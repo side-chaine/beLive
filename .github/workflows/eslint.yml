@@ -2,37 +2,17 @@ name: Lint JS (ESLint)
 
 on:
   pull_request:
-    paths:
-      - '**/*.js'
-      - '**/*.jsx'
-      - '.eslintrc*'
+    branches: [ "main" ]
   push:
-    branches:
-      - main
-      - 'chore/*'
-      - 'docs/*'
-      - 'open-source/*'
+    branches: [ "main" ]
 
 jobs:
-  eslint:
+  lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: '18'
-
-      - name: Install dependencies (or temporary eslint)
-        run: |
-          if [ -f package.json ]; then
-            npm ci
-          else
-            echo "{}" > package.json
-            npm i --no-save eslint
-          fi
-
-      - name: Run ESLint
-        run: |
-          npx eslint js --ext .js
+      - run: npm install
+      - run: npm run lint
