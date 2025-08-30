@@ -67,8 +67,8 @@ class WaveformEditor {
         this.dragStartTime = 0;
         
         // Waveform source switching
-        this.currentWaveformSource = 'vocals'; // По умолчанию показываем вокал
-        this.currentWaveformColor = '#FFD700'; // Золотой цвет для вокала
+        this.currentWaveformSource = "vocals"; // По умолчанию показываем вокал
+        this.currentWaveformColor = "#FFD700"; // Золотой цвет для вокала
         this.sourceButtons = {};
         
         // Кэш для данных волновых форм
@@ -98,31 +98,31 @@ class WaveformEditor {
         }
         
         // Добавляем слушатель для обнаружения скачков в позиции
-        document.addEventListener('audio-position-changed', this._handlePositionChangeBound);
+        document.addEventListener("audio-position-changed", this._handlePositionChangeBound);
         
         // Subscribe to marker manager events if available
         if (this.markerManager) {
-            this.markerManager.subscribe('markersReset', () => {
+            this.markerManager.subscribe("markersReset", () => {
                 this._drawWaveform();
             });
             
-            this.markerManager.subscribe('markerAdded', () => {
+            this.markerManager.subscribe("markerAdded", () => {
                 this._drawWaveform();
             });
             
-            this.markerManager.subscribe('markerUpdated', () => {
+            this.markerManager.subscribe("markerUpdated", () => {
                 this._drawWaveform();
             });
             
-            this.markerManager.subscribe('markerDeleted', () => {
+            this.markerManager.subscribe("markerDeleted", () => {
                 this._drawWaveform();
             });
         }
         
-        console.log('WaveformEditor initialized');
+        console.log("WaveformEditor initialized");
         
         // In the constructor section, add global event listeners for drag prevention
-        document.addEventListener('dragstart', (e) => {
+        document.addEventListener("dragstart", (e) => {
             // Prevent default browser drag behavior when we're dragging our own elements
             if (this.isDraggingLoopStart || this.isDraggingLoopEnd || this.isDraggingLoop) {
                 e.preventDefault();
@@ -130,15 +130,15 @@ class WaveformEditor {
             }
         });
 
-        document.addEventListener('blocks-applied', (e) => {
+        document.addEventListener("blocks-applied", (e) => {
             try {
                 if (this.markerManager) {
                     this.markerManager.updateMarkerColors();
                 }
                 this._drawWaveform();
-                console.log('WaveformEditor: blocks-applied handled', e.detail);
+                console.log("WaveformEditor: blocks-applied handled", e.detail);
             } catch (err) {
-                console.warn('WaveformEditor: failed to handle blocks-applied', err);
+                console.warn("WaveformEditor: failed to handle blocks-applied", err);
             }
         });
     }
@@ -150,6 +150,7 @@ class WaveformEditor {
      * @returns {Promise} Promise that resolves when audio is loaded
      */
     async loadAudioForSync(audioUrl) {
+// eslint-disable-next-line no-async-promise-executor
         return new Promise(async (resolve, reject) => {
             if (!audioUrl) {
                 console.error("WaveformEditor: No audio URL provided for sync loading.");
@@ -196,75 +197,75 @@ class WaveformEditor {
     // Create UI elements
     _createUI() {
         // Create container
-        this.container = document.createElement('div');
-        this.container.id = 'waveform-editor';
-        this.container.classList.add('waveform-editor');
-        this.container.style.display = 'none'; // Initially hidden
+        this.container = document.createElement("div");
+        this.container.id = "waveform-editor";
+        this.container.classList.add("waveform-editor");
+        this.container.style.display = "none"; // Initially hidden
         
         // Create header with controls
-        this.header = document.createElement('div');
-        this.header.classList.add('waveform-header');
+        this.header = document.createElement("div");
+        this.header.classList.add("waveform-header");
         
         // Add back button
-        const backButton = document.createElement('button');
-        backButton.textContent = 'Back';
-        backButton.className = 'waveform-btn back-btn';
-        backButton.title = 'Return to main view';
-        backButton.addEventListener('click', () => this.hide());
+        const backButton = document.createElement("button");
+        backButton.textContent = "Back";
+        backButton.className = "waveform-btn back-btn";
+        backButton.title = "Return to main view";
+        backButton.addEventListener("click", () => this.hide());
         
         // Add title
-        const title = document.createElement('div');
-        title.classList.add('waveform-title');
-        title.textContent = 'Sync Editor';
+        const title = document.createElement("div");
+        title.classList.add("waveform-title");
+        title.textContent = "Sync Editor";
         
         // Create header sections for better organization
-        const leftSide = document.createElement('div');
-        leftSide.className = 'waveform-header-left';
+        const leftSide = document.createElement("div");
+        leftSide.className = "waveform-header-left";
         leftSide.appendChild(backButton);
         leftSide.appendChild(title);
         
-        const centerSection = document.createElement('div');
-        centerSection.className = 'waveform-header-center';
+        const centerSection = document.createElement("div");
+        centerSection.className = "waveform-header-center";
         
         // Time display - перемещаем в центр
-        this.timeDisplay = document.createElement('div');
-        this.timeDisplay.id = 'waveform-time-display';
-        this.timeDisplay.classList.add('waveform-time-display');
-        this.timeDisplay.textContent = '00:00';
+        this.timeDisplay = document.createElement("div");
+        this.timeDisplay.id = "waveform-time-display";
+        this.timeDisplay.classList.add("waveform-time-display");
+        this.timeDisplay.textContent = "00:00";
         centerSection.appendChild(this.timeDisplay);
         
         // Create right side section with controls
-        const rightSide = document.createElement('div');
-        rightSide.className = 'waveform-header-right';
+        const rightSide = document.createElement("div");
+        rightSide.className = "waveform-header-right";
         
         // Add zoom controls in a button group
-        const zoomControls = document.createElement('div');
-        zoomControls.classList.add('btn-group');
+        const zoomControls = document.createElement("div");
+        zoomControls.classList.add("btn-group");
         
-        const zoomInBtn = document.createElement('button');
-        zoomInBtn.textContent = '🔍+';
-        zoomInBtn.title = 'Zoom In';
-        zoomInBtn.className = 'waveform-btn';
-        zoomInBtn.addEventListener('click', () => this._zoomIn());
+        const zoomInBtn = document.createElement("button");
+        zoomInBtn.textContent = "🔍+";
+        zoomInBtn.title = "Zoom In";
+        zoomInBtn.className = "waveform-btn";
+        zoomInBtn.addEventListener("click", () => this._zoomIn());
         
-        const zoomOutBtn = document.createElement('button');
-        zoomOutBtn.textContent = '🔍−';
-        zoomOutBtn.title = 'Zoom Out';
-        zoomOutBtn.className = 'waveform-btn';
-        zoomOutBtn.addEventListener('click', () => this._zoomOut());
+        const zoomOutBtn = document.createElement("button");
+        zoomOutBtn.textContent = "🔍−";
+        zoomOutBtn.title = "Zoom Out";
+        zoomOutBtn.className = "waveform-btn";
+        zoomOutBtn.addEventListener("click", () => this._zoomOut());
         
         zoomControls.appendChild(zoomInBtn);
         zoomControls.appendChild(zoomOutBtn);
         
         // Add follow playhead toggle button
-        const followGroup = document.createElement('div');
-        followGroup.classList.add('btn-group');
+        const followGroup = document.createElement("div");
+        followGroup.classList.add("btn-group");
         
-        const followToggle = document.createElement('button');
-        followToggle.textContent = this.followPlayhead ? 'Follow: On' : 'Follow: Off';
-        followToggle.title = 'Toggle auto-follow playhead (centered mode)';
-        followToggle.className = 'waveform-btn';
-        followToggle.addEventListener('click', () => {
+        const followToggle = document.createElement("button");
+        followToggle.textContent = this.followPlayhead ? "Follow: On" : "Follow: Off";
+        followToggle.title = "Toggle auto-follow playhead (centered mode)";
+        followToggle.className = "waveform-btn";
+        followToggle.addEventListener("click", () => {
             this.followPlayhead = !this.followPlayhead;
             
             // Также включаем/выключаем режим центрированного плейхеда
@@ -286,8 +287,8 @@ class WaveformEditor {
                 this.playheadReachedCenter = false;
             }
             
-            followToggle.textContent = this.followPlayhead ? 'Follow: On' : 'Follow: Off';
-            followToggle.classList.toggle('active', this.followPlayhead);
+            followToggle.textContent = this.followPlayhead ? "Follow: On" : "Follow: Off";
+            followToggle.classList.toggle("active", this.followPlayhead);
             
             // Перерисовываем волновую форму с новыми настройками
             this._drawWaveform();
@@ -295,77 +296,77 @@ class WaveformEditor {
         
         // Set active class based on initial state
         if (this.followPlayhead) {
-            followToggle.classList.add('active');
+            followToggle.classList.add("active");
         }
         
         followGroup.appendChild(followToggle);
         
         // Add loop toggle button
-        const loopToggle = document.createElement('button');
-        loopToggle.textContent = 'Loop: Off';
-        loopToggle.title = 'Toggle loop mode (Shift+Click to set loop)';
-        loopToggle.className = 'waveform-btn loop-btn';
-        loopToggle.addEventListener('click', () => this._toggleLoop());
+        const loopToggle = document.createElement("button");
+        loopToggle.textContent = "Loop: Off";
+        loopToggle.title = "Toggle loop mode (Shift+Click to set loop)";
+        loopToggle.className = "waveform-btn loop-btn";
+        loopToggle.addEventListener("click", () => this._toggleLoop());
         this.loopToggleBtn = loopToggle;  // Store reference to update later
         
         followGroup.appendChild(loopToggle);
         
         // Markers toggle button
-        const markersToggleBtn = document.createElement('button');
-        markersToggleBtn.textContent = 'Markers: Off';
-        markersToggleBtn.title = 'Toggle markers visibility';
-        markersToggleBtn.className = 'waveform-btn markers-toggle-btn';
-        markersToggleBtn.addEventListener('click', () => this._toggleMarkers());
+        const markersToggleBtn = document.createElement("button");
+        markersToggleBtn.textContent = "Markers: Off";
+        markersToggleBtn.title = "Toggle markers visibility";
+        markersToggleBtn.className = "waveform-btn markers-toggle-btn";
+        markersToggleBtn.addEventListener("click", () => this._toggleMarkers());
         this.markersToggleBtn = markersToggleBtn; // Store reference to update text
         
         // Add marker button (double-click functionality will be added later)
-        const addMarkerBtn = document.createElement('button');
-        addMarkerBtn.textContent = 'Add Marker';
-        addMarkerBtn.title = 'Add Marker at Current Position';
-        addMarkerBtn.className = 'waveform-btn add-marker-btn';
-        addMarkerBtn.addEventListener('click', () => this._addMarkerAtPlayhead());
+        const addMarkerBtn = document.createElement("button");
+        addMarkerBtn.textContent = "Add Marker";
+        addMarkerBtn.title = "Add Marker at Current Position";
+        addMarkerBtn.className = "waveform-btn add-marker-btn";
+        addMarkerBtn.addEventListener("click", () => this._addMarkerAtPlayhead());
         
         // Add text edit button
-        const editTextBtn = document.createElement('button');
-        editTextBtn.innerHTML = '<strong>T</strong>'; // Bold "T" icon
-        editTextBtn.title = 'Edit Lyrics Text';
-        editTextBtn.className = 'waveform-btn edit-text-btn';
-        editTextBtn.addEventListener('click', () => this._openNewBlockEditor());
+        const editTextBtn = document.createElement("button");
+        editTextBtn.innerHTML = "<strong>T</strong>"; // Bold "T" icon
+        editTextBtn.title = "Edit Lyrics Text";
+        editTextBtn.className = "waveform-btn edit-text-btn";
+        editTextBtn.addEventListener("click", () => this._openNewBlockEditor());
         
         // Добавляем кнопку удаления выбранных маркеров в группу
-        const actionGroup = document.createElement('div');
-        actionGroup.classList.add('btn-group');
+        const actionGroup = document.createElement("div");
+        actionGroup.classList.add("btn-group");
         
-        const deleteMarkersBtn = document.createElement('button');
-        deleteMarkersBtn.textContent = 'Delete Selected';
-        deleteMarkersBtn.title = 'Delete Selected Markers';
-        deleteMarkersBtn.className = 'waveform-btn delete-btn';
-        deleteMarkersBtn.addEventListener('click', () => this._deleteSelectedMarkers());
+        const deleteMarkersBtn = document.createElement("button");
+        deleteMarkersBtn.textContent = "Delete Selected";
+        deleteMarkersBtn.title = "Delete Selected Markers";
+        deleteMarkersBtn.className = "waveform-btn delete-btn";
+        deleteMarkersBtn.addEventListener("click", () => this._deleteSelectedMarkers());
         
         // Добавляем кнопку сброса всех маркеров
-        const resetMarkersBtn = document.createElement('button');
-        resetMarkersBtn.textContent = 'Reset All';
-        resetMarkersBtn.title = 'Remove All Markers';
-        resetMarkersBtn.className = 'waveform-btn reset-btn';
-        resetMarkersBtn.addEventListener('click', () => this._resetAllMarkers());
+        const resetMarkersBtn = document.createElement("button");
+        resetMarkersBtn.textContent = "Reset All";
+        resetMarkersBtn.title = "Remove All Markers";
+        resetMarkersBtn.className = "waveform-btn reset-btn";
+        resetMarkersBtn.addEventListener("click", () => this._resetAllMarkers());
         
         actionGroup.appendChild(deleteMarkersBtn);
         actionGroup.appendChild(resetMarkersBtn);
         
         // Add save button for markers
-        const saveMarkersBtn = document.createElement('button');
-        saveMarkersBtn.textContent = 'Save & Close';
-        saveMarkersBtn.className = 'waveform-btn save-btn';
-        saveMarkersBtn.title = 'Save markers and close editor';
-        saveMarkersBtn.addEventListener('click', () => {
+        const saveMarkersBtn = document.createElement("button");
+        saveMarkersBtn.textContent = "Save & Close";
+        saveMarkersBtn.className = "waveform-btn save-btn";
+        saveMarkersBtn.title = "Save markers and close editor";
+        saveMarkersBtn.addEventListener("click", () => {
             this._saveMarkers();
             // Close the editor after saving
             this.hide();
         });
         
         // Create main controls container
-        const mainControls = document.createElement('div');
-        mainControls.className = 'waveform-controls';
+        const mainControls = document.createElement("div");
+        mainControls.className = "waveform-controls";
         
         // Add all control groups
         mainControls.appendChild(zoomControls);
@@ -385,146 +386,146 @@ class WaveformEditor {
         this.header.appendChild(rightSide);
         
         // Create canvas container
-        const canvasContainer = document.createElement('div');
-        canvasContainer.className = 'waveform-canvas-container';
+        const canvasContainer = document.createElement("div");
+        canvasContainer.className = "waveform-canvas-container";
         
         // Create canvas for waveform
-        this.canvas = document.createElement('canvas');
-        this.canvas.classList.add('waveform-canvas');
+        this.canvas = document.createElement("canvas");
+        this.canvas.classList.add("waveform-canvas");
         canvasContainer.appendChild(this.canvas);
         
         // Create playhead
-        this.playhead = document.createElement('div');
-        this.playhead.classList.add('playhead');
+        this.playhead = document.createElement("div");
+        this.playhead.classList.add("playhead");
         canvasContainer.appendChild(this.playhead);
         
         // Create loop region elements
-        this.loopElement = document.createElement('div');
-        this.loopElement.className = 'waveform-loop-region';
-        this.loopElement.style.position = 'absolute';
-        this.loopElement.style.top = '0';
-        this.loopElement.style.height = '100%';
-        this.loopElement.style.display = 'none';
+        this.loopElement = document.createElement("div");
+        this.loopElement.className = "waveform-loop-region";
+        this.loopElement.style.position = "absolute";
+        this.loopElement.style.top = "0";
+        this.loopElement.style.height = "100%";
+        this.loopElement.style.display = "none";
         // Remove the inline background color to use the CSS class styles
         // Remove the inline border styles to use the CSS class styles
-        this.loopElement.style.zIndex = '2';
+        this.loopElement.style.zIndex = "2";
         // Make it non-blocking for mouse events
-        this.loopElement.style.pointerEvents = 'none';
+        this.loopElement.style.pointerEvents = "none";
         canvasContainer.appendChild(this.loopElement);
         
         // Create loop bottom drag handle
-        this.loopBottomHandle = document.createElement('div');
-        this.loopBottomHandle.className = 'waveform-loop-handle bottom-handle';
-        this.loopBottomHandle.style.position = 'absolute';
-        this.loopBottomHandle.style.bottom = '0';
-        this.loopBottomHandle.style.height = '12px';
-        this.loopBottomHandle.style.display = 'none';
+        this.loopBottomHandle = document.createElement("div");
+        this.loopBottomHandle.className = "waveform-loop-handle bottom-handle";
+        this.loopBottomHandle.style.position = "absolute";
+        this.loopBottomHandle.style.bottom = "0";
+        this.loopBottomHandle.style.height = "12px";
+        this.loopBottomHandle.style.display = "none";
         // Remove inline styles that are defined in CSS
         // this.loopBottomHandle.style.cursor = 'grab';
         // this.loopBottomHandle.style.backgroundColor = 'rgba(255, 200, 50, 0.7)';
         // this.loopBottomHandle.style.border = '1px solid rgba(255, 255, 255, 0.7)';
         // this.loopBottomHandle.style.borderRadius = '3px 3px 0 0';
-        this.loopBottomHandle.style.zIndex = '5';
-        this.loopBottomHandle.style.pointerEvents = 'auto'; // Ensure it's clickable
+        this.loopBottomHandle.style.zIndex = "5";
+        this.loopBottomHandle.style.pointerEvents = "auto"; // Ensure it's clickable
         canvasContainer.appendChild(this.loopBottomHandle);
         
         // Create loop start handle
-        this.loopStartHandle = document.createElement('div');
-        this.loopStartHandle.className = 'waveform-loop-handle start-handle';
-        this.loopStartHandle.style.position = 'absolute';
-        this.loopStartHandle.style.top = '0';
-        this.loopStartHandle.style.width = '5px'; // Using a fixed width instead of this.loopHandleWidth
-        this.loopStartHandle.style.height = '100%';
-        this.loopStartHandle.style.display = 'none';
+        this.loopStartHandle = document.createElement("div");
+        this.loopStartHandle.className = "waveform-loop-handle start-handle";
+        this.loopStartHandle.style.position = "absolute";
+        this.loopStartHandle.style.top = "0";
+        this.loopStartHandle.style.width = "5px"; // Using a fixed width instead of this.loopHandleWidth
+        this.loopStartHandle.style.height = "100%";
+        this.loopStartHandle.style.display = "none";
         // Remove inline styles that are defined in CSS
         // this.loopStartHandle.style.cursor = 'ew-resize';
         // this.loopStartHandle.style.backgroundColor = 'rgba(255, 200, 50, 0.5)';
         // this.loopStartHandle.style.border = '1px solid rgba(255, 255, 255, 0.5)';
-        this.loopStartHandle.style.zIndex = '5';
-        this.loopStartHandle.style.pointerEvents = 'auto'; // Ensure it's clickable
+        this.loopStartHandle.style.zIndex = "5";
+        this.loopStartHandle.style.pointerEvents = "auto"; // Ensure it's clickable
         canvasContainer.appendChild(this.loopStartHandle);
         
         // Create loop end handle
-        this.loopEndHandle = document.createElement('div');
-        this.loopEndHandle.className = 'waveform-loop-handle end-handle';
-        this.loopEndHandle.style.position = 'absolute';
-        this.loopEndHandle.style.top = '0';
-        this.loopEndHandle.style.width = '5px'; // Using a fixed width instead of this.loopHandleWidth
-        this.loopEndHandle.style.height = '100%';
-        this.loopEndHandle.style.display = 'none';
+        this.loopEndHandle = document.createElement("div");
+        this.loopEndHandle.className = "waveform-loop-handle end-handle";
+        this.loopEndHandle.style.position = "absolute";
+        this.loopEndHandle.style.top = "0";
+        this.loopEndHandle.style.width = "5px"; // Using a fixed width instead of this.loopHandleWidth
+        this.loopEndHandle.style.height = "100%";
+        this.loopEndHandle.style.display = "none";
         // Remove inline styles that are defined in CSS
         // this.loopEndHandle.style.cursor = 'ew-resize';
         // this.loopEndHandle.style.backgroundColor = 'rgba(255, 200, 50, 0.5)';
         // this.loopEndHandle.style.border = '1px solid rgba(255, 255, 255, 0.5)';
-        this.loopEndHandle.style.zIndex = '5';
-        this.loopEndHandle.style.pointerEvents = 'auto'; // Ensure it's clickable
+        this.loopEndHandle.style.zIndex = "5";
+        this.loopEndHandle.style.pointerEvents = "auto"; // Ensure it's clickable
         canvasContainer.appendChild(this.loopEndHandle);
         
         // Создаем элемент для отображения выделения
-        this.selectionElement = document.createElement('div');
-        this.selectionElement.className = 'waveform-selection';
-        this.selectionElement.style.position = 'absolute';
-        this.selectionElement.style.top = '0';
-        this.selectionElement.style.height = '100%';
-        this.selectionElement.style.display = 'none';
-        this.selectionElement.style.pointerEvents = 'none';
-        this.selectionElement.style.zIndex = '3';
+        this.selectionElement = document.createElement("div");
+        this.selectionElement.className = "waveform-selection";
+        this.selectionElement.style.position = "absolute";
+        this.selectionElement.style.top = "0";
+        this.selectionElement.style.height = "100%";
+        this.selectionElement.style.display = "none";
+        this.selectionElement.style.pointerEvents = "none";
+        this.selectionElement.style.zIndex = "3";
         canvasContainer.appendChild(this.selectionElement);
         
         // Create main content container
-        const contentContainer = document.createElement('div');
-        contentContainer.className = 'sync-editor-container';
+        const contentContainer = document.createElement("div");
+        contentContainer.className = "sync-editor-container";
         contentContainer.appendChild(this.header);
         contentContainer.appendChild(canvasContainer);
         
         // Create footer for source controls
-        const footerControls = document.createElement('div');
-        footerControls.className = 'waveform-footer-controls';
+        const footerControls = document.createElement("div");
+        footerControls.className = "waveform-footer-controls";
 
         // Добавляем переключатель источника волн
-        const waveformSourceGroup = document.createElement('div');
-        waveformSourceGroup.className = 'waveform-source-group';
+        const waveformSourceGroup = document.createElement("div");
+        waveformSourceGroup.className = "waveform-source-group";
         
         // Кнопка Вокал
-        const vocalsBtn = document.createElement('button');
-        vocalsBtn.textContent = 'V';
-        vocalsBtn.title = 'Vocals - Вокальная дорожка';
-        vocalsBtn.className = 'waveform-btn source-btn active'; // Активна по умолчанию
-        vocalsBtn.dataset.source = 'vocals';
-        vocalsBtn.addEventListener('click', async () => {
+        const vocalsBtn = document.createElement("button");
+        vocalsBtn.textContent = "V";
+        vocalsBtn.title = "Vocals - Вокальная дорожка";
+        vocalsBtn.className = "waveform-btn source-btn active"; // Активна по умолчанию
+        vocalsBtn.dataset.source = "vocals";
+        vocalsBtn.addEventListener("click", async () => {
             vocalsBtn.disabled = true;
             try {
-                await this._switchWaveformSource('vocals');
+                await this._switchWaveformSource("vocals");
             } finally {
                 vocalsBtn.disabled = false;
             }
         });
         
         // Кнопка Инструментал
-        const instrumentalBtn = document.createElement('button');
-        instrumentalBtn.textContent = 'I';
-        instrumentalBtn.title = 'Instrumental - Инструментальная дорожка';
-        instrumentalBtn.className = 'waveform-btn source-btn';
-        instrumentalBtn.dataset.source = 'instrumental';
-        instrumentalBtn.addEventListener('click', async () => {
+        const instrumentalBtn = document.createElement("button");
+        instrumentalBtn.textContent = "I";
+        instrumentalBtn.title = "Instrumental - Инструментальная дорожка";
+        instrumentalBtn.className = "waveform-btn source-btn";
+        instrumentalBtn.dataset.source = "instrumental";
+        instrumentalBtn.addEventListener("click", async () => {
             instrumentalBtn.disabled = true;
             try {
-                await this._switchWaveformSource('instrumental');
+                await this._switchWaveformSource("instrumental");
             } finally {
                 instrumentalBtn.disabled = false;
             }
         });
         
         // Кнопка Мастер (микс)
-        const masterBtn = document.createElement('button');
-        masterBtn.textContent = 'M';
-        masterBtn.title = 'Master - Смешанный трек';
-        masterBtn.className = 'waveform-btn source-btn';
-        masterBtn.dataset.source = 'master';
-        masterBtn.addEventListener('click', async () => {
+        const masterBtn = document.createElement("button");
+        masterBtn.textContent = "M";
+        masterBtn.title = "Master - Смешанный трек";
+        masterBtn.className = "waveform-btn source-btn";
+        masterBtn.dataset.source = "master";
+        masterBtn.addEventListener("click", async () => {
             masterBtn.disabled = true;
             try {
-                await this._switchWaveformSource('master');
+                await this._switchWaveformSource("master");
             } finally {
                 masterBtn.disabled = false;
             }
@@ -535,45 +536,45 @@ class WaveformEditor {
         waveformSourceGroup.appendChild(masterBtn);
 
         // Кнопка выбора цвета
-        const colorPickerBtn = document.createElement('button');
-        colorPickerBtn.className = 'color-picker-button';
-        colorPickerBtn.title = 'Выбор цветовой схемы волн';
-        colorPickerBtn.innerHTML = '🎨';
+        const colorPickerBtn = document.createElement("button");
+        colorPickerBtn.className = "color-picker-button";
+        colorPickerBtn.title = "Выбор цветовой схемы волн";
+        colorPickerBtn.innerHTML = "🎨";
         
-        console.log('🎨 Создаю кнопку выбора цвета, ColorService доступен:', !!window.colorService);
+        console.log("🎨 Создаю кнопку выбора цвета, ColorService доступен:", !!window.colorService);
         
         // Выпадающее меню цветов
-        const colorDropdown = document.createElement('div');
-        colorDropdown.className = 'color-dropdown';
+        const colorDropdown = document.createElement("div");
+        colorDropdown.className = "color-dropdown";
         
         // Создаем элементы цветовых схем
         if (window.colorService) {
-            console.log('🎨 ColorService найден, создаю схемы...');
+            console.log("🎨 ColorService найден, создаю схемы...");
             const schemes = window.colorService.getColorSchemes();
             const currentScheme = window.colorService.getCurrentScheme();
             
-            console.log('🎨 Доступные схемы:', schemes.length);
+            console.log("🎨 Доступные схемы:", schemes.length);
             
             schemes.forEach(scheme => {
-                const schemeItem = document.createElement('div');
-                schemeItem.className = `color-scheme-item ${scheme.id === currentScheme.id ? 'active' : ''}`;
+                const schemeItem = document.createElement("div");
+                schemeItem.className = `color-scheme-item ${scheme.id === currentScheme.id ? "active" : ""}`;
                 schemeItem.dataset.schemeId = scheme.id;
                 
                 // Превью цветов
                 const preview = window.colorService.createPreviewCanvas(scheme);
-                preview.className = 'color-preview';
+                preview.className = "color-preview";
                 
                 // Название схемы
-                const schemeName = document.createElement('span');
-                schemeName.className = 'scheme-name';
+                const schemeName = document.createElement("span");
+                schemeName.className = "scheme-name";
                 schemeName.textContent = scheme.name;
                 
                 schemeItem.appendChild(preview);
                 schemeItem.appendChild(schemeName);
                 
                 // Обработчик клика
-                schemeItem.addEventListener('click', () => {
-                    console.log('🎨 Выбрана схема:', scheme.name);
+                schemeItem.addEventListener("click", () => {
+                    console.log("🎨 Выбрана схема:", scheme.name);
                     window.colorService.setColorScheme(scheme.id);
                     this._updateColorDropdown();
                     this._hideColorDropdown();
@@ -582,18 +583,18 @@ class WaveformEditor {
                 colorDropdown.appendChild(schemeItem);
             });
         } else {
-            console.warn('🎨 ColorService не найден при создании UI');
+            console.warn("🎨 ColorService не найден при создании UI");
         }
         
         // Обработчики для кнопки и меню
-        colorPickerBtn.addEventListener('click', (e) => {
-            console.log('🎨 Клик по кнопке выбора цвета');
+        colorPickerBtn.addEventListener("click", (e) => {
+            console.log("🎨 Клик по кнопке выбора цвета");
             e.stopPropagation();
             this._toggleColorDropdown();
         });
         
         // Закрытие меню при клике вне его
-        document.addEventListener('click', (e) => {
+        document.addEventListener("click", (e) => {
             if (!colorPickerBtn.contains(e.target) && !colorDropdown.contains(e.target)) {
                 this._hideColorDropdown();
             }
@@ -637,8 +638,8 @@ class WaveformEditor {
     // Attach event listeners
     _attachEventListeners() {
         // Double-click on canvas to add marker
-        this.canvas.addEventListener('dblclick', (e) => {
-            if (!this.markerManager || !this.showMarkers) return;
+        this.canvas.addEventListener("dblclick", (e) => {
+            if (!this.markerManager || !this.showMarkers) {return;}
             
             const rect = this.canvas.getBoundingClientRect();
             const clickX = e.clientX - rect.left;
@@ -649,11 +650,11 @@ class WaveformEditor {
         });
         
         // Canvas click for playhead positioning or loop creation
-        this.canvas.addEventListener('click', (e) => {
+        this.canvas.addEventListener("click", (e) => {
             // Если установлен флаг игнорирования следующего клика после отпускания маркера,
             // то игнорируем это событие и сбрасываем флаг
             if (this.ignoringNextClick) {
-                console.log('Ignoring click after marker drag');
+                console.log("Ignoring click after marker drag");
                 this.ignoringNextClick = false;
                 e.preventDefault();
                 e.stopPropagation();
@@ -661,7 +662,7 @@ class WaveformEditor {
             }
             
             // If in selection mode or dragging, ignore clicks
-            if (this.isSelecting || e.shiftKey) return;
+            if (this.isSelecting || e.shiftKey) {return;}
             
             if (this.audioEngine && this.audioDuration) {
                 const rect = this.canvas.getBoundingClientRect();
@@ -715,8 +716,8 @@ class WaveformEditor {
         });
         
         // Mouse down - начало выделения, перетаскивания маркера, или петли
-        this.canvas.addEventListener('mousedown', (e) => {
-            if (!this.audioEngine) return;
+        this.canvas.addEventListener("mousedown", (e) => {
+            if (!this.audioEngine) {return;}
             
             const rect = this.canvas.getBoundingClientRect();
             const clickX = e.clientX - rect.left;
@@ -754,8 +755,8 @@ class WaveformEditor {
                     this.dragOffset = clickX - loopStartX;
                     
                     // Add dragging class for visual feedback
-                    this.loopBottomHandle.classList.add('dragging');
-                    console.log('Starting to drag entire loop, offset:', this.dragOffset);
+                    this.loopBottomHandle.classList.add("dragging");
+                    console.log("Starting to drag entire loop, offset:", this.dragOffset);
                     
                     e.preventDefault();
                     e.stopPropagation();
@@ -765,8 +766,8 @@ class WaveformEditor {
                 // Check if clicking on loop start handle
                 if (Math.abs(clickX - loopStartX) <= 5) { // Use fixed width of 5px
                     this.isDraggingLoopStart = true;
-                    this.loopStartHandle.classList.add('dragging');
-                    console.log('Starting to drag loop start handle');
+                    this.loopStartHandle.classList.add("dragging");
+                    console.log("Starting to drag loop start handle");
                     e.preventDefault();
                     e.stopPropagation();
                     return;
@@ -775,8 +776,8 @@ class WaveformEditor {
                 // Check if clicking on loop end handle
                 if (Math.abs(clickX - loopEndX) <= 5) { // Use fixed width of 5px
                     this.isDraggingLoopEnd = true;
-                    this.loopEndHandle.classList.add('dragging');
-                    console.log('Starting to drag loop end handle');
+                    this.loopEndHandle.classList.add("dragging");
+                    console.log("Starting to drag loop end handle");
                     e.preventDefault();
                     e.stopPropagation();
                     return;
@@ -789,7 +790,7 @@ class WaveformEditor {
         });
         
         // Mouse move - обновление выделения, перетаскивание маркера или границ петли
-        document.addEventListener('mousemove', (e) => {
+        document.addEventListener("mousemove", (e) => {
             // Handle selection during mouse drag
             if (this.isSelecting) {
                 const rect = this.canvas.getBoundingClientRect();
@@ -820,16 +821,16 @@ class WaveformEditor {
                         
                         // Handle hover for start handle
                         if (Math.abs(mouseX - loopStartX) <= 5) { // 5px is the handle width
-                            this.loopStartHandle.classList.add('hover');
+                            this.loopStartHandle.classList.add("hover");
                         } else {
-                            this.loopStartHandle.classList.remove('hover');
+                            this.loopStartHandle.classList.remove("hover");
                         }
                         
                         // Handle hover for end handle
                         if (Math.abs(mouseX - loopEndX) <= 5) { // 5px is the handle width
-                            this.loopEndHandle.classList.add('hover');
+                            this.loopEndHandle.classList.add("hover");
                         } else {
-                            this.loopEndHandle.classList.remove('hover');
+                            this.loopEndHandle.classList.remove("hover");
                         }
                         
                         // Handle hover for bottom handle
@@ -837,9 +838,9 @@ class WaveformEditor {
                                                 e.clientY >= rect.bottom - 15 && // 12px handle height + some buffer
                                                 e.clientY <= rect.bottom;
                         if (bottomHandleHover) {
-                            this.loopBottomHandle.classList.add('hover');
+                            this.loopBottomHandle.classList.add("hover");
                         } else {
-                            this.loopBottomHandle.classList.remove('hover');
+                            this.loopBottomHandle.classList.remove("hover");
                         }
                     }
                 }
@@ -910,14 +911,14 @@ class WaveformEditor {
         });
         
         // Mouse up - завершение выделения, перетаскивания маркера или ручки петли
-        document.addEventListener('mouseup', (e) => {
+        document.addEventListener("mouseup", (e) => {
             // Handle end of selection
             if (this.isSelecting) {
                 this.isSelecting = false;
                 
                 // If selection is too small, clear it
                 if (Math.abs(this.selectionEnd - this.selectionStart) < 0.1) {
-                    console.log('Selection too small, clearing');
+                    console.log("Selection too small, clearing");
                     this._clearSelection();
                 } else if (e.shiftKey) {
                     // If shift is still held when releasing, create loop from selection
@@ -933,12 +934,12 @@ class WaveformEditor {
                 e.preventDefault();
                 
                 // Remove dragging classes
-                this.loopStartHandle.classList.remove('dragging');
-                this.loopEndHandle.classList.remove('dragging');
-                this.loopBottomHandle.classList.remove('dragging');
+                this.loopStartHandle.classList.remove("dragging");
+                this.loopEndHandle.classList.remove("dragging");
+                this.loopBottomHandle.classList.remove("dragging");
                 
                 // Reset user select
-                document.body.style.userSelect = '';
+                document.body.style.userSelect = "";
                 
                 this.isDraggingLoopStart = false;
                 this.isDraggingLoopEnd = false;
@@ -964,7 +965,7 @@ class WaveformEditor {
         });
         
         // Prevent default browser context menu on canvas
-        this.canvas.addEventListener('contextmenu', (e) => {
+        this.canvas.addEventListener("contextmenu", (e) => {
             e.preventDefault();
             
             // Show delete option if right-clicking on a marker
@@ -978,7 +979,7 @@ class WaveformEditor {
                     const markerX = this._timeToPixels(marker.time);
                     
                     if (Math.abs(markerX - clickX) < threshold) {
-                        if (confirm('Delete this marker?')) {
+                        if (confirm("Delete this marker?")) {
                             this.markerManager.deleteMarker(marker.id);
                             this._drawWaveform();
                         }
@@ -989,9 +990,9 @@ class WaveformEditor {
         });
         
         // Escape key для отмены выделения и другие глобальные клавиши
-        document.addEventListener('keydown', (e) => {
+        document.addEventListener("keydown", (e) => {
             // Отмена выделения при нажатии Escape
-            if (e.key === 'Escape' && this.isVisible) {
+            if (e.key === "Escape" && this.isVisible) {
                 this._clearSelection();
                 
                 // Also clear loop if Escape is pressed with Alt key
@@ -1001,18 +1002,18 @@ class WaveformEditor {
             }
             
             // Shift+L to toggle loop
-            if (e.key === 'l' && e.shiftKey && this.isVisible) {
+            if (e.key === "l" && e.shiftKey && this.isVisible) {
                 e.preventDefault();
                 this._toggleLoop();
             }
         });
         
         // Trackpad gestures for zooming and scrolling
-        this.canvas.addEventListener('wheel', (e) => {
+        this.canvas.addEventListener("wheel", (e) => {
             e.preventDefault(); // Prevent default scroll behavior
             
             // Check if we have audio data and duration
-            if (!this.audioDuration || (!this.rawVocalData && !this.rawInstrumentalData)) return;
+            if (!this.audioDuration || (!this.rawVocalData && !this.rawInstrumentalData)) {return;}
             
             // Get current mouse position for zoom focus
             const rect = this.canvas.getBoundingClientRect();
@@ -1089,7 +1090,7 @@ class WaveformEditor {
         }, { passive: false });
         
         // Window resize
-        window.addEventListener('resize', () => {
+        window.addEventListener("resize", () => {
             this._resizeCanvas();
             this._drawWaveform();
             
@@ -1100,64 +1101,64 @@ class WaveformEditor {
         });
         
         // Add direct event listeners to handle dragging for each handle
-        this.loopStartHandle.addEventListener('mousedown', (e) => {
+        this.loopStartHandle.addEventListener("mousedown", (e) => {
             e.preventDefault();
             e.stopPropagation();
             this.isDraggingLoopStart = true;
-            this.loopStartHandle.classList.add('dragging');
-            console.log('Starting to drag loop start handle');
+            this.loopStartHandle.classList.add("dragging");
+            console.log("Starting to drag loop start handle");
         });
 
-        this.loopEndHandle.addEventListener('mousedown', (e) => {
+        this.loopEndHandle.addEventListener("mousedown", (e) => {
             e.preventDefault();
             e.stopPropagation();
             this.isDraggingLoopEnd = true;
-            this.loopEndHandle.classList.add('dragging');
-            console.log('Starting to drag loop end handle');
+            this.loopEndHandle.classList.add("dragging");
+            console.log("Starting to drag loop end handle");
         });
 
-        this.loopBottomHandle.addEventListener('mousedown', (e) => {
+        this.loopBottomHandle.addEventListener("mousedown", (e) => {
             e.preventDefault();
             e.stopPropagation();
             this.isDraggingLoop = true;
-            this.loopBottomHandle.classList.add('dragging');
+            this.loopBottomHandle.classList.add("dragging");
             
             // Calculate offset from mouse to start of loop for consistent dragging
             const rect = this.canvas.getBoundingClientRect();
             const loopStartPixel = this._timeToPixels(this.loopStart);
             const mouseX = e.clientX - rect.left;
             this.dragOffset = mouseX - loopStartPixel;
-            console.log('Starting to drag entire loop, offset:', this.dragOffset);
+            console.log("Starting to drag entire loop, offset:", this.dragOffset);
         });
 
         // Add mouseup and mouseleave events to document to handle drag end
-        document.addEventListener('mouseup', (e) => {
+        document.addEventListener("mouseup", (e) => {
             if (this.isDraggingLoopStart || this.isDraggingLoopEnd || this.isDraggingLoop) {
-                console.log('Ending loop drag operation');
+                console.log("Ending loop drag operation");
             }
             
             // Reset all dragging states
             if (this.isDraggingLoopStart) {
-                this.loopStartHandle.classList.remove('dragging');
+                this.loopStartHandle.classList.remove("dragging");
                 this.isDraggingLoopStart = false;
             }
             
             if (this.isDraggingLoopEnd) {
-                this.loopEndHandle.classList.remove('dragging');
+                this.loopEndHandle.classList.remove("dragging");
                 this.isDraggingLoopEnd = false;
             }
             
             if (this.isDraggingLoop) {
-                this.loopBottomHandle.classList.remove('dragging');
+                this.loopBottomHandle.classList.remove("dragging");
                 this.isDraggingLoop = false;
                 this.dragOffset = 0;
             }
         });
         
         // Добавляем обработку drag and drop для маркеров
-        this.canvas.addEventListener('mousedown', this._handleMarkerDragStart.bind(this));
-        document.addEventListener('mousemove', this._handleMarkerDrag.bind(this));
-        document.addEventListener('mouseup', this._handleMarkerDragEnd.bind(this));
+        this.canvas.addEventListener("mousedown", this._handleMarkerDragStart.bind(this));
+        document.addEventListener("mousemove", this._handleMarkerDrag.bind(this));
+        document.addEventListener("mouseup", this._handleMarkerDragEnd.bind(this));
     }
     
     // Load audio data for visualization
@@ -1190,7 +1191,7 @@ class WaveformEditor {
     
     // Generate peaks data from audio channel
     _generatePeaks(channelData) {
-        if (!channelData || !this.audioDuration || !this.pixelsPerSecond || this.pixelsPerSecond <= 0) return [];
+        if (!channelData || !this.audioDuration || !this.pixelsPerSecond || this.pixelsPerSecond <= 0) {return [];}
         
         // --- (Rest of the method is likely ok, but ensure pps is valid) ---
         const totalSamples = channelData.length;
@@ -1223,8 +1224,8 @@ class WaveformEditor {
             
             for (let j = start + 1; j < end; j++) {
                 const value = channelData[j];
-                if (value < min) min = value;
-                if (value > max) max = value;
+                if (value < min) {min = value;}
+                if (value > max) {max = value;}
             }
             
             // Only add peaks for the visible canvas area
@@ -1238,9 +1239,9 @@ class WaveformEditor {
     
     // Draw waveform on canvas
     _drawWaveform() {
-        if (!this.canvas) return;
+        if (!this.canvas) {return;}
         
-        const ctx = this.canvas.getContext('2d');
+        const ctx = this.canvas.getContext("2d");
         const width = this.canvas.width;
         const height = this.canvas.height;
 
@@ -1249,20 +1250,20 @@ class WaveformEditor {
 
         // Определяем какие данные использовать для отрисовки
         let audioData = null;
-        let waveformColor = this.currentWaveformColor || '#FFD700';
+        let waveformColor = this.currentWaveformColor || "#FFD700";
 
         switch (this.currentWaveformSource) {
-            case 'vocals':
+            case "vocals":
                 audioData = this.vocalAudioData;
-                waveformColor = '#FFD700'; // Золотой для вокала
+                waveformColor = "#FFD700"; // Золотой для вокала
                 break;
-            case 'instrumental':
+            case "instrumental":
                 audioData = this.instrumentalAudioData;
-                waveformColor = '#00CED1'; // Бирюзовый для инструментала
+                waveformColor = "#00CED1"; // Бирюзовый для инструментала
                 break;
-            case 'master':
+            case "master":
                 audioData = this.masterAudioData;
-                waveformColor = '#FF6B6B'; // Красный для мастер-дорожки
+                waveformColor = "#FF6B6B"; // Красный для мастер-дорожки
                 break;
             default:
                 // Fallback на первые доступные данные
@@ -1273,13 +1274,13 @@ class WaveformEditor {
         // Если нет данных, показываем mock волну
         if (!audioData) {
             audioData = this._createMockAudioData();
-            waveformColor = '#666666'; // Серый для mock данных
+            waveformColor = "#666666"; // Серый для mock данных
         }
         
         // Draw background with gradient
         const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-        bgGradient.addColorStop(0, '#1e1e1e');
-        bgGradient.addColorStop(1, '#171717');
+        bgGradient.addColorStop(0, "#1e1e1e");
+        bgGradient.addColorStop(1, "#171717");
         ctx.fillStyle = bgGradient;
         ctx.fillRect(0, 0, width, height);
         
@@ -1331,7 +1332,7 @@ class WaveformEditor {
      * @private
      */
     _drawGrid(ctx) {
-        if (!this.audioDuration) return;
+        if (!this.audioDuration) {return;}
             
             // Calculate time range visible in view
             const startTime = this.scrollPosition / this.pixelsPerSecond;
@@ -1366,11 +1367,11 @@ class WaveformEditor {
         const firstMinorLine = Math.floor(startTime / minorInterval) * minorInterval;
         
         // Draw minor grid lines first (thinner and lighter)
-        ctx.strokeStyle = 'rgba(80, 80, 80, 0.15)';
+        ctx.strokeStyle = "rgba(80, 80, 80, 0.15)";
         ctx.lineWidth = 1;
         
         for (let time = firstMinorLine; time <= endTime; time += minorInterval) {
-            if (time < 0) continue;
+            if (time < 0) {continue;}
             
             // Skip if this is also a major grid line
             if (Math.abs(time / gridInterval - Math.round(time / gridInterval)) < 0.001) {
@@ -1387,11 +1388,11 @@ class WaveformEditor {
         }
         
         // Draw major grid lines
-        ctx.strokeStyle = 'rgba(120, 120, 120, 0.2)';
+        ctx.strokeStyle = "rgba(120, 120, 120, 0.2)";
         ctx.lineWidth = 1;
         
             for (let time = firstGridLine; time <= endTime; time += gridInterval) {
-                if (time < 0) continue;
+                if (time < 0) {continue;}
                 
                 const x = this._timeToPixels(time);
                 if (x >= 0 && x <= this.canvasWidth) {
@@ -1402,9 +1403,9 @@ class WaveformEditor {
                     ctx.stroke();
                     
                     // Draw time labels
-                ctx.fillStyle = 'rgba(200, 200, 200, 0.5)';
-                    ctx.font = '10px Arial';
-                ctx.textAlign = 'center';
+                ctx.fillStyle = "rgba(200, 200, 200, 0.5)";
+                    ctx.font = "10px Arial";
+                ctx.textAlign = "center";
                 
                 // Format time differently based on scale
                 let timeText;
@@ -1412,13 +1413,13 @@ class WaveformEditor {
                     // Format as minutes:seconds for larger intervals
                     const minutes = Math.floor(time / 60);
                     const seconds = Math.floor(time % 60);
-                    timeText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    timeText = `${minutes}:${seconds.toString().padStart(2, "0")}`;
                 } else if (gridInterval >= 1) {
                     // Show seconds with no decimal for medium intervals
                     timeText = `${Math.floor(time)}s`;
                 } else {
                     // Show decimals for small intervals
-                    timeText = time.toFixed(1) + 's';
+                    timeText = time.toFixed(1) + "s";
                 }
                 
                 ctx.fillText(timeText, x, 12);
@@ -1440,7 +1441,7 @@ class WaveformEditor {
 
         // 1. Отрисовка инструментальной дорожки (если есть)
         if (this.instrumentalAudioData) {
-            this._drawSingleWaveform(ctx, middle, this.instrumentalAudioData, '#4497ff', 0.8);
+            this._drawSingleWaveform(ctx, middle, this.instrumentalAudioData, "#4497ff", 0.8);
         }
 
         // 2. Отрисовка вокальной дорожки поверх (если есть)
@@ -1448,15 +1449,15 @@ class WaveformEditor {
             // Если нет инструментала, рисуем вокал по центру. 
             // Если есть, рисуем его как мастер-трек (например, немного сместив или другим стилем)
             const isMasterVocal = !!this.instrumentalAudioData;
-            this._drawSingleWaveform(ctx, middle, this.vocalAudioData, '#FFD700', 1.0, isMasterVocal);
+            this._drawSingleWaveform(ctx, middle, this.vocalAudioData, "#FFD700", 1.0, isMasterVocal);
         }
 
         if (!this.instrumentalAudioData && !this.vocalAudioData) {
             console.log("WaveformEditor: Vocal audio data not available");
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
             ctx.font = `${14 * dpr}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.fillText('Аудиоданные недоступны', width / 2, middle);
+            ctx.textAlign = "center";
+            ctx.fillText("Аудиоданные недоступны", width / 2, middle);
         }
     }
     
@@ -1474,7 +1475,7 @@ class WaveformEditor {
         const dpr = window.devicePixelRatio || 1;
         const totalPixels = width * dpr;
         
-        if (!audioData) return;
+        if (!audioData) {return;}
 
         // Извлекаем RGB компоненты из hex цвета
         const rgb = this._hexToRgb(color) || { r: 65, g: 150, b: 255 };
@@ -1502,8 +1503,8 @@ class WaveformEditor {
         // Если это вокал для мастер-дорожки, сначала "вырезаем" фон
         if (isMasterVocal) {
             const bgGradient = ctx.createLinearGradient(0, 0, 0, this.canvasHeight);
-            bgGradient.addColorStop(0, '#1e1e1e');
-            bgGradient.addColorStop(1, '#171717');
+            bgGradient.addColorStop(0, "#1e1e1e");
+            bgGradient.addColorStop(1, "#171717");
             ctx.fillStyle = bgGradient;
             ctx.fill(); // Заполняем путь фоном, "стирая" все, что под ним
         }
@@ -1539,7 +1540,7 @@ class WaveformEditor {
      * @private
      */
     _drawMarkers(ctx) {
-        if (!this.markerManager || !this.showMarkers) return;
+        if (!this.markerManager || !this.showMarkers) {return;}
         
         const markers = this.markerManager.getMarkers();
         
@@ -1547,7 +1548,7 @@ class WaveformEditor {
             const x = this._timeToPixels(marker.time);
             
             // Skip if outside view
-            if (x < -10 || x > this.canvasWidth + 10) continue;
+            if (x < -10 || x > this.canvasWidth + 10) {continue;}
             
             // Проверяем, выделен ли маркер или это перетаскиваемый маркер
             const isSelected = this.selectedMarkers.some(m => m.id === marker.id);
@@ -1556,11 +1557,11 @@ class WaveformEditor {
             // Определяем цвет маркера
             let markerColor;
             if (isSelected || isDragging) {
-                markerColor = '#ff9800'; // Оранжевый для выделенных/перетаскиваемых
+                markerColor = "#ff9800"; // Оранжевый для выделенных/перетаскиваемых
             } else if (marker.color) {
                 markerColor = marker.color; // Цвет на основе типа блока
             } else {
-                markerColor = '#4CAF50'; // Зеленый по умолчанию
+                markerColor = "#4CAF50"; // Зеленый по умолчанию
             }
             
             // Draw marker line with glow effect
@@ -1569,7 +1570,7 @@ class WaveformEditor {
             
             if (isSelected || isDragging) {
                 // Add glow effect for selected or dragged markers
-                ctx.shadowColor = 'rgba(255, 152, 0, 0.7)';
+                ctx.shadowColor = "rgba(255, 152, 0, 0.7)";
                 ctx.shadowBlur = 8;
             } else {
                 // Subtle glow for colored markers based on their type
@@ -1578,7 +1579,7 @@ class WaveformEditor {
                     ctx.shadowColor = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, 0.5)`;
                     ctx.shadowBlur = 4;
                 } else {
-                    ctx.shadowColor = 'transparent';
+                    ctx.shadowColor = "transparent";
                     ctx.shadowBlur = 0;
                 }
             }
@@ -1596,13 +1597,13 @@ class WaveformEditor {
             ctx.fill();
             
             // Reset shadow for text
-            ctx.shadowColor = 'transparent';
+            ctx.shadowColor = "transparent";
             ctx.shadowBlur = 0;
             
             // Draw time label below marker
-            ctx.fillStyle = '#fff';
-            ctx.font = '10px Arial';
-            ctx.textAlign = 'center';
+            ctx.fillStyle = "#fff";
+            ctx.font = "10px Arial";
+            ctx.textAlign = "center";
             ctx.fillText(this._formatTime(marker.time), x, this.canvasHeight - 5);
         }
     }
@@ -1651,7 +1652,7 @@ class WaveformEditor {
     
     // Центрирование на определенном времени
     _centerPlayheadAtTime(time) {
-        if (!this.audioDuration) return;
+        if (!this.audioDuration) {return;}
         
         // Рассчитать scrollPosition, чтобы указанное время было в центре экрана
         const centerOffset = (this.canvasWidth / 2) / this.pixelsPerSecond;
@@ -1660,14 +1661,14 @@ class WaveformEditor {
     
     // Обработчик изменения позиции
     _handlePositionChange(event) {
-        if (!this.isVisible) return;
+        if (!this.isVisible) {return;}
         
         const currentTime = this.audioEngine ? this.audioEngine.getCurrentTime() : 0;
         
         // Проверяем, был ли значительный скачок позиции
         // (это может указывать на то, что пользователь установил новую позицию)
         if (Math.abs(currentTime - this.lastKnownPosition) > 1.0) { // Скачок больше 1 секунды
-            console.log('Detected position jump, resetting centered playhead state');
+            console.log("Detected position jump, resetting centered playhead state");
             // Сбрасываем флаг центрирования, чтобы плейхед начал движение заново
             this.playheadReachedCenter = false;
         }
@@ -1679,9 +1680,9 @@ class WaveformEditor {
     // Update playhead position based on current time
     _updatePlayhead(currentTime) {
         // Skip updates if editor is not visible
-        if (!this.isVisible) return;
+        if (!this.isVisible) {return;}
         
-        if (!this.playhead || !this.audioDuration) return;
+        if (!this.playhead || !this.audioDuration) {return;}
         
         // Обновляем последнюю известную позицию
         this.lastKnownPosition = currentTime;
@@ -1702,7 +1703,7 @@ class WaveformEditor {
                 this.scrollPosition = absolutePlayheadX - centerX;
                 
                 // Добавляем класс для стилизации центрированного режима
-                this.container.classList.add('centered-playhead');
+                this.container.classList.add("centered-playhead");
                 
                 // Перерисовываем волновую форму
                 this._drawWaveform();
@@ -1715,7 +1716,7 @@ class WaveformEditor {
                 this.playhead.style.left = `${x}px`;
                 
                 // В этом случае убираем класс центрированного режима
-                this.container.classList.remove('centered-playhead');
+                this.container.classList.remove("centered-playhead");
             }
         } else {
             // Стандартный режим - плейхед движется по экрану
@@ -1723,7 +1724,7 @@ class WaveformEditor {
         this.playhead.style.left = `${x}px`;
             
             // Убираем класс центрированного режима
-            this.container.classList.remove('centered-playhead');
+            this.container.classList.remove("centered-playhead");
         
         // Auto-scroll if playhead goes off screen and followPlayhead is enabled
         if (this.followPlayhead) {
@@ -1749,14 +1750,14 @@ class WaveformEditor {
     _resetCenteredPlayheadState() {
         this.playheadReachedCenter = false;
         this.scrollPosition = 0;
-        this.container.classList.remove('centered-playhead');
+        this.container.classList.remove("centered-playhead");
     }
     
     // Convert time in seconds to pixel position
     _timeToPixels(time) {
         // Ensure we have a valid time value
-        if (typeof time !== 'number' || isNaN(time)) {
-            console.warn('Invalid time value in _timeToPixels:', time);
+        if (typeof time !== "number" || isNaN(time)) {
+            console.warn("Invalid time value in _timeToPixels:", time);
             return 0; 
         }
         
@@ -1779,8 +1780,8 @@ class WaveformEditor {
     // Convert pixel position to time in seconds
     _pixelsToTime(pixels) {
         // Ensure we have a valid pixel value
-        if (typeof pixels !== 'number' || isNaN(pixels)) {
-            console.warn('Invalid pixels value in _pixelsToTime:', pixels);
+        if (typeof pixels !== "number" || isNaN(pixels)) {
+            console.warn("Invalid pixels value in _pixelsToTime:", pixels);
             return 0; 
         }
         
@@ -1807,9 +1808,9 @@ class WaveformEditor {
         
         if (includeMs) {
             const ms = Math.floor((seconds % 1) * 1000);
-            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+            return `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}.${ms.toString().padStart(3, "0")}`;
         } else {
-            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            return `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
         }
     }
     
@@ -1855,29 +1856,29 @@ class WaveformEditor {
 
                 console.log(`Sync Editor: Stored original style "${this.preSyncStyleId}" and scale ${this.preSyncScale}. Applying "default" editor style and 0.8 scale.`);
                 
-                window.textStyleManager.setStyle('default'); // Устанавливаем стиль редактора
+                window.textStyleManager.setStyle("default"); // Устанавливаем стиль редактора
                 window.textStyleManager.setFontScale(0.8);  // Устанавливаем масштаб 80%
             }
             
-            this.container.style.display = 'flex';
+            this.container.style.display = "flex";
             this.isVisible = true;
 
             // 🎯 NEW: По умолчанию переключаемся на мастер-трек при открытии
-            setTimeout(() => this._switchWaveformSource('master'), 100);
+            setTimeout(() => this._switchWaveformSource("master"), 100);
             
             // Добавляем слушатель для центровки при каждом изменении активной строки
             this._syncEditorCenteringHandler = () => {
                 // Исправление: если пришли из репетиции, но открыли Sync — принудительно ведём себя как караоке/концерт
-                const isRehearsal = (document.body && document.body.classList.contains('mode-rehearsal')) ||
-                                    (window.textStyleManager && window.textStyleManager.currentStyleId === 'rehearsal');
-                const treatAsTeleprompter = document.body.classList.contains('mode-karaoke') || document.body.classList.contains('mode-concert');
+                const isRehearsal = (document.body && document.body.classList.contains("mode-rehearsal")) ||
+                                    (window.textStyleManager && window.textStyleManager.currentStyleId === "rehearsal");
+                const treatAsTeleprompter = document.body.classList.contains("mode-karaoke") || document.body.classList.contains("mode-concert");
                 if (!isRehearsal || treatAsTeleprompter) {
                     this._centerActiveLineInSyncEditor();
                 }
             };
-            document.addEventListener('active-line-changed', this._syncEditorCenteringHandler);
+            document.addEventListener("active-line-changed", this._syncEditorCenteringHandler);
             // На всякий случай включаем авто-скролл у дисплея
-            try { if (window.lyricsDisplay) window.lyricsDisplay.autoScrollEnabled = true; } catch(_) {}
+            try { if (window.lyricsDisplay) {window.lyricsDisplay.autoScrollEnabled = true;} } catch(_) {}
             // Дополнительно: при скролле колесом в редакторе — не разрешаем lyricsDisplay перехватывать авто-скролл
             try {
                 if (window.lyricsDisplay) {
@@ -1891,22 +1892,22 @@ class WaveformEditor {
             // Reset markers visibility state when opening editor
             this.showMarkers = false;
             if (this.markersToggleBtn) {
-                this.markersToggleBtn.textContent = 'Markers: Off';
-                this.markersToggleBtn.classList.remove('active');
+                this.markersToggleBtn.textContent = "Markers: Off";
+                this.markersToggleBtn.classList.remove("active");
             }
             
             // Add class to body to adjust layout
-            document.body.classList.add('waveform-active');
+            document.body.classList.add("waveform-active");
 
             requestAnimationFrame(() => {
                 this._resizeCanvas();
                 
                 // 🎯 НЕ ВЫЗЫВАЕМ _loadAudioData ЕСЛИ АУДИО УЖЕ ЗАГРУЖЕНО
                 if (!this.audioData || this.audioData.length === 0) {
-                    console.log('WaveformEditor: No audio data found, trying to load...');
+                    console.log("WaveformEditor: No audio data found, trying to load...");
                 this._loadAudioData(); // Try to load audio data when editor is shown
                 } else {
-                    console.log('WaveformEditor: Audio data already loaded, skipping _loadAudioData');
+                    console.log("WaveformEditor: Audio data already loaded, skipping _loadAudioData");
                 }
                 
                 // Перерисовываем
@@ -1938,13 +1939,13 @@ class WaveformEditor {
                         
                         // ПРИНУДИТЕЛЬНОЕ центрирование активной строчки в Sync Editor
                         setTimeout(() => {
-                            const isRehearsal = (document.body && document.body.classList.contains('mode-rehearsal')) ||
-                                                (window.textStyleManager && window.textStyleManager.currentStyleId === 'rehearsal');
-                            const treatAsTeleprompter = document.body.classList.contains('mode-karaoke') || document.body.classList.contains('mode-concert');
+                            const isRehearsal = (document.body && document.body.classList.contains("mode-rehearsal")) ||
+                                                (window.textStyleManager && window.textStyleManager.currentStyleId === "rehearsal");
+                            const treatAsTeleprompter = document.body.classList.contains("mode-karaoke") || document.body.classList.contains("mode-concert");
                             if (!isRehearsal || treatAsTeleprompter) {
                                 this._centerActiveLineInSyncEditor();
                             } else {
-                                console.log('Sync Editor: Initial centering suppressed in rehearsal mode');
+                                console.log("Sync Editor: Initial centering suppressed in rehearsal mode");
                             }
                         }, 150); // Увеличил задержку для стабильности
                     }
@@ -1956,7 +1957,7 @@ class WaveformEditor {
                 }
                 
                 // Создаем и диспатчим событие открытия редактора
-            const event = new CustomEvent('sync-editor-opened', { 
+            const event = new CustomEvent("sync-editor-opened", { 
                     detail: {
                         isLoopEnabled: this.isLoopEnabled,
                         loopStart: this.loopStart,
@@ -1964,10 +1965,10 @@ class WaveformEditor {
                     }
                 });
             document.dispatchEvent(event);
-                console.log('WaveformEditor: Dispatched sync-editor-opened event', event.detail);
+                console.log("WaveformEditor: Dispatched sync-editor-opened event", event.detail);
             });
             
-            console.log('WaveformEditor: Shown');
+            console.log("WaveformEditor: Shown");
         }
     }
 
@@ -1977,10 +1978,10 @@ class WaveformEditor {
      */
     _centerActiveLineInSyncEditor() {
         // Подавляем центровку в режиме репетиции
-        const isRehearsal = (document.body && document.body.classList.contains('mode-rehearsal')) ||
-                            (window.textStyleManager && window.textStyleManager.currentStyleId === 'rehearsal');
+        const isRehearsal = (document.body && document.body.classList.contains("mode-rehearsal")) ||
+                            (window.textStyleManager && window.textStyleManager.currentStyleId === "rehearsal");
         if (isRehearsal) {
-            console.log('Sync Editor: Centering suppressed in rehearsal mode');
+            console.log("Sync Editor: Centering suppressed in rehearsal mode");
             return;
         }
         const currentLyricsDisplay = window.lyricsDisplay;
@@ -1990,9 +1991,9 @@ class WaveformEditor {
             
             // Используем точно такую же механику как в концертном режиме
             activeElement.scrollIntoView({
-                behavior: 'smooth', // Плавная анимация для комфорта
-                block: 'start',     // ПРИКРЕПЛЯЕМ К ВЕРХУ ЭКРАНА!
-                inline: 'nearest'
+                behavior: "smooth", // Плавная анимация для комфорта
+                block: "start",     // ПРИКРЕПЛЯЕМ К ВЕРХУ ЭКРАНА!
+                inline: "nearest"
             });
             
             const lineIndex = parseInt(activeElement.dataset.index) || 0;
@@ -2006,20 +2007,20 @@ class WaveformEditor {
      */
     _activateFirstUnmarkedLine() {
         if (!this.markerManager || !window.lyricsDisplay) {
-            console.log('WaveformEditor: _activateFirstUnmarkedLine - markerManager or lyricsDisplay not available.');
+            console.log("WaveformEditor: _activateFirstUnmarkedLine - markerManager or lyricsDisplay not available.");
             return;
         }
 
         const markers = this.markerManager.getMarkers();
         const totalLines = window.lyricsDisplay.lyrics ? window.lyricsDisplay.lyrics.length : 0;
 
-        console.log('WaveformEditor: _activateFirstUnmarkedLine called.');
-        console.log('WaveformEditor: Markers length:', markers.length);
-        console.log('WaveformEditor: Total lyric lines from lyricsDisplay:', totalLines);
+        console.log("WaveformEditor: _activateFirstUnmarkedLine called.");
+        console.log("WaveformEditor: Markers length:", markers.length);
+        console.log("WaveformEditor: Total lyric lines from lyricsDisplay:", totalLines);
 
         // If no markers, activate the first line
         if (markers.length === 0 && totalLines > 0) {
-            console.log('WaveformEditor: No markers found, attempting to activate line 0.');
+            console.log("WaveformEditor: No markers found, attempting to activate line 0.");
             window.lyricsDisplay.setActiveLine(0);
             return;
         }
@@ -2046,15 +2047,15 @@ class WaveformEditor {
     hide() {
         if (this.container) {
             // Remove body class
-            document.body.classList.remove('waveform-active');
+            document.body.classList.remove("waveform-active");
             
             // Удаляем слушатель центровки активной строки
             if (this._syncEditorCenteringHandler) {
-                document.removeEventListener('active-line-changed', this._syncEditorCenteringHandler);
+                document.removeEventListener("active-line-changed", this._syncEditorCenteringHandler);
                 this._syncEditorCenteringHandler = null;
             }
             
-            this.container.style.display = 'none';
+            this.container.style.display = "none";
             this.isVisible = false;
             
             // Восстанавливаем оригинальный стиль и масштаб
@@ -2064,7 +2065,7 @@ class WaveformEditor {
                 window.textStyleManager.setStyle(this.preSyncStyleId); // Восстанавливаем стиль
                 
                 // Проверяем, что масштаб является числом перед восстановлением
-                if (typeof this.preSyncScale === 'number' && !isNaN(this.preSyncScale)) {
+                if (typeof this.preSyncScale === "number" && !isNaN(this.preSyncScale)) {
                     window.textStyleManager.setFontScale(this.preSyncScale); // Восстанавливаем масштаб
                 } else {
                     console.warn(`Sync Editor: Invalid scale value ${this.preSyncScale}, not restoring`);
@@ -2076,11 +2077,11 @@ class WaveformEditor {
             }
             
             // Создаем и диспатчим событие закрытия редактора
-            const event = new CustomEvent('sync-editor-closed');
+            const event = new CustomEvent("sync-editor-closed");
             document.dispatchEvent(event);
-            console.log('WaveformEditor: Dispatched sync-editor-closed event');
+            console.log("WaveformEditor: Dispatched sync-editor-closed event");
             
-            console.log('WaveformEditor: Hidden');
+            console.log("WaveformEditor: Hidden");
         }
     }
     
@@ -2106,12 +2107,12 @@ class WaveformEditor {
     cleanup() {
         // Unregister event listeners
         if (this.audioEngine) {
-            this.audioEngine.removeEventListener('positionUpdate', this._updatePlayheadBound);
-            this.audioEngine.removeEventListener('trackLoaded', this._loadAudioDataBound);
+            this.audioEngine.removeEventListener("positionUpdate", this._updatePlayheadBound);
+            this.audioEngine.removeEventListener("trackLoaded", this._loadAudioDataBound);
         }
         
         // Удаляем глобальный слушатель позиции
-        document.removeEventListener('audio-position-changed', this._handlePositionChangeBound);
+        document.removeEventListener("audio-position-changed", this._handlePositionChangeBound);
         
         // Unsubscribe from marker manager
         if (this.markerManager) {
@@ -2127,7 +2128,7 @@ class WaveformEditor {
             this.container.parentNode.removeChild(this.container);
         }
         
-        console.log('WaveformEditor cleaned up');
+        console.log("WaveformEditor cleaned up");
     }
     
     /**
@@ -2136,7 +2137,7 @@ class WaveformEditor {
      */
     _saveMarkersToTrack() {
         if (!this.markerManager) {
-            console.error('Marker manager not available');
+            console.error("Marker manager not available");
             return false;
         }
         
@@ -2144,7 +2145,7 @@ class WaveformEditor {
         const success = this.markerManager.saveMarkersToTrack();
         
         if (!success) {
-            console.error('Failed to save markers to track');
+            console.error("Failed to save markers to track");
         }
         
         return success;
@@ -2155,23 +2156,23 @@ class WaveformEditor {
      * @private
      */
     _saveMarkers() {
-        console.log('WaveformEditor: Starting _saveMarkers');
+        console.log("WaveformEditor: Starting _saveMarkers");
         
         if (!this.markerManager) {
-            console.error('Marker manager not available');
-            alert('Marker manager not available');
+            console.error("Marker manager not available");
+            alert("Marker manager not available");
             return false;
         }
         
         // Проверяем наличие трекКаталога
         const trackCatalog = window.trackCatalog;
         if (!trackCatalog) {
-            console.error('Track catalog not available');
-            alert('Track catalog not available');
+            console.error("Track catalog not available");
+            alert("Track catalog not available");
             return false;
         }
         
-        console.log('TrackCatalog status:', {
+        console.log("TrackCatalog status:", {
             exists: !!trackCatalog,
             tracksLength: trackCatalog.tracks ? trackCatalog.tracks.length : 0,
             currentTrackIndex: trackCatalog.currentTrackIndex
@@ -2179,27 +2180,27 @@ class WaveformEditor {
         
         // Save markers to track catalog first
         const success = this.markerManager.saveMarkersToTrack();
-        console.log('Save to track result:', success);
+        console.log("Save to track result:", success);
         
         if (success) {
             // Get current track and markers
             if (trackCatalog.currentTrackIndex < 0 || trackCatalog.currentTrackIndex >= trackCatalog.tracks.length) {
-                console.error('Invalid current track index:', trackCatalog.currentTrackIndex);
-                alert('No valid track selected for saving markers');
+                console.error("Invalid current track index:", trackCatalog.currentTrackIndex);
+                alert("No valid track selected for saving markers");
                 return false;
             }
             
             const currentTrack = trackCatalog.tracks[trackCatalog.currentTrackIndex];
             const markers = this.markerManager.getMarkers();
             
-            console.log('Current track:', currentTrack);
-            console.log('Markers count:', markers.length);
+            console.log("Current track:", currentTrack);
+            console.log("Markers count:", markers.length);
             
             // Получаем блоки из lyrics display если есть
             let textBlocks = [];
             if (window.lyricsDisplay && window.lyricsDisplay.textBlocks) {
                 textBlocks = window.lyricsDisplay.getTextBlocksForExport();
-                console.log('Text blocks count:', textBlocks.length);
+                console.log("Text blocks count:", textBlocks.length);
             }
             
             // Create track backup data
@@ -2208,54 +2209,54 @@ class WaveformEditor {
                 title: currentTrack.title,
                 savedAt: new Date().toISOString(),
                 markers: markers,
-                lyrics: currentTrack.lyrics || '',
+                lyrics: currentTrack.lyrics || "",
                 textBlocks: textBlocks
             };
             
-            console.log('Track data prepared for export:', trackData);
+            console.log("Track data prepared for export:", trackData);
             
             try {
                 // Convert to JSON
                 const jsonData = JSON.stringify(trackData, null, 2);
                 
                 // Add UTF-8 BOM to ensure proper encoding for Cyrillic characters
-                const utf8BomJsonData = '\uFEFF' + jsonData;
+                const utf8BomJsonData = "\uFEFF" + jsonData;
                 
                 // Create filename based on track title - preserve original name
                 const fileName = `text_track_${currentTrack.title}.json`;
                 
-                console.log('Creating download for file:', fileName);
+                console.log("Creating download for file:", fileName);
                 
                 // Create download link
-                const blob = new Blob([utf8BomJsonData], { type: 'application/json;charset=utf-8' });
+                const blob = new Blob([utf8BomJsonData], { type: "application/json;charset=utf-8" });
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
+                const a = document.createElement("a");
                 a.href = url;
                 a.download = fileName;
-                a.style.display = 'none';
+                a.style.display = "none";
                 
                 // Trigger download
                 document.body.appendChild(a);
                 a.click();
                 
-                console.log('Download triggered successfully');
+                console.log("Download triggered successfully");
                 
                 // Cleanup
                 setTimeout(() => {
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
-                    console.log('Download cleanup completed');
+                    console.log("Download cleanup completed");
                 }, 100);
                 
                 alert(`Markers saved to file: ${fileName}`);
                 return true;
             } catch (error) {
-                console.error('Error saving markers to file:', error);
-                alert('Markers saved in the track catalog, but file export failed: ' + error.message);
+                console.error("Error saving markers to file:", error);
+                alert("Markers saved in the track catalog, but file export failed: " + error.message);
                 return false;
             }
         } else {
-            alert('Failed to save markers. Please ensure a track is loaded.');
+            alert("Failed to save markers. Please ensure a track is loaded.");
             return false;
         }
     }
@@ -2265,7 +2266,7 @@ class WaveformEditor {
      * @private
      */
     _updateSelectedMarkers() {
-        if (!this.markerManager) return;
+        if (!this.markerManager) {return;}
         
         // Получаем все маркеры
         const allMarkers = this.markerManager.getMarkers();
@@ -2287,10 +2288,10 @@ class WaveformEditor {
      * @private
      */
     _updateSelectionDisplay() {
-        if (!this.selectionElement) return;
+        if (!this.selectionElement) {return;}
         
         if (this.selectionStart === null || this.selectionEnd === null) {
-            this.selectionElement.style.display = 'none';
+            this.selectionElement.style.display = "none";
             return;
         }
         
@@ -2304,10 +2305,10 @@ class WaveformEditor {
         const width = Math.abs(endX - startX);
         
         // Display selection
-        this.selectionElement.style.display = 'block';
+        this.selectionElement.style.display = "block";
         this.selectionElement.style.left = `${startX}px`;
         this.selectionElement.style.width = `${width}px`;
-        this.selectionElement.style.backgroundColor = 'rgba(0, 255, 0, 0.2)';
+        this.selectionElement.style.backgroundColor = "rgba(0, 255, 0, 0.2)";
         
         // Show selection info
         const duration = endTime - startTime;
@@ -2333,7 +2334,7 @@ class WaveformEditor {
      */
     _deleteSelectedMarkers() {
         if (!this.markerManager || this.selectedMarkers.length === 0) {
-            alert('No markers selected. Shift+click and drag to select markers.');
+            alert("No markers selected. Shift+click and drag to select markers.");
             return;
         }
         
@@ -2358,13 +2359,13 @@ class WaveformEditor {
      * @private
      */
     _resetAllMarkers() {
-        if (!this.markerManager) return;
+        if (!this.markerManager) {return;}
         
-        if (confirm('Delete ALL markers? This cannot be undone!')) {
+        if (confirm("Delete ALL markers? This cannot be undone!")) {
             this.markerManager.resetMarkers();
             this._clearSelection();
             this._drawWaveform();
-            console.log('All markers have been reset');
+            console.log("All markers have been reset");
         }
     }
     
@@ -2373,7 +2374,7 @@ class WaveformEditor {
      * @private
      */
     _addMarkerAtPlayhead() {
-        if (!this.markerManager || !this.showMarkers) return;
+        if (!this.markerManager || !this.showMarkers) {return;}
         
         // Get current time from audio engine
         const currentTime = this.audioEngine ? this.audioEngine.getCurrentTime() : 0;
@@ -2388,17 +2389,17 @@ class WaveformEditor {
      * @private
      */
     _addMarkerAtTime(time) {
-        if (!this.markerManager || !this.showMarkers || !window.lyricsDisplay) return;
+        if (!this.markerManager || !this.showMarkers || !window.lyricsDisplay) {return;}
         
         // Get all lyric lines
-        const lines = document.querySelectorAll('.lyric-line');
+        const lines = document.querySelectorAll(".lyric-line");
         if (!lines || lines.length === 0) {
-            console.log('No lyric lines found to add marker');
+            console.log("No lyric lines found to add marker");
             return;
         }
         
         // First try to use the active line
-        const activeLine = document.querySelector('.lyric-line.active');
+        const activeLine = document.querySelector(".lyric-line.active");
         if (activeLine) {
             const lineIndex = parseInt(activeLine.dataset.index, 10);
             if (!isNaN(lineIndex) && lineIndex >= 0) {
@@ -2406,9 +2407,9 @@ class WaveformEditor {
                 this.markerManager.addMarker(lineIndex, time);
                 
                 // Visual feedback
-                activeLine.classList.add('flash-highlight');
+                activeLine.classList.add("flash-highlight");
                 setTimeout(() => {
-                    activeLine.classList.remove('flash-highlight');
+                    activeLine.classList.remove("flash-highlight");
                 }, 200);
                 
                 // Force redraw of waveform
@@ -2428,22 +2429,22 @@ class WaveformEditor {
             // Flash the line for visual feedback
             const lineElement = document.querySelector(`.lyric-line[data-index="${lineIndex}"]`);
             if (lineElement) {
-                lineElement.classList.add('flash-highlight');
+                lineElement.classList.add("flash-highlight");
                 setTimeout(() => {
-                    lineElement.classList.remove('flash-highlight');
+                    lineElement.classList.remove("flash-highlight");
                 }, 200);
             }
             
             // Force redraw of waveform
             this._drawWaveform();
         } else {
-            console.log('No suitable line found for marker at time:', time);
+            console.log("No suitable line found for marker at time:", time);
         }
     }
     
     // Resize canvas to fill container
     _resizeCanvas() {
-        if (!this.canvas || !this.container) return;
+        if (!this.canvas || !this.container) {return;}
         
         const containerWidth = this.container.clientWidth;
         const containerHeight = this.container.clientHeight - this.header.clientHeight;
@@ -2470,7 +2471,7 @@ class WaveformEditor {
      * @private
      */
     _drawLoopRegion(ctx) {
-        if (!this.loopActive || this.loopStart === null || this.loopEnd === null) return;
+        if (!this.loopActive || this.loopStart === null || this.loopEnd === null) {return;}
         
         // We'll only draw thin lines for loop region boundaries, not the region itself
         const startX = this._timeToPixels(this.loopStart);
@@ -2485,7 +2486,7 @@ class WaveformEditor {
         // Instead only draw thin lines at start and end
         
         // Draw loop borders
-        ctx.strokeStyle = 'rgba(255, 200, 50, 0.8)';
+        ctx.strokeStyle = "rgba(255, 200, 50, 0.8)";
         ctx.lineWidth = 1;
         
         // Draw start line
@@ -2525,8 +2526,8 @@ class WaveformEditor {
         
         // Update UI
         if (this.loopToggleBtn) {
-            this.loopToggleBtn.textContent = this.loopActive ? 'Loop: On' : 'Loop: Off';
-            this.loopToggleBtn.classList.toggle('active', this.loopActive);
+            this.loopToggleBtn.textContent = this.loopActive ? "Loop: On" : "Loop: Off";
+            this.loopToggleBtn.classList.toggle("active", this.loopActive);
         }
         
         // Update loop in audio engine
@@ -2542,7 +2543,7 @@ class WaveformEditor {
         this._updateLoopDisplay();
         this._drawWaveform();
         
-        console.log(`Loop ${this.loopActive ? 'enabled' : 'disabled'}`);
+        console.log(`Loop ${this.loopActive ? "enabled" : "disabled"}`);
     }
     
     /**
@@ -2550,7 +2551,7 @@ class WaveformEditor {
      */
     createLoopFromSelection() {
         if (this.selectionStart === null || this.selectionEnd === null) {
-            console.log('No selection available to create loop');
+            console.log("No selection available to create loop");
             return;
         }
         
@@ -2560,7 +2561,7 @@ class WaveformEditor {
         
         // Ensure loop has minimum size
         if (end - start < 0.1) {
-            console.warn('Selection too small for loop');
+            console.warn("Selection too small for loop");
             return;
         }
         
@@ -2573,8 +2574,8 @@ class WaveformEditor {
             
             // Update button state
             if (this.loopToggleBtn) {
-                this.loopToggleBtn.textContent = 'Loop: On';
-                this.loopToggleBtn.classList.add('active');
+                this.loopToggleBtn.textContent = "Loop: On";
+                this.loopToggleBtn.classList.add("active");
         }
         
         // Clear selection after creating loop
@@ -2600,8 +2601,8 @@ class WaveformEditor {
         
         // Update button state
         if (this.loopToggleBtn) {
-            this.loopToggleBtn.textContent = 'Loop: Off';
-            this.loopToggleBtn.classList.remove('active');
+            this.loopToggleBtn.textContent = "Loop: Off";
+            this.loopToggleBtn.classList.remove("active");
         }
         
         // Clear loop in audio engine
@@ -2612,7 +2613,7 @@ class WaveformEditor {
         // Update visual display
         this._updateLoopDisplay();
         
-        console.log('Loop cleared');
+        console.log("Loop cleared");
     }
     
     /**
@@ -2620,7 +2621,7 @@ class WaveformEditor {
      */
     createLoopAtPlayhead() {
         if (!this.audioEngine || !this.audioDuration) {
-            console.warn('Cannot create loop: Audio not loaded');
+            console.warn("Cannot create loop: Audio not loaded");
             return;
         }
         
@@ -2645,8 +2646,8 @@ class WaveformEditor {
             
             // Update button state
             if (this.loopToggleBtn) {
-                this.loopToggleBtn.textContent = 'Loop: On';
-                this.loopToggleBtn.classList.add('active');
+                this.loopToggleBtn.textContent = "Loop: On";
+                this.loopToggleBtn.classList.add("active");
         }
         
         // Update loop in audio engine
@@ -2666,7 +2667,7 @@ class WaveformEditor {
      */
     _updateLoopDisplay() {
         if (!this.loopElement || !this.loopStartHandle || !this.loopEndHandle || !this.loopBottomHandle) {
-            console.warn('Loop display elements not initialized');
+            console.warn("Loop display elements not initialized");
             return;
         }
         
@@ -2674,15 +2675,15 @@ class WaveformEditor {
         if (!this.loopActive || this.loopStart === null || this.loopEnd === null || 
             isNaN(this.loopStart) || isNaN(this.loopEnd) || this.loopStart >= this.loopEnd) {
             
-            this.loopElement.style.display = 'none';
-            this.loopStartHandle.style.display = 'none';
-            this.loopEndHandle.style.display = 'none';
-            this.loopBottomHandle.style.display = 'none';
+            this.loopElement.style.display = "none";
+            this.loopStartHandle.style.display = "none";
+            this.loopEndHandle.style.display = "none";
+            this.loopBottomHandle.style.display = "none";
             
             // If there's an error with loop settings, log it
             if (this.loopActive && (this.loopStart === null || this.loopEnd === null || 
                 isNaN(this.loopStart) || isNaN(this.loopEnd))) {
-                console.warn('Loop is active but times are invalid:', this.loopStart, this.loopEnd);
+                console.warn("Loop is active but times are invalid:", this.loopStart, this.loopEnd);
             }
             
             // Force a canvas redraw to remove any ghost marks
@@ -2701,29 +2702,29 @@ class WaveformEditor {
         
         // Check if loop is visible in the current view
         if (loopEndPixels < 0 || loopStartPixels > this.canvasWidth) {
-            console.log('Loop outside visible area, hiding');
-            this.loopElement.style.display = 'none';
-            this.loopStartHandle.style.display = 'none'; 
-            this.loopEndHandle.style.display = 'none';
-            this.loopBottomHandle.style.display = 'none';
+            console.log("Loop outside visible area, hiding");
+            this.loopElement.style.display = "none";
+            this.loopStartHandle.style.display = "none"; 
+            this.loopEndHandle.style.display = "none";
+            this.loopBottomHandle.style.display = "none";
             return;
         }
         
         // Position and show the loop region
-        this.loopElement.style.display = 'block';
+        this.loopElement.style.display = "block";
         this.loopElement.style.left = `${loopStartPixels}px`;
         this.loopElement.style.width = `${loopWidth}px`;
         
         // Position and show the loop start handle
-        this.loopStartHandle.style.display = 'block';
+        this.loopStartHandle.style.display = "block";
         this.loopStartHandle.style.left = `${loopStartPixels - 2.5}px`; // Center the 5px wide handle
         
         // Position and show the loop end handle
-        this.loopEndHandle.style.display = 'block';
+        this.loopEndHandle.style.display = "block";
         this.loopEndHandle.style.left = `${loopEndPixels - 2.5}px`; // Center the 5px wide handle
         
         // Position and show the loop bottom handle
-        this.loopBottomHandle.style.display = 'block';
+        this.loopBottomHandle.style.display = "block";
         this.loopBottomHandle.style.left = `${loopStartPixels}px`;
         this.loopBottomHandle.style.width = `${loopWidth}px`;
         
@@ -2739,13 +2740,13 @@ class WaveformEditor {
         
         // Update button text
         if (this.markersToggleBtn) {
-            this.markersToggleBtn.textContent = this.showMarkers ? 'Markers: On' : 'Markers: Off';
-            this.markersToggleBtn.classList.toggle('active', this.showMarkers);
+            this.markersToggleBtn.textContent = this.showMarkers ? "Markers: On" : "Markers: Off";
+            this.markersToggleBtn.classList.toggle("active", this.showMarkers);
         }
         
         // 🎨 ОБНОВЛЯЕМ ЦВЕТА МАРКЕРОВ ПРИ АКТИВАЦИИ
         if (this.showMarkers && this.markerManager) {
-            console.log('WaveformEditor: Updating marker colors on activation...');
+            console.log("WaveformEditor: Updating marker colors on activation...");
             this.markerManager.updateMarkerColors();
         }
         
@@ -2755,7 +2756,7 @@ class WaveformEditor {
     // Добавляем новые методы для обработки перетаскивания маркеров
     _handleMarkerDragStart(e) {
         // Проверяем видимость маркеров
-        if (!this.markerManager || !this.showMarkers) return;
+        if (!this.markerManager || !this.showMarkers) {return;}
         
         const rect = this.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -2763,7 +2764,7 @@ class WaveformEditor {
         
         // Получаем маркеры из менеджера маркеров
         const markers = this.markerManager.getMarkers();
-        if (!markers || markers.length === 0) return;
+        if (!markers || markers.length === 0) {return;}
         
         // Проверяем, попал ли клик на маркер
         for (let i = 0; i < markers.length; i++) {
@@ -2782,7 +2783,7 @@ class WaveformEditor {
                 this.isDraggingMarker = true;
                 
                 // Устанавливаем курсор
-                this.canvas.style.cursor = 'ew-resize';
+                this.canvas.style.cursor = "ew-resize";
                 
                 // Добавляем маркер в выделенные
                 this.selectedMarkers = [marker];
@@ -2791,14 +2792,14 @@ class WaveformEditor {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                console.log('Началось перетаскивание маркера:', marker.id);
+                console.log("Началось перетаскивание маркера:", marker.id);
                 break;
             }
         }
     }
 
     _handleMarkerDrag(e) {
-        if (!this.isDraggingMarker || !this.draggedMarker) return;
+        if (!this.isDraggingMarker || !this.draggedMarker) {return;}
         
         const rect = this.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -2818,7 +2819,7 @@ class WaveformEditor {
             this._drawWaveform();
             
             // Если есть менеджер маркеров, обновляем его
-            if (this.markerManager && typeof this.markerManager.updateMarker === 'function') {
+            if (this.markerManager && typeof this.markerManager.updateMarker === "function") {
                 this.markerManager.updateMarker(
                     this.draggedMarker.id, 
                     { time: boundedTime }
@@ -2830,7 +2831,7 @@ class WaveformEditor {
     }
 
     _handleMarkerDragEnd(e) {
-        if (!this.isDraggingMarker) return;
+        if (!this.isDraggingMarker) {return;}
         
         // Предотвращаем дальнейшую обработку и всплытие события
         // чтобы избежать запуска воспроизведения из-за клика по canvas
@@ -2850,13 +2851,13 @@ class WaveformEditor {
             // Сохраняем маркеры в базе данных, но НЕ загружаем файл
             this._saveMarkersToTrack();
             
-            console.log('Завершено перетаскивание маркера:', this.draggedMarker.id);
+            console.log("Завершено перетаскивание маркера:", this.draggedMarker.id);
         }
         
         // Сбрасываем состояние перетаскивания
         this.isDraggingMarker = false;
         this.draggedMarker = null;
-        this.canvas.style.cursor = 'default';
+        this.canvas.style.cursor = "default";
         
         // Перерисовываем
         this._drawWaveform();
@@ -2867,59 +2868,59 @@ class WaveformEditor {
      * @private
      */
     async _openNewBlockEditor() {
-        console.log('WaveformEditor: Opening NEW block editor for track:', this.currentTrackId);
+        console.log("WaveformEditor: Opening NEW block editor for track:", this.currentTrackId);
         
         // Проверяем наличие трека
         if (!this.currentTrackId) {
-            this._showNotification('Ошибка: Трек не выбран', 'error');
-            console.error('WaveformEditor: No currentTrackId available');
+            this._showNotification("Ошибка: Трек не выбран", "error");
+            console.error("WaveformEditor: No currentTrackId available");
             return;
         }
         
         if (!window.trackCatalog) {
-            this._showNotification('Ошибка: Каталог треков недоступен', 'error');
-            console.error('WaveformEditor: TrackCatalog not available');
+            this._showNotification("Ошибка: Каталог треков недоступен", "error");
+            console.error("WaveformEditor: TrackCatalog not available");
             return;
         }
         
                  const track = window.trackCatalog.tracks.find(t => t.id === this.currentTrackId);
         if (!track) {
-            this._showNotification('Ошибка: Трек не найден', 'error');
-            console.error('WaveformEditor: Track not found for ID:', this.currentTrackId);
+            this._showNotification("Ошибка: Трек не найден", "error");
+            console.error("WaveformEditor: Track not found for ID:", this.currentTrackId);
             return;
         }
         
         // Получаем ОРИГИНАЛЬНЫЙ текст с сохранением форматирования
-        let currentLyrics = '';
+        let currentLyrics = "";
         
         // 🎯 ИСПРАВЛЕНО: Для RTF файлов сначала парсим, потом передаем в редактор
         if (track.lyricsOriginalContent) {
-            console.log('Using ORIGINAL lyrics from track.lyricsOriginalContent. Length:', track.lyricsOriginalContent.length);
+            console.log("Using ORIGINAL lyrics from track.lyricsOriginalContent. Length:", track.lyricsOriginalContent.length);
             
             // Проверяем если это RTF - парсим его
-            if (track.lyricsOriginalContent.trim().startsWith('{\\rtf')) {
-                console.log('WaveformEditor: Парсим RTF перед передачей в редактор блоков');
+            if (track.lyricsOriginalContent.trim().startsWith("{\\rtf")) {
+                console.log("WaveformEditor: Парсим RTF перед передачей в редактор блоков");
                 try {
                     // Специальный упрощённый парсер для редактора блоков: сохраняем пустые строки как границы
-                    if (typeof track.lyricsOriginalContent === 'string') {
+                    if (typeof track.lyricsOriginalContent === "string") {
                         const raw = track.lyricsOriginalContent;
                         // Сначала превращаем двойные \par в двойные переносы
                         let txt = raw
-                            .replace(/\\par\b\s*\\par\b/g, '\n\n')
-                            .replace(/\\line\b\s*\\line\b/g, '\n\n');
+                            .replace(/\\par\b\s*\\par\b/g, "\n\n")
+                            .replace(/\\line\b\s*\\line\b/g, "\n\n");
                         // Затем одиночные \par/\line в одиночные переносы
-                        txt = txt.replace(/\\par\b/g, '\n').replace(/\\line\b/g, '\n');
+                        txt = txt.replace(/\\par\b/g, "\n").replace(/\\line\b/g, "\n");
                         // Декодируем Unicode-последовательности \uXXXX (RTF), включая отрицательные
                         txt = txt.replace(/\\u(-?\d+)\s?/g, (m, numStr) => {
                             let code = parseInt(numStr, 10);
-                            if (code < 0) code = 65536 + code; // корректировка отрицательных
-                            try { return String.fromCharCode(code); } catch (_) { return ''; }
+                            if (code < 0) {code = 65536 + code;} // корректировка отрицательных
+                            try { return String.fromCharCode(code); } catch (_) { return ""; }
                         });
                         // Декодируем CP1251 байты в \'HH через TextDecoder (fallback: fromCharCode)
                         txt = txt.replace(/\\'([0-9a-fA-F]{2})/g, (m, hex) => {
                             try {
-                                if (typeof TextDecoder !== 'undefined') {
-                                    const dec = new TextDecoder('windows-1251');
+                                if (typeof TextDecoder !== "undefined") {
+                                    const dec = new TextDecoder("windows-1251");
                                     const u8 = new Uint8Array([parseInt(hex, 16)]);
                                     return dec.decode(u8);
                                 }
@@ -2928,28 +2929,28 @@ class WaveformEditor {
                         });
                         // Удаляем управляющие последовательности, не затрагивая переводы строк
                         txt = txt
-                            .replace(/\{\\[^}]*\}/g, '')
-                            .replace(/\\u-?\d+\s?/g, '')
-                            .replace(/\\'[0-9a-fA-F]{2}/g, '')
-                            .replace(/\\[a-zA-Z]+-?\d*\s?/g, '')
-                            .replace(/[{}]/g, '')
-                            .replace(/\r\n|\r/g, '\n');
+                            .replace(/\{\\[^}]*\}/g, "")
+                            .replace(/\\u-?\d+\s?/g, "")
+                            .replace(/\\'[0-9a-fA-F]{2}/g, "")
+                            .replace(/\\[a-zA-Z]+-?\d*\s?/g, "")
+                            .replace(/[{}]/g, "")
+                            .replace(/\r\n|\r/g, "\n");
                         // Нормализуем: 3+ переносов -> 2 переноса
-                        txt = txt.replace(/\n{3,}/g, '\n\n');
+                        txt = txt.replace(/\n{3,}/g, "\n\n");
                         // Удаляем слэш в конце строк и строки, состоящие только из слэша
-                        txt = txt.replace(/\\\s*$/gm, ''); // trailing backslash at EOL
-                        txt = txt.replace(/^\s*\\\s*$/gm, ''); // lines that are only backslash
+                        txt = txt.replace(/\\\s*$/gm, ""); // trailing backslash at EOL
+                        txt = txt.replace(/^\s*\\\s*$/gm, ""); // lines that are only backslash
                         // Если встречается "\\\n" считаем это «пустой разделитель» -> просто перевод строки
-                        txt = txt.replace(/\\\s*\n/g, '\n');
+                        txt = txt.replace(/\\\s*\n/g, "\n");
                         currentLyrics = txt.trim();
-                        console.log('WaveformEditor: SIMPLE-RTF parsed for BlockEditor, length:', currentLyrics.length);
+                        console.log("WaveformEditor: SIMPLE-RTF parsed for BlockEditor, length:", currentLyrics.length);
                     } else {
                         // Fallback к базовой очистке RTF
                         currentLyrics = this._basicRtfCleanup(track.lyricsOriginalContent);
-                        console.log('WaveformEditor: Использована базовая очистка RTF');
+                        console.log("WaveformEditor: Использована базовая очистка RTF");
                     }
                 } catch (error) {
-                    console.error('WaveformEditor: Ошибка парсинга RTF:', error);
+                    console.error("WaveformEditor: Ошибка парсинга RTF:", error);
                     currentLyrics = track.lyricsOriginalContent;
                 }
             } else {
@@ -2957,10 +2958,10 @@ class WaveformEditor {
             }
         } else if (track.lyrics) {
             currentLyrics = track.lyrics;
-            console.log('Using track.lyrics. Length:', currentLyrics.length);
+            console.log("Using track.lyrics. Length:", currentLyrics.length);
         } else if (window.lyricsDisplay && window.lyricsDisplay.fullText) {
             currentLyrics = window.lyricsDisplay.fullText;
-            console.log('Using lyrics from lyricsDisplay.fullText. Length:', currentLyrics.length);
+            console.log("Using lyrics from lyricsDisplay.fullText. Length:", currentLyrics.length);
         }
         
         // Создаем или используем существующий экземпляр ModalBlockEditor
@@ -2970,28 +2971,28 @@ class WaveformEditor {
         
         // Fallback: если в currentLyrics нет пустых строк как разделителей — пробуем собрать блоки из уже загруженных строк LyricsDisplay
         try {
-            const hasDoubleNewlines = /\n\s*\n/.test(currentLyrics || '');
+            const hasDoubleNewlines = /\n\s*\n/.test(currentLyrics || "");
             if (!hasDoubleNewlines && window.lyricsDisplay && Array.isArray(window.lyricsDisplay.lyrics) && window.lyricsDisplay.lyrics.length > 0) {
-                const lines = window.lyricsDisplay.lyrics.map(l => String(l || '').trim()).filter(Boolean);
+                const lines = window.lyricsDisplay.lyrics.map(l => String(l || "").trim()).filter(Boolean);
                 const blocks = [];
                 const boundary = /(\[?\s*(припев|проигрыш)\s*\]?)/i;
                 let acc = [];
                 for (const line of lines) {
                     if (boundary.test(line)) {
-                        if (acc.length) { blocks.push(acc.join('\n')); acc = []; }
+                        if (acc.length) { blocks.push(acc.join("\n")); acc = []; }
                         blocks.push(line);
                         continue;
                     }
                     acc.push(line);
-                    if (acc.length >= 2) { blocks.push(acc.join('\n')); acc = []; }
+                    if (acc.length >= 2) { blocks.push(acc.join("\n")); acc = []; }
                 }
-                if (acc.length) blocks.push(acc.join('\n'));
+                if (acc.length) {blocks.push(acc.join("\n"));}
                 if (blocks.length > 0) {
-                    currentLyrics = blocks.join('\n\n');
-                    console.log('WaveformEditor: Applied LyricsDisplay fallback, blocks:', blocks.length);
+                    currentLyrics = blocks.join("\n\n");
+                    console.log("WaveformEditor: Applied LyricsDisplay fallback, blocks:", blocks.length);
                 }
             }
-        } catch (e) { console.warn('WaveformEditor: LyricsDisplay fallback failed', e); }
+        } catch (e) { console.warn("WaveformEditor: LyricsDisplay fallback failed", e); }
         
         // Инициализируем редактор с оригинальным текстом
         this.modalBlockEditor.init(
@@ -2999,48 +3000,48 @@ class WaveformEditor {
             track,
             // 🎯 ИСПРАВЛЕННЫЙ Callback для сохранения (новый формат)
             async (editedBlocks, savedTrackInfo) => {
-                console.log('WaveformEditor: Block editor save callback triggered');
-                console.log('WaveformEditor: Edited blocks:', editedBlocks);
-                console.log('WaveformEditor: Track info:', savedTrackInfo);
+                console.log("WaveformEditor: Block editor save callback triggered");
+                console.log("WaveformEditor: Edited blocks:", editedBlocks);
+                console.log("WaveformEditor: Track info:", savedTrackInfo);
                 
                 if (window.trackCatalog && this.currentTrackId) {
                     try {
                         // 🎯 СОХРАНЯЕМ БЛОКИ ЧЕРЕЗ ПРАВИЛЬНЫЙ МЕТОД
-                        console.log('WaveformEditor: Сохраняем блоки через saveLyricsBlocks...');
+                        console.log("WaveformEditor: Сохраняем блоки через saveLyricsBlocks...");
                         window.trackCatalog.saveLyricsBlocks(this.currentTrackId, editedBlocks);
                         
                         // 🎯 ОБНОВЛЯЕМ ТЕКСТ ЧЕРЕЗ updateTrackLyrics
                         const updatedLyrics = window.trackCatalog._convertBlocksToPlainText(editedBlocks);
-                        console.log('WaveformEditor: Обновляем текст трека...');
+                        console.log("WaveformEditor: Обновляем текст трека...");
                         window.trackCatalog.updateTrackLyrics(this.currentTrackId, updatedLyrics);
 
                         // 🎯 СРАЗУ ПРИМЕНЯЕМ БЛОКИ К ОТОБРАЖЕНИЮ, ЧТОБЫ МАРКЕРЫ ЗНАЛИ ТИПЫ
-                        if (window.lyricsDisplay && typeof window.lyricsDisplay.loadImportedBlocks === 'function') {
+                        if (window.lyricsDisplay && typeof window.lyricsDisplay.loadImportedBlocks === "function") {
                             await window.lyricsDisplay.loadImportedBlocks(editedBlocks, true);
                         }
-                        if (window.markerManager && typeof window.markerManager.updateMarkerColors === 'function') {
+                        if (window.markerManager && typeof window.markerManager.updateMarkerColors === "function") {
                             window.markerManager.updateMarkerColors();
                         }
 
-                        this._showNotification('Текст и блоки сохранены успешно!', 'success');
+                        this._showNotification("Текст и блоки сохранены успешно!", "success");
                         
                         // 🎯 ВОЗВРАЩАЕМ РЕЗУЛЬТАТ ДЛЯ АВТООТКРЫТИЯ SYNC EDITOR
                         return { trackId: this.currentTrackId, success: true };
                         
                     } catch (error) {
-                        console.error('WaveformEditor: Ошибка при сохранении блоков:', error);
-                        this._showNotification('Ошибка при сохранении блоков!', 'error');
+                        console.error("WaveformEditor: Ошибка при сохранении блоков:", error);
+                        this._showNotification("Ошибка при сохранении блоков!", "error");
                         return { trackId: this.currentTrackId, success: false, error };
                     }
                 } else {
-                    console.warn('WaveformEditor: TrackCatalog или currentTrackId недоступны');
-                    this._showNotification('Ошибка: нет доступа к каталогу треков', 'error');
-                    return { success: false, error: 'TrackCatalog unavailable' };
+                    console.warn("WaveformEditor: TrackCatalog или currentTrackId недоступны");
+                    this._showNotification("Ошибка: нет доступа к каталогу треков", "error");
+                    return { success: false, error: "TrackCatalog unavailable" };
                 }
             },
             // Callback для отмены
             () => {
-                console.log('WaveformEditor: Block editor cancelled');
+                console.log("WaveformEditor: Block editor cancelled");
             }
         );
         
@@ -3054,11 +3055,11 @@ class WaveformEditor {
      * @param {string} type - The notification type (info, success, warning, error)
      * @private
      */
-    _showNotification(message, type = 'info') {
+    _showNotification(message, type = "info") {
         console.log(`WaveformEditor notification: ${message}`);
         
         // Create notification element
-        const notification = document.createElement('div');
+        const notification = document.createElement("div");
         notification.className = `waveform-notification ${type}`;
         notification.textContent = message;
         
@@ -3083,8 +3084,8 @@ class WaveformEditor {
         console.log(`🔄 WaveformEditor: Начинаем переключение на источник: ${source}`);
 
         if (!this.audioEngine || !this.audioEngine.hybridEngine) {
-            console.warn('❌ WaveformEditor: AudioEngine или hybridEngine недоступны');
-            this._showNotification('Источники аудио недоступны', 'error');
+            console.warn("❌ WaveformEditor: AudioEngine или hybridEngine недоступны");
+            this._showNotification("Источники аудио недоступны", "error");
             return;
         }
 
@@ -3093,9 +3094,9 @@ class WaveformEditor {
         this.currentWaveformSource = source;
 
         try {
-            if (source === 'master') {
+            if (source === "master") {
                 // Для мастер-дорожки используем наложение инструментальной и вокальной волн
-                this._showNotification('Загружаем компоненты для Мастер-вида...', 'info');
+                this._showNotification("Загружаем компоненты для Мастер-вида...", "info");
                 
                 // Убеждаемся что у нас есть данные для обеих волн
                 let needsInstrumentalLoad = !this.instrumentalAudioData;
@@ -3104,28 +3105,28 @@ class WaveformEditor {
                 // Загружаем недостающие данные
                 if (needsInstrumentalLoad && this.audioEngine.hybridEngine.instrumentalUrl) {
                     const instrumentalBuffer = await this._loadBufferFromUrl(this.audioEngine.hybridEngine.instrumentalUrl);
-                    if (!this.audioDuration) this.audioDuration = instrumentalBuffer.duration;
-                    if (!this.sampleRate) this.sampleRate = instrumentalBuffer.sampleRate;
+                    if (!this.audioDuration) {this.audioDuration = instrumentalBuffer.duration;}
+                    if (!this.sampleRate) {this.sampleRate = instrumentalBuffer.sampleRate;}
                     this.rawInstrumentalData = instrumentalBuffer.getChannelData(0);
                     this.instrumentalAudioData = this._generatePeaks(this.rawInstrumentalData);
-                    console.log('✅ Instrumental data loaded for master view');
+                    console.log("✅ Instrumental data loaded for master view");
                 }
                 
                 if (needsVocalLoad && this.audioEngine.hybridEngine.vocalsUrl) {
                     const vocalBuffer = await this._loadBufferFromUrl(this.audioEngine.hybridEngine.vocalsUrl);
-                    if (!this.audioDuration) this.audioDuration = vocalBuffer.duration;
-                    if (!this.sampleRate) this.sampleRate = vocalBuffer.sampleRate;
+                    if (!this.audioDuration) {this.audioDuration = vocalBuffer.duration;}
+                    if (!this.sampleRate) {this.sampleRate = vocalBuffer.sampleRate;}
                     this.rawVocalData = vocalBuffer.getChannelData(0);
                     this.vocalAudioData = this._generatePeaks(this.rawVocalData);
-                    console.log('✅ Vocal data loaded for master view');
+                    console.log("✅ Vocal data loaded for master view");
                 }
                 
-                console.log('✅ WaveformEditor: Master view prepared with overlay waves');
+                console.log("✅ WaveformEditor: Master view prepared with overlay waves");
                 this._drawWaveform();
-                this._showNotification('Переключено на Мастер', 'success');
+                this._showNotification("Переключено на Мастер", "success");
             } else { // Обработка для 'vocals' и 'instrumental'
-                const isVocal = source === 'vocals';
-                const targetDataProp = isVocal ? 'vocalAudioData' : 'instrumentalAudioData';
+                const isVocal = source === "vocals";
+                const targetDataProp = isVocal ? "vocalAudioData" : "instrumentalAudioData";
                 const sourceUrl = isVocal ? this.audioEngine.hybridEngine.vocalsUrl : this.audioEngine.hybridEngine.instrumentalUrl;
                 
                 if (!sourceUrl) {
@@ -3138,21 +3139,21 @@ class WaveformEditor {
                     console.log(`✅ Using cached data for ${source}`);
                     this._drawWaveform();
             } else {
-                    this._showNotification(`Загружаем ${this._getSourceDisplayName(source)}...`, 'info');
+                    this._showNotification(`Загружаем ${this._getSourceDisplayName(source)}...`, "info");
                     const buffer = await this._loadBufferFromUrl(sourceUrl);
-                    if (!this.audioDuration) this.audioDuration = buffer.duration;
-                    if (!this.sampleRate) this.sampleRate = buffer.sampleRate;
-                    this[isVocal ? 'rawVocalData' : 'rawInstrumentalData'] = buffer.getChannelData(0);
-                    this[targetDataProp] = this._generatePeaks(this[isVocal ? 'rawVocalData' : 'rawInstrumentalData']);
+                    if (!this.audioDuration) {this.audioDuration = buffer.duration;}
+                    if (!this.sampleRate) {this.sampleRate = buffer.sampleRate;}
+                    this[isVocal ? "rawVocalData" : "rawInstrumentalData"] = buffer.getChannelData(0);
+                    this[targetDataProp] = this._generatePeaks(this[isVocal ? "rawVocalData" : "rawInstrumentalData"]);
                     console.log(`✅ Data loaded for ${source}`);
                     this._drawWaveform();
                 }
-                this._showNotification(`Переключено на ${this._getSourceDisplayName(source)}`, 'success');
+                this._showNotification(`Переключено на ${this._getSourceDisplayName(source)}`, "success");
             }
             
         } catch (error) {
             console.error(`❌ WaveformEditor: Ошибка переключения на источник ${source}:`, error);
-            this._showNotification(`Ошибка загрузки ${this._getSourceDisplayName(source)}`, 'error');
+            this._showNotification(`Ошибка загрузки ${this._getSourceDisplayName(source)}`, "error");
         }
     }
     
@@ -3166,15 +3167,15 @@ class WaveformEditor {
         console.log(`🔄 WaveformEditor: Загружаем аудио из URL: ${audioUrl.substring(0, 50)}...`);
         
         // Проверяем на некорректные blob URL
-        if (audioUrl.includes('blob:null/')) {
-            console.warn('❌ WaveformEditor: Обнаружен некорректный blob:null URL, пропускаем загрузку');
-            throw new Error('Invalid blob:null URL detected');
+        if (audioUrl.includes("blob:null/")) {
+            console.warn("❌ WaveformEditor: Обнаружен некорректный blob:null URL, пропускаем загрузку");
+            throw new Error("Invalid blob:null URL detected");
         }
         
         try {
             // Для data URL используем прямое декодирование
-            if (audioUrl.startsWith('data:')) {
-                console.log('📊 WaveformEditor: Обрабатываем data URL...');
+            if (audioUrl.startsWith("data:")) {
+                console.log("📊 WaveformEditor: Обрабатываем data URL...");
                 const response = await fetch(audioUrl);
                 const arrayBuffer = await response.arrayBuffer();
                 
@@ -3212,7 +3213,7 @@ class WaveformEditor {
         Object.keys(this.sourceButtons).forEach(key => {
             const button = this.sourceButtons[key];
             if (button) {
-                button.classList.toggle('active', key === source);
+                button.classList.toggle("active", key === source);
             }
         });
     }
@@ -3240,7 +3241,7 @@ class WaveformEditor {
             
             return true;
         } catch (error) {
-            console.error('Error loading waveform from URL:', error);
+            console.error("Error loading waveform from URL:", error);
             throw error;
         }
     }
@@ -3252,13 +3253,13 @@ class WaveformEditor {
      */
     _getSourceDisplayName(source) {
         switch (source) {
-            case 'vocals':
-                return 'Вокал';
-            case 'instrumental':
-                return 'Инструментал';
-            case 'master':
+            case "vocals":
+                return "Вокал";
+            case "instrumental":
+                return "Инструментал";
+            case "master":
             default:
-                return 'Мастер';
+                return "Мастер";
         }
     }
     
@@ -3270,28 +3271,28 @@ class WaveformEditor {
     _getSourceColor(source) {
         if (window.colorService) {
             switch (source) {
-                case 'vocals':
+                case "vocals":
                     return window.colorService.getVocalsColor();
-                case 'instrumental':
+                case "instrumental":
                     return window.colorService.getInstrumentalColor();
-                case 'master':
+                case "master":
                     // Для мастера возвращаем цвет инструментала (базовый цвет)
                     return window.colorService.getInstrumentalColor();
                 default:
-                    return '#2196F3';
+                    return "#2196F3";
             }
         }
         
         // Fallback цвета если ColorService недоступен
         switch (source) {
-            case 'vocals':
-                return '#FFD700';
-            case 'instrumental':
-                return '#2196F3';
-            case 'master':
-                return '#2196F3';
+            case "vocals":
+                return "#FFD700";
+            case "instrumental":
+                return "#2196F3";
+            case "master":
+                return "#2196F3";
             default:
-                return '#2196F3';
+                return "#2196F3";
         }
     }
 
@@ -3299,34 +3300,34 @@ class WaveformEditor {
      * Переключить отображение выпадающего меню цветов
      */
     _toggleColorDropdown() {
-        console.log('🎨 _toggleColorDropdown вызван, colorDropdown:', !!this.colorDropdown);
+        console.log("🎨 _toggleColorDropdown вызван, colorDropdown:", !!this.colorDropdown);
         
         if (!this.colorDropdown) {
-            console.warn('🎨 colorDropdown не найден!');
+            console.warn("🎨 colorDropdown не найден!");
             return;
         }
 
-        const isCurrentlyActive = this.colorDropdown.classList.contains('active');
-        console.log('🎨 Текущее состояние меню:', isCurrentlyActive ? 'активно' : 'скрыто');
+        const isCurrentlyActive = this.colorDropdown.classList.contains("active");
+        console.log("🎨 Текущее состояние меню:", isCurrentlyActive ? "активно" : "скрыто");
         
         if (isCurrentlyActive) {
             // Закрываем меню
-            this.colorDropdown.classList.remove('active');
-            console.log('🎨 Меню закрыто');
+            this.colorDropdown.classList.remove("active");
+            console.log("🎨 Меню закрыто");
         } else {
             // Открываем меню
-            this.colorDropdown.classList.add('active');
-            console.log('🎨 Меню открыто');
+            this.colorDropdown.classList.add("active");
+            console.log("🎨 Меню открыто");
         }
         
         // Проверяем позицию и размеры для отладки
         const rect = this.colorDropdown.getBoundingClientRect();
-        console.log('🎨 Позиция меню:', {
+        console.log("🎨 Позиция меню:", {
             x: rect.x,
             y: rect.y,
             width: rect.width,
             height: rect.height,
-            visible: isCurrentlyActive ? 'закрыто' : 'открыто'
+            visible: isCurrentlyActive ? "закрыто" : "открыто"
         });
     }
 
@@ -3334,9 +3335,9 @@ class WaveformEditor {
      * Скрыть выпадающее меню цветов
      */
     _hideColorDropdown() {
-        console.log('🎨 _hideColorDropdown вызван');
+        console.log("🎨 _hideColorDropdown вызван");
         if (this.colorDropdown) {
-            this.colorDropdown.classList.remove('active');
+            this.colorDropdown.classList.remove("active");
         }
     }
 
@@ -3344,16 +3345,16 @@ class WaveformEditor {
      * Обновить состояние выпадающего меню цветов
      */
     _updateColorDropdown() {
-        if (!this.colorDropdown || !window.colorService) return;
+        if (!this.colorDropdown || !window.colorService) {return;}
         
         const currentScheme = window.colorService.getCurrentScheme();
-        const items = this.colorDropdown.querySelectorAll('.color-scheme-item');
+        const items = this.colorDropdown.querySelectorAll(".color-scheme-item");
         
         items.forEach(item => {
             if (item.dataset.schemeId === currentScheme.id) {
-                item.classList.add('active');
+                item.classList.add("active");
             } else {
-                item.classList.remove('active');
+                item.classList.remove("active");
             }
         });
         
@@ -3384,13 +3385,13 @@ class WaveformEditor {
         console.log(`WaveformEditor: Загрузка двойных волновых форм. Инструментал: ${instrumentalUrl}, Вокал: ${vocalsUrl}`);
         // Авто-подмена blob:null на безопасные URL из audioEngine.hybridEngine
         if (this.audioEngine && this.audioEngine.hybridEngine) {
-            if (instrumentalUrl && instrumentalUrl.includes('blob:null/')) {
+            if (instrumentalUrl && instrumentalUrl.includes("blob:null/")) {
                 const safeI = this.audioEngine.hybridEngine.instrumentalUrl;
-                if (safeI) instrumentalUrl = safeI;
+                if (safeI) {instrumentalUrl = safeI;}
             }
-            if (vocalsUrl && vocalsUrl.includes('blob:null/')) {
+            if (vocalsUrl && vocalsUrl.includes("blob:null/")) {
                 const safeV = this.audioEngine.hybridEngine.vocalsUrl;
-                if (safeV) vocalsUrl = safeV;
+                if (safeV) {vocalsUrl = safeV;}
             }
         }
         
@@ -3404,29 +3405,29 @@ class WaveformEditor {
 
         if (instrumentalUrl) {
             loadPromises.push(this._loadBufferFromUrl(instrumentalUrl).then(buffer => {
-                console.log('Инструментальная дорожка загружена.');
+                console.log("Инструментальная дорожка загружена.");
                 this.rawInstrumentalData = buffer.getChannelData(0);
                 this.instrumentalAudioData = this._generatePeaks(this.rawInstrumentalData);
-                if (!this.audioDuration) this.audioDuration = buffer.duration;
+                if (!this.audioDuration) {this.audioDuration = buffer.duration;}
             }));
         }
 
         if (vocalsUrl) {
             loadPromises.push(this._loadBufferFromUrl(vocalsUrl).then(buffer => {
-                console.log('Вокальная дорожка загружена.');
+                console.log("Вокальная дорожка загружена.");
                 this.rawVocalData = buffer.getChannelData(0);
                 this.vocalAudioData = this._generatePeaks(this.rawVocalData);
-                if (!this.audioDuration) this.audioDuration = buffer.duration;
+                if (!this.audioDuration) {this.audioDuration = buffer.duration;}
             }));
         }
 
         try {
             await Promise.all(loadPromises);
-            console.log('Все волновые формы успешно загружены и обработаны.');
+            console.log("Все волновые формы успешно загружены и обработаны.");
             this._drawWaveform();
         } catch (error) {
-            console.error('Ошибка при загрузке одной из волновых форм:', error);
-            this._showNotification('Не удалось загрузить аудио для редактора.', 'error');
+            console.error("Ошибка при загрузке одной из волновых форм:", error);
+            this._showNotification("Не удалось загрузить аудио для редактора.", "error");
             // Даже если есть ошибка, пытаемся отрисовать то, что загрузилось
             this._drawWaveform();
         }
@@ -3439,38 +3440,38 @@ class WaveformEditor {
      * @private
      */
     _basicRtfCleanup(rtfText) {
-        if (!rtfText) return '';
+        if (!rtfText) {return "";}
         
         try {
             let cleanText = rtfText;
             
             // Удаляем RTF заголовки и метаданные
-            cleanText = cleanText.replace(/^{\\rtf1[^{}]*/, '');
-            cleanText = cleanText.replace(/\{\\colortbl[^{}]*\}/g, '');
-            cleanText = cleanText.replace(/\{\\fonttbl[^{}]*\}/g, '');
-            cleanText = cleanText.replace(/\{\\stylesheet[^{}]*\}/g, '');
+            cleanText = cleanText.replace(/^{\\rtf1[^{}]*/, "");
+            cleanText = cleanText.replace(/\{\\colortbl[^{}]*\}/g, "");
+            cleanText = cleanText.replace(/\{\\fonttbl[^{}]*\}/g, "");
+            cleanText = cleanText.replace(/\{\\stylesheet[^{}]*\}/g, "");
             
             // Заменяем команды переносов
-            cleanText = cleanText.replace(/\\par\s?/g, '\n');
-            cleanText = cleanText.replace(/\\line\s?/g, '\n');
+            cleanText = cleanText.replace(/\\par\s?/g, "\n");
+            cleanText = cleanText.replace(/\\line\s?/g, "\n");
             
             // Удаляем RTF команды
-            cleanText = cleanText.replace(/\\[a-z]+\d*\s?/g, '');
-            cleanText = cleanText.replace(/[{}]/g, '');
+            cleanText = cleanText.replace(/\\[a-z]+\d*\s?/g, "");
+            cleanText = cleanText.replace(/[{}]/g, "");
             
             // Очищаем множественные переносы
-            cleanText = cleanText.replace(/\n{3,}/g, '\n\n');
+            cleanText = cleanText.replace(/\n{3,}/g, "\n\n");
             cleanText = cleanText.trim();
             
             return cleanText;
         } catch (error) {
-            console.error('WaveformEditor: Ошибка базовой очистки RTF:', error);
+            console.error("WaveformEditor: Ошибка базовой очистки RTF:", error);
             return rtfText;
         }
     }
 }
 
-console.log('WaveformEditor loaded');
+console.log("WaveformEditor loaded");
 
 // Initialize immediately when audio engine is available
 // Make it globally accessible

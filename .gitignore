@@ -46,3 +46,14 @@ tmp/
 *.backup
 *-backup.*
 *.orig Reference COD/
+.DS_Store
+.cursor
+.cursorrules
+cursor-memory-bank
+cursor-rules
+Kraken_Studio
+Log
+Reference COD
+ProjectRules
+temp_fix.txt
+tests
