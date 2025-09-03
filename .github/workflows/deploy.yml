@@ -34,7 +34,6 @@ jobs:
     - name: 🧪 Run tests
       run: |
         echo "🧪 Running basic checks..."
-        # Проверяем, что основные файлы существуют
         test -f index.html || (echo "❌ index.html not found" && exit 1)
         test -d js || (echo "❌ js directory not found" && exit 1)
         test -d css || (echo "❌ css directory not found" && exit 1)
@@ -44,7 +43,7 @@ jobs:
       if: github.ref == 'refs/heads/main'
       uses: peaceiris/actions-gh-pages@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ secrets.GH_PAGES_TOKEN }}
         publish_dir: .
         
     - name: 📊 Report deployment
