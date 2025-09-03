@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Avatar - Enhanced Prototype</title>
+    <script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #eee;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        h1 {
+            color: #00d4ff;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+            margin-bottom: 10px;
+        }
+        
+        .status {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+        }
+        
+        .status.active {
+            border-color: #00ff88;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            width: 100%;
+            max-width: 1400px;
+            justify-content: center;
+        }
+
+        /* БОКОВЫЕ ПАНЕЛИ КАСТОМИЗАЦИИ */
+        .customization-panel {
+            width: 280px;
+            background: rgba(0, 20, 40, 0.9);
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: all 0.5s ease;
+            pointer-events: none;
+        }
+
+        .customization-panel.visible {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+        }
+
+        .customization-panel.right {
+            transform: translateX(50px);
+        }
+
+        .customization-panel.right.visible {
+            transform: translateX(0);
+        }
+
+        .panel-title {
+            color: #00ff88;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .carrier-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .carrier-item {
+            background: rgba(20, 30, 50, 0.8);
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .carrier-item:hover {
+            border-color: #00d4ff;
+            background: rgba(30, 45, 70, 0.9);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+        }
+
+        .carrier-item.selected {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+        }
+
+        .carrier-emoji {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .carrier-name {
+            color: #fff;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .carrier-3d {
+            width: 100%;
+            height: 80px;
+            border-radius: 8px;
+            margin: 8px 0;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .approved-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+
+        .approved-info {
+            flex: 1;
+        }
+
+        .approved-name {
+            color: #00ff88;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .approved-settings {
+            color: #aaa;
+            font-size: 10px;
+        }
+
+        .remove-btn {
+            background: #ff4444;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .settings-panel {
+            background: rgba(20, 30, 50, 0.9);
+            border: 2px solid #00d4ff;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .setting-group {
+            margin-bottom: 15px;
+        }
+
+        .setting-label {
+            color: #00d4ff;
+            font-size: 12px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .setting-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #333;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .setting-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00d4ff;
+            cursor: pointer;
+        }
+
+        .setting-value {
+            color: #fff;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+            padding: 2px 6px;
+        }
+
+        .save-btn {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+        }
+        
+        .container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+            background: radial-gradient(circle at center, rgba(26, 26, 46, 0.8), rgba(22, 33, 62, 0.9));
+        }
+        
+        #video-tracking, #canvas-output {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #video-tracking {
+            display: none;
+        }
+        
+        #canvas-output {
+            background: transparent;
+            pointer-events: none;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #6a1b9a, #8e24aa);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(106, 27, 154, 0.4);
+        }
+
+        .customize-btn {
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            font-size: 16px;
+            padding: 12px 24px;
+        }
+
+        .customize-btn:hover {
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎭 Live Avatar - Enhanced Prototype</h1>
+    <div class="status" id="status">Инициализация...</div>
+    
+    <div class="main-layout">
+        <!-- ЛЕВАЯ ПАНЕЛЬ - ТЕСТОВЫЕ НОСИТЕЛИ -->
+        <div class="customization-panel" id="testPanel">
+            <div class="panel-title">🧪 Тестовые носители</div>
+            <div class="carrier-grid" id="testCarriers">
+                <!-- Носители будут добавлены через JavaScript -->
+            </div>
+            
+            <!-- НАСТРОЙКИ -->
+            <div class="settings-panel">
+                <div class="setting-group">
+                    <label class="setting-label">Ширина</label>
+                    <input type="range" class="setting-slider" id="widthSlider" min="0.5" max="3" step="0.1" value="1">
+                    <div class="setting-value" id="widthValue">1.0</div>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">Высота</label>
+                    <input type="range" class="setting-slider" id="heightSlider" min="0.5" max="3" step="0.1" value="1">
+                    <div class="setting-value" id="heightValue">1.0</div>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">Смещение</label>
+                    <input type="range" class="setting-slider" id="offsetSlider" min="-100" max="100" step="5" value="0">
+                    <div class="setting-value" id="offsetValue">0</div>
+                </div>
+                <button class="save-btn" onclick="saveCurrentCarrier()">💾 СОХРАНИТЬ В КОЛЛЕКЦИЮ</button>
+            </div>
+        </div>
+
+        <!-- ЦЕНТРАЛЬНАЯ ОБЛАСТЬ -->
+        <div>
+            <div class="container">
+                <video id="video-tracking" autoplay muted playsinline></video>
+                <canvas id="canvas-output" width="800" height="600"></canvas>
+            </div>
+            
+            <div class="controls">
+                <button class="customize-btn" onclick="toggleCustomization()">🎨 Кастомизация</button>
+                <button onclick="toggleDebug()">Debug Mode</button>
+                <button onclick="changeAvatarColor()">Сменить цвет</button>
+                <button onclick="toggleLimbs()">Вкл/Выкл Конечности</button>
+                <button onclick="setGesture('default')" title="Default">🖐️</button>
+                <button onclick="setGesture('peace')" title="Peace">✌️</button>
+                <button onclick="setGesture('rock')" title="Rock">🤘</button>
+                <button onclick="setGesture('yo')" title="Yo!">👉</button>
+            </div>
+        </div>
+
+        <!-- ПРАВАЯ ПАНЕЛЬ - ОДОБРЕННАЯ КОЛЛЕКЦИЯ -->
+        <div class="customization-panel right" id="approvedPanel">
+            <div class="panel-title">✅ Одобренная коллекция</div>
+            <div id="approvedCarriers" class="carrier-grid">
+                <div class="empty-state">Пока нет одобренных носителей</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MediaPipe через более стабильный источник -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1640029074/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1620248257/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1635988162/pose.js"></script>
+
+    <script>
+        const videoTrackingElement = document.getElementById('video-tracking');
+        const canvasElement = document.getElementById('canvas-output');
+        const canvasCtx = canvasElement.getContext('2d');
+        const statusElement = document.getElementById('status');
+
+        const canvasWidth = canvasElement.width;
+        const canvasHeight = canvasElement.height;
+        
+        let debugMode = false;
+        let avatarColors = ['#6a1b9a', '#e91e63', '#2196f3', '#4caf50', '#ff9800'];
+        let currentColorIndex = 0;
+        
+        let showLimbs = true; // Флаг для отображения конечностей (включим по умолчанию для демонстрации)
+        let avatarHorizontalOffset = 0;
+        let avatarRunPhase = 0;
+        let previousAvatarHorizontalOffset = 0;
+        
+        // --- СИСТЕМА ЖЕСТОВ ---
+        let currentGesture = 'default';
+        
+        // --- СИСТЕМА СГЛАЖИВАНИЯ ---
+        // Хранилище сглаженных позиций для уменьшения дрожания
+        let smoothedPoints = {}; 
+        // Коэффициент сглаживания (0 - очень плавно, 1 - без сглаживания)
+        const smoothingFactor = 0.4;
+
+        // --- СИСТЕМА КАСТОМИЗАЦИИ ---
+        let customizationVisible = false;
+        let currentCarrier = null;
+        let approvedCarriers = JSON.parse(localStorage.getItem('approvedCarriers') || '[]');
+        let scene, renderer, threeCamera;
+
+        // Тестовые носители
+        const TEST_CARRIERS = [
+            { id: 'jets', name: 'Реактивные двигатели', emoji: '🚀', type: 'jets' },
+            { id: 'hoverboard', name: 'Ховерборд', emoji: '🛸', type: 'hoverboard' },
+            { id: 'mech_legs', name: 'Механические ноги', emoji: '🦾', type: 'mech_legs' },
+            { id: 'dragon_wings', name: 'Крылья дракона', emoji: '🐉', type: 'dragon_wings' },
+            { id: 'rocket_boots', name: 'Ракетные сапоги', emoji: '👢', type: 'rocket_boots' },
+            { id: 'energy_platform', name: 'Энергетическая платформа', emoji: '⚡', type: 'energy_platform' },
+            { id: 'spider_legs', name: 'Паучьи ноги', emoji: '🕷️', type: 'spider_legs' },
+            { id: 'flame_wheels', name: 'Огненные колеса', emoji: '🔥', type: 'flame_wheels' }
+        ];
+
+        function drawHand(ctx, wristX, wristY, elbowX, elbowY, gesture, limbColor) {
+            const angle = Math.atan2(wristY - elbowY, wristX - elbowX) + Math.PI / 2;
+
+            ctx.fillStyle = '#ffcc80'; // Цвет ладони (светлее чем рука)
+            
+            // --- Ладонь ---
+            ctx.save();
+            ctx.translate(wristX, wristY);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            // Ладонь - слегка скругленный прямоугольник
+            ctx.moveTo(-12, -10);
+            ctx.lineTo(12, -10);
+            ctx.lineTo(15, 10);
+            ctx.lineTo(-15, 10);
+            ctx.closePath();
+            ctx.fill();
+
+            // --- Пальцы ---
+            const fingerLength = 22;
+            const fingerWidth = 8;
+            const thumbLength = 16;
+            
+            ctx.fillStyle = limbColor; // Пальцы того же цвета что и рука
+
+            const drawFinger = (x, y, length, width, fingerAngle = 0) => {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(fingerAngle);
+                ctx.beginPath();
+                ctx.roundRect(-width / 2, -length, width, length, width / 2);
+                ctx.fill();
+                ctx.restore();
+            };
+
+            switch (gesture) {
+                case 'peace':
+                    drawFinger(-7, -8, fingerLength, fingerWidth); // Указательный
+                    drawFinger(7, -8, fingerLength, fingerWidth); // Средний
+                    break;
+                case 'rock':
+                    drawFinger(-10, -8, fingerLength, fingerWidth); // Указательный
+                    drawFinger(10, -8, fingerLength * 0.8, fingerWidth); // Мизинец
+                    // Большой палец прижимает остальные
+                     drawFinger(-2, -2, thumbLength, fingerWidth, Math.PI / 3);
+                    break;
+                case 'yo':
+                    drawFinger(0, -8, fingerLength * 1.1, fingerWidth); // Средний, чуть длиннее
+                    break;
+                case 'fist':
+                     // Просто ладонь
+                    break;
+                default: // default (open palm)
+                    // 4 пальца
+                    drawFinger(-11, -8, fingerLength * 0.9, fingerWidth, -0.1);
+                    drawFinger(-3, -9, fingerLength, fingerWidth);
+                    drawFinger(5, -9, fingerLength, fingerWidth, 0.1);
+                    drawFinger(12, -8, fingerLength * 0.8, fingerWidth, 0.2);
+                    // Большой палец
+                    drawFinger(-14, 0, thumbLength, fingerWidth, Math.PI / 2.5);
+                    break;
+            }
+
+            ctx.restore();
+        }
+        
+        function drawJetEngines(ctx, centerX, baseY, width, runPhase, isRunning, velocity) {
+            ctx.save();
+
+            // 1. Универсальная платформа
+            const platformHeight = 20;
+            const platformWidth = width * 1.3; // Платформа чуть шире плеч
+            const platformY = baseY + 5; 
+
+            ctx.fillStyle = '#78909c';
+            ctx.strokeStyle = '#455a64';
+            ctx.lineWidth = 4;
+            
+            ctx.beginPath();
+            ctx.roundRect(centerX - platformWidth / 2, platformY, platformWidth, platformHeight, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            // 2. Мощные двигатели
+            const engineWidth = platformWidth / 2.2;
+            const engineHeight = 70;
+
+            const drawEngine = (xOffset) => {
+                const engineX = centerX + xOffset;
+                const engineY = platformY - engineHeight + 10; // Сидят на платформе
+                
+                // Корпус и детали (как раньше)
+                ctx.fillStyle = '#b0bec5';
+                ctx.strokeStyle = '#546e7a';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.rect(engineX - engineWidth / 2, engineY, engineWidth, engineHeight);
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = '#78909c';
+                ctx.beginPath();
+                ctx.rect(engineX - engineWidth / 2, engineY, engineWidth, 15);
+                ctx.fill();
+                
+                // Сопло
+                const nozzleY = engineY + engineHeight;
+                ctx.fillStyle = '#455a64';
+                ctx.beginPath();
+                ctx.moveTo(engineX - engineWidth / 2 + 5, nozzleY);
+                ctx.lineTo(engineX + engineWidth / 2 - 5, nozzleY);
+                ctx.lineTo(engineX + engineWidth / 2 - 10, nozzleY + 15);
+                ctx.lineTo(engineX - engineWidth / 2 + 10, nozzleY + 15);
+                ctx.closePath();
+                ctx.fill();
+
+                // 3. ИСПРАВЛЕННАЯ ФИЗИКА ПЛАМЕНИ - пламя летит в противоположную сторону от движения
+                const flameAngle = -velocity * 0.08; // ВОЗВРАЩАЕМ ПРАВИЛЬНУЮ ФИЗИКУ - инвертируем направление
+                const flameLength = 40 + (isRunning ? 80 : 0) + Math.abs(velocity * 2);
+
+                ctx.save();
+                ctx.translate(engineX, nozzleY + 10);
+                ctx.rotate(flameAngle); // Применяем наклон
+
+                const grad = ctx.createLinearGradient(0, 0, 0, flameLength);
+                grad.addColorStop(0, 'rgba(0, 255, 255, 1)');
+                grad.addColorStop(0.5, 'rgba(100, 181, 246, 0.7)');
+                grad.addColorStop(1, 'rgba(30, 136, 229, 0)');
+                
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.moveTo(-engineWidth / 2 + 15, 0);
+                ctx.lineTo(engineWidth / 2 - 15, 0);
+                ctx.lineTo(0, flameLength);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.restore();
+            };
+            
+            drawEngine(-platformWidth / 4); 
+            drawEngine(platformWidth / 4);
+            
+            ctx.restore();
+        }
+        
+        function updateStatus(message, isActive = false) {
+            statusElement.textContent = message;
+            statusElement.className = isActive ? 'status active' : 'status';
+        }
+
+        function drawAvatar(results) {
+            const poseLandmarks = results.poseLandmarks;
+            const segmentationMask = results.segmentationMask;
+            const image = results.image;
+
+            // Сохраняем состояние контекста
+            canvasCtx.save();
+            
+            // --- Создаем отзеркаленную копию координат для интуитивного управления ---
+            const mirroredLandmarks = poseLandmarks ? 
+                poseLandmarks.map(lm => ({...lm, visibility: lm.visibility, x: 1 - lm.x, y: lm.y })) : null;
+
+            // --- Горизонтальное смещение на основе положения головы ---
+            const horizontalVelocity = avatarHorizontalOffset - previousAvatarHorizontalOffset;
+            previousAvatarHorizontalOffset = avatarHorizontalOffset;
+
+            // ИСПРАВЛЕННАЯ ЛОГИКА: используем отзеркаленные координаты для правильного движения
+            if (mirroredLandmarks && mirroredLandmarks[0].visibility > 0.6) {
+                const deviation = 0.5 - mirroredLandmarks[0].x; // ИНВЕРТИРУЕМ ОБРАТНО для правильного движения
+                avatarHorizontalOffset = avatarHorizontalOffset * 0.9 + (deviation * 600) * 0.1;
+            } else {
+                // Плавно возвращаем в центр, если поза не видна
+                avatarHorizontalOffset *= 0.95;
+            }
+
+            // Очищаем холст
+            canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            // --- Масштабирование и центрирование с учетом смещения ---
+            const scale = 0.4; // Уменьшен размер аватара
+            const verticalLift = -60; // Скорректирован подъем для нового размера
+            const newWidth = canvasWidth * scale;
+            const newHeight = canvasHeight * scale;
+            const offsetX = (canvasWidth - newWidth) / 2;
+            const offsetY = (canvasHeight - newHeight) / 2 + verticalLift;
+
+            // Сдвигаем начало координат в точку, где будет отрисован аватар + смещение
+            canvasCtx.translate(offsetX + avatarHorizontalOffset, offsetY);
+            canvasCtx.scale(scale, scale);
+
+            // --- ОТРИСОВКА СЕГМЕНТИРОВАННОГО ПОЛЬЗОВАТЕЛЯ ---
+            if (segmentationMask && image) {
+                 // Добавляем эффект свечения вокруг пользователя
+                canvasCtx.shadowColor = avatarColors[currentColorIndex];
+                canvasCtx.shadowBlur = 25;
+                canvasCtx.shadowOffsetX = 0;
+                canvasCtx.shadowOffsetY = 0;
+
+                // Рисуем маску сегментации, чтобы создать форму для свечения
+                canvasCtx.drawImage(segmentationMask, 0, 0, canvasWidth, canvasHeight);
+                
+                // Сбрасываем тень для последующих отрисовок
+                canvasCtx.shadowColor = 'transparent';
+
+                // Используем 'source-in', чтобы обрезать видео по маске
+                canvasCtx.globalCompositeOperation = 'source-in';
+                canvasCtx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
+
+            } else if (image) {
+                // Если маски нет, просто рисуем видео (на случай сбоя)
+                canvasCtx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
+            }
+            
+            // Сбрасываем режим наложения
+            canvasCtx.globalCompositeOperation = 'source-over';
+
+            // --- ОТРИСОВКА АВАТАРА ---
+            // Используем отзеркаленные данные для определения позы
+            const poseDetected = mirroredLandmarks && mirroredLandmarks.length > 0;
+            
+            if (poseDetected) {
+                const limbColor = '#ffab40';
+                
+                if (showLimbs) {
+                    // Настройки для конечностей
+                    canvasCtx.strokeStyle = limbColor;
+                    canvasCtx.lineWidth = 18;
+                    canvasCtx.lineCap = 'round';
+
+                    // --- Логика сглаживания ---
+                    const smoothPoint = (key, newPoint) => {
+                        if (!newPoint) return null;
+                        const oldPoint = smoothedPoints[key];
+                        const newSmoothedPoint = { x: newPoint.x, y: newPoint.y };
+
+                        if (oldPoint) {
+                            newSmoothedPoint.x = oldPoint.x * (1 - smoothingFactor) + newPoint.x * smoothingFactor;
+                            newSmoothedPoint.y = oldPoint.y * (1 - smoothingFactor) + newPoint.y * smoothingFactor;
+                        }
+                        
+                        smoothedPoints[key] = { x: newSmoothedPoint.x, y: newSmoothedPoint.y };
+                        return { ...newSmoothedPoint, visibility: newPoint.visibility };
+                    };
+
+                    // --- РЕАКТИВНЫЕ ДВИГАТЕЛИ ---
+                    const leftShoulder = mirroredLandmarks[11];
+                    const rightShoulder = mirroredLandmarks[12];
+                    const leftHip = mirroredLandmarks[23];
+                    const rightHip = mirroredLandmarks[24];
+
+                    let hipCenterX = canvasWidth / 2;
+                    if (leftShoulder && rightShoulder && leftShoulder.visibility > 0.3) {
+                        hipCenterX = ((leftShoulder.x + rightShoulder.x) / 2) * canvasWidth;
+                    }
+
+                    // --- Определение базы аватара ---
+                    let avatarBaseY = 500; // Базовая высота
+                    let avatarWidth = 150; // Ширина по умолчанию
+
+                    if (leftShoulder && rightShoulder && leftShoulder.visibility > 0.4) {
+                        avatarWidth = Math.abs(leftShoulder.x - rightShoulder.x) * canvasWidth;
+                    }
+
+                    if (leftHip && rightHip && leftHip.visibility > 0.4) {
+                        avatarBaseY = Math.max(leftHip.y, rightHip.y) * canvasHeight + 10; 
+                    } else if (leftShoulder && rightShoulder) {
+                        avatarBaseY = ((leftShoulder.y + rightShoulder.y) / 2) * canvasHeight + 150;
+                    }
+                    
+                    const isRunning = Math.abs(horizontalVelocity) > 1;
+                    
+                    if (isRunning) {
+                        avatarRunPhase += 0.4;
+                    }
+                    
+                    drawJetEngines(canvasCtx, hipCenterX, avatarBaseY, avatarWidth, avatarRunPhase, isRunning, horizontalVelocity);
+                
+                    updateStatus(`✅ Поза обнаружена!`, true);
+                } else {
+                     updateStatus(`✅ Поза обнаружена!`, true);
+                }
+
+            } else {
+                updateStatus(`🧍‍♂️ Пошевелитесь для управления`, false);
+                smoothedPoints = {}; // Сброс сглаживания при потере позы
+            }
+            
+            // Отладочная информация
+            if (debugMode && mirroredLandmarks) {
+                drawConnectors(canvasCtx, mirroredLandmarks, POSE_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
+                drawLandmarks(canvasCtx, mirroredLandmarks, {color: '#FF0000', lineWidth: 1, radius: 3});
+            }
+
+             // Восстанавливаем контекст
+             canvasCtx.restore();
+        }
+
+        function onResults(results) {
+            drawAvatar(results);
+        }
+
+        function toggleDebug() {
+            debugMode = !debugMode;
+        }
+        
+        function toggleLimbs() {
+            showLimbs = !showLimbs;
+        }
+        
+        function changeAvatarColor() {
+            currentColorIndex = (currentColorIndex + 1) % avatarColors.length;
+        }
+
+        function setGesture(gesture) {
+            currentGesture = gesture;
+            console.log(`Gesture set to: ${gesture}`);
+        }
+
+        // Инициализация MediaPipe
+        async function initializeMediaPipe() {
+            try {
+                updateStatus("Загрузка MediaPipe Pose...");
+                const pose = new Pose({
+                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1635988162/${file}`
+                });
+                pose.setOptions({
+                    modelComplexity: 1,
+                    smoothLandmarks: true,
+                    minDetectionConfidence: 0.5,
+                    minTrackingConfidence: 0.5,
+                    enableSegmentation: true,
+                    selfieMode: true
+                });
+                pose.onResults(onResults);
+
+                updateStatus("Запуск камеры...");
+                
+                // Получаем поток камеры
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 800, height: 600 }
+                });
+                
+                videoTrackingElement.srcObject = stream;
+                
+                const camera = new Camera(videoTrackingElement, {
+                    onFrame: async () => {
+                        await pose.send({ image: videoTrackingElement });
+                    },
+                    width: 800,
+                    height: 600
+                });
+                
+                await camera.start();
+                updateStatus("🎥 Камера активна - Технология POSE!", true);
+                
+            } catch (error) {
+                console.error('Ошибка инициализации:', error);
+                updateStatus("❌ Ошибка загрузки. Проверьте камеру и подключение.");
+            }
+        }
+
+        // Запуск
+        window.addEventListener('load', () => {
+            initializeMediaPipe();
+            setupSettingsHandlers();
+        });
+
+        // Управление кастомизацией
+        function toggleCustomization() {
+            customizationVisible = !customizationVisible;
+            const testPanel = document.getElementById('testPanel');
+            const approvedPanel = document.getElementById('approvedPanel');
+            
+            if (customizationVisible) {
+                testPanel.classList.add('visible');
+                approvedPanel.classList.add('visible');
+                if (!scene) {
+                    initThreeJS();
+                }
+                renderTestCarriers();
+                renderApprovedCarriers();
+            } else {
+                testPanel.classList.remove('visible');
+                approvedPanel.classList.remove('visible');
+            }
+        }
+
+        // Инициализация Three.js для 3D превью
+        function initThreeJS() {
+            console.log('🔧 Инициализация Three.js для превью...');
+            
+            if (typeof THREE === 'undefined') {
+                console.error('❌ THREE.js не загружен!');
+                return false;
+            }
+            
+            scene = new THREE.Scene();
+            
+            // Создаем рендереры для каждого превью по мере необходимости
+            console.log('✅ Three.js готов для создания превью');
+            return true;
+        }
+
+        // Создание 3D превью носителя
+        function create3DPreview(container, carrierType) {
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            
+            renderer.setSize(width, height);
+            renderer.setClearColor(0x000000, 0);
+            container.appendChild(renderer.domElement);
+            
+            // Освещение
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(5, 10, 5);
+            scene.add(directionalLight);
+            
+            // Создаем модель носителя
+            const carrier = createCarrierModel(carrierType);
+            scene.add(carrier);
+            
+            camera.position.set(0, 2, 5);
+            camera.lookAt(0, 0, 0);
+            
+            // Анимация
+            function animate() {
+                requestAnimationFrame(animate);
+                if (carrier) {
+                    carrier.rotation.y += 0.01;
+                }
+                renderer.render(scene, camera);
+            }
+            animate();
+            
+            return { scene, renderer, camera, carrier };
+        }
+
+        // Создание 3D модели носителя
+        function createCarrierModel(type) {
+            const group = new THREE.Group();
+            
+            switch (type) {
+                case 'jets':
+                    // Реактивные двигатели
+                    const jetGeometry = new THREE.CylinderGeometry(0.3, 0.4, 1, 8);
+                    const jetMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
+                    
+                    const jet1 = new THREE.Mesh(jetGeometry, jetMaterial);
+                    jet1.position.x = -0.5;
+                    const jet2 = new THREE.Mesh(jetGeometry, jetMaterial);
+                    jet2.position.x = 0.5;
+                    
+                    group.add(jet1, jet2);
+                    break;
+                    
+                case 'hoverboard':
+                    // Ховерборд
+                    const boardGeometry = new THREE.BoxGeometry(2, 0.1, 0.6);
+                    const boardMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff88 });
+                    const board = new THREE.Mesh(boardGeometry, boardMaterial);
+                    group.add(board);
+                    break;
+                    
+                case 'energy_platform':
+                    // Энергетическая платформа
+                    const platformGeometry = new THREE.CylinderGeometry(1, 1, 0.2, 8);
+                    const platformMaterial = new THREE.MeshPhongMaterial({ 
+                        color: 0x6600ff,
+                        emissive: 0x220066
+                    });
+                    const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+                    group.add(platform);
+                    break;
+                    
+                default:
+                    // Базовая модель
+                    const defaultGeometry = new THREE.BoxGeometry(1, 0.5, 1);
+                    const defaultMaterial = new THREE.MeshPhongMaterial({ color: 0x0099ff });
+                    const defaultMesh = new THREE.Mesh(defaultGeometry, defaultMaterial);
+                    group.add(defaultMesh);
+            }
+            
+            return group;
+        }
+
+        // Отрисовка тестовых носителей
+        function renderTestCarriers() {
+            const container = document.getElementById('testCarriers');
+            container.innerHTML = '';
+            
+            TEST_CARRIERS.forEach(carrier => {
+                const item = document.createElement('div');
+                item.className = 'carrier-item';
+                item.onclick = () => selectCarrier(carrier);
+                
+                item.innerHTML = `
+                    <span class="carrier-emoji">${carrier.emoji}</span>
+                    <div class="carrier-name">${carrier.name}</div>
+                    <div class="carrier-3d" id="preview-${carrier.id}"></div>
+                `;
+                
+                container.appendChild(item);
+                
+                // Создаем 3D превью после добавления в DOM
+                setTimeout(() => {
+                    const previewContainer = document.getElementById(`preview-${carrier.id}`);
+                    if (previewContainer) {
+                        create3DPreview(previewContainer, carrier.type);
+                    }
+                }, 100);
+            });
+        }
+
+        // Выбор носителя
+        function selectCarrier(carrier) {
+            // Убираем выделение с предыдущего
+            document.querySelectorAll('.carrier-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Выделяем текущий
+            event.target.closest('.carrier-item').classList.add('selected');
+            
+            currentCarrier = carrier;
+            console.log(`🎯 Выбран носитель: ${carrier.name}`);
+        }
+
+        // Сохранение носителя в коллекцию
+        function saveCurrentCarrier() {
+            if (!currentCarrier) {
+                alert('Выберите носитель для сохранения!');
+                return;
+            }
+            
+            const settings = {
+                width: parseFloat(document.getElementById('widthSlider').value),
+                height: parseFloat(document.getElementById('heightSlider').value),
+                offset: parseInt(document.getElementById('offsetSlider').value)
+            };
+            
+            const approvedCarrier = {
+                ...currentCarrier,
+                settings,
+                id: `${currentCarrier.id}_${Date.now()}` // Уникальный ID
+            };
+            
+            approvedCarriers.push(approvedCarrier);
+            localStorage.setItem('approvedCarriers', JSON.stringify(approvedCarriers));
+            
+            renderApprovedCarriers();
+            
+            // Визуальная обратная связь
+            const saveBtn = document.querySelector('.save-btn');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = '✅ СОХРАНЕНО!';
+            saveBtn.style.background = 'linear-gradient(45deg, #4caf50, #66bb6a)';
+            
+            setTimeout(() => {
+                saveBtn.textContent = originalText;
+                saveBtn.style.background = 'linear-gradient(45deg, #ff6b35, #f7931e)';
+            }, 2000);
+        }
+
+        // Отрисовка одобренных носителей
+        function renderApprovedCarriers() {
+            const container = document.getElementById('approvedCarriers');
+            
+            if (approvedCarriers.length === 0) {
+                container.innerHTML = '<div class="empty-state">Пока нет одобренных носителей</div>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            approvedCarriers.forEach(carrier => {
+                const item = document.createElement('div');
+                item.className = 'approved-item';
+                
+                item.innerHTML = `
+                    <div class="approved-info">
+                        <div class="approved-name">${carrier.emoji} ${carrier.name}</div>
+                        <div class="approved-settings">W:${carrier.settings.width} H:${carrier.settings.height} Y:${carrier.settings.offset}</div>
+                    </div>
+                    <button class="remove-btn" onclick="removeApprovedCarrier('${carrier.id}')">×</button>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+
+        // Удаление носителя из коллекции
+        function removeApprovedCarrier(carrierId) {
+            approvedCarriers = approvedCarriers.filter(c => c.id !== carrierId);
+            localStorage.setItem('approvedCarriers', JSON.stringify(approvedCarriers));
+            renderApprovedCarriers();
+        }
+
+        // Обновление значений слайдеров
+        function setupSettingsHandlers() {
+            const widthSlider = document.getElementById('widthSlider');
+            const heightSlider = document.getElementById('heightSlider');
+            const offsetSlider = document.getElementById('offsetSlider');
+            
+            const widthValue = document.getElementById('widthValue');
+            const heightValue = document.getElementById('heightValue');
+            const offsetValue = document.getElementById('offsetValue');
+            
+            widthSlider.oninput = () => widthValue.textContent = widthSlider.value;
+            heightSlider.oninput = () => heightValue.textContent = heightSlider.value;
+            offsetSlider.oninput = () => offsetValue.textContent = offsetSlider.value;
+        }
+    </script>
+</body>
+</html> 

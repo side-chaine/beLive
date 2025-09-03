@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>beLIVE 2030 - Концепция "Живая лента"</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Заголовок */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            background: rgba(10, 10, 10, 0.8);
+        }
+
+        .logo {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-text {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff3366 0%, #ff6b6b 50%, #4ecdc4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: -5px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .progress-ring {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: conic-gradient(#ff3366 0deg 216deg, rgba(255, 255, 255, 0.1) 216deg 360deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .progress-ring:hover {
+            transform: scale(1.1);
+        }
+
+        .progress-ring::before {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #1a1a2e;
+        }
+
+        .daily-progress {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 1;
+        }
+
+        .progress-text {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #ff3366;
+        }
+
+        .progress-label {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff3366, #4ecdc4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.1);
+        }
+
+        /* Основной контент */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            height: calc(100vh - 100px);
+            gap: 30px;
+            padding: 30px;
+        }
+
+        /* Live потоки */
+        .live-streams {
+            overflow-y: auto;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-header h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .tab.active, .tab:hover {
+            background: #ff3366;
+            color: #ffffff;
+            border-color: #ff3366;
+            transform: translateY(-2px);
+        }
+
+        .streams-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .stream-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+
+        .stream-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(255, 51, 102, 0.2);
+            border-color: rgba(255, 51, 102, 0.5);
+        }
+
+        .stream-preview {
+            position: relative;
+            height: 180px;
+            background: linear-gradient(135deg, #2d3748, #4a5568);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stream-thumbnail {
+            font-size: 3rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .live-indicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #ff3366;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .viewer-count {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .stream-info {
+            padding: 15px;
+        }
+
+        .stream-info h3 {
+            margin: 0 0 5px 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .stream-info p {
+            margin: 0 0 15px 0;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .stream-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .join-btn, .watch-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .join-btn {
+            background: linear-gradient(135deg, #ff3366, #ff6b6b);
+            color: white;
+        }
+
+        .join-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255, 51, 102, 0.4);
+        }
+
+        .watch-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .watch-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        /* Боковая панель */
+        .sidebar {
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .sidebar section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+
+        .sidebar section:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .sidebar h3 {
+            margin: 0 0 15px 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .quick-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .quick-btn.concert {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .quick-btn.karaoke {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        }
+
+        .quick-btn.practice {
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+        }
+
+        .quick-btn.live {
+            background: linear-gradient(135deg, #ff3366, #e74c3c);
+        }
+
+        .quick-btn:hover {
+            transform: translateY(-2px) scale(1.05);
+        }
+
+        .demo-notice {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .demo-notice.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-link {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .sidebar {
+                order: -1;
+            }
+            
+            .header {
+                padding: 15px 20px;
+            }
+            
+            .logo-text {
+                font-size: 1.5rem;
+            }
+            
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">← Назад к beLIVE</a>
+    
+    <!-- Заголовок -->
+    <header class="header">
+        <div class="logo">
+            <span class="logo-text">beLIVE</span>
+            <span class="tagline">Концепция: Живая лента</span>
+        </div>
+        <div class="user-info">
+            <div class="progress-ring">
+                <div class="daily-progress">
+                    <span class="progress-text">3/5</span>
+                    <span class="progress-label">цели</span>
+                </div>
+            </div>
+            <div class="user-avatar">👤</div>
+        </div>
+    </header>
+    
+    <!-- Основной контент -->
+    <main class="main-content">
+        <!-- Левая панель: Live потоки -->
+        <section class="live-streams">
+            <div class="section-header">
+                <h2>🔴 Live Streams</h2>
+                <div class="filter-tabs">
+                    <button class="tab active">Караоке</button>
+                    <button class="tab">Обучение</button>
+                    <button class="tab">Дуэты</button>
+                </div>
+            </div>
+            
+            <div class="streams-grid">
+                <div class="stream-card">
+                    <div class="stream-preview">
+                        <div class="stream-thumbnail">🎤</div>
+                        <div class="live-indicator">LIVE</div>
+                        <div class="viewer-count">1.2K</div>
+                    </div>
+                    <div class="stream-info">
+                        <h3>Анна поет рок-хиты</h3>
+                        <p>Присоединяйтесь к караоке!</p>
+                        <div class="stream-actions">
+                            <button class="join-btn">🎵 Спеть дуэт</button>
+                            <button class="watch-btn">👁️ Смотреть</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stream-card">
+                    <div class="stream-preview">
+                        <div class="stream-thumbnail">🎭</div>
+                        <div class="live-indicator">LIVE</div>
+                        <div class="viewer-count">856</div>
+                    </div>
+                    <div class="stream-info">
+                        <h3>Урок вокала: дыхание</h3>
+                        <p>Базовые техники для начинающих</p>
+                        <div class="stream-actions">
+                            <button class="join-btn">📚 Учиться</button>
+                            <button class="watch-btn">👁️ Смотреть</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stream-card">
+                    <div class="stream-preview">
+                        <div class="stream-thumbnail">🌟</div>
+                        <div class="live-indicator">LIVE</div>
+                        <div class="viewer-count">2.1K</div>
+                    </div>
+                    <div class="stream-info">
+                        <h3>Битва голосов</h3>
+                        <p>Кто споет лучше? Голосуй!</p>
+                        <div class="stream-actions">
+                            <button class="join-btn">⚔️ Участвовать</button>
+                            <button class="watch-btn">👁️ Смотреть</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stream-card">
+                    <div class="stream-preview">
+                        <div class="stream-thumbnail">🎸</div>
+                        <div class="live-indicator">LIVE</div>
+                        <div class="viewer-count">643</div>
+                    </div>
+                    <div class="stream-info">
+                        <h3>Джем-сессия</h3>
+                        <p>Импровизация с инструментами</p>
+                        <div class="stream-actions">
+                            <button class="join-btn">🎶 Играть</button>
+                            <button class="watch-btn">👁️ Смотреть</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Правая панель -->
+        <aside class="sidebar">
+            <section>
+                <h3>🚀 Быстрый старт</h3>
+                <div class="action-buttons">
+                    <button class="quick-btn concert">Концерт</button>
+                    <button class="quick-btn karaoke">Караоке</button>
+                    <button class="quick-btn practice">Репетиция</button>
+                    <button class="quick-btn live">LIVE</button>
+                </div>
+            </section>
+            
+            <section>
+                <h3>📊 Ваш прогресс</h3>
+                <p>Сегодня вы уже спели <strong>23 минуты</strong> и выполнили <strong>7 песен</strong> с точностью <strong>91%</strong>.</p>
+            </section>
+            
+            <section>
+                <h3>🔥 Тренды недели</h3>
+                <p><strong>#1</strong> Bohemian Rhapsody (+1,847)</p>
+                <p><strong>#2</strong> Someone Like You (+1,523)</p>
+                <p><strong>#3</strong> Perfect (+1,401)</p>
+            </section>
+        </aside>
+    </main>
+
+    <div class="demo-notice" id="demoNotice">
+        <h3>🎭 Демо-режим</h3>
+        <p>Это интерактивный макет концепции.<br>Реальная функциональность не реализована.</p>
+    </div>
+
+    <script>
+        // Базовая интерактивность для демо
+        const buttons = document.querySelectorAll('button, .stream-card');
+        const demoNotice = document.getElementById('demoNotice');
+
+        buttons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                demoNotice.classList.add('show');
+                setTimeout(() => {
+                    demoNotice.classList.remove('show');
+                }, 2000);
+            });
+        });
+
+        // Анимация счетчика зрителей
+        setInterval(() => {
+            const viewerCounts = document.querySelectorAll('.viewer-count');
+            viewerCounts.forEach(count => {
+                const current = parseInt(count.textContent.replace('K', ''));
+                const change = Math.random() > 0.5 ? 1 : -1;
+                const newValue = Math.max(1, current + change);
+                count.textContent = newValue + 'K';
+            });
+        }, 3000);
+    </script>
+</body>
+</html> 

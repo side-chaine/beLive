@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Avatar Carrier Curator - Система кураторства носителей</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        .main-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Левая панель - тестовые носители */
+        .test-carriers-panel {
+            width: 280px;
+            background: rgba(15, 20, 25, 0.95);
+            border-right: 3px solid #00ffff;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 5px 0 15px rgba(0, 255, 255, 0.2);
+        }
+
+        .panel-title {
+            color: #00ffff;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            text-align: center;
+            text-shadow: 0 0 15px #00ffff;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .carrier-item {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(0, 255, 255, 0.05));
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .carrier-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .carrier-item:hover::before {
+            left: 100%;
+        }
+
+        .carrier-item:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 255, 255, 0.1));
+            border-color: #00ffff;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .carrier-item.active {
+            background: linear-gradient(135deg, rgba(255, 165, 0, 0.3), rgba(255, 165, 0, 0.1));
+            border-color: #ffa500;
+            box-shadow: 0 0 30px rgba(255, 165, 0, 0.8);
+            transform: scale(1.02);
+        }
+
+        .carrier-emoji {
+            font-size: 32px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .carrier-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        /* Центральная область */
+        .center-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .avatar-container {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(circle at center, rgba(0, 255, 255, 0.1) 0%, transparent 70%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #avatarCanvas {
+            width: 500px;
+            height: 400px;
+            border: 3px solid #00ffff;
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        #threeCanvas {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+            z-index: 10;
+            border: 2px solid rgba(255, 165, 0, 0.6);
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        /* Панель настроек */
+        .settings-panel {
+            height: 140px;
+            background: linear-gradient(135deg, rgba(15, 20, 25, 0.98), rgba(25, 30, 35, 0.98));
+            border-top: 3px solid #00ffff;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            box-shadow: 0 -5px 15px rgba(0, 255, 255, 0.2);
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .setting-label {
+            color: #00ffff;
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .setting-slider {
+            width: 140px;
+            height: 8px;
+            background: linear-gradient(90deg, rgba(0, 255, 255, 0.3), rgba(0, 255, 255, 0.6));
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .setting-slider:hover {
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+
+        .setting-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            background: radial-gradient(circle, #00ffff, #0099cc);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+            transition: all 0.2s ease;
+        }
+
+        .setting-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 1);
+        }
+
+        .setting-value {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: bold;
+            background: rgba(0, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 255, 255, 0.4);
+        }
+
+        .save-button {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            border: none;
+            padding: 16px 32px;
+            border-radius: 30px;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .save-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .save-button:hover::before {
+            left: 100%;
+        }
+
+        .save-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.7);
+        }
+
+        .save-button:active {
+            transform: translateY(0);
+        }
+
+        /* Правая панель - одобренные носители */
+        .approved-carriers-panel {
+            width: 280px;
+            background: rgba(15, 20, 25, 0.95);
+            border-left: 3px solid #00ff00;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: -5px 0 15px rgba(0, 255, 0, 0.2);
+        }
+
+        .approved-panel-title {
+            color: #00ff00;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            text-align: center;
+            text-shadow: 0 0 15px #00ff00;
+            border-bottom: 2px solid rgba(0, 255, 0, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .approved-item {
+            background: linear-gradient(135deg, rgba(0, 255, 0, 0.15), rgba(0, 255, 0, 0.05));
+            border: 2px solid rgba(0, 255, 0, 0.4);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .approved-item:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .approved-item .remove-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: linear-gradient(45deg, #ff4444, #cc3333);
+            border: none;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(255, 68, 68, 0.4);
+        }
+
+        .remove-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(255, 68, 68, 0.7);
+        }
+
+        .approved-emoji {
+            font-size: 28px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .approved-name {
+            font-size: 13px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 5px;
+        }
+
+        .approved-settings {
+            font-size: 11px;
+            color: #aaaaaa;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 3px 8px;
+            border-radius: 8px;
+        }
+
+        /* Статус камеры */
+        .camera-status {
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(45deg, #00ff00, #00cc00);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0, 255, 0, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 4px 15px rgba(0, 255, 0, 0.4); }
+            50% { box-shadow: 0 4px 25px rgba(0, 255, 0, 0.8); }
+        }
+
+        /* Скрытые элементы */
+        #videoInput {
+            display: none;
+        }
+
+        /* Скроллбары */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #00ffff, #0099cc);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #00cccc, #007799);
+        }
+
+        /* Анимации загрузки */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #00ffff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Левая панель - тестовые носители -->
+        <div class="test-carriers-panel">
+            <div class="panel-title">🧪 ТЕСТОВЫЕ НОСИТЕЛИ</div>
+            <div id="testCarriersList">
+                <!-- Носители будут добавлены через JS -->
+            </div>
+        </div>
+
+        <!-- Центральная область -->
+        <div class="center-area">
+            <div class="camera-status">✅ Система готова к тестированию!</div>
+            
+            <div class="avatar-container">
+                <video id="videoInput" autoplay muted></video>
+                <canvas id="avatarCanvas"></canvas>
+                <canvas id="threeCanvas" width="400" height="300"></canvas>
+            </div>
+
+            <!-- Панель настроек -->
+            <div class="settings-panel">
+                <div class="setting-group">
+                    <div class="setting-label">Ширина</div>
+                    <input type="range" class="setting-slider" id="widthSlider" min="0.5" max="2.5" step="0.1" value="1">
+                    <div class="setting-value" id="widthValue">1.0</div>
+                </div>
+                
+                <div class="setting-group">
+                    <div class="setting-label">Высота</div>
+                    <input type="range" class="setting-slider" id="heightSlider" min="0.5" max="2.5" step="0.1" value="1">
+                    <div class="setting-value" id="heightValue">1.0</div>
+                </div>
+                
+                <button class="save-button" id="saveCarrier">💾 СОХРАНИТЬ В КОЛЛЕКЦИЮ</button>
+                
+                <div class="setting-group">
+                    <div class="setting-label">Смещение</div>
+                    <input type="range" class="setting-slider" id="offsetSlider" min="-100" max="100" step="10" value="0">
+                    <div class="setting-value" id="offsetValue">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Правая панель - одобренные носители -->
+        <div class="approved-carriers-panel">
+            <div class="approved-panel-title">✅ ОДОБРЕННАЯ КОЛЛЕКЦИЯ</div>
+            <div id="approvedCarriersList">
+                <!-- Одобренные носители будут добавлены через JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Глобальные переменные
+        let pose, camera, videoElement, canvasElement, canvasCtx;
+        let scene, renderer, threeCamera, currentCarrier = null;
+        let carrierSettings = { width: 1, height: 1, offsetY: 0 };
+        let testCarriers = [];
+        let approvedCarriers = JSON.parse(localStorage.getItem('approvedCarriers') || '[]');
+
+        // Определение тестовых носителей
+        const TEST_CARRIERS = [
+            { id: 'jet_engines', name: 'Реактивные двигатели', emoji: '🚀', type: 'primitive' },
+            { id: 'hoverboard', name: 'Ховерборд', emoji: '🛹', type: 'primitive' },
+            { id: 'mech_legs', name: 'Механические ноги', emoji: '🦾', type: 'primitive' },
+            { id: 'dragon_wings', name: 'Крылья дракона', emoji: '🐉', type: 'primitive' },
+            { id: 'rocket_boots', name: 'Ракетные сапоги', emoji: '👢', type: 'primitive' },
+            { id: 'energy_platform', name: 'Энергетическая платформа', emoji: '⚡', type: 'primitive' },
+            { id: 'cyber_wheels', name: 'Кибер-колеса', emoji: '🎡', type: 'primitive' },
+            { id: 'plasma_thrusters', name: 'Плазменные двигатели', emoji: '🌟', type: 'primitive' }
+        ];
+
+        // Инициализация Three.js
+        function initThreeJS() {
+            console.log('🔧 Инициализация Three.js...');
+            
+            // Проверяем доступность THREE
+            if (typeof THREE === 'undefined') {
+                console.error('❌ THREE.js не загружен!');
+                return false;
+            }
+            
+            scene = new THREE.Scene();
+            console.log('✅ Scene создана');
+            
+            const canvas = document.getElementById('threeCanvas');
+            if (!canvas) {
+                console.error('❌ Canvas не найден!');
+                return false;
+            }
+            
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: canvas, 
+                alpha: true,
+                antialias: true 
+            });
+            
+            renderer.setSize(400, 300);
+            renderer.setClearColor(0x000000, 0);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            console.log('✅ Renderer настроен');
+            
+            // Освещение
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(5, 10, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+            
+            const pointLight = new THREE.PointLight(0x00ffff, 0.8, 100);
+            pointLight.position.set(0, 5, 0);
+            scene.add(pointLight);
+            console.log('✅ Освещение добавлено');
+            
+            // Камера
+            threeCamera = new THREE.PerspectiveCamera(75, 400/300, 0.1, 1000);
+            threeCamera.position.set(0, 2, 8);
+            threeCamera.lookAt(0, 0, 0);
+            console.log('✅ Камера настроена');
+            
+            // Добавляем тестовый куб для проверки
+            const testGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const testMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+            const testCube = new THREE.Mesh(testGeometry, testMaterial);
+            testCube.position.set(0, 0, 0);
+            scene.add(testCube);
+            console.log('✅ Тестовый куб добавлен');
+            
+            // Рендер цикл
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // Вращаем тестовый куб
+                if (testCube) {
+                    testCube.rotation.x += 0.01;
+                    testCube.rotation.y += 0.01;
+                }
+                
+                if (currentCarrier) {
+                    // Анимация носителя
+                    currentCarrier.rotation.y += 0.015;
+                    
+                    // Анимация пламени
+                    if (currentCarrier.userData.flames) {
+                        currentCarrier.userData.flames.forEach((flame, index) => {
+                            flame.material.opacity = 0.6 + Math.sin(Date.now() * 0.008 + index) * 0.4;
+                            flame.scale.y = 1 + Math.sin(Date.now() * 0.01 + index) * 0.3;
+                        });
+                    }
+                    
+                    // Анимация энергетических колец
+                    if (currentCarrier.userData.rings) {
+                        currentCarrier.userData.rings.forEach((ring, index) => {
+                            ring.rotation.z += 0.02 * (index + 1);
+                            ring.material.opacity = 0.5 + Math.sin(Date.now() * 0.005 + index) * 0.3;
+                        });
+                    }
+                }
+                
+                renderer.render(scene, threeCamera);
+            }
+            animate();
+            console.log('✅ Анимация запущена');
+            
+            return true;
+        }
+
+        // Создание примитивных носителей
+        function createPrimitiveCarrier(type, settings) {
+            const group = new THREE.Group();
+            
+            switch(type) {
+                case 'jet_engines':
+                    // Основная платформа
+                    const platform = new THREE.Mesh(
+                        new THREE.BoxGeometry(2.5 * settings.width, 0.4, 1.2),
+                        new THREE.MeshPhongMaterial({ 
+                            color: 0x666666,
+                            shininess: 100
+                        })
+                    );
+                    platform.castShadow = true;
+                    group.add(platform);
+                    
+                    // Двигатели
+                    const engines = [];
+                    for (let i = 0; i < 2; i++) {
+                        const engine = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.4, 0.5, 1.5 * settings.height, 12),
+                            new THREE.MeshPhongMaterial({ 
+                                color: 0x333333,
+                                shininess: 80
+                            })
+                        );
+                        engine.position.set((i === 0 ? -1 : 1) * settings.width, -0.8 * settings.height, 0);
+                        engine.castShadow = true;
+                        engines.push(engine);
+                        group.add(engine);
+                    }
+                    
+                    // Пламя
+                    const flames = [];
+                    for (let i = 0; i < 2; i++) {
+                        const flame = new THREE.Mesh(
+                            new THREE.ConeGeometry(0.3, 1.5, 8),
+                            new THREE.MeshBasicMaterial({ 
+                                color: 0x00aaff,
+                                transparent: true,
+                                opacity: 0.8
+                            })
+                        );
+                        flame.position.set((i === 0 ? -1 : 1) * settings.width, -1.6 * settings.height, 0);
+                        flames.push(flame);
+                        group.add(flame);
+                    }
+                    group.userData.flames = flames;
+                    break;
+                    
+                case 'hoverboard':
+                    const board = new THREE.Mesh(
+                        new THREE.BoxGeometry(3 * settings.width, 0.3, 1),
+                        new THREE.MeshPhongMaterial({ 
+                            color: 0xff6600,
+                            shininess: 120
+                        })
+                    );
+                    board.castShadow = true;
+                    group.add(board);
+                    
+                    // Энергетические кольца
+                    const rings = [];
+                    for (let i = 0; i < 4; i++) {
+                        const ring = new THREE.Mesh(
+                            new THREE.TorusGeometry(0.5, 0.15, 8, 16),
+                            new THREE.MeshBasicMaterial({ 
+                                color: 0x00ffff,
+                                transparent: true,
+                                opacity: 0.7
+                            })
+                        );
+                        ring.position.set((i - 1.5) * 0.7 * settings.width, -0.6 * settings.height, 0);
+                        ring.rotation.x = Math.PI / 2;
+                        rings.push(ring);
+                        group.add(ring);
+                    }
+                    group.userData.rings = rings;
+                    break;
+                    
+                case 'mech_legs':
+                    // Создание механических ног
+                    for (let legIndex = 0; legIndex < 2; legIndex++) {
+                        const xPos = (legIndex === 0 ? -0.5 : 0.5) * settings.width;
+                        
+                        // Бедро
+                        const thigh = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.2, 0.25, 1.2 * settings.height, 8),
+                            new THREE.MeshPhongMaterial({ color: 0x444444 })
+                        );
+                        thigh.position.set(xPos, -0.6 * settings.height, 0);
+                        thigh.castShadow = true;
+                        group.add(thigh);
+                        
+                        // Голень
+                        const shin = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.15, 0.2, 1 * settings.height, 8),
+                            new THREE.MeshPhongMaterial({ color: 0x666666 })
+                        );
+                        shin.position.set(xPos, -1.4 * settings.height, 0);
+                        shin.castShadow = true;
+                        group.add(shin);
+                        
+                        // Стопа
+                        const foot = new THREE.Mesh(
+                            new THREE.BoxGeometry(0.6, 0.2, 0.8),
+                            new THREE.MeshPhongMaterial({ color: 0x888888 })
+                        );
+                        foot.position.set(xPos, -1.9 * settings.height, 0.2);
+                        foot.castShadow = true;
+                        group.add(foot);
+                    }
+                    break;
+                    
+                case 'dragon_wings':
+                    // Создание крыльев дракона
+                    for (let wingIndex = 0; wingIndex < 2; wingIndex++) {
+                        const side = wingIndex === 0 ? -1 : 1;
+                        
+                        // Основание крыла
+                        const wingBase = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.1, 0.2, 0.8, 6),
+                            new THREE.MeshPhongMaterial({ color: 0x8B4513 })
+                        );
+                        wingBase.position.set(side * 0.3, 0, 0);
+                        wingBase.rotation.z = side * Math.PI / 6;
+                        group.add(wingBase);
+                        
+                        // Мембрана крыла
+                        const wingMembrane = new THREE.Mesh(
+                            new THREE.PlaneGeometry(2 * settings.width, 1.5 * settings.height),
+                            new THREE.MeshPhongMaterial({ 
+                                color: 0x654321,
+                                transparent: true,
+                                opacity: 0.8,
+                                side: THREE.DoubleSide
+                            })
+                        );
+                        wingMembrane.position.set(side * 1.2 * settings.width, 0, 0);
+                        wingMembrane.rotation.y = side * Math.PI / 4;
+                        group.add(wingMembrane);
+                    }
+                    break;
+                    
+                case 'energy_platform':
+                    // Основная платформа
+                    const energyPlatform = new THREE.Mesh(
+                        new THREE.CylinderGeometry(1.5 * settings.width, 1.5 * settings.width, 0.3, 16),
+                        new THREE.MeshPhongMaterial({ 
+                            color: 0x9900ff,
+                            shininess: 150
+                        })
+                    );
+                    energyPlatform.castShadow = true;
+                    group.add(energyPlatform);
+                    
+                    // Энергетические кристаллы
+                    const crystals = [];
+                    for (let i = 0; i < 6; i++) {
+                        const angle = (i / 6) * Math.PI * 2;
+                        const crystal = new THREE.Mesh(
+                            new THREE.OctahedronGeometry(0.2),
+                            new THREE.MeshBasicMaterial({ 
+                                color: 0x00ffff,
+                                transparent: true,
+                                opacity: 0.8
+                            })
+                        );
+                        crystal.position.set(
+                            Math.cos(angle) * settings.width,
+                            -0.5 * settings.height,
+                            Math.sin(angle) * settings.width
+                        );
+                        crystals.push(crystal);
+                        group.add(crystal);
+                    }
+                    group.userData.rings = crystals;
+                    break;
+            }
+            
+            group.position.y = settings.offsetY * 0.02;
+            return group;
+        }
+
+        // Обновление текущего носителя
+        function updateCurrentCarrier() {
+            if (currentCarrier) {
+                scene.remove(currentCarrier);
+            }
+            
+            const activeCarrier = document.querySelector('.carrier-item.active');
+            if (activeCarrier) {
+                const carrierId = activeCarrier.dataset.id;
+                const carrierData = TEST_CARRIERS.find(c => c.id === carrierId);
+                
+                if (carrierData) {
+                    currentCarrier = createPrimitiveCarrier(carrierId, carrierSettings);
+                    scene.add(currentCarrier);
+                }
+            }
+        }
+
+        // Обработчики настроек
+        function setupSettingsHandlers() {
+            const widthSlider = document.getElementById('widthSlider');
+            const heightSlider = document.getElementById('heightSlider');
+            const offsetSlider = document.getElementById('offsetSlider');
+            const saveButton = document.getElementById('saveCarrier');
+            
+            widthSlider.addEventListener('input', (e) => {
+                carrierSettings.width = parseFloat(e.target.value);
+                document.getElementById('widthValue').textContent = carrierSettings.width.toFixed(1);
+                updateCurrentCarrier();
+            });
+            
+            heightSlider.addEventListener('input', (e) => {
+                carrierSettings.height = parseFloat(e.target.value);
+                document.getElementById('heightValue').textContent = carrierSettings.height.toFixed(1);
+                updateCurrentCarrier();
+            });
+            
+            offsetSlider.addEventListener('input', (e) => {
+                carrierSettings.offsetY = parseInt(e.target.value);
+                document.getElementById('offsetValue').textContent = carrierSettings.offsetY;
+                updateCurrentCarrier();
+            });
+            
+            saveButton.addEventListener('click', () => {
+                const activeCarrier = document.querySelector('.carrier-item.active');
+                if (activeCarrier) {
+                    const carrierId = activeCarrier.dataset.id;
+                    const carrierData = TEST_CARRIERS.find(c => c.id === carrierId);
+                    
+                    // Проверяем, не добавлен ли уже этот носитель
+                    const existingIndex = approvedCarriers.findIndex(c => 
+                        c.id === carrierId && 
+                        JSON.stringify(c.settings) === JSON.stringify(carrierSettings)
+                    );
+                    
+                    if (existingIndex === -1) {
+                        const approvedCarrier = {
+                            ...carrierData,
+                            settings: { ...carrierSettings },
+                            timestamp: Date.now()
+                        };
+                        
+                        approvedCarriers.push(approvedCarrier);
+                        localStorage.setItem('approvedCarriers', JSON.stringify(approvedCarriers));
+                        
+                        renderApprovedCarriers();
+                        
+                        // Визуальная обратная связь
+                        saveButton.innerHTML = '✅ ДОБАВЛЕНО В КОЛЛЕКЦИЮ!';
+                        saveButton.style.background = 'linear-gradient(45deg, #00ff00, #00cc00)';
+                        setTimeout(() => {
+                            saveButton.innerHTML = '💾 СОХРАНИТЬ В КОЛЛЕКЦИЮ';
+                            saveButton.style.background = 'linear-gradient(45deg, #ff6b35, #f7931e)';
+                        }, 2000);
+                    } else {
+                        // Уже существует
+                        saveButton.innerHTML = '⚠️ УЖЕ В КОЛЛЕКЦИИ';
+                        saveButton.style.background = 'linear-gradient(45deg, #ffaa00, #ff8800)';
+                        setTimeout(() => {
+                            saveButton.innerHTML = '💾 СОХРАНИТЬ В КОЛЛЕКЦИЮ';
+                            saveButton.style.background = 'linear-gradient(45deg, #ff6b35, #f7931e)';
+                        }, 2000);
+                    }
+                } else {
+                    // Не выбран носитель
+                    saveButton.innerHTML = '❌ ВЫБЕРИТЕ НОСИТЕЛЬ';
+                    saveButton.style.background = 'linear-gradient(45deg, #ff4444, #cc3333)';
+                    setTimeout(() => {
+                        saveButton.innerHTML = '💾 СОХРАНИТЬ В КОЛЛЕКЦИЮ';
+                        saveButton.style.background = 'linear-gradient(45deg, #ff6b35, #f7931e)';
+                    }, 2000);
+                }
+            });
+        }
+
+        // Рендер списка тестовых носителей
+        function renderTestCarriers() {
+            const container = document.getElementById('testCarriersList');
+            container.innerHTML = '';
+            
+            TEST_CARRIERS.forEach(carrier => {
+                const item = document.createElement('div');
+                item.className = 'carrier-item';
+                item.dataset.id = carrier.id;
+                item.innerHTML = `
+                    <span class="carrier-emoji">${carrier.emoji}</span>
+                    <div class="carrier-name">${carrier.name}</div>
+                `;
+                
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.carrier-item').forEach(el => el.classList.remove('active'));
+                    item.classList.add('active');
+                    updateCurrentCarrier();
+                });
+                
+                container.appendChild(item);
+            });
+        }
+
+        // Рендер списка одобренных носителей
+        function renderApprovedCarriers() {
+            const container = document.getElementById('approvedCarriersList');
+            container.innerHTML = '';
+            
+            if (approvedCarriers.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">Пока нет одобренных носителей</div>';
+                return;
+            }
+            
+            approvedCarriers.forEach((carrier, index) => {
+                const item = document.createElement('div');
+                item.className = 'approved-item';
+                item.innerHTML = `
+                    <button class="remove-btn" onclick="removeApprovedCarrier(${index})">×</button>
+                    <span class="approved-emoji">${carrier.emoji}</span>
+                    <div class="approved-name">${carrier.name}</div>
+                    <div class="approved-settings">
+                        W:${carrier.settings.width} H:${carrier.settings.height} Y:${carrier.settings.offsetY}
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Удаление одобренного носителя
+        function removeApprovedCarrier(index) {
+            if (confirm('Удалить этот носитель из коллекции?')) {
+                approvedCarriers.splice(index, 1);
+                localStorage.setItem('approvedCarriers', JSON.stringify(approvedCarriers));
+                renderApprovedCarriers();
+            }
+        }
+
+        // Инициализация MediaPipe (упрощенная версия для демо)
+        function initMediaPipe() {
+            videoElement = document.getElementById('videoInput');
+            canvasElement = document.getElementById('avatarCanvas');
+            canvasCtx = canvasElement.getContext('2d');
+
+            // Заглушка для демо
+            canvasCtx.fillStyle = 'rgba(0, 255, 255, 0.1)';
+            canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+            
+            canvasCtx.fillStyle = '#00ffff';
+            canvasCtx.font = '24px Arial';
+            canvasCtx.textAlign = 'center';
+            canvasCtx.fillText('ОБЛАСТЬ АВАТАРА', canvasElement.width/2, canvasElement.height/2 - 20);
+            canvasCtx.fillText('(Здесь будет ваше видео)', canvasElement.width/2, canvasElement.height/2 + 20);
+        }
+
+        // Инициализация приложения
+        function init() {
+            console.log('🚀 Запуск системы кураторства носителей...');
+            
+            // Проверяем загрузку Three.js
+            if (typeof THREE === 'undefined') {
+                console.error('❌ THREE.js не загружен! Повторная попытка через 1 секунду...');
+                setTimeout(init, 1000);
+                return;
+            }
+            
+            // Инициализация компонентов
+            const threeInitialized = initThreeJS();
+            if (!threeInitialized) {
+                console.error('❌ Ошибка инициализации Three.js');
+                return;
+            }
+            
+            initMediaPipe();
+            setupSettingsHandlers();
+            renderTestCarriers();
+            renderApprovedCarriers();
+            
+            console.log('✅ Система кураторства готова к работе!');
+            console.log(`📊 Загружено ${TEST_CARRIERS.length} тестовых носителей`);
+            console.log(`💾 В коллекции: ${approvedCarriers.length} одобренных носителей`);
+            
+            // Автоматически выбираем первый носитель для демонстрации
+            setTimeout(() => {
+                const firstCarrier = document.querySelector('.carrier-item');
+                if (firstCarrier) {
+                    firstCarrier.click();
+                    console.log('🎯 Автоматически выбран первый носитель для демонстрации');
+                }
+            }, 500);
+        }
+
+        // Запуск при загрузке страницы
+        window.addEventListener('load', init);
+        
+        // Экспорт функции для глобального доступа
+        window.removeApprovedCarrier = removeApprovedCarrier;
+    </script>
+</body>
+</html> 

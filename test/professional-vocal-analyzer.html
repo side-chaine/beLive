@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎵 Профессиональный Вокальный Анализатор | Melodyne Pro</title>
+    <!-- ИМПОРТ ПРОФЕССИОНАЛЬНОЙ БИБЛИОТЕКИ PITCHY -->
+    <script type="module">
+        import { PitchDetector } from "https://esm.sh/pitchy@4";
+        window.PitchDetector = PitchDetector;
+        console.log('✅ Pitchy библиотека загружена');
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 10px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            background: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .file-input-label:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .play-button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .play-button:hover {
+            background: #1976D2;
+            transform: scale(1.1);
+        }
+
+        /* ПРОФЕССИОНАЛЬНАЯ ПАНЕЛЬ НАСТРОЕК */
+        .pro-settings {
+            display: flex;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .setting-group label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        .setting-group input, .setting-group select {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            padding: 4px 8px;
+            color: white;
+            text-align: center;
+            width: 80px;
+            font-size: 0.75rem;
+        }
+
+        /* АНАЛИЗАТОР ВОКАЛЬНЫХ ТЕХНИК */
+        .vocal-techniques {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 10px;
+            border-radius: 8px;
+            min-width: 200px;
+            font-size: 0.8rem;
+            z-index: 1000;
+        }
+
+        .technique {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+
+        .technique.detected {
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .technique.not-detected {
+            background: rgba(100, 100, 100, 0.2);
+        }
+
+        /* ПРОФЕССИОНАЛЬНАЯ ВИЗУАЛИЗАЦИЯ */
+        .visualization-container {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #professionalCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* ПРОФЕССИОНАЛЬНАЯ ПАНЕЛЬ ОТЛАДКИ */
+        .pro-debug {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            min-width: 300px;
+        }
+
+        .debug-metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+        }
+
+        .debug-bar {
+            width: 100px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .debug-bar-fill {
+            height: 100%;
+            transition: all 0.2s ease;
+        }
+
+        .status {
+            text-align: center;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            margin-top: 5px;
+            font-size: 0.85rem;
+        }
+
+        .status.ready {
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .status.error {
+            background: rgba(244, 67, 54, 0.3);
+        }
+
+        .status.analyzing {
+            background: rgba(255, 193, 7, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Заголовок -->
+        <div class="header">
+            <h1>🎵 Профессиональный Вокальный Анализатор</h1>
+            <p>Система анализа вокальных техник в реальном времени</p>
+        </div>
+
+        <!-- Управление аудио -->
+        <div class="audio-controls">
+            <div class="file-input-wrapper">
+                <input type="file" id="audioFile" accept="audio/*">
+                <label for="audioFile" class="file-input-label">📁 Загрузить вокал</label>
+            </div>
+            <button class="play-button" id="playButton">▶️</button>
+            <div style="color: #ccc; font-family: monospace;">
+                <span id="currentTime">00:00</span> / <span id="totalTime">00:00</span>
+            </div>
+        </div>
+
+        <!-- Профессиональные настройки -->
+        <div class="pro-settings">
+            <div class="setting-group">
+                <label>📊 Амплитуда</label>
+                <input type="range" id="amplitudeThreshold" min="0.005" max="0.1" step="0.005" value="0.02">
+                <span id="amplitudeValue">0.02</span>
+            </div>
+            <div class="setting-group">
+                <label>🎯 Четкость</label>
+                <input type="range" id="clarityThreshold" min="0.5" max="0.95" step="0.05" value="0.8">
+                <span id="clarityValue">0.80</span>
+            </div>
+            <div class="setting-group">
+                <label>⚖️ Стабильность</label>
+                <input type="range" id="stabilityThreshold" min="1" max="20" step="1" value="5">
+                <span id="stabilityValue">5¢</span>
+            </div>
+            <div class="setting-group">
+                <label>⏱️ Мин. длительность</label>
+                <input type="number" id="minDuration" value="50" min="20" max="500" step="10">
+            </div>
+            <div class="setting-group">
+                <label for="minFreq">🎵 Мин. частота: <span id="minFreqValue">65</span> Hz</label>
+                <input type="range" id="minFreq" min="40" max="200" value="65" step="5">
+            </div>
+            
+            <div class="setting-group">
+                <label for="maxFreq">🎶 Макс. частота: <span id="maxFreqValue">1050</span> Hz</label>
+                <input type="range" id="maxFreq" min="300" max="2000" value="1050" step="50">
+            </div>
+            <div class="setting-group">
+                <label>🧹 Анти-шум</label>
+                <input type="range" id="noiseFilter" min="50" max="500" step="50" value="200">
+                <span id="noiseFilterValue">200мс</span>
+            </div>
+            <div class="setting-group">
+                <label>🎵 Мин. стабильность</label>
+                <input type="range" id="minStability" min="50" max="95" step="5" value="70">
+                <span id="minStabilityValue">70%</span>
+            </div>
+        </div>
+
+        <!-- Основная визуализация -->
+        <div class="visualization-container">
+            <canvas id="professionalCanvas"></canvas>
+        </div>
+
+        <!-- Профессиональная отладочная панель -->
+        <div class="pro-debug">
+            <h4 style="margin-bottom: 5px;">🔬 Профессиональные метрики</h4>
+            <div class="debug-metric">
+                <span>Частота:</span>
+                <span id="freqValue">- Hz</span>
+            </div>
+            <div class="debug-metric">
+                <span>Нота:</span>
+                <span id="noteValue">-</span>
+            </div>
+            <div class="debug-metric">
+                <span>Амплитуда:</span>
+                <div class="debug-bar">
+                    <div class="debug-bar-fill" id="amplitudeBar"></div>
+                </div>
+                <span id="amplitudePercent">-%</span>
+            </div>
+            <div class="debug-metric">
+                <span>Четкость:</span>
+                <div class="debug-bar">
+                    <div class="debug-bar-fill" id="clarityBar"></div>
+                </div>
+                <span id="clarityPercent">-%</span>
+            </div>
+            <div class="debug-metric">
+                <span>Активных нот:</span>
+                <span id="activeNotesCount">0</span>
+            </div>
+            <div class="debug-metric">
+                <span>Завершенных:</span>
+                <span id="completedNotesCount">0</span>
+            </div>
+            <div class="debug-metric">
+                <span>Отфильтровано:</span>
+                <span id="filteredNotesCount">0</span>
+            </div>
+        </div>
+
+        <div class="status" id="status">Загрузите аудио файл для профессионального анализа</div>
+    </div>
+
+    <script>
+        class ProfessionalVocalAnalyzer {
+            constructor() {
+                this.audio = null;
+                this.audioContext = null;
+                this.analyser = null;
+                this.source = null;
+                this.isPlaying = false;
+                this.animationId = null;
+                
+                // ПРОФЕССИОНАЛЬНАЯ СИСТЕМА PITCHY
+                this.pitchDetector = null;
+                this.inputBuffer = null;
+                this.bufferSize = 4096;
+                
+                // Canvas
+                this.canvas = document.getElementById('professionalCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                
+                // UI элементы
+                this.playButton = document.getElementById('playButton');
+                this.statusDiv = document.getElementById('status');
+                
+                // Настройки профессионального анализа
+                this.settings = {
+                    amplitude: 0.02,
+                    clarity: 0.80,
+                    stability: 5,
+                    minDuration: 50,
+                    minFreq: 65,     // C2 - начинаем с низкой ноты
+                    maxFreq: 1050,   // C6 - заканчиваем высокой нотой (5 октав)
+                    noiseFilter: 200,
+                    minStability: 70,
+                    transitionSensitivity: 15,
+                    attackThreshold: 0.1,
+                    noteGapThreshold: 100,
+                    pitchStabilityWindow: 3,
+                    adaptiveMode: true
+                };
+                
+                // СИСТЕМА НОТ С УЛУЧШЕННЫМ ОТСЛЕЖИВАНИЕМ
+                this.activeNotes = new Map();
+                this.noteHistory = [];
+                this.pitchHistory = [];
+                this.filteredNotesCount = 0;
+                
+                // НОВЫЕ СИСТЕМЫ ТОЧНОСТИ
+                this.lastPitchData = null;
+                this.transitionBuffer = [];
+                this.adaptiveThresholds = {
+                    amplitude: 0.02,
+                    clarity: 0.8
+                };
+                
+                // ЗАГОТОВКА ДЛЯ ИИ-API
+                this.aiService = {
+                    enabled: false,
+                    apiUrl: null,
+                    analysisBuffer: [],
+                    lastAnalysis: null
+                };
+
+                // 🎹 СИСТЕМА ВИРТУАЛЬНОЙ КЛАВИАТУРЫ
+                this.piano = {
+                    keyHeight: 100,      // Высота клавиш
+                    blackKeyHeight: 65,  // Высота черных клавиш
+                    startY: 0,           // Будет вычисляться динамически (внизу экрана)
+                    pressedKeys: new Map(),  // Какие клавиши нажаты
+                    keyFlashes: new Map(),   // Эффекты нажатия
+                    noteParticles: []        // Частицы от нот
+                };
+
+                // Генерируем клавиши пианино
+                this.generatePianoKeys(this.canvas.width);
+                
+                this.init();
+            }
+
+            async init() {
+                await this.waitForPitchy();
+                this.setupEventListeners();
+                this.setupCanvas();
+                this.updateStatus('✅ Профессиональная система готова!', 'ready');
+            }
+
+            async waitForPitchy() {
+                return new Promise((resolve) => {
+                    const check = () => {
+                        if (window.PitchDetector) {
+                            console.log('✅ Pitchy готов к работе');
+                            resolve();
+                        } else {
+                            setTimeout(check, 100);
+                        }
+                    };
+                    check();
+                });
+            }
+
+            setupEventListeners() {
+                // Загрузка файла
+                document.getElementById('audioFile').addEventListener('change', (e) => {
+                    this.loadAudioFile(e.target.files[0]);
+                });
+
+                // Воспроизведение
+                this.playButton.addEventListener('click', () => {
+                    this.togglePlayback();
+                });
+
+                // Настройки в реальном времени
+                document.getElementById('amplitudeThreshold').addEventListener('input', (e) => {
+                    this.settings.minAmplitude = parseFloat(e.target.value);
+                    document.getElementById('amplitudeValue').textContent = e.target.value;
+                });
+
+                document.getElementById('clarityThreshold').addEventListener('input', (e) => {
+                    this.settings.minClarity = parseFloat(e.target.value);
+                    document.getElementById('clarityValue').textContent = e.target.value;
+                });
+
+                document.getElementById('stabilityThreshold').addEventListener('input', (e) => {
+                    this.settings.stabilityThreshold = parseInt(e.target.value);
+                    document.getElementById('stabilityValue').textContent = e.target.value + '¢';
+                });
+
+                document.getElementById('minDuration').addEventListener('input', (e) => {
+                    this.settings.minDuration = parseInt(e.target.value);
+                });
+
+                document.getElementById('minFreq').addEventListener('input', (e) => {
+                    this.settings.minFreq = parseInt(e.target.value);
+                    document.getElementById('minFreqValue').textContent = e.target.value;
+                });
+
+                document.getElementById('maxFreq').addEventListener('input', (e) => {
+                    this.settings.maxFreq = parseInt(e.target.value);
+                    document.getElementById('maxFreqValue').textContent = e.target.value;
+                });
+
+                // НОВЫЕ ОБРАБОТЧИКИ ДЛЯ АНТИ-ШУМА
+                document.getElementById('noiseFilter').addEventListener('input', (e) => {
+                    this.settings.noiseFilter = parseInt(e.target.value);
+                    document.getElementById('noiseFilterValue').textContent = e.target.value + 'мс';
+                    console.log(`🧹 Анти-шум: ${e.target.value}мс`);
+                });
+
+                document.getElementById('minStability').addEventListener('input', (e) => {
+                    this.settings.minStability = parseInt(e.target.value) / 100;
+                    document.getElementById('minStabilityValue').textContent = e.target.value + '%';
+                    console.log(`🎵 Стабильность: ${e.target.value}%`);
+                });
+            }
+
+            setupCanvas() {
+                const resize = () => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.canvas.width = rect.width * window.devicePixelRatio;
+                    this.canvas.height = rect.height * window.devicePixelRatio;
+                    this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+                    
+                    // ПРИНУДИТЕЛЬНО РИСУЕМ ИНТЕРФЕЙС СРАЗУ
+                    this.drawProfessionalVisualization();
+                };
+                window.addEventListener('resize', resize);
+                resize();
+                
+                // ЗАПУСКАЕМ ВИЗУАЛИЗАЦИЮ СРАЗУ (даже без аудио)
+                this.startVisualLoop();
+            }
+
+            async loadAudioFile(file) {
+                if (!file) return;
+                
+                console.log(`🎵 Загрузка: ${file.name}`);
+                this.updateStatus('🔍 Инициализация...', 'analyzing');
+
+                try {
+                    this.audio = new Audio();
+                    this.audio.src = URL.createObjectURL(file);
+                    
+                    await new Promise((resolve, reject) => {
+                        this.audio.onloadedmetadata = resolve;
+                        this.audio.onerror = reject;
+                    });
+
+                    // Создаем AudioContext
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                        sampleRate: 44100,
+                        latencyHint: 'interactive'
+                    });
+                    
+                    this.analyser = this.audioContext.createAnalyser();
+                    this.analyser.fftSize = this.bufferSize;
+                    this.analyser.smoothingTimeConstant = 0.0;
+
+                    this.source = this.audioContext.createMediaElementSource(this.audio);
+                    this.source.connect(this.analyser);
+                    this.analyser.connect(this.audioContext.destination);
+
+                    // Инициализируем Pitchy
+                    this.pitchDetector = window.PitchDetector.forFloat32Array(this.bufferSize);
+                    this.inputBuffer = new Float32Array(this.bufferSize);
+
+                    document.getElementById('totalTime').textContent = this.formatTime(this.audio.duration);
+                    this.updateStatus(`✅ Готов: ${file.name}`, 'ready');
+
+                    console.log('✅ Система готова к профессиональному анализу');
+
+                } catch (error) {
+                    console.error('❌ Ошибка:', error);
+                    this.updateStatus('Ошибка загрузки', 'error');
+                }
+            }
+
+            togglePlayback() {
+                if (!this.audio) return;
+
+                if (this.isPlaying) {
+                    this.audio.pause();
+                    this.playButton.textContent = '▶️';
+                    this.updateStatus('⏸️ Пауза', 'ready');
+                } else {
+                    this.audio.play();
+                    this.playButton.textContent = '⏸️';
+                    this.updateStatus('🎵 Анализирую...', 'analyzing');
+                    this.startAnalysis();
+                }
+                this.isPlaying = !this.isPlaying;
+            }
+
+            startAnalysis() {
+                const analyze = () => {
+                    // Обновляем время
+                    if (this.audio) {
+                        document.getElementById('currentTime').textContent = this.formatTime(this.audio.currentTime);
+                    }
+
+                    if (!this.analyser || !this.isPlaying) {
+                        this.animationId = requestAnimationFrame(analyze);
+                        return;
+                    }
+
+                    // Получаем аудио данные
+                    this.analyser.getFloatTimeDomainData(this.inputBuffer);
+                    
+                    // ПРОФЕССИОНАЛЬНАЯ ДЕТЕКЦИЯ
+                    const pitchData = this.detectPitchProfessional();
+                    
+                    if (pitchData) {
+                        // Обработка нот
+                        this.processNotesProfessional(pitchData);
+                        
+                        // Обновление UI
+                        this.updateProfessionalUI(pitchData);
+                    }
+
+                    // Отрисовка
+                    this.drawProfessionalVisualization();
+
+                    this.animationId = requestAnimationFrame(analyze);
+                };
+
+                analyze();
+            }
+
+            // ПРОФЕССИОНАЛЬНАЯ ДЕТЕКЦИЯ С УЛУЧШЕННОЙ ТОЧНОСТЬЮ
+            detectPitchProfessional() {
+                if (!this.pitchDetector) return null;
+
+                try {
+                    const [frequency, clarity] = this.pitchDetector.findPitch(this.inputBuffer, this.audioContext.sampleRate);
+                    
+                    // Вычисляем амплитуду с RMS
+                    let rms = 0;
+                    for (let i = 0; i < this.inputBuffer.length; i++) {
+                        rms += this.inputBuffer[i] * this.inputBuffer[i];
+                    }
+                    rms = Math.sqrt(rms / this.inputBuffer.length);
+
+                    // АДАПТИВНЫЕ ПОРОГИ
+                    if (this.settings.adaptiveMode) {
+                        this.updateAdaptiveThresholds(rms, clarity);
+                    }
+
+                    // Применяем фильтры с адаптивными порогами
+                    const amplitudeThreshold = this.adaptiveThresholds.amplitude;
+                    const clarityThreshold = this.adaptiveThresholds.clarity;
+
+                    if (frequency > 0 && 
+                        clarity >= clarityThreshold && 
+                        rms >= amplitudeThreshold &&
+                        frequency >= this.settings.minFreq &&
+                        frequency <= this.settings.maxFreq) {
+                        
+                        const noteInfo = this.frequencyToNoteAccurate(frequency);
+                        
+                        const pitchData = {
+                            frequency: frequency,
+                            clarity: clarity,
+                            amplitude: rms,
+                            note: noteInfo.note,
+                            octave: noteInfo.octave,
+                            cents: noteInfo.cents,
+                            timestamp: performance.now(),
+                            confidence: clarity * Math.min(1, rms / 0.05)
+                        };
+
+                        // ДЕТЕКТ ПЕРЕХОДОВ И АТАК
+                        const transitionDetected = this.detectTransition(pitchData);
+                        const attackDetected = this.detectAttack(pitchData);
+                        
+                        if (transitionDetected || attackDetected) {
+                            pitchData.isTransition = true;
+                            console.log(`🔄 Переход/атака: ${noteInfo.note}${noteInfo.octave} (${frequency.toFixed(1)}Hz)`);
+                        }
+
+                        this.pitchHistory.push(pitchData);
+                        if (this.pitchHistory.length > 100) {
+                            this.pitchHistory.shift();
+                        }
+
+                        this.lastPitchData = pitchData;
+                        console.log(`🎵 ${noteInfo.note}${noteInfo.octave} (${frequency.toFixed(1)}Hz) Четкость: ${(clarity*100).toFixed(0)}%`);
+                        
+                        return pitchData;
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Ошибка Pitchy:', error);
+                }
+
+                return null;
+            }
+
+            // ТОЧНАЯ КАЛИБРОВКА ЧАСТОТА → НОТА
+            frequencyToNoteAccurate(frequency) {
+                // Базовая частота A4 = 440 Hz (международный стандарт)
+                const A4 = 440.0;
+                
+                // Вычисляем точное количество полутонов от A4
+                const semitonesFromA4 = 12 * Math.log2(frequency / A4);
+                
+                // Номер MIDI ноты (A4 = 69)
+                const midiNumber = 69 + semitonesFromA4;
+                const roundedMidiNumber = Math.round(midiNumber);
+                
+                // Октава и индекс ноты
+                const octave = Math.floor(roundedMidiNumber / 12) - 1;
+                const noteIndex = roundedMidiNumber % 12;
+                
+                // Массив нот (C = 0)
+                const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+                
+                // Отклонение в центах от идеальной ноты
+                const cents = Math.round((midiNumber - roundedMidiNumber) * 100);
+                
+                // Точная частота идеальной ноты для калибровки
+                const idealFrequency = A4 * Math.pow(2, (roundedMidiNumber - 69) / 12);
+                
+                return {
+                    note: notes[noteIndex] || 'X',
+                    octave: octave,
+                    cents: cents,
+                    midiNumber: roundedMidiNumber,
+                    idealFrequency: idealFrequency,
+                    deviation: frequency - idealFrequency
+                };
+            }
+
+            // АДАПТИВНАЯ НАСТРОЙКА ПОРОГОВ
+            updateAdaptiveThresholds(rms, clarity) {
+                const alpha = 0.1; // Скорость адаптации
+                
+                // Адаптируем амплитуду
+                if (rms > this.adaptiveThresholds.amplitude) {
+                    this.adaptiveThresholds.amplitude = this.adaptiveThresholds.amplitude * (1 - alpha) + (rms * 0.7) * alpha;
+                }
+                
+                // Адаптируем четкость
+                if (clarity > this.adaptiveThresholds.clarity) {
+                    this.adaptiveThresholds.clarity = this.adaptiveThresholds.clarity * (1 - alpha) + (clarity * 0.9) * alpha;
+                }
+                
+                // Ограничиваем минимальные значения
+                this.adaptiveThresholds.amplitude = Math.max(0.005, Math.min(0.05, this.adaptiveThresholds.amplitude));
+                this.adaptiveThresholds.clarity = Math.max(0.6, Math.min(0.95, this.adaptiveThresholds.clarity));
+            }
+
+            // ДЕТЕКТ ПЕРЕХОДОВ МЕЖДУ НОТАМИ
+            detectTransition(currentPitch) {
+                if (!this.lastPitchData) return false;
+                
+                const currentNote = this.frequencyToNoteAccurate(currentPitch.frequency);
+                const lastNote = this.frequencyToNoteAccurate(this.lastPitchData.frequency);
+                
+                // Разница в центах
+                const centsDiff = Math.abs(currentNote.midiNumber - lastNote.midiNumber) * 100;
+                
+                return centsDiff > this.settings.transitionSensitivity;
+            }
+
+            // ДЕТЕКТ АТАК (РЕЗКИХ ИЗМЕНЕНИЙ АМПЛИТУДЫ)
+            detectAttack(currentPitch) {
+                if (!this.lastPitchData) return false;
+                
+                const amplitudeRatio = currentPitch.amplitude / this.lastPitchData.amplitude;
+                
+                // Детектим резкое увеличение амплитуды (атака)
+                return amplitudeRatio > (1 + this.settings.attackThreshold);
+            }
+
+            // УМНАЯ ОБРАБОТКА НОТ С РАЗДЕЛЕНИЕМ
+            processNotesProfessional(pitchData) {
+                const noteKey = `${pitchData.note}${pitchData.octave}`;
+                const currentTime = pitchData.timestamp;
+                
+                let activeNote = this.activeNotes.get(noteKey);
+                
+                if (activeNote) {
+                    // Проверяем, нужно ли разделить ноту
+                    const shouldSeparate = this.shouldSeparateNote(activeNote, pitchData, currentTime);
+                    
+                    if (shouldSeparate) {
+                        // Завершаем текущую ноту
+                        activeNote.endTime = currentTime;
+                        activeNote.duration = activeNote.endTime - activeNote.startTime;
+                        activeNote.ended = true;
+                        
+                        const isValidNote = this.validateNoteQuality(activeNote);
+                        if (isValidNote) {
+                            this.noteHistory.push(activeNote);
+                            console.log(`✂️ Разделена нота ${noteKey}: ${activeNote.duration.toFixed(0)}мс`);
+                        } else {
+                            this.filteredNotesCount++;
+                            console.log(`🧹 Отфильтрована разделенная нота ${noteKey}: ${activeNote.duration.toFixed(0)}мс`);
+                        }
+                        
+                        this.activeNotes.delete(noteKey);
+                        
+                        // Создаем новую ноту
+                        this.createNewNote(noteKey, pitchData, currentTime);
+                        
+                        // 🎹 ОТПУСКАЕМ СТАРУЮ И НАЖИМАЕМ НОВУЮ КЛАВИШУ
+                        this.releaseKey(activeNote);
+                        this.pressKey(pitchData);
+                        
+                    } else {
+                        // Продлеваем существующую ноту
+                        activeNote.endTime = currentTime;
+                        activeNote.duration = activeNote.endTime - activeNote.startTime;
+                        
+                        // Обновляем среднюю частоту (сглаживание)
+                        const alpha = 0.3;
+                        activeNote.frequency = activeNote.frequency * (1 - alpha) + pitchData.frequency * alpha;
+                    }
+                    
+                } else {
+                    // Создаем новую ноту
+                    this.createNewNote(noteKey, pitchData, currentTime);
+                    
+                    // 🎹 НАЖИМАЕМ КЛАВИШУ НА ПИАНИНО!
+                    this.pressKey(pitchData);
+                }
+                
+                // Очистка старых нот
+                this.cleanupInactiveNotes(currentTime);
+            }
+
+            // ПРОВЕРКА НЕОБХОДИМОСТИ РАЗДЕЛЕНИЯ НОТЫ
+            shouldSeparateNote(activeNote, pitchData, currentTime) {
+                // 1. Проверяем временной пропуск
+                const timeSinceLastUpdate = currentTime - activeNote.endTime;
+                if (timeSinceLastUpdate > this.settings.noteGapThreshold) {
+                    return true;
+                }
+                
+                // 2. Детект атаки/перехода
+                if (pitchData.isTransition) {
+                    return true;
+                }
+                
+                // 3. Значительное изменение частоты
+                const frequencyDiff = Math.abs(pitchData.frequency - activeNote.frequency);
+                const semitonesDiff = 12 * Math.log2(pitchData.frequency / activeNote.frequency);
+                if (Math.abs(semitonesDiff) > 0.5) { // Больше четверти тона
+                    return true;
+                }
+                
+                // 4. Резкое изменение амплитуды (новая атака)
+                if (this.lastPitchData) {
+                    const amplitudeJump = pitchData.amplitude / this.lastPitchData.amplitude;
+                    if (amplitudeJump > 2.0) { // Амплитуда увеличилась в 2 раза
+                        return true;
+                    }
+                }
+                
+                return false;
+            }
+
+            // СОЗДАНИЕ НОВОЙ НОТЫ
+            createNewNote(noteKey, pitchData, currentTime) {
+                const newNote = {
+                    note: pitchData.note,
+                    octave: pitchData.octave,
+                    frequency: pitchData.frequency,
+                    startTime: currentTime,
+                    endTime: currentTime,
+                    duration: 0,
+                    confidence: pitchData.confidence,
+                    color: this.getNoteColor(pitchData.note),
+                    ended: false,
+                    // Дополнительные данные для ИИ
+                    midiNumber: pitchData.midiNumber || 0,
+                    cents: pitchData.cents || 0,
+                    isTransition: pitchData.isTransition || false
+                };
+                
+                this.activeNotes.set(noteKey, newNote);
+                console.log(`🆕 Новая нота: ${noteKey}`);
+                
+                // Добавляем в буфер для ИИ-анализа
+                this.addToAIBuffer(newNote);
+            }
+
+            // ЗАГОТОВКА ДЛЯ ИИ-АНАЛИЗА
+            addToAIBuffer(noteData) {
+                if (!this.aiService.enabled) return;
+                
+                this.aiService.analysisBuffer.push({
+                    note: noteData.note,
+                    octave: noteData.octave,
+                    frequency: noteData.frequency,
+                    timestamp: noteData.startTime,
+                    confidence: noteData.confidence,
+                    midiNumber: noteData.midiNumber,
+                    cents: noteData.cents,
+                    isTransition: noteData.isTransition
+                });
+                
+                // Ограничиваем размер буфера
+                if (this.aiService.analysisBuffer.length > 50) {
+                    this.aiService.analysisBuffer.shift();
+                }
+                
+                // Можно добавить отправку в API каждые N нот
+                if (this.aiService.analysisBuffer.length % 10 === 0) {
+                    this.sendToAIAnalysis();
+                }
+            }
+
+            // ОТПРАВКА ДАННЫХ В ИИ (ЗАГОТОВКА)
+            async sendToAIAnalysis() {
+                if (!this.aiService.enabled || !this.aiService.apiUrl) return;
+                
+                try {
+                    const response = await fetch(this.aiService.apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            notes: this.aiService.analysisBuffer,
+                            settings: this.settings,
+                            timestamp: Date.now()
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    this.aiService.lastAnalysis = result;
+                    
+                    // Применяем рекомендации ИИ
+                    if (result.recommendations) {
+                        this.applyAIRecommendations(result.recommendations);
+                    }
+                    
+                    console.log('🤖 ИИ-анализ получен:', result);
+                    
+                } catch (error) {
+                    console.error('❌ Ошибка ИИ-API:', error);
+                }
+            }
+
+            // ПРИМЕНЕНИЕ РЕКОМЕНДАЦИЙ ИИ (ЗАГОТОВКА)
+            applyAIRecommendations(recommendations) {
+                if (recommendations.adjustAmplitude) {
+                    this.settings.minAmplitude = recommendations.adjustAmplitude;
+                }
+                if (recommendations.adjustClarity) {
+                    this.settings.minClarity = recommendations.adjustClarity;
+                }
+                if (recommendations.adjustTransitionSensitivity) {
+                    this.settings.transitionSensitivity = recommendations.adjustTransitionSensitivity;
+                }
+                
+                console.log('🤖 Применены рекомендации ИИ:', recommendations);
+            }
+
+            // 🎯 ОСНОВНАЯ ОТРИСОВКА (КЛАВИАТУРА ВНИЗУ + PIANO ROLL СВЕРХУ)
+            drawProfessionalVisualization() {
+                const canvas = document.getElementById('professionalCanvas');
+                if (!canvas) return;
+                
+                const rect = canvas.getBoundingClientRect();
+                const width = rect.width;
+                const height = rect.height;
+                
+                // Очищаем экран
+                this.ctx.clearRect(0, 0, width, height);
+                
+                // Фон
+                this.ctx.fillStyle = '#1a1a1a';
+                this.ctx.fillRect(0, 0, width, height);
+                
+                // Область для Piano Roll (сверху) и клавиатуры (внизу)
+                const pianoHeight = 120; // Фиксированная высота клавиатуры
+                const rollHeight = height - pianoHeight;
+                
+                // Настройка клавиатуры внизу экрана
+                this.piano.startY = rollHeight;
+                this.piano.keyHeight = 100;
+                this.piano.blackKeyHeight = 65;
+                
+                // Перегенерируем клавиши если размер изменился
+                if (!this.piano.keys.length || this.piano.lastWidth !== width) {
+                    this.generatePianoKeys(width);
+                    this.piano.lastWidth = width;
+                }
+                
+                // Рисуем Piano Roll сверху
+                this.drawPianoRoll(0, 0, width, rollHeight);
+                
+                // Рисуем клавиатуру внизу
+                this.drawVirtualPianoBottom(width, height);
+                
+                // Рисуем активные ноты летящие вверх от клавиш
+                this.drawActiveNotesFromKeysBottom(width, rollHeight, height);
+                
+                // Рисуем Playhead только в области Piano Roll
+                this.drawPlayheadRoll(width, rollHeight);
+            }
+
+            drawPianoRoll(startX, startY, width, height) {
+                // Фон Piano Roll
+                this.ctx.fillStyle = '#1a1a1a';
+                this.ctx.fillRect(startX, startY, width, height);
+                
+                // ТОЧНАЯ КАЛИБРОВКА НОТНОГО СТАНА (МЕЖДУНАРОДНЫЙ СТАНДАРТ)
+                const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+                const whiteKeys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+                
+                // Создаем точный список нот с правильными частотами
+                const notesList = [];
+                const A4_FREQ = 440.0; // Международный стандарт
+                
+                // Генерируем ноты в диапазоне с точными частотами
+                for (let midiNumber = 21; midiNumber <= 108; midiNumber++) { // Piano range: A0 to C8
+                    const frequency = A4_FREQ * Math.pow(2, (midiNumber - 69) / 12);
+                    
+                    if (frequency >= this.settings.minFreq && frequency <= this.settings.maxFreq) {
+                        const octave = Math.floor(midiNumber / 12) - 1;
+                        const noteIndex = midiNumber % 12;
+                        
+                        notesList.push({
+                            note: notes[noteIndex],
+                            octave: octave,
+                            frequency: frequency,
+                            midiNumber: midiNumber,
+                            isWhite: whiteKeys.includes(notes[noteIndex])
+                        });
+                    }
+                }
+                
+                // Сортируем по частоте для правильного отображения
+                notesList.sort((a, b) => a.frequency - b.frequency);
+                
+                // Если нет нот в диапазоне, рисуем базовую разметку
+                if (notesList.length === 0) {
+                    this.ctx.strokeStyle = 'rgba(100, 100, 100, 0.5)';
+                    this.ctx.lineWidth = 1;
+                    for (let i = 0; i < 10; i++) {
+                        const y = startY + (height * i / 10);
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(startX, y);
+                        this.ctx.lineTo(startX + width, y);
+                        this.ctx.stroke();
+                    }
+                    
+                    // Показываем текущий диапазон
+                    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                    this.ctx.font = '14px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(`Диапазон: ${this.settings.minFreq}-${this.settings.maxFreq} Hz`, 
+                                    startX + width/2, startY + height/2);
+                    return;
+                }
+                
+                // Вычисляем логарифмическое распределение для лучшего отображения
+                const minLogFreq = Math.log(this.settings.minFreq);
+                const maxLogFreq = Math.log(this.settings.maxFreq);
+                const logRange = maxLogFreq - minLogFreq;
+                
+                // Рисуем линии нот с правильным распределением
+                notesList.forEach((noteInfo) => {
+                    // Логарифмическое позиционирование для более точного отображения
+                    const logFreq = Math.log(noteInfo.frequency);
+                    const normalizedPosition = (logFreq - minLogFreq) / logRange;
+                    const y = startY + height - (normalizedPosition * height);
+                    
+                    // Фон клавиш с улучшенной контрастностью
+                    if (noteInfo.isWhite) {
+                        this.ctx.fillStyle = 'rgba(70, 70, 70, 0.4)';
+                    } else {
+                        this.ctx.fillStyle = 'rgba(40, 40, 40, 0.6)';
+                    }
+                    
+                    const noteHeight = Math.max(8, height / notesList.length);
+                    this.ctx.fillRect(startX, y - noteHeight/2, width, noteHeight);
+                    
+                    // Линии с четкой градацией
+                    this.ctx.strokeStyle = noteInfo.isWhite ? 'rgba(100, 100, 100, 0.9)' : 'rgba(60, 60, 60, 0.7)';
+                    this.ctx.lineWidth = noteInfo.isWhite ? 1.5 : 0.8;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(startX, y);
+                    this.ctx.lineTo(startX + width, y);
+                    this.ctx.stroke();
+                    
+                    // Названия нот слева
+                    if (noteInfo.isWhite) {
+                        this.ctx.textAlign = 'left';
+                        this.ctx.font = '10px monospace';
+                        this.ctx.fillStyle = 'rgba(200, 200, 200, 0.8)';
+                        this.ctx.fillText(`${noteInfo.note}${noteInfo.octave}`, startX + 5, y + 4);
+                    }
+                    
+                    // Точные частоты справа
+                    this.ctx.textAlign = 'right';
+                    this.ctx.font = '10px monospace';
+                    this.ctx.fillStyle = noteInfo.isWhite ? 'rgba(200, 200, 200, 0.8)' : 'rgba(160, 160, 160, 0.7)';
+                    this.ctx.fillText(`${noteInfo.frequency.toFixed(1)}Hz`, startX + width - 5, y + 4);
+                });
+            }
+
+            drawActiveNotesFromKeysBottom(width, rollHeight, totalHeight) {
+                const currentTime = performance.now();
+                const timeWindow = 8000; // 8 секунд
+                
+                // Объединяем активные и завершенные ноты
+                const allNotes = [...this.activeNotes.values(), ...this.noteHistory.slice(-20)];
+                
+                allNotes.forEach(note => {
+                    const age = currentTime - note.startTime;
+                    if (age > timeWindow) return;
+                    
+                    // Находим соответствующую клавишу на пианино
+                    const pianoKey = this.findKeyByNote(note.note, note.octave);
+                    if (!pianoKey) return;
+                    
+                    // Стартовая позиция - от клавиши пианино (внизу)
+                    const startKeyX = pianoKey.x + pianoKey.width/2;
+                    const startKeyY = pianoKey.y; // Верх клавиши
+                    
+                    // Позиция ноты на timeline (движение вправо по времени)
+                    const noteX = width - (age / timeWindow) * width;
+                    const blockWidth = Math.max(8, (note.duration / timeWindow) * width);
+                    
+                    // Y позиция в Piano Roll (сверху) на основе частоты
+                    const logFreq = Math.log(note.frequency);
+                    const minLogFreq = Math.log(this.settings.minFreq);
+                    const maxLogFreq = Math.log(this.settings.maxFreq);
+                    const logRange = maxLogFreq - minLogFreq;
+                    const normalizedPosition = (logFreq - minLogFreq) / logRange;
+                    const noteY = rollHeight - (normalizedPosition * rollHeight); // В области Piano Roll
+                    
+                    const blockHeight = Math.max(15, rollHeight / 50);
+                    
+                    // Цвет ноты
+                    let color = this.getNoteColor(note.note);
+                    const isActive = !note.ended;
+                    const alpha = isActive ? 0.9 : 0.6;
+                    
+                    // 🌟 РИСУЕМ ТРАЕКТОРИЮ ОТ КЛАВИШИ СНИЗУ ВВЕРХ (если нота молодая)
+                    if (age < 1000) { // Первая секунда
+                        const trajectoryAlpha = Math.max(0, (1000 - age) / 1000) * 0.4;
+                        this.ctx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${trajectoryAlpha})`;
+                        this.ctx.lineWidth = 3;
+                        this.ctx.setLineDash([8, 8]);
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(startKeyX, startKeyY);
+                        this.ctx.lineTo(noteX + blockWidth/2, noteY);
+                        this.ctx.stroke();
+                        this.ctx.setLineDash([]);
+                    }
+                    
+                    // Рисуем ноту в Piano Roll
+                    this.ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`;
+                    this.ctx.fillRect(noteX, noteY - blockHeight/2, blockWidth, blockHeight);
+                    
+                    // Обводка
+                    this.ctx.strokeStyle = `rgba(${color.r + 50}, ${color.g + 50}, ${color.b + 50}, 1)`;
+                    this.ctx.lineWidth = isActive ? 2 : 1;
+                    this.ctx.strokeRect(noteX, noteY - blockHeight/2, blockWidth, blockHeight);
+                    
+                    // Название ноты
+                    if (blockWidth > 20) {
+                        this.ctx.fillStyle = '#ffffff';
+                        this.ctx.font = isActive ? 'bold 12px Arial' : '10px Arial';
+                        this.ctx.textAlign = 'center';
+                        this.ctx.fillText(`${note.note}${note.octave}`, noteX + blockWidth/2, noteY + 3);
+                    }
+                });
+            }
+
+            drawPlayheadRoll(startX, width) {
+                // Красная линия плейхеда (в области Piano Roll)
+                this.ctx.strokeStyle = '#FF4444';
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                this.ctx.moveTo(startX, 0);
+                this.ctx.lineTo(startX, width);
+                this.ctx.stroke();
+            }
+
+            // ЦВЕТА ДЛЯ ТЕХНИК
+            getNoteColor(note) {
+                // Базовые цвета нот
+                const colors = {
+                    'C': { r: 255, g: 100, b: 100 },
+                    'C#': { r: 255, g: 150, b: 100 },
+                    'D': { r: 255, g: 200, b: 100 },
+                    'D#': { r: 255, g: 255, b: 100 },
+                    'E': { r: 200, g: 255, b: 100 },
+                    'F': { r: 100, g: 255, b: 100 },
+                    'F#': { r: 100, g: 255, b: 200 },
+                    'G': { r: 100, g: 200, b: 255 },
+                    'G#': { r: 100, g: 150, b: 255 },
+                    'A': { r: 150, g: 100, b: 255 },
+                    'A#': { r: 200, g: 100, b: 255 },
+                    'B': { r: 255, g: 100, b: 200 }
+                };
+                return colors[note] || { r: 150, g: 150, b: 150 };
+            }
+
+            // ОБНОВЛЕНИЕ UI
+            updateProfessionalUI(pitchData) {
+                // Основные метрики
+                document.getElementById('freqValue').textContent = pitchData.frequency.toFixed(1) + ' Hz';
+                document.getElementById('noteValue').textContent = `${pitchData.note}${pitchData.octave} (${pitchData.cents > 0 ? '+' : ''}${pitchData.cents}¢)`;
+                
+                // Полоски
+                const amplitudePercent = Math.min(100, (pitchData.amplitude / 0.1) * 100);
+                const clarityPercent = pitchData.clarity * 100;
+                
+                document.getElementById('amplitudeBar').style.width = amplitudePercent + '%';
+                document.getElementById('amplitudeBar').style.backgroundColor = pitchData.amplitude > this.settings.minAmplitude ? '#4CAF50' : '#FF6B6B';
+                document.getElementById('amplitudePercent').textContent = amplitudePercent.toFixed(0) + '%';
+                
+                document.getElementById('clarityBar').style.width = clarityPercent + '%';
+                document.getElementById('clarityBar').style.backgroundColor = pitchData.clarity > this.settings.minClarity ? '#4CAF50' : '#FF6B6B';
+                document.getElementById('clarityPercent').textContent = clarityPercent.toFixed(0) + '%';
+                
+                document.getElementById('activeNotesCount').textContent = this.activeNotes.size;
+                document.getElementById('completedNotesCount').textContent = this.noteHistory.length;
+                document.getElementById('filteredNotesCount').textContent = this.filteredNotesCount;
+            }
+
+            // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+            frequencyToNote(frequency) {
+                const A4 = 440;
+                const semitones = 12 * Math.log2(frequency / A4);
+                const noteNumber = Math.round(semitones) + 69;
+                const octave = Math.floor(noteNumber / 12) - 1;
+                const noteIndex = noteNumber % 12;
+                const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+                
+                const exactSemitones = 12 * Math.log2(frequency / A4) + 69;
+                const targetNoteNumber = Math.round(exactSemitones);
+                const cents = Math.round((exactSemitones - targetNoteNumber) * 100);
+                
+                return {
+                    note: notes[noteIndex] || '-',
+                    octave: octave,
+                    cents: cents
+                };
+            }
+
+            formatTime(seconds) {
+                if (isNaN(seconds)) return '00:00';
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            updateStatus(message, type = '') {
+                this.statusDiv.textContent = message;
+                this.statusDiv.className = `status ${type}`;
+            }
+
+            // ОЧИСТКА НЕАКТИВНЫХ НОТ
+            cleanupInactiveNotes(currentTime) {
+                for (let [key, note] of this.activeNotes) {
+                    if (currentTime - note.endTime > 200 && !note.ended) {
+                        note.ended = true;
+                        
+                        // СТРОГАЯ ФИЛЬТРАЦИЯ ПРОТИВ ШУМА
+                        const isValidNote = this.validateNoteQuality(note);
+                        
+                        if (isValidNote) {
+                            this.noteHistory.push(note);
+                            console.log(`✅ Завершена нота ${key}: ${note.duration.toFixed(0)}мс, уверенность: ${(note.confidence*100).toFixed(0)}%`);
+                        } else {
+                            this.filteredNotesCount++;
+                            console.log(`🧹 Отфильтрована нота ${key}: ${note.duration.toFixed(0)}мс (шум)`);
+                        }
+                        
+                        // 🎹 ОТПУСКАЕМ КЛАВИШУ ПРИ ЗАВЕРШЕНИИ НОТЫ
+                        this.releaseKey(note);
+                        
+                        this.activeNotes.delete(key);
+                    }
+                }
+                
+                // Ограничиваем историю
+                if (this.noteHistory.length > 30) {
+                    this.noteHistory = this.noteHistory.slice(-30);
+                }
+            }
+
+            // УЛУЧШЕННАЯ ВАЛИДАЦИЯ КАЧЕСТВА НОТЫ
+            validateNoteQuality(note) {
+                // 1. Минимальная длительность из настроек анти-шума
+                if (note.duration < this.settings.noiseFilter) {
+                    return false;
+                }
+                
+                // 2. Минимальная уверенность
+                if (note.confidence < this.settings.minStability) {
+                    return false;
+                }
+                
+                // 3. Проверка стабильности частоты (если есть данные)
+                if (this.pitchHistory.length > 5) {
+                    const recentPitches = this.pitchHistory.slice(-this.settings.stabilityWindow);
+                    const noteFrequencies = recentPitches.filter(p => 
+                        Math.abs(p.frequency - note.frequency) < 20
+                    );
+                    
+                    // Если менее 60% недавних питчей соответствуют этой ноте - отфильтровываем
+                    if (noteFrequencies.length / recentPitches.length < 0.6) {
+                        return false;
+                    }
+                }
+                
+                // 4. НОВАЯ ПРОВЕРКА: исключаем слишком короткие переходы
+                if (note.isTransition && note.duration < 100) {
+                    return false;
+                }
+                
+                return true;
+            }
+
+            // 🎹 ГЕНЕРАЦИЯ КЛАВИШ ПИАНИНО НА ВСЮ ШИРИНУ (5 ОКТАВ)
+            generatePianoKeys(canvasWidth) {
+                const whiteNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+                const blackNotes = ['C#', 'D#', null, 'F#', 'G#', 'A#', null]; // null где нет черных клавиш
+                
+                this.piano.keys = [];
+                
+                // Собираем все ноты в расширенном диапазоне частот (5 октав)
+                const allNotes = [];
+                for (let octave = 1; octave <= 8; octave++) { // Расширили диапазон
+                    for (let i = 0; i < whiteNotes.length; i++) {
+                        const note = whiteNotes[i];
+                        const frequency = this.noteToFrequency(note, octave);
+                        
+                        if (frequency >= this.settings.minFreq && frequency <= this.settings.maxFreq) {
+                            allNotes.push({
+                                note: note,
+                                octave: octave,
+                                frequency: frequency,
+                                isBlack: false,
+                                midiNumber: this.noteToMidi(note, octave)
+                            });
+                        }
+                        
+                        // Черная клавиша (если есть)
+                        if (blackNotes[i] && octave <= 8) {
+                            const blackNote = blackNotes[i];
+                            const blackFreq = this.noteToFrequency(blackNote, octave);
+                            
+                            if (blackFreq >= this.settings.minFreq && blackFreq <= this.settings.maxFreq) {
+                                allNotes.push({
+                                    note: blackNote,
+                                    octave: octave,
+                                    frequency: blackFreq,
+                                    isBlack: true,
+                                    midiNumber: this.noteToMidi(blackNote, octave)
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                // Сортируем по частоте
+                allNotes.sort((a, b) => a.frequency - b.frequency);
+                
+                // Считаем только белые клавиши для расчета ширины
+                const whiteKeysCount = allNotes.filter(n => !n.isBlack).length;
+                
+                if (whiteKeysCount === 0) {
+                    console.warn('🎹 Нет нот в диапазоне!');
+                    return;
+                }
+                
+                // Вычисляем ширину белых клавиш чтобы заполнить весь экран
+                const totalWidth = canvasWidth || 1200;
+                const whiteKeyWidth = totalWidth / whiteKeysCount;
+                const blackKeyWidth = whiteKeyWidth * 0.6; // Черные клавиши уже белых
+                
+                this.piano.keyWidth = whiteKeyWidth;
+                this.piano.blackKeyWidth = blackKeyWidth;
+                
+                // Размещаем белые клавиши
+                let whiteKeyIndex = 0;
+                allNotes.forEach(noteInfo => {
+                    if (!noteInfo.isBlack) {
+                        this.piano.keys.push({
+                            ...noteInfo,
+                            x: whiteKeyIndex * whiteKeyWidth,
+                            y: this.piano.startY,
+                            width: whiteKeyWidth,
+                            height: this.piano.keyHeight
+                        });
+                        whiteKeyIndex++;
+                    }
+                });
+                
+                // Размещаем черные клавиши между белыми
+                allNotes.forEach(noteInfo => {
+                    if (noteInfo.isBlack) {
+                        // Находим ближайшую белую клавишу слева
+                        const leftWhiteKey = this.piano.keys.find(k => 
+                            !k.isBlack && k.midiNumber === noteInfo.midiNumber - 1
+                        );
+                        
+                        if (leftWhiteKey) {
+                            this.piano.keys.push({
+                                ...noteInfo,
+                                x: leftWhiteKey.x + leftWhiteKey.width - blackKeyWidth/2,
+                                y: this.piano.startY,
+                                width: blackKeyWidth,
+                                height: this.piano.blackKeyHeight
+                            });
+                        }
+                    }
+                });
+                
+                // Сортируем: сначала белые, потом черные (для правильного рендеринга)
+                this.piano.keys.sort((a, b) => {
+                    if (a.isBlack !== b.isBlack) {
+                        return a.isBlack ? 1 : -1;
+                    }
+                    return a.x - b.x;
+                });
+                
+                console.log(`🎹 Создано ${this.piano.keys.length} клавиш (${whiteKeysCount} белых) на ширину ${totalWidth}px`);
+                console.log(`🎼 Диапазон: ${allNotes[0]?.note}${allNotes[0]?.octave} - ${allNotes[allNotes.length-1]?.note}${allNotes[allNotes.length-1]?.octave}`);
+            }
+
+            // 🎵 КОНВЕРТАЦИЯ НОТА → ЧАСТОТА
+            noteToFrequency(note, octave) {
+                const noteToSemitone = {
+                    'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
+                    'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+                };
+                
+                const semitone = noteToSemitone[note];
+                const A4 = 440;
+                const midiNumber = octave * 12 + semitone + 12;
+                
+                return A4 * Math.pow(2, (midiNumber - 69) / 12);
+            }
+
+            // 🎵 КОНВЕРТАЦИЯ НОТА → MIDI
+            noteToMidi(note, octave) {
+                const noteToSemitone = {
+                    'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
+                    'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+                };
+                
+                return octave * 12 + noteToSemitone[note] + 12;
+            }
+
+            // 🎹 НАЖАТИЕ КЛАВИШИ (ПРИ ДЕТЕКТЕ НОТЫ)
+            pressKey(noteData) {
+                const key = this.findKeyByNote(noteData.note, noteData.octave);
+                if (!key) return;
+                
+                const keyId = `${noteData.note}${noteData.octave}`;
+                
+                // Помечаем клавишу как нажатую
+                this.piano.pressedKeys.set(keyId, {
+                    key: key,
+                    startTime: performance.now(),
+                    intensity: noteData.confidence || 0.8
+                });
+                
+                // Создаем эффект вспышки
+                this.piano.keyFlashes.set(keyId, {
+                    startTime: performance.now(),
+                    intensity: noteData.confidence || 0.8,
+                    x: key.x + key.width/2,
+                    y: key.y + key.height/2
+                });
+                
+                // Создаем частицы
+                this.createKeyParticles(key);
+                
+                console.log(`🎹 Нажата клавиша: ${keyId}`);
+            }
+
+            // 🔍 ПОИСК КЛАВИШИ ПО НОТЕ
+            findKeyByNote(note, octave) {
+                return this.piano.keys.find(key => 
+                    key.note === note && key.octave === octave
+                );
+            }
+
+            // ✨ СОЗДАНИЕ ЧАСТИЦ ПРИ НАЖАТИИ КЛАВИШИ (ЛЕТЯЩИХ ВВЕРХ)
+            createKeyParticles(key) {
+                const particleCount = 3 + Math.random() * 5;
+                
+                for (let i = 0; i < particleCount; i++) {
+                    this.piano.noteParticles.push({
+                        x: key.x + key.width / 2 + (Math.random() - 0.5) * key.width * 0.8,
+                        y: this.piano.startY + 10 + Math.random() * 20,
+                        speed: 1 + Math.random() * 2,
+                        size: 1 + Math.random() * 3,
+                        alpha: 0.8 + Math.random() * 0.2,
+                        color: key.isBlack ? '#4fc3f7' : '#81c784'
+                    });
+                }
+            }
+
+            // 🎹 ОТПУСКАНИЕ КЛАВИШИ
+            releaseKey(noteData) {
+                const keyId = `${noteData.note}${noteData.octave}`;
+                this.piano.pressedKeys.delete(keyId);
+            }
+
+            // 🎨 ОТРИСОВКА КЛАВИАТУРЫ ВНИЗУ ЭКРАНА
+            drawVirtualPianoBottom(width, height) {
+                console.log(`🎹 Отрисовка клавиатуры: ${this.piano.keys.length} клавиш, startY: ${this.piano.startY}`);
+                
+                if (!this.piano.keys.length) {
+                    console.warn('⚠️ Нет клавиш для отрисовки!');
+                    return;
+                }
+                
+                // Фон клавиатуры с четкими границами
+                this.ctx.fillStyle = 'rgba(40, 40, 40, 0.95)';
+                this.ctx.fillRect(0, this.piano.startY, width, height - this.piano.startY);
+                
+                // Рамка вокруг клавиатуры
+                this.ctx.strokeStyle = '#666';
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeRect(0, this.piano.startY, width, height - this.piano.startY);
+                
+                console.log(`🎹 Рисуем белые клавиши: ${this.piano.keys.filter(k => !k.isBlack).length}`);
+                
+                // Рисуем белые клавиши
+                this.piano.keys.filter(key => !key.isBlack).forEach(key => {
+                    this.drawPianoKey(key);
+                });
+                
+                console.log(`🎹 Рисуем черные клавиши: ${this.piano.keys.filter(k => k.isBlack).length}`);
+                
+                // Рисуем черные клавиши поверх белых
+                this.piano.keys.filter(key => key.isBlack).forEach(key => {
+                    this.drawPianoKey(key);
+                });
+                
+                // Рисуем эффекты
+                this.drawKeyEffects();
+                
+                // Обновляем и рисуем частицы (летящие вверх)
+                this.updateAndDrawParticlesUp();
+                
+                // Отладочная информация
+                this.ctx.fillStyle = 'white';
+                this.ctx.font = '12px Arial';
+                this.ctx.textAlign = 'left';
+                this.ctx.fillText(`Клавиш: ${this.piano.keys.length}`, 10, this.piano.startY + 15);
+            }
+
+            // 🎹 ОТРИСОВКА ОТДЕЛЬНОЙ КЛАВИШИ
+            drawPianoKey(key) {
+                if (!key) return;
+                
+                const keyId = `${key.note}${key.octave}`;
+                const isPressed = this.piano.pressedKeys.has(keyId);
+                const pressData = this.piano.pressedKeys.get(keyId);
+                
+                // Убеждаемся что ключ в пределах видимой области
+                if (key.y < 0 || key.y > this.ctx.canvas.height) {
+                    console.warn(`⚠️ Клавиша ${keyId} вне экрана: y=${key.y}`);
+                    return;
+                }
+                
+                console.log(`🎹 Рисуем клавишу ${keyId}: x=${key.x.toFixed(0)}, y=${key.y.toFixed(0)}, w=${key.width.toFixed(0)}, h=${key.height.toFixed(0)}, black=${key.isBlack}`);
+                
+                // Цвет клавиши
+                let fillColor, strokeColor;
+                
+                if (key.isBlack) {
+                    fillColor = isPressed ? '#555' : '#000';
+                    strokeColor = '#888';
+                } else {
+                    fillColor = isPressed ? '#ddd' : '#fff';
+                    strokeColor = '#000';
+                }
+                
+                // Эффект свечения при нажатии
+                if (isPressed && pressData) {
+                    const glowIntensity = pressData.intensity * 20;
+                    const noteColor = this.getNoteColor(key.note);
+                    
+                    this.ctx.shadowColor = `rgba(${noteColor.r}, ${noteColor.g}, ${noteColor.b}, 0.8)`;
+                    this.ctx.shadowBlur = glowIntensity;
+                } else {
+                    this.ctx.shadowBlur = 0;
+                }
+                
+                // Рисуем клавишу
+                this.ctx.fillStyle = fillColor;
+                this.ctx.strokeStyle = strokeColor;
+                this.ctx.lineWidth = key.isBlack ? 1 : 2;
+                
+                this.ctx.fillRect(key.x, key.y, key.width, key.height);
+                this.ctx.strokeRect(key.x, key.y, key.width, key.height);
+                
+                // Сбрасываем тень
+                this.ctx.shadowBlur = 0;
+                
+                // Название ноты на клавише
+                if (key.width > 15) {
+                    this.ctx.fillStyle = key.isBlack ? '#fff' : '#000';
+                    this.ctx.font = key.isBlack ? '8px Arial' : '10px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(
+                        `${key.note}${key.octave}`, 
+                        key.x + key.width/2, 
+                        key.y + key.height - 8
+                    );
+                }
+            }
+
+            // ✨ ОТРИСОВКА ЭФФЕКТОВ КЛАВИШ
+            drawKeyEffects() {
+                const currentTime = performance.now();
+                
+                // Удаляем старые эффекты и рисуем активные
+                for (let [keyId, effect] of this.piano.keyFlashes) {
+                    const age = currentTime - effect.startTime;
+                    const maxAge = 300; // 300мс эффект
+                    
+                    if (age > maxAge) {
+                        this.piano.keyFlashes.delete(keyId);
+                        continue;
+                    }
+                    
+                    const progress = age / maxAge;
+                    const alpha = (1 - progress) * effect.intensity;
+                    
+                    // Круговая вспышка
+                    const radius = progress * 30;
+                    const gradient = this.ctx.createRadialGradient(
+                        effect.x, effect.y, 0,
+                        effect.x, effect.y, radius
+                    );
+                    
+                    gradient.addColorStop(0, `rgba(255, 255, 255, ${alpha * 0.8})`);
+                    gradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
+                    
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.beginPath();
+                    this.ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+            }
+
+            // 💫 ОБНОВЛЕНИЕ И ОТРИСОВКА ЧАСТИЦ (ЛЕТЯЩИХ ВВЕРХ)
+            updateAndDrawParticlesUp() {
+                for (let i = this.piano.noteParticles.length - 1; i >= 0; i--) {
+                    const particle = this.piano.noteParticles[i];
+                    
+                    // Движение вверх вместо вправо
+                    particle.y -= particle.speed;
+                    particle.alpha -= 0.008;
+                    
+                    if (particle.alpha <= 0 || particle.y < 0) {
+                        this.piano.noteParticles.splice(i, 1);
+                        continue;
+                    }
+                    
+                    // Рисуем частицу
+                    this.ctx.save();
+                    this.ctx.globalAlpha = particle.alpha;
+                    this.ctx.fillStyle = particle.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.restore();
+                }
+            }
+
+            // 🔄 ПОСТОЯННАЯ ВИЗУАЛИЗАЦИЯ (ДАЖЕ БЕЗ АУДИО)
+            startVisualLoop() {
+                const render = () => {
+                    this.drawProfessionalVisualization();
+                    requestAnimationFrame(render);
+                };
+                render();
+            }
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            new ProfessionalVocalAnalyzer();
+        });
+    </script>
+</body>
+</html> 

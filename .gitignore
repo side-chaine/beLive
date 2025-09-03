@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Config files with secrets
+continue.config.yaml
+*.local
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs
+*.log
+Log/*.log
+Log/*
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.temp
+
+# Backup files
+*.bak
+*.backup
+*-backup.*
+*.orig Reference COD/
+.DS_Store
+.cursor
+.cursorrules
+cursor-memory-bank
+cursor-rules
+Kraken_Studio
+Log
+Reference COD
+ProjectRules
+temp_fix.txt
+tests

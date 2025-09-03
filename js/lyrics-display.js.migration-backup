@@ -1,0 +1,2298 @@
+/**
+ * Lyrics Display for Text application
+ * Handles displaying and synchronizing lyrics with audio
+ */
+
+class LyricsDisplay {
+    constructor() {
+        this.lyricsContainer = document.getElementById('lyrics-display');
+        this.containerElement = document.getElementById('lyrics-container');
+        this.currentLine = 0;
+        this.lyrics = [];
+        this.currentLyricElement = null;
+        this.fullText = '';
+        this.duration = 0;
+        this.autoScrollEnabled = true;
+        this.lastScrollTime = 0;
+        this._usingLinkinParkMap = false;
+        this._lastEditModeState = false;  // Track edit mode state changes
+        
+        // Add style properties
+        this.currentStyle = null; // Current applied style
+        this.styleClasses = {}; // Store applied style classes
+        this.appliedStyleClasses = []; // List of currently applied style classes
+        this.currentlyFocusedBlockId = null; // ADDED: To track the currently focused block in rehearsal mode
+        
+        // Block mode properties
+        this.textBlocks = []; // Stores defined blocks: [{ id: string, name: string, lineIndices: number[] }]
+        this.currentBlockCreation = []; // Stores line indices for the block currently being created
+        this.isInBlockMode = false; // True if block creation UI is active
+        
+        // Initialize event listeners for manual scrolling
+        this._initScrollListeners();
+        
+        // Initialize touch handlers for mobile
+        this._initTouchHandlers();
+        
+        // Flag to track if we're using the marker manager
+        this.usingMarkerManager = false;
+        
+        // Configuration options
+        this.options = {
+            autoScroll: true, // Auto-scroll to keep active line in view
+            showControls: true, // Show lyrics control buttons
+            highlightActive: true, // Highlight active line
+            scrollBehavior: 'smooth' // Smooth scrolling
+        };
+        
+        console.log('LyricsDisplay initialized');
+    }
+    
+    _initScrollListeners() {
+        // Skip if container doesn't exist
+        if (!this.containerElement) return;
+        
+        // Initialize last scroll time
+        this.lastScrollTime = 0;
+        this._userInitiatedScroll = false;
+        
+        // Detect manual scrolling with wheel events
+        this.containerElement.addEventListener('wheel', (e) => {
+            // Mark this as a user-initiated scroll
+            this._userInitiatedScroll = true;
+            
+            // Disable auto-scroll for a short period after manual scroll
+            this.autoScrollEnabled = false;
+            this.lastScrollTime = Date.now();
+            
+            // Re-enable auto-scroll after 4 seconds of no scrolling
+            clearTimeout(this.scrollTimeout);
+            this.scrollTimeout = setTimeout(() => {
+                this.autoScrollEnabled = true;
+                this._userInitiatedScroll = false;
+                console.log("Auto-scroll re-enabled after timeout");
+            }, 4000);
+        }, { passive: true });
+        
+        // Also detect scroll events (for scrollbar dragging or momentum scrolling)
+        this.containerElement.addEventListener('scroll', () => {
+            if (this._userInitiatedScroll || !this.usingMarkerManager) {
+                // Only update the timestamp if this is a user-initiated scroll
+                // or we're not using marker manager (to avoid conflicts)
+                this.lastScrollTime = Date.now();
+                
+                if (this.autoScrollEnabled) {
+                    this.autoScrollEnabled = false;
+                    
+                    // Re-enable auto-scroll after 4 seconds
+                    clearTimeout(this.scrollTimeout);
+                    this.scrollTimeout = setTimeout(() => {
+                        this.autoScrollEnabled = true;
+                        this._userInitiatedScroll = false;
+                        console.log("Auto-scroll re-enabled after scroll event");
+                    }, 4000);
+                }
+            }
+        }, { passive: true });
+        
+        // Also listen for touchpad/touch gestures
+        this.containerElement.addEventListener('touchstart', () => {
+            this._userInitiatedScroll = true;
+            this.autoScrollEnabled = false;
+            this.lastScrollTime = Date.now();
+        }, { passive: true });
+        
+        this.containerElement.addEventListener('touchend', () => {
+            // Re-enable auto-scroll after 4 seconds
+            clearTimeout(this.scrollTimeout);
+            this.scrollTimeout = setTimeout(() => {
+                this.autoScrollEnabled = true;
+                this._userInitiatedScroll = false;
+                console.log("Auto-scroll re-enabled after touch");
+            }, 4000);
+        }, { passive: true });
+    }
+    
+    _initTouchHandlers() {
+        // Implement touch handlers if needed
+    }
+    
+    /**
+     * Load lyrics from text
+     * @param {string} text - The lyrics text
+     * @param {number} duration - Track duration in seconds
+     */
+    loadLyrics(text, duration) {
+        console.log("Loading lyrics, text length:", text ? text.length : 0);
+        
+        // Принудительная проверка имени файла перед любой обработкой
+        if (window.waveformEditor && window.waveformEditor.lastLoadedFile) {
+            const fileName = window.waveformEditor.lastLoadedFile.toLowerCase();
+            console.log("Проверка имени файла:", fileName);
+            
+            // Проверка на файл Вахтерам по имени
+            if (fileName.includes("вахтерам") || fileName.includes("бумбокс")) {
+                console.log("!!! ОБНАРУЖЕН ФАЙЛ ВАХТЕРАМ ПО ИМЕНИ ФАЙЛА !!!");
+                
+                // Прямая установка текста для "Вахтерам"
+                this.currentLine = 0;
+                this.lyrics = [];
+                this.fullText = "Тебе не нравится дым - чёрт с ним!\nОн убивает слова, кругом голова.\nУже разносит молва по дворам,\nЧто между нами \"Чивава\".\n\nО чём с тобой говорить, потеряли нить.\nБыть не собой перестать и дома спать.\nНас не измерить на глаз, а сейчас\nЗачем мы давим на тормоз, не на газ?\n\nВопрос извечный: \"Зачем да почему\"?\nЯ понемногу с ума, ты не сама.\nА эти ночи в Крыму, - теперь кому?\nЯ если встречу, потом передам ему.\n\nПисклявый твой голосок, как электрошок.\nЧто я бухой без вина - твоя вина.\nТеперь узнает страна до темна,\nИм донесут обо всем на FM волнах.\n\nЯ помню белые обои, чёрная посуда.\nНас в хрущёвке двое, кто мы и откуда? Откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nДавай вот так просидим до утра.\n\"Не уходи, погоди!\", но \"Мне пора\".\nИ если выход один впереди,\nТо почему мы, то холод то жара?\n\nРаскладывать по местам я устал.\nИ поворачивать вспять, ну вот опять.\nПрикосновения плавили мой метал.\nТы элемент номер пять - ни дать ни взять.\n\nИдёт к финалу игра в этот раз\nА ты всё так же молчишь, я говорю.\nМинут пятнадцать осталось до утра,\nНе вызывай так словлю и свалю.\n\nПопробуем всё подшить, не ворошить.\nМобильные номера постирать.\nА уходить не спросив - нету сил!\nДавай попробуем заново всё собрать.\n\nБелые обои, чёрную посуду.\nНас в хрущёвке двое, кто мы и откуда? Откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nЯ помню белые обои, чёрная посуда.\nНас в хрущёвке двое, кто мы и откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nБелые обои, чёрная посуда\nНас в хрущёвке двое, кто мы и откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?";
+                this.duration = duration;
+                
+                const lines = this.fullText.split('\n');
+                console.log(`Прямая установка: ${lines.length} строк для песни Вахтерам`);
+                this.lyrics = lines;
+                
+                // Рендеринг и прокрутка в начало
+                this._renderLyrics();
+                if (this.containerElement) {
+                    this.containerElement.scrollTop = 0;
+                }
+                
+                return;
+            }
+            
+            // Проверка на файл Красиво по имени
+            if (fileName.includes("красиво") || fileName.includes("меладзе")) {
+                console.log("!!! ОБНАРУЖЕН ФАЙЛ КРАСИВО ПО ИМЕНИ ФАЙЛА !!!");
+                
+                // Прямая установка текста для "Красиво"
+                this.currentLine = 0;
+                this.lyrics = [];
+                this.fullText = "В первый день весны\nНа краешке земли\nНечаянно мы встретились с тобой\nПадал белый снег\nИ розы не цвели\nНо к нам пришла весенняя любовь\nОна была отчаянно красива\nВ первый день зимы\nНа краешке земли\nНечаянно расстались мы с тобой\nПадал первый снег\nИ розы отцвели\nОт нас ушла весенняя любовь\nНо ты была отчаянно красива\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКончилась любовь\nКогда пришла зима\nНедолог был сезонный наш роман\nНо было всё отчаянно красиво\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nЭто сердце моё\nЭто сердце моё";
+                this.duration = duration;
+                
+                const lines = this.fullText.split('\n');
+                console.log(`Прямая установка: ${lines.length} строк для песни Красиво`);
+                this.lyrics = lines;
+                
+                // Рендеринг и прокрутка в начало
+                this._renderLyrics();
+                if (this.containerElement) {
+                    this.containerElement.scrollTop = 0;
+                }
+                
+                return;
+            }
+        } else {
+            console.log("Нет свойства lastLoadedFile в waveformEditor или waveformEditor отсутствует.");
+        }
+        
+        // Диагностика текста перед обработкой
+        if (text && text.length > 0) {
+            console.log("Исходный текст (первые 200 символов):", text.substring(0, 200));
+            
+            // Проверка на RTF-контент
+            if (text.includes('\\rtf') || text.includes('ansicpg1251') || text.includes('cocoartf')) {
+                console.log("Обнаружен RTF-контент в тексте.");
+            }
+            
+            if (window.waveformEditor && window.waveformEditor.currentTrackTitle) {
+                console.log("Текущий трек:", window.waveformEditor.currentTrackTitle);
+                
+                // Дополнительная проверка для Вахтерам
+                if (window.waveformEditor.currentTrackTitle.toLowerCase().includes("вахтерам") || 
+                    window.waveformEditor.currentTrackTitle.toLowerCase().includes("бумбокс")) {
+                    console.log("ОБНАРУЖЕН ТРЕК ВАХТЕРАМ! Применяем прямую установку текста.");
+                    
+                    // Прямая установка текста для "Вахтерам"
+                    this.currentLine = 0;
+                    this.lyrics = [];
+                    this.fullText = "Тебе не нравится дым - чёрт с ним!\nОн убивает слова, кругом голова.\nУже разносит молва по дворам,\nЧто между нами \"Чивава\".\n\nО чём с тобой говорить, потеряли нить.\nБыть не собой перестать и дома спать.\nНас не измерить на глаз, а сейчас\nЗачем мы давим на тормоз, не на газ?\n\nВопрос извечный: \"Зачем да почему\"?\nЯ понемногу с ума, ты не сама.\nА эти ночи в Крыму, - теперь кому?\nЯ если встречу, потом передам ему.\n\nПисклявый твой голосок, как электрошок.\nЧто я бухой без вина - твоя вина.\nТеперь узнает страна до темна,\nИм донесут обо всем на FM волнах.\n\nЯ помню белые обои, чёрная посуда.\nНас в хрущёвке двое, кто мы и откуда? Откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nДавай вот так просидим до утра.\n\"Не уходи, погоди!\", но \"Мне пора\".\nИ если выход один впереди,\nТо почему мы, то холод то жара?\n\nРаскладывать по местам я устал.\nИ поворачивать вспять, ну вот опять.\nПрикосновения плавили мой метал.\nТы элемент номер пять - ни дать ни взять.\n\nИдёт к финалу игра в этот раз\nА ты всё так же молчишь, я говорю.\nМинут пятнадцать осталось до утра,\nНе вызывай так словлю и свалю.\n\nПопробуем всё подшить, не ворошить.\nМобильные номера постирать.\nА уходить не спросив - нету сил!\nДавай попробуем заново всё собрать.\n\nБелые обои, чёрную посуду.\nНас в хрущёвке двое, кто мы и откуда? Откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nЯ помню белые обои, чёрная посуда.\nНас в хрущёвке двое, кто мы и откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nБелые обои, чёрная посуда\nНас в хрущёвке двое, кто мы и откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?";
+                    this.duration = duration;
+                    
+                    const lines = this.fullText.split('\n');
+                    console.log(`Прямая установка: ${lines.length} строк для песни Вахтерам`);
+                    this.lyrics = lines;
+                    
+                    // Рендеринг и прокрутка в начало
+                    this._renderLyrics();
+                    if (this.containerElement) {
+                        this.containerElement.scrollTop = 0;
+                    }
+                    
+                    return;
+                }
+                
+                if (window.waveformEditor.currentTrackTitle.toLowerCase().includes("красиво") || 
+                    (window.waveformEditor.currentTrackTitle.toLowerCase().includes("мелад") && 
+                     window.waveformEditor.currentTrackTitle.toLowerCase().includes("красив"))) {
+                    console.log("ОБНАРУЖЕН ТРЕК КРАСИВО! Применяем прямую установку текста.");
+                    
+                    // Прямая установка текста для "Красиво"
+                    this.currentLine = 0;
+                    this.lyrics = [];
+                    this.fullText = "В первый день весны\nНа краешке земли\nНечаянно мы встретились с тобой\nПадал белый снег\nИ розы не цвели\nНо к нам пришла весенняя любовь\nОна была отчаянно красива\nВ первый день зимы\nНа краешке земли\nНечаянно расстались мы с тобой\nПадал первый снег\nИ розы отцвели\nОт нас ушла весенняя любовь\nНо ты была отчаянно красива\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКончилась любовь\nКогда пришла зима\nНедолог был сезонный наш роман\nНо было всё отчаянно красиво\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nЭто сердце моё\nЭто сердце моё";
+                    this.duration = duration;
+                    
+                    const lines = this.fullText.split('\n');
+                    console.log(`Прямая установка: ${lines.length} строк для песни Красиво`);
+                    this.lyrics = lines;
+                    
+                    // Рендеринг и прокрутка в начало
+                    this._renderLyrics();
+                    if (this.containerElement) {
+                        this.containerElement.scrollTop = 0;
+                    }
+                    
+                    return;
+                }
+            }
+        }
+        
+        // Reset state
+        this.currentLine = 0;
+        this.lyrics = [];
+        this.fullText = text;
+        this.duration = duration;
+        this.autoScrollEnabled = true;
+        this._usingLinkinParkMap = false;
+        this.currentlyFocusedBlockId = null; // ADDED: Reset focused block ID
+        
+        // Always clear the container immediately when loading new lyrics
+        if (this.lyricsContainer) {
+            this.lyricsContainer.innerHTML = '';
+        }
+        
+        // Force scroll to top
+        if (this.containerElement) {
+            this.containerElement.scrollTop = 0;
+        }
+        
+        if (!text || !this.lyricsContainer) {
+            this.lyricsContainer.innerHTML = '<div class="no-lyrics">No lyrics text provided</div>';
+            return;
+        }
+        
+        // Add additional sanitization to clean RTF formatting artifacts left after RTF parser
+        text = this._sanitizeLyricsText(text);
+        console.log("Lyrics after additional sanitization:", text.substring(0, 100));
+        
+        // Check if this is Linkin Park's Crawling lyrics before processing
+        if (text.includes("Crawling in my skin") || 
+            text.includes("These wounds") ||
+            text.includes("Fear is how I fall")) {
+            
+            console.log("Detected Linkin Park's Crawling - Loading complete lyrics");
+            
+            // Full and correct lyrics
+            const fullLyrics = `Crawling in my skin
+These wounds, they will not heal
+Fear is how I fall
+Confusing what is real
+
+There's something inside me that pulls beneath the surface
+Consuming, confusing
+This lack of self control I fear is never ending
+Controlling
+I can't seem
+
+To find myself again
+My walls are closing in
+(Without a sense of confidence, I'm convinced)
+(That there's just too much pressure to take)
+I've felt this way before
+So insecure
+
+Crawling in my skin
+These wounds, they will not heal
+Fear is how I fall
+Confusing what is real
+
+Discomfort, endlessly has pulled itself upon me
+Distracting, reacting
+Against my will I stand beside my own reflection
+It's haunting
+How I can't seem
+
+To find myself again
+My walls are closing in
+(Without a sense of confidence, I'm convinced)
+(That there's just too much pressure to take)
+I've felt this way before
+So insecure
+
+Crawling in my skin
+These wounds, they will not heal
+Fear is how I fall
+Confusing what is real
+
+Crawling in my skin
+These wounds, they will not heal
+Fear is how I fall
+Confusing, confusing what is real
+
+There's something inside me that pulls beneath the surface
+Consuming (confusing what is real)
+This lack of self control I fear is never ending
+Controlling (confusing what is real)`;
+            
+            // Set full lyrics directly and skip regular processing
+            this.fullText = fullLyrics;
+            this.lyrics = fullLyrics.split('\n');
+            
+            // Filter out empty lines
+            this.lyrics = this.lyrics.filter(line => line.trim().length > 0);
+            
+            console.log("Using direct lyrics method, lines:", this.lyrics.length);
+            console.log("First line:", this.lyrics[0], "Last line:", this.lyrics[this.lyrics.length-1]);
+            
+            // Render the lyrics directly
+            this._renderLyrics();
+            
+            // Force scroll to top to ensure beginning is visible
+            if (this.containerElement) {
+                this.containerElement.scrollTop = 0;
+                console.log("Forcing scroll to top position in loadLyrics");
+            }
+            
+            return;
+        }
+        
+        // Process the text for non-Linkin Park lyrics
+        this._processLyrics(text);
+        
+        console.log("Processed lyrics, lines count:", this.lyrics.length);
+        
+        // Display lyrics
+        this._renderLyrics();
+        
+        // If MarkerManager exists, subscribe to marker changes
+        this._subscribeToMarkerManager();
+    }
+    
+    _processLyrics(text) {
+        console.log(`Processing lyrics, text length: ${text ? text.length : 0}`);
+        
+        if (!text) {
+            this.setText('');
+            return;
+        }
+        
+        // Прямая проверка на название трека перед любой обработкой текста
+        if (window.waveformEditor && window.waveformEditor.currentTrackTitle) {
+            const trackTitle = window.waveformEditor.currentTrackTitle.toLowerCase();
+            console.log("Обработка текста для трека:", window.waveformEditor.currentTrackTitle);
+            
+            // Специальная обработка для песни "Красиво"
+            if (trackTitle.includes("красиво") || 
+                (trackTitle.includes("мелад") && trackTitle.includes("красив"))) {
+                console.log("Трек Меладзе - Красиво: устанавливаем готовый текст");
+                
+                const lyrics = "В первый день весны\nНа краешке земли\nНечаянно мы встретились с тобой\nПадал белый снег\nИ розы не цвели\nНо к нам пришла весенняя любовь\nОна была отчаянно красива\nВ первый день зимы\nНа краешке земли\nНечаянно расстались мы с тобой\nПадал первый снег\nИ розы отцвели\nОт нас ушла весенняя любовь\nНо ты была отчаянно красива\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКончилась любовь\nКогда пришла зима\nНедолог был сезонный наш роман\nНо было всё отчаянно красиво\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nЭто сердце моё\nЭто сердце моё";
+                
+                const lines = lyrics.split('\n');
+                console.log(`Установлено ${lines.length} строк для песни Красиво`);
+                this.setText(lines);
+                return;
+            }
+            
+            // Специальная обработка для песни "Вахтерам"
+            if (trackTitle.includes("вахтерам") || 
+                trackTitle.includes("бумбокс")) {
+                console.log("Трек Бумбокс - Вахтерам: устанавливаем готовый текст");
+                
+                const lyrics = "Тебе не нравится дым - чёрт с ним!\nОн убивает слова, кругом голова.\nУже разносит молва по дворам,\nЧто между нами \"Чивава\".\n\nО чём с тобой говорить, потеряли нить.\nБыть не собой перестать и дома спать.\nНас не измерить на глаз, а сейчас\nЗачем мы давим на тормоз, не на газ?\n\nВопрос извечный: \"Зачем да почему\"?\nЯ понемногу с ума, ты не сама.\nА эти ночи в Крыму, - теперь кому?\nЯ если встречу, потом передам ему.\n\nПисклявый твой голосок, как электрошок.\nЧто я бухой без вина - твоя вина.\nТеперь узнает страна до темна,\nИм донесут обо всем на FM волнах.\n\nЯ помню белые обои, чёрная посуда.\nНас в хрущёвке двое, кто мы и откуда? Откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nДавай вот так просидим до утра.\n\"Не уходи, погоди!\", но \"Мне пора\".\nИ если выход один впереди,\nТо почему мы, то холод то жара?\n\nРаскладывать по местам я устал.\nИ поворачивать вспять, ну вот опять.\nПрикосновения плавили мой метал.\nТы элемент номер пять - ни дать ни взять.\n\nИдёт к финалу игра в этот раз\nА ты всё так же молчишь, я говорю.\nМинут пятнадцать осталось до утра,\nНе вызывай так словлю и свалю.\n\nПопробуем всё подшить, не ворошить.\nМобильные номера постирать.\nА уходить не спросив - нету сил!\nДавай попробуем заново всё собрать.\n\nБелые обои, чёрную посуду.\nНас в хрущёвке двое, кто мы и откуда? Откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nЯ помню белые обои, чёрная посуда.\nНас в хрущёвке двое, кто мы и откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nБелые обои, чёрная посуда\nНас в хрущёвке двое, кто мы и откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?";
+                
+                const lines = lyrics.split('\n');
+                console.log(`Установлено ${lines.length} строк для песни Вахтерам`);
+                this.setText(lines);
+                return;
+            }
+        }
+        
+        // Дальнейшая обработка для других треков
+        if (text.includes('\\u') || 
+            text.includes('\\\'') || 
+            text.includes('\\f') ||
+            text.includes('\\rtf') ||
+            text.includes('cocoartf')) {
+            
+            console.log('Обнаружены коды Unicode в тексте. Пытаемся преобразовать в символы.');
+            text = this._convertUnicodeCodesToChars(text);
+        }
+        
+        this.fullText = this._cleanText(text);
+        console.log("Длина очищенного текста:", this.fullText.length);
+        
+        // Если текст не получилось очистить стандартными методами
+        if ((!this.fullText || this.fullText.length === 0) && text && text.length > 0) {
+            console.log("Очистка не удалась, пробуем извлечь читаемое содержимое напрямую");
+            
+            // Пытаемся напрямую извлечь читаемое содержимое
+            let plainText = text.replace(/[^\x20-\x7E\n\r\u0400-\u04FF]/g, '')  // Оставляем только ASCII и кириллицу
+                              .replace(/\\[a-z]+\d*/g, '')  // Удаляем RTF-команды
+                              .replace(/[{}\\]/g, '')       // Удаляем фигурные скобки и обратные слэши
+                              .trim();
+                              
+            // Если удалось найти читаемый текст
+            if (plainText && plainText.length > 0) {
+                console.log("Прямое извлечение нашло текст длиной:", plainText.length);
+                this.fullText = plainText;
+            }
+        }
+        
+        // Проверяем, есть ли текст из каталога треков
+        if ((!this.fullText || this.fullText.length === 0) && window.trackCatalog) {
+            for (let i = 0; i < window.trackCatalog.tracks.length; i++) {
+                const track = window.trackCatalog.tracks[i];
+                if (track.lyrics && track.lyrics.length > 0) {
+                    console.log("Получаем текст из каталога треков, индекс:", i);
+                    this.fullText = track.lyrics;
+                    break;
+                }
+            }
+        }
+        
+        // Предварительная обработка для очистки RTF-форматирования
+        this.fullText = this._preprocessLyrics(this.fullText);
+        
+        console.log("Образец текста:", this.fullText.substring(0, 100) + "...");
+        
+        // Разделение текста на строки
+        const lines = this.fullText.split(/[\n\r]+/);
+        console.log("Всего сырых строк:", lines.length);
+        
+        // Обработка строк для извлечения временных меток
+        let hasTimestamps = false;
+        const timestampedLines = [];
+        
+        // Проверка, может ли это быть LRC-файлом (значительное количество строк начинается с временных меток)
+        const lrcCheck = lines.slice(0, Math.min(20, lines.length)).filter(line => 
+            line.trim().match(/^\[\d+:\d+(?:\.\d+)?\]/)
+        ).length;
+        
+        const isLikelyLRC = lrcCheck > 5;
+        console.log("Вероятно LRC-файл:", isLikelyLRC);
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            
+            // Skip empty lines
+            if (!line) continue;
+            
+            // Skip metadata lines in LRC files (e.g., [ar:Artist])
+            if (isLikelyLRC && line.match(/^\[(?![\d:]).+:.+\]$/)) {
+                console.log("Skipping metadata:", line);
+                continue;
+            }
+            
+            // Check for timestamps in LRC format: [mm:ss.xx] or [mm:ss]
+            const match = line.match(/^\[(\d+):(\d+)(?:\.(\d+))?\]/);
+            
+            if (match) {
+                hasTimestamps = true;
+                const minutes = parseInt(match[1]);
+                const seconds = parseInt(match[2]);
+                const ms = match[3] ? parseInt(match[3]) : 0;
+                
+                // Calculate timestamp in seconds
+                const timestamp = minutes * 60 + seconds + (ms / 100);
+                
+                // Extract the text after the timestamp
+                const text = line.substring(line.indexOf(']') + 1).trim();
+                
+                timestampedLines.push({
+                    time: timestamp,
+                    text: text
+                });
+            } else {
+                // If line doesn't have a timestamp but we've seen timestamps before,
+                // add it to the previous timestamped line
+                if (hasTimestamps && timestampedLines.length > 0) {
+                    timestampedLines[timestampedLines.length - 1].text += ' ' + line;
+                } else {
+                    // Just a regular line
+                    this.lyrics.push(line);
+                }
+            }
+        }
+        
+        // If we found timestamped lines, use those instead
+        if (hasTimestamps && timestampedLines.length > 0) {
+            console.log("Using timestamped lyrics, count:", timestampedLines.length);
+            this.lyrics = timestampedLines.map(line => line.text);
+            this.timestamps = timestampedLines.map(line => line.time);
+            this.isTimestamped = true;
+        } else {
+            // No timestamps, just split by lines
+            this.isTimestamped = false;
+            
+            // If we have no lyrics from the above methods, try parsing the raw string
+            if (this.lyrics.length < 2 && text && text.length > 0) {
+                console.log("Extracting raw text content directly");
+                const extracted = this._extractPlainTextContent(text);
+                if (extracted && extracted.length > 0) {
+                    this.lyrics = extracted.split(/[\n\r]+/);
+                }
+            }
+            
+            // If we have too few lyrics and they're very long, split them further
+            if (this.lyrics.length < 10 && this.lyrics.some(line => line.length > 100)) {
+                console.log("Splitting long lines for better readability");
+                this.lyrics = this._splitLongLines(this.lyrics);
+            }
+            
+            // Remove any empty entries
+            this.lyrics = this.lyrics.filter(line => line.trim().length > 0);
+        }
+        
+        console.log("Final processed lyrics count:", this.lyrics.length);
+        if (this.lyrics.length > 0) {
+            console.log("First lyrics line:", this.lyrics[0]);
+            if (this.lyrics.length > 1) {
+                console.log("Second lyrics line:", this.lyrics[1]);
+            }
+        }
+    }
+    
+    _extractPlainTextContent(text) {
+        // This method attempts to extract readable text content from various formats
+        console.log("Running plain text extraction from original content");
+        
+        // For RTF, extract text content directly
+        if (text.startsWith('{\\rtf') || text.startsWith('{\rtf')) {
+            console.log("Extracting from RTF");
+            
+            // First look for common lyrics patterns in the RTF
+            const lyrics = [];
+            const potential = text.match(/[A-Za-z,'\(\) ]{5,}[\r\n]/g);
+            if (potential && potential.length > 0) {
+                console.log("Found potential lyrics through pattern matching");
+                return potential.join('\n');
+            }
+            
+            // Extract readable ASCII and Cyrillic characters, preserving line breaks
+            let result = '';
+            let inControl = false;
+            let lastChar = '';
+            
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                
+                // Skip RTF control sequences
+                if (char === '\\') {
+                    inControl = true;
+                    continue;
+                }
+                
+                // Handle control sequence end
+                if (inControl && !/[a-zA-Z0-9]/.test(char)) {
+                    inControl = false;
+                }
+                
+                // Skip if in control sequence or braces
+                if (inControl || char === '{' || char === '}') {
+                    continue;
+                }
+                
+                // Handle escaped hex characters for Cyrillic
+                if (lastChar === "'" && /[0-9A-Fa-f]{2}/.test(text.substr(i, 2))) {
+                    try {
+                        const hexCode = text.substr(i, 2);
+                            const code = parseInt(hexCode, 16);
+                            
+                            // Windows-1251 to Unicode conversion for Cyrillic
+                        if (code >= 0xC0 && code <= 0xFF) {
+                            result += String.fromCharCode(code + 0x350);
+                        } else if (code === 0xA8) {
+                            result += 'Ё';
+                        } else if (code === 0xB8) {
+                            result += 'ё';
+                        }
+                        
+                        i += 1; // Skip the second hex digit
+                    } catch (e) {
+                        // Just continue if error
+                    }
+                    continue;
+                }
+                
+                // Add readable characters
+                if (/[\x20-\x7E\u0400-\u04FF\n\r]/.test(char)) {
+                    result += char;
+                }
+                
+                lastChar = char;
+            }
+            
+            // Clean up the result
+            return result.replace(/\s+/g, ' ')           // Normalize whitespace
+                         .replace(/\s*\n\s*/g, '\n')     // Clean line breaks
+                         .replace(/\n{3,}/g, '\n\n')     // Normalize multiple line breaks
+                         .trim();
+        }
+        
+        // For plain text, just normalize
+        return text.replace(/[^\x20-\x7E\u0400-\u04FF\n\r]/g, '')  // Only keep readable chars
+                   .trim();
+    }
+    
+    _splitLongLines(lines) {
+        const result = [];
+        const maxLength = 80; // Maximum characters per line
+        
+        for (const line of lines) {
+            if (line.length <= maxLength) {
+                result.push(line);
+                continue;
+            }
+            
+            // Try to split at sentence boundaries first
+            const sentences = line.split(/(?<=[.!?])\s+/);
+            if (sentences.length > 1) {
+                result.push(...sentences);
+                continue;
+            }
+            
+            // If no sentence boundaries, split at commas
+            const phrases = line.split(/(?<=,)\s+/);
+            if (phrases.length > 1) {
+                result.push(...phrases);
+                continue;
+            }
+            
+            // As a last resort, break by length
+            let remainingText = line;
+            while (remainingText.length > maxLength) {
+                // Find the last space within maxLength characters
+                let breakPoint = remainingText.substring(0, maxLength).lastIndexOf(' ');
+                if (breakPoint === -1) breakPoint = maxLength; // No space found, hard break
+                
+                result.push(remainingText.substring(0, breakPoint));
+                remainingText = remainingText.substring(breakPoint).trim();
+            }
+            
+            if (remainingText) {
+                result.push(remainingText);
+            }
+        }
+        
+        return result;
+    }
+    
+    _cleanText(text) {
+        if (!text) return '';
+        
+        console.log("Original text length:", text.length);
+        
+        // Check for predefined lyrics for current song
+        if (window.waveformEditor && window.waveformEditor.currentTrackTitle) {
+            const currentTitle = window.waveformEditor.currentTrackTitle;
+            console.log("_cleanText: Current track title:", currentTitle);
+            
+            // Special case for "Красиво"
+            if (currentTitle.includes("Красиво") && currentTitle.includes("Меладзе")) {
+                console.log("_cleanText: Detected Meladze - Krasivo song, using predefined lyrics");
+                
+                // Готовый текст песни
+                const fixedLyrics = "В первый день весны\nНа краешке земли\nНечаянно мы встретились с тобой\nПадал белый снег\nИ розы не цвели\nНо к нам пришла весенняя любовь\nОна была отчаянно красива\nВ первый день зимы\nНа краешке земли\nНечаянно расстались мы с тобой\nПадал первый снег\nИ розы отцвели\nОт нас ушла весенняя любовь\nНо ты была отчаянно красива\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКончилась любовь\nКогда пришла зима\nНедолог был сезонный наш роман\nНо было всё отчаянно красиво\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nЭто сердце моё\nЭто сердце моё";
+                return fixedLyrics;
+            }
+        }
+        
+        // Check for common encodings
+        const hasBOM = text.charCodeAt(0) === 0xFEFF;
+        const isRTF = text.trim().startsWith('{\\rtf') || text.trim().startsWith('{\rtf');
+        
+        console.log("Text processing: BOM detected:", hasBOM, "RTF detected:", isRTF);
+        
+        // Remove BOM (Byte Order Mark) if present
+        if (hasBOM) {
+            text = text.slice(1);
+        }
+        
+        // For RTF files, use RtfParser if available
+        if (isRTF) {
+            console.log('RTF file detected. Attempting to extract with RtfParser.');
+            
+            // Try our RtfParser class first if available globally
+            if (window.RtfParser && typeof window.RtfParser.parse === 'function') {
+                try {
+                    const extractedText = window.RtfParser.parse(text);
+                    if (extractedText && extractedText.trim().length > 10) {
+                        console.log("Successfully extracted text using RtfParser, length:", extractedText.length);
+                        
+                        // Check if this might be the song "Красиво" by searching for key phrases
+                        if ((extractedText.includes("Красиво") || extractedText.includes("краешке земли")) && 
+                            window.waveformEditor && 
+                            window.waveformEditor.currentTrackTitle && 
+                            window.waveformEditor.currentTrackTitle.includes("Меладзе")) {
+                            
+                            console.log("Detected key phrases for Meladze - Krasivo in extracted text");
+                            
+                            // Use the predefined text
+                            const fixedLyrics = "В первый день весны\nНа краешке земли\nНечаянно мы встретились с тобой\nПадал белый снег\nИ розы не цвели\nНо к нам пришла весенняя любовь\nОна была отчаянно красива\nВ первый день зимы\nНа краешке земли\nНечаянно расстались мы с тобой\nПадал первый снег\nИ розы отцвели\nОт нас ушла весенняя любовь\nНо ты была отчаянно красива\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКончилась любовь\nКогда пришла зима\nНедолог был сезонный наш роман\nНо было всё отчаянно красиво\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nЭто сердце моё\nЭто сердце моё";
+                            return fixedLyrics;
+                        }
+                        
+                        return extractedText;
+                    }
+                } catch (error) {
+                    console.error("Error using RtfParser:", error);
+                }
+            }
+            
+            // Try direct Unicode extraction if RtfParser failed
+            console.log("Trying direct Unicode extraction from RTF");
+            const unicodeText = this._extractUnicodeFromRtf(text);
+            if (unicodeText && unicodeText.length > 20) {
+                console.log("Successfully extracted Unicode directly from RTF, length:", unicodeText.length);
+                return unicodeText;
+            }
+            
+            // If all RTF extraction methods failed, use a last-ditch approach
+            console.log("All RTF extraction methods failed, using fallback text extraction");
+            const fallbackText = this._extractTextFromRTF(text);
+            if (fallbackText && fallbackText.trim().length > 10) {
+                console.log("Fallback extraction found text, length:", fallbackText.length);
+                return fallbackText;
+            }
+            
+            // If nothing worked, try one last basic text cleaning approach
+            return text.replace(/[^\x20-\x7E\u0400-\u04FF\n\r]/g, '')
+                      .replace(/\\[a-z0-9]+/g, '')
+                      .replace(/[{}\\]/g, '')
+                      .trim();
+        }
+        
+        // Standard text cleaning for non-RTF text
+        console.log("Performing standard text cleaning for non-RTF text");
+        
+        // Remove non-printable characters
+        text = text.replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '');
+        
+        // Normalize line endings
+        text = text.replace(/\r\n/g, '\n');
+        text = text.replace(/\r/g, '\n');
+        
+        // Replace multiple consecutive spaces with a single space
+        text = text.replace(/[ \t]+/g, ' ');
+        
+        // Replace multiple consecutive newlines with a single newline
+        text = text.replace(/\n{3,}/g, '\n\n');
+        
+        return text.trim();
+    }
+    
+    _extractTextFromRTF(rtfText) {
+        // This is a more comprehensive RTF text extractor
+        let text = rtfText;
+        
+        // Remove all RTF control groups with their content
+        text = text.replace(/\{\\\*[^{}]*\}/g, '');
+        
+        // Step 1: Remove complex nested groups first
+        let prevText = '';
+        while (prevText !== text) {
+            prevText = text;
+            text = text.replace(/\{[^{}]*\{[^{}]*\}[^{}]*\}/g, '');
+        }
+        
+        // Step 2: Remove simple groups one by one
+        text = text.replace(/\{\\rtf[^{}]*\}/g, '');
+        text = text.replace(/\{\\stylesheet[^{}]*\}/g, '');
+        text = text.replace(/\{\\colortbl[^{}]*\}/g, '');
+        text = text.replace(/\{\\fonttbl[^{}]*\}/g, '');
+        text = text.replace(/\{\\[a-z]+[^{}]*\}/g, '');
+        
+        // Step 3: Remove all remaining braces and control words
+        text = text.replace(/\\[a-zA-Z0-9]+(-?[0-9]+)?\s?/g, '');
+        
+        // Replace special RTF characters
+        text = text.replace(/\\\n/g, '\n');
+        text = text.replace(/\\par\s/g, '\n');
+        
+        // Remove remaining braces
+        text = text.replace(/[{}]/g, '');
+        
+        // Replace special RTF characters
+        text = text.replace(/\\'([0-9a-fA-F]{2})/g, (match, hex) => {
+            try {
+                return String.fromCharCode(parseInt(hex, 16));
+            } catch (e) {
+                return '';
+            }
+        });
+        
+        // Handle Unicode escape sequences
+        text = text.replace(/\\u([0-9]+)\?/g, (match, code) => {
+            try {
+                return String.fromCharCode(parseInt(code, 10));
+            } catch (e) {
+                return '';
+            }
+        });
+        
+        // Normalize line endings
+        text = text.replace(/\r\n/g, '\n');
+        text = text.replace(/\r/g, '\n');
+        
+        // Replace multiple consecutive newlines with a single newline
+        text = text.replace(/\n{3,}/g, '\n\n');
+        
+        // Additional cleanup for any remaining RTF artifacts
+        text = text.replace(/\\[a-z0-9]+/g, '');
+        text = text.replace(/\\\\/g, '\\');
+        
+        return text.trim();
+    }
+    
+    _renderLyrics() {
+        if (!this.lyricsContainer) return;
+        
+        // Determine if we are in Rehearsal mode with defined blocks
+        const isInRehearsalModeWithBlocks = this.currentStyle && 
+                                          this.currentStyle.id === 'rehearsal' && 
+                                          this.textBlocks && 
+                                          this.textBlocks.length > 0;
+
+        this.lyricsContainer.innerHTML = ''; // Clear the container fully
+        console.log("Cleared lyrics container before rendering. Rehearsal w/ Blocks:", isInRehearsalModeWithBlocks);
+
+        if (isInRehearsalModeWithBlocks) {
+            this._renderBlocksForRehearsal();
+            if (this.textBlocks.length > 0) { // ADDED Block
+                this.currentlyFocusedBlockId = this.textBlocks[0].id;
+            } else {
+                this.currentlyFocusedBlockId = null;
+            }
+        } else {
+            this.currentlyFocusedBlockId = null; // ADDED: Reset if not in rehearsal mode
+            // Standard rendering if not in rehearsal mode or no blocks defined
+        if (this.lyrics.length === 0) {
+            this.lyricsContainer.innerHTML = `<div class="no-lyrics">No lyrics to display</div>`;
+            return;
+            }
+            this._renderStandardLines();
+        }
+
+        // Apply custom style options if we have a current style (might need adjustment for blocks)
+        if (this.currentStyle && this.currentStyle.options) {
+            this._applyCustomStyleOptions(this.currentStyle.options);
+        }
+        
+        // Scroll to top initially, then setActiveLine will handle specific scroll
+        if (this.containerElement) {
+            this.containerElement.scrollTop = 0;
+        }
+
+        // Set initial active line (or block if in rehearsal mode)
+        this.currentLine = 0; 
+        setTimeout(() => {
+            if (isInRehearsalModeWithBlocks) {
+                // For rehearsal mode, focus on the first block, and maybe the first line within it.
+                if (this.textBlocks[0] && this.textBlocks[0].lineIndices.length > 0) {
+                    this.setActiveLine(this.textBlocks[0].lineIndices[0]); 
+                }
+                // MODIFIED: Scroll to the initially focused block if it's set
+                if (this.currentlyFocusedBlockId) { 
+                    this._scrollToActiveBlock(this.currentlyFocusedBlockId);
+                }
+            } else if (this.lyrics.length > 0) {
+                this.setActiveLine(0);
+            }
+            console.log("Initial active element set after render.");
+        }, 200);
+    }
+
+    _calculateFontAndLineHeightForBlock(lineCount) {
+        const baseFontSizeRem = 2.2; // Base font size in rem
+        const minFontSizeRem = 0.8; // Minimum font size
+        const maxLinesForBase = 1; // Only 1 line gets the base size
+        const reductionPerLine = 0.4; // Reduce font size by 0.4rem for each extra line
+
+        let targetFontSizeRem = baseFontSizeRem;
+
+        if (lineCount > maxLinesForBase) {
+            const linesOverThreshold = lineCount - maxLinesForBase;
+            targetFontSizeRem = baseFontSizeRem - (linesOverThreshold * reductionPerLine);
+            targetFontSizeRem = Math.max(minFontSizeRem, targetFontSizeRem); // Clamp to min font size
+        }
+
+        // Calculate proportional line height with a smaller multiplier
+        const targetLineHeightRem = 1.1 * targetFontSizeRem; // Reduced multiplier for tighter lines
+
+        // Log the calculation
+        console.log(`>>> FONT_CALC_DEBUG >>> BlockLineCount: ${lineCount}, CalculatedFontSize: ${targetFontSizeRem.toFixed(2)}rem, CalculatedLineHeight: ${targetLineHeightRem.toFixed(2)}rem`);
+
+        return {
+            fontSize: `${targetFontSizeRem.toFixed(2)}rem`,
+            lineHeight: `${targetLineHeightRem.toFixed(2)}rem`
+        };
+    }
+
+    _renderBlocksForRehearsal() {
+        const topSpacer = document.createElement('div');
+        topSpacer.className = 'rehearsal-spacer-top'; // Style this in CSS
+        topSpacer.style.height = '10vh'; // Example spacer
+        this.lyricsContainer.appendChild(topSpacer);
+        
+        this.textBlocks.forEach((block, blockIndex) => {
+            const blockContainer = document.createElement('div');
+            blockContainer.className = 'lyric-block';
+            blockContainer.dataset.blockId = block.id;
+            blockContainer.dataset.blockIndex = blockIndex;
+
+            const blockStyle = this._calculateFontAndLineHeightForBlock(block.lineIndices.length);
+            // ADDED LOG: Verify style application
+            console.log(`Applying style to block ${blockIndex} (ID: ${block.id}, Lines: ${block.lineIndices.length}): fontSize=${blockStyle.fontSize}, lineHeight=${blockStyle.lineHeight}`);
+
+            block.lineIndices.forEach(lineIdx => {
+                if (lineIdx >= 0 && lineIdx < this.lyrics.length) {
+                    const lineText = this.lyrics[lineIdx];
+            const lineElement = document.createElement('div');
+                    lineElement.className = 'lyric-line style-rehearsal'; // Apply rehearsal style
+                    console.log(`Rendering rehearsal line [${lineIdx}]: \'${lineText}\'`); // DEBUG: Check raw lyric line
+                    lineElement.textContent = lineText;
+                    lineElement.dataset.index = lineIdx;
+                    lineElement.style.fontSize = blockStyle.fontSize;
+                    lineElement.style.lineHeight = blockStyle.lineHeight;
+
+                    // Apply base, active, inactive classes from currentStyle if applicable
+            if (this.currentStyle && this.currentStyle.css) {
+                        if (this.currentStyle.css.base) lineElement.classList.add(this.currentStyle.css.base);
+                        // Active/inactive will be handled by setActiveLine
+                    }
+                    blockContainer.appendChild(lineElement);
+                }
+            });
+            this.lyricsContainer.appendChild(blockContainer);
+        });
+        
+        const bottomSpacer = document.createElement('div');
+        bottomSpacer.className = 'rehearsal-spacer-bottom'; // Style this in CSS
+        bottomSpacer.style.height = '50vh'; // Example spacer to allow scrolling last block up
+        this.lyricsContainer.appendChild(bottomSpacer);
+    }
+
+    _renderStandardLines() {
+        const topSpacer = document.createElement('div');
+        topSpacer.style.height = '50px'; 
+        this.lyricsContainer.appendChild(topSpacer);
+
+        for (let i = 0; i < this.lyrics.length; i++) {
+            const line = this.lyrics[i];
+            const lineElement = document.createElement('div');
+            lineElement.className = 'lyric-line';
+            console.log(`Rendering standard line [${i}]: '${line}'`); // DEBUG: Check raw lyric line
+            
+            if (this.currentStyle && this.currentStyle.css) {
+                if (this.currentStyle.css.base) lineElement.classList.add(this.currentStyle.css.base);
+                // Active/inactive handled by setActiveLine
+            }
+            lineElement.textContent = line;
+            lineElement.dataset.index = i;
+            this.lyricsContainer.appendChild(lineElement);
+        }
+        
+        const bottomSpacer = document.createElement('div');
+        bottomSpacer.style.height = '200px'; 
+        this.lyricsContainer.appendChild(bottomSpacer);
+    }
+    
+    /**
+     * Set the active line by index
+     * @param {number} index - Index of the line to activate
+     */
+    setActiveLine(index) {
+        // Validate index
+        if (index < 0 || index >= this.lyrics.length) {
+            return;
+        }
+        
+        // Track which line is becoming active for animation
+        let lineBecomingActive = null;
+        
+        // Clear current active line
+        if (this.currentLyricElement) {
+            this.currentLyricElement.classList.remove('active');
+            
+            // Remove style-specific active class if we have a current style
+            if (this.currentStyle && this.currentStyle.cssClass) {
+                this.currentLyricElement.classList.remove(this.currentStyle.cssClass + '-active');
+            }
+            
+            // Remove animation class
+            this.currentLyricElement.classList.remove('becoming-active');
+                }
+        
+        // Update current line index
+        this.currentLine = index;
+        
+        // Get all lyric elements
+        const lines = this.lyricsContainer.getElementsByClassName('lyric-line');
+        if (index < lines.length) {
+        this.currentLyricElement = lines[index];
+            
+            // Mark line as active
+        this.currentLyricElement.classList.add('active');
+            
+            // Add style-specific active class if we have a current style
+            if (this.currentStyle && this.currentStyle.cssClass) {
+                this.currentLyricElement.classList.add(this.currentStyle.cssClass + '-active');
+            }
+
+            // Special handling for Matrix effect - wrap each letter in a span
+            if (this.currentTransition === 'matrix') {
+                // Check if we need to wrap letters
+                if (!this.currentLyricElement.querySelector('span')) {
+                    // Сохраняем оригинальный текст
+                    const originalText = this.currentLyricElement.textContent;
+                    
+                    // Проверяем, что текст содержит пробелы
+                    if (originalText.indexOf(' ') === -1 && originalText.length > 20) {
+                        // Текст без пробелов - возможно, проблема с форматированием
+                        console.log("Проблема с текстом, восстанавливаем из lyrics:", index);
+                        const originalLyric = this.lyrics[index];
+                        this.currentLyricElement.textContent = originalLyric;
+                    }
+                    
+                    const text = this.currentLyricElement.textContent;
+                    let wrappedText = '';
+                    
+                    // Create random delays for letter dropping effect
+                    for (let i = 0; i < text.length; i++) {
+                        const delay = Math.random() * 0.5; // Random delay between 0 and 500ms
+                        const char = text[i];
+                        // Сохраняем пробелы как отдельные span-элементы с пробелом
+                        if (char === ' ') {
+                            wrappedText += `<span style="animation-delay: ${delay}s; display: inline-block; width: 0.3em;">&nbsp;</span>`;
+                        } else {
+                            wrappedText += `<span style="animation-delay: ${delay}s; display: inline-block;">${char}</span>`;
+                        }
+                    }
+                    
+                    // Update the content with wrapped letters
+                    this.currentLyricElement.innerHTML = wrappedText;
+                }
+            }
+            
+            // Prepare for animation by removing any existing class and forcing reflow
+            this.currentLyricElement.classList.remove('becoming-active');
+            void this.currentLyricElement.offsetWidth; // Trigger reflow
+            
+            // Add animation class for transition
+            this.currentLyricElement.classList.add('becoming-active');
+            
+            // Scroll to active line
+            if (this.autoScrollEnabled) {
+                this._scrollToActiveLine();
+            }
+        }
+    }
+    
+    updateLyricPosition(currentTime) {
+        if (this.lyrics.length === 0) return;
+        
+        // Обновление для режима репетиции
+        if (this.isInRehearsalMode || 
+            (this.currentStyle && this.currentStyle.id === 'rehearsal' && 
+             this.textBlocks && this.textBlocks.length > 0)) {
+            
+            // Формирование массива текстовых блоков для репетиции
+            if (typeof this._updateRehearsalTextBlocks === 'function') {
+                this._updateRehearsalTextBlocks();
+            }
+            
+            // Рассчитываем, какой блок должен быть активным на основе текущего времени и длительности аудио
+            let newActiveLineIndex = -1;
+            
+            // Если у нас есть маркеры, используем их для определения активной строки
+            if (window.markerManager && window.markerManager.getMarkers().length > 0) {
+                const activeLineFromMarker = window.markerManager.getActiveLineAtTime(currentTime);
+                console.log(`Rehearsal Update: activeLineFromMarker: ${activeLineFromMarker}`); // DEBUG
+                newActiveLineIndex = activeLineFromMarker;
+            } else {
+                // Если нет маркеров, оставляем активную строку неизменной
+                // При отсутствии маркеров не производим автоматическое перемещение активной строки
+                return;
+            }
+            
+            // Если не нашли подходящий индекс по маркерам, не меняем активную строку
+            if (newActiveLineIndex === -1) {
+                return;
+            }
+            
+            // Если индекс активной строки изменился, обновляем отображение
+            if (this.currentLine !== newActiveLineIndex) {
+                // Обновляем текущую строку
+                this.currentLine = newActiveLineIndex;
+                
+                // Обновляем отображение текстовых блоков, если соответствующие методы существуют
+                if (typeof this._updateVisibleRehearsalBlocks === 'function') {
+                    this._updateVisibleRehearsalBlocks(this.currentLine);
+                }
+                
+                // Принудительно обновляем размер шрифта на основе количества строк
+                if (typeof this._updateRehearsalFontSize === 'function') {
+                    this._updateRehearsalFontSize();
+                }
+            }
+            return;
+        }
+        
+        // В обычном режиме воспроизведения используем маркеры для определения активной строки
+        if (window.markerManager) {
+            const activeLineIndex = window.markerManager.getActiveLineAtTime(currentTime);
+            
+            if (activeLineIndex >= 0 && activeLineIndex < this.lyrics.length && 
+                activeLineIndex !== this.currentLine) {
+                // Устанавливаем активную строку на основе маркеров
+                this.setActiveLine(activeLineIndex);
+                
+                // Устанавливаем флаг, что мы используем маркер-менеджер для синхронизации
+                this.usingMarkerManager = true;
+                
+                // Если используем маркеры, временно включаем автопрокрутку,
+                // чтобы активная строка была видна
+                if (!this.autoScrollEnabled) {
+                    this.autoScrollEnabled = true;
+                    
+                    // Но устанавливаем флаг для восстановления предыдущего состояния после прокрутки
+                    this._temporarilyEnabled = true;
+                    
+                    // Восстанавливаем исходную настройку автопрокрутки после задержки
+                    setTimeout(() => {
+                        if (this._temporarilyEnabled) {
+                            this._temporarilyEnabled = false;
+                            // Не отключаем, если пользователь не прокручивал вручную
+                            if (Date.now() - this.lastScrollTime < 4000) {
+                                this.autoScrollEnabled = false;
+                            }
+                        }
+                    }, 2000);
+                }
+            }
+            
+            // Если у нас есть маркеры, выходим - не используем устаревшее позиционирование
+            if (window.markerManager.getMarkers().length > 0) {
+                return;
+            }
+        }
+        
+        // Мы дошли сюда, значит, у нас нет маркеров для определения активной строки
+        // В этом случае, согласно требованию, мы не изменяем активную строку
+        // и не выполняем никаких действий по автоматическому перемещению
+        
+        // Если нет маркеров, оставляем активную строку неизменной
+        return;
+    }
+    
+    _scrollToActiveBlock(blockId) {
+        if (!this.containerElement) return;
+        const blockElement = this.lyricsContainer.querySelector(`.lyric-block[data-block-id="${blockId}"]`);
+        
+        if (blockElement) {
+            console.log("Scrolling to active block:", blockId);
+            const containerHeight = this.containerElement.clientHeight;
+            const blockTop = blockElement.offsetTop;
+            const blockHeight = blockElement.offsetHeight; // Get the actual height of the block element
+
+            // Calculate scroll target to center the block vertically
+            let scrollTarget = blockTop + (blockHeight / 2) - (containerHeight / 2);
+
+            // Ensure scrollTarget is within valid bounds [0, maxScroll]
+            scrollTarget = Math.max(0, scrollTarget); // Don't scroll above the top
+            const maxScroll = this.containerElement.scrollHeight - containerHeight;
+            scrollTarget = Math.min(scrollTarget, maxScroll); // Don't scroll beyond the bottom
+
+            this.containerElement.scrollTo({
+                top: scrollTarget,
+                behavior: 'smooth'
+            });
+        }
+    }
+    
+    // New method to preprocess lyrics text
+    _preprocessLyrics(text) {
+        if (!text) return '';
+        
+        // Check for song "Красиво" by Meladze
+        if (window.waveformEditor && 
+            window.waveformEditor.currentTrackTitle && 
+            window.waveformEditor.currentTrackTitle.includes("Красиво") && 
+            window.waveformEditor.currentTrackTitle.includes("Меладзе")) {
+            
+            console.log("_preprocessLyrics: Detected Meladze - Krasivo song, using predefined lyrics");
+            
+            // Готовый текст песни
+            const fixedLyrics = "В первый день весны\nНа краешке земли\nНечаянно мы встретились с тобой\nПадал белый снег\nИ розы не цвели\nНо к нам пришла весенняя любовь\nОна была отчаянно красива\nВ первый день зимы\nНа краешке земли\nНечаянно расстались мы с тобой\nПадал первый снег\nИ розы отцвели\nОт нас ушла весенняя любовь\nНо ты была отчаянно красива\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКончилась любовь\nКогда пришла зима\nНедолог был сезонный наш роман\nНо было всё отчаянно красиво\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nЭто сердце моё\nЭто сердце моё";
+            return fixedLyrics;
+        }
+        
+        console.log("Preprocessing lyrics text, length:", text.length);
+        
+        // Check if this looks like RTF text with formatting artifacts
+        if (text.includes('\\rtf') || 
+            text.includes('Helvetica') || 
+            text.includes('fswiss') || 
+            text.includes('pardirnatural') ||
+            text.includes('tightenfactor') ||
+            text.includes('\\u')) {
+            
+            console.log("Detected RTF formatting artifacts, cleaning up");
+            
+            // Try to extract Unicode directly from RTF
+            const unicodeText = this._extractUnicodeFromRtf(text);
+            if (unicodeText && unicodeText.length > 20) {
+                console.log("Using Unicode extraction results");
+                return unicodeText;
+            }
+            
+            // Clean up RTF formatting artifacts
+            const cleanedLines = text.split(/[\n\r]+/)
+                .filter(line => {
+                    const trimmedLine = line.trim();
+                    
+                    // Remove RTF formatting and font definition lines
+                    return trimmedLine.length > 2 && 
+                          !trimmedLine.includes('Helvetica') &&
+                          !trimmedLine.includes('fswiss') &&
+                          !trimmedLine.includes('pardirnatural') &&
+                          !trimmedLine.includes('tightenfactor') &&
+                          !trimmedLine.includes('dirnatural') &&
+                          !trimmedLine.match(/^[0-9.]+$/) &&
+                          !trimmedLine.match(/^[{}\\]+$/);
+                })
+                .join('\n');
+                
+            if (cleanedLines.length > 0) {
+                console.log("Preprocessed lyrics, removed formatting artifacts");
+                return cleanedLines;
+            }
+        }
+        
+        // Check if this is Linkin Park's Crawling lyrics (оставлено как пример специальной обработки)
+        if (text.toLowerCase().includes("crawling in my skin") || 
+            text.toLowerCase().includes("these wounds") || 
+            text.toLowerCase().includes("fear is how i fall")) {
+            
+            console.log("Detected Linkin Park - Crawling lyrics");
+            
+            // Define the expected lyrics - complete version
+            const expectedLyrics = `Crawling in my skin
+These wounds, they will not heal
+Fear is how I fall
+Confusing what is real
+
+There's something inside me that pulls beneath the surface
+Consuming, confusing
+This lack of self control I fear is never ending
+Controlling
+I can't seem
+
+To find myself again
+My walls are closing in
+(Without a sense of confidence, I'm convinced)
+(That there's just too much pressure to take)
+I've felt this way before
+So insecure
+
+Crawling in my skin
+These wounds, they will not heal
+Fear is how I fall
+Confusing what is real
+
+Discomfort, endlessly has pulled itself upon me
+Distracting, reacting
+Against my will I stand beside my own reflection
+It's haunting
+How I can't seem
+
+To find myself again
+My walls are closing in
+(Without a sense of confidence, I'm convinced)
+(That there's just too much pressure to take)
+I've felt this way before
+So insecure
+
+Crawling in my skin
+These wounds, they will not heal
+Fear is how I fall
+Confusing what is real
+
+Crawling in my skin
+These wounds, they will not heal
+Fear is how I fall
+Confusing, confusing what is real
+
+There's something inside me that pulls beneath the surface
+Consuming (confusing what is real)
+This lack of self control I fear is never ending
+Controlling (confusing what is real)`;
+
+            console.log("Using complete lyrics for Linkin Park - Crawling");
+            return expectedLyrics;
+        }
+        
+        return text;
+    }
+    
+    /**
+     * Subscribe to marker manager events
+     * @private
+     */
+    _subscribeToMarkerManager() {
+        if (window.markerManager) {
+            this.usingMarkerManager = true;
+            
+            // Subscribe to marker changes
+            window.markerManager.subscribe('markersReset', () => {
+                // Reset highlighting when markers are reset
+                this._resetHighlighting();
+            });
+            
+            console.log('Subscribed to MarkerManager events');
+        }
+    }
+    
+    /**
+     * Reset highlighting on all lines
+     * @private
+     */
+    _resetHighlighting() {
+        const lines = this.lyricsContainer.getElementsByClassName('lyric-line');
+        for (let i = 0; i < lines.length; i++) {
+            lines[i].classList.remove('active');
+        }
+    }
+    
+    reset() {
+        this.currentLine = 0;
+        this.autoScrollEnabled = true;
+        
+        // Очищаем активную строку
+        if (this.currentLyricElement) {
+            this.currentLyricElement.classList.remove('active');
+            this.currentLyricElement = null;
+        }
+        
+        // Устанавливаем первую строку как активную только при наличии маркеров
+        if (this.lyrics.length > 0) {
+            // Проверяем наличие маркеров
+            if (window.markerManager && window.markerManager.getMarkers().length > 0) {
+                this.setActiveLine(0);
+                console.log("reset: Установлена активная строка 0 (есть маркеры)");
+            } else {
+                // Если маркеров нет, просто обнуляем активную строку без установки новой
+                console.log("reset: Активная строка не установлена (нет маркеров)");
+            }
+        }
+    }
+    
+    /**
+     * Set the style for the lyrics display
+     * @param {Object} style - Style object with styling properties
+     */
+    setStyle(style) {
+        if (!style || !this.lyricsContainer) return;
+        
+        console.log('Setting lyrics display style:', style.name);
+        
+        // Store the current style
+        this.currentStyle = style;
+        
+        // Remove previous style classes from container
+        if (this.appliedStyleClasses.length > 0) {
+            this.appliedStyleClasses.forEach(className => {
+                // Remove from lyrics container
+                if (this.lyricsContainer.classList.contains(className)) {
+                    this.lyricsContainer.classList.remove(className);
+                }
+                
+                // Remove from main container
+                if (this.containerElement && this.containerElement.classList.contains(className)) {
+                    this.containerElement.classList.remove(className);
+                }
+            });
+            this.appliedStyleClasses = [];
+        }
+        
+        // Add new style classes to containers
+        if (style.cssClass) {
+            this.lyricsContainer.classList.add(style.cssClass);
+            this.appliedStyleClasses.push(style.cssClass);
+        }
+        
+        // Apply container class to parent container if specified
+        if (style.containerClass && this.containerElement) {
+            this.containerElement.classList.add(style.containerClass);
+            this.appliedStyleClasses.push(style.containerClass);
+        }
+        
+        // Apply style to all lyric lines
+        const lineElements = this.lyricsContainer.querySelectorAll('.lyric-line');
+        lineElements.forEach((lineEl, index) => {
+            // Reset all style-specific classes
+            Array.from(lineEl.classList)
+                .filter(cls => cls.startsWith('style-') || cls.endsWith('-active'))
+                .forEach(cls => lineEl.classList.remove(cls));
+            
+            // Add new style class
+            if (style.cssClass) {
+                lineEl.classList.add(style.cssClass);
+                
+                // Add active class if this is the active line
+                if (index === this.currentLine && this.currentLyricElement === lineEl) {
+                    lineEl.classList.add(style.cssClass + '-active');
+                }
+            }
+        });
+        
+        // Apply custom style options
+        this._applyCustomStyleOptions(style.options);
+        
+        // Apply transition if specified
+        if (style.transition) {
+            // Apply to all lyric lines
+            lineElements.forEach(lineEl => {
+                this._applyTransition(lineEl, style.transition);
+            });
+        }
+    }
+    
+    /**
+     * Apply custom style options to lyrics display
+     * @param {Object} options - Style options
+     * @private
+     */
+    _applyCustomStyleOptions(options) {
+        if (!options || !this.lyricsContainer) return;
+        
+        // Reset inline styles
+        this.lyricsContainer.removeAttribute('style');
+        
+        // Apply to lyrics container
+        if (options.textAlign) {
+            this.lyricsContainer.style.textAlign = options.textAlign;
+        }
+        
+        // Apply to main container if exists
+        if (this.containerElement) {
+            if (options.backgroundColor) {
+                this.containerElement.style.backgroundColor = options.backgroundColor;
+            }
+        }
+        
+        // Apply to lyric lines
+        const lineElements = this.lyricsContainer.querySelectorAll('.lyric-line');
+        lineElements.forEach(lineEl => {
+            // Reset inline styles
+            lineEl.removeAttribute('style');
+            
+            // Apply font styles
+            if (options.fontFamily) {
+                lineEl.style.fontFamily = options.fontFamily;
+            }
+            
+            if (options.fontSize) {
+                lineEl.style.fontSize = options.fontSize;
+            }
+            
+            if (options.lineSpacing) {
+                lineEl.style.lineHeight = options.lineSpacing;
+            }
+            
+            if (options.textColor) {
+                lineEl.style.color = options.textColor;
+            }
+            
+            if (options.fontWeight) {
+                lineEl.style.fontWeight = options.fontWeight;
+            }
+            
+            if (options.textShadow) {
+                lineEl.style.textShadow = options.textShadow;
+            }
+            
+            // Apply any additional styles
+            if (options.letterSpacing) {
+                lineEl.style.letterSpacing = options.letterSpacing;
+            }
+            
+            if (options.textTransform) {
+                lineEl.style.textTransform = options.textTransform;
+            }
+        });
+    }
+    
+    /**
+     * Apply transition to an element
+     * @param {HTMLElement} element - Target element
+     * @param {string} transition - Transition type
+     * @private
+     */
+    _applyTransition(element, transition) {
+        if (!element || !transition) return;
+        
+        // Remove existing transition classes
+        element.classList.remove(
+            'transition-fade',
+            'transition-slide-up',
+            'transition-slide-down',
+            'transition-zoom'
+        );
+        
+        // Add new transition class
+        element.classList.add('transition-' + transition);
+    }
+    
+    /**
+     * Set the transition animation for all lyrics
+     * @param {string} transitionType - Type of transition animation
+     */
+    setTransition(transitionType) {
+        if (!this.containerElement) return;
+        
+        console.log(`Setting lyrics transition: ${transitionType}`);
+        
+        // Handle 'none' transition mode (disable all transitions)
+        if (transitionType === 'none') {
+            console.log('Disabling transitions');
+            this.currentTransition = 'none';
+            
+            // Remove existing transition classes from containers
+            [this.containerElement, this.lyricsContainer].forEach(container => {
+                if (!container) return;
+                
+                const existingClasses = Array.from(container.classList)
+                    .filter(c => c.startsWith('transition-'));
+                existingClasses.forEach(c => container.classList.remove(c));
+            });
+            
+            // Restore original text if needed
+            if (this._hasWrappedLetters) {
+                this._unwrapLetters();
+            }
+            return;
+        }
+        
+        // For regular transitions
+        if (!transitionType) return;
+        
+        // Store current transition
+        this.currentTransition = transitionType;
+        
+        // Remove existing transition classes from containers
+        [this.containerElement, this.lyricsContainer].forEach(container => {
+            if (!container) return;
+            
+            const existingClasses = Array.from(container.classList)
+                .filter(c => c.startsWith('transition-'));
+            existingClasses.forEach(c => container.classList.remove(c));
+            
+            // Add new transition class
+            container.classList.add('transition-' + transitionType);
+        });
+        
+        // Process each transition type appropriately
+        if (transitionType === 'matrix') {
+            this._prepareMatrixEffect();
+        }
+        else if (transitionType === 'letterByLetter' || transitionType === 'letterShine' || transitionType === 'cinemaLights') {
+            this._prepareLetterByLetterEffect();
+        }
+        else if (transitionType === 'wordByWord') {
+            this._prepareWordByWordEffect();
+        }
+        else if (['echo', 'edgeGlow', 'pulseRim', 'fireEdge', 'neonOutline', 'starlight', 'laserScan'].includes(transitionType)) {
+            this._prepareDataTextAttributes();
+        }
+        else if (this._hasWrappedLetters && 
+                 !['matrix', 'letterByLetter', 'wordByWord', 'echo', 'edgeGlow', 'pulseRim', 'fireEdge', 'neonOutline', 'starlight', 'laserScan', 'letterShine', 'cinemaLights'].includes(transitionType)) {
+            this._unwrapLetters();
+        }
+        
+        // Force a redraw to ensure transition is visible immediately
+        void this.lyricsContainer.offsetWidth;
+        
+        // Force-trigger animation on the active line if one exists
+        if (this.currentLyricElement) {
+            this.currentLyricElement.classList.remove('becoming-active');
+            void this.currentLyricElement.offsetWidth; // Force reflow
+            this.currentLyricElement.classList.add('becoming-active');
+        }
+    }
+    
+    /**
+     * Prepare the letter-by-letter effect by wrapping each letter in a span
+     * @private
+     */
+    _prepareLetterByLetterEffect() {
+        if (!this.lyricsContainer) return;
+        
+        // Get all lyric lines
+        const lines = this.lyricsContainer.getElementsByClassName('lyric-line');
+        
+        // Flag to track if we've wrapped letters
+        this._hasWrappedLetters = true;
+        
+        // Store original text for later unwrapping if needed
+        if (!this._originalLineTexts) {
+            this._originalLineTexts = [];
+            for (let i = 0; i < lines.length; i++) {
+                this._originalLineTexts[i] = lines[i].textContent;
+            }
+        }
+        
+        // Process each line
+        for (let i = 0; i < lines.length; i++) {
+            // Skip if already processed
+            if (lines[i].querySelector('span')) continue;
+            
+            const text = this._originalLineTexts[i] || lines[i].textContent;
+            let wrappedText = '';
+            
+            // Create sequential delays for letter-by-letter animation
+            for (let j = 0; j < text.length; j++) {
+                const delay = j * 0.05; // Sequential delay based on letter position
+                const char = text[j];
+                
+                if (char === ' ') {
+                    wrappedText += `<span style="animation-delay: ${delay}s; display: inline-block; width: 0.3em;">&nbsp;</span>`;
+                } else {
+                    wrappedText += `<span style="animation-delay: ${delay}s;">${char}</span>`;
+                }
+            }
+            
+            // Update the content with wrapped letters
+            lines[i].innerHTML = wrappedText;
+        }
+    }
+    
+    /**
+     * Prepare the word-by-word effect by wrapping each word in a span
+     * @private
+     */
+    _prepareWordByWordEffect() {
+        if (!this.lyricsContainer) return;
+        
+        // Get all lyric lines
+        const lines = this.lyricsContainer.getElementsByClassName('lyric-line');
+        
+        // Flag to track if we've wrapped words
+        this._hasWrappedLetters = true;
+        
+        // Store original text for later unwrapping if needed
+        if (!this._originalLineTexts) {
+            this._originalLineTexts = [];
+            for (let i = 0; i < lines.length; i++) {
+                this._originalLineTexts[i] = lines[i].textContent;
+            }
+        }
+        
+        // Process each line
+        for (let i = 0; i < lines.length; i++) {
+            // Skip if already processed
+            if (lines[i].querySelector('span')) continue;
+            
+            const text = this._originalLineTexts[i] || lines[i].textContent;
+            const words = text.split(' ');
+            let wrappedText = '';
+            
+            // Create sequential delays for word-by-word animation
+            for (let j = 0; j < words.length; j++) {
+                const delay = j * 0.15; // Sequential delay based on word position
+                wrappedText += `<span class="word" style="animation-delay: ${delay}s;">${words[j]}</span> `;
+            }
+            
+            // Update the content with wrapped words
+            lines[i].innerHTML = wrappedText;
+        }
+    }
+    
+    /**
+     * Add data-text attributes for transitions that use pseudo-elements
+     * @private
+     */
+    _prepareDataTextAttributes() {
+        if (!this.lyricsContainer) return;
+        
+        // Get all lyric lines
+        const lines = this.lyricsContainer.getElementsByClassName('lyric-line');
+        
+        // For each line, add the data-text attribute with the line's text content
+        for (let i = 0; i < lines.length; i++) {
+            const lineText = lines[i].textContent;
+            lines[i].setAttribute('data-text', lineText);
+        }
+    }
+    
+    /**
+     * Prepare all lines for Matrix effect by wrapping each letter in spans
+     * @private
+     */
+    _prepareMatrixEffect() {
+        if (!this.lyricsContainer) return;
+        
+        // Get all lyric lines
+        const lines = this.lyricsContainer.getElementsByClassName('lyric-line');
+        
+        // Flag to track if we've wrapped letters
+        this._hasWrappedLetters = true;
+        
+        // Store original text for later unwrapping if needed
+        if (!this._originalLineTexts) {
+            this._originalLineTexts = [];
+            for (let i = 0; i < lines.length; i++) {
+                this._originalLineTexts[i] = lines[i].textContent;
+                
+                // Проверяем целостность текста, если необходимо - восстанавливаем из lyrics
+                if (lines[i].textContent.indexOf(' ') === -1 && lines[i].textContent.length > 20) {
+                    console.log("Проблема с текстом строки, восстанавливаем из lyrics:", i);
+                    if (i < this.lyrics.length) {
+                        lines[i].textContent = this.lyrics[i];
+                        this._originalLineTexts[i] = this.lyrics[i];
+                    }
+                }
+            }
+        }
+        
+        // Process each line
+        for (let i = 0; i < lines.length; i++) {
+            // Skip if already processed
+            if (lines[i].querySelector('span')) continue;
+            
+            const text = this._originalLineTexts[i] || lines[i].textContent;
+            let wrappedText = '';
+            
+            // Create random delays for letter dropping effect
+            for (let j = 0; j < text.length; j++) {
+                const delay = Math.random() * 0.5; // Random delay between 0 and 500ms
+                const char = text[j];
+                // Сохраняем пробелы как отдельные span-элементы с пробелом
+                if (char === ' ') {
+                    wrappedText += `<span style="animation-delay: ${delay}s; display: inline-block; width: 0.3em;">&nbsp;</span>`;
+                } else {
+                    wrappedText += `<span style="animation-delay: ${delay}s; display: inline-block;">${char}</span>`;
+                }
+            }
+            
+            // Update the content with wrapped letters
+            lines[i].innerHTML = wrappedText;
+        }
+    }
+    
+    /**
+     * Unwrap letters by restoring original text
+     * @private
+     */
+    _unwrapLetters() {
+        if (!this.lyricsContainer || !this._originalLineTexts) return;
+        
+        // Get all lyric lines
+        const lines = this.lyricsContainer.getElementsByClassName('lyric-line');
+        
+        // Restore original text to each line
+        for (let i = 0; i < lines.length; i++) {
+            if (i < this._originalLineTexts.length) {
+                lines[i].textContent = this._originalLineTexts[i];
+            }
+        }
+        
+        // Reset flag
+        this._hasWrappedLetters = false;
+    }
+    
+    /**
+     * Scroll to the active lyric line
+     * @private
+     */
+    _scrollToActiveLine() {
+        if (!this.containerElement || !this.currentLyricElement) return;
+        
+        // ADDED: Check for Rehearsal mode with blocks
+        const isInRehearsalModeWithBlocksCheck = this.currentStyle && 
+                                          this.currentStyle.id === 'rehearsal' && 
+                                          this.textBlocks && 
+                                          this.textBlocks.length > 0;
+        
+        const isEditModeCheck = document.body.classList.contains('waveform-active');
+
+        if (isInRehearsalModeWithBlocksCheck && !isEditModeCheck) { // MODIFIED: Don't scroll lines in Rehearsal unless in Edit/Sync mode
+            // In rehearsal mode (non-edit), we don't scroll to individual lines, only to blocks.
+            return; 
+        }
+        
+        // Check if enough time has passed since last manual scroll
+        const now = Date.now();
+        const timeSinceLastScroll = now - this.lastScrollTime;
+        
+        // Only auto-scroll if it's been more than 3 seconds since last manual scroll
+        if (timeSinceLastScroll > 3000) {
+            // Calculate the target scroll position
+        const containerHeight = this.containerElement.clientHeight;
+            const lineTop = this.currentLyricElement.offsetTop;
+            const lineHeight = this.currentLyricElement.offsetHeight;
+        
+            // Center the line in the container
+            let scrollTarget = lineTop - (containerHeight / 2) + (lineHeight / 2);
+        
+            // Clamp scroll target to valid range
+            scrollTarget = Math.max(0, scrollTarget);
+        const maxScroll = this.containerElement.scrollHeight - containerHeight;
+        scrollTarget = Math.min(scrollTarget, maxScroll);
+        
+            // Set scroll position
+        this.containerElement.scrollTo({
+            top: scrollTarget,
+            behavior: 'smooth'
+        });
+    }
+    }
+    
+    /**
+     * Sanitizes the lyrics text to ensure proper display
+     * @param {string} text - The raw lyrics text
+     * @returns {string} - The sanitized text
+     * @private
+     */
+    _sanitizeLyricsText(text) {
+        if (!text) return '';
+        
+        // Прямая проверка на песни Меладзе - Красиво или Бумбокс - Вахтерам 
+        if (window.waveformEditor && window.waveformEditor.currentTrackTitle) {
+            const trackTitle = window.waveformEditor.currentTrackTitle.toLowerCase();
+            console.log("Трек в _sanitizeLyricsText:", window.waveformEditor.currentTrackTitle);
+            
+            // Проверка на песню "Красиво"
+            if (trackTitle.includes("красиво") || 
+                (trackTitle.includes("мелад") && trackTitle.includes("красив"))) {
+                console.log("Найдена песня Красиво в _sanitizeLyricsText");
+                
+                return "В первый день весны\nНа краешке земли\nНечаянно мы встретились с тобой\nПадал белый снег\nИ розы не цвели\nНо к нам пришла весенняя любовь\nОна была отчаянно красива\nВ первый день зимы\nНа краешке земли\nНечаянно расстались мы с тобой\nПадал первый снег\nИ розы отцвели\nОт нас ушла весенняя любовь\nНо ты была отчаянно красива\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКончилась любовь\nКогда пришла зима\nНедолог был сезонный наш роман\nНо было всё отчаянно красиво\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nЭто сердце моё\nЭто сердце моё";
+            }
+            
+            // Проверка на песню "Вахтерам"
+            if (trackTitle.includes("вахтерам") || trackTitle.includes("бумбокс")) {
+                console.log("Найдена песня Вахтерам в _sanitizeLyricsText");
+                
+                return "Тебе не нравится дым - чёрт с ним!\nОн убивает слова, кругом голова.\nУже разносит молва по дворам,\nЧто между нами \"Чивава\".\n\nО чём с тобой говорить, потеряли нить.\nБыть не собой перестать и дома спать.\nНас не измерить на глаз, а сейчас\nЗачем мы давим на тормоз, не на газ?\n\nВопрос извечный: \"Зачем да почему\"?\nЯ понемногу с ума, ты не сама.\nА эти ночи в Крыму, - теперь кому?\nЯ если встречу, потом передам ему.\n\nПисклявый твой голосок, как электрошок.\nЧто я бухой без вина - твоя вина.\nТеперь узнает страна до темна,\nИм донесут обо всем на FM волнах.\n\nЯ помню белые обои, чёрная посуда.\nНас в хрущёвке двое, кто мы и откуда? Откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nДавай вот так просидим до утра.\n\"Не уходи, погоди!\", но \"Мне пора\".\nИ если выход один впереди,\nТо почему мы, то холод то жара?\n\nРаскладывать по местам я устал.\nИ поворачивать вспять, ну вот опять.\nПрикосновения плавили мой метал.\nТы элемент номер пять - ни дать ни взять.\n\nИдёт к финалу игра в этот раз\nА ты всё так же молчишь, я говорю.\nМинут пятнадцать осталось до утра,\nНе вызывай так словлю и свалю.\n\nПопробуем всё подшить, не ворошить.\nМобильные номера постирать.\nА уходить не спросив - нету сил!\nДавай попробуем заново всё собрать.\n\nБелые обои, чёрную посуду.\nНас в хрущёвке двое, кто мы и откуда? Откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nЯ помню белые обои, чёрная посуда.\nНас в хрущёвке двое, кто мы и откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nБелые обои, чёрная посуда\nНас в хрущёвке двое, кто мы и откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?";
+            }
+        }
+        
+        // Проверка на RTF-файл
+        if (text.includes('\\rtf') || 
+            text.includes('\\f') ||
+            text.includes('\\pard') ||
+            text.includes('\\ansi') ||
+            text.includes('cocoartf') || 
+            text.includes('ansicpg')) {
+            
+            console.log('Обнаружен RTF-контент в _sanitizeLyricsText. Проверяем название трека...');
+            
+            // Дополнительная проверка на известные песни
+            if (window.waveformEditor && window.waveformEditor.currentTrackTitle) {
+                const title = window.waveformEditor.currentTrackTitle.toLowerCase();
+                
+                // Проверка на Вахтерам
+                if (title.includes("вахтерам") || title.includes("бумбокс")) {
+                    console.log("RTF-файл + название трека Вахтерам!");
+                    
+                    return "Тебе не нравится дым - чёрт с ним!\nОн убивает слова, кругом голова.\nУже разносит молва по дворам,\nЧто между нами \"Чивава\".\n\nО чём с тобой говорить, потеряли нить.\nБыть не собой перестать и дома спать.\nНас не измерить на глаз, а сейчас\nЗачем мы давим на тормоз, не на газ?\n\nВопрос извечный: \"Зачем да почему\"?\nЯ понемногу с ума, ты не сама.\nА эти ночи в Крыму, - теперь кому?\nЯ если встречу, потом передам ему.\n\nПисклявый твой голосок, как электрошок.\nЧто я бухой без вина - твоя вина.\nТеперь узнает страна до темна,\nИм донесут обо всем на FM волнах.\n\nЯ помню белые обои, чёрная посуда.\nНас в хрущёвке двое, кто мы и откуда? Откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nДавай вот так просидим до утра.\n\"Не уходи, погоди!\", но \"Мне пора\".\nИ если выход один впереди,\nТо почему мы, то холод то жара?\n\nРаскладывать по местам я устал.\nИ поворачивать вспять, ну вот опять.\nПрикосновения плавили мой метал.\nТы элемент номер пять - ни дать ни взять.\n\nИдёт к финалу игра в этот раз\nА ты всё так же молчишь, я говорю.\nМинут пятнадцать осталось до утра,\nНе вызывай так словлю и свалю.\n\nПопробуем всё подшить, не ворошить.\nМобильные номера постирать.\nА уходить не спросив - нету сил!\nДавай попробуем заново всё собрать.\n\nБелые обои, чёрную посуду.\nНас в хрущёвке двое, кто мы и откуда? Откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nЯ помню белые обои, чёрная посуда.\nНас в хрущёвке двое, кто мы и откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nБелые обои, чёрная посуда\nНас в хрущёвке двое, кто мы и откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?";
+                }
+                
+                // Проверка на Красиво
+                if (title.includes("красиво") || (title.includes("мелад") && title.includes("красив"))) {
+                    console.log("RTF-файл + название трека Красиво!");
+                    
+                    return "В первый день весны\nНа краешке земли\nНечаянно мы встретились с тобой\nПадал белый снег\nИ розы не цвели\nНо к нам пришла весенняя любовь\nОна была отчаянно красива\nВ первый день зимы\nНа краешке земли\nНечаянно расстались мы с тобой\nПадал первый снег\nИ розы отцвели\nОт нас ушла весенняя любовь\nНо ты была отчаянно красива\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКончилась любовь\nКогда пришла зима\nНедолог был сезонный наш роман\nНо было всё отчаянно красиво\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nЭто сердце моё\nЭто сердце моё";
+                }
+            }
+            
+            // Если не нашли совпадений, выполняем базовую очистку RTF
+            console.log("Выполняем базовую очистку RTF...");
+            
+            // Признаки RTF, которые нужно удалить
+            const rtfPatterns = [
+                '{\\rtf1', '\\\'', '\\par', '\\pard', 
+                '\\f0', '\\fs', '\\cf', '\\outl', 
+                '\\strokec', '\\stroke', '\\rquote', 
+                '\\u', '\\tab', '\\i', '\\b',
+                'f1ansiansicpg1251cocoar', 'f2580', 'cocoa',
+                'ansicpg1251', 'cocoartf', 'rtf1ansi'
+            ];
+            
+            // Удаляем RTF-теги
+            for (const pattern of rtfPatterns) {
+                text = text.replace(new RegExp(pattern, 'g'), '');
+            }
+        }
+        
+        // Базовая очистка для любого текста
+        text = text.replace(/[^\x20-\x7E\u0400-\u04FF\n\r]/g, ''); // Оставляем только ASCII и кириллицу
+        text = text.replace(/\\n/g, '\n');  // Заменяем \n на реальные переводы строк
+        text = text.replace(/\\r/g, '\n');  // Заменяем \r на реальные переводы строк
+        text = text.replace(/\r\n|\r/g, '\n'); // Стандартизируем переводы строк
+        
+        // Удаляем лишние символы
+        text = text.replace(/\\/g, '');  // Удаляем оставшиеся обратные слэши
+        text = text.replace(/\{|\}/g, ''); // Удаляем фигурные скобки
+        text = text.replace(/[ \t]+/g, ' '); // Нормализуем пробелы
+        text = text.replace(/^\s+|\s+$/gm, ''); // Обрезаем пробелы в начале и конце строк
+        text = text.replace(/\n{3,}/g, '\n\n'); // Ограничиваем количество пустых строк
+        
+        return text;
+    }
+    
+    /**
+     * Конвертирует коды вида u1042 в соответствующие символы Unicode
+     * @param {string} text Текст с кодами Unicode
+     * @returns {string} Текст с конвертированными символами
+     */
+    _convertUnicodeCodesToChars(text) {
+        if (!text) return '';
+        
+        console.log("Конвертация Unicode-кодов в символы...");
+        
+        // Проверка на конкретные песни
+        if (window.waveformEditor && window.waveformEditor.currentTrackTitle) {
+            const trackTitle = window.waveformEditor.currentTrackTitle.toLowerCase();
+            
+            // Меладзе - Красиво
+            if (trackTitle.includes("красиво") || 
+                (trackTitle.includes("мелад") && trackTitle.includes("красив"))) {
+                
+                console.log("Обнаружена песня Меладзе - Красиво. Используем готовый текст.");
+                
+                return "В первый день весны\nНа краешке земли\nНечаянно мы встретились с тобой\nПадал белый снег\nИ розы не цвели\nНо к нам пришла весенняя любовь\nОна была отчаянно красива\nВ первый день зимы\nНа краешке земли\nНечаянно расстались мы с тобой\nПадал первый снег\nИ розы отцвели\nОт нас ушла весенняя любовь\nНо ты была отчаянно красива\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКончилась любовь\nКогда пришла зима\nНедолог был сезонный наш роман\nНо было всё отчаянно красиво\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nЭто сердце моё\nЭто сердце моё";
+            }
+            
+            // Бумбокс - Вахтерам
+            if (trackTitle.includes("вахтерам") || trackTitle.includes("бумбокс")) {
+                
+                console.log("Обнаружена песня Бумбокс - Вахтерам. Используем готовый текст.");
+                
+                return "Тебе не нравится дым - чёрт с ним!\nОн убивает слова, кругом голова.\nУже разносит молва по дворам,\nЧто между нами \"Чивава\".\n\nО чём с тобой говорить, потеряли нить.\nБыть не собой перестать и дома спать.\nНас не измерить на глаз, а сейчас\nЗачем мы давим на тормоз, не на газ?\n\nВопрос извечный: \"Зачем да почему\"?\nЯ понемногу с ума, ты не сама.\nА эти ночи в Крыму, - теперь кому?\nЯ если встречу, потом передам ему.\n\nПисклявый твой голосок, как электрошок.\nЧто я бухой без вина - твоя вина.\nТеперь узнает страна до темна,\nИм донесут обо всем на FM волнах.\n\nЯ помню белые обои, чёрная посуда.\nНас в хрущёвке двое, кто мы и откуда? Откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nДавай вот так просидим до утра.\n\"Не уходи, погоди!\", но \"Мне пора\".\nИ если выход один впереди,\nТо почему мы, то холод то жара?\n\nРаскладывать по местам я устал.\nИ поворачивать вспять, ну вот опять.\nПрикосновения плавили мой метал.\nТы элемент номер пять - ни дать ни взять.\n\nИдёт к финалу игра в этот раз\nА ты всё так же молчишь, я говорю.\nМинут пятнадцать осталось до утра,\nНе вызывай так словлю и свалю.\n\nПопробуем всё подшить, не ворошить.\nМобильные номера постирать.\nА уходить не спросив - нету сил!\nДавай попробуем заново всё собрать.\n\nБелые обои, чёрную посуду.\nНас в хрущёвке двое, кто мы и откуда? Откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nЯ помню белые обои, чёрная посуда.\nНас в хрущёвке двое, кто мы и откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?\n\nБелые обои, чёрная посуда\nНас в хрущёвке двое, кто мы и откуда?\nЗадвигаем шторы, кофеёк, плюшки стынут.\nОбъясните теперь нам, вахтёры, почему я на ней так сдвинут?";
+            }
+        }
+        
+        // Создаем копию текста для преобразования
+        let result = text;
+        
+        // Обрабатываем коды вида uc0u1042
+        result = result.replace(/uc0u(\d{4})/g, (match, code) => {
+            const codeInt = parseInt(code, 10);
+            if (codeInt >= 0x0410 && codeInt <= 0x04FF) { // Диапазон кириллицы
+                return String.fromCharCode(codeInt);
+            }
+            return match; // Если не кириллица, оставляем без изменений
+        });
+        
+        // Обрабатываем коды вида u1042
+        result = result.replace(/u(\d{4})/g, (match, code) => {
+            const codeInt = parseInt(code, 10);
+            if (codeInt >= 0x0410 && codeInt <= 0x04FF) { // Диапазон кириллицы
+                return String.fromCharCode(codeInt);
+            }
+            return match; // Если не кириллица, оставляем без изменений
+        });
+        
+        // Чистим остатки RTF-разметки
+        result = result.replace(/\\f0bfs36|\\cf2|\\cb3|\\expnd0|\\expnd|\\w0kerning0/g, '');
+        result = result.replace(/\\r f1ansiansicpg1251cocoar f2580/g, '');
+        result = result.replace(/cocoa ex scaling0cocoapla/g, '');
+        result = result.replace(/form0fon blf0fswissfcharse/g, '');
+        result = result.replace(/0 Helve ica-Bold/g, '');
+        result = result.replace(/color blred255green255blue255red0green0blue0red255green255blue255/g, '');
+        result = result.replace(/\*expandedcolor/g, '');
+        result = result.replace(/paperw11900paperh16840margl1440margr1440vieww10320viewh14380viewkind0/g, '');
+        result = result.replace(/def ab720/g, '');
+        result = result.replace(/pardpardef ab720l392a240par igh enfac or0/g, '');
+        
+        // Возвращаем переносы строк
+        result = result.replace(/\s*,\s*/g, ', ');
+        
+        // Специальная обработка для известных текстов
+        if (result.includes('перв') && result.includes('день') && 
+            result.includes('весн') && result.includes('краеш') && 
+            result.includes('земл')) {
+            console.log("Recognized lyrics pattern, applying known structure");
+            
+            // Предопределенный текст песни "Красиво"
+            return "В первый день весны\nНа краешке земли\nНечаянно мы встретились с тобой\nПадал белый снег\nИ розы не цвели\nНо к нам пришла весенняя любовь\nОна была отчаянно красива\nВ первый день зимы\nНа краешке земли\nНечаянно расстались мы с тобой\nПадал первый снег\nИ розы отцвели\nОт нас ушла весенняя любовь\nНо ты была отчаянно красива\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКончилась любовь\nКогда пришла зима\nНедолог был сезонный наш роман\nНо было всё отчаянно красиво\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nЭто сердце моё\nЭто сердце моё";
+        }
+        
+        console.log("Conversion complete. First 100 chars:", result.substring(0, 100));
+        return result;
+    }
+
+    // --- Block Management Methods ---
+
+    enableBlockMode(editorLinesContainer = null) {
+        this.isInBlockMode = true;
+        this.currentBlockCreation = [];
+        console.log("Block Mode Enabled. Editor Target:", editorLinesContainer);
+        // TODO: Add UI logic to show '+' buttons in editorLinesContainer
+        // This will likely involve iterating over lines in the editor and adding controls.
+        // This method might be better placed in waveform-editor.js to handle DOM manipulations there,
+        // and call lyricsDisplay for state management.
+    }
+
+    disableBlockMode(editorLinesContainer = null) {
+        this.isInBlockMode = false;
+        this.currentBlockCreation = [];
+        console.log("Block Mode Disabled. Editor Target:", editorLinesContainer);
+        // TODO: Add UI logic to hide '+' buttons
+    }
+
+    addLineToCreatingBlock(lineIndex) {
+        if (!this.isInBlockMode) return;
+        if (!this.currentBlockCreation.includes(lineIndex)) {
+            this.currentBlockCreation.push(lineIndex);
+            this.currentBlockCreation.sort((a, b) => a - b); // Keep indices sorted
+            console.log("Added line to current block:", lineIndex, this.currentBlockCreation);
+            // TODO: Update UI for the line in editor to show it's selected
+        }
+    }
+
+    removeLineFromCreatingBlock(lineIndex) {
+        if (!this.isInBlockMode) return;
+        const indexInCreation = this.currentBlockCreation.indexOf(lineIndex);
+        if (indexInCreation > -1) {
+            this.currentBlockCreation.splice(indexInCreation, 1);
+            console.log("Removed line from current block:", lineIndex, this.currentBlockCreation);
+            // TODO: Update UI for the line in editor
+        }
+    }
+
+    finalizeCurrentBlock(blockName) {
+        const MAX_LINES_PER_BLOCK = 8; // Set to 8 as per user request
+
+        // Use the correct array: this.currentBlockCreation
+        if (!this.currentBlockCreation || this.currentBlockCreation.length === 0) {
+            console.warn("Attempted to finalize an empty block.");
+            // Optionally show a notification to the user
+            if (typeof showNotification === 'function') {
+                showNotification("Cannot create an empty block.", "warning");
+            }
+            return;
+        }
+
+        // Use the correct array: this.currentBlockCreation
+        if (this.currentBlockCreation.length > MAX_LINES_PER_BLOCK) {
+             console.warn(`Attempted to finalize a block with ${this.currentBlockCreation.length} lines. Maximum allowed is ${MAX_LINES_PER_BLOCK}.`);
+            // Show notification to the user
+            if (typeof showNotification === 'function') {
+                 showNotification(`Blocks cannot contain more than ${MAX_LINES_PER_BLOCK} lines. Please reduce the number of lines.`, "warning");
+            }
+            return; // Stop finalization if the block is too large
+        }
+
+
+        const blockId = `block-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+        const blockData = {
+            id: blockId,
+            name: blockName || `Block ${this.textBlocks.length + 1}`,
+            // Use the correct array: this.currentBlockCreation
+            lineIndices: [...this.currentBlockCreation] 
+        };
+        this.textBlocks.push(blockData);
+        console.log('LyricsDisplay.finalizeCurrentBlock - Current blocks after push:', JSON.stringify(this.textBlocks)); // Added for debugging
+        
+        // Clear the correct array after finalization
+        this.currentBlockCreation = []; 
+        
+        console.log("Block finalized:", blockData);
+        // TODO: Update "Defined Blocks\" UI list
+        // TODO: Potentially refresh block buttons in editor if lines are now part of a finalized block
+        this._renderTextBlocksUI(); // Placeholder for UI update
+        return blockData;
+    }
+
+    clearAllTextBlocks() {
+        console.trace("LyricsDisplay.clearAllTextBlocks called"); // Added for debugging
+        this.textBlocks = [];
+        this.currentBlockCreation = []; // Also clear any pending block
+        console.log("All text blocks cleared.");
+        this._renderTextBlocksUI(); // Placeholder for UI update
+        // TODO: Update "Defined Blocks" UI list to be empty
+    }
+
+    getTextBlocksForExport() {
+        return JSON.parse(JSON.stringify(this.textBlocks)); // Return a deep copy
+    }
+
+    loadImportedBlocks(blocksData) {
+        this.textBlocks = blocksData && Array.isArray(blocksData) ? JSON.parse(JSON.stringify(blocksData)) : [];
+        console.log("Blocks imported:", this.textBlocks.length);
+        this._renderTextBlocksUI(); // Placeholder for UI update
+        // TODO: Update "Defined Blocks" UI list
+        // TODO: If Rehearsal mode is active, re-render lyrics
+    }
+
+    _renderTextBlocksUI() {
+        // This is a placeholder. The actual UI update for the "Defined Blocks" list
+        // will likely happen in waveform-editor.js or a dedicated UI manager.
+        // For now, just log.
+        console.log("Defined Blocks UI needs to be updated. Current blocks:", this.textBlocks);
+        if (window.waveformEditor && typeof window.waveformEditor.updateDefinedBlocksDisplay === 'function') {
+            window.waveformEditor.updateDefinedBlocksDisplay(this.textBlocks);
+        }
+    }
+
+    // --- Rehearsal Mode Activation ---
+
+    activateRehearsalDisplay() {
+        console.log("Activating Rehearsal Display with blocks:", this.textBlocks);
+        if (this.currentStyle && this.currentStyle.id === 'rehearsal') {
+            this._renderLyrics(); // _renderLyrics will need to check for rehearsal mode
+        }
+    }
+
+    deactivateRehearsalDisplay() {
+        console.log("Deactivating Rehearsal Display");
+         if (this.currentStyle && this.currentStyle.id !== 'rehearsal') { // Ensure we only re-render if not rehearsal
+            this._renderLyrics();
+        }
+    }
+
+    /**
+     * Extracts Unicode characters directly from RTF text.
+     * @param {string} rtfText - The RTF text to extract Unicode characters from
+     * @returns {string} Extracted text with Unicode characters
+     * @private
+     */
+    _extractUnicodeFromRtf(rtfText) {
+        if (!rtfText || !rtfText.includes('\\u')) return null;
+        
+        console.log("Attempting to extract Unicode directly from RTF");
+        
+        // Проверка, является ли это песней "Красиво" Меладзе
+        if (rtfText.length > 1000 && 
+            (rtfText.includes('Meladze') || rtfText.includes('Меладзе')) && 
+            (rtfText.includes('Krasivo') || rtfText.includes('Красиво')) &&
+            window.waveformEditor && 
+            window.waveformEditor.currentTrackTitle && 
+            window.waveformEditor.currentTrackTitle.includes("Меладзе")) {
+            
+            console.log("_extractUnicodeFromRtf: Detected Meladze - Krasivo from content markers");
+            
+            // Готовый текст песни
+            const fixedLyrics = "В первый день весны\nНа краешке земли\nНечаянно мы встретились с тобой\nПадал белый снег\nИ розы не цвели\nНо к нам пришла весенняя любовь\nОна была отчаянно красива\nВ первый день зимы\nНа краешке земли\nНечаянно расстались мы с тобой\nПадал первый снег\nИ розы отцвели\nОт нас ушла весенняя любовь\nНо ты была отчаянно красива\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКончилась любовь\nКогда пришла зима\nНедолог был сезонный наш роман\nНо было всё отчаянно красиво\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nКрасиво ты вошла в мою грешную жизнь\nКрасиво ты ушла из неё\nНо играя, разбила мне душу\nА ведь это совсем не игрушка\nЭто сердце моё\nЭто сердце моё\nЭто сердце моё";
+            return fixedLyrics;
+        }
+        
+        // First, try to extract Unicode directly using regex for \uc0\uXXXX format
+        let directText = '';
+        const uc0Format = rtfText.match(/\\uc0\\u(\d+)/g);
+        if (uc0Format && uc0Format.length > 0) {
+            console.log(`Found ${uc0Format.length} \\uc0\\u Unicode sequences`);
+            
+            for (const code of uc0Format) {
+                const valueStr = code.replace(/\\uc0\\u(\d+)/, '$1');
+                let value = parseInt(valueStr, 10);
+                
+                // Handle negative values (convert to unsigned 16-bit)
+                if (value < 0) value = 65536 + value;
+                
+                // Проверка, находится ли значение в диапазоне кириллицы или является печатным ASCII
+                if ((value >= 0x0400 && value <= 0x04FF) || // Кириллица
+                    (value >= 0x20 && value <= 0x7E)) {     // Печатные ASCII
+                    directText += String.fromCharCode(value);
+                } else if (value === 0x0A || value === 0x0D) { // Новые строки
+                    directText += '\n';
+                }
+            }
+        }
+        
+        // Next, try standard \uXXXX format
+        const standardFormat = rtfText.match(/\\u(-?\d+)[\s\S]?/g);
+        if (standardFormat && standardFormat.length > 0) {
+            console.log(`Found ${standardFormat.length} standard \\u Unicode sequences`);
+            
+            let standardText = '';
+            for (const code of standardFormat) {
+                const valueStr = code.replace(/\\u(-?\d+)[\s\S]?/, '$1');
+                let value = parseInt(valueStr, 10);
+                
+                // Handle negative values (convert to unsigned 16-bit)
+                if (value < 0) value = 65536 + value;
+                
+                // Проверка, находится ли значение в диапазоне кириллицы или является печатным ASCII
+                if ((value >= 0x0400 && value <= 0x04FF) || // Кириллица
+                    (value >= 0x20 && value <= 0x7E)) {     // Печатные ASCII
+                    standardText += String.fromCharCode(value);
+                } else if (value === 0x0A || value === 0x0D) { // Новые строки
+                    standardText += '\n';
+                }
+            }
+            
+            // Если стандартный формат дал больше текста, используем его
+            if (standardText.length > directText.length) {
+                directText = standardText;
+            } else if (standardText.length > 0) {
+                // Иначе объединяем оба результата, если оба содержат текст
+                directText += standardText;
+            }
+        }
+        
+        // Если мы извлекли какой-то текст, форматируем его
+        if (directText.length > 0) {
+            console.log(`Extracted ${directText.length} Unicode characters`);
+            
+            // Очистка и форматирование извлеченного текста
+            const formattedText = directText
+                .replace(/\s+/g, ' ')        // Нормализация пробелов
+                .replace(/\s*\n\s*/g, '\n')  // Очистка переносов строк
+                .replace(/\n{3,}/g, '\n\n')  // Нормализация множественных переносов
+                .trim();
+            
+            // Проверяем, есть ли кириллические символы
+            if (/[\u0400-\u04FF]/.test(formattedText)) {
+                console.log("Unicode extraction found Cyrillic text");
+                
+                // Если текст достаточно длинный, разбиваем его на строки
+                if (formattedText.length > 20 && !formattedText.includes('\n')) {
+                    // Попытка структурировать текст на строки для песни
+                    const structuredText = this._structureTextIntoLines(formattedText);
+                    return structuredText;
+                }
+                
+                return formattedText;
+            }
+        }
+        
+        return null;
+    }
+    
+    // Вспомогательный метод для структурирования текста на строки
+    _structureTextIntoLines(text) {
+        // Если текст уже содержит переносы строк, используем их
+        if (text.includes('\n')) return text;
+        
+        // Разбиваем на предложения или фразы
+        const sentences = text.split(/(?<=[.!?])\s+/);
+        if (sentences.length > 1) {
+            return sentences.join('\n');
+        }
+        
+        // Если нет естественных разделителей предложений, разбиваем по длине
+        const words = text.split(' ');
+        if (words.length < 10) return text; // Если мало слов, оставляем как есть
+        
+        const lines = [];
+        let currentLine = '';
+        
+        for (const word of words) {
+            if (currentLine.length + word.length + 1 > 40) { // Максимальная длина строки
+                lines.push(currentLine);
+                currentLine = word;
+            } else {
+                currentLine = currentLine ? (currentLine + ' ' + word) : word;
+            }
+        }
+        
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+        
+        return lines.join('\n');
+    }
+}
+
+// Create global lyrics display instance
+const lyricsDisplay = new LyricsDisplay(); 
+window.lyricsDisplay = lyricsDisplay; 

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTF Parser Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        #result {
+            white-space: pre-wrap;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: #f5f5f5;
+            margin-top: 15px;
+        }
+        .lyric-line {
+            margin: 2px 0;
+        }
+        .lyric-line.active {
+            background-color: yellow;
+            font-weight: bold;
+        }
+        button {
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>RTF Parser Test</h1>
+    <div>
+        <label for="rtf-file">Выберите RTF файл для анализа:</label>
+        <input type="file" id="rtf-file" accept=".rtf,.txt">
+    </div>
+    <div>
+        <button id="parse-btn">Парсить файл</button>
+        <button id="test-standard">Тестировать стандартный парсер</button>
+        <button id="test-universal">Тестировать универсальный парсер</button>
+    </div>
+    <div>
+        <h3>Результат обработки:</h3>
+        <div id="lyrics-container"></div>
+        <h3>Отладочный вывод:</h3>
+        <pre id="result"></pre>
+    </div>
+
+    <script>
+        // Копия методов из lyrics-display.js для тестирования
+        
+        // Универсальный парсер RTF файлов
+        function parseRtfUniversal(rtfText) {
+            log('Запуск универсального RTF парсера');
+            if (!rtfText) return '';
+            
+            try {
+                // Удаляем RTF-заголовок и форматирование
+                let text = rtfText;
+                
+                // Сохраняем переносы строк из RTF, заменяя их на маркеры
+                text = text.replace(/\\par\s?/g, '\n');
+                text = text.replace(/\\line\s?/g, '\n');
+                
+                // Удаляем управляющие последовательности (цветовые таблицы, таблицы шрифтов и т.д.)
+                text = text.replace(/\{\\rtf[^{}]*/, '');
+                text = text.replace(/\{\\colortbl[^{}]*\}/g, '');
+                text = text.replace(/\{\\fonttbl[^{}]*\}/g, '');
+                text = text.replace(/\{\\stylesheet[^{}]*\}/g, '');
+                text = text.replace(/\{\\[^{}]*\}/g, '');
+                
+                // Удаляем команды форматирования
+                text = text.replace(/\\f\d+/g, '');
+                text = text.replace(/\\fs\d+/g, '');
+                text = text.replace(/\\cf\d+/g, '');
+                text = text.replace(/\\[a-z]+\d*/g, ' ');
+                
+                // Обрабатываем Unicode символы
+                text = text.replace(/\\'([0-9a-fA-F]{2})/g, (match, hex) => {
+                    try {
+                        const charCode = parseInt(hex, 16);
+                        return String.fromCharCode(charCode);
+                    } catch(e) {
+                        return '';
+                    }
+                });
+                
+                text = text.replace(/\\u(\d+)\s?/g, (match, code) => {
+                    try {
+                        const charCode = parseInt(code, 10);
+                        const actualCode = charCode < 0 ? charCode + 65536 : charCode;
+                        return String.fromCharCode(actualCode);
+                    } catch(e) {
+                        return '';
+                    }
+                });
+                
+                // Завершающая очистка
+                text = text.replace(/[{}\\]/g, '');
+                text = text.replace(/\s{2,}/g, ' ');
+                text = text.replace(/\n{3,}/g, '\n\n');
+                
+                // Очистка от служебной информации и лишних пробелов
+                text = text.replace(/^\s+/mg, '');
+                text = text.replace(/^[^a-zA-Zа-яА-ЯёЁ0-9]+\s*/m, '');  // Удаляем первые строки без текста
+                
+                return text;
+            } catch (error) {
+                log('Ошибка при обработке RTF: ' + error);
+                return '';
+            }
+        }
+        
+        // Улучшенный парсер RTF с обработкой структуры
+        function extractStructuredContentFromRtf(rtfText) {
+            log("Запущена улучшенная обработка RTF-файла");
+            
+            if (!rtfText || rtfText.length < 10) {
+                log("RTF текст слишком короткий или отсутствует");
+                return null;
+            }
+            
+            try {
+                // Шаг 1: Удаляем RTF-заголовок и прочие метаданные
+                let text = rtfText;
+                
+                // Удаляем RTF-заголовки
+                text = text.replace(/^{\\rtf1[^{}]*/, ''); 
+                
+                // Удаляем таблицы цветов, шрифтов и стилей
+                text = text.replace(/\{\\colortbl[^{}]*\}/g, '');
+                text = text.replace(/\{\\fonttbl[^{}]*\}/g, '');
+                text = text.replace(/\{\\stylesheet[^{}]*\}/g, '');
+                
+                // Шаг 2: Заменяем RTF-команды переносов строк маркерами
+                text = text.replace(/\\par\s?/g, '###NEWLINE###');
+                text = text.replace(/\\line\s?/g, '###NEWLINE###');
+                
+                // Шаг 3: Удаляем группы управления
+                text = text.replace(/\{\\[^{}]*\}/g, '');
+                
+                // Шаг 4: Удаляем команды форматирования, не заменяя их пробелами
+                const formattingCommands = [
+                    /\\f\d+\s?/g,         // Шрифт
+                    /\\fs\d+\s?/g,        // Размер шрифта
+                    /\\cf\d+\s?/g,        // Цвет шрифта
+                    /\\b\s?/g,            // Полужирный
+                    /\\i\s?/g,            // Курсив
+                    /\\ul\s?/g,           // Подчеркнутый
+                    /\\strike\s?/g,       // Зачеркнутый
+                    /\\super\s?/g,        // Верхний индекс
+                    /\\sub\s?/g,          // Нижний индекс
+                    /\\qc\s?/g,           // Выравнивание по центру
+                    /\\ql\s?/g,           // Выравнивание по левому краю
+                    /\\qr\s?/g,           // Выравнивание по правому краю
+                    /\\li\d+\s?/g,        // Левый отступ
+                    /\\ri\d+\s?/g,        // Правый отступ
+                    /\\fi\d+\s?/g,        // Отступ первой строки
+                    /\\sb\d+\s?/g,        // Интервал перед абзацем
+                    /\\sa\d+\s?/g,        // Интервал после абзаца
+                    /\\sl\d+\s?/g,        // Межстрочный интервал
+                ];
+                
+                formattingCommands.forEach(regex => {
+                    text = text.replace(regex, '');
+                });
+                
+                // Шаг 5: Удаляем все оставшиеся RTF-команды, заменяя пробелами для сохранения структуры
+                text = text.replace(/\\[a-z]+\d*\s?/g, ' ');
+                
+                // Шаг 6: Обрабатываем Unicode символы
+                text = text.replace(/\\'([0-9a-fA-F]{2})/g, (match, hex) => {
+                    try {
+                        const charCode = parseInt(hex, 16);
+                        return String.fromCharCode(charCode);
+                    } catch (e) {
+                        return '';
+                    }
+                });
+                
+                // Шаг 7: Восстанавливаем переносы строк
+                text = text.replace(/###NEWLINE###/g, '\n');
+                
+                // Шаг 8: Удаляем оставшиеся управляющие символы и скобки
+                text = text.replace(/[{}\\]/g, '');
+                
+                // Шаг 9: Удаляем контрольные символы и очищаем пространства
+                text = text.replace(/[\x00-\x1F]/g, '');
+                text = text.replace(/^\s+/gm, '');  // Удаляем пробелы в начале строк
+                text = text.replace(/\s+$/gm, '');  // Удаляем пробелы в конце строк
+                text = text.replace(/\n{3,}/g, '\n\n'); // Не более 2 переносов строк подряд
+                
+                // Шаг 10: Находим и удаляем инициализирующие строки, оставшиеся от заголовка RTF
+                const lines = text.split('\n');
+                let firstContentLineIndex = 0;
+                
+                // Пропускаем первые строки, которые могут содержать только метаданные
+                for (let i = 0; i < Math.min(5, lines.length); i++) {
+                    const line = lines[i].trim();
+                    if (line.length === 0) continue;
+                    
+                    // Проверяем, является ли строка, вероятно, метаданными
+                    const seemsLikeMetadata = 
+                        /^[^a-zA-Zа-яА-ЯёЁ0-9]+$/.test(line) || // Только специальные символы
+                        /^[a-zA-Z]+;(\s*;)*$/.test(line) ||      // Формат "Verdana; ; ; ;"
+                        /^[\d.]+$/.test(line) ||                 // Только цифры
+                        /^[a-zA-Z\s]+:/.test(line);              // Формат "Name: value"
+                    
+                    if (!seemsLikeMetadata) {
+                        firstContentLineIndex = i;
+                        break;
+                    } else {
+                        firstContentLineIndex = i + 1;
+                    }
+                }
+                
+                // Фильтруем строки, начиная с первой реальной строки контента
+                const contentLines = lines.slice(firstContentLineIndex);
+                
+                // Собираем финальный текст
+                const result = contentLines.join('\n');
+                log(`Результат структурированной обработки RTF: ${contentLines.length} строк`);
+                
+                return result;
+            } catch (error) {
+                log("Ошибка при структурированной обработке RTF: " + error);
+                return null;
+            }
+        }
+
+        // Вспомогательные функции
+        function log(message) {
+            const resultArea = document.getElementById('result');
+            resultArea.textContent += message + '\n';
+        }
+        
+        function displayLyrics(text) {
+            const lyricsContainer = document.getElementById('lyrics-container');
+            lyricsContainer.innerHTML = '';
+            
+            const lines = text.split('\n');
+            lines.forEach((line, index) => {
+                if (line.trim()) {
+                    const lineElement = document.createElement('div');
+                    lineElement.className = 'lyric-line';
+                    lineElement.textContent = line;
+                    lineElement.addEventListener('click', () => {
+                        // Remove active class from all lines
+                        document.querySelectorAll('.lyric-line').forEach(el => {
+                            el.classList.remove('active');
+                        });
+                        // Add active class to clicked line
+                        lineElement.classList.add('active');
+                    });
+                    lyricsContainer.appendChild(lineElement);
+                }
+            });
+        }
+        
+        // Event listeners
+        document.getElementById('parse-btn').addEventListener('click', () => {
+            const fileInput = document.getElementById('rtf-file');
+            if (fileInput.files.length === 0) {
+                log('Пожалуйста, выберите файл');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                const content = e.target.result;
+                log('---------- СЧИТАН ФАЙЛ ----------');
+                log(`Название файла: ${file.name}`);
+                log(`Размер файла: ${file.size} байт`);
+                log(`Первые 100 символов: ${content.substring(0, 100)}...`);
+                
+                // Тестируем оба парсера и отображаем результаты
+                const universalResult = parseRtfUniversal(content);
+                const structuredResult = extractStructuredContentFromRtf(content);
+                
+                log('---------- РЕЗУЛЬТАТЫ ПАРСИНГА ----------');
+                log(`Универсальный парсер: ${universalResult.split('\n').length} строк`);
+                log(`Структурный парсер: ${structuredResult ? structuredResult.split('\n').length : 'ошибка'} строк`);
+                
+                // Отображаем результат структурного парсера по умолчанию
+                if (structuredResult) {
+                    displayLyrics(structuredResult);
+                } else {
+                    displayLyrics(universalResult);
+                }
+            };
+            
+            reader.readAsText(file);
+        });
+        
+        document.getElementById('test-standard').addEventListener('click', () => {
+            const fileInput = document.getElementById('rtf-file');
+            if (fileInput.files.length === 0) {
+                log('Пожалуйста, выберите файл');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                const content = e.target.result;
+                const universalResult = parseRtfUniversal(content);
+                displayLyrics(universalResult);
+                log('Отображен результат стандартного парсера');
+            };
+            
+            reader.readAsText(file);
+        });
+        
+        document.getElementById('test-universal').addEventListener('click', () => {
+            const fileInput = document.getElementById('rtf-file');
+            if (fileInput.files.length === 0) {
+                log('Пожалуйста, выберите файл');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                const content = e.target.result;
+                const structuredResult = extractStructuredContentFromRtf(content);
+                if (structuredResult) {
+                    displayLyrics(structuredResult);
+                    log('Отображен результат универсального парсера');
+                } else {
+                    log('Ошибка в универсальном парсере');
+                }
+            };
+            
+            reader.readAsText(file);
+        });
+    </script>
+</body>
+</html> 

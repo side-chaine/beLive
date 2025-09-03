@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест эффектов фона - MediaPipe Selfie Segmentation</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 640px;
+            height: 480px;
+            margin: 20px auto;
+            border: 2px solid #333;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+        
+        canvas {
+            transform: scaleX(-1);
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .effect-btn {
+            margin: 5px;
+            padding: 10px 20px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .effect-btn:hover {
+            background: #555;
+        }
+        
+        .effect-btn.active {
+            background: #007bff;
+        }
+        
+        .status {
+            text-align: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: #333;
+            border-radius: 5px;
+        }
+        
+        .log {
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+    
+    <!-- MediaPipe Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Тест эффектов фона MediaPipe</h1>
+        
+        <div class="status" id="status">Инициализация...</div>
+        
+        <div class="video-container">
+            <video id="video" autoplay muted playsinline></video>
+        </div>
+        
+        <div class="controls">
+            <button class="effect-btn" onclick="applyEffect('none')">Без эффекта</button>
+            <button class="effect-btn" onclick="applyEffect('blur')">Размытие</button>
+            <button class="effect-btn" onclick="applyEffect('green')">Зеленый фон</button>
+            <button class="effect-btn" onclick="applyEffect('blue')">Синий фон</button>
+            <button class="effect-btn" onclick="applyEffect('gradient')">Градиент</button>
+            <button class="effect-btn" onclick="applyEffect('matrix')">Матрица</button>
+            <button class="effect-btn" onclick="applyEffect('neon')">Неон</button>
+        </div>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        let video;
+        let selfieSegmentation;
+        let canvas;
+        let ctx;
+        let currentEffect = 'none';
+        let isProcessing = false;
+        
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+        
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+            log(`Status: ${message}`);
+        }
+        
+        async function initCamera() {
+            try {
+                updateStatus('Запуск камеры...');
+                
+                video = document.getElementById('video');
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480 }
+                });
+                
+                video.srcObject = stream;
+                
+                // Создаем canvas для эффектов
+                canvas = document.createElement('canvas');
+                canvas.width = 640;
+                canvas.height = 480;
+                canvas.style.position = 'absolute';
+                canvas.style.top = '0';
+                canvas.style.left = '0';
+                canvas.style.width = '100%';
+                canvas.style.height = '100%';
+                canvas.style.pointerEvents = 'none';
+                
+                ctx = canvas.getContext('2d');
+                video.parentElement.appendChild(canvas);
+                
+                updateStatus('Камера запущена');
+                return true;
+            } catch (error) {
+                updateStatus(`Ошибка камеры: ${error.message}`);
+                return false;
+            }
+        }
+        
+        async function initMediaPipe() {
+            try {
+                updateStatus('Инициализация MediaPipe...');
+                
+                // Ждем загрузки библиотек
+                let attempts = 0;
+                while (!window.SelfieSegmentation && attempts < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
+                }
+                
+                if (!window.SelfieSegmentation) {
+                    throw new Error('MediaPipe Selfie Segmentation не загружен');
+                }
+                
+                selfieSegmentation = new SelfieSegmentation({
+                    locateFile: (file) => {
+                        return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
+                    }
+                });
+                
+                selfieSegmentation.setOptions({
+                    modelSelection: 1,
+                    selfieMode: true
+                });
+                
+                selfieSegmentation.onResults(onResults);
+                
+                updateStatus('MediaPipe готов');
+                return true;
+            } catch (error) {
+                updateStatus(`Ошибка MediaPipe: ${error.message}`);
+                return false;
+            }
+        }
+        
+        function onResults(results) {
+            if (!ctx || !canvas || currentEffect === 'none') return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (results.segmentationMask) {
+                try {
+                    applyBackgroundEffect(results.segmentationMask);
+                } catch (error) {
+                    log(`Ошибка применения эффекта: ${error.message}`);
+                }
+            }
+        }
+        
+        function applyBackgroundEffect(mask) {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Получаем маску с правильным зеркалированием для CSS-зеркалированного видео
+            tempCtx.save();
+            tempCtx.scale(-1, 1);
+            tempCtx.drawImage(mask, -canvas.width, 0, canvas.width, canvas.height);
+            tempCtx.restore();
+            
+            const imageData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
+            const maskData = imageData.data;
+            
+            // Применяем эффект
+            switch (currentEffect) {
+                case 'blur':
+                    applyBlurEffect(maskData);
+                    break;
+                case 'green':
+                    applyColorEffect(maskData, '#00FF00');
+                    break;
+                case 'blue':
+                    applyColorEffect(maskData, '#0000FF');
+                    break;
+                case 'gradient':
+                    applyGradientEffect(maskData);
+                    break;
+                case 'matrix':
+                    applyMatrixEffect(maskData);
+                    break;
+                case 'neon':
+                    applyNeonEffect(maskData);
+                    break;
+            }
+        }
+        
+        function applyBlurEffect(maskData) {
+            ctx.save();
+            ctx.filter = 'blur(15px)';
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            ctx.filter = 'none';
+            ctx.restore();
+            
+            // Накладываем человека
+            overlayPerson(maskData);
+        }
+        
+        function applyColorEffect(maskData, color) {
+            ctx.save();
+            ctx.fillStyle = color;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            overlayPerson(maskData);
+            ctx.restore();
+        }
+        
+        function applyGradientEffect(maskData) {
+            ctx.save();
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, '#FF0080');
+            gradient.addColorStop(0.5, '#7928CA');
+            gradient.addColorStop(1, '#FF8A80');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            overlayPerson(maskData);
+            ctx.restore();
+        }
+        
+        function applyMatrixEffect(maskData) {
+            ctx.save();
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Зеленые символы
+            ctx.fillStyle = '#00FF41';
+            ctx.font = '14px monospace';
+            const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノ';
+            for (let i = 0; i < 50; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const char = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(char, x, y);
+            }
+            
+            overlayPerson(maskData);
+            ctx.restore();
+        }
+        
+        function applyNeonEffect(maskData) {
+            ctx.save();
+            const gradient = ctx.createRadialGradient(
+                canvas.width / 2, canvas.height / 2, 0,
+                canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height)
+            );
+            gradient.addColorStop(0, '#FF00FF');
+            gradient.addColorStop(0.5, '#00FFFF');
+            gradient.addColorStop(1, '#000033');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            overlayPerson(maskData);
+            ctx.restore();
+        }
+        
+        function overlayPerson(maskData) {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Рисуем видео БЕЗ дополнительного зеркалирования
+            tempCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < maskData.length; i += 4) {
+                const alpha = maskData[i] > 128 ? imageData.data[i + 3] : 0;
+                imageData.data[i + 3] = alpha;
+            }
+            
+            tempCtx.putImageData(imageData, 0, 0);
+            ctx.drawImage(tempCanvas, 0, 0);
+        }
+        
+        function applyEffect(effect) {
+            // Обновляем активную кнопку
+            document.querySelectorAll('.effect-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            currentEffect = effect;
+            log(`Применен эффект: ${effect}`);
+            
+            if (effect === 'none') {
+                if (canvas) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+                isProcessing = false;
+                return;
+            }
+            
+            if (!isProcessing && selfieSegmentation && video) {
+                isProcessing = true;
+                processFrame();
+            }
+        }
+        
+        async function processFrame() {
+            if (!isProcessing || !selfieSegmentation || !video) return;
+            
+            try {
+                await selfieSegmentation.send({ image: video });
+            } catch (error) {
+                log(`Ошибка обработки кадра: ${error.message}`);
+            }
+            
+            if (isProcessing) {
+                requestAnimationFrame(processFrame);
+            }
+        }
+        
+        // Инициализация
+        async function init() {
+            const cameraOk = await initCamera();
+            if (!cameraOk) return;
+            
+            const mediaPipeOk = await initMediaPipe();
+            if (!mediaPipeOk) return;
+            
+            updateStatus('Готов к работе! Выберите эффект.');
+        }
+        
+        // Запуск при загрузке страницы
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html> 

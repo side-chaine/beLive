@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест Drag Boundary System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-block {
+            border: 2px solid #333;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            background: #2a2a2a;
+            position: relative;
+        }
+        .rehearsal-active-block {
+            border-color: #ff6b35;
+            box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+        }
+        .line {
+            padding: 8px 0;
+            border-left: 3px solid transparent;
+            padding-left: 10px;
+            margin: 2px 0;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        button {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #e55a2b;
+        }
+        .status {
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 Тест Drag Boundary System</h1>
+    
+    <div class="controls">
+        <button onclick="activateDragSystem()">Активировать Drag System</button>
+        <button onclick="deactivateDragSystem()">Деактивировать Drag System</button>
+        <button onclick="testBoundaryChange()">Тест изменения границ</button>
+    </div>
+    
+    <div class="status" id="status">
+        Статус: Готов к тестированию
+    </div>
+    
+    <div class="test-block rehearsal-active-block" id="test-block">
+        <h3>Тестовый блок для drag boundaries</h3>
+        <div class="line">Строка 1: Первая строка текста</div>
+        <div class="line">Строка 2: Вторая строка текста</div>
+        <div class="line">Строка 3: Третья строка текста</div>
+        <div class="line">Строка 4: Четвертая строка текста</div>
+        <div class="line">Строка 5: Пятая строка текста</div>
+    </div>
+
+    <script>
+        // Мок-объекты для тестирования
+        class MockBlockLoopControl {
+            onBoundaryChange(boundaries) {
+                updateStatus(`Границы изменены: ${boundaries.startTime.toFixed(2)}s - ${boundaries.endTime.toFixed(2)}s`);
+                console.log('MockBlockLoopControl: Boundary change:', boundaries);
+            }
+        }
+
+        class MockMarkerManager {
+            getMarkers() {
+                return [
+                    { lineIndex: 0, time: 10.0 },
+                    { lineIndex: 1, time: 15.0 },
+                    { lineIndex: 2, time: 20.0 },
+                    { lineIndex: 3, time: 25.0 },
+                    { lineIndex: 4, time: 30.0 }
+                ];
+            }
+        }
+
+        // Создаем мок-объекты
+        const mockBlockLoopControl = new MockBlockLoopControl();
+        const mockMarkerManager = new MockMarkerManager();
+        
+        // Глобальные переменные
+        let dragBoundaryController = null;
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = `Статус: ${message}`;
+        }
+
+        function activateDragSystem() {
+            if (!window.DragBoundaryController) {
+                updateStatus('Ошибка: DragBoundaryController не найден');
+                return;
+            }
+
+            try {
+                dragBoundaryController = new DragBoundaryController(mockBlockLoopControl);
+                dragBoundaryController.markerManager = mockMarkerManager;
+                dragBoundaryController.activate();
+                
+                const testBlock = document.getElementById('test-block');
+                const mockBlock = {
+                    id: 'test-1',
+                    name: 'Тестовый блок',
+                    lineIndices: [0, 1, 2, 3, 4]
+                };
+                
+                dragBoundaryController.activateForBlock(testBlock, mockBlock);
+                updateStatus('Drag System активирован');
+            } catch (error) {
+                updateStatus(`Ошибка активации: ${error.message}`);
+                console.error('Activation error:', error);
+            }
+        }
+
+        function deactivateDragSystem() {
+            if (dragBoundaryController) {
+                dragBoundaryController.deactivate();
+                updateStatus('Drag System деактивирован');
+            } else {
+                updateStatus('Drag System не был активирован');
+            }
+        }
+
+        function testBoundaryChange() {
+            if (dragBoundaryController) {
+                const testBoundaries = {
+                    startTime: 12.5,
+                    endTime: 27.3
+                };
+                mockBlockLoopControl.onBoundaryChange(testBoundaries);
+            } else {
+                updateStatus('Сначала активируйте Drag System');
+            }
+        }
+
+        // Загружаем CSS для drag handles
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'css/styles.css';
+        document.head.appendChild(link);
+    </script>
+
+    <!-- Подключаем DragBoundaryController -->
+    <script src="js/drag-boundary-controller.js"></script>
+</body>
+</html> 
