@@ -1,4 +1,3 @@
-cat > README.md <<'EOF'
 # beLive
 
 **beLive** — an experimental music web app for rehearsal, collaborative performance and visual immersion.
@@ -25,6 +24,26 @@ beLive blends a compact studio workflow with a social karaoke experience: solo a
 - **Avatar Studio:** interactive room feed — preview performers and tracks; avatars embedded in UI for immersive performance.
 - **AI tools (planned):** intelligent recommendations, pitch correction, auto-harmonization and auto-mastering.
 - **Real-time (future):** low-latency collaboration via WebRTC / WebSockets.
+
+---
+
+## Screenshots
+
+Here are some visuals of **beLive** in action:
+
+| ![Avatar Demo](Docs/screenshots/avatar_demo.png) | ![Concert Room 1](Docs/screenshots/concert_room.png) | ![Concert Room 2](Docs/screenshots/concert_room2.png) |
+|:-----------------------------------------------:|:-----------------------------------------------:|:-----------------------------------------------:|
+| Avatar Studio POC                               | Main concert room                                | Concert room, alternative view                    |
+
+| ![Karaoke View](Docs/screenshots/karaoke_view.png) | ![Loop Control](Docs/screenshots/rehearsal_Loop_Control_view.png) | ![Pitch Control](Docs/screenshots/rehearsal_Pitch_view.png) |
+|:-----------------------------------------------:|:-----------------------------------------------:|:-----------------------------------------------:|
+| Karaoke session interface                        | Loop control panel (rehearsal)                  | Pitch adjustment panel (rehearsal)              |
+
+| ![Sync Control](Docs/screenshots/rehearsal_Sync_view.png) | ![Rehearsal Main](Docs/screenshots/rehearsal_view.png) |
+|:-----------------------------------------------:|:-----------------------------------------------:|
+| Synchronization panel (rehearsal)               | Main rehearsal view                               |
+
+*All screenshots are POCs and may be updated as development progresses.*
 
 ---
 
@@ -63,5 +82,3 @@ This project is licensed under the MIT License — see `LICENSE`.
 
 ## Contact
 Owner / Author: **Nikita Cheremisinov** — GitHub: [@side-chaine](https://github.com/side-chaine)
-
-EOF
