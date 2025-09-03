@@ -14,9 +14,9 @@ class RehearsalBackgroundManager {
 	}
 
 	_preloadAll() {
-		if (!Array.isArray(this.imagePaths)) return;
+		if (!Array.isArray(this.imagePaths)) {return;}
 		this.imagePaths.forEach(src => {
-			if (this._cache.has(src)) return;
+			if (this._cache.has(src)) {return;}
 			const img = new Image();
 			img.decoding = 'async';
 			img.loading = 'eager';
@@ -30,7 +30,7 @@ class RehearsalBackgroundManager {
 	}
 
 	start() {
-		if (!this.imagePaths || this.imagePaths.length === 0) return;
+		if (!this.imagePaths || this.imagePaths.length === 0) {return;}
 		this.body.classList.add('rehearsal-active');
 		this.isActive = true;
 		this._preloadAll();
@@ -48,7 +48,7 @@ class RehearsalBackgroundManager {
 	}
 
 	_setBackground(forcedIndex = null) {
-		if (!this.isActive || !this.body.classList.contains('mode-rehearsal')) return;
+		if (!this.isActive || !this.body.classList.contains('mode-rehearsal')) {return;}
 		let nextIndex = forcedIndex;
 		if (typeof nextIndex !== 'number' || nextIndex < 0) {
 			// случайный только если не передан индекс
@@ -67,7 +67,7 @@ class RehearsalBackgroundManager {
 			this._cache.set(imagePath, img);
 		}
 		const apply = () => {
-			if (!this.isActive || !this.body.classList.contains('mode-rehearsal')) return;
+			if (!this.isActive || !this.body.classList.contains('mode-rehearsal')) {return;}
 			this.body.style.setProperty('background-image', `url('${imagePath}')`, 'important');
 			console.log(`✅ Rehearsal Background: set ${imagePath}`);
 		};
@@ -91,22 +91,22 @@ class RehearsalBackgroundManager {
 	 * Привязка к смене блоков: меняем фон только при естественном проигрывании и смене блока.
 	 */
 	bindToBlockChanges(lyricsDisplay, blockLoopControl, audioEngine) {
-		if (this._boundHandler) return; // уже привязано
+		if (this._boundHandler) {return;} // уже привязано
 		this._boundHandler = (e) => {
 			try {
-				if (!this.isActive || !this.body.classList.contains('mode-rehearsal')) return;
-				if (!lyricsDisplay || !Array.isArray(lyricsDisplay.textBlocks) || lyricsDisplay.textBlocks.length === 0) return;
+				if (!this.isActive || !this.body.classList.contains('mode-rehearsal')) {return;}
+				if (!lyricsDisplay || !Array.isArray(lyricsDisplay.textBlocks) || lyricsDisplay.textBlocks.length === 0) {return;}
 				// Не менять при лупе или seek
-				if (blockLoopControl && (blockLoopControl.isLooping || blockLoopControl.isSeekingInProgress)) return;
+				if (blockLoopControl && (blockLoopControl.isLooping || blockLoopControl.isSeekingInProgress)) {return;}
 				// Можно менять фон даже на паузе; блокируем только при loop/seek
 				const lineIndex = e.detail?.lineIndex;
-				if (typeof lineIndex !== 'number') return;
+				if (typeof lineIndex !== 'number') {return;}
 				// Работаем по разделённым блокам (учитываем разбиение >8 строк)
 				const processedBlocks = (typeof lyricsDisplay._splitLargeBlocks === 'function')
 					? lyricsDisplay._splitLargeBlocks(lyricsDisplay.textBlocks || [])
 					: (lyricsDisplay.textBlocks || []);
 				const newBlockIndex = this._getBlockIndexByLine(processedBlocks, lineIndex);
-				if (newBlockIndex === null) return;
+				if (newBlockIndex === null) {return;}
 				const newBlockId = processedBlocks[newBlockIndex]?.id || `idx-${newBlockIndex}`;
 				if (this._currentBlockIndex === null) {
 					this._currentBlockIndex = newBlockIndex;
@@ -140,10 +140,10 @@ class RehearsalBackgroundManager {
 	_getBlockIndexByLine(blocks, lineIndex) {
 		for (let i = 0; i < blocks.length; i++) {
 			const blk = blocks[i];
-			if (!blk || !Array.isArray(blk.lineIndices)) continue;
+			if (!blk || !Array.isArray(blk.lineIndices)) {continue;}
 			const min = Math.min(...blk.lineIndices);
 			const max = Math.max(...blk.lineIndices);
-			if (lineIndex >= min && lineIndex <= max) return i;
+			if (lineIndex >= min && lineIndex <= max) {return i;}
 		}
 		return null;
 	}

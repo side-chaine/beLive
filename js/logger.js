@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+ 
 (function(global){
   const LEVELS = { debug: 10, info: 20, warn: 30, error: 40 };
   let currentLevel = LEVELS.info;
@@ -14,19 +14,19 @@
 
   function toggleDebugLogs(enable){
     debugEnabled = !!enable;
-    if (enable) currentLevel = LEVELS.debug;
+    if (enable) {currentLevel = LEVELS.debug;}
   }
 
   function fmt(component, level, message, context){
     const ts = new Date().toISOString();
     const payload = { ts, level, component, message };
-    if (context && typeof context === 'object') Object.assign(payload, { context });
+    if (context && typeof context === 'object') {Object.assign(payload, { context });}
     return payload;
   }
 
   function logAt(levelName, component, message, context){
     const level = LEVELS[levelName] || LEVELS.info;
-    if (!debugEnabled && level < currentLevel) return;
+    if (!debugEnabled && level < currentLevel) {return;}
     const payload = fmt(component, levelName, message, context);
     switch (levelName){
       case 'debug': console.debug(payload); break;

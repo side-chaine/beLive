@@ -86,10 +86,10 @@ class EnhancedTextProcessor {
         })
         .filter(line => {
             // Фильтрация пустых строк
-            if (line.length === 0) return false;
+            if (line.length === 0) {return false;}
             
             // Фильтрация строк, состоящих только из пунктуации (допускаем немного больше символов)
-            if (/^[;:,.\/#!"~*$%^&+=_{}()\-\[\]<>?@'`€£¥§©®™•…–—‘'""„‚‹›«»¡¿‰‱℗℠№#\*\^\(\)\[\]\{\}\s]+$/.test(line)) return false;
+            if (/^[;:,.\/#!"~*$%^&+=_{}()\-\[\]<>?@'`€£¥§©®™•…–—‘'""„‚‹›«»¡¿‰‱℗℠№#\*\^\(\)\[\]\{\}\s]+$/.test(line)) {return false;}
             
             return true;
         });
@@ -156,7 +156,7 @@ class EnhancedTextProcessor {
      * @private
      */
     static _extractTextFromRtf(rtfText) {
-        if (!rtfText) return '';
+        if (!rtfText) {return '';}
         
         console.log("EnhancedTextProcessor: внутреннее базовое извлечение текста из RTF");
         
@@ -226,7 +226,7 @@ class EnhancedTextProcessor {
      * @returns {string} - 'ru' для русского, 'en' для английского, 'unknown' для неопределенного
      */
     static detectLanguage(text) {
-        if (!text) return 'unknown';
+        if (!text) {return 'unknown';}
         
         const sample = text.substring(0, 500);
         const russianMatch = sample.match(/[а-яА-ЯёЁ]/g);

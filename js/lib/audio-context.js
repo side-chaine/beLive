@@ -14,7 +14,7 @@ class AudioContextManager {
     }
     
     async initialize() {
-        if (this.isInitialized) return this.audioContext;
+        if (this.isInitialized) {return this.audioContext;}
         
         if (!this.isSupported) {
             console.warn('AudioContext не поддерживается в этом браузере');

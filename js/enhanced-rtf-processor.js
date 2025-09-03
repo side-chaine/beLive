@@ -378,7 +378,7 @@ class EnhancedRtfProcessor {
      * @private
      */
     _intelligentLineSplitting(text) {
-        if (!text || text.trim().length === 0) return '';
+        if (!text || text.trim().length === 0) {return '';}
         
         const isRussian = this._detectLanguage(text) === 'russian';
         console.log(`EnhancedRtfProcessor: Применяем интеллектуальное разделение для ${isRussian ? 'русского' : 'английского'} текста (акцент на заглавных буквах)`);
@@ -409,7 +409,7 @@ class EnhancedRtfProcessor {
         const finalLines = [];
 
         for (const line of lines) {
-            if (line.trim().length === 0) continue;
+            if (line.trim().length === 0) {continue;}
 
             // Проверяем, нужно ли дополнительно делить эту строку
             // Эвристика: если строка длинная И (в ней мало пробелов ИЛИ она не заканчивается пунктуацией)
@@ -423,7 +423,7 @@ class EnhancedRtfProcessor {
             let currentSegment = '';
             for (let i = 0; i < words.length; i++) {
                 const word = words[i];
-                if (word.trim().length === 0) continue;
+                if (word.trim().length === 0) {continue;}
 
                 // Условие для начала новой строки: 
                 // 1. Не первое слово в обрабатываемом сегменте (currentSegment уже что-то содержит)
@@ -470,11 +470,11 @@ class EnhancedRtfProcessor {
      * @private
      */
     _splitLongLine(line, isRussian) {
-        if (!line || line.trim().length === 0) return []; // Возвращаем пустой массив, если строка пуста
+        if (!line || line.trim().length === 0) {return [];} // Возвращаем пустой массив, если строка пуста
         
         // Если строка короткая, нет смысла ее делить
         const minLengthToSplit = isRussian ? 70 : 80;
-        if (line.length < minLengthToSplit) return [line.trim()];
+        if (line.length < minLengthToSplit) {return [line.trim()];}
 
         const result = [];
         const maxLength = isRussian ? 60 : 70;
@@ -483,7 +483,7 @@ class EnhancedRtfProcessor {
 
         for (let i = 0; i < words.length; i++) {
             const word = words[i];
-            if (word.trim().length === 0) continue;
+            if (word.trim().length === 0) {continue;}
 
             if (currentSegment.length + word.length + 1 > maxLength && currentSegment.length > 0) {
                 const prevWord = i > 0 ? words[i-1].toLowerCase() : '';

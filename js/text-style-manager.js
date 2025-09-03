@@ -196,7 +196,7 @@ class TextStyleManager {
                 lineSpacing: '1.8',
                 fontFamily: "'Times New Roman', Times, serif",
                 textColor: '#ffffff',
-                backgroundColor: 'rgba(0, 0, 0, 0.5)'
+                backgroundColor: 'transparent'
             }
         };
         
@@ -451,7 +451,7 @@ class TextStyleManager {
      * @private
      */
     _applyStyle(styleId) {
-        if (!this.styles[styleId]) return;
+        if (!this.styles[styleId]) {return;}
         
         const style = this.styles[styleId];
         this.currentStyleId = styleId;
@@ -588,7 +588,7 @@ class TextStyleManager {
      * @param {string} fontFamily - The CSS font-family string.
      */
     applyFontToCurrentStyle(fontFamily) {
-        if (!fontFamily) return;
+        if (!fontFamily) {return;}
 
         console.log(`Applying font "${fontFamily}" to concert style.`);
         
@@ -619,12 +619,12 @@ class TextStyleManager {
         this.buttonA_ref = document.createElement('button');
         this.buttonA_ref.textContent = 'A';
         this.buttonA_ref.className = 'transition-set-btn';
-        if (this.activeTransitionSet === 'A') this.buttonA_ref.classList.add('active');
+        if (this.activeTransitionSet === 'A') {this.buttonA_ref.classList.add('active');}
         this.buttonA_ref.addEventListener('click', () => {
             this.activeTransitionSet = 'A';
             this._renderTransitionsGrid(transitionsGrid); // Pass the grid container
             this.buttonA_ref.classList.add('active');
-            if (this.buttonB_ref) this.buttonB_ref.classList.remove('active');
+            if (this.buttonB_ref) {this.buttonB_ref.classList.remove('active');}
         });
         
         const sectionTitle = document.createElement('h3');
@@ -634,12 +634,12 @@ class TextStyleManager {
         this.buttonB_ref = document.createElement('button');
         this.buttonB_ref.textContent = 'B';
         this.buttonB_ref.className = 'transition-set-btn';
-        if (this.activeTransitionSet === 'B') this.buttonB_ref.classList.add('active');
+        if (this.activeTransitionSet === 'B') {this.buttonB_ref.classList.add('active');}
         this.buttonB_ref.addEventListener('click', () => {
             this.activeTransitionSet = 'B';
             this._renderTransitionsGrid(transitionsGrid); // Pass the grid container
             this.buttonB_ref.classList.add('active');
-            if (this.buttonA_ref) this.buttonA_ref.classList.remove('active');
+            if (this.buttonA_ref) {this.buttonA_ref.classList.remove('active');}
         });
 
         headerContent.appendChild(this.buttonA_ref);
@@ -702,11 +702,11 @@ class TextStyleManager {
                 // Update A/B button highlighting based on the source of the selected transition
                 const source = this.transitions[id].source;
                 if (source === 'claude') {
-                    if(this.buttonA_ref) this.buttonA_ref.classList.add('active');
-                    if(this.buttonB_ref) this.buttonB_ref.classList.remove('active');
+                    if(this.buttonA_ref) {this.buttonA_ref.classList.add('active');}
+                    if(this.buttonB_ref) {this.buttonB_ref.classList.remove('active');}
                 } else if (source === 'gemini') {
-                    if(this.buttonB_ref) this.buttonB_ref.classList.add('active');
-                    if(this.buttonA_ref) this.buttonA_ref.classList.remove('active');
+                    if(this.buttonB_ref) {this.buttonB_ref.classList.add('active');}
+                    if(this.buttonA_ref) {this.buttonA_ref.classList.remove('active');}
                 }
 
                 const styleSelectorContainer = document.getElementById('style-selector-container');
@@ -806,7 +806,7 @@ class TextStyleManager {
      */
     _getScaledStyle(styleId) {
         const originalStyle = this.styles[styleId];
-        if (!originalStyle) return null;
+        if (!originalStyle) {return null;}
 
         const currentScale = this.getFontScale();
 

@@ -152,7 +152,7 @@ class CreativeMasks {
         const leftTemple = landmarks[103];
         const rightTemple = landmarks[332];
 
-        if (!forehead || !leftTemple || !rightTemple) return;
+        if (!forehead || !leftTemple || !rightTemple) {return;}
 
         const centerX = (1 - forehead.x) * width;
         const centerY = forehead.y * height - 60;
@@ -214,7 +214,7 @@ class CreativeMasks {
         const nose = landmarks[168];
         const upperLip = landmarks[13];
 
-        if (!nose || !upperLip) return;
+        if (!nose || !upperLip) {return;}
 
         const noseX = (1 - nose.x) * width;
         const noseY = nose.y * height;
@@ -253,7 +253,7 @@ class CreativeMasks {
         const leftTemple = landmarks[103];
         const rightTemple = landmarks[332];
 
-        if (!forehead || !leftTemple || !rightTemple) return;
+        if (!forehead || !leftTemple || !rightTemple) {return;}
 
         const centerX = (1 - forehead.x) * width;
         const centerY = forehead.y * height - 40;
@@ -300,7 +300,7 @@ class CreativeMasks {
         const leftTemple = landmarks[103];
         const rightTemple = landmarks[332];
 
-        if (!forehead || !leftTemple || !rightTemple) return;
+        if (!forehead || !leftTemple || !rightTemple) {return;}
 
         const centerX = (1 - forehead.x) * width;
         const centerY = forehead.y * height - 30;
@@ -350,7 +350,7 @@ class CreativeMasks {
         const leftEye = landmarks[33];
         const rightEye = landmarks[362];
 
-        if (!leftEye || !rightEye) return;
+        if (!leftEye || !rightEye) {return;}
 
         const leftEyeX = (1 - leftEye.x) * width;
         const leftEyeY = leftEye.y * height;

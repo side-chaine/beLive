@@ -4,7 +4,7 @@
 	 * Простой RTF→Text: сохраняет пустые строки и корректно декодирует кириллицу.
 	 */
 	window.SimpleRtf.toText = function toText(rtfContent){
-		if (typeof rtfContent !== 'string') return '';
+		if (typeof rtfContent !== 'string') {return '';}
 		let txt = rtfContent;
 		// Двойные переносы как разделители блоков
 		txt = txt.replace(/\\par\b\s*\\par\b/g, '\n\n').replace(/\\line\b\s*\\line\b/g, '\n\n');
@@ -13,7 +13,7 @@
 		// Декодирование \uXXXX (в т.ч. отрицательные)
 		txt = txt.replace(/\\u(-?\d+)\??/g, function(_, code){
 			let num = parseInt(code, 10);
-			if (num < 0) num = 65536 + num; // RTF negative unicode fix
+			if (num < 0) {num = 65536 + num;} // RTF negative unicode fix
 			return String.fromCharCode(num);
 		});
 		// Декодирование \'HH по CP1251

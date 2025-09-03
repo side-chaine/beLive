@@ -84,7 +84,7 @@ class StateManager {
      * Исправляет баг с "висящим" старым текстом в концертном режиме
      */
     forceTextRerender() {
-        if (!window.lyricsDisplay) return;
+        if (!window.lyricsDisplay) {return;}
         
         console.log('🎨 StateManager: Forcing text rerender in current mode');
         

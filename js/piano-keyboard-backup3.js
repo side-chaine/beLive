@@ -204,7 +204,7 @@ class PianoKeyboard {
         };
         
         this.clickHandler = (e) => {
-            if (!this.canvas) return;
+            if (!this.canvas) {return;}
             
             const rect = this.canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
@@ -508,7 +508,7 @@ class PianoKeyboard {
 
     // 🎯 УЛУЧШЕННОЕ ОПРЕДЕЛЕНИЕ НОТЫ ПО ЧАСТОТЕ
     frequencyToNoteId(frequency) {
-        if (!this.keys || frequency <= 0) return null;
+        if (!this.keys || frequency <= 0) {return null;}
         
         let bestMatch = null;
         let smallestError = Infinity;
@@ -567,7 +567,7 @@ class PianoKeyboard {
             const percentError = (error / test.expectedFreq) * 100;
             
             const passed = percentError < 0.1; // Ошибка должна быть < 0.1%
-            if (passed) passedTests++;
+            if (passed) {passedTests++;}
             totalError += percentError;
             
             console.log(`${passed ? '✅' : '❌'} ${test.note}${test.octave}: рассчитано=${calculated.toFixed(2)}Hz, ожидается=${test.expectedFreq}Hz, ошибка=${percentError.toFixed(3)}%`);
@@ -579,7 +579,7 @@ class PianoKeyboard {
             const expectedNote = `${test.note}${test.octave}`;
             const passed = detectedNote === expectedNote;
             
-            if (passed) passedTests++;
+            if (passed) {passedTests++;}
             
             console.log(`${passed ? '✅' : '❌'} ${test.expectedFreq}Hz → обнаружено="${detectedNote}", ожидается="${expectedNote}"`);
         }
@@ -718,11 +718,11 @@ class PianoKeyboard {
     }
 
     startConditionalAnalysis() {
-        if (!this.isBackgroundAnalyzing) return;
+        if (!this.isBackgroundAnalyzing) {return;}
         
         // ⚡ СУПЕР-ТОЧНЫЙ анализ 500fps
         const analyze = (timestamp) => {
-            if (!this.isBackgroundAnalyzing) return;
+            if (!this.isBackgroundAnalyzing) {return;}
             
             if (timestamp - this.lastAnalysisTime >= this.analysisInterval) {
                 this.lastAnalysisTime = timestamp;
@@ -751,23 +751,23 @@ class PianoKeyboard {
     
     // 🎯 ВЫСОКОТОЧНАЯ детекция питча
     detectPitchWithHighAccuracy() {
-        if (!this.pitchDetector || !this.inputBuffer) return null;
+        if (!this.pitchDetector || !this.inputBuffer) {return null;}
         
         this.analyser.getFloatTimeDomainData(this.inputBuffer);
         const [frequency, clarity] = this.pitchDetector.findPitch(this.inputBuffer, this.audioContext.sampleRate);
         
-        if (!frequency || frequency <= 0) return null;
+        if (!frequency || frequency <= 0) {return null;}
         
         this.detectionStats.totalDetections++;
         
         // 🎯 СТРОГИЙ диапазон для вокала (C2-C6)
         const minFreq = 65.4;   
         const maxFreq = 1046.5; 
-        if (frequency < minFreq || frequency > maxFreq) return null;
+        if (frequency < minFreq || frequency > maxFreq) {return null;}
         
         // 🎯 ВЫСОКИЕ пороги для точности
         const minClarity = 0.70; // Повышен до 70% для точности
-        if (clarity < minClarity) return null;
+        if (clarity < minClarity) {return null;}
         
         // RMS амплитуда
             let rms = 0;
@@ -777,7 +777,7 @@ class PianoKeyboard {
             rms = Math.sqrt(rms / this.inputBuffer.length);
 
         const minRms = 0.005; // Минимальный сигнал
-        if (rms < minRms) return null;
+        if (rms < minRms) {return null;}
         
         // 🎯 ПРОВЕРКА НА ГАРМОНИКИ - ключевая для точности!
         if (!this.isValidFundamentalFrequency(frequency, clarity)) {
@@ -845,7 +845,7 @@ class PianoKeyboard {
         const { frequency, clarity } = pitchData;
         const keyId = this.frequencyToNoteId(frequency);
         
-        if (!keyId) return;
+        if (!keyId) {return;}
         
         // 🚫 АНТИГАРМОНИЧЕСКАЯ ЗАЩИТА
         if (this.isHarmonicJump(frequency, this.currentActiveNote)) {
@@ -872,10 +872,10 @@ class PianoKeyboard {
     // 🗺️ ЗАПИСЬ В ПИТЧ-КАРТУ ТРЕКА
     recordToPitchMap(keyId, pitchData) {
         // Записываем только если трек воспроизводится (не статический анализ)
-        if (!this.isTrackPlaying() || pitchData.isStatic) return;
+        if (!this.isTrackPlaying() || pitchData.isStatic) {return;}
         
         const currentTime = this.getCurrentTrackTime();
-        if (currentTime < 0) return; // Некорректное время
+        if (currentTime < 0) {return;} // Некорректное время
         
         const { frequency, clarity } = pitchData;
         
@@ -990,7 +990,7 @@ class PianoKeyboard {
         const { frequency, clarity, amplitude, timestamp } = pitchData;
         const noteData = this.activeNotes.get(keyId);
         
-        if (!noteData) return;
+        if (!noteData) {return;}
         
         // Обновляем данные
         noteData.lastDetection = timestamp;
@@ -1009,7 +1009,7 @@ class PianoKeyboard {
     // 🎯 АНИМАЦИЯ ШАРИКА К КЛАВИШЕ
     animateBallToKey(keyId) {
         const targetKey = this.keys.find(key => `${key.note}${key.octave}` === keyId);
-        if (!targetKey) return;
+        if (!targetKey) {return;}
         
         if (!this.singleBallIndicator) {
             this.singleBallIndicator = { visible: false };
@@ -1041,7 +1041,7 @@ class PianoKeyboard {
     // 🎯 ОСТАНОВКА НОТЫ
     stopNote(keyId, reason = 'silence') {
         const noteData = this.activeNotes.get(keyId);
-        if (!noteData) return;
+        if (!noteData) {return;}
         
         const duration = performance.now() - noteData.startTime;
         console.log(`🔇 ОСТАНОВКА ${keyId} (${reason}): продолжительность ${duration.toFixed(0)}мс, детекций: ${noteData.detectionCount}`);
@@ -1059,7 +1059,7 @@ class PianoKeyboard {
     
     // 🎯 ОПРЕДЕЛЕНИЕ ID НОТЫ ПО ЧАСТОТЕ
     frequencyToNoteId(frequency) {
-        if (!this.keys) return null;
+        if (!this.keys) {return null;}
         
         let closestKey = null;
         let closestDistance = Infinity;
@@ -1109,7 +1109,7 @@ class PianoKeyboard {
     
     // 🎯 ПРИНУДИТЕЛЬНАЯ ОСТАНОВКА ВСЕХ КЛАВИШ
     forceStopAllKeys(reason = 'forced') {
-        if (this.activeNotes.size === 0) return; // НЕ логируем если нет активных нот
+        if (this.activeNotes.size === 0) {return;} // НЕ логируем если нет активных нот
         
         console.log(`🛑 Принудительная остановка всех нот (${reason}), активных: ${this.activeNotes.size}`);
         
@@ -1126,7 +1126,7 @@ class PianoKeyboard {
     
     // 🎯 ОЧИСТКА НЕАКТИВНЫХ КЛАВИШ
     cleanupInactiveKeysInstant(timestamp) {
-        if (!this.currentActiveNote) return;
+        if (!this.currentActiveNote) {return;}
         
         const timeSinceLastDetection = timestamp - this.currentActiveNote.lastDetection;
         
@@ -1143,10 +1143,10 @@ class PianoKeyboard {
     
     // 🎯 ЗАПУСК РЕНДЕРИНГА
     startRender() {
-        if (this.renderLoop) return;
+        if (this.renderLoop) {return;}
         
         const render = (timestamp) => {
-            if (!this.isActive) return;
+            if (!this.isActive) {return;}
             
             this.updateBallAnimation(timestamp);
             this.draw();
@@ -1159,7 +1159,7 @@ class PianoKeyboard {
     
     // 🎯 ОБНОВЛЕНИЕ АНИМАЦИИ ШАРИКА
     updateBallAnimation(timestamp) {
-        if (!this.ballAnimation || !this.ballAnimation.isAnimating) return;
+        if (!this.ballAnimation || !this.ballAnimation.isAnimating) {return;}
         
         const elapsed = timestamp - this.ballAnimation.startTime;
         const progress = Math.min(elapsed / this.ballAnimation.duration, 1);
@@ -1181,7 +1181,7 @@ class PianoKeyboard {
     
     // 🎹 ОСНОВНАЯ ФУНКЦИЯ РИСОВАНИЯ
     draw() {
-        if (!this.ctx || !this.keys) return;
+        if (!this.ctx || !this.keys) {return;}
         
         const canvas = this.canvas;
         const ctx = this.ctx;
@@ -1307,7 +1307,7 @@ class PianoKeyboard {
     
     // ⚪ РИСОВАНИЕ СИСТЕМЫ ДВОЙНОГО ШАРИКА
     drawBallIndicator(ctx) {
-        if (!this.singleBallIndicator || !this.singleBallIndicator.visible) return;
+        if (!this.singleBallIndicator || !this.singleBallIndicator.visible) {return;}
         
         const ball = this.singleBallIndicator;
         const key = this.keys.find(k => `${k.note}${k.octave}` === ball.keyId);
@@ -1523,7 +1523,7 @@ class PianoKeyboard {
     
     // 🎯 РАСЧЕТ РАСКЛАДКИ КЛАВИАТУРЫ
     calculateKeyboardLayout() {
-        if (!this.keys) return;
+        if (!this.keys) {return;}
         
         const canvasWidth = this.canvas.width / (window.devicePixelRatio || 1);
         const canvasHeight = this.canvas.height / (window.devicePixelRatio || 1);
@@ -1587,7 +1587,7 @@ class PianoKeyboard {
 
     // 🎯 АНТИГАРМОНИЧЕСКАЯ СИСТЕМА - ЗАЩИТА ОТ ОКТАВНЫХ СКАЧКОВ
     isHarmonicJump(newFrequency, currentNote) {
-        if (!currentNote) return false;
+        if (!currentNote) {return false;}
         
         const currentFreq = currentNote.currentFrequency;
         const ratio = newFrequency / currentFreq;
@@ -1614,7 +1614,7 @@ class PianoKeyboard {
         const deviation = Math.abs(frequency - targetFrequency);
         const maxDeviation = targetFrequency * 0.029; // ±2.9% (полутон)
         
-        if (deviation > maxDeviation) return 0;
+        if (deviation > maxDeviation) {return 0;}
         
         const accuracy = Math.max(0, 10 - (deviation / maxDeviation) * 10);
         return Math.round(accuracy);
@@ -1864,7 +1864,7 @@ class PianoKeyboard {
     
     // ⏩ ЗАПУСК НЕПРЕРЫВНОЙ ПЕРЕМОТКИ
     startContinuousScrubbing(direction) {
-        if (!this.scrubSystem.isActive) return;
+        if (!this.scrubSystem.isActive) {return;}
         
         // Повторяем шаги с заданным интервалом
         this.scrubSystem.continuousInterval = setInterval(() => {
@@ -1942,7 +1942,7 @@ class PianoKeyboard {
     performStaticPitchAnalysis(timestamp) {
         // Пытаемся получить данные с текущей позиции трека
         try {
-            if (!this.analyser || !this.inputBuffer) return;
+            if (!this.analyser || !this.inputBuffer) {return;}
             
             // Получаем текущие данные аудио
             this.analyser.getFloatTimeDomainData(this.inputBuffer);
@@ -1970,7 +1970,7 @@ class PianoKeyboard {
     
     // 🧹 УМНАЯ ОЧИСТКА КЛАВИШ - только при длительной неактивности
     cleanupInactiveKeysConditional(timestamp) {
-        if (!this.currentActiveNote) return;
+        if (!this.currentActiveNote) {return;}
         
         // ЗАЩИТА СИМУЛИРОВАННЫХ НОТ: не удаляем ноты во время навигации по питч-карте
         if (this.currentActiveNote.isSimulated || 

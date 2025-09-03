@@ -100,7 +100,7 @@ class RtfParser {
      * @private
      */
     static _detectRtfLanguage(rtfContent) {
-        if (!rtfContent) return 'unknown';
+        if (!rtfContent) {return 'unknown';}
         
         // Создаем контрольную сумму для RTF-файла для точной идентификации
         const generateChecksum = (text) => {
@@ -448,7 +448,7 @@ class RtfParser {
      * @private
      */
     static _improveEnglishTextStructure(text) {
-        if (!text) return '';
+        if (!text) {return '';}
         
         // Сначала добавляем пробелы после заглавных букв, если перед ними нет пробела
         text = text.replace(/([a-z])([A-Z])/g, '$1 $2');
@@ -501,7 +501,7 @@ class RtfParser {
                 for (const word of words) {
                     // Новая строка начинается с заглавной буквы или после знаков препинания
                     if (word.match(/^[A-Z]/) && currentLine.length > 20) {
-                        if (currentLine) lines.push(currentLine.trim());
+                        if (currentLine) {lines.push(currentLine.trim());}
                         currentLine = word;
                     } else {
                         currentLine += ' ' + word;
@@ -514,7 +514,7 @@ class RtfParser {
                     }
                 }
                 
-                if (currentLine) lines.push(currentLine.trim());
+                if (currentLine) {lines.push(currentLine.trim());}
                 
                 console.log(`Сформировано ${lines.length} строк из отдельных слов.`);
                 result = lines.join('\n');

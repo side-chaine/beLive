@@ -306,7 +306,7 @@ class TrackCatalog {
     
     _initDragAndDrop(type) {
         const dropzone = document.getElementById(`${type}-dropzone`);
-        if (!dropzone) return;
+        if (!dropzone) {return;}
         
         const fileInput = document.getElementById(`${type}-upload`);
         
@@ -363,7 +363,7 @@ class TrackCatalog {
     
     _resetDropzone(type) {
         const dropzone = document.getElementById(`${type}-dropzone`);
-        if (!dropzone) return;
+        if (!dropzone) {return;}
         
         dropzone.classList.remove('file-selected');
         
@@ -1180,7 +1180,7 @@ class TrackCatalog {
     }
     
     deleteTrack(id) {
-        if (!this.db || id === undefined) return;
+        if (!this.db || id === undefined) {return;}
         
         const transaction = this.db.transaction(['tracks'], 'readwrite');
         const store = transaction.objectStore('tracks');
@@ -1292,7 +1292,7 @@ class TrackCatalog {
     }
     
     _renderTrackList() {
-        if (!this.catalogElement) return;
+        if (!this.catalogElement) {return;}
         
         // Clear catalog element
         this.catalogElement.innerHTML = '';
@@ -1363,7 +1363,7 @@ class TrackCatalog {
     }
     
     async loadTrack(index, options = {}) {
-        if (index < 0 || index >= this.tracks.length) return;
+        if (index < 0 || index >= this.tracks.length) {return;}
         
         const prevTrackId = (this.currentTrackIndex >= 0 && this.currentTrackIndex < this.tracks.length)
             ? (this.tracks[this.currentTrackIndex] && this.tracks[this.currentTrackIndex].id) : null;
@@ -1382,7 +1382,7 @@ class TrackCatalog {
 
         // ПОКАЗЫВАЕМ ИНДИКАТОР ЗАГРУЗКИ
         const loadingOverlay = document.getElementById('loading-overlay');
-        if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+        if (loadingOverlay) {loadingOverlay.classList.remove('hidden');}
 
         console.log(`🔄 Loading track: "${track.title}"`);
         console.time('⏱️ TOTAL_TRACK_LOAD_TIME'); // Диагностика общего времени
@@ -1531,12 +1531,12 @@ class TrackCatalog {
             alert('Error loading track. Please try again.');
         } finally {
             // ПРЯЧЕМ ИНДИКАТОР ЗАГРУЗКИ в любом случае
-            if (loadingOverlay) loadingOverlay.classList.add('hidden');
+            if (loadingOverlay) {loadingOverlay.classList.add('hidden');}
         }
     }
     
     playNextTrack() {
-        if (this.tracks.length === 0) return;
+        if (this.tracks.length === 0) {return;}
         
         let nextIndex = this.currentTrackIndex + 1;
         if (nextIndex >= this.tracks.length) {
@@ -1547,7 +1547,7 @@ class TrackCatalog {
     }
     
     playPreviousTrack() {
-        if (this.tracks.length === 0) return;
+        if (this.tracks.length === 0) {return;}
         
         let prevIndex = this.currentTrackIndex - 1;
         if (prevIndex < 0) {
@@ -1763,7 +1763,7 @@ class TrackCatalog {
      */
     async exportTrackWithAudio(trackId) {
         const track = this.tracks.find(t => t.id === trackId);
-        if (!track) throw new Error('Track not found for export with audio');
+        if (!track) {throw new Error('Track not found for export with audio');}
 
         const zip = new JSZip();
 
@@ -1966,7 +1966,7 @@ class TrackCatalog {
                     if (audioFiles.length > 0) {
                         // Attempt to find by original name first
                         let instFileEntry = zip.file(instrumentalFileName);
-                        if (!instFileEntry && audioFiles.length === 1) instFileEntry = audioFiles[0]; // If only one audio, assume it's instrumental
+                        if (!instFileEntry && audioFiles.length === 1) {instFileEntry = audioFiles[0];} // If only one audio, assume it's instrumental
                         if (!instFileEntry && audioFiles.length > 0 && audioFiles.find(f => f.name.toLowerCase().includes('instrumental') || f.name.toLowerCase().includes('backing'))) {
                             instFileEntry = audioFiles.find(f => f.name.toLowerCase().includes('instrumental') || f.name.toLowerCase().includes('backing'));
                         } else if (!instFileEntry && audioFiles.length > 0 && !audioFiles.find(f => f.name.toLowerCase().includes('vocal'))) {
@@ -2037,7 +2037,7 @@ class TrackCatalog {
      * @returns {string} File extension
      */
     _getFileExtension(mimeType) {
-        if (!mimeType) return 'mp3';
+        if (!mimeType) {return 'mp3';}
         
         const extensions = {
             'audio/mp3': 'mp3',
@@ -2221,7 +2221,7 @@ class TrackCatalog {
      */
     _setupLoadMarkersButton() {
         const importContainer = document.querySelector('.import-markers-container');
-        if (!importContainer) return;
+        if (!importContainer) {return;}
         
         // Create the Load Markers button
         const loadMarkersBtn = document.createElement('button');
@@ -2313,7 +2313,7 @@ class TrackCatalog {
         
         // Remove any message
         const message = document.querySelector('.load-markers-message');
-        if (message) message.remove();
+        if (message) {message.remove();}
     }
 
     updateTrackLyrics(trackId, newLyricsText) {

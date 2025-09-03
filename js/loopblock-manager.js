@@ -538,7 +538,7 @@ class LoopBlockManager {
             
             // Проверяем блоки на валидность
             const validBlocks = this.selectedBlocks.filter(block => {
-                if (!block) return false;
+                if (!block) {return false;}
                 
                 const startTime = parseFloat(block.getAttribute('data-start-time'));
                 const endTime = parseFloat(block.getAttribute('data-end-time'));
@@ -876,10 +876,10 @@ class LoopBlockManager {
      * @private
      */
     _resetBlockStyles() {
-        if (!this.blocks || this.blocks.length === 0) return;
+        if (!this.blocks || this.blocks.length === 0) {return;}
         
         this.blocks.forEach(block => {
-            if (!block) return;
+            if (!block) {return;}
             
             try {
                 // Удаляем классы
@@ -909,7 +909,7 @@ class LoopBlockManager {
      * @private
      */
     _disableProgressBarInteraction() {
-        if (!this.progressBarContainer) return;
+        if (!this.progressBarContainer) {return;}
         
         // Сохраняем стиль cursor, чтобы изменить его
         this.originalCursorStyle = getComputedStyle(this.progressBarContainer).cursor;
@@ -945,7 +945,7 @@ class LoopBlockManager {
      * @private
      */
     _enableProgressBarInteraction() {
-        if (!this.progressBarContainer) return;
+        if (!this.progressBarContainer) {return;}
         
         // Восстанавливаем курсор
         this.progressBarContainer.style.cursor = this.originalCursorStyle || 'pointer';
@@ -1327,7 +1327,7 @@ class LoopBlockManager {
      * @private
      */
     _setupBlockInteractions(blockElement) {
-        if (!blockElement) return;
+        if (!blockElement) {return;}
         
         // Обработчик для mousedown на блоке (для перетаскивания и изменения размера)
         blockElement.addEventListener('mousedown', (e) => {
@@ -1414,7 +1414,7 @@ class LoopBlockManager {
      * @private
      */
     _handleMouseMove(e) {
-        if (!this.selectedBlock || !this.dragMode) return;
+        if (!this.selectedBlock || !this.dragMode) {return;}
         
         const containerWidth = this.progressBarContainer.offsetWidth;
         const deltaX = e.clientX - this.dragStartX;
@@ -1512,7 +1512,7 @@ class LoopBlockManager {
      * @private
      */
     _navigateToBlockTime(blockElement, position = 'start') {
-        if (!this.audioEngine || !blockElement.dataset.startTime) return;
+        if (!this.audioEngine || !blockElement.dataset.startTime) {return;}
         
         let timeToSeek;
         const startTime = parseFloat(blockElement.dataset.startTime);
@@ -1670,7 +1670,7 @@ class LoopBlockManager {
      * @private
      */
     _findBlockByTimeRange(startTime, endTime) {
-        if (!this.active || !this.container) return null;
+        if (!this.active || !this.container) {return null;}
         
         // Допустимая погрешность в секундах
         const tolerance = 0.2;
@@ -1706,13 +1706,13 @@ class LoopBlockManager {
         }
         
         // Проверяем наличие аудио движка
-        if (!this.audioEngine) return;
+        if (!this.audioEngine) {return;}
         
         const containerWidth = this.progressBarContainer.offsetWidth;
         const totalDuration = this.audioEngine.duration;
         
         // Если позиция клика превышает ширину контейнера, выходим
-        if (x > containerWidth) return;
+        if (x > containerWidth) {return;}
         
         // Вычисляем позицию и время блока
         const startPercent = (x / containerWidth);
@@ -1768,7 +1768,7 @@ class LoopBlockManager {
      * @param {boolean} [notify=true] - Whether to show notification
      */
     enable(notify = true) {
-        if (this.isActive) return;
+        if (this.isActive) {return;}
         
         this.isActive = true;
         
@@ -1811,7 +1811,7 @@ class LoopBlockManager {
      * @param {boolean} [notify=true] - Whether to show notification
      */
     disable(notify = true) {
-        if (!this.isActive) return;
+        if (!this.isActive) {return;}
         
         this.isActive = false;
         
@@ -2375,7 +2375,7 @@ class LoopBlockManager {
      * @private
      */
     _handleShiftClick(blockElement) {
-        if (!blockElement) return;
+        if (!blockElement) {return;}
         
         // Получаем информацию о блоке
         const blockName = blockElement.getAttribute('data-block-name');
@@ -2432,7 +2432,7 @@ class LoopBlockManager {
             
             // Фильтруем только уникальные блоки
             this.selectedBlocks = this.selectedBlocks.filter(block => {
-                if (!block) return false;
+                if (!block) {return false;}
                 
                 const blockId = block.getAttribute('data-block-name') + '_' + 
                                 block.getAttribute('data-start-time') + '_' + 

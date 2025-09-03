@@ -1922,8 +1922,8 @@ hr {
 }
 
 .container-karaoke {
-    background-color: rgba(0, 0, 0, 0.5);
-    padding: 20px;
+    background-color: transparent !important;
+    padding: 0 !important;
 }
 
 /* Концертный стиль - исправленный */

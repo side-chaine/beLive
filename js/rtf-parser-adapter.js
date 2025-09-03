@@ -135,7 +135,7 @@ class RtfParserAdapter {
      * @private
      */
     _basicCleanup(rtfContent) {
-        if (!rtfContent) return '';
+        if (!rtfContent) {return '';}
         
         // Удаляем RTF-заголовок и команды
         let cleanedText = rtfContent
@@ -163,7 +163,7 @@ class RtfParserAdapter {
      * @private
      */
     _intelligentLineSplitting(text) {
-        if (!text) return '';
+        if (!text) {return '';}
         
         // Определяем язык текста
         const isRussian = /[а-яА-ЯёЁ]/.test(text);

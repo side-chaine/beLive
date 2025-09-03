@@ -178,6 +178,11 @@ class App {
 
         // Инициализация менеджера фона для караоке
         const karaokeImages = [
+            'Karaoke/pexels-isabella-mendes-107313-332688.jpg',
+            'Karaoke/pexels-mccutcheon-1191710.jpg',
+            'Karaoke/pexels-trinitykubassek-341858.jpg',
+            'Karaoke/pexels-maumascaro-1154189.jpg',
+            'Karaoke/pexels-marcin-dampc-807808-1684187.jpg',
             'Karaoke/yichen-wang-aBeTfQ65ycQ-unsplash.jpg',
             'Karaoke/boliviainteligente-NFY0BeronrE-unsplash.jpg',
             'Karaoke/prince-abid-LeZItQhwFks-unsplash.jpg',
@@ -195,19 +200,55 @@ class App {
 
         // Инициализация менеджера фона для репетиции (статичный фон, без слайдшоу)
         const rehearsalImages = [
-            'Rehearsal/dj_naushniki_ustanovka_122020_2560x1440.jpg',
-            'Rehearsal/didzhej_muzyka_diskoteka_160929_2560x1440.jpg',
-            'Rehearsal/gitara_bas_gitara_struny_106722_2560x1440.jpg',
-            'Rehearsal/muzykalnyj_instrument_muzyka_udarnye_106370_2560x1440.jpg',
-            'Rehearsal/noty_griaznyj_bumaga_124163_2560x1440.jpg',
-            'Rehearsal/krolik_naushniki_muzyka_130283_2560x1440.jpg',
+            'Rehearsal/pexels-conojeghuo-375893.jpg',
+            'Rehearsal/pexels-david-bartus-43782-844928.jpg',
+            'Rehearsal/pexels-pixabay-164938.jpg',
+            'Rehearsal/pexels-pixabay-164716.jpg',
+            'Rehearsal/pexels-didsss-1653090.jpg',
+            'Rehearsal/pexels-nikita-khandelwal-178978-632656.jpg',
+            'Rehearsal/pexels-pixabay-270288.jpg',
+            'Rehearsal/pexels-pixabay-164853.jpg',
+            'Rehearsal/pexels-pixabay-210766.jpg',
+            'Rehearsal/pexels-pixabay-159613.jpg',
+            'Rehearsal/pexels-pixabay-164769.jpg',
+            'Rehearsal/pexels-reneterp-1327430.jpg',
+            'Rehearsal/pexels-bclarkphoto-1135995.jpg',
+            'Rehearsal/pexels-pixabay-290660.jpg',
+            'Rehearsal/pexels-everson-mayer-478307-1481309.jpg',
+            'Rehearsal/pexels-antonh-145707.jpg',
+            'Rehearsal/pexels-pixabay-159376.jpg',
+            'Rehearsal/pexels-joshsorenson-995301.jpg',
+            'Rehearsal/pexels-pixabay-257904.jpg',
+            'Rehearsal/4b8023db-3000-4084-bef9-b7aec2a804da.jpg',
             'Rehearsal/soty_obem_zheleznyj_167098_2560x1440.jpg',
             'Rehearsal/dvoichnyj_kod_kod_tsifry_147523_2560x1440.jpg',
             'Rehearsal/fotoapparat_obektiv_remeshok_145518_1600x900.jpg',
+            'Rehearsal/vinilovaia_plastinka_tonarm_kartridzh_107810_2560x1440.jpg',
+            'Rehearsal/didzhej_muzyka_diskoteka_160929_2560x1440.jpg',
+            'Rehearsal/krolik_naushniki_muzyka_130283_2560x1440.jpg',
+            'Rehearsal/noty_griaznyj_bumaga_124163_2560x1440.jpg',
+            'Rehearsal/gitara_bas_gitara_struny_106722_2560x1440.jpg',
+            'Rehearsal/dj_naushniki_ustanovka_122020_2560x1440.jpg',
+            'Rehearsal/muzykalnyj_instrument_muzyka_udarnye_106370_2560x1440.jpg',
             'Rehearsal/naushniki_knigi_obrazovanie_121501_2560x1600.jpg',
             'Rehearsal/naushniki_ustanovka_muzyka_104587_1280x1024.jpg'
         ];
         this.rehearsalBackgroundManager = new RehearsalBackgroundManager(rehearsalImages, 0);
+
+        // Инициализация менеджера фона для концерта (слайдшоу)
+        const concertImages = [
+            'Concert/pexels-teddy-2263436.jpg',
+            'Concert/pexels-markusspiske-92078.jpg',
+            'Concert/pexels-wendywei-1677710.jpg',
+            'Concert/pexels-rahulp9800-1652353.jpg',
+            'Concert/pexels-apasaric-2078071.jpg',
+            'Concert/pexels-jackgittoes-761543.jpg',
+            'Concert/pexels-picjumbo-com-55570-196652.jpg',
+            'Concert/pexels-thibault-trillet-44912-167491.jpg',
+            'Concert/pexels-mark-angelo-sampan-738078-1587927.jpg',
+            'Concert/pexels-wendywei-1190297.jpg'
+        ];
+        this.concertBackgroundManager = new ConcertBackgroundManager(concertImages, 60000);
     }
     
     initCatalogV2() {
@@ -302,12 +343,24 @@ class App {
         if (this.instrumentalVolumeSlider) {
             this.instrumentalVolumeSlider.addEventListener('input', () => {
                 this.audioEngine.setInstrumentalVolume(this.instrumentalVolumeSlider.value / 100);
+                // сохраняем только в режиме репетиции
+                try {
+                    if (document.body.classList.contains('mode-rehearsal')) {
+                        localStorage.setItem('rehearsal:instrumentalVolume', String(this.instrumentalVolumeSlider.value));
+                    }
+                } catch(_) {}
             });
         }
         
         if (this.vocalsVolumeSlider) {
             this.vocalsVolumeSlider.addEventListener('input', () => {
                 this.audioEngine.setVocalsVolume(this.vocalsVolumeSlider.value / 100);
+                // сохраняем только в режиме репетиции
+                try {
+                    if (document.body.classList.contains('mode-rehearsal')) {
+                        localStorage.setItem('rehearsal:vocalsVolume', String(this.vocalsVolumeSlider.value));
+                    }
+                } catch(_) {}
             });
         }
         
@@ -354,6 +407,12 @@ class App {
         // Возврат после закрытия Sync: откатываем временную «карате-имитацию»
         document.addEventListener('sync-editor-closed', () => {
             try {
+                // Если Sync закрыли в караоке и мы временно включали вокал — вернём 0%
+                if (document.body.classList.contains('mode-karaoke') && this._karaokeTempVocalsEnabled) {
+                    try { this.audioEngine.setVocalsVolume(0); } catch(_) {}
+                    if (this.vocalsVolumeSlider) { this.vocalsVolumeSlider.value = 0; }
+                    this._karaokeTempVocalsEnabled = false;
+                }
                 if (this._syncCameFromRehearsal) {
                     // Возвращаем полноценный режим репетиции
                     document.body.classList.remove('mode-karaoke');
@@ -362,9 +421,9 @@ class App {
                     try { this._setLyricsContainerStyle(null); } catch(_) {}
                     try { this.blockLoopControl && this.blockLoopControl.activate(); } catch(_) {}
                     try {
-                        if (this.bpmControls) this.bpmControls.style.display = 'flex';
+                        if (this.bpmControls) {this.bpmControls.style.display = 'flex';}
                         this._updateBPMDisplay();
-                        if (this.rehearsalBackgroundManager) this.rehearsalBackgroundManager.start();
+                        if (this.rehearsalBackgroundManager) {this.rehearsalBackgroundManager.start();}
                     } catch(_) {}
                     this._emitModeChanged('karaoke', 'rehearsal');
                     this._syncCameFromRehearsal = false;
@@ -436,7 +495,7 @@ class App {
     }
     
     _togglePlayPause() {
-        if (!this.audioEngine) return;
+        if (!this.audioEngine) {return;}
         
         if (this.audioEngine.isPlaying) {
             this.audioEngine.pause();
@@ -446,7 +505,7 @@ class App {
     }
     
     _initProgressBar() {
-        if (!this.progressBarContainer || !this.progressBar || !this.progressTooltip) return;
+        if (!this.progressBarContainer || !this.progressBar || !this.progressTooltip) {return;}
         
         // Add event listeners for seeking
         this.progressBarContainer.addEventListener('click', (e) => this._handleProgressBarClick(e));
@@ -457,7 +516,7 @@ class App {
     }
     
     _handleProgressBarClick(e) {
-        if (!this.audioEngine || !this.progressBarContainer) return;
+        if (!this.audioEngine || !this.progressBarContainer) {return;}
         
         // Calculate click position as a percentage of the bar width
         const rect = this.progressBarContainer.getBoundingClientRect();
@@ -478,7 +537,7 @@ class App {
     }
     
     _updateProgressTooltip(e) {
-        if (!this.audioEngine || !this.progressBarContainer || !this.progressTooltip) return;
+        if (!this.audioEngine || !this.progressBarContainer || !this.progressTooltip) {return;}
         
         // Calculate hover position as a percentage of the bar width
         const rect = this.progressBarContainer.getBoundingClientRect();
@@ -497,7 +556,7 @@ class App {
     }
     
     _updateProgressBar(currentTime, duration) {
-        if (!this.progressBar || !this.timeDisplay) return;
+        if (!this.progressBar || !this.timeDisplay) {return;}
         
         // Update progress bar width
         const progressPercentage = (currentTime / duration) * 100;
@@ -508,7 +567,7 @@ class App {
     }
     
     _formatTime(seconds) {
-        if (isNaN(seconds) || seconds < 0) return '0:00';
+        if (isNaN(seconds) || seconds < 0) {return '0:00';}
         
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60).toString().padStart(2, '0');
@@ -518,7 +577,7 @@ class App {
     _setupAudioUpdateInterval() {
         // Update lyrics position and transport controls every 50ms
         setInterval(() => {
-            if (!this.audioEngine || !this.lyricsDisplay) return;
+            if (!this.audioEngine || !this.lyricsDisplay) {return;}
             
             // Get current playback time and duration
             const currentTime = this.audioEngine.getCurrentTime();
@@ -614,6 +673,19 @@ class App {
                     }
                     
                     // Открываем редактор
+                    // Если мы в караоке — временно включаем вокал и открываем панель управления
+                    const inKaraoke = document.body.classList.contains('mode-karaoke');
+                    if (inKaraoke) {
+                        try {
+                            this._karaokeTempVocalsEnabled = true;
+                            if (this.vocalsVolumeSlider) { this.vocalsVolumeSlider.value = 100; }
+                            this.audioEngine.setVocalsVolume(1);
+                        } catch(_) {}
+                        try {
+                            const transportControls = document.getElementById('transport-controls');
+                            if (transportControls) { transportControls.classList.add('is-open'); }
+                        } catch(_) {}
+                    }
                     // ФИКС: Если входим из репетиции — имитируем «каравоке-вход» для стилей/классов/скролла
                     const cameFromRehearsal = document.body.classList.contains('mode-rehearsal');
                     if (cameFromRehearsal) {
@@ -704,11 +776,15 @@ class App {
             return;
         }
 
-        this.micToggleButton.addEventListener('click', () => {
-            const newState = this.audioEngine.toggleMicrophone();
-            this._updateMicToggleButtonState(newState.enabled);
-            if(newState.enabled && newState.volume !== undefined) {
-                this.micVolumeSlider.value = newState.volume * 100;
+        this.micToggleButton.addEventListener('click', async () => {
+            try {
+                const newState = await this.audioEngine.toggleMicrophone();
+                this._updateMicToggleButtonState(newState.enabled);
+                if(newState.enabled && newState.volume !== undefined) {
+                    this.micVolumeSlider.value = newState.volume * 100;
+                }
+            } catch (e) {
+                console.warn('Microphone toggle blocked or failed:', e?.message||e);
             }
         });
 
@@ -719,6 +795,15 @@ class App {
         const initialMicState = this.audioEngine.getMicrophoneState ? this.audioEngine.getMicrophoneState() : { enabled: false, volume: 0.7 };
         this._updateMicToggleButtonState(initialMicState.enabled);
         this.micVolumeSlider.value = initialMicState.volume * 100;
+
+        // Слушаем внешние изменения, чтобы синхронизировать UI без повторных запросов
+        document.addEventListener('microphone-state-changed', (e) => {
+            const det = e.detail || {};
+            this._updateMicToggleButtonState(!!det.enabled);
+            if (typeof det.volume === 'number') {
+                this.micVolumeSlider.value = Math.round(det.volume * 100);
+            }
+        });
 
         console.log('Microphone UI initialized using existing DOM elements.');
     }
@@ -735,10 +820,10 @@ class App {
 
             if (isEnabled) {
                 this.micToggleButton.title = 'Microphone ON - Click to disable';
-                if (micControl) micControl.style.opacity = '1';
+                if (micControl) {micControl.style.opacity = '1';}
             } else {
                 this.micToggleButton.title = 'Microphone OFF - Click to enable';
-                if (micControl) micControl.style.opacity = '0.6';
+                if (micControl) {micControl.style.opacity = '0.6';}
             }
         }
     }
@@ -857,6 +942,9 @@ class App {
         }
         
         this.karaokeBackgroundManager.stop();
+        if (this.concertBackgroundManager) { this.concertBackgroundManager.stop(); }
+        if (this.rehearsalBackgroundManager) { this.rehearsalBackgroundManager.stop(); }
+        if (this.concertBackgroundManager) { this.concertBackgroundManager.start(); }
         this.textStyleManager.setStyle('concert');
         this._setLyricsContainerStyle('style-concert');
         this.blockLoopControl.deactivate();
@@ -870,6 +958,15 @@ class App {
         // CSS классы для режимов
         document.body.classList.add('mode-concert');
         document.body.classList.remove('mode-rehearsal', 'mode-karaoke', 'mode-live');
+        // В проф. режимах панель всегда открыта
+        try {
+            const transportControls = document.getElementById('transport-controls');
+            if (transportControls) { transportControls.classList.add('is-open'); }
+        } catch(_) {}
+        // Старт слайдшоу фона для концерта
+        if (this.concertBackgroundManager) { this.concertBackgroundManager.start(); }
+        // Пресет громкости для концертного режима: по умолчанию как караоке
+        try { this._applyModeVolumePreset('concert'); } catch(_) {}
         try { this._emitModeChanged(previousMode, 'concert'); } catch(_) {}
     }
     
@@ -888,7 +985,8 @@ class App {
         this.textStyleManager.setStyle('karaoke');
         this._setLyricsContainerStyle('style-karaoke');
         this.blockLoopControl.deactivate();
-        if (this.rehearsalBackgroundManager) this.rehearsalBackgroundManager.stop();
+        if (this.rehearsalBackgroundManager) {this.rehearsalBackgroundManager.stop();}
+        if (this.concertBackgroundManager) { this.concertBackgroundManager.stop(); }
         this._hideLiveFeedConcept();
         
         if (this.bpmControls) {
@@ -899,6 +997,14 @@ class App {
         document.body.classList.add('mode-karaoke');
         document.body.classList.remove('mode-concert', 'mode-rehearsal', 'mode-live');
         this.karaokeBackgroundManager.start();
+        // В караоке панель скрыта
+        try {
+            const transportControls = document.getElementById('transport-controls');
+            if (transportControls) { transportControls.classList.remove('is-open'); }
+        } catch(_) {}
+
+        // Пресет громкости для караоке: вокал в ноль, инструментал по умолчанию
+        try { this._applyModeVolumePreset('karaoke'); } catch(_) {}
 
         // Сообщаем о смене режима
         try { this._emitModeChanged(previousMode, 'karaoke'); } catch(_) {}
@@ -972,6 +1078,11 @@ class App {
         // Сначала классы режима, потом запуск фона
         document.body.classList.add('mode-rehearsal');
         document.body.classList.remove('mode-concert', 'mode-karaoke', 'mode-live');
+        // В проф. режимах панель всегда открыта
+        try {
+            const transportControls = document.getElementById('transport-controls');
+            if (transportControls) { transportControls.classList.add('is-open'); }
+        } catch(_) {}
         if (this.rehearsalBackgroundManager) {
             this.rehearsalBackgroundManager.start();
             // Привяжем смену фона к смене блоков (только если не луп и не seek)
@@ -980,6 +1091,8 @@ class App {
 
         // Сообщаем о смене режима
         try { this._emitModeChanged(previousMode, 'rehearsal'); } catch(_) {}
+        // Пресет/восстановление громкости для репетиции
+        try { this._applyModeVolumePreset('rehearsal'); } catch(_) {}
     }
     
     /**
@@ -990,7 +1103,7 @@ class App {
         console.log('Activating live mode');
         const previousMode = this._getCurrentMode?.() || this._detectBodyMode?.() || null;
         this.karaokeBackgroundManager.stop();
-        if (this.rehearsalBackgroundManager) this.rehearsalBackgroundManager.stop();
+        if (this.rehearsalBackgroundManager) {this.rehearsalBackgroundManager.stop();}
         this.textStyleManager.setStyle('live');
         this._setLyricsContainerStyle('style-live');
         this.blockLoopControl.deactivate();
@@ -1025,6 +1138,9 @@ class App {
         // CSS классы для режимов
         document.body.classList.add('mode-live');
         document.body.classList.remove('mode-concert', 'mode-karaoke', 'mode-rehearsal');
+
+        // Пресет громкости для Live: как караоке (вокал 0% по умолчанию)
+        try { this._applyModeVolumePreset('live'); } catch(_) {}
 
         // Сообщаем о смене режима
         try { this._emitModeChanged(previousMode, 'live'); } catch(_) {}
@@ -1070,10 +1186,10 @@ class App {
      */
     _detectBodyMode() {
         const b = document.body.classList;
-        if (b.contains('mode-rehearsal')) return 'rehearsal';
-        if (b.contains('mode-karaoke')) return 'karaoke';
-        if (b.contains('mode-live')) return 'live';
-        if (b.contains('mode-concert')) return 'concert';
+        if (b.contains('mode-rehearsal')) {return 'rehearsal';}
+        if (b.contains('mode-karaoke')) {return 'karaoke';}
+        if (b.contains('mode-live')) {return 'live';}
+        if (b.contains('mode-concert')) {return 'concert';}
         return null;
     }
 
@@ -1523,6 +1639,24 @@ class App {
 
         this._updateScaleControlsState(); // Включаем или выключаем кнопки
         this._updateScaleDisplay();      // Обновляем отображаемый процент
+
+        // Восстановление UI репетиции: вагончики и кнопка Loop
+        try {
+            const isRehearsal = document.body.classList.contains('mode-rehearsal');
+            if (isRehearsal) {
+                if (this.blockLoopControl) {
+                    this.blockLoopControl.activate();
+                    // Форсируем создание кнопки Loop для активного блока (если есть)
+                    if (typeof this.blockLoopControl._createLoopButtonForCurrentBlock === 'function') {
+                        this.blockLoopControl._createLoopButtonForCurrentBlock();
+                    }
+                }
+                // Перерисовать блоки для репетиции, если текст готов
+                if (this.lyricsDisplay && typeof this.lyricsDisplay.activateRehearsalDisplay === 'function') {
+                    this.lyricsDisplay.activateRehearsalDisplay();
+                }
+            }
+        } catch(_) {}
     }
 
     /**
@@ -1540,7 +1674,7 @@ class App {
      * @private
      */
     _updateScaleDisplay() {
-        if (!this.scaleValueBtn) return;
+        if (!this.scaleValueBtn) {return;}
         
             const scale = window.textStyleManager.getFontScale();
         this.scaleValueBtn.textContent = `${Math.round(scale * 100)}%`;
@@ -1552,9 +1686,9 @@ class App {
      */
     _updateScaleControlsState() {
         const allowed = this._isScalingAllowed();
-        if (this.scaleDownBtn) this.scaleDownBtn.disabled = !allowed;
-        if (this.scaleUpBtn) this.scaleUpBtn.disabled = !allowed;
-        if (this.scaleValueBtn) this.scaleValueBtn.disabled = !allowed;
+        if (this.scaleDownBtn) {this.scaleDownBtn.disabled = !allowed;}
+        if (this.scaleUpBtn) {this.scaleUpBtn.disabled = !allowed;}
+        if (this.scaleValueBtn) {this.scaleValueBtn.disabled = !allowed;}
     }
 
     // Добавим метод для управления классом контейнера
@@ -1575,8 +1709,44 @@ class App {
         }
     }
 
+    /**
+     * Применяет режимно-зависимый пресет громкости.
+     * - karaoke: vocals=0, instrumental=100
+     * - rehearsal: восстанавливает сохранённые значения (если есть)
+     * - concert/live: значения по умолчанию (инструментал 100, вокал 0)
+     */
+    _applyModeVolumePreset(mode) {
+        const setSlider = (el, v) => { if (el) { el.value = v; } };
+        const apply = (inst, voc) => {
+            setSlider(this.instrumentalVolumeSlider, inst);
+            setSlider(this.vocalsVolumeSlider, voc);
+            try { this.audioEngine.setInstrumentalVolume((inst || 0)/100); } catch(_) {}
+            try { this.audioEngine.setVocalsVolume((voc || 0)/100); } catch(_) {}
+        };
+
+        if (mode === 'karaoke') {
+            apply(100, 0);
+            return;
+        }
+        if (mode === 'rehearsal') {
+            // восстановить, если сохранились
+            let inst = 100; let voc = 100;
+            try {
+                const sInst = localStorage.getItem('rehearsal:instrumentalVolume');
+                const sVoc = localStorage.getItem('rehearsal:vocalsVolume');
+                if (sInst !== null) { inst = Math.max(0, Math.min(100, parseInt(sInst, 10) || 0)); }
+                if (sVoc !== null) { voc = Math.max(0, Math.min(100, parseInt(sVoc, 10) || 0)); }
+            } catch(_) {}
+            apply(inst, voc);
+            return;
+        }
+        if (mode === 'concert' || mode === 'live') {
+            apply(100, 0);
+        }
+    }
+
     _handleModeChange(mode) {
-        if (this.currentMode === mode) return;
+        if (this.currentMode === mode) {return;}
 
         console.log(`Switching to ${mode} mode`);
 
@@ -1613,7 +1783,7 @@ class App {
     }
 
     async _handleWordAlignment() {
-        if (this.isSyncing) return;
+        if (this.isSyncing) {return;}
 
         this.isSyncing = true;
         const syncButton = document.getElementById('align-words-btn');
@@ -1843,7 +2013,7 @@ class App {
      */
     _handleWordAlignmentProgress(payload) {
         const syncButton = document.getElementById('align-words-btn');
-        if (!syncButton) return;
+        if (!syncButton) {return;}
 
         console.log('App: WordAlignment progress update:', payload);
 
@@ -1872,7 +2042,7 @@ class App {
      * @returns {string} Нормализованный текст.
      */
     _universalNormalizer(text) {
-        if (!text) return '';
+        if (!text) {return '';}
         return text
             .toLowerCase()
             .replace(/'|\'/g, '') // Удаляет апострофы (e.g., "it's" -> "its")
@@ -1899,7 +2069,7 @@ class App {
         // 1. Подсчет частоты слов для расчета уникальности
         normalizedLines.forEach(words => {
             words.forEach(word => {
-                if (!word) return;
+                if (!word) {return;}
                 wordFrequencies.set(word, (wordFrequencies.get(word) || 0) + 1);
                 totalWords++;
             });
@@ -1914,7 +2084,7 @@ class App {
                 for (let j = i; j < words.length && j < i + maxLength; j++) {
                     currentPhrase = (j === i) ? words[j] : `${currentPhrase} ${words[j]}`;
                     const phraseLength = j - i + 1;
-                    if (phraseLength < minLength) continue;
+                    if (phraseLength < minLength) {continue;}
 
                     if (!phrases.has(currentPhrase)) {
                         phrases.set(currentPhrase, { occurrences: [], lineIndexes: new Set() });
@@ -1976,7 +2146,7 @@ class App {
         // Создаем карту нормализованных слов с обратной ссылкой на индекс оригинального слова
         const wordMap = [];
         aiWords.forEach((originalWordObj, originalIndex) => {
-            if (!originalWordObj || typeof originalWordObj.word !== 'string') return;
+            if (!originalWordObj || typeof originalWordObj.word !== 'string') {return;}
 
             const normalizedSubWords = this._universalNormalizer(originalWordObj.word.replace(/\\n/g, ' ')).split(' ');
             normalizedSubWords.forEach(subWord => {
@@ -1990,11 +2160,11 @@ class App {
         });
        
         for (let i = 0; i < wordMap.length; i++) {
-            if (usedWordIndexes.has(i)) continue;
+            if (usedWordIndexes.has(i)) {continue;}
 
             // Ищем самую длинную возможную фразу, начиная с текущего слова
             for (let len = MAX_PHRASE_LENGTH; len >= MIN_PHRASE_LENGTH; len--) {
-                if (i + len > wordMap.length) continue;
+                if (i + len > wordMap.length) {continue;}
 
                 const currentPhrase = wordMap.slice(i, i + len).map(w => w.text).join(' ');
                 const phraseData = textAtlas.get(currentPhrase);
@@ -2241,7 +2411,7 @@ class App {
         }
 
         const lyricsDisplay = document.getElementById('lyrics-display');
-        if (!lyricsDisplay) return;
+        if (!lyricsDisplay) {return;}
 
         const lyricLines = lyricsDisplay.querySelectorAll('.lyric-line');
         
@@ -2289,7 +2459,7 @@ class App {
      * @param {Array} words - Массив слов с временными метками
      */
     _highlightWordsInLine(lineElement, words) {
-        if (!words || words.length === 0) return;
+        if (!words || words.length === 0) {return;}
         
         const originalText = lineElement.textContent;
         let highlightedHTML = originalText;
@@ -2352,6 +2522,7 @@ class App {
 
         // Создаем новый обработчик и сохраняем ссылку для cleanup
         this._transportToggleHandler = () => {
+            // Разморозили в караоке: панель можно открыть вручную
             transportControls.classList.toggle('is-open');
             console.log(`🎛️ Transport controls: ${transportControls.classList.contains('is-open') ? 'открыты' : 'закрыты'}`);
         };

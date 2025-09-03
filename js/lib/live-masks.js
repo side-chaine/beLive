@@ -185,7 +185,7 @@ class LiveMasks {
                 
                 // Функция рендеринга маски
                 render: (ctx, faceData) => {
-                    if (!faceData || !faceData.keyPoints) return;
+                    if (!faceData || !faceData.keyPoints) {return;}
                     
                     const { leftEye, rightEye } = faceData.keyPoints;
                     const eyeDistance = Math.sqrt(
@@ -246,7 +246,7 @@ class LiveMasks {
             
             // Функция рендеринга маски
             render: (ctx, faceData) => {
-                if (!faceData || !faceData.keyPoints) return;
+                if (!faceData || !faceData.keyPoints) {return;}
                 
                 const { leftEye, rightEye, faceWidth, faceHeight } = faceData.keyPoints;
                 const eyeDistance = Math.sqrt(
@@ -306,7 +306,7 @@ class LiveMasks {
             
             // Функция рендеринга маски
             render: (ctx, faceData) => {
-                if (!faceData || !faceData.keyPoints) return;
+                if (!faceData || !faceData.keyPoints) {return;}
                 
                 const { nose, mouth, faceWidth } = faceData.keyPoints;
                 
@@ -355,7 +355,7 @@ class LiveMasks {
             
             // Функция рендеринга маски
             render: (ctx, faceData) => {
-                if (!faceData || !faceData.keyPoints) return;
+                if (!faceData || !faceData.keyPoints) {return;}
                 
                 const { faceCenter, faceWidth, faceHeight } = faceData.keyPoints;
                 
@@ -424,13 +424,13 @@ class LiveMasks {
             
             // Функция рендеринга маски
             render: (ctx, faceData, timestamp) => {
-                if (!faceData) return;
+                if (!faceData) {return;}
                 
                 const canvasWidth = ctx.canvas.width;
                 const canvasHeight = ctx.canvas.height;
                 
                 // Обновляем частицы
-                if (!timestamp) timestamp = performance.now();
+                if (!timestamp) {timestamp = performance.now();}
                 const deltaTime = timestamp - this.lastUpdate || 16;
                 this.lastUpdate = timestamp;
                 
@@ -459,8 +459,8 @@ class LiveMasks {
                         p.y = -0.1;
                         p.x = Math.random();
                     }
-                    if (p.x < 0) p.x = 1;
-                    if (p.x > 1) p.x = 0;
+                    if (p.x < 0) {p.x = 1;}
+                    if (p.x > 1) {p.x = 0;}
                     
                     // Рисуем частицу
                     ctx.fillStyle = p.color;
@@ -505,7 +505,7 @@ class LiveMasks {
             
             // Функция рендеринга маски
             render: (ctx, faceData) => {
-                if (!faceData || !faceData.boundingBox) return;
+                if (!faceData || !faceData.boundingBox) {return;}
                 
                 const { boundingBox } = faceData;
                 const { topLeft, bottomRight, width, height } = boundingBox;
@@ -590,7 +590,7 @@ class LiveMasks {
             
             // Функция рендеринга маски
             render: (ctx, faceData) => {
-                if (!faceData || !faceData.keyPoints) return;
+                if (!faceData || !faceData.keyPoints) {return;}
                 
                 const { faceCenter, faceWidth, faceHeight } = faceData.keyPoints;
                 
@@ -623,8 +623,8 @@ class LiveMasks {
                 
                 // Определяем текст эмоции
                 let emotionText = '😐';
-                if (emotion === 'happy') emotionText = '😊';
-                else if (emotion === 'serious') emotionText = '😑';
+                if (emotion === 'happy') {emotionText = '😊';}
+                else if (emotion === 'serious') {emotionText = '😑';}
                 
                 // Рисуем фон для текста
                 const textWidth = ctx.measureText(emotionText).width;
@@ -742,7 +742,7 @@ class LiveMasks {
      * @private
      */
     _getPointAverage(points) {
-        if (!points || points.length === 0) return { x: 0, y: 0, z: 0 };
+        if (!points || points.length === 0) {return { x: 0, y: 0, z: 0 };}
         
         const sum = points.reduce(
             (acc, point) => {

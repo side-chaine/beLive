@@ -7,13 +7,13 @@ if (window.pianoKeyboard) {
         // ФИЛЬТРУЕМ ТОЛЬКО КАЧЕСТВЕННЫЕ ОСНОВНЫЕ НОТЫ
         const notes = this.pitchMap.notes.filter(note => {
             // Проверяем качество ноты
-            if (!note.maxClarity || note.maxClarity < 0.6) return false;
+            if (!note.maxClarity || note.maxClarity < 0.6) {return false;}
             
             // Проверяем длительность (исключаем короткие подъезды)
-            if (note.duration && note.duration < 0.15) return false;
+            if (note.duration && note.duration < 0.15) {return false;}
             
             // Проверяем что это не артефакт
-            if (note.detectionCount && note.detectionCount < 3) return false;
+            if (note.detectionCount && note.detectionCount < 3) {return false;}
             
             return true; // Это качественная нота
         });

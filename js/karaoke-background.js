@@ -10,7 +10,7 @@ class KaraokeBackgroundManager {
 
     start() {
         console.log('Karaoke Background Manager: Starting slideshow...');
-        if (!this.imagePaths || this.imagePaths.length === 0) return;
+        if (!this.imagePaths || this.imagePaths.length === 0) {return;}
         
         this.body.classList.add('karaoke-active');
         this.isActive = true;
@@ -58,7 +58,7 @@ class KaraokeBackgroundManager {
         // Preload the image to ensure smooth transition
         const img = new Image();
         img.onload = () => {
-            if (!this.isActive || !this.body.classList.contains('mode-karaoke')) return;
+            if (!this.isActive || !this.body.classList.contains('mode-karaoke')) {return;}
             this.body.style.setProperty('background-image', `url('${imagePath}')`, 'important');
             console.log(`✅ Karaoke Background Manager: SUCCESSFULLY set background to ${imagePath}`);
         };

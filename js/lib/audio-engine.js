@@ -12,7 +12,7 @@ class SimpleAudioEngine {
     }
     
     async initialize() {
-        if (this.isInitialized) return true;
+        if (this.isInitialized) {return true;}
         
         try {
             if (window.audioContextManager) {

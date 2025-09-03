@@ -393,8 +393,8 @@ class FaceMeshDetector {
                     mask[maskIndex] = 255;
                     
                     // Заполняем соседние пиксели для сглаживания
-                    if (x + 1 < width) mask[maskIndex + 1] = 255;
-                    if (y + 1 < height) mask[(y + 1) * width + x] = 255;
+                    if (x + 1 < width) {mask[maskIndex + 1] = 255;}
+                    if (y + 1 < height) {mask[(y + 1) * width + x] = 255;}
                 }
             }
         }
@@ -685,8 +685,8 @@ class FaceMeshDetector {
      * @private
      */
     applySmoothingFromHistory() {
-        if (this.faceHistory.length === 0) return null;
-        if (this.faceHistory.length === 1) return this.faceHistory[0];
+        if (this.faceHistory.length === 0) {return null;}
+        if (this.faceHistory.length === 1) {return this.faceHistory[0];}
         
         // Вычисляем взвешенное среднее
         let totalWeight = 0;

@@ -588,12 +588,12 @@ class LiveMode {
         const backButton = document.querySelector('.back-button');
         const closeModalButton = document.getElementById('close-modal');
         
-        if (recordButton) recordButton.addEventListener('click', this.toggleRecording);
-        if (streamButton) streamButton.addEventListener('click', this.toggleStreaming);
-        if (effectsButton) effectsButton.addEventListener('click', this.toggleMasksPanel);
-        if (settingsButton) settingsButton.addEventListener('click', this.showSettingsModal);
-        if (backButton) backButton.addEventListener('click', this.backToMainView);
-        if (closeModalButton) closeModalButton.addEventListener('click', this.hideModal);
+        if (recordButton) {recordButton.addEventListener('click', this.toggleRecording);}
+        if (streamButton) {streamButton.addEventListener('click', this.toggleStreaming);}
+        if (effectsButton) {effectsButton.addEventListener('click', this.toggleMasksPanel);}
+        if (settingsButton) {settingsButton.addEventListener('click', this.showSettingsModal);}
+        if (backButton) {backButton.addEventListener('click', this.backToMainView);}
+        if (closeModalButton) {closeModalButton.addEventListener('click', this.hideModal);}
         
         // Обработка клика на масках
         if (this.masksContainer) {
@@ -1051,7 +1051,7 @@ class LiveMode {
                 const button = document.createElement('button');
                 button.id = `${mode.id}-mode-btn`;
                 button.className = 'live-settings-button';
-                if (mode.id === 'live') button.classList.add('active');
+                if (mode.id === 'live') {button.classList.add('active');}
                 
                 button.innerHTML = `<i class="fas fa-${mode.icon}"></i> ${mode.name}`;
                 
@@ -1303,7 +1303,7 @@ class LiveMode {
      * Запуск обработки видеопотока
      */
     _startVideoProcessing() {
-        if (!this.videoElement || !this.videoStream) return;
+        if (!this.videoElement || !this.videoStream) {return;}
         
         console.log('LiveMode: Запуск обработки видео');
         
@@ -1629,7 +1629,7 @@ class LiveMode {
      * Фильтрация масок по категории
      */
     filterMasks(category) {
-        if (!this.masksContainer) return;
+        if (!this.masksContainer) {return;}
         
         // Получаем все элементы масок
         const masks = this.masksContainer.querySelectorAll('.mask-item');
@@ -1657,7 +1657,7 @@ class LiveMode {
      * Показать модальное окно настроек
      */
     showSettingsModal() {
-        if (!this.modalContainer) return;
+        if (!this.modalContainer) {return;}
         
         // Очищаем содержимое модального окна
         const modalBody = this.modalContainer.querySelector('.modal-body');
@@ -1750,7 +1750,7 @@ class LiveMode {
      * Показать модальное окно настроек стрима
      */
     showStreamSettingsModal() {
-        if (!this.modalContainer) return;
+        if (!this.modalContainer) {return;}
         
         // Очищаем содержимое модального окна
         const modalBody = this.modalContainer.querySelector('.modal-body');
@@ -2137,7 +2137,7 @@ class LiveMode {
      */
     _updateActiveLine(lineIndex) {
         // Проверяем валидность индекса
-        if (!this.isActive || lineIndex < 0 || lineIndex >= this.lyricsLines.length) return;
+        if (!this.isActive || lineIndex < 0 || lineIndex >= this.lyricsLines.length) {return;}
         
         // Предотвращаем многократные обновления за короткое время
         if (this.isLyricsDisplayUpdating) {

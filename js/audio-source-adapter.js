@@ -24,18 +24,18 @@
   }
 
   function detectMimeFromName(name){
-    if (!name) return 'application/octet-stream';
+    if (!name) {return 'application/octet-stream';}
     const lower = name.toLowerCase();
-    if (lower.endsWith('.mp3')) return 'audio/mpeg';
-    if (lower.endsWith('.wav')) return 'audio/wav';
-    if (lower.endsWith('.ogg')) return 'audio/ogg';
-    if (lower.endsWith('.m4a') || lower.endsWith('.aac')) return 'audio/aac';
+    if (lower.endsWith('.mp3')) {return 'audio/mpeg';}
+    if (lower.endsWith('.wav')) {return 'audio/wav';}
+    if (lower.endsWith('.ogg')) {return 'audio/ogg';}
+    if (lower.endsWith('.m4a') || lower.endsWith('.aac')) {return 'audio/aac';}
     return 'audio/*';
   }
 
   async function normalize(input){
     try {
-      if (!input) throw new Error('AudioSourceAdapter.normalize: empty input');
+      if (!input) {throw new Error('AudioSourceAdapter.normalize: empty input');}
 
       // Blob/File → data URL
       if (input instanceof Blob) {
@@ -83,7 +83,7 @@
         } finally {
           activeDecodes--;
           const next = decodeQueue.shift();
-          if (next) next();
+          if (next) {next();}
         }
       };
 

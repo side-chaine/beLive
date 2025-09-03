@@ -29,7 +29,7 @@ const rtfParserIntegration = {
         // Добавляем новый метод для парсинга RTF через адаптер
         LyricsDisplay.prototype._parseRtfWithAdapter = async function(rtfText) {
             console.log('RTF Integration: Запуск парсинга RTF через RtfParserAdapter');
-            if (!rtfText) return '';
+            if (!rtfText) {return '';}
             
             try {
                 // Создаем экземпляр адаптера

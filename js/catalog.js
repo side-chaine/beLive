@@ -72,7 +72,7 @@ class CatalogV2 {
     
     renderMyMusic() {
         const myMusicContent = this.overlay.querySelector('.my-music-content');
-        if (!myMusicContent) return;
+        if (!myMusicContent) {return;}
         
         if (this.tracks.length === 0) {
             myMusicContent.innerHTML = '<p class="empty-state">Загрузите треки через "Upload Track" →</p>';
@@ -291,7 +291,7 @@ class CatalogV2 {
     
     playTrack(button) {
         const trackItem = button.closest('.track-item');
-        if (!trackItem) return;
+        if (!trackItem) {return;}
         
         const trackId = parseInt(trackItem.dataset.trackId);
         const track = this.tracks.find(t => t.id === trackId);
@@ -335,7 +335,7 @@ class CatalogV2 {
     
     addToPlaylist(button) {
         const trackItem = button.closest('.track-item');
-        if (!trackItem) return;
+        if (!trackItem) {return;}
         
         const trackId = parseInt(trackItem.dataset.trackId);
         const track = this.tracks.find(t => t.id === trackId);
@@ -379,7 +379,7 @@ class CatalogV2 {
     
     updateSaveButton() {
         const saveBtn = this.overlay.querySelector('#upload-save');
-        if (!saveBtn) return;
+        if (!saveBtn) {return;}
         
         // Требуется хотя бы инструментальная дорожка
         const hasInstrumental = this.uploadSession.instrumental !== null;
@@ -557,7 +557,7 @@ class CatalogV2 {
     }
     
     open() {
-        if (!this.overlay) return;
+        if (!this.overlay) {return;}
         
         this.overlay.classList.remove('hidden');
         this.isOpen = true;
@@ -566,7 +566,7 @@ class CatalogV2 {
     }
     
     close() {
-        if (!this.overlay) return;
+        if (!this.overlay) {return;}
         
         this.overlay.classList.add('hidden');
         this.isOpen = false;

@@ -11,7 +11,7 @@
     function runIntegration() {
         if (integrationAttempted) {
             // console.log("TextProcessorIntegrator: Повторная попытка интеграции или интеграция уже выполнена.");
-            if (integrationSuccessful) return;
+            if (integrationSuccessful) {return;}
         }
         integrationAttempted = true;
 
@@ -118,7 +118,7 @@
             LyricsDisplay.prototype._cleanText = function(text) {
                 console.log("TextProcessorIntegrator (Hooked): Перехвачен вызов _cleanText.");
                 try {
-                    if (!text) return '';
+                    if (!text) {return '';}
                     // Всегда используем наш EnhancedTextProcessor.processPlainText для очистки и разделения,
                     // так как _cleanText обычно ожидает на выходе строку, а не массив.
                     const lines = window.EnhancedTextProcessor.processPlainText(text);

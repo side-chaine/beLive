@@ -57,7 +57,7 @@ class LyricsDisplay {
     
     _initScrollListeners() {
         // Skip if container doesn't exist
-        if (!this.containerElement) return;
+        if (!this.containerElement) {return;}
         
         // Initialize last scroll time
         this.lastScrollTime = 0;
@@ -376,7 +376,7 @@ class LyricsDisplay {
      */
     _parseRtfUniversal(rtfText) {
         console.log('Запуск универсального RTF парсера');
-        if (!rtfText) return '';
+        if (!rtfText) {return '';}
         
         try {
             // Удаляем RTF-заголовок и форматирование
@@ -459,7 +459,7 @@ class LyricsDisplay {
      * @returns {string} - Обработанный текст
      */
     _parseLrcFile(lrcText) {
-        if (!lrcText) return '';
+        if (!lrcText) {return '';}
         
         console.log('Запуск парсера LRC файла');
         
@@ -490,7 +490,7 @@ class LyricsDisplay {
      * @returns {string} - Определенный язык ('russian', 'english', 'mixed')
      */
     _detectLanguage(text) {
-        if (!text) return 'unknown';
+        if (!text) {return 'unknown';}
         
         // Подсчет символов кириллицы и латиницы
         const cyrillicChars = (text.match(/[а-яА-ЯёЁ]/g) || []).length;
@@ -506,8 +506,8 @@ class LyricsDisplay {
         const words = text.toLowerCase().match(/\b[а-яёa-z]+\b/g) || [];
         
         words.forEach(word => {
-            if (russianKeywords.includes(word)) russianKeywordsCount++;
-            if (englishKeywords.includes(word)) englishKeywordsCount++;
+            if (russianKeywords.includes(word)) {russianKeywordsCount++;}
+            if (englishKeywords.includes(word)) {englishKeywordsCount++;}
         });
         
         console.log(`Количество русских букв: ${cyrillicChars}, английских: ${latinChars}`);
@@ -528,7 +528,7 @@ class LyricsDisplay {
      * @returns {string} - Очищенный текст
      */
     _basicTextCleanup(text) {
-        if (!text) return '';
+        if (!text) {return '';}
         
         // Удаляем все управляющие и непечатаемые символы, оставляем только печатаемые и переносы строк
         let cleaned = text.replace(/[^\x20-\x7E\nа-яА-ЯёЁ]/g, '');
@@ -588,10 +588,10 @@ class LyricsDisplay {
             const line = lines[i].trim();
             
             // Пропускаем строки только с пробелами
-            if (line.length === 0) continue;
+            if (line.length === 0) {continue;}
             
             // Пропускаем строки, содержащие только технические символы
-            if (/^\s*[;:,.\\\/#!$%\^&\*;:{}=\-_`~()]+\s*$/.test(line)) continue;
+            if (/^\s*[;:,.\\\/#!$%\^&\*;:{}=\-_`~()]+\s*$/.test(line)) {continue;}
             
             // Обрабатываем очень короткие строки
             if (line.length <= 2 && 
@@ -623,10 +623,10 @@ class LyricsDisplay {
             const line = lines[i].trim();
             
             // Пропускаем строки только с пробелами
-            if (line.length === 0) continue;
+            if (line.length === 0) {continue;}
             
             // Пропускаем строки, содержащие только технические символы
-            if (/^\s*[;:,.\\\/#!$%\^&\*;:{}=\-_`~()]+\s*$/.test(line)) continue;
+            if (/^\s*[;:,.\\\/#!$%\^&\*;:{}=\-_`~()]+\s*$/.test(line)) {continue;}
             
             // Обрабатываем очень короткие строки
             if (line.length <= 2 && 
@@ -665,7 +665,7 @@ class LyricsDisplay {
      */
     _intelligentLineSplitting(text) {
         console.log('Применяем интеллектуальное разделение текста на строки');
-        if (!text) return [];
+        if (!text) {return [];}
         
         // Пытаемся определить разделители строк по структуре текста
         let lines = [];
@@ -863,7 +863,7 @@ class LyricsDisplay {
             while (remainingText.length > maxLength) {
                 // Find the last space within maxLength characters
                 let breakPoint = remainingText.substring(0, maxLength).lastIndexOf(' ');
-                if (breakPoint === -1) breakPoint = maxLength; // No space found, hard break
+                if (breakPoint === -1) {breakPoint = maxLength;} // No space found, hard break
                 
                 result.push(remainingText.substring(0, breakPoint));
                 remainingText = remainingText.substring(breakPoint).trim();
@@ -884,7 +884,7 @@ class LyricsDisplay {
      */
     _cleanText(text) {
         console.log("Original text length:", text ? text.length : 0);
-        if (!text) return '';
+        if (!text) {return '';}
         
         // Определяем тип текста
         const isRtf = text.includes('\\rtf') || text.includes('{\\');
@@ -998,7 +998,7 @@ class LyricsDisplay {
     }
     
     _renderLyrics() {
-        if (!this.lyricsContainer) return;
+        if (!this.lyricsContainer) {return;}
         
         // --- NEW KARAOKE LOGIC V2 ---
         // Special handling for Karaoke mode to prevent flickering and ensure stability.
@@ -1007,8 +1007,10 @@ class LyricsDisplay {
             if (!this.karaokeLineElements || this.karaokeLineElements.length === 0 || !document.getElementById('karaoke-line-0')) {
                 console.log('[KARAOKE] DOM not found or empty in _renderLyrics, creating it.');
                 this.lyricsContainer.innerHTML = `
-                    <div id="karaoke-line-0" class="lyric-line"></div>
-                    <div id="karaoke-line-1" class="lyric-line"></div>
+                    <div class="karaoke-panel">
+                        <div id="karaoke-line-0" class="lyric-line"></div>
+                        <div id="karaoke-line-1" class="lyric-line"></div>
+                    </div>
                 `;
                 this.karaokeLineElements = [
                     document.getElementById('karaoke-line-0'),
@@ -1093,7 +1095,7 @@ class LyricsDisplay {
 
     _renderBlocksForRehearsal() {
         const lyricsContainer = this.lyricsContainer;
-        if (!lyricsContainer) return;
+        if (!lyricsContainer) {return;}
 
         // Очищаем контейнер
         lyricsContainer.innerHTML = '';
@@ -1205,7 +1207,7 @@ class LyricsDisplay {
                 
                 // ДОБАВЛЕНО: Применяем стили и классы переходов как в обычном режиме
             if (this.currentStyle && this.currentStyle.css) {
-                    if (this.currentStyle.css.base) lineDiv.classList.add(this.currentStyle.css.base);
+                    if (this.currentStyle.css.base) {lineDiv.classList.add(this.currentStyle.css.base);}
                 }
                 
                 // ДОБАВЛЕНО: Применяем текущий переход
@@ -1394,6 +1396,7 @@ class LyricsDisplay {
         const lyricsLen = Array.isArray(this.lyrics) ? this.lyrics.length : 0;
         const seen = new Set();
         const result = [];
+        const allowedTypes = new Set(['verse', 'chorus', 'bridge']);
         (blocks || []).forEach((blk, idx) => {
             if (!blk || !Array.isArray(blk.lineIndices) || blk.lineIndices.length === 0) {
                 return; // пустой блок
@@ -1401,22 +1404,26 @@ class LyricsDisplay {
             // сортируем и уникализируем индексы, оставляем только валидные в пределах текста
             const sorted = [...blk.lineIndices].sort((a,b)=>a-b)
                 .filter((v,i,arr)=> (i===0 || v!==arr[i-1]) && v>=0 && v<lyricsLen);
-            if (sorted.length === 0) return;
+            if (sorted.length === 0) {return;}
             // используем ключ по диапазону для отбраковки полных дублей
             const key = `${sorted[0]}-${sorted[sorted.length-1]}`;
-            if (seen.has(key)) return;
+            if (seen.has(key)) {return;}
             seen.add(key);
+            // сохраняем и валидируем тип блока (важно для окраски маркеров и панели)
+            const rawType = typeof blk.type === 'string' ? blk.type.toLowerCase() : undefined;
+            const type = allowedTypes.has(rawType) ? rawType : (blk.type ? rawType : undefined);
             result.push({
                 id: blk.id || `blk-${idx}-${sorted[0]}`,
                 name: blk.name || `Block ${idx+1}`,
-                lineIndices: sorted
+                lineIndices: sorted,
+                ...(type ? { type } : {})
             });
         });
         return result;
     }
 
     _renderStandardLines() {
-        if (!this.lyricsContainer) return;
+        if (!this.lyricsContainer) {return;}
         this.lyricsContainer.innerHTML = '';
         this.lyricsContainer.className = 'lyrics-display style-standard'; // Reset classes
 
@@ -1439,7 +1446,7 @@ class LyricsDisplay {
             console.log(`Rendering standard line [${index}]: '${line}'`); // DEBUG: Check raw lyric line
             
             if (this.currentStyle && this.currentStyle.css) {
-                if (this.currentStyle.css.base) lineElement.classList.add(this.currentStyle.css.base);
+                if (this.currentStyle.css.base) {lineElement.classList.add(this.currentStyle.css.base);}
                 // Active/inactive handled by setActiveLine
             }
             lineElement.innerHTML = this._parseParenthesesForDuet(line);
@@ -1512,7 +1519,7 @@ class LyricsDisplay {
             if (styleOptions) {
                 const { fontSize, lineHeight, textColor } = styleOptions;
                 const applyStyles = (el, isActive) => {
-                    if (!el) return;
+                    if (!el) {return;}
                     el.style.fontSize = fontSize;
                     el.style.lineHeight = lineHeight;
                     el.style.color = textColor || '#ffffff';
@@ -1594,7 +1601,7 @@ class LyricsDisplay {
     }
     
     updateLyricPosition(currentTime) {
-        if (this.lyrics.length === 0) return;
+        if (this.lyrics.length === 0) {return;}
         
         // Проверяем, находимся ли мы в режиме репетиции с блоками
         const isInRehearsalModeWithBlocks = this.currentStyle && 
@@ -1726,7 +1733,7 @@ class LyricsDisplay {
     }
     
     _scrollToActiveBlock(blockId) {
-        if (!this.containerElement) return;
+        if (!this.containerElement) {return;}
         const blockElement = this.lyricsContainer.querySelector(`.lyric-block[data-block-id="${blockId}"]`);
         
         if (blockElement) {
@@ -1753,7 +1760,7 @@ class LyricsDisplay {
     // New method to preprocess lyrics text
     _preprocessLyrics(text) {
         console.log("Preprocessing lyrics text, length:", text ? text.length : 0);
-        if (!text || text.length === 0) return '';
+        if (!text || text.length === 0) {return '';}
 
         let processed = text;
         
@@ -1960,7 +1967,7 @@ class LyricsDisplay {
      * @private
      */
     _applyCustomStyleOptions(options) {
-        if (!options) return;
+        if (!options) {return;}
         
         if (this.lyricsContainer) {
             this.lyricsContainer.style.textAlign = options.textAlign || 'center';
@@ -1981,7 +1988,7 @@ class LyricsDisplay {
      * @private
      */
     _applyTransition(element, transition) {
-        if (!element || !transition) return;
+        if (!element || !transition) {return;}
         
         // Remove existing transition classes
         element.classList.remove(
@@ -2000,7 +2007,7 @@ class LyricsDisplay {
      * @param {string} transitionType - Type of transition animation
      */
     setTransition(transitionType) {
-        if (!this.containerElement) return;
+        if (!this.containerElement) {return;}
         
         console.log(`Setting lyrics transition: ${transitionType}`);
         
@@ -2011,7 +2018,7 @@ class LyricsDisplay {
             
             // Remove existing transition classes from containers
             [this.containerElement, this.lyricsContainer].forEach(container => {
-                if (!container) return;
+                if (!container) {return;}
                 
                 const existingClasses = Array.from(container.classList)
                     .filter(c => c.startsWith('transition-'));
@@ -2026,14 +2033,14 @@ class LyricsDisplay {
         }
         
         // For regular transitions
-        if (!transitionType) return;
+        if (!transitionType) {return;}
         
         // Store current transition
         this.currentTransition = transitionType;
         
         // Remove existing transition classes from containers
         [this.containerElement, this.lyricsContainer].forEach(container => {
-            if (!container) return;
+            if (!container) {return;}
             
             const existingClasses = Array.from(container.classList)
                 .filter(c => c.startsWith('transition-'));
@@ -2082,7 +2089,7 @@ class LyricsDisplay {
      * @private
      */
     _prepareLetterByLetterEffect() {
-        if (!this.lyricsContainer) return;
+        if (!this.lyricsContainer) {return;}
         
         // Get all lyric lines
         const lines = this.lyricsContainer.getElementsByClassName('lyric-line');
@@ -2101,7 +2108,7 @@ class LyricsDisplay {
         // Process each line
         for (let i = 0; i < lines.length; i++) {
             // Skip if already processed
-            if (lines[i].querySelector('span')) continue;
+            if (lines[i].querySelector('span')) {continue;}
             
             const text = this._originalLineTexts[i] || lines[i].textContent;
             let wrappedText = '';
@@ -2128,7 +2135,7 @@ class LyricsDisplay {
      * @private
      */
     _prepareWordByWordEffect() {
-        if (!this.lyricsContainer) return;
+        if (!this.lyricsContainer) {return;}
         
         // Get all lyric lines
         const lines = this.lyricsContainer.getElementsByClassName('lyric-line');
@@ -2147,7 +2154,7 @@ class LyricsDisplay {
         // Process each line
         for (let i = 0; i < lines.length; i++) {
             // Skip if already processed
-            if (lines[i].querySelector('span')) continue;
+            if (lines[i].querySelector('span')) {continue;}
             
             const text = this._originalLineTexts[i] || lines[i].textContent;
             const words = text.split(' ');
@@ -2169,7 +2176,7 @@ class LyricsDisplay {
      * @private
      */
     _prepareDataTextAttributes() {
-        if (!this.lyricsContainer) return;
+        if (!this.lyricsContainer) {return;}
         
         // Get all lyric lines
         const lines = this.lyricsContainer.getElementsByClassName('lyric-line');
@@ -2186,7 +2193,7 @@ class LyricsDisplay {
      * @private
      */
     _prepareMatrixEffect() {
-        if (!this.lyricsContainer) return;
+        if (!this.lyricsContainer) {return;}
         
         // Get all lyric lines
         const lines = this.lyricsContainer.getElementsByClassName('lyric-line');
@@ -2214,7 +2221,7 @@ class LyricsDisplay {
         // Process each line
         for (let i = 0; i < lines.length; i++) {
             // Skip if already processed
-            if (lines[i].querySelector('span')) continue;
+            if (lines[i].querySelector('span')) {continue;}
             
             const text = this._originalLineTexts[i] || lines[i].textContent;
             let wrappedText = '';
@@ -2354,7 +2361,7 @@ class LyricsDisplay {
      * @private
      */
     _sanitizeLyricsText(text) {
-        if (!text) return '';
+        if (!text) {return '';}
 
         // Проверяем наличие RTF-контента
         const isRtfContent = text.includes('\\rtf') || 
@@ -2475,12 +2482,12 @@ class LyricsDisplay {
         const hasEnglishMarkers = /\b(the|and|in|of|to|a|is|for|with|as)\b/i.test(text);
         
         // Принятие решения на основе статистики
-        if (russianChars > englishChars * 2) return 'russian';
-        if (englishChars > russianChars * 2) return 'english';
+        if (russianChars > englishChars * 2) {return 'russian';}
+        if (englishChars > russianChars * 2) {return 'english';}
         
         // При близком соотношении используем маркеры
-        if (hasRussianMarkers && !hasEnglishMarkers) return 'russian';
-        if (hasEnglishMarkers && !hasRussianMarkers) return 'english';
+        if (hasRussianMarkers && !hasEnglishMarkers) {return 'russian';}
+        if (hasEnglishMarkers && !hasRussianMarkers) {return 'english';}
         
         // По умолчанию используем русский
         return russianChars >= englishChars ? 'russian' : 'english';
@@ -2603,7 +2610,7 @@ class LyricsDisplay {
     }
 
     addLineToCreatingBlock(lineIndex) {
-        if (!this.isInBlockMode) return;
+        if (!this.isInBlockMode) {return;}
         if (!this.currentBlockCreation.includes(lineIndex)) {
             this.currentBlockCreation.push(lineIndex);
             this.currentBlockCreation.sort((a, b) => a - b); // Keep indices sorted
@@ -2613,7 +2620,7 @@ class LyricsDisplay {
     }
 
     removeLineFromCreatingBlock(lineIndex) {
-        if (!this.isInBlockMode) return;
+        if (!this.isInBlockMode) {return;}
         const indexInCreation = this.currentBlockCreation.indexOf(lineIndex);
         if (indexInCreation > -1) {
             this.currentBlockCreation.splice(indexInCreation, 1);
@@ -2807,7 +2814,7 @@ class LyricsDisplay {
      * @private
      */
     _extractUnicodeFromRtf(rtfText) {
-        if (!rtfText) return '';
+        if (!rtfText) {return '';}
         
         // Регулярное выражение для поиска Unicode символов в RTF
         const unicodeRegex = /\\u(\d+)\s?/g;
@@ -2935,7 +2942,7 @@ class LyricsDisplay {
             // Пропускаем первые строки, которые могут содержать только метаданные
             for (let i = 0; i < Math.min(5, lines.length); i++) {
                 const line = lines[i].trim();
-                if (line.length === 0) continue;
+                if (line.length === 0) {continue;}
                 
                 // Проверяем, является ли строка, вероятно, метаданными
                 const seemsLikeMetadata = 
@@ -2973,7 +2980,7 @@ class LyricsDisplay {
      * @private
      */
     _extractLinesDirectlyFromRtf(rtfText) {
-        if (!rtfText) return [];
+        if (!rtfText) {return [];}
         
             const lines = [];
         const rtfLines = rtfText.split(/\\par\s?|\n/);
@@ -3010,7 +3017,7 @@ class LyricsDisplay {
      * @private
      */
     _improveRussianStructure(text) {
-        if (!text) return '';
+        if (!text) {return '';}
         
         // Исправляем переносы строк
         let improved = text.replace(/([.!?])\s*(?=[А-ЯЁ])/g, '$1\n');
@@ -3037,7 +3044,7 @@ class LyricsDisplay {
      * @private
      */
     _improveEnglishStructure(text) {
-        if (!text) return '';
+        if (!text) {return '';}
         
         // Исправляем переносы строк после знаков препинания
         let improved = text.replace(/([.!?])\s*(?=[A-Z])/g, '$1\n');
@@ -3080,7 +3087,7 @@ class LyricsDisplay {
      * @private
      */
     _sanitizeRussianText(text, isRtfContent) {
-        if (!text) return '';
+        if (!text) {return '';}
         
         let sanitized = text;
         
@@ -3125,7 +3132,7 @@ class LyricsDisplay {
      * @private
      */
     _sanitizeEnglishText(text, isRtfContent) {
-        if (!text) return '';
+        if (!text) {return '';}
         
         let sanitized = text;
         
@@ -3167,7 +3174,7 @@ class LyricsDisplay {
      */
     _detectTextLanguage(text) {
         // Если текст очень короткий, не можем определить язык
-        if (!text || text.length < 10) return 'unknown';
+        if (!text || text.length < 10) {return 'unknown';}
         
         // Удаляем RTF-разметку для более точного определения
         let cleanText = text;
@@ -3194,8 +3201,8 @@ class LyricsDisplay {
         
         // Считаем количество ключевых слов
         for (const word of words) {
-            if (russianKeywords.includes(word)) russianKeywordCount++;
-            if (englishKeywords.includes(word)) englishKeywordCount++;
+            if (russianKeywords.includes(word)) {russianKeywordCount++;}
+            if (englishKeywords.includes(word)) {englishKeywordCount++;}
         }
         
         console.log(`Количество русских букв: ${russianCount}, английских: ${englishCount}`);
@@ -3216,7 +3223,7 @@ class LyricsDisplay {
      * @private
      */
     _convertUnicodeCodesToChars(text) {
-        if (!text) return '';
+        if (!text) {return '';}
         
         let result = text;
         
@@ -3280,7 +3287,7 @@ class LyricsDisplay {
      */
     _prepareMatrixEffectForLine(lineElement) {
         // Пропускаем если уже обработана
-        if (lineElement.querySelector('span')) return;
+        if (lineElement.querySelector('span')) {return;}
         
         const text = lineElement.textContent;
         let wrappedText = '';
@@ -3306,7 +3313,7 @@ class LyricsDisplay {
      */
     _prepareLetterByLetterEffectForLine(lineElement) {
         // Пропускаем если уже обработана
-        if (lineElement.querySelector('span')) return;
+        if (lineElement.querySelector('span')) {return;}
         
         const text = lineElement.textContent;
         let wrappedText = '';
@@ -3333,7 +3340,7 @@ class LyricsDisplay {
      */
     _prepareWordByWordEffectForLine(lineElement) {
         // Пропускаем если уже обработана
-        if (lineElement.querySelector('span')) return;
+        if (lineElement.querySelector('span')) {return;}
         
         const text = lineElement.textContent;
         const words = text.split(' ');

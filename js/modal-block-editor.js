@@ -82,9 +82,9 @@ class ModalBlockEditor {
         if (!this._hotkeysBound) {
             this._hotkeysBound = true;
             document.addEventListener('keydown', (e) => {
-                if (this.container.classList.contains('hidden')) return;
+                if (this.container.classList.contains('hidden')) {return;}
                 const isCmd = e.metaKey || e.ctrlKey;
-                if (!isCmd) return;
+                if (!isCmd) {return;}
                 if (e.key.toLowerCase() === 'z' && !e.shiftKey) {
                     e.preventDefault();
                     this.undo();
@@ -114,7 +114,7 @@ class ModalBlockEditor {
         this.blockListArea.addEventListener('click', (event) => {
             console.log('ModalBlockEditor: blockListArea CLICK event fired'); // Отладка
             const targetBlock = event.target.closest('.text-block');
-            if (!targetBlock || this.isDragging) return; // Игнорировать клики во время перетаскивания
+            if (!targetBlock || this.isDragging) {return;} // Игнорировать клики во время перетаскивания
 
             if (this.isEditModeActive) {
                 // Если режим редактирования активен, клик должен фокусировать на блоке для редактирования.
@@ -163,7 +163,7 @@ class ModalBlockEditor {
     }
     
     _handleBlockMouseDown(event) {
-        if (this.isEditModeActive) return; // Не работаем в режиме редактирования
+        if (this.isEditModeActive) {return;} // Не работаем в режиме редактирования
 
         const targetBlock = event.target.closest('.text-block');
         console.log('ModalBlockEditor: Mouse down on block:', targetBlock); // Отладка
@@ -178,7 +178,7 @@ class ModalBlockEditor {
 
     _handleBlockDrag(event) {
         console.log('ModalBlockEditor: Mouse move, isDragging:', this.isDragging, 'draggedBlock:', this.draggedBlock); // Отладка
-        if (!this.isDragging || !this.draggedBlock) return;
+        if (!this.isDragging || !this.draggedBlock) {return;}
         event.preventDefault();
 
         // Сначала убираем все предыдущие подсветки кандидатов
@@ -191,7 +191,7 @@ class ModalBlockEditor {
         const blocks = Array.from(this.blockListArea.querySelectorAll('.text-block'));
 
         for (const potentialTarget of blocks) {
-            if (potentialTarget === this.draggedBlock) continue; // Не можем слиться сами с собой
+            if (potentialTarget === this.draggedBlock) {continue;} // Не можем слиться сами с собой
 
             const rect = potentialTarget.getBoundingClientRect();
             const threshold = 15; // Пиксели - зона чувствительности у края блока
@@ -212,7 +212,7 @@ class ModalBlockEditor {
 
     _handleBlockMouseUp(event) {
         console.log('ModalBlockEditor: Mouse up, isDragging:', this.isDragging, 'draggedBlock:', this.draggedBlock, 'mergeTarget:', this.mergeTarget); // Отладка
-        if (!this.isDragging || !this.draggedBlock) return;
+        if (!this.isDragging || !this.draggedBlock) {return;}
         event.preventDefault();
 
         if (this.mergeTarget) {
@@ -235,7 +235,7 @@ class ModalBlockEditor {
     }
 
     _performMerge() {
-        if (!this.draggedBlock || !this.mergeTarget) return;
+        if (!this.draggedBlock || !this.mergeTarget) {return;}
 
         const draggedText = this.draggedBlock.innerText.trim();
         const targetText = this.mergeTarget.innerText.trim();
@@ -267,7 +267,7 @@ class ModalBlockEditor {
         // Обновление выделения и типа
         if (this.selectedBlock && this.selectedBlock !== blockToKeep) {
              if(blockToRemoveWasSelected || this.selectedBlock) { 
-                if(this.selectedBlock) this.selectedBlock.classList.remove('selected-block-highlight');
+                if(this.selectedBlock) {this.selectedBlock.classList.remove('selected-block-highlight');}
              }
         }
         this.selectedBlock = blockToKeep; 
@@ -311,7 +311,7 @@ class ModalBlockEditor {
     }
     
     _splitTextIntoBlocks(text) {
-        if (!text || text.trim() === '') return [];
+        if (!text || text.trim() === '') {return [];}
         
         console.log('🔍 ModalBlockEditor: _splitTextIntoBlocks получил текст длиной:', text.length);
         
@@ -347,7 +347,7 @@ class ModalBlockEditor {
         let matchCount = 0;
         
         for (const block of allBlocks) {
-            if (block === content) continue;
+            if (block === content) {continue;}
             const blockWords = block.toLowerCase().split(/\s+/).filter(w => w.length > 3);
             const commonWords = words.filter(word => blockWords.includes(word));
             if (commonWords.length > words.length * 0.45) {
@@ -531,7 +531,7 @@ class ModalBlockEditor {
         }
 
         this.isEditModeActive = false; 
-        if(this.selectedBlock) this.selectedBlock.classList.remove('selected-block-highlight');
+        if(this.selectedBlock) {this.selectedBlock.classList.remove('selected-block-highlight');}
         this.selectedBlock = null;
         
         this.statusElement.textContent = 'Режим выбора блоков.'; // Обновленный статус
@@ -674,8 +674,8 @@ class ModalBlockEditor {
     }
 
     _toggleEditMode() {
-        if (!this.editModeToggleBtn) return; // Защита, если кнопка не найдена
-        if (this.isDragging) return; // Не переключать режим во время перетаскивания
+        if (!this.editModeToggleBtn) {return;} // Защита, если кнопка не найдена
+        if (this.isDragging) {return;} // Не переключать режим во время перетаскивания
 
         this.isEditModeActive = !this.isEditModeActive;
         this.statusElement.textContent = this.isEditModeActive ? 'Режим редактирования текста активен.' : 'Режим выбора блоков.';
@@ -701,8 +701,8 @@ class ModalBlockEditor {
     }
 
     _deleteSelectedBlockHandler() {
-        if (!this.deleteSelectedBlockBtn) return; // Защита
-        if (this.isDragging) return; // Не удалять во время перетаскивания
+        if (!this.deleteSelectedBlockBtn) {return;} // Защита
+        if (this.isDragging) {return;} // Не удалять во время перетаскивания
 
         if (this.selectedBlock && !this.isEditModeActive) {
             if (this.blockListArea.children.length > 1) {
@@ -727,7 +727,7 @@ class ModalBlockEditor {
     }
 
     _createBlockTypeSelector() {
-        if (this.blockTypeSelector) return; // Создаем только один раз
+        if (this.blockTypeSelector) {return;} // Создаем только один раз
 
         const selector = document.createElement('div');
         selector.id = 'block-type-selector';
@@ -766,7 +766,7 @@ class ModalBlockEditor {
         });
 
         this.blockTypeSelector.addEventListener('mouseleave', () => {
-            if (this.hideSelectorTimeout) clearTimeout(this.hideSelectorTimeout); // На всякий случай
+            if (this.hideSelectorTimeout) {clearTimeout(this.hideSelectorTimeout);} // На всякий случай
             this.hideSelectorTimeout = setTimeout(() => {
                 this._hideBlockTypeSelector();
                 // this.activeBlockForSelector = null; // Сбрасываем здесь, если мышь ушла с селектора
@@ -775,7 +775,7 @@ class ModalBlockEditor {
     }
 
     _showBlockTypeSelector(blockElement) {
-        if (!this.blockTypeSelector) this._createBlockTypeSelector();
+        if (!this.blockTypeSelector) {this._createBlockTypeSelector();}
         
         if (this.hideSelectorTimeout) {
             clearTimeout(this.hideSelectorTimeout);
@@ -839,7 +839,7 @@ class ModalBlockEditor {
     }
 
     _setBlockType(blockElement, type) {
-        if (!blockElement) return;
+        if (!blockElement) {return;}
         // Удаляем старые классы типов
         blockElement.classList.remove('block-type-verse', 'block-type-chorus', 'block-type-bridge');
         // Добавляем новый класс типа
@@ -853,7 +853,7 @@ class ModalBlockEditor {
     }
     
     _handleBlockMouseEnter(event) {
-        if (this.isDragging || this.isEditModeActive) return;
+        if (this.isDragging || this.isEditModeActive) {return;}
         const targetBlock = event.target.closest('.text-block');
         
         if (targetBlock) {
@@ -884,7 +884,7 @@ class ModalBlockEditor {
         if (targetBlock && this.activeBlockForSelector === targetBlock) {
             // И курсор НЕ перешел на сам селектор
             if (!relatedTarget || !this.blockTypeSelector || !this.blockTypeSelector.contains(relatedTarget)) {
-                if (this.hideSelectorTimeout) clearTimeout(this.hideSelectorTimeout); // Отменяем предыдущий таймаут, если есть
+                if (this.hideSelectorTimeout) {clearTimeout(this.hideSelectorTimeout);} // Отменяем предыдущий таймаут, если есть
                 this.hideSelectorTimeout = setTimeout(() => {
                     // Финальная проверка перед скрытием: действительно ли мы все еще должны его скрыть?
                     // Может быть, пользователь уже навел курсор обратно на блок или на селектор.
@@ -952,11 +952,11 @@ class ModalBlockEditor {
     }
 
     _pushSnapshot(reason = '') {
-        if (this.isRestoring) return; // не писать историю во время восстановления
+        if (this.isRestoring) {return;} // не писать историю во время восстановления
         const snap = this._serialize();
         if (this.historyStack.length === 0 || this.historyStack[this.historyStack.length - 1] !== snap) {
             this.historyStack.push(snap);
-            if (this.historyStack.length > this.maxHistory) this.historyStack.shift();
+            if (this.historyStack.length > this.maxHistory) {this.historyStack.shift();}
             this.redoStack = [];
             // console.debug('Undo snapshot saved:', reason);
             this._updateUndoRedoButtons();
@@ -964,7 +964,7 @@ class ModalBlockEditor {
     }
 
     undo() {
-        if (this.historyStack.length < 2) return; // нужен хотя бы один предыдущий снапшот
+        if (this.historyStack.length < 2) {return;} // нужен хотя бы один предыдущий снапшот
         const current = this.historyStack.pop();
         this.redoStack.push(current);
         const prev = this.historyStack[this.historyStack.length - 1];
@@ -975,7 +975,7 @@ class ModalBlockEditor {
     }
 
     redo() {
-        if (this.redoStack.length === 0) return;
+        if (this.redoStack.length === 0) {return;}
         const snap = this.redoStack.pop();
         this.historyStack.push(snap);
         this._applySerialized(snap);
@@ -987,8 +987,8 @@ class ModalBlockEditor {
     _updateUndoRedoButtons() {
         const canUndo = this.historyStack.length > 1;
         const canRedo = this.redoStack.length > 0;
-        if (this.undoBtn) this.undoBtn.disabled = !canUndo;
-        if (this.redoBtn) this.redoBtn.disabled = !canRedo;
+        if (this.undoBtn) {this.undoBtn.disabled = !canUndo;}
+        if (this.redoBtn) {this.redoBtn.disabled = !canRedo;}
     }
 }
 

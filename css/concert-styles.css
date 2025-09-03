@@ -1,8 +1,6 @@
 /* CSS-стили для режима "Концерт" */
 
+/* У concert не должно быть собственной плашки/заливки — фон берём с body */
 #lyrics-container.style-concert #lyrics-display {
-    font-family: 'Times New Roman', Times, serif;
-    background-color: rgba(10, 10, 10, 0.9);
-    color: #FFFFFF;
-    text-align: center;
-} 
+    background-color: transparent !important;
+}

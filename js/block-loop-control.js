@@ -76,7 +76,7 @@ class BlockLoopControl {
      * Активирует компонент (только в режиме репетиции)
      */
     activate() {
-        if (this.isActive) return;
+        if (this.isActive) {return;}
         
         this.isActive = true;
         console.log('BlockLoopControl: Активирован');
@@ -199,7 +199,7 @@ class BlockLoopControl {
      * Деактивирует компонент
      */
     deactivate() {
-        if (!this.isActive) return;
+        if (!this.isActive) {return;}
         
         this.isActive = false;
         console.log('BlockLoopControl: Деактивирован');
@@ -279,7 +279,7 @@ class BlockLoopControl {
         // Ранний хук после рендера текста (если событие используется в системе)
         try {
             document.addEventListener('lyrics-rendered', () => {
-                if (!this.isActive) return;
+                if (!this.isActive) {return;}
                 try {
                     this._createLoopButtonForCurrentBlock();
                     // Ранний ререндер и позиционирование портала, чтобы поезд не появлялся наверху
@@ -381,7 +381,7 @@ class BlockLoopControl {
      * @private
      */
     _findBlockByLineIndex(lineIndex) {
-        if (!this.lyricsDisplay || !this.lyricsDisplay.textBlocks) return null;
+        if (!this.lyricsDisplay || !this.lyricsDisplay.textBlocks) {return null;}
         
         let currentLineCount = 0;
         
@@ -638,7 +638,7 @@ class BlockLoopControl {
      * Останавливает зацикливание
      */
     stopLooping() {
-        if (!this.isLooping) return;
+        if (!this.isLooping) {return;}
         
         console.log('BlockLoopControl: Остановка зацикливания');
         
@@ -668,7 +668,7 @@ class BlockLoopControl {
         }
         // Убираем подсветку с подключенного блока
         const linkedEl = document.querySelector('.rehearsal-active-block.loop-linked');
-        if (linkedEl) linkedEl.classList.remove('loop-linked');
+        if (linkedEl) {linkedEl.classList.remove('loop-linked');}
         
         // НЕ деактивируем drag boundaries при остановке лупа
         // Границы должны оставаться активными для возможности перетаскивания
@@ -779,7 +779,7 @@ class BlockLoopControl {
      * @private
      */
     _updateButtonState(isActive) {
-        if (!this.loopButton) return;
+        if (!this.loopButton) {return;}
         
         if (isActive) {
             this.loopButton.classList.add('active');
@@ -797,7 +797,7 @@ class BlockLoopControl {
      * @param {number} currentTime - текущее время воспроизведения
      */
     handleTimeUpdate(currentTime) {
-        if (!this.isActive || !this.isLooping) return;
+        if (!this.isActive || !this.isLooping) {return;}
         
         this.diagnosticCounter++;
         
@@ -959,7 +959,7 @@ class BlockLoopControl {
      * @param {Event} event - событие изменения блока
      */
     handleBlockChange(event) {
-        if (!this.isActive) return;
+        if (!this.isActive) {return;}
         
         // Обновляем мягкую подсветку текущего вагона
         try { this._updateTrainPlayingHighlight(); } catch(_) {}
@@ -1175,7 +1175,7 @@ class BlockLoopControl {
      * Вызывается при изменении блока
      */
     updateForCurrentBlock() {
-        if (!this.isActive) return;
+        if (!this.isActive) {return;}
         
         console.log('BlockLoopControl: Обновление для текущего блока');
         // Обновляем подсветку поезда
@@ -1273,7 +1273,7 @@ class BlockLoopControl {
      * @param {Object} boundaries - новые границы {startTime, endTime}
      */
     onBoundaryChange(boundaries) {
-        if (!this.isLooping || !boundaries) return;
+        if (!this.isLooping || !boundaries) {return;}
         
         console.log('BlockLoopControl: Границы изменены через drag:', boundaries);
         
@@ -1333,8 +1333,8 @@ class BlockLoopControl {
                     }
                 }
             } else {
-                if (startTime !== null) this.loopStartTime = startTime;
-                if (endTime !== null) this.loopEndTime = endTime;
+                if (startTime !== null) {this.loopStartTime = startTime;}
+                if (endTime !== null) {this.loopEndTime = endTime;}
             }
 
             console.log(`�� LOOP BOUNDARIES UPDATED FROM LINES: start=${this.loopStartTime?.toFixed(2)}s end=${this.loopEndTime?.toFixed(2)}s | combined=${(this.combinedStartTime??this.loopStartTime).toFixed(2)}s-${(this.combinedEndTime??this.loopEndTime).toFixed(2)}s`);
@@ -1348,7 +1348,7 @@ class BlockLoopControl {
      * @param {number} endLineIndex - индекс конечной строки
      */
     updateLoopBoundaries(startLineIndex, endLineIndex) {
-        if (!this.isLooping || !this.markerManager) return;
+        if (!this.isLooping || !this.markerManager) {return;}
         
         console.log(`BlockLoopControl: Обновление границ лупа: строки ${startLineIndex}-${endLineIndex}`);
         
@@ -1485,13 +1485,13 @@ class BlockLoopControl {
      * @private
      */
     _checkLoopHealth() {
-        if (!this.isActive || this.isSeekingInProgress) return;
+        if (!this.isActive || this.isSeekingInProgress) {return;}
         
         const currentTime = this.audioEngine?.getCurrentTime();
         const currentBlock = this.lyricsDisplay?.currentActiveBlock;
         
         // Если нет текущего времени или блока, пропускаем проверку
-        if (currentTime === undefined || !currentBlock) return;
+        if (currentTime === undefined || !currentBlock) {return;}
         
         // Проверяем: должен ли быть активен луп, но он неактивен?
         const s = this.isMultiLoopEnabled ? this.combinedStartTime : this.loopStartTime;
@@ -1528,7 +1528,7 @@ class BlockLoopControl {
         }
         
         // Все в порядке - логируем только каждые 10 проверок
-        if (!this.diagnosticCounter) this.diagnosticCounter = 0;
+        if (!this.diagnosticCounter) {this.diagnosticCounter = 0;}
         this.diagnosticCounter++;
         
         if (this.diagnosticCounter % 30 === 0) {
@@ -1603,7 +1603,7 @@ class BlockLoopControl {
     }
 
     _attachNextBlock(block) {
-        if (!this._hasNextBlock(block)) return;
+        if (!this._hasNextBlock(block)) {return;}
         const blocks = this._getProcessedBlocks();
         const idx = blocks.findIndex(b => b.id === block.id);
         const nextBlock = blocks[idx + 1];
@@ -1618,8 +1618,8 @@ class BlockLoopControl {
             setTimeout(() => this.plusButton && this.plusButton.classList.remove('active'), 180);
         }
         // Поддержка массива выбранных блоков (паровозик)
-        if (this.selectedBlocks.length === 0) this.selectedBlocks.push(block.id);
-        if (!this.selectedBlocks.includes(nextBlock.id)) this.selectedBlocks.push(nextBlock.id);
+        if (this.selectedBlocks.length === 0) {this.selectedBlocks.push(block.id);}
+        if (!this.selectedBlocks.includes(nextBlock.id)) {this.selectedBlocks.push(nextBlock.id);}
         // Если луп ещё не запущен — запускаем от первого блока
         if (!this.isLooping) {
             this.startLooping(block);
@@ -1673,7 +1673,7 @@ class BlockLoopControl {
     }
 
     _syncDragModeForBlock(block) {
-        if (!this.dragBoundaryController || !this.dragBoundaryController.isActive) return;
+        if (!this.dragBoundaryController || !this.dragBoundaryController.isActive) {return;}
         let mode = 'both';
         if (this.isLooping && this.isMultiLoopEnabled) {
             if (this.linkedBlock && block.id === this.linkedBlock.id) {
@@ -1693,10 +1693,10 @@ class BlockLoopControl {
 
     _getRememberedBoundaries(blockId) {
         const b = this.blockBoundaryMemory.get(blockId);
-        if (!b) return null;
+        if (!b) {return null;}
         const start = typeof b.start === 'number' ? b.start : b.startBoundary;
         const end = typeof b.end === 'number' ? b.end : b.endBoundary;
-        if (typeof start === 'number' && typeof end === 'number') return { start, end };
+        if (typeof start === 'number' && typeof end === 'number') {return { start, end };}
         return null;
     }
 
@@ -1705,7 +1705,7 @@ class BlockLoopControl {
         this.selectedBlocks = [];
         if (this.loopChipsContainer) { this.loopChipsContainer.innerHTML = ''; }
         const linkedEl = document.querySelector('.rehearsal-active-block.loop-linked, .rehearsal-preview-block.loop-linked');
-        if (linkedEl) linkedEl.classList.remove('loop-linked');
+        if (linkedEl) {linkedEl.classList.remove('loop-linked');}
         this.isMultiLoopEnabled = false;
         this.linkedBlock = null;
         this.combinedStartTime = null;
@@ -1715,9 +1715,9 @@ class BlockLoopControl {
 
     // Рендер вертикального стека чипов по selectedBlocks
     _renderLoopChips() {
-        if (!this.loopChipsContainer) return;
+        if (!this.loopChipsContainer) {return;}
         this.loopChipsContainer.innerHTML = '';
-        if (!this.isLooping || this.selectedBlocks.length < 2) return; // показываем только при паровозике
+        if (!this.isLooping || this.selectedBlocks.length < 2) {return;} // показываем только при паровозике
         const blocks = this._getProcessedBlocks();
         const allowRemove = (id) => {
             // V1: разрешаем удалять только крайние, центральные заблокированы
@@ -1738,11 +1738,11 @@ class BlockLoopControl {
     }
 
     _removeFromTrain(blockId) {
-        if (!this.isLooping || this.selectedBlocks.length < 2) return;
+        if (!this.isLooping || this.selectedBlocks.length < 2) {return;}
         const first = this.selectedBlocks[0];
         const last = this.selectedBlocks[this.selectedBlocks.length - 1];
         // V1: удалять можно только края
-        if (blockId !== first && blockId !== last) return;
+        if (blockId !== first && blockId !== last) {return;}
         this.selectedBlocks = this.selectedBlocks.filter(id => id !== blockId);
         if (this.selectedBlocks.length === 1) {
             // Возврат к одиночному режиму
@@ -1763,17 +1763,17 @@ class BlockLoopControl {
     }
 
     _syncTrainEdges() {
-        if (this.selectedBlocks.length < 2) return;
+        if (this.selectedBlocks.length < 2) {return;}
         const blocks = this._getProcessedBlocks();
         const first = blocks.find(b => b.id === this.selectedBlocks[0]);
         const last = blocks.find(b => b.id === this.selectedBlocks[this.selectedBlocks.length - 1]);
-        if (first) this.currentLoopBlock = first;
-        if (last) this.linkedBlock = last;
+        if (first) {this.currentLoopBlock = first;}
+        if (last) {this.linkedBlock = last;}
         // Пересчёт комбинированного диапазона
         const firstRange = first ? this._getBlockTimeRange(first) : null;
         const lastRange = last ? this._getBlockTimeRange(last) : null;
-        if (firstRange) this.combinedStartTime = this.loopStartTime ?? firstRange.startTime;
-        if (lastRange) this.combinedEndTime = lastRange.endTime;
+        if (firstRange) {this.combinedStartTime = this.loopStartTime ?? firstRange.startTime;}
+        if (lastRange) {this.combinedEndTime = lastRange.endTime;}
         // Выставляем режимы линий: начало у первого, конец у последнего
         this._syncDragModeForBlock(first);
         this._syncDragModeForBlock(last);
@@ -1896,12 +1896,25 @@ class BlockLoopControl {
             wagon.setAttribute('data-title', fullText);
 
             // Тип блока → аккуратная цветовая тема вагона
+            // 1) Пытаемся использовать явный block.type (приходит из LyricsDisplay._sanitizeBlocks)
+            // 2) Фолбэки: по id (blk-verse-*, blk-chorus-*, blk-bridge-*) или по имени
+            const explicitType = typeof block.type === 'string' ? block.type.toLowerCase() : '';
+            const idStr = String(block.id || '');
             const name = (block.name || '').toLowerCase();
-            if (/(verse|куплет)/.test(name)) {
+            const inferFromId = /blk-(verse|chorus|bridge)-/i.test(idStr)
+                ? idStr.replace(/^.*blk-(verse|chorus|bridge)-.*$/i, '$1').toLowerCase()
+                : '';
+            const inferFromName = /(verse|куплет)/.test(name)
+                ? 'verse'
+                : (/(chorus|припев)/.test(name)
+                    ? 'chorus'
+                    : (/(bridge|бридж)/.test(name) ? 'bridge' : ''));
+            const blockType = explicitType || inferFromId || inferFromName;
+            if (blockType === 'verse') {
                 wagon.classList.add('loop-wagon--verse');
-            } else if (/(chorus|припев)/.test(name)) {
+            } else if (blockType === 'chorus') {
                 wagon.classList.add('loop-wagon--chorus');
-            } else if (/(bridge|бридж)/.test(name)) {
+            } else if (blockType === 'bridge') {
                 wagon.classList.add('loop-wagon--bridge');
             }
 
@@ -1912,6 +1925,20 @@ class BlockLoopControl {
 			toggleBtn.onclick = (ev) => {
 				ev.stopPropagation();
 				this._onWagonToggle(block);
+				// Мгновенный визуальный фидбэк
+				try {
+					const idStr = String(block.id);
+					const isSelected = Array.isArray(this.selectedBlocks) && this.selectedBlocks.includes(idStr);
+					if (isSelected) {
+						toggleBtn.classList.add('is-on');
+						wagon.classList.add('is-in-loop');
+						toggleBtn.title = 'Убрать из лупа';
+					} else {
+						toggleBtn.classList.remove('is-on');
+						wagon.classList.remove('is-in-loop');
+						toggleBtn.title = 'Добавить в луп';
+					}
+				} catch(_) {}
 			};
 
 			// Вставляем элементы внутрь кнопки-вагона
@@ -1952,8 +1979,119 @@ class BlockLoopControl {
         try { this._scrollActiveWagonIntoView(); } catch(_) {}
     }
 
+    /**
+     * Возвращает массив блоков для поезда (сохранённый порядок LyricsDisplay)
+     * @private
+     */
+    _getProcessedBlocks() {
+        if (!this.lyricsDisplay || !Array.isArray(this.lyricsDisplay.textBlocks)) {return [];} 
+        return this.lyricsDisplay.textBlocks.slice();
+    }
+
+    /**
+     * Обработчик нажатия на плюс у вагона: добавляет/удаляет блок из цепочки
+     * @param {Object} block - блок, соответствующий вагону
+     * @private
+     */
+    _onWagonToggle(block) {
+        if (!block || block.id === undefined || block.id === null) {return;}
+
+        const blocks = this._getProcessedBlocks();
+        const order = new Map(blocks.map((b, i) => [String(b.id), i]));
+
+        // Если луп не активен — стартуем с текущего активного блока
+        if (!this.isLooping) {
+            const anchor = this.lyricsDisplay?.currentActiveBlock || block;
+            this.startLooping(anchor);
+            this.selectedBlocks = [String(anchor.id)];
+        }
+
+        // Переключаем выбранность вагона (всегда работаем со строковыми id)
+        const blockId = String(block.id);
+        const already = this.selectedBlocks.includes(blockId);
+        if (already) {
+            // Удаляем только крайние блоки, чтобы сохранять непрерывность
+            if (this.selectedBlocks.length > 1) {
+                const first = this.selectedBlocks[0];
+                const last = this.selectedBlocks[this.selectedBlocks.length - 1];
+                if (blockId === first || blockId === last) {
+                    this.selectedBlocks = this.selectedBlocks.filter(id => id !== blockId);
+                }
+            }
+        } else {
+            // Добавляем и сортируем по порядку следования
+            this.selectedBlocks.push(blockId);
+            this.selectedBlocks.sort((a, b) => (order.get(String(a)) ?? 0) - (order.get(String(b)) ?? 0));
+        }
+
+        // Обновляем режим multi-loop
+        if (this.selectedBlocks.length >= 2) {
+            this.isMultiLoopEnabled = true;
+            const firstBlock = blocks.find(b => String(b.id) === this.selectedBlocks[0]);
+            const lastBlock = blocks.find(b => String(b.id) === this.selectedBlocks[this.selectedBlocks.length - 1]);
+            this.currentLoopBlock = firstBlock || this.currentLoopBlock;
+            this.linkedBlock = lastBlock && lastBlock.id !== this.currentLoopBlock?.id ? lastBlock : null;
+
+            // Пересчёт объединённых временных границ
+            const firstRange = firstBlock ? this._getBlockTimeRange(firstBlock) : null;
+            const lastRange = lastBlock ? this._getBlockTimeRange(lastBlock) : null;
+            if (firstRange && lastRange && firstRange.startTime != null && lastRange.endTime != null) {
+                this.combinedStartTime = firstRange.startTime;
+                this.combinedEndTime = lastRange.endTime;
+            }
+        } else {
+            this.isMultiLoopEnabled = false;
+            this.linkedBlock = null;
+            // Синхронизируем single-loop границы с текущим блоком
+            const single = blocks.find(b => String(b.id) === this.selectedBlocks[0]) || this.currentLoopBlock;
+            const r = single ? this._getBlockTimeRange(single) : null;
+            if (r) { this.loopStartTime = r.startTime; this.loopEndTime = r.endTime; }
+        }
+
+        // Визуальный фидбэк: обновляем чек состояния кнопок/вагонов
+        this._updateTrainSelectionStyles();
+        // Также обновим состояние главной кнопки (Stop/Loop)
+        this._updateButtonState(true);
+    }
+
+    /**
+     * Применяет классы выбранности для вагонов и их кнопок (+ → ×)
+     * @private
+     */
+    _updateTrainSelectionStyles() {
+        if (!this.loopTrainContainer) {return;}
+        const selected = new Set(this.selectedBlocks || []);
+        const wagons = this.loopTrainContainer.querySelectorAll('.loop-wagon');
+        wagons.forEach(wagon => {
+            const id = wagon.dataset.blockId;
+            const toggle = wagon.querySelector('.wagon-loop-toggle');
+            const isSelected = selected.has(id);
+            if (isSelected) {
+                wagon.classList.add('is-in-loop');
+                if (toggle) { toggle.classList.add('is-on'); toggle.title = 'Убрать из лупа'; }
+            } else {
+                wagon.classList.remove('is-in-loop');
+                if (toggle) { toggle.classList.remove('is-on'); toggle.title = 'Добавить в луп'; }
+            }
+        });
+    }
+
+    /**
+     * Центрирует активный вагон по возможности
+     * @private
+     */
+    _scrollActiveWagonIntoView() {
+        if (!this.loopTrainContainer || !this.lyricsDisplay?.currentActiveBlock) {return;}
+        const id = this.lyricsDisplay.currentActiveBlock.id;
+        const el = this.loopTrainContainer.querySelector(`.loop-wagon[data-block-id="${id}"]`);
+        if (!el || typeof el.scrollIntoView !== 'function') {return;}
+        try {
+            el.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+        } catch(_) {}
+    }
+
     _hideTrainContainer() {
-        if (this.loopTrainContainer) this.loopTrainContainer.style.display = 'none';
+        if (this.loopTrainContainer) {this.loopTrainContainer.style.display = 'none';}
     }
 
     _destroyLoopTrain() {
@@ -1996,7 +2134,7 @@ class BlockLoopControl {
                     const isRehearsal = document.body.classList.contains('mode-rehearsal');
                     if (isRehearsal) {
                         const hasBlocks = Array.isArray(this.lyricsDisplay?.textBlocks) && this.lyricsDisplay.textBlocks.length > 0;
-                        if (hasBlocks) this._renderLoopTrain(); else this._destroyLoopTrain();
+                        if (hasBlocks) {this._renderLoopTrain();} else {this._destroyLoopTrain();}
                     } else {
                         this._destroyLoopTrain();
                     }
@@ -2030,7 +2168,7 @@ class BlockLoopControl {
 
     // Обновляет позицию портала-поезда над активным блоком
     _updateTrainPortalPosition(blockEl) {
-        if (!this.loopTrainContainer) return;
+        if (!this.loopTrainContainer) {return;}
         // ФИКС: привязка к #lyrics-container для устойчивости между стилями/режимами
         try {
             const lc = document.getElementById('lyrics-container');
@@ -2043,7 +2181,7 @@ class BlockLoopControl {
         } catch(_) {}
         // Fallback на активный блок
         const el = blockEl || this.currentBlockElement || this._findBlockDOMElement(this.lyricsDisplay.currentActiveBlock);
-        if (!el) return;
+        if (!el) {return;}
         try {
             const rect = el.getBoundingClientRect();
             this.loopTrainContainer.style.top = `${Math.max(0, rect.top - 28)}px`;
@@ -2052,11 +2190,11 @@ class BlockLoopControl {
 
     // Многокадровое обновление позиции до стабилизации layout, чтобы поезд не зависал на верхней кромке
     _updateTrainPortalPositionUntilStable(blockEl) {
-        if (!this.loopTrainContainer) return;
+        if (!this.loopTrainContainer) {return;}
         let attempts = 0;
         const maxAttempts = 20; // ~20 кадров (~330-400мс)
         const tick = () => {
-            if (!this.loopTrainContainer) return;
+            if (!this.loopTrainContainer) {return;}
             try {
                 const lc = document.getElementById('lyrics-container');
                 if (lc) {
@@ -2079,7 +2217,7 @@ class BlockLoopControl {
                 }
             } catch(_) {}
             attempts += 1;
-            if (attempts < maxAttempts) requestAnimationFrame(tick);
+            if (attempts < maxAttempts) {requestAnimationFrame(tick);}
         };
         requestAnimationFrame(tick);
     }
@@ -2089,9 +2227,9 @@ class BlockLoopControl {
      * Сохраняем начало фразы и добавляем многоточие (быстро и читабельно).
      */
     _trimTitleToFit(element, fullText) {
-        if (!element || !fullText) return;
+        if (!element || !fullText) {return;}
         // Быстрый путь: если уже помещается, выходим
-        if (element.scrollWidth <= element.clientWidth) return;
+        if (element.scrollWidth <= element.clientWidth) {return;}
         let left = 4; // минимум видимых символов
         let right = fullText.length;
         let best = '';
@@ -2106,15 +2244,15 @@ class BlockLoopControl {
                 right = mid - 1;
             }
         }
-        if (best) element.textContent = best; else element.textContent = fullText;
+        if (best) {element.textContent = best;} else {element.textContent = fullText;}
     }
 
     _updateTrainPlayingHighlight() {
-        if (!this.loopTrainContainer) return;
+        if (!this.loopTrainContainer) {return;}
         const blocks = this._getProcessedBlocks();
-        if (!blocks || blocks.length === 0) return;
+        if (!blocks || blocks.length === 0) {return;}
         const current = this.lyricsDisplay?.currentActiveBlock;
-        if (!current) return;
+        if (!current) {return;}
         const idx = blocks.findIndex(b => b.id === current.id);
         const wagons = this.loopTrainContainer.querySelectorAll('.loop-wagon');
         wagons.forEach(w => w.classList.remove('playing'));
@@ -2127,7 +2265,7 @@ class BlockLoopControl {
 
     // Обновление визуала выбранных вагонов (цепочки)
     _updateTrainSelectionStyles() {
-        if (!this.loopTrainContainer) return;
+        if (!this.loopTrainContainer) {return;}
         const wagons = this.loopTrainContainer.querySelectorAll('.loop-wagon');
         wagons.forEach(w => {
             const id = w.dataset.blockId;
@@ -2143,8 +2281,8 @@ class BlockLoopControl {
 
     // Клик по тогглеру вагона
     _onWagonToggle(block) {
-        if (!block || !block.id) return;
-        if (!Array.isArray(this.selectedBlocks)) this.selectedBlocks = [];
+        if (!block || !block.id) {return;}
+        if (!Array.isArray(this.selectedBlocks)) {this.selectedBlocks = [];}
         // Если луп не включен — включаем на выбранном блоке
         if (!this.isLooping) {
             this.selectedBlocks = [block.id];
@@ -2154,13 +2292,13 @@ class BlockLoopControl {
         }
         // Правило непрерывной цепочки (только расширение по краям или снятие краёв)
         const chain = this.selectedBlocks.slice();
-        if (chain.length === 0) chain.push(this.currentLoopBlock?.id || block.id);
+        if (chain.length === 0) {chain.push(this.currentLoopBlock?.id || block.id);}
         const blocks = this._getProcessedBlocks();
         const idToIndex = new Map(blocks.map((b, i) => [b.id, i]));
         const bIdx = idToIndex.get(block.id);
         const firstIdx = idToIndex.get(chain[0]);
         const lastIdx = idToIndex.get(chain[chain.length - 1]);
-        if (bIdx == null || firstIdx == null || lastIdx == null) return;
+        if (bIdx == null || firstIdx == null || lastIdx == null) {return;}
         // Снятие с краёв
         if (block.id === chain[0] || block.id === chain[chain.length - 1]) {
             if (chain.length === 1) {
@@ -2231,11 +2369,11 @@ class BlockLoopControl {
 
     // Центрирование активного вагона в области видимости
     _scrollActiveWagonIntoView(idx) {
-        if (!this.loopTrainContainer) return;
+        if (!this.loopTrainContainer) {return;}
         const wagons = this.loopTrainContainer.querySelectorAll('.loop-wagon');
-        if (!wagons || wagons.length === 0) return;
+        if (!wagons || wagons.length === 0) {return;}
         let index = typeof idx === 'number' ? idx : Array.from(wagons).findIndex(w => w.classList.contains('playing'));
-        if (index < 0) return;
+        if (index < 0) {return;}
         const wagon = wagons[index];
         const container = this.loopTrainContainer;
         const targetLeft = wagon.offsetLeft - (container.clientWidth - wagon.clientWidth) / 2;

@@ -78,7 +78,7 @@ class VideoProcessor {
      * Запуск обработки видео
      */
     startProcessing() {
-        if (this.isProcessing) return;
+        if (this.isProcessing) {return;}
         
         this.isProcessing = true;
         console.log('🎥 VideoProcessor: Запуск обработки видео');
@@ -169,7 +169,7 @@ class VideoProcessor {
      * Отображение точек лица
      */
     drawFacePoints(landmarks) {
-        if (!landmarks || !Array.isArray(landmarks)) return;
+        if (!landmarks || !Array.isArray(landmarks)) {return;}
         
         this.overlayCtx.fillStyle = this.facePointColor;
         
@@ -243,7 +243,7 @@ class VideoProcessor {
      * Применение фильтра к видео
      */
     applyFilter(filterName, value = 1) {
-        if (!this.canvas) return;
+        if (!this.canvas) {return;}
         
         const filters = {
             blur: `blur(${value}px)`,

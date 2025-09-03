@@ -381,7 +381,7 @@ class EnhancedTextEditor {
             
             blocks.forEach(block => {
                 const blockText = block.querySelector('.block-text');
-                if (!blockText || !blockText.textContent.trim()) return;
+                if (!blockText || !blockText.textContent.trim()) {return;}
                 
                 const blockType = block.getAttribute('data-block-type') || 'verse';
                 const blockContent = blockText.textContent.trim();

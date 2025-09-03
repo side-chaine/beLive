@@ -41,10 +41,74 @@ class AudioEngine {
         this.microphoneEnabled = false;
         this.microphoneVolume = 0.7;
         this.microphoneSource = null;
+        this.microphoneStream = null;
         this.microphoneGain.gain.value = this.microphoneVolume;
         
         console.log("🚀 AudioEngine (Hybrid Engine) - Гибридная архитектура восстановлена");
         this._setupEventListeners();
+
+        // Служебные структуры для синхронизации
+        this._syncNudgeInterval = null;   // периодические мелкие коррекции времени
+        this._seekInProgress = false;     // барьер seek
+        this._lastSeekTime = 0;           // последний момент seek
+
+        // Колбэки завершения обоих потоков
+        this._onBothEndedCallbacks = [];
+    }
+
+    // ===== МИКРОФОН: управление разрешениями и состоянием =====
+    async enableMicrophone() {
+        try {
+            if (this.microphoneEnabled) { return { enabled: true, volume: this.microphoneVolume }; }
+            // Храним один stream во всём приложении, чтобы не было повторных запросов
+            if (!this.microphoneStream) {
+                this.microphoneStream = await navigator.mediaDevices.getUserMedia({
+                    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+                });
+            }
+            if (!this.microphoneSource) {
+                this.microphoneSource = this.audioContext.createMediaStreamSource(this.microphoneStream);
+            }
+            try { this.microphoneSource.disconnect(); } catch(_) {}
+            this.microphoneSource.connect(this.microphoneGain);
+            this.microphoneEnabled = true;
+            this._emitMicState();
+            return { enabled: true, volume: this.microphoneVolume };
+        } catch (e) {
+            console.warn('Microphone enable failed:', e);
+            this.microphoneEnabled = false;
+            this._emitMicState();
+            throw e;
+        }
+    }
+
+    disableMicrophone() {
+        try {
+            // Не останавливаем stream, чтобы Chrome не спрашивал разрешение заново
+            try { this.microphoneSource && this.microphoneSource.disconnect(); } catch(_) {}
+        } finally {
+            this.microphoneEnabled = false;
+            this._emitMicState();
+        }
+    }
+
+    toggleMicrophone() {
+        return this.microphoneEnabled ? (this.disableMicrophone(), { enabled: false, volume: this.microphoneVolume }) : this.enableMicrophone();
+    }
+
+    setMicrophoneVolume(volume) {
+        this.microphoneVolume = Math.max(0, Math.min(1, volume));
+        if (this.microphoneGain) { this.microphoneGain.gain.value = this.microphoneVolume; }
+        this._emitMicState();
+    }
+
+    getMicrophoneState() {
+        return { enabled: !!this.microphoneEnabled, volume: this.microphoneVolume };
+    }
+
+    _emitMicState() {
+        const evt = new CustomEvent('microphone-state-changed', { detail: { enabled: !!this.microphoneEnabled, volume: this.microphoneVolume } });
+        document.dispatchEvent(evt);
     }
     
     _setupEventListeners() {
@@ -121,7 +185,7 @@ class AudioEngine {
      * @private
      */
     _startPositionUpdateInterval() {
-        if (this._positionUpdateInterval) return;
+        if (this._positionUpdateInterval) {return;}
         
         this._positionUpdateInterval = setInterval(() => {
             const currentTime = this.getCurrentTime();
@@ -168,6 +232,27 @@ class AudioEngine {
             }
         });
     }
+
+    /**
+     * Подписка на завершение обоих потоков (инструментал + вокал)
+     * @param {Function} callback
+     */
+    onBothEnded(callback) {
+        if (typeof callback === 'function') {
+            this._onBothEndedCallbacks.push(callback);
+        }
+        return () => {
+            this._onBothEndedCallbacks = this._onBothEndedCallbacks.filter(cb => cb !== callback);
+        };
+    }
+
+    _emitBothEndedOnce() {
+        try {
+            this._onBothEndedCallbacks.forEach(cb => {
+                try { cb(); } catch (e) { console.warn('onBothEnded callback error', e); }
+            });
+        } catch(_) {}
+    }
     
     /**
      * Load a track into the audio engine using hybrid streaming.
@@ -187,7 +272,7 @@ class AudioEngine {
         this.instrumentalAudio.crossOrigin = "anonymous";
 
         // Track blob URLs for cleanup
-        if (instrumentalUrl.startsWith('blob:')) this.activeBlobUrls.push(instrumentalUrl);
+        if (instrumentalUrl.startsWith('blob:')) {this.activeBlobUrls.push(instrumentalUrl);}
 
         // Create a promise that resolves when the instrumental is ready to play
         const instrumentalReadyPromise = new Promise((resolve, reject) => {
@@ -237,7 +322,7 @@ class AudioEngine {
             this.vocalsAudio = new Audio();
             this.vocalsAudio.crossOrigin = "anonymous";
             
-            if (vocalsUrl.startsWith('blob:')) this.activeBlobUrls.push(vocalsUrl);
+            if (vocalsUrl.startsWith('blob:')) {this.activeBlobUrls.push(vocalsUrl);}
 
             vocalsReadyPromise = new Promise((resolve, reject) => {
                 this.vocalsAudio.addEventListener('error', (e) => {
@@ -327,6 +412,24 @@ class AudioEngine {
         console.log('🎯 ГИБРИД: Рассинхронизация устранена!');
 
             this._notifyTrackLoaded();
+            
+            // Навешиваем завершение: основной триггер — окончание инструментала
+            if (this.instrumentalAudio) {
+                this.instrumentalAudio.onended = () => {
+                    const tryEmit = () => {
+                        const vocalsDone = !this.vocalsAudio || this.vocalsAudio.ended || (this.vocalsAudio.readyState >= 2 && Math.abs((this.vocalsAudio.duration || 0) - (this.vocalsAudio.currentTime || 0)) < 0.25);
+                        if (vocalsDone) {
+                            this._emitBothEndedOnce();
+                        } else if (this.vocalsAudio) {
+                            const once = () => { this.vocalsAudio?.removeEventListener('ended', once); this._emitBothEndedOnce(); };
+                            this.vocalsAudio.addEventListener('ended', once, { once: true });
+                        } else {
+                            this._emitBothEndedOnce();
+                        }
+                    };
+                    tryEmit();
+                };
+            }
             
             return {
             duration: this.duration,
@@ -529,44 +632,14 @@ class AudioEngine {
             await this.instrumentalAudio.play();
             console.log('▶️ ИНСТРУМЕНТАЛ: Воспроизведение начато');
 
-            // Play vocals in sync if available. Если источник ещё не подключен — подключим на лету
-            if (this.vocalsAudio && this.vocalsAudio.readyState >= 3) {
-                try {
-                    if (!this.vocalsSourceNode) {
-                        this.vocalsSourceNode = this.audioContext.createMediaElementSource(this.vocalsAudio);
-                        this.vocalsSourceNode.connect(this.vocalsGain);
-                        console.log('🎤 ВОКАЛ ПОДКЛЮЧЕН (on play)');
-                    }
-                    // Sync vocals to instrumental timing
-                    this.vocalsAudio.currentTime = this.instrumentalAudio.currentTime;
-                    await this.vocalsAudio.play();
-                    console.log('🎤 ВОКАЛ: Синхронизирован и воспроизводится');
-                } catch (vocalsError) {
-                    console.warn('⚠️ Вокал не может быть воспроизведен:', vocalsError);
-                }
-            } else if (this.vocalsAudio && !this.vocalsSourceNode) {
-                console.log('🔄 ВОКАЛ: Ожидаем подключения к Web Audio API...');
-                // Попытаемся переподключить через короткую задержку
-                setTimeout(() => {
-                    if (this.vocalsAudio && this.vocalsAudio.readyState >= 3 && !this.vocalsSourceNode) {
-                        try {
-                            this.vocalsSourceNode = this.audioContext.createMediaElementSource(this.vocalsAudio);
-                            this.vocalsSourceNode.connect(this.vocalsGain);
-                            console.log('🎤 ВОКАЛ: Экстренное подключение к Web Audio выполнено');
-                            
-                            // Активируем вокальные контролы
-                            if (window.app && window.app.enableVocalControls) {
-                                window.app.enableVocalControls();
-                            }
-                        } catch (error) {
-                            console.error('❌ Экстренное подключение вокала не удалось:', error);
-                        }
-                    }
-                }, 100);
-            }
+            // Попытаться безопасно стартовать вокал в синхрон
+            await this._ensureVocalsPlayingSync();
 
             this.isPlaying = true;
             this._notifyPlaybackStateChanged();
+            
+            // Запускаем периодические мелкие коррекции синхрона
+            this._startSyncNudger();
             
         } catch (error) {
             console.error('❌ Ошибка воспроизведения:', error);
@@ -590,6 +663,7 @@ class AudioEngine {
 
         this.isPlaying = false;
         this._notifyPlaybackStateChanged();
+        if (this._syncNudgeInterval) { clearInterval(this._syncNudgeInterval); this._syncNudgeInterval = null; }
     }
     
     /**
@@ -609,6 +683,7 @@ class AudioEngine {
         this.isPlaying = false;
         this._notifyPlaybackStateChanged();
         console.log('⏹️ ГИБРИД: Остановлен и сброшен');
+        if (this._syncNudgeInterval) { clearInterval(this._syncNudgeInterval); this._syncNudgeInterval = null; }
     }
     
     /**
@@ -625,13 +700,24 @@ class AudioEngine {
      */
     setCurrentTime(time) {
         if (this.instrumentalAudio) {
+            this._seekInProgress = true;
+            this._lastSeekTime = Date.now();
             this.instrumentalAudio.currentTime = time;
-            
             // Sync vocals if available
-            if (this.vocalsAudio) {
-                this.vocalsAudio.currentTime = time;
-            }
-            
+            if (this.vocalsAudio) { this.vocalsAudio.currentTime = time; }
+            // Финальная фиксация через короткую задержку
+            setTimeout(() => {
+                try {
+                    if (this.instrumentalAudio) {
+                        const t = this.instrumentalAudio.currentTime;
+                        if (this.vocalsAudio && Math.abs((this.vocalsAudio.currentTime || 0) - t) > 0.05) {
+                            this.vocalsAudio.currentTime = t;
+                        }
+                    }
+                } finally {
+                    this._seekInProgress = false;
+                }
+            }, 120);
             console.log(`⏰ СИНХРО: Позиция установлена ${time.toFixed(2)}с`);
         }
     }
@@ -820,8 +906,8 @@ class AudioEngine {
             this.streamDestination = this.audioContext.createMediaStreamDestination();
             
             // Подключаем все нужные узлы к этому назначению
-            if (this.instrumentalGain) this.instrumentalGain.connect(this.streamDestination);
-            if (this.vocalsGain) this.vocalsGain.connect(this.streamDestination);
+            if (this.instrumentalGain) {this.instrumentalGain.connect(this.streamDestination);}
+            if (this.vocalsGain) {this.vocalsGain.connect(this.streamDestination);}
             // Не подключаем микрофон, если не хотим его записывать
             // if (this.microphoneGain) this.microphoneGain.connect(this.streamDestination);
         }
@@ -836,7 +922,7 @@ class AudioEngine {
      */
     async _createSafeUrlFromOriginal(originalUrl) {
         try {
-            if (!originalUrl) return null;
+            if (!originalUrl) {return null;}
             
             // Если это не blob URL или это корректный blob URL, возвращаем как есть
             if (!originalUrl.startsWith('blob:') || !originalUrl.includes('blob:null/')) {
@@ -864,6 +950,68 @@ class AudioEngine {
             console.error('❌ БЕЗОПАСНЫЙ URL: Ошибка конвертации:', error);
             return originalUrl; // Возвращаем исходный URL в случае ошибки
         }
+    }
+
+    // ====== ВНУТРЕННИЙ СИНХРОНИЗАТОР ======
+    async _ensureVocalsPlayingSync(retries = 3) {
+        if (!this.vocalsAudio) { return false; }
+        try {
+            if (!this.vocalsSourceNode && this.vocalsAudio.readyState >= 2) {
+                this.vocalsSourceNode = this.audioContext.createMediaElementSource(this.vocalsAudio);
+                this.vocalsSourceNode.connect(this.vocalsGain);
+                console.log('🎤 ВОКАЛ ПОДКЛЮЧЕН (ensure)');
+            }
+        } catch (e) {
+            console.warn('⚠️ Не удалось подключить вокал к AudioContext:', e);
+        }
+        if (this.vocalsAudio.readyState < 2) {
+            if (retries > 0) {
+                await new Promise(r => setTimeout(r, 200));
+                return this._ensureVocalsPlayingSync(retries - 1);
+            }
+            return false;
+        }
+        try {
+            this.vocalsAudio.currentTime = this.instrumentalAudio ? this.instrumentalAudio.currentTime : 0;
+            await this.vocalsAudio.play();
+            console.log('🎤 ВОКАЛ: Синхронизирован и воспроизводится');
+            if (window.app && window.app.enableVocalControls) {
+                window.app.enableVocalControls();
+            }
+            return true;
+        } catch (err) {
+            if (retries > 0) {
+                console.warn('🔁 Повтор старта вокала...', err?.name || err);
+                await new Promise(r => setTimeout(r, 300 * (4 - retries)));
+                return this._ensureVocalsPlayingSync(retries - 1);
+            }
+            console.warn('⚠️ Вокал не запущен после ретраев');
+            return false;
+        }
+    }
+
+    _startSyncNudger() {
+        if (this._syncNudgeInterval) { clearInterval(this._syncNudgeInterval); }
+        this._syncNudgeInterval = setInterval(() => {
+            try {
+                if (!this._isPlaying || !this.instrumentalAudio) { return; }
+                if (!this.vocalsAudio) { return; }
+                // Не корректируем во время активного seek
+                if (this._seekInProgress) { return; }
+                const a = this.instrumentalAudio.currentTime || 0;
+                const v = this.vocalsAudio.currentTime || 0;
+                const delta = v - a;
+                if (Math.abs(delta) > 0.09) {
+                    this.vocalsAudio.currentTime = a + 0.01;
+                }
+                // Если вокал по какой-то причине остановился — перезапустим тихо
+                if (!this.vocalsAudio.paused && !this.instrumentalAudio.paused) { return; }
+                if (!this.vocalsAudio.paused && this.instrumentalAudio.paused) { return; }
+                if (this.instrumentalAudio && !this.instrumentalAudio.paused && this.vocalsAudio && this.vocalsAudio.paused) {
+                    this._ensureVocalsPlayingSync(1);
+                }
+            } catch(_) {}
+        }, 200);
     }
 }
 

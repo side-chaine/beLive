@@ -56,9 +56,9 @@ class CatalogV2 {
                 const s = db.createObjectStore('tracks', { keyPath: 'id' });
                 s.createIndex('title', 'title', { unique: false });
             }
-            if (!db.objectStoreNames.contains('app_state')) db.createObjectStore('app_state', { keyPath: 'key' });
-            if (!db.objectStoreNames.contains('temp_audio_files')) db.createObjectStore('temp_audio_files', { keyPath: 'id' });
-            if (!db.objectStoreNames.contains('my_music')) db.createObjectStore('my_music', { keyPath: 'trackId' });
+            if (!db.objectStoreNames.contains('app_state')) {db.createObjectStore('app_state', { keyPath: 'key' });}
+            if (!db.objectStoreNames.contains('temp_audio_files')) {db.createObjectStore('temp_audio_files', { keyPath: 'id' });}
+            if (!db.objectStoreNames.contains('my_music')) {db.createObjectStore('my_music', { keyPath: 'trackId' });}
         };
         request.onsuccess = (event) => {
             this.db = event.target.result;
@@ -153,7 +153,7 @@ class CatalogV2 {
         // Кандидаты: старая прод/дев база. Исключаем текущую
         const current = (window.__DB_NAME || 'TextAppDB');
         const candidates = ['TextAppDB', 'TextAppDB_DEV'].filter(n => n !== current);
-        if (candidates.length === 0) return;
+        if (candidates.length === 0) {return;}
         for (const name of candidates) {
             try {
                 const srcDb = await new Promise((resolve, reject) => {
@@ -203,7 +203,7 @@ class CatalogV2 {
     
     renderMyMusic() {
         const myMusicContent = this.overlay.querySelector('.my-music-content');
-        if (!myMusicContent) return;
+        if (!myMusicContent) {return;}
         
         // 🎯 Берём только треки, добавленные пользователем в "Мою музыку"
         const allTracks = (window.trackCatalog && window.trackCatalog.tracks) ? window.trackCatalog.tracks : this.tracks;
@@ -251,7 +251,7 @@ class CatalogV2 {
                 e.stopPropagation();
                 const item = e.currentTarget.closest('.track-item');
                 const id = parseInt(item?.dataset?.trackId);
-                if (!id || !this.db) return;
+                if (!id || !this.db) {return;}
                 await this.removeFromMyMusic(id);
                 this.renderMyMusic();
             });
@@ -261,7 +261,7 @@ class CatalogV2 {
     // Рендер всего каталога (панель Поиск) всеми треками
     renderSearchAllTracks() {
         const searchResults = document.querySelector('.search-results');
-        if (!searchResults) return;
+        if (!searchResults) {return;}
         const source = (window.trackCatalog && window.trackCatalog.tracks) ? window.trackCatalog.tracks : this.tracks;
         searchResults.innerHTML = '';
         if (!source || source.length === 0) {
@@ -288,11 +288,11 @@ class CatalogV2 {
     // Подключение поля поиска для фильтрации
     attachSearchHandlers() {
         const input = document.querySelector('.search-mode-content input[type="text"], .search-input');
-        if (!input) return;
+        if (!input) {return;}
         input.addEventListener('input', () => {
             const q = (input.value || '').toLowerCase();
             const searchResults = document.querySelector('.search-results');
-            if (!searchResults) return;
+            if (!searchResults) {return;}
             const source = (window.trackCatalog && window.trackCatalog.tracks) ? window.trackCatalog.tracks : this.tracks;
             const filtered = !q ? source : source.filter(t => (t.title || '').toLowerCase().includes(q));
             searchResults.innerHTML = '';
@@ -304,7 +304,7 @@ class CatalogV2 {
     _initPlaylistsUI() {
         try {
             const panel = this.overlay.querySelector('#playlists-panel');
-            if (!panel) return;
+            if (!panel) {return;}
             panel.innerHTML = `
                 <div class="create-playlist-section">
                     <button class="create-playlist-btn" id="create-playlist-btn">
@@ -339,9 +339,9 @@ class CatalogV2 {
         const ctor = this.overlay.querySelector('#playlist-constructor');
         const btn = this.overlay.querySelector('#create-playlist-btn');
         const nameInput = this.overlay.querySelector('#playlist-name-input');
-        if (ctor) ctor.style.display = 'flex';
-        if (btn) btn.style.display = 'none';
-        if (nameInput) nameInput.value = this.currentPlaylistName;
+        if (ctor) {ctor.style.display = 'flex';}
+        if (btn) {btn.style.display = 'none';}
+        if (nameInput) {nameInput.value = this.currentPlaylistName;}
         this._setPlusPulse(true);
         this._updatePlaylistSummary();
     }
@@ -351,8 +351,8 @@ class CatalogV2 {
         this.currentPlaylist = [];
         const ctor = this.overlay.querySelector('#playlist-constructor');
         const btn = this.overlay.querySelector('#create-playlist-btn');
-        if (ctor) ctor.style.display = 'none';
-        if (btn) btn.style.display = 'flex';
+        if (ctor) {ctor.style.display = 'none';}
+        if (btn) {btn.style.display = 'flex';}
         this._setPlusPulse(false);
     }
 
@@ -381,7 +381,7 @@ class CatalogV2 {
 
     _renderSavedPlaylist(data) {
         const container = this.overlay.querySelector('#saved-playlists');
-        if (!container) return;
+        if (!container) {return;}
         const total = data.tracks.length;
         const el = document.createElement('div');
         el.className = 'playlist-item';
@@ -403,6 +403,7 @@ class CatalogV2 {
         });
         el.querySelector('.play-btn').addEventListener('click', (e) => {
             e.stopPropagation();
+            try { this.close(); } catch(_) {}
             this._playPlaylistSequentially(data);
         });
         el.querySelector('.delete-btn').addEventListener('click', (e) => {
@@ -418,44 +419,44 @@ class CatalogV2 {
 
     _updatePlaylistSummary() {
         const countEl = this.overlay.querySelector('#constructor-track-count');
-        if (countEl) countEl.textContent = String(this.currentPlaylist.length);
+        if (countEl) {countEl.textContent = String(this.currentPlaylist.length);}
     }
 
     _setPlusPulse(on) {
         try {
             const selector = '.add-btn, .add-to-playlist-btn, .add-to-setlist-btn';
             this.overlay.querySelectorAll(selector).forEach(btn => {
-                if (on) btn.classList.add('add-btn-pulse'); else btn.classList.remove('add-btn-pulse');
+                if (on) {btn.classList.add('add-btn-pulse');} else {btn.classList.remove('add-btn-pulse');}
             });
         } catch(_) {}
     }
 
     _rerenderSavedPlaylists() {
         const container = this.overlay.querySelector('#saved-playlists');
-        if (!container) return;
+        if (!container) {return;}
         container.innerHTML = '';
         [...this.playlists].reverse().forEach(p => this._renderSavedPlaylist(p));
     }
 
     // === Sequential playback (MVP) ===
     _playPlaylistSequentially(playlist) {
-        if (!playlist || !Array.isArray(playlist.tracks) || playlist.tracks.length === 0) return;
+        if (!playlist || !Array.isArray(playlist.tracks) || playlist.tracks.length === 0) {return;}
         let index = 0;
         const playNext = () => {
             const t = playlist.tracks[index];
-            if (!t) return;
+            if (!t) {return;}
             const all = (window.trackCatalog?.tracks || []);
             const candidate = all.find(x => (x.title || '').startsWith(t.title));
             if (!candidate) { index = (index + 1) % playlist.tracks.length; return playNext(); }
             const i = all.indexOf(candidate);
             window.trackCatalog.loadTrack(i, { autoplay: true, openSyncEditor: false }).then(() => {
                 const ae = window.audioEngine;
-                if (ae?.instrumentalAudio) {
-                    ae.instrumentalAudio.onended = () => {
-                        ae.instrumentalAudio.onended = null;
+                if (ae && typeof ae.onBothEnded === 'function') {
+                    const unsub = ae.onBothEnded(() => {
+                        if (typeof unsub === 'function') { try { unsub(); } catch(_) {} }
                         index = (index + 1) % playlist.tracks.length;
                         playNext();
-                    };
+                    });
                 } else {
                     const duration = candidate.duration || 0;
                     setTimeout(() => { index = (index + 1) % playlist.tracks.length; playNext(); }, Math.max(500, duration * 1000));
@@ -474,11 +475,11 @@ class CatalogV2 {
         this.editingPlaylistId = playlist.id;
         const ctor = this.overlay.querySelector('#playlist-constructor');
         const btn = this.overlay.querySelector('#create-playlist-btn');
-        if (btn) btn.style.display = 'none';
+        if (btn) {btn.style.display = 'none';}
         if (ctor) {
             ctor.style.display = 'flex';
             const nameInput = this.overlay.querySelector('#playlist-name-input');
-            if (nameInput) nameInput.value = this.currentPlaylistName;
+            if (nameInput) {nameInput.value = this.currentPlaylistName;}
             const list = this.overlay.querySelector('#constructor-tracks');
             if (list) {
                 list.innerHTML = '';
@@ -505,14 +506,14 @@ class CatalogV2 {
         let dragEl = null;
         listEl.addEventListener('dragstart', (e) => {
             const li = e.target.closest('.constructor-track-item');
-            if (!li) return;
+            if (!li) {return;}
             dragEl = li;
             li.classList.add('dragging');
             listEl.classList.add('drag-target');
             e.dataTransfer.effectAllowed = 'move';
         });
         listEl.addEventListener('dragend', () => {
-            if (dragEl) dragEl.classList.remove('dragging');
+            if (dragEl) {dragEl.classList.remove('dragging');}
             listEl.classList.remove('drag-target');
             dragEl = null;
             // Обновляем порядок в currentPlaylist
@@ -523,8 +524,8 @@ class CatalogV2 {
         listEl.addEventListener('dragover', (e) => {
             e.preventDefault();
             const afterEl = this._getDragAfterElement(listEl, e.clientY);
-            if (!dragEl) return;
-            if (afterEl == null) listEl.appendChild(dragEl); else listEl.insertBefore(dragEl, afterEl);
+            if (!dragEl) {return;}
+            if (afterEl == null) {listEl.appendChild(dragEl);} else {listEl.insertBefore(dragEl, afterEl);}
         });
     }
 
@@ -533,15 +534,15 @@ class CatalogV2 {
         return els.reduce((closest, child) => {
             const box = child.getBoundingClientRect();
             const offset = y - box.top - box.height / 2;
-            if (offset < 0 && offset > closest.offset) return { offset, element: child };
-            else return closest;
+            if (offset < 0 && offset > closest.offset) {return { offset, element: child };}
+            else {return closest;}
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
     // === Persistence for playlists ===
     _savePlaylistsToDB() {
         try {
-            if (!this.db) return;
+            if (!this.db) {return;}
             const tx = this.db.transaction('app_state', 'readwrite');
             const store = tx.objectStore('app_state');
             store.put({ key: 'playlists_v1', value: this.playlists, lastUpdated: Date.now() });
@@ -588,7 +589,7 @@ class CatalogV2 {
             } else if (track && typeof track.title === 'string') {
                 artist = this._extractArtistFromTitle(track.title) || artist;
             }
-            if (!grouped[artist]) grouped[artist] = [];
+            if (!grouped[artist]) {grouped[artist] = [];}
             grouped[artist].push(track);
         });
         return grouped;
@@ -684,7 +685,7 @@ class CatalogV2 {
             // Удаление трека из общего каталога (правый столбец)
             if (e.target.classList.contains('delete-btn')) {
                 const id = parseInt(e.target.dataset.trackId || e.target.closest('.track-item')?.dataset?.trackId);
-                if (!id) return;
+                if (!id) {return;}
                 this.deleteTrackFromCatalog(id);
             }
 
@@ -823,7 +824,7 @@ class CatalogV2 {
     
     playTrack(button) {
         const trackItem = button.closest('.track-item');
-        if (!trackItem) return;
+        if (!trackItem) {return;}
         
         const trackId = parseInt(trackItem.dataset.trackId);
         
@@ -884,7 +885,7 @@ class CatalogV2 {
     
     addToPlaylist(button) {
         const trackItem = button.closest('.track-item');
-        if (!trackItem) return;
+        if (!trackItem) {return;}
         
         const trackId = parseInt(trackItem.dataset.trackId);
         
@@ -933,7 +934,7 @@ class CatalogV2 {
                         if (btn) { btn.textContent = '➕'; btn.disabled = false; }
                     });
                     const placeholder = list.querySelector('.drop-zone-message');
-                    if (placeholder) placeholder.style.display = 'none';
+                    if (placeholder) {placeholder.style.display = 'none';}
                     list.appendChild(row);
                 }
             }
@@ -1228,7 +1229,7 @@ class CatalogV2 {
         
         // Находим контейнер результатов поиска
         const searchResults = document.querySelector('.search-results');
-        if (!searchResults) return;
+        if (!searchResults) {return;}
         
         // Убираем пустое состояние
         const emptyState = searchResults.querySelector('.empty-state');
@@ -1271,7 +1272,7 @@ class CatalogV2 {
     // 🗑️ Удаление трека из общего каталога (IndexedDB + UI)
     async deleteTrackFromCatalog(trackId) {
         try {
-            if (!confirm('Удалить трек из каталога?')) return;
+            if (!confirm('Удалить трек из каталога?')) {return;}
             // Удаление из основной БД треков
             if (window.trackCatalog && typeof window.trackCatalog.deleteTrack === 'function') {
                 // deleteTrack не возвращает Promise — запускаем и сразу обновляем UI
@@ -1282,7 +1283,7 @@ class CatalogV2 {
             // Немедленное удаление из DOM (правой колонки)
             try {
                 const item = document.querySelector(`.search-results .track-item[data-track-id="${trackId}"]`);
-                if (item && item.parentElement) item.parentElement.removeChild(item);
+                if (item && item.parentElement) {item.parentElement.removeChild(item);}
             } catch(_) {}
             // Отложенная перерисовка (даём IndexedDB завершить операцию)
             setTimeout(() => this.renderSearchAllTracks(), 200);
@@ -1427,7 +1428,7 @@ class CatalogV2 {
     }
     
     open() {
-        if (!this.overlay) return;
+        if (!this.overlay) {return;}
         
         this.overlay.classList.remove('hidden');
         this.isOpen = true;
@@ -1436,7 +1437,7 @@ class CatalogV2 {
     }
     
     close() {
-        if (!this.overlay) return;
+        if (!this.overlay) {return;}
         
         this.overlay.classList.add('hidden');
         this.isOpen = false;
@@ -1445,7 +1446,7 @@ class CatalogV2 {
     }
 
     async loadMyMusicFromDB() {
-        if (!this.db) return;
+        if (!this.db) {return;}
         try {
             const tx = this.db.transaction(['my_music'], 'readonly');
             const store = tx.objectStore('my_music');
@@ -1459,7 +1460,7 @@ class CatalogV2 {
     }
 
     async addToMyMusic(trackId) {
-        if (!this.db || !trackId) return;
+        if (!this.db || !trackId) {return;}
         try {
             const tx = this.db.transaction(['my_music'], 'readwrite');
             const store = tx.objectStore('my_music');
@@ -1469,7 +1470,7 @@ class CatalogV2 {
     }
 
     async removeFromMyMusic(trackId) {
-        if (!this.db || !trackId) return;
+        if (!this.db || !trackId) {return;}
         try {
             const tx = this.db.transaction(['my_music'], 'readwrite');
             const store = tx.objectStore('my_music');

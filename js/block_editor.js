@@ -83,7 +83,7 @@ function createAndSetupBlock(container, text = '', placeholder = 'Введите
 
 // Функция для интеллектуального разделения текста на блоки
 function splitTextIntoBlocks(text) {
-    if (!text || text.trim() === '') return [];
+    if (!text || text.trim() === '') {return [];}
     
     // Нормализуем все переносы строк к \n
     const normalizedText = text.replace(/\r\n|\r/g, '\n');
@@ -189,22 +189,22 @@ function determineBlockTypes(blocks) {
 
 // Новая функция для вычисления сходства между блоками
 function calculateBlockSimilarity(block1, block2) {
-    if (!block1 || !block2) return 0;
+    if (!block1 || !block2) {return 0;}
     
     const lines1 = block1.split('\n').map(line => line.trim().toLowerCase());
     const lines2 = block2.split('\n').map(line => line.trim().toLowerCase());
     
     // Проверка на абсолютное совпадение
-    if (block1.toLowerCase() === block2.toLowerCase()) return 1.0;
+    if (block1.toLowerCase() === block2.toLowerCase()) {return 1.0;}
     
     // Если блоки очень разного размера, они вряд ли похожи
     const lengthRatio = Math.min(lines1.length, lines2.length) / Math.max(lines1.length, lines2.length);
-    if (lengthRatio < 0.5) return 0.0;
+    if (lengthRatio < 0.5) {return 0.0;}
     
     // Считаем количество совпадающих строк
     let matchingLines = 0;
     for (const line1 of lines1) {
-        if (line1.length < 3) continue; // Пропускаем слишком короткие строки
+        if (line1.length < 3) {continue;} // Пропускаем слишком короткие строки
         
         for (const line2 of lines2) {
             if (line1 === line2 || 
@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Новый текстовый блок добавлен.');
         });
     } else {
-        if (!addBlockBtn && blockListArea) console.warn('Кнопка "Добавить блок" не найдена.');
+        if (!addBlockBtn && blockListArea) {console.warn('Кнопка "Добавить блок" не найдена.');}
         // Если blockListArea нет, предупреждение уже было выше.
     }
 

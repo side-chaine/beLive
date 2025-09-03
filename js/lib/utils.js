@@ -6,8 +6,8 @@
 const DOMUtils = {
     createElement(tag, className = '', text = '') {
         const element = document.createElement(tag);
-        if (className) element.className = className;
-        if (text) element.textContent = text;
+        if (className) {element.className = className;}
+        if (text) {element.textContent = text;}
         return element;
     },
     
@@ -30,7 +30,7 @@ const CanvasUtils = {
     },
     
     drawLines(ctx, points, color = '#00ff00', lineWidth = 1) {
-        if (points.length < 2) return;
+        if (points.length < 2) {return;}
         
         ctx.strokeStyle = color;
         ctx.lineWidth = lineWidth;

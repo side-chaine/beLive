@@ -154,7 +154,7 @@ class MarkerManager {
      */
     _activateNextLine(lineIndex) {
         // Make sure the line index is valid
-        if (lineIndex < 0 || lineIndex >= this.lyricsDisplay.lyrics.length) return;
+        if (lineIndex < 0 || lineIndex >= this.lyricsDisplay.lyrics.length) {return;}
         
         // Tell the lyrics display to activate this line
         this.lyricsDisplay.setActiveLine(lineIndex);
@@ -236,7 +236,7 @@ class MarkerManager {
             if (block.lineIndices && block.lineIndices.includes(lineIndex)) {
                 // Разрешённые типы
                 const allowed = new Set(['verse','chorus','bridge']);
-                if (block.type && allowed.has(block.type)) return block.type;
+                if (block.type && allowed.has(block.type)) {return block.type;}
                 return 'unknown';
             }
         }
@@ -423,7 +423,7 @@ class MarkerManager {
      * Используется когда загружаются новые блоки текста
      */
     updateMarkerColors() {
-        if (!this.markers || this.markers.length === 0) return;
+        if (!this.markers || this.markers.length === 0) {return;}
         
         let updated = false;
         const hasBlocks = !!(this.lyricsDisplay && Array.isArray(this.lyricsDisplay.textBlocks) && this.lyricsDisplay.textBlocks.length > 0);
@@ -546,7 +546,7 @@ class MarkerManager {
         });
         
         // If not in edit mode or no markers, nothing to highlight
-        if (!this.markers || this.markers.length === 0) return;
+        if (!this.markers || this.markers.length === 0) {return;}
         
         // Get all line indexes that have markers
         const markedLines = this.markers.map(marker => marker.lineIndex);
@@ -627,7 +627,7 @@ class MarkerManager {
      * @private
      */
     _applyMarkerColorToLine(lineElement, marker) {
-        if (!lineElement || !marker) return;
+        if (!lineElement || !marker) {return;}
         
         // Добавляем CSS класс для типа блока
         if (marker.blockType) {
@@ -669,7 +669,7 @@ class MarkerManager {
      * @private
      */
     _notifySubscribers(event, data) {
-        if (!this.subscribers[event]) return;
+        if (!this.subscribers[event]) {return;}
         
         this.subscribers[event].forEach(callback => {
             try {
@@ -802,7 +802,7 @@ class MarkerManager {
      * Группируем по непрерывным отрезкам одинакового blockType.
      */
     _buildBlocksFromMarkers(markers) {
-        if (!Array.isArray(markers) || markers.length === 0) return [];
+        if (!Array.isArray(markers) || markers.length === 0) {return [];}
         const sorted = [...markers].sort((a,b)=>a.lineIndex-b.lineIndex);
         const blocks = [];
         let current = null;

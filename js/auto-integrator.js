@@ -58,7 +58,7 @@
             const loadScript = (id, path, onLoadCallback) => {
                 if (document.getElementById(id)) {
                     console.log(`AutoIntegrator: Скрипт с ID '${id}' уже существует.`);
-                    if (onLoadCallback) onLoadCallback();
+                    if (onLoadCallback) {onLoadCallback();}
                     return;
                 }
                 const script = document.createElement('script');
@@ -67,7 +67,7 @@
                 script.async = false; // Важно для последовательной загрузки
                 script.onload = () => {
                     console.log(`AutoIntegrator: Скрипт '${path}' успешно загружен.`);
-                    if (onLoadCallback) onLoadCallback();
+                    if (onLoadCallback) {onLoadCallback();}
                 };
                 script.onerror = () => {
                     console.error(`AutoIntegrator: Ошибка при загрузке скрипта '${path}'.`);

@@ -270,7 +270,7 @@ class MaskSystem {
             const category = this.categories[categoryKey];
             const btn = document.createElement('button');
             btn.className = 'mask-category-btn';
-            if (categoryKey === this.currentCategory) btn.classList.add('active');
+            if (categoryKey === this.currentCategory) {btn.classList.add('active');}
             btn.innerHTML = `${category.icon} ${category.name}`;
             btn.onclick = (event) => this.switchCategory(categoryKey, event);
             categoriesContainer.appendChild(btn);
@@ -317,10 +317,10 @@ class MaskSystem {
     }
     
     updateMasksGrid() {
-        if (!this.masksContainer) return;
+        if (!this.masksContainer) {return;}
         
         const categoryData = this.categories[this.currentCategory];
-        if (!categoryData) return;
+        if (!categoryData) {return;}
         
         const currentMasks = categoryData.masks;
         
@@ -967,7 +967,7 @@ class MaskSystem {
      * Обработка результатов Face Mesh для overlay масок
      */
     handleOverlayMaskResults(results, mask) {
-        if (!this.overlayCanvas || !results.multiFaceLandmarks) return;
+        if (!this.overlayCanvas || !results.multiFaceLandmarks) {return;}
 
         const ctx = this.overlayCanvas.getContext('2d');
         const canvas = this.overlayCanvas;
@@ -1020,7 +1020,7 @@ class MaskSystem {
         const rightEye = landmarks[362]; // Правый угол правого глаза
         const nose = landmarks[168]; // Переносица
 
-        if (!leftEye || !rightEye || !nose) return;
+        if (!leftEye || !rightEye || !nose) {return;}
 
         // ИСПРАВЛЕНО: Зеркалируем координаты X для соответствия CSS-зеркалированному видео
         const x1 = leftEye.x * width;
@@ -1069,7 +1069,7 @@ class MaskSystem {
         const leftMouth = landmarks[61]; // Левый уголок рта
         const rightMouth = landmarks[291]; // Правый уголок рта
 
-        if (!upperLip || !leftMouth || !rightMouth) return;
+        if (!upperLip || !leftMouth || !rightMouth) {return;}
 
         // ИСПРАВЛЕНО: Зеркалируем координаты X для соответствия CSS-зеркалированному видео
         const centerX = upperLip.x * width;
@@ -1105,7 +1105,7 @@ class MaskSystem {
         const leftTemple = landmarks[103]; // Левый висок
         const rightTemple = landmarks[332]; // Правый висок
 
-        if (!forehead || !leftTemple || !rightTemple) return;
+        if (!forehead || !leftTemple || !rightTemple) {return;}
 
         // ИСПРАВЛЕНО: Зеркалируем координаты X для соответствия CSS-зеркалированному видео
         const centerX = forehead.x * width;
@@ -1140,7 +1140,7 @@ class MaskSystem {
         const leftTemple = landmarks[103];
         const rightTemple = landmarks[332];
 
-        if (!forehead || !leftTemple || !rightTemple) return;
+        if (!forehead || !leftTemple || !rightTemple) {return;}
 
         // ИСПРАВЛЕНО: Зеркалируем координаты X для соответствия CSS-зеркалированному видео
         const centerX = forehead.x * width;
@@ -1462,10 +1462,10 @@ class MaskSystem {
      * Создание overlay canvas для отображения эффектов
      */
     createOverlayCanvas() {
-        if (this.overlayCanvas) return;
+        if (this.overlayCanvas) {return;}
         
         const videoContainer = this.videoElement.parentElement;
-        if (!videoContainer) return;
+        if (!videoContainer) {return;}
         
         this.overlayCanvas = document.createElement('canvas');
         this.overlayCanvas.className = 'mask-overlay-canvas';
@@ -1502,7 +1502,7 @@ class MaskSystem {
      * Рисование результатов детектирования лица
      */
     drawFaceResults(faces) {
-        if (!this.overlayContext || !faces.length) return;
+        if (!this.overlayContext || !faces.length) {return;}
         
         const face = faces[0]; // Берем первое лицо
         
@@ -1981,7 +1981,7 @@ class MaskSystem {
 
     async processEmotionDetection() {
         try {
-            if (!this.overlayCanvas || !this.isProcessing) return;
+            if (!this.overlayCanvas || !this.isProcessing) {return;}
             
             const ctx = this.overlayCanvas.getContext('2d');
             ctx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
@@ -2074,7 +2074,7 @@ class MaskSystem {
 
     async processAgeDetection() {
         try {
-            if (!this.overlayCanvas || !this.isProcessing) return;
+            if (!this.overlayCanvas || !this.isProcessing) {return;}
             
             const ctx = this.overlayCanvas.getContext('2d');
             ctx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
@@ -2201,7 +2201,7 @@ class MaskSystem {
 
     // Обработка результатов Selfie Segmentation
     onSelfieSegmentationResults(results) {
-        if (!this.overlayCanvas || !this.overlayCanvas.getContext) return;
+        if (!this.overlayCanvas || !this.overlayCanvas.getContext) {return;}
         
         // Более агрессивный throttling для быстродействия (максимум 15 FPS)
         const now = Date.now();
@@ -2699,7 +2699,7 @@ class MaskSystem {
         try {
             // ОПТИМИЗИРОВАНО: Добавляем дополнительный throttling на уровне отправки кадров
             const now = Date.now();
-            if (!this.lastFrameSendTime) this.lastFrameSendTime = 0;
+            if (!this.lastFrameSendTime) {this.lastFrameSendTime = 0;}
             
             // Отправляем кадры не чаще 15 FPS для стабильности
             if (now - this.lastFrameSendTime < 67) {
@@ -3764,7 +3764,7 @@ class MaskSystem {
         
         for (let i = 1; i < words.length; i++) {
             const word = words[i];
-            if (!word) continue; // Пропускаем пустые слова
+            if (!word) {continue;} // Пропускаем пустые слова
             
             const width = ctx.measureText(currentLine + ' ' + word).width;
             

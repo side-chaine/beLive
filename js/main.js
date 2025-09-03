@@ -38,7 +38,7 @@ class PitchDetectionEngine {
     }
     
     startDetection() {
-        if (!this.detector) return;
+        if (!this.detector) {return;}
         this.isActive = true;
         console.log('🎵 Запуск pitch detection...');
         this.detectPitch();
@@ -50,7 +50,7 @@ class PitchDetectionEngine {
     }
     
     detectPitch() {
-        if (!this.isActive) return;
+        if (!this.isActive) {return;}
         
         this.analyser.getFloatTimeDomainData(this.dataArray);
         const [frequency, clarity] = this.detector.findPitch(this.dataArray, this.audioContext.sampleRate);

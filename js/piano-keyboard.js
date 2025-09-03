@@ -135,32 +135,52 @@ class PianoKeyboard {
     }
 
     async init() {
-        console.log('🎹 Инициализация клавиатуры...');
-        
-        await this.waitForPitchy();
+        if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🎹 Инициализация клавиатуры (lazy) ...'); }
+        // Лёгкая инициализация: только канвас и локальные обработчики.
+        // Всё тяжёлое (Pitchy, аудио, анализ) — ТОЛЬКО при нажатии на кнопку.
         this.setupCanvas();
         this.setupEventListeners();
-        this.setupAutoAudioEngineIntegration();
-        this.keys = this.generatePianoKeys();
-        
-        console.log('🎹 Piano Keyboard инициализирован');
-        
-        // Начальная калибровка при инициализации
-        setTimeout(() => {
-            console.log('🎯 Начальная калибровка системы...');
-            this.runPitchCalibrationTests();
-        }, 2000);
+        this._initialized = false; // будет подготовлено при первом show()
+        if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🎹 Piano Keyboard готов к ленивому запуску'); }
     }
 
     async waitForPitchy() {
         return new Promise((resolve) => {
-            const check = () => {
-                if (window.PitchDetector) {
-                    console.log('✅ Pitchy готов для точной детекции');
-                    resolve();
-                } else {
-                    setTimeout(check, 100);
+            const ensureScript = (src) => {
+                return new Promise((res) => {
+                    const el = document.createElement('script');
+                    el.async = true;
+                    el.src = src;
+                    el.onload = () => res(true);
+                    el.onerror = () => res(false);
+                    document.head.appendChild(el);
+                });
+            };
+            const normalizeGlobals = () => {
+                if (!window.PitchDetector && window.pitchy && window.pitchy.PitchDetector) {
+                    window.PitchDetector = window.pitchy.PitchDetector;
                 }
+                if (!window.PitchDetector && window.Pitchy && window.Pitchy.PitchDetector) {
+                    window.PitchDetector = window.Pitchy.PitchDetector;
+                }
+            };
+            let injected = false;
+            const check = async () => {
+                normalizeGlobals();
+                if (window.PitchDetector) {
+                    if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('✅ Pitchy готов для точной детекции'); }
+                    resolve();
+                    return;
+                }
+                // esm.sh мог отвалиться — подстрахуемся одноразовой подгрузкой UMD
+                if (!injected) {
+                    injected = true;
+                    const okCdn = await ensureScript('https://cdn.jsdelivr.net/npm/pitchy/dist/pitchy.umd.js');
+                    if (!okCdn) {
+                        await ensureScript('https://unpkg.com/pitchy@latest/dist/pitchy.umd.js');
+                    }
+                }
+                setTimeout(check, 150);
             };
             check();
         });
@@ -192,9 +212,7 @@ class PianoKeyboard {
             }
         };
         
-        // Устанавливаем ГЛОБАЛЬНЫЕ перехватчики с высоким приоритетом
-        document.addEventListener('keydown', this.globalKeyHandler, true); // true = capture phase
-        document.addEventListener('keyup', this.globalKeyUpHandler, true);
+        // Глобальные перехватчики подключаем только при активной клавиатуре (в show)
         
         // ⏩ ЛОКАЛЬНЫЕ обработчики для режима клавиш
         this.keydownHandler = (e) => {
@@ -213,19 +231,31 @@ class PianoKeyboard {
         };
         
         this.clickHandler = (e) => {
-            if (!this.canvas) return;
+            if (!this.canvas) {return;}
             
             const rect = this.canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
             
-            // Кнопка закрытия
-            const closeButtonSize = 50;
-            const closeButtonX = this.canvas.width - closeButtonSize;
-            const closeButtonY = 0;
+            // Кнопка закрытия: над клавиатурой справа
+            const dpr = window.devicePixelRatio || 1;
+            const size = 40 * dpr;
+            const margin = 16 * dpr;
+            const canvasHeightCss = this.canvas.height / dpr;
+            let keyboardTop = canvasHeightCss - 200; // запасной вариант
+            if (this.keys && this.keys.length) {
+                keyboardTop = this.keys.reduce((min, k) => {
+                    const ky = typeof k.y === 'number' ? k.y : min;
+                    return ky < min ? ky : min;
+                }, keyboardTop) - 12;
+                if (!isFinite(keyboardTop)) { keyboardTop = canvasHeightCss - 200; }
+                if (keyboardTop < 0) { keyboardTop = 0; }
+            }
+            const closeButtonX = this.canvas.width - size - margin;
+            const closeButtonY = Math.max(8 * dpr, (keyboardTop * dpr) - size - 2 * dpr);
             
-            if (x >= closeButtonX && x <= closeButtonX + closeButtonSize && 
-                y >= closeButtonY && y <= closeButtonY + closeButtonSize) {
+            if (x * dpr >= closeButtonX && x * dpr <= closeButtonX + size &&
+                y * dpr >= closeButtonY && y * dpr <= closeButtonY + size) {
                 this.hide();
                 return;
             }
@@ -237,14 +267,61 @@ class PianoKeyboard {
         const initPianoButton = () => {
             const pianoBtn = document.getElementById('piano-keyboard-btn');
             if (pianoBtn) {
-                console.log('🎹 Кнопка найдена');
-                // 🔒 FROZEN: Временно отключаем функциональность Pitch, оставляя кнопку без действия
-                pianoBtn.addEventListener('click', (e) => {
+                if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🎹 Кнопка Pitch найдена'); }
+                // Короткий клик — вкл/выкл
+                pianoBtn.addEventListener('click', async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Pitch (piano-keyboard) временно отключен');
+                    try {
+                        // Блокируем повторные клики на время загрузки
+                        if (pianoBtn.dataset.loading === '1') {return;}
+                        pianoBtn.dataset.loading = '1';
+                        pianoBtn.classList.add('loading');
+                        const oldTitle = pianoBtn.title;
+                        pianoBtn.title = 'Загрузка Pitch…';
+
+                        // Не разрешаем запуск в караоке
+                        if (document.body.classList.contains('mode-karaoke')) {
+                            pianoBtn.dataset.loading = '0';
+                            pianoBtn.classList.remove('loading');
+                            pianoBtn.title = oldTitle || 'Недоступно в караоке';
+                            return;
+                        }
+
+                        // Ленивая загрузка тяжёлых компонентов и запуск
+                        await this._ensureInitialized();
+                        this.toggle();
+
+                        // Обновляем визуальное состояние
+                        this._updateButtonUI();
+
+                        // Снимаем флаг загрузки
+                        pianoBtn.dataset.loading = '0';
+                        pianoBtn.classList.remove('loading');
+                        pianoBtn.title = oldTitle;
+                    } catch (err) {
+                        console.error('❌ Не удалось запустить Pitch:', err);
+                        pianoBtn.dataset.loading = '0';
+                        pianoBtn.classList.remove('loading');
+                    }
                 });
-                pianoBtn.style.opacity = '0.75';
+                // Долгое нажатие — переключение замка (репетиция/концерт)
+                let lockPressTimer = null;
+                const longPressMs = 600;
+                const startLockTimer = () => {
+                    if (pianoBtn.dataset.loading === '1') {return;}
+                    lockPressTimer = setTimeout(() => {
+                        this.isLocked = !this.isLocked;
+                        this._updateButtonUI();
+                    }, longPressMs);
+                };
+                const cancelLockTimer = () => { if (lockPressTimer) {clearTimeout(lockPressTimer); lockPressTimer = null;} };
+                pianoBtn.addEventListener('mousedown', startLockTimer);
+                pianoBtn.addEventListener('touchstart', startLockTimer, {passive: true});
+                pianoBtn.addEventListener('mouseup', cancelLockTimer);
+                pianoBtn.addEventListener('mouseleave', cancelLockTimer);
+                pianoBtn.addEventListener('touchend', cancelLockTimer);
+                pianoBtn.style.opacity = '1';
                 return true;
             }
             return false;
@@ -261,7 +338,7 @@ class PianoKeyboard {
         // Локальные обработчики для остальных клавиш
         document.addEventListener('keydown', (event) => {
             if (event.code === 'Escape' && this.isActive) {
-                console.log('🎹 Escape нажат, закрываем клавиатуру');
+                if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🎹 Escape нажат, закрываем клавиатуру'); }
                 this.hide();
             }
             
@@ -270,21 +347,21 @@ class PianoKeyboard {
                 if (event.code === 'KeyC' && event.ctrlKey) {
                     // Ctrl+C - калибровочные тесты
                     event.preventDefault();
-                    console.log('🎯 Запуск калибровочных тестов по Ctrl+C');
+                    if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🎯 Запуск калибровочных тестов по Ctrl+C'); }
                     this.runPitchCalibrationTests();
                 } else if (event.code === 'KeyT') {
                     // T - тесты точности
                     event.preventDefault();
-                    console.log('🎯 Запуск тестов точности по клавише T');
+                    if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🎯 Запуск тестов точности по клавише T'); }
                     if (!this.testingSystem.isActive) {
                         this.startAccuracyTest();
                     } else {
-                        console.log('🎯 Тесты уже активны');
+                        if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🎯 Тесты уже активны'); }
                     }
                 } else if (event.code === 'KeyR') {
                     // R - сброс фильтров
                     event.preventDefault();
-                    console.log('🔄 Сброс фильтров гармоник по клавише R');
+                    if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🔄 Сброс фильтров гармоник по клавише R'); }
                     this.resetHarmonicFilters();
                 }
             }
@@ -293,7 +370,7 @@ class PianoKeyboard {
 
     // 🎯 ЗАПУСК ТЕСТОВ ТОЧНОСТИ
     startAccuracyTest() {
-        console.log('🎯 Запуск тестов точности детекции...');
+        if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🎯 Запуск тестов точности детекции...'); }
         this.testingSystem.isActive = true;
         this.testingSystem.currentExercise = 0;
         this.testingSystem.testResults = [];
@@ -304,7 +381,7 @@ class PianoKeyboard {
         this.detectionStats.totalDetections = 0;
         this.detectionStats.missedNotes = 0;
         
-        console.log(`🎼 Начинается упражнение 1: "${this.testingSystem.exercises[0].name}"`);
+        if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log(`🎼 Начинается упражнение 1: "${this.testingSystem.exercises[0].name}"`); }
     }
 
     // Остальные методы следуют...
@@ -316,7 +393,8 @@ class PianoKeyboard {
         this.canvas.style.width = '100%';
         this.canvas.style.height = '100%';
         this.canvas.style.zIndex = '10000';
-        this.canvas.style.background = 'rgba(0, 0, 0, 0.8)';
+        // Прозрачный фон — не затемняем экран
+        this.canvas.style.background = 'transparent';
         this.canvas.style.display = 'none';
         
         this.ctx = this.canvas.getContext('2d');
@@ -341,17 +419,17 @@ class PianoKeyboard {
     }
 
     setupAudioContext() {
-        console.log('🔊 Инициализация аудио для точной детекции...');
+        if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🔊 Инициализация аудио для точной детекции...'); }
         
         try {
             if (window.audioEngine && window.audioEngine.audioContext) {
                 this.audioContext = window.audioEngine.audioContext;
-                console.log('✅ Используем audioEngine.audioContext');
+                if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('✅ Используем audioEngine.audioContext'); }
             } else {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (AudioContext) {
                     this.audioContext = new AudioContext();
-                    console.log('✅ Создан новый AudioContext');
+                    if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('✅ Создан новый AudioContext'); }
                 } else {
                     console.error('❌ AudioContext не поддерживается');
                     return false;
@@ -361,15 +439,37 @@ class PianoKeyboard {
             this.analyser = this.audioContext.createAnalyser();
             this.analyser.fftSize = this.bufferSize;
             this.analyser.smoothingTimeConstant = 0.0; // Без сглаживания для точности
+            // Ветка мониторинга: удерживаем анализатор «живым» в Chrome
+            try {
+                if (!this._silentMonitorGain) {
+                    this._silentMonitorGain = this.audioContext.createGain();
+                    this._silentMonitorGain.gain.value = 0.0; // полностью тихо
+                }
+                this.analyser.disconnect();
+                this.analyser.connect(this._silentMonitorGain);
+                this._silentMonitorGain.connect(this.audioContext.destination);
+            } catch (_) { /* безопасно пропускаем */ }
             
             this.inputBuffer = new Float32Array(this.analyser.fftSize);
             
             if (window.PitchDetector) {
+                try {
                 this.pitchDetector = window.PitchDetector.forFloat32Array(this.bufferSize);
-                console.log('✅ Pitchy детектор готов для точной работы');
+                if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('✅ Pitchy детектор готов для точной работы'); }
+                    this.usingFallbackDetector = false;
+                } catch (err) {
+                    console.warn('⚠️ Pitchy не инициализировался, включаю ACF‑фолбэк', err);
+                    this.pitchDetector = {
+                        findPitch: (buffer, sampleRate) => this._fallbackFindPitchACF(buffer, sampleRate)
+                    };
+                    this.usingFallbackDetector = true;
+                }
             } else {
-                console.error('❌ PitchDetector не найден');
-                return false;
+                console.warn('⚠️ PitchDetector не найден, включаю ACF‑фолбэк');
+                this.pitchDetector = {
+                    findPitch: (buffer, sampleRate) => this._fallbackFindPitchACF(buffer, sampleRate)
+                };
+                this.usingFallbackDetector = true;
             }
             
             return true;
@@ -391,7 +491,14 @@ class PianoKeyboard {
 
     show() {
         if (this.isActive) {
-            console.log('🎹 Клавиатура уже активна, игнорируем вызов');
+            if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🎹 Клавиатура уже активна, игнорируем вызов'); }
+            return;
+        }
+        // Гейтинг по режиму: разрешено только в rehearsal/concert
+        const b = document.body.classList;
+        const modeIsAllowed = (b.contains('mode-rehearsal') || b.contains('mode-concert')) && !b.contains('mode-karaoke');
+        if (!modeIsAllowed) {
+            console.warn('Pitch не доступен в текущем режиме');
             return;
         }
         
@@ -408,16 +515,32 @@ class PianoKeyboard {
             this.canvas.addEventListener('click', this.clickHandler);
         }
         
+        // Подготовка тяжёлых зависимостей по требованию
+        // (Pitchy, аудио, клавиши, интеграция)
+        this._ensureInitialized()
+            .then(() => {
         this.setupAudioContext();
+                // Подключаем глобальные перехватчики только когда активны
+                document.addEventListener('keydown', this.globalKeyHandler, true);
+                document.addEventListener('keyup', this.globalKeyUpHandler, true);
+                
         this.calculateKeyboardLayout();
         this.startMainLoop();
         
-        // 🎯 АВТОМАТИЧЕСКАЯ КАЛИБРОВКА ПРИ ЗАПУСКЕ
+                // 🎯 АВТОКАЛИБРОВКА после запуска
         setTimeout(() => {
             this.runPitchCalibrationTests();
-        }, 1000); // Через 1 секунду после запуска
+                }, 1000);
         
-        console.log('🎹 Клавиатура активирована');
+        if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🎹 Клавиатура активирована'); }
+                // Не усыпляем пока открыт UI
+                this._clearAutoOff();
+                this._updateButtonUI();
+            })
+            .catch((err) => {
+                console.error('❌ Ошибка ленивой инициализации Pitch:', err);
+                this.isActive = false;
+            });
     }
 
     hide() {
@@ -427,18 +550,21 @@ class PianoKeyboard {
             this.canvas.removeEventListener('click', this.clickHandler);
         }
         
-        // Очищаем обработчики перемотки
-        document.removeEventListener('keydown', this.globalKeyHandler);
-        document.removeEventListener('keyup', this.globalKeyUpHandler);
+        // Очищаем обработчики перемотки и глобальные перехватчики
+        document.removeEventListener('keydown', this.globalKeyHandler, true);
+        document.removeEventListener('keyup', this.globalKeyUpHandler, true);
         this.stopScrubbing();
         
         if (this.renderLoop) {
             cancelAnimationFrame(this.renderLoop);
             this.renderLoop = null;
         }
-        
+        // Полностью останавливаем аудио-анализ и отключаем узлы
+        try { this.stopBackgroundVocalAnalysis(); } catch (_) {}
         this.forceStopAllKeys('closed');
-        console.log('🎹 Точная клавиатура деактивирована');
+        if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🎹 Точная клавиатура деактивирована'); }
+        this._clearAutoOff();
+        this._updateButtonUI();
     }
 
     // Продолжение следует в следующих методах...
@@ -483,7 +609,7 @@ class PianoKeyboard {
             }
         }
         
-        console.log(`🎹 Создано ${keys.length} клавиш для точной детекции`);
+        if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log(`🎹 Создано ${keys.length} клавиш для точной детекции`); }
         return keys;
     }
 
@@ -508,7 +634,7 @@ class PianoKeyboard {
         
         // Проверочный лог для калибровки
         if (note === 'A' && octave === 4) {
-            console.log(`🎯 КАЛИБРОВКА: A4 = ${frequency.toFixed(2)}Hz (должно быть 440.00Hz)`);
+            if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log(`🎯 КАЛИБРОВКА: A4 = ${frequency.toFixed(2)}Hz (должно быть 440.00Hz)`); }
         }
         
         return frequency;
@@ -516,7 +642,7 @@ class PianoKeyboard {
 
     // 🎯 УЛУЧШЕННОЕ ОПРЕДЕЛЕНИЕ НОТЫ ПО ЧАСТОТЕ
     frequencyToNoteId(frequency) {
-        if (!this.keys || frequency <= 0) return null;
+        if (!this.keys || frequency <= 0) {return null;}
         
         let bestMatch = null;
         let smallestError = Infinity;
@@ -542,7 +668,7 @@ class PianoKeyboard {
             
             // Лог для отладки детекции
             if (Math.random() < 0.1) { // 10% логов для не засорения
-                console.log(`🎵 Детекция: ${frequency.toFixed(1)}Hz → ${keyId} (${bestMatch.frequency.toFixed(1)}Hz, точность: ${accuracy.toFixed(1)}%)`);
+                if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log(`🎵 Детекция: ${frequency.toFixed(1)}Hz → ${keyId} (${bestMatch.frequency.toFixed(1)}Hz, точность: ${accuracy.toFixed(1)}%)`); }
             }
             
             return keyId;
@@ -553,7 +679,7 @@ class PianoKeyboard {
 
     // 🎯 КАЛИБРОВОЧНЫЕ ТЕСТЫ
     runPitchCalibrationTests() {
-        console.log('🎯 ===== ЗАПУСК КАЛИБРОВОЧНЫХ ТЕСТОВ ПИТЧА =====');
+        if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🎯 ===== ЗАПУСК КАЛИБРОВОЧНЫХ ТЕСТОВ ПИТЧА ====='); }
         
         const testNotes = [
             { note: 'C', octave: 4, expectedFreq: 261.63 },
@@ -568,45 +694,47 @@ class PianoKeyboard {
         let totalError = 0;
         let passedTests = 0;
         
-        console.log('📋 Тестируем расчет частот:');
+        if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('📋 Тестируем расчет частот:'); }
         for (const test of testNotes) {
             const calculated = this.noteToFrequency(test.note, test.octave);
             const error = Math.abs(calculated - test.expectedFreq);
             const percentError = (error / test.expectedFreq) * 100;
             
             const passed = percentError < 0.1; // Ошибка должна быть < 0.1%
-            if (passed) passedTests++;
+            if (passed) {passedTests++;}
             totalError += percentError;
             
-            console.log(`${passed ? '✅' : '❌'} ${test.note}${test.octave}: рассчитано=${calculated.toFixed(2)}Hz, ожидается=${test.expectedFreq}Hz, ошибка=${percentError.toFixed(3)}%`);
+            if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log(`${passed ? '✅' : '❌'} ${test.note}${test.octave}: рассчитано=${calculated.toFixed(2)}Hz, ожидается=${test.expectedFreq}Hz, ошибка=${percentError.toFixed(3)}%`); }
         }
         
-        console.log('📋 Тестируем обратное преобразование:');
+        if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('📋 Тестируем обратное преобразование:'); }
         for (const test of testNotes) {
             const detectedNote = this.frequencyToNoteId(test.expectedFreq);
             const expectedNote = `${test.note}${test.octave}`;
             const passed = detectedNote === expectedNote;
             
-            if (passed) passedTests++;
+            if (passed) {passedTests++;}
             
-            console.log(`${passed ? '✅' : '❌'} ${test.expectedFreq}Hz → обнаружено="${detectedNote}", ожидается="${expectedNote}"`);
+            if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log(`${passed ? '✅' : '❌'} ${test.expectedFreq}Hz → обнаружено="${detectedNote}", ожидается="${expectedNote}"`); }
         }
         
         const averageError = totalError / testNotes.length;
         const successRate = (passedTests / (testNotes.length * 2)) * 100;
         
+        if (window.DEBUG_CONFIG?.PIANO?.enabled) { 
         console.log(`📊 РЕЗУЛЬТАТЫ КАЛИБРОВКИ:`);
         console.log(`   Пройдено тестов: ${passedTests}/${testNotes.length * 2}`);
         console.log(`   Процент успеха: ${successRate.toFixed(1)}%`);
         console.log(`   Средняя ошибка: ${averageError.toFixed(3)}%`);
-        
-        if (successRate >= 95) {
-            console.log('🎯 ✅ КАЛИБРОВКА ПИТЧА ПРОШЛА УСПЕШНО!');
-        } else {
-            console.log('🎯 ❌ ТРЕБУЕТСЯ ДОРАБОТКА КАЛИБРОВКИ!');
         }
         
-        console.log('🎯 ===== КАЛИБРОВОЧНЫЕ ТЕСТЫ ЗАВЕРШЕНЫ =====');
+        if (successRate >= 95) {
+            if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🎯 ✅ КАЛИБРОВКА ПИТЧА ПРОШЛА УСПЕШНО!'); }
+        } else {
+            if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🎯 ❌ ТРЕБУЕТСЯ ДОРАБОТКА КАЛИБРОВКИ!'); }
+        }
+        
+        if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🎯 ===== КАЛИБРОВОЧНЫЕ ТЕСТЫ ЗАВЕРШЕНЫ ====='); }
         
         return { successRate, averageError, passedTests };
     }
@@ -640,14 +768,72 @@ class PianoKeyboard {
         this.currentTrackHasVocals = hasVocals;
         console.log(`🎤 Статус для точной детекции: ${this.currentTrackHasVocals}`);
         
-        // Запускаем анализ
-        setTimeout(() => {
-            this.startBackgroundVocalAnalysis();
-        }, 500);
+        // Анализ не запускаем автоматически — только при активной клавиатуре (show)
+    }
+
+    async _ensureInitialized() {
+        if (this._initialized) {return;}
+        await this.waitForPitchy();
+        if (!this.keys) {
+            this.keys = this.generatePianoKeys();
+        }
+        // Готовим интеграцию, но без старта анализа
+        this.setupAutoAudioEngineIntegration();
+        this._initialized = true;
+    }
+
+    stopBackgroundVocalAnalysis() {
+        try {
+            if (this.analyser) {
+                try { this.analyser.disconnect(); } catch (_) {}
+            }
+            if (this._silentMonitorGain) {
+                try { this._silentMonitorGain.disconnect(); } catch (_) {}
+            }
+            // Отключаем возможный микрофон
+            if (this.microphoneStream && this.microphoneStream.getTracks) {
+                this.microphoneStream.getTracks().forEach(t => { try { t.stop(); } catch (_) {} });
+            }
+        } catch (e) {
+            // ignore
+        }
+    }
+
+    _armAutoOff() {
+        // Авто‑сон только когда UI закрыт, чтобы не шуметь
+        if (this.isActive || this.isLocked) { return; }
+        if (this._autoOffTimer) {clearTimeout(this._autoOffTimer);} 
+        this._autoOffTimer = setTimeout(() => {
+            if (!this.isActive) {
+                try { this.stopBackgroundVocalAnalysis(); } catch(_) {}
+                document.removeEventListener('keydown', this.globalKeyHandler, true);
+                document.removeEventListener('keyup', this.globalKeyUpHandler, true);
+            }
+        }, 15000);
+    }
+
+    _clearAutoOff() {
+        if (this._autoOffTimer) { clearTimeout(this._autoOffTimer); this._autoOffTimer = null; }
+    }
+
+    _updateButtonUI() {
+        const btn = document.getElementById('piano-keyboard-btn');
+        if (!btn) {return;}
+        btn.classList.toggle('active', !!this.isActive);
+        btn.classList.toggle('locked', !!this.isLocked);
+        if (document.body.classList.contains('mode-karaoke')) {
+            btn.title = 'Pitch недоступен в режиме караоке';
+        } else if (this.isLocked) {
+            btn.title = 'Pitch: закреплён (репетиция/концерт)';
+        } else if (this.isActive) {
+            btn.title = 'Pitch: включен (долгое нажатие — замок)';
+        } else {
+            btn.title = 'Pitch: выключен (нажмите для запуска)';
+        }
     }
 
     async startBackgroundVocalAnalysis() {
-        console.log('🎤 Запуск ТОЧНОГО анализа вокальной дорожки...');
+        if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('🎤 Запуск ТОЧНОГО анализа вокальной дорожки...'); }
         
         try {
             if (!this.audioContext) {
@@ -658,82 +844,111 @@ class PianoKeyboard {
                 }
             }
 
-            // 🎯 ПРИОРИТЕТНОЕ подключение к вокальной дорожке
+            // 🎯 УМНОЕ подключение к узлу с автопроверкой сигнала
             let connected = false;
+            const tryNodeWithRmsCheck = async (node) => {
+                if (!node || typeof node.connect !== 'function') { return false; }
+                try {
+                    try { this.analyser.disconnect(); } catch(_) {}
+                    node.connect(this.analyser);
+                    // ВАЖНО: держим ветку живой — снова подключаем анализатор к тихому выходу
+                    try {
+                        if (this._silentMonitorGain) {
+                            this.analyser.connect(this._silentMonitorGain);
+                        }
+                    } catch(_) {}
+                    // Короткая задержка и замер RMS
+                    await new Promise(r => setTimeout(r, 40));
+                    const buf = new Float32Array(this.analyser.fftSize);
+                    this.analyser.getFloatTimeDomainData(buf);
+                    let sum = 0; for (let i=0;i<buf.length;i++){ sum += buf[i]*buf[i]; }
+                    const rms = Math.sqrt(sum / buf.length);
+                    const ok = rms > 0.0005; // сигнал есть
+                    if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log(`📈 RMS=${rms.toFixed(6)} на узле ${node.constructor?.name||'Node'} → ${ok?'OK':'SILENT'}`); }
+                    return ok;
+                } catch (e) {
+                    console.warn('⚠️ Ошибка проверки узла', e);
+                    return false;
+                }
+            };
             
             if (window.audioEngine) {
-                const vocalNodes = [
+                const isFile = (typeof location !== 'undefined' && location.protocol === 'file:');
+                // В file:// Chrome иногда даёт «тишину» на MediaElementSource → ставим его последним
+                const nodesPreferred = isFile ? [
+                    window.audioEngine.masterGain,
+                    window.audioEngine.outputGain,
+                    window.audioEngine.vocalsGain,
+                    window.audioEngine.vocalsSourceNode
+                ] : [
+                    window.audioEngine.vocalsSourceNode,
                     window.audioEngine.vocalsGain,
                     window.audioEngine.masterGain,
                     window.audioEngine.outputGain
                 ];
-                
-                for (const node of vocalNodes) {
-                    if (node && typeof node.connect === 'function') {
-                        try {
-                            if (this.analyser) {
-                                this.analyser.disconnect();
-                            }
-                            
-                            node.connect(this.analyser);
-                            console.log(`✅ Подключен к ВОКАЛЬНОМУ узлу:`, node.constructor.name);
+                for (const node of nodesPreferred) {
+                    if (connected) { break; }
+                    const ok = await tryNodeWithRmsCheck(node);
+                    if (ok) {
+                        console.log('✅ Подключен к ВОКАЛЬНОМУ узлу:', node.constructor?.name || 'Node');
                             connected = true;
-        } catch (error) {
-                            console.warn(`⚠️ Не удалось подключиться к узлу:`, error);
-                        }
+                        break;
                     }
         }
     }
 
-            // Fallback к микрофону
-            if (!connected && !window.audioEngine) {
-                console.log('🎤 Попытка подключения к микрофону...');
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: {
-                    echoCancellation: false,
-                    noiseSuppression: false,
-                            autoGainControl: false,
-                            sampleRate: 44100
-                        } 
-                    });
-                    const micSource = this.audioContext.createMediaStreamSource(stream);
-                    micSource.connect(this.analyser);
-                    console.log(`✅ Подключен к микрофону`);
-                    connected = true;
-        } catch (error) {
-                    console.warn(`⚠️ Микрофон недоступен:`, error);
-                }
-            }
+            // ВРЕМЕННО: микрофон отключён. Используем только узлы audioEngine.
+            // if (!connected) { ... }
             
             if (connected) {
                 this.isBackgroundAnalyzing = true;
                 this.startConditionalAnalysis();
-                console.log('✅ ТОЧНЫЙ анализ запущен');
+                if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('✅ ТОЧНЫЙ анализ запущен'); }
             } else {
                 console.error('❌ Не удалось подключиться к аудио источнику');
                 this.isBackgroundAnalyzing = true;
                 this.startConditionalAnalysis();
-                console.log('⚡ Анализ запущен принудительно');
+                if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('⚡ Анализ запущен принудительно'); }
             }
             
+            // Обновляем таймер «последнего несилентного сигнала»
+            this.lastNonSilentTime = performance.now();
         } catch (error) {
             console.error('❌ Ошибка запуска анализа:', error);
             this.isBackgroundAnalyzing = true;
             this.startConditionalAnalysis();
-            console.log('⚡ Анализ запущен аварийно');
+            if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log('⚡ Анализ запущен аварийно'); }
         }
     }
 
     startConditionalAnalysis() {
-        if (!this.isBackgroundAnalyzing) return;
+        if (!this.isBackgroundAnalyzing) {return;}
         
         // ⚡ СУПЕР-ТОЧНЫЙ анализ 500fps
         const analyze = (timestamp) => {
-            if (!this.isBackgroundAnalyzing) return;
+            if (!this.isBackgroundAnalyzing) {return;}
             
             if (timestamp - this.lastAnalysisTime >= this.analysisInterval) {
                 this.lastAnalysisTime = timestamp;
+                
+                // Быстрый замер RMS для авто‑восстановления
+                try {
+                    const a = this.analyser;
+                    if (a) {
+                        const tmp = new Float32Array(a.fftSize);
+                        a.getFloatTimeDomainData(tmp);
+                        let s = 0; for (let i=0;i<tmp.length;i++){ s += tmp[i]*tmp[i]; }
+                        const rms = Math.sqrt(s / tmp.length);
+                        if (!this.lastNonSilentTime) { this.lastNonSilentTime = timestamp; }
+                        if (rms > 0.0005) {
+                            this.lastNonSilentTime = timestamp;
+                        } else if (timestamp - this.lastNonSilentTime > 1200) {
+                            if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.warn('🩺 Автовосстановление Pitch: обнаружена длительная тишина, переподключаю узлы...'); }
+                            try { this.startBackgroundVocalAnalysis(); } catch(_) {}
+                            this.lastNonSilentTime = timestamp; // сброс
+                        }
+                    }
+                } catch (_) { /* ignore */ }
                 
                 // 🎯 АНАЛИЗ В ЛЮБОМ РЕЖИМЕ - играет или на паузе
                 const pitchData = this.detectPitchWithHighAccuracy();
@@ -747,6 +962,9 @@ class PianoKeyboard {
                         this.checkForSilenceInstant(timestamp);
                     }
                 }
+
+                // Пользовательский индикатор (микрофон) временно отключён
+                this.userBall = null;
             }
             
             // 🧹 Очистка только если трек действительно остановлен надолго
@@ -759,23 +977,45 @@ class PianoKeyboard {
     
     // 🎯 ВЫСОКОТОЧНАЯ детекция питча
     detectPitchWithHighAccuracy() {
-        if (!this.pitchDetector || !this.inputBuffer) return null;
+        if (!this.pitchDetector || !this.inputBuffer) {return null;}
         
         this.analyser.getFloatTimeDomainData(this.inputBuffer);
-        const [frequency, clarity] = this.pitchDetector.findPitch(this.inputBuffer, this.audioContext.sampleRate);
+        let result = this.pitchDetector.findPitch(this.inputBuffer, this.audioContext.sampleRate);
+        let frequency, clarity;
+        if (Array.isArray(result)) {
+            [frequency, clarity] = result;
+        } else if (result && typeof result === 'object' && 'frequency' in result) {
+            frequency = result.frequency;
+            clarity = result.clarity ?? 0.8;
+        }
+        // Если используем фолбэк и пока не нашли стабильную частоту — возвращаем текущее активное значение для непрерывности
+        if ((!frequency || frequency <= 0) && this.usingFallbackDetector && this.currentActiveNote) {
+            frequency = this.currentActiveNote.currentFrequency;
+            clarity = Math.max(clarity || 0.6, 0.6);
+        }
         
-        if (!frequency || frequency <= 0) return null;
+        if (!frequency || frequency <= 0) {return null;}
         
         this.detectionStats.totalDetections++;
         
         // 🎯 СТРОГИЙ диапазон для вокала (C2-C6)
         const minFreq = 65.4;   
         const maxFreq = 1046.5; 
-        if (frequency < minFreq || frequency > maxFreq) return null;
+        if (frequency < minFreq || frequency > maxFreq) {return null;}
         
         // 🎯 ВЫСОКИЕ пороги для точности
-        const minClarity = 0.70; // Повышен до 70% для точности
-        if (clarity < minClarity) return null;
+        // Динамический порог ясности: мягче для ACF‑фолбэка и первого захвата
+        let minClarity = this.usingFallbackDetector ? 0.40 : 0.60;
+        if (!this.currentActiveNote && (!this.octaveStabilizer || !this.octaveStabilizer.ema)) {
+            minClarity = Math.min(minClarity, 0.35);
+        }
+        if (clarity < minClarity) {
+            // Мягкое принятие: если сигнал стабилен рядом с EMA-опорой
+            if (!this.octaveStabilizer || !this.octaveStabilizer.ema) { return null; }
+            const anchor = this.octaveStabilizer.ema;
+            const rel = Math.abs(frequency - anchor) / anchor;
+            if (clarity < 0.50 || rel > 0.10) { return null; }
+        }
         
         // RMS амплитуда
             let rms = 0;
@@ -784,11 +1024,34 @@ class PianoKeyboard {
             }
             rms = Math.sqrt(rms / this.inputBuffer.length);
 
-        const minRms = 0.005; // Минимальный сигнал
-        if (rms < minRms) return null;
+        const minRms = this.usingFallbackDetector ? 0.001 : 0.003; // ещё мягче для фолбэка
+        if (rms < minRms) {return null;}
         
-        // 🎯 ПРОВЕРКА НА ГАРМОНИКИ - ключевая для точности!
-        if (!this.isValidFundamentalFrequency(frequency, clarity)) {
+        // 🎯 СТАБИЛИЗАЦИЯ ОКТАВЫ: нормализуем к опорной частоте
+        if (!this.octaveStabilizer) {
+            this.octaveStabilizer = { ema: 0, alpha: 0.2, lastTime: performance.now() };
+        }
+        const st = this.octaveStabilizer;
+        // Инициализация EMA опорой
+        if (st.ema === 0) { st.ema = frequency; }
+        // Нормализация текущей частоты к ближайшей октаве относительно opora
+        const normToAnchor = (f, anchor) => {
+            if (anchor <= 0) { return f; }
+            while (f > anchor * 1.6) { f /= 2; }
+            while (f < anchor / 1.6) { f *= 2; }
+            return f;
+        };
+        frequency = normToAnchor(frequency, st.ema);
+        // Доп. сглаживание — слегка тянем к опоре, чтобы убрать дрейф
+        frequency = (frequency * 0.85) + (st.ema * 0.15);
+        // Обновляем EMA только для достаточно уверенных измерений
+        if (clarity >= 0.75) {
+            st.ema = st.alpha * frequency + (1 - st.alpha) * st.ema;
+            st.lastTime = performance.now();
+        }
+        
+        // 🎯 ПРОВЕРКА НА ГАРМОНИКИ после нормализации (мягче для фолбэка)
+        if (!this.usingFallbackDetector && !this.isValidFundamentalFrequency(frequency, clarity)) {
             this.detectionStats.harmonicsRejected++;
             return null;
         }
@@ -799,6 +1062,34 @@ class PianoKeyboard {
             amplitude: rms,
             timestamp: performance.now()
         };
+    }
+    
+    // 🔁 ПРОСТОЙ ФОЛБЭК ACF, если Pitchy временно недоступен
+    _fallbackFindPitchACF(buffer, sampleRate) {
+        // Нормализация
+        let rms = 0;
+        for (let i = 0; i < buffer.length; i++) {
+            const v = buffer[i];
+            rms += v * v;
+        }
+        rms = Math.sqrt(rms / buffer.length);
+        if (rms < 0.003) { return [0, 0]; }
+        // Автокорреляция
+        const SIZE = buffer.length;
+        const MAX_SHIFT = Math.floor(SIZE / 2);
+        let bestShift = -1;
+        let bestCorr = 0;
+        for (let shift = 20; shift < MAX_SHIFT; shift++) {
+            let corr = 0;
+            for (let i = 0; i < MAX_SHIFT; i++) {
+                corr += buffer[i] * buffer[i + shift];
+            }
+            if (corr > bestCorr) { bestCorr = corr; bestShift = shift; }
+        }
+        if (bestShift <= 0) { return [0, 0]; }
+        const frequency = sampleRate / bestShift;
+        const clarity = Math.min(1, bestCorr / MAX_SHIFT);
+        return [frequency, clarity];
     }
     
     // 🔇 УЛУЧШЕННАЯ проверка основной частоты vs гармоники  
@@ -855,9 +1146,9 @@ class PianoKeyboard {
         const { frequency, clarity } = pitchData;
         const keyId = this.frequencyToNoteId(frequency);
         
-        if (!keyId) return;
+        if (!keyId) {return;}
         
-        // 🚫 АНТИГАРМОНИЧЕСКАЯ ЗАЩИТА
+        // 🚫 АНТИГАРМОНИЧЕСКАЯ ЗАЩИТА c учётом опоры EMA (ещё слой стабилизации)
         if (this.isHarmonicJump(frequency, this.currentActiveNote)) {
             return; // Блокируем гармонический скачок
         }
@@ -882,10 +1173,10 @@ class PianoKeyboard {
     // 🗺️ ЗАПИСЬ В ПИТЧ-КАРТУ ТРЕКА
     recordToPitchMap(keyId, pitchData) {
         // Записываем только если трек воспроизводится (не статический анализ)
-        if (!this.isTrackPlaying() || pitchData.isStatic) return;
+        if (!this.isTrackPlaying() || pitchData.isStatic) {return;}
         
         const currentTime = this.getCurrentTrackTime();
-        if (currentTime < 0) return; // Некорректное время
+        if (currentTime < 0) {return;} // Некорректное время
         
         const { frequency, clarity } = pitchData;
         
@@ -1006,7 +1297,7 @@ class PianoKeyboard {
         const { frequency, clarity, amplitude, timestamp } = pitchData;
         const noteData = this.activeNotes.get(keyId);
         
-        if (!noteData) return;
+        if (!noteData) {return;}
         
         // Обновляем данные
         noteData.lastDetection = timestamp;
@@ -1025,7 +1316,7 @@ class PianoKeyboard {
     // 🎯 АНИМАЦИЯ ШАРИКА К КЛАВИШЕ
     animateBallToKey(keyId) {
         const targetKey = this.keys.find(key => `${key.note}${key.octave}` === keyId);
-        if (!targetKey) return;
+        if (!targetKey) {return;}
         
         if (!this.singleBallIndicator) {
             this.singleBallIndicator = { visible: false };
@@ -1059,7 +1350,7 @@ class PianoKeyboard {
     // 🎯 ОСТАНОВКА НОТЫ
     stopNote(keyId, reason = 'silence') {
         const noteData = this.activeNotes.get(keyId);
-        if (!noteData) return;
+        if (!noteData) {return;}
         
         const duration = performance.now() - noteData.startTime;
         
@@ -1080,14 +1371,14 @@ class PianoKeyboard {
     
     // 🎯 ОПРЕДЕЛЕНИЕ ID НОТЫ ПО ЧАСТОТЕ
     frequencyToNoteId(frequency) {
-        if (!this.keys) return null;
+        if (!this.keys) {return null;}
         
         let closestKey = null;
         let closestDistance = Infinity;
         
         for (const key of this.keys) {
             const distance = Math.abs(frequency - key.frequency);
-            const tolerance = key.frequency * 0.03; // 3% толерантность
+            const tolerance = key.frequency * 0.06; // до 6% как мягкий фолбэк
             
             if (distance < tolerance && distance < closestDistance) {
                 closestDistance = distance;
@@ -1130,7 +1421,7 @@ class PianoKeyboard {
     
     // 🎯 ПРИНУДИТЕЛЬНАЯ ОСТАНОВКА ВСЕХ КЛАВИШ
     forceStopAllKeys(reason = 'forced') {
-        if (this.activeNotes.size === 0) return; // НЕ логируем если нет активных нот
+        if (this.activeNotes.size === 0) {return;} // НЕ логируем если нет активных нот
         
         console.log(`🛑 Принудительная остановка всех нот (${reason}), активных: ${this.activeNotes.size}`);
         
@@ -1147,7 +1438,7 @@ class PianoKeyboard {
     
     // 🎯 ОЧИСТКА НЕАКТИВНЫХ КЛАВИШ
     cleanupInactiveKeysInstant(timestamp) {
-        if (!this.currentActiveNote) return;
+        if (!this.currentActiveNote) {return;}
         
         const timeSinceLastDetection = timestamp - this.currentActiveNote.lastDetection;
         
@@ -1164,10 +1455,10 @@ class PianoKeyboard {
     
     // 🎯 ЗАПУСК РЕНДЕРИНГА
     startRender() {
-        if (this.renderLoop) return;
+        if (this.renderLoop) {return;}
         
         const render = (timestamp) => {
-            if (!this.isActive) return;
+            if (!this.isActive) {return;}
             
             this.updateBallAnimation(timestamp);
             this.draw();
@@ -1180,7 +1471,7 @@ class PianoKeyboard {
     
     // 🎯 ОБНОВЛЕНИЕ АНИМАЦИИ ШАРИКА
     updateBallAnimation(timestamp) {
-        if (!this.ballAnimation || !this.ballAnimation.isAnimating) return;
+        if (!this.ballAnimation || !this.ballAnimation.isAnimating) {return;}
         
         const elapsed = timestamp - this.ballAnimation.startTime;
         const progress = Math.min(elapsed / this.ballAnimation.duration, 1);
@@ -1202,40 +1493,44 @@ class PianoKeyboard {
     
     // 🎹 ОСНОВНАЯ ФУНКЦИЯ РИСОВАНИЯ
     draw() {
-        if (!this.ctx || !this.keys) return;
+        if (!this.ctx || !this.keys) {return;}
         
         const canvas = this.canvas;
         const ctx = this.ctx;
         const canvasWidth = canvas.width / (window.devicePixelRatio || 1);
         const canvasHeight = canvas.height / (window.devicePixelRatio || 1);
         
-        // Очистка
+        // Очистка (без затемнения экрана)
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
         
-        // Фон
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-        
-        // Заголовок
-        ctx.font = 'bold 24px Arial';
-        ctx.fillStyle = '#ffffff';
-        ctx.textAlign = 'center';
-        ctx.fillText('🎹 ТОЧНАЯ ДЕТЕКЦИЯ ПИТЧА - ЦЕЛЬ: 95%', canvasWidth / 2, 40);
-        
-        // Статистика точности
-        this.drawAccuracyStats(ctx, canvasWidth);
+        // Лёгкий градиент под клавиатурой для читаемости
+        let keyboardTop = canvasHeight - 200;
+        try {
+            if (this.keys && this.keys.length) {
+                keyboardTop = this.keys.reduce((min, k) => {
+                    const y = typeof k.y === 'number' ? k.y : min;
+                    return y < min ? y : min;
+                }, keyboardTop) - 12;
+                if (!isFinite(keyboardTop)) { keyboardTop = canvasHeight - 200; }
+                if (keyboardTop < 0) { keyboardTop = 0; }
+            }
+        } catch (_) { /* noop */ }
+        const grad = ctx.createLinearGradient(0, keyboardTop, 0, canvasHeight);
+        grad.addColorStop(0, 'rgba(0,0,0,0.0)');
+        grad.addColorStop(1, 'rgba(0,0,0,0.45)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, keyboardTop, canvasWidth, canvasHeight - keyboardTop);
         
         // Клавиши
         this.drawKeys(ctx);
         
-        // Шарик-индикатор
+        // Шарик-индикатор референса (зелёный)
         this.drawBallIndicator(ctx);
         
-        // Диагностика
-        this.drawDiagnostics(ctx, canvasWidth, canvasHeight);
+        // Диагностика скрыта в прод‑режиме для чистого UI
         
-        // Кнопка закрытия
-        this.drawCloseButton(ctx, canvasWidth);
+        // Кнопка закрытия над клавиатурой справа
+        this.drawCloseButton(ctx, canvasWidth, keyboardTop);
     }
     
     // 📊 СТАТИСТИКА ТОЧНОСТИ
@@ -1280,6 +1575,10 @@ class PianoKeyboard {
     // 🎹 РИСОВАНИЕ ОДНОЙ КЛАВИШИ
     drawKey(ctx, key, isBlack) {
         const keyId = `${key.note}${key.octave}`;
+        // Прозрачность по краям диапазона: C2→C3 (слева), C5→B5 (справа)
+        const alpha = this.getKeyAlphaForVocalRange(key.note, key.octave);
+        ctx.save();
+        ctx.globalAlpha = alpha;
         const isPressed = this.pressedKeys.has(keyId);
         const isActive = this.currentActiveNote && this.currentActiveNote.keyId === keyId;
         
@@ -1312,11 +1611,14 @@ class PianoKeyboard {
         ctx.lineWidth = isActive ? 3 : 1;
         ctx.strokeRect(key.x, key.y, key.width, key.height);
         
-        // Текст ноты
+        // Текст ноты (показываем только вокальный диапазон как 1 и 2 октавы)
+        const displayLabel = this.getDisplayLabelForVocalRange(key.note, key.octave);
+        if (displayLabel) {
         ctx.font = '12px Arial';
         ctx.fillStyle = isBlack ? '#ffffff' : '#000000';
         ctx.textAlign = 'center';
-        ctx.fillText(keyId, key.x + key.width / 2, key.y + key.height - 10);
+            ctx.fillText(displayLabel, key.x + key.width / 2, key.y + key.height - 10);
+        }
         
         // 🎯 ИНДИКАТОР ТОЧНОСТИ (если активная)
         if (isActive && accuracy !== undefined) {
@@ -1324,11 +1626,46 @@ class PianoKeyboard {
             ctx.fillStyle = '#ffffff';
             ctx.fillText(`${accuracy}/10`, key.x + key.width / 2, key.y + 15);
         }
+        ctx.restore();
+    }
+
+    // 🟩 Прозрачность клавиш по краям диапазона (C3..C5 — 100% видимость)
+    getKeyAlphaForVocalRange(note, octave) {
+        const semitoneIdx = this.getSemitoneIndex(note, octave);
+        const leftStart = this.getSemitoneIndex('C', 2); // C2
+        const leftEnd   = this.getSemitoneIndex('C', 3); // C3
+        const rightStart= this.getSemitoneIndex('C', 5); // C5
+        const rightEnd  = this.getSemitoneIndex('B', 5); // B5
+        if (semitoneIdx <= leftEnd) {
+            const span = Math.max(1, leftEnd - leftStart);
+            return Math.min(1, Math.max(0, (semitoneIdx - leftStart) / span));
+        }
+        if (semitoneIdx >= rightStart) {
+            const span = Math.max(1, rightEnd - rightStart);
+            return Math.min(1, Math.max(0, 1 - (semitoneIdx - rightStart) / span));
+        }
+        return 1;
+    }
+
+    // 🔢 Отображаем только 1 и 2 октавы (внутри C3..B4), переименовывая 3→1 и 4→2
+    getDisplayLabelForVocalRange(note, octave) {
+        if (octave === 3 || octave === 4) {
+            const mappedOctave = octave - 2; // 3→1, 4→2
+            return `${note}${mappedOctave}`;
+        }
+        return '';
+    }
+
+    // 🔢 Сервис: семитоновый индекс для линейных расчётов
+    getSemitoneIndex(note, octave) {
+        const order = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+        const i = order.indexOf(note);
+        return octave * 12 + (i >= 0 ? i : 0);
     }
     
     // ⚪ РИСОВАНИЕ СИСТЕМЫ ДВОЙНОГО ШАРИКА
     drawBallIndicator(ctx) {
-        if (!this.singleBallIndicator || !this.singleBallIndicator.visible) return;
+        if (!this.singleBallIndicator || !this.singleBallIndicator.visible) {return;}
         
         const ball = this.singleBallIndicator;
         const key = this.keys.find(k => `${k.note}${k.octave}` === ball.keyId);
@@ -1375,6 +1712,9 @@ class PianoKeyboard {
             ball.size = ballSize;
         }
     }
+
+    // Пользовательский индикатор (микрофон) отключён
+    drawUserBallIndicator(ctx) { /* noop */ }
     
     // 🔍 ДИАГНОСТИЧЕСКАЯ ИНФОРМАЦИЯ
     drawDiagnostics(ctx, canvasWidth, canvasHeight) {
@@ -1517,25 +1857,37 @@ class PianoKeyboard {
     }
     
     // ❌ КНОПКА ЗАКРЫТИЯ
-    drawCloseButton(ctx, canvasWidth) {
-        const size = 50;
-        const x = canvasWidth - size;
-        const y = 0;
-        
-        // Фон кнопки
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.fillRect(x, y, size, size);
-        
-        // X
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 3;
+    drawCloseButton(ctx, canvasWidth, keyboardTop) {
+        const size = 40;
+        const x = canvasWidth - size - 16;
+        // Размещаем вплотную к клавиатуре (зазор 2px)
+        const y = Math.max(8, (keyboardTop || 0) - size - 2);
+        // Стеклянная кнопка
+        ctx.fillStyle = 'rgba(255,255,255,0.18)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(x + 15, y + 15);
-        ctx.lineTo(x + 35, y + 35);
-        ctx.moveTo(x + 35, y + 15);
-        ctx.lineTo(x + 15, y + 35);
+        const r = 12;
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + size, y, x + size, y + size, r);
+        ctx.arcTo(x + size, y + size, x, y + size, r);
+        ctx.arcTo(x, y + size, x, y, r);
+        ctx.arcTo(x, y, x + size, y, r);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Иконка X
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x + 12, y + 12);
+        ctx.lineTo(x + size - 12, y + size - 12);
+        ctx.moveTo(x + size - 12, y + 12);
+        ctx.lineTo(x + 12, y + size - 12);
         ctx.stroke();
     }
+    
+    // (удалено) drawHeaderChip — по запросу скрываем заголовок
     
     // 🎯 ОБРАБОТКА КЛИКОВ ПО ПАНЕЛИ УПРАВЛЕНИЯ
     handleControlPanelClick(x, y) {
@@ -1544,14 +1896,14 @@ class PianoKeyboard {
     
     // 🎯 РАСЧЕТ РАСКЛАДКИ КЛАВИАТУРЫ
     calculateKeyboardLayout() {
-        if (!this.keys) return;
+        if (!this.keys) {return;}
         
         const canvasWidth = this.canvas.width / (window.devicePixelRatio || 1);
         const canvasHeight = this.canvas.height / (window.devicePixelRatio || 1);
         
         // Клавиатура внизу экрана
         const keyboardHeight = 150;
-        const keyboardY = canvasHeight - keyboardHeight - 50;
+        const keyboardY = canvasHeight - keyboardHeight - 8; // в самый низ, небольшой отступ
         
         const whiteKeys = this.keys.filter(k => !k.isBlack);
         const whiteKeyWidth = Math.min(60, canvasWidth / whiteKeys.length);
@@ -1608,7 +1960,7 @@ class PianoKeyboard {
 
     // 🎯 АНТИГАРМОНИЧЕСКАЯ СИСТЕМА - ЗАЩИТА ОТ ОКТАВНЫХ СКАЧКОВ
     isHarmonicJump(newFrequency, currentNote) {
-        if (!currentNote) return false;
+        if (!currentNote) {return false;}
         
         const currentFreq = currentNote.currentFrequency;
         const ratio = newFrequency / currentFreq;
@@ -1642,7 +1994,7 @@ class PianoKeyboard {
         const deviation = Math.abs(frequency - targetFrequency);
         const maxDeviation = targetFrequency * 0.029; // ±2.9% (полутон)
         
-        if (deviation > maxDeviation) return 0;
+        if (deviation > maxDeviation) {return 0;}
         
         const accuracy = Math.max(0, 10 - (deviation / maxDeviation) * 10);
         return Math.round(accuracy);
@@ -1894,7 +2246,7 @@ class PianoKeyboard {
     
     // ⏩ ЗАПУСК НЕПРЕРЫВНОЙ ПЕРЕМОТКИ
     startContinuousScrubbing(direction) {
-        if (!this.scrubSystem.isActive) return;
+        if (!this.scrubSystem.isActive) {return;}
         
         // Повторяем шаги с заданным интервалом
         this.scrubSystem.continuousInterval = setInterval(() => {
@@ -1988,7 +2340,7 @@ class PianoKeyboard {
     performStaticPitchAnalysis(timestamp) {
         // Пытаемся получить данные с текущей позиции трека
         try {
-            if (!this.analyser || !this.inputBuffer) return;
+            if (!this.analyser || !this.inputBuffer) {return;}
             
             // Получаем текущие данные аудио
             this.analyser.getFloatTimeDomainData(this.inputBuffer);
@@ -2006,7 +2358,7 @@ class PianoKeyboard {
                     isStatic: true // Флаг статического анализа
                 };
                 
-                console.log(`🔍 Статический анализ: ${frequency.toFixed(1)}Hz (${(clarity*100).toFixed(1)}%)`);
+                if (window.DEBUG_CONFIG?.PIANO?.enabled) { console.log(`🔍 Статический анализ: ${frequency.toFixed(1)}Hz (${(clarity*100).toFixed(1)}%)`); }
                 this.processNoteWithAccuracyTracking(pitchData);
             }
         } catch (error) {
@@ -2016,7 +2368,7 @@ class PianoKeyboard {
     
     // 🧹 УМНАЯ ОЧИСТКА КЛАВИШ - только при длительной неактивности
     cleanupInactiveKeysConditional(timestamp) {
-        if (!this.currentActiveNote) return;
+        if (!this.currentActiveNote) {return;}
         
         // ЗАЩИТА СИМУЛИРОВАННЫХ НОТ: не удаляем ноты во время навигации по питч-карте
         if (this.currentActiveNote.isSimulated || 
@@ -2250,7 +2602,7 @@ class PianoKeyboard {
 
     // 🎯 ПОИСК НОТЫ В ОПРЕДЕЛЕННОЕ ВРЕМЯ
     findNoteAtTime(targetTime) {
-        if (!this.pitchMap || !this.pitchMap.notes) return null;
+        if (!this.pitchMap || !this.pitchMap.notes) {return null;}
         
         const notes = this.pitchMap.notes;
         let foundNote = null;
@@ -2331,10 +2683,8 @@ class PianoKeyboard {
     startMainLoop() {
         // Запускаем анализ звука
         this.startBackgroundVocalAnalysis();
-        
-        // Запускаем рендеринг
+        // Рендер рисует только клавиатуру и шарик-индикатор
         this.startRender();
-        
         console.log('🎯 Основной цикл запущен');
     }
 }

@@ -15,7 +15,7 @@
 	const levels = ['debug','info','warn','error'];
 	const original = console;
 	window.Log = {
-		debug: (...args) => { if (window.__DEBUG__) original.debug(...args); },
+		debug: (...args) => { if (window.__DEBUG__) {original.debug(...args);} },
 		info: (...args) => original.info(...args),
 		warn: (...args) => original.warn(...args),
 		error: (...args) => original.error(...args)
