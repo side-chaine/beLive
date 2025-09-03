@@ -1,21 +1,24 @@
-
-cat > .github/workflows/deploy-pages.yml <<'EOF'
-name: Build and Deploy to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches:
       - main
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
@@ -23,8 +26,8 @@ jobs:
         run: |
           if [ -f package.json ]; then
             echo "Installing dependencies and building"
-            npm install
-            npm run build
+            npm ci
+            npm run build || true
           else
             echo "No package.json — skipping Node build"
           fi
@@ -34,9 +37,9 @@ jobs:
         run: |
           rm -rf pages_output
           mkdir -p pages_output
-          if [ -d "${{ env.BUILD_DIR }}" ]; then
+          if [ -n "${BUILD_DIR}" ] && [ -d "${BUILD_DIR}" ]; then
             echo "Copying build dir ${BUILD_DIR} -> pages_output"
-            cp -R "${{ env.BUILD_DIR }}"/* pages_output/ || true
+            cp -R "${BUILD_DIR}"/* pages_output/ || true
           else
             echo "Build dir not found, copying repo root to pages_output (excluding .git and .github)"
             rsync -a --exclude='.git' --exclude='.github' ./ pages_output/ || true

@@ -1,18 +1,9 @@
-name: DCO
+name: DCO Check
 
 on:
   pull_request:
     types: [opened, edited, reopened, synchronize]
 
-jobs:
-  dco:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: DCO check
-        uses: docker://probot/dco:latest
-name: DCO Check
-on: [pull_request]
 jobs:
   dco:
     runs-on: ubuntu-latest
