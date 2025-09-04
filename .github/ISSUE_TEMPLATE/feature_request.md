@@ -1,43 +1,19 @@
 ---
-name: ✨ Новая фича
-about: Предложить новую функцию для beLive
-title: '[ФИЧА] '
-labels: ['✨ фича', '🟡 кракен']
-assignees: ''
+name: ✨ Feature Request
+about: Suggest a new feature or enhancement
+title: "[Feature]: "
+labels: ["type: enhancement", "status: needs triage"]
+assignees: []
 ---
 
-## 🎯 Цель фичи
-Какую проблему решает эта функция?
+**Is your feature request related to a problem?**
+Please describe.
 
-## 💡 Описание решения
-Четкое описание того, что вы хотите реализовать.
+**Describe the solution you'd like**
+A clear and concise description of what you want to happen.
 
-## 🎨 Mockup/Wireframe
-Если есть идеи по дизайну, приложите скетчи или описание.
+**Describe alternatives you've considered**
+A clear and concise description of any alternative solutions.
 
-## 🔧 Техническая реализация
-### Предполагаемые технологии:
-- [ ] Web Audio API
-- [ ] Canvas/WebGL
-- [ ] WebRTC
-- [ ] ИИ/ML
-- [ ] Другое: ___
-
-### Файлы для изменения:
-- `js/`
-- `css/`
-- `html/`
-
-## 📊 Критерии готовности
-- [ ] Функция работает согласно описанию
-- [ ] Добавлены тесты
-- [ ] Обновлена документация
-- [ ] Проверена на мобильных устройствах
-
-## 🏷️ Этап реализации
-- [ ] 🐙 Кракен v1.0 (MVP)
-- [ ] 🌟 Первый Контакт v1.1
-- [ ] 🌌 Созвездие v2.0
-
-## 📝 Дополнительная информация
-Любые другие детали или контекст. 
+**Additional context**
+Add any other context or screenshots about the feature request here.

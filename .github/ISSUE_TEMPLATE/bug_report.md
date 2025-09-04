@@ -1,35 +1,29 @@
 ---
-name: 🐛 Баг-репорт
-about: Сообщить о проблеме в приложении beLive
-title: '[БАГ] '
-labels: ['🔴 критично', '🐛 баг']
-assignees: ''
+name: 🐛 Bug Report
+about: Create a report to help us improve
+title: "[Bug]: "
+labels: ["type: bug", "status: needs triage"]
+assignees: []
 ---
 
-## 🐛 Описание бага
-Краткое и четкое описание проблемы.
+**Describe the bug**
+A clear and concise description of what the bug is.
 
-## 🔄 Шаги для воспроизведения
-1. Перейти к '...'
-2. Нажать на '...'
-3. Прокрутить вниз до '...'
-4. Увидеть ошибку
+**Steps to reproduce**
+1. Go to '...'
+2. Click on '...'
+3. See error
 
-## ✅ Ожидаемое поведение
-Четкое описание того, что должно было произойти.
+**Expected behavior**
+A clear and concise description of what you expected to happen.
 
-## 📱 Скриншоты
-Если применимо, добавьте скриншоты для объяснения проблемы.
+**Screenshots**
+If applicable, add screenshots to help explain your problem.
 
-## 🖥️ Информация об устройстве:
-- ОС: [например, iOS]
-- Браузер: [например, Chrome, Safari]
-- Версия: [например, 22]
+**Environment (please complete the following information):**
+ - Device: [e.g. iPhone 14, Desktop]
+ - OS: [e.g. iOS 17, macOS 12]
+ - Browser [e.g. Chrome 116, Safari]
 
-## 📝 Дополнительный контекст
-Любая другая информация о проблеме.
-
-## 🎯 Приоритет
-- [ ] Блокирует работу приложения
-- [ ] Влияет на основной функционал
-- [ ] Косметическая проблема 
+**Additional context**
+Add any other context about the problem here.

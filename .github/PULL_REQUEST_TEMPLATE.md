@@ -1,22 +1,10 @@
-# Название PR (коротко)
+## 📋 Summary
+Explain the changes you made.
 
-Описание: кратко поясни изменeния и зачем они (1-2 предложения).
+## ✅ Checklist
+- [ ] Tests added (if applicable)
+- [ ] Documentation updated (README, etc.)
+- [ ] DCO sign-off added (`git commit -s`)
 
-## Что сделано
-- [ ] Обновлён README / документация
-- [ ] Добавлены workflow / CI
-- [ ] DCO sign-off присутствует (Signed-off-by)
-- [ ] Branch protection учтён / проверен
-- [ ] Проверены статус-чеки (DCO, deploy и т.д.)
-- [ ] Скриншоты / демо прилагаются (если нужно)
-
-## Как протестировать
-1. Шаг 1 — что запустить локально
-2. Шаг 2 — где смотреть результаты (GH Actions, Pages)
-3. Примеры файлов/тестов для проверки: `test/`
-
-## Заметки
-- Если PR затрагивает публичные данные или логи — отметить и предложить удаление/переезд в private branch.
-- Если требует согласования — указать ответственных (CODEOWNERS).
-
-Signed-off-by: Nikita Side-Chaine <nikitosss007@gmail.com>
+## 🔗 Related Issues
+Closes #
