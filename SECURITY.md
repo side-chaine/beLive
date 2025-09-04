@@ -1,25 +1,17 @@
-# Security Policy
+# Политика безопасности
 
-## Supported Versions
-We support the latest major version of beLive. Security fixes will be backported to previous major releases at the maintainers' discretion.
+Пожалуйста, не создавайте публичный issue для сообщения об уязвимости.
 
-## Reporting a Vulnerability
-If you discover a security vulnerability, **do not create a public issue**. Instead, please send a secure report to: **security@belive.dev** (replace with your preferred email).
+Как сообщить:
+- Отправьте подробности на: nikitosss007@gmail.com  
+- В теме письма укажите: [beLive] Security issue — краткое описание
 
-Include the following information in your report:
-- A short description of the vulnerability.
-- Steps to reproduce the issue, including test files if applicable.
-- Affected versions and environment details.
-- Any proposed mitigation or patches (optional).
+Процесс обработки:
+1. Подтверждаем получение в течение 48 часов.
+2. Обсуждаем детали и при необходимости запрашиваем дополнительную информацию.
+3. Готовим исправление и планируем публичное раскрытие.
+4. После фикса публикуем advisory / release с рекомендациями по обновлению.
 
-We will acknowledge receipt within 48 hours and provide an estimated timeline to fix.
-
-## Disclosure Policy
-We follow coordinated disclosure. The maintainers will work with reporters to fix issues before public disclosure. Once a fix and appropriate releases are available, the vulnerability will be disclosed publicly with credit to the reporter unless they request anonymity.
-
-## Emergency Contact
-If the vulnerability is critical and requires urgent attention, mark the subject as **[SECURITY]** and use the same email address above.
-
-## After Disclosure
-After a fix is released, we will publish a security advisory and update the `SECURITY.md` with mitigation steps and advisory notes.
-
+Рекомендации для исследователей безопасности:
+- По возможности приложите PoC / шаги для воспроизведения.
+- Не публикуйте данные, позволяющие эксплуатацию уязвимости, до выпуска фикса.
