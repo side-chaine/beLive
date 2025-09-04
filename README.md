@@ -82,3 +82,12 @@ This project is licensed under the MIT License — see `LICENSE`.
 
 ## Contact
 Owner / Author: **Nikita Cheremisinov** — GitHub: [@side-chaine](https://github.com/side-chaine)
+
+---
+
+## Badges
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitHub Pages](https://img.shields.io/badge/Pages-live-brightgreen)](https://side-chaine.github.io/beLive)
+[![DCO](https://img.shields.io/badge/DCO-required-blue)](.github/workflows/dco.yml)
+[![Dependabot](https://img.shields.io/badge/Dependabot-enabled-success)](.github/dependabot.yml)
