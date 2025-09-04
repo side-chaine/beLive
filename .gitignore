@@ -1,21 +1,43 @@
-# Node modules
+# Dependencies / builds
 node_modules/
-
-# Logs
-Log/
-*.log
-
-# MacOS
-.DS_Store
-
-# Build outputs
-pages_output/
 dist/
 build/
+.tmp/
+.cache/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# Temporary files
-*.tmp
-*.swp
-
-# Local config
+# Env / secrets
 .env
+.env.*
+*.local
+continue.config.yaml
+
+# OS / editors
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+.Spotlight-V100
+.Trashes
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Project-specific (keep tests, docs, screenshots tracked!)
+Log/
+logs/
+temp/
+tmp/
+Kraken_Studio/
+
+# Cursor/editor artifacts
+.cursor
+.cursorrules
+cursor-memory-bank
+cursor-rules
