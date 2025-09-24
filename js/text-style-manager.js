@@ -112,8 +112,7 @@ class TextStyleManager {
         // Apply default style
         this._applyStyle('default');
         
-        // Предварительно инициализируем Live режим и камеру
-        this._initLiveCamera();
+        // ВАЖНО: не запрашиваем камеру на этапе инициализации
         
         console.log('TextStyleManager initialized with', Object.keys(this.styles).length, 'styles and', 
             Object.keys(this.transitions).length, 'total transitions');

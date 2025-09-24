@@ -3,41 +3,14 @@
  * Модуль для работы с камерой, видеоэффектами и трансляцией
  */
 
-// Автоматическое создание экземпляра LiveMode при загрузке документа
+// Автоматически создаём экземпляр без запроса доступа к камере
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('LiveMode: Автоматическая инициализация при загрузке документа');
     try {
-        if (typeof LiveMode === 'undefined') {
-            console.error('LiveMode: Класс LiveMode не определен!');
-            return;
-        }
-        
-        // Создаем глобальный экземпляр LiveMode если его еще нет
+        if (typeof LiveMode === 'undefined') { return; }
         if (!window.liveMode) {
-            console.log('LiveMode: Создание нового экземпляра');
             window.liveMode = new LiveMode();
-            
-            // Запускаем предварительную инициализацию камеры с небольшой задержкой
-            setTimeout(() => {
-                console.log('LiveMode: Запуск предварительной инициализации камеры');
-                window.liveMode._preInitCamera()
-                    .then(result => {
-                        if (result) {
-                            console.log('LiveMode: Предварительная инициализация камеры успешна');
-                        } else {
-                            console.warn('LiveMode: Предварительная инициализация камеры не выполнена');
-                        }
-                    })
-                    .catch(err => {
-                        console.error('LiveMode: Ошибка при предварительной инициализации:', err);
-                    });
-            }, 1000);
-        } else {
-            console.log('LiveMode: Экземпляр уже существует');
         }
-    } catch (e) {
-        console.error('LiveMode: Ошибка при автоинициализации:', e);
-    }
+    } catch (_) {}
 });
 
 class LiveMode {
@@ -82,8 +55,7 @@ class LiveMode {
         // Добавляем слушателей событий для маркеров
         this._addMarkerListeners();
         
-        // Предварительно инициализируем камеру при загрузке
-        this._preInitCamera();
+        // ВАЖНО: не запрашиваем камеру в конструкторе — единственная точка запроса в bootstrap/activate()
         
         console.log('LiveMode: экземпляр создан');
     }
@@ -1154,6 +1126,7 @@ class LiveMode {
                 video: true,
                 audio: false  // Начинаем без аудио для большей совместимости
             });
+            try { window.dispatchEvent(new CustomEvent('camera-permission-resolved', { detail: { allowed: true } })); } catch(_) {}
             
             console.log('LiveMode: Доступ к камере получен');
             
@@ -1178,6 +1151,7 @@ class LiveMode {
             return true;
             
         } catch (error) {
+            try { window.dispatchEvent(new CustomEvent('camera-permission-resolved', { detail: { allowed: false } })); } catch(_) {}
             console.error('LiveMode: Ошибка доступа к камере:', error.name, error.message);
             
             // Проверяем, не заблокирован ли доступ на уровне браузера или ОС
@@ -1517,9 +1491,30 @@ class LiveMode {
                 }
             });
             
-            // 8. Переключаемся на предыдущий режим через App
-            if (window.app && typeof window.app.switchToLastMode === 'function') {
-                window.app.switchToLastMode();
+            // 8. Возврат в режим приложения
+            // Если задан принудительный режим после Live — используем его и НЕ прыгаем обратно в live
+            if (window.app) {
+                if (window.__forceAfterLiveMode) {
+                    const targetMode = window.__forceAfterLiveMode;
+                    window.__forceAfterLiveMode = null;
+                    try {
+                        if (typeof window.app._enableResidualLiveOverlay === 'function') {
+                            window.app._enableResidualLiveOverlay(true);
+                        }
+                        if (targetMode === 'catalog') {
+                            // Открываем каталог напрямую
+                            if (typeof window.openCatalog === 'function') {
+                                window.openCatalog();
+                            }
+                        } else if (typeof window.app._handleModeChange === 'function') {
+                            window.app._handleModeChange(targetMode);
+                        } else if (typeof window.app.switchToLastMode === 'function') {
+                            window.app.switchToLastMode();
+                        }
+                    } catch (e) { console.warn('LiveMode: force return failed', e); }
+                } else if (typeof window.app.switchToLastMode === 'function') {
+                    window.app.switchToLastMode();
+                }
             } else if (window.textStyleManager) {
                 // Если нет специального метода, просто переключаемся на стандартный режим
                 try {

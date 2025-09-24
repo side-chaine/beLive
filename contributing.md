@@ -1,42 +1,18 @@
 # Contributing to beLive
 
-Спасибо за интерес к beLive! Ниже — краткие инструкции, как внести вклад.
+🎤 Thank you for your interest in contributing to **beLive**!
 
-## 1) Перед началом
-- Ознакомьтесь с README, текущими issues и Discussions.
-- Если собираетесь браться за задачу — напишите об этом в issue, чтобы избежать дублирования.
+## How to Contribute
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature/your-feature`).
+3. Commit your changes (`git commit -m "feat: add new feature"`).
+4. Push the branch (`git push origin feature/your-feature`).
+5. Open a Pull Request.
 
-## 2) Issues
-- Для ошибок используйте шаблон "Bug report".
-- Для предложений — шаблон "Feature request".
-- Помечайте лейблы (bug, enhancement, good first issue).
+## Code Style
+- Use **English** for code, variable names, and commit messages.
+- Follow the [Conventional Commits](https://www.conventionalcommits.org/) specification.
 
-## 3) Форк и ветки
-- Форкните репозиторий и создайте ветку с именем вида: feat/краткое-описание или fix/краткое-описание.
-- Делайте маленькие логические коммиты. Рекомендуется Conventional Commits (например: feat(ui): добавить кнопку).
+## Issues
+If you discover a bug or have a feature request, please open an [issue](../../issues).
 
-## 4) Pull request
-- Описание PR: что изменено, зачем, как тестировать.
-- Укажите связанные issues (например: Fixes #123).
-- PR должен проходить CI (lint и тесты).
-
-## 5) Локальная разработка (пример)
-- Установить зависимости: npm ci
-- Запуск dev-сервера: npm run dev
-- Запуск тестов: npm test
-- Запуск линтера: npm run lint
-
-(Если в вашем проекте другие команды — сообщите, я подправлю файл)
-
-## 6) Код-стиль
-- Используйте ESLint + Prettier (если проект их использует). Следуйте существующим правилам в проекте.
-
-## 7) Тесты
-- Добавляйте тесты для нового функционала/фикс
-
-## 8) Как предлагаем работать с новыми контрибьюторами
-- Помечайте задачи лейблом `good first issue` для новичков.
-- Если кто-то открыл PR и нужна помощь — оставьте развернутый отзыв или назначьте ревьюера.
-
-## Благодарность
-Спасибо за ваш вклад! Если нужна помощь — создайте issue или напишите в Discussions.
