@@ -1,0 +1,13 @@
+name: DCO Check
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+jobs:
+  dco:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check DCO sign-offs
+        uses: whilp/dco-action@v1

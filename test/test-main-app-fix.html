@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест исправлений основного приложения - Студия масок 2030</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        h1 {
+            text-align: center;
+            color: #FFD700;
+            font-size: 2em;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        .test-title {
+            font-size: 1.2em;
+            color: #FFD700;
+            margin-bottom: 15px;
+        }
+        .test-btn {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .status-display {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #00FF00;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .success { color: #4ECDC4; }
+        .error { color: #FF6B6B; }
+        .warning { color: #FFA500; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎭 Тест исправлений основного приложения</h1>
+        
+        <div class="test-section">
+            <div class="test-title">📋 Проверка компонентов</div>
+            <button class="test-btn" onclick="checkComponents()">Проверить загрузку</button>
+            <button class="test-btn" onclick="testMaskSystem()">Тест MaskSystem</button>
+            <button class="test-btn" onclick="testBackgroundEngine()">Тест Background Engine</button>
+            <button class="test-btn" onclick="waitForMediaPipe()">🔄 Ждать MediaPipe</button>
+            <div class="status-display" id="componentStatus">
+                Готов к тестированию...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🎯 Быстрый тест эффектов</div>
+            <button class="test-btn" onclick="quickTestFaceMesh()">Face Mesh</button>
+            <button class="test-btn" onclick="quickTestPose()">Pose</button>
+            <button class="test-btn" onclick="quickTestBackground()">Background AI</button>
+            <button class="test-btn" onclick="openMainApp()">🚀 Открыть основное приложение</button>
+            <div class="status-display" id="testStatus">
+                Выберите тест для выполнения...
+            </div>
+        </div>
+    </div>
+
+    <!-- Подключение библиотек MediaPipe -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
+    
+    <!-- Основные модули -->
+    <script src="js/background-effects-engine.js"></script>
+    <script src="js/mask-system.js"></script>
+
+    <script>
+        // Функции логирования
+        function log(message, type = 'info', targetId = 'componentStatus') {
+            const statusDiv = document.getElementById(targetId);
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                info: '#00FF00',
+                success: '#4ECDC4',
+                warning: '#FFA500',
+                error: '#FF6B6B'
+            };
+            
+            const logEntry = document.createElement('div');
+            logEntry.style.color = colors[type] || '#00FF00';
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            statusDiv.appendChild(logEntry);
+            statusDiv.scrollTop = statusDiv.scrollHeight;
+            
+            console.log(`[TEST] ${message}`);
+        }
+
+        // Проверка компонентов
+        function checkComponents() {
+            log('🔍 Проверка загрузки компонентов...', 'info');
+            
+            // Проверяем MediaPipe
+            const mediapipeComponents = {
+                'FaceMesh': window.FaceMesh,
+                'Pose': window.Pose,
+                'Hands': window.Hands,
+                'Holistic': window.Holistic,
+                'SelfieSegmentation': window.SelfieSegmentation
+            };
+            
+            for (const [name, component] of Object.entries(mediapipeComponents)) {
+                if (component) {
+                    log(`✅ ${name} загружен`, 'success');
+                } else {
+                    log(`❌ ${name} не загружен`, 'error');
+                }
+            }
+            
+            // Проверяем наши компоненты
+            if (window.BackgroundEffectsEngine) {
+                log('✅ BackgroundEffectsEngine загружен', 'success');
+            } else {
+                log('❌ BackgroundEffectsEngine не загружен', 'error');
+            }
+            
+            if (window.MaskSystem) {
+                log('✅ MaskSystem загружен', 'success');
+            } else {
+                log('❌ MaskSystem не загружен', 'error');
+            }
+        }
+
+        // Ожидание загрузки MediaPipe библиотек
+        async function waitForMediaPipe() {
+            log('🔄 Ожидание загрузки MediaPipe библиотек...', 'info');
+            
+            let attempts = 0;
+            const maxAttempts = 200; // 20 секунд
+            
+            const checkInterval = setInterval(() => {
+                attempts++;
+                
+                const mediapipeComponents = {
+                    'FaceMesh': window.FaceMesh,
+                    'Pose': window.Pose,
+                    'Hands': window.Hands,
+                    'Holistic': window.Holistic,
+                    'SelfieSegmentation': window.SelfieSegmentation
+                };
+                
+                const loaded = Object.entries(mediapipeComponents).filter(([name, component]) => !!component);
+                const total = Object.keys(mediapipeComponents).length;
+                
+                log(`📊 MediaPipe: ${loaded.length}/${total} библиотек загружено (${attempts * 100}мс)`, 'info');
+                
+                if (loaded.length === total) {
+                    clearInterval(checkInterval);
+                    log('✅ Все MediaPipe библиотеки загружены!', 'success');
+                    log('🎯 Теперь можно тестировать эффекты', 'success');
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(checkInterval);
+                    log('⚠️ Не все библиотеки загружены за отведенное время', 'warning');
+                    log(`📋 Загружены: ${loaded.map(([name]) => name).join(', ')}`, 'info');
+                }
+            }, 100);
+        }
+
+        // Улучшенный тест MaskSystem с ожиданием MediaPipe
+        async function testMaskSystem() {
+            log('🎭 Тестирование MaskSystem...', 'info');
+            
+            try {
+                const maskSystem = new MaskSystem();
+                log('✅ MaskSystem создан', 'success');
+                
+                await maskSystem.init();
+                log('✅ MaskSystem инициализирован', 'success');
+                
+                // Проверяем флаг готовности MediaPipe
+                log(`📊 MediaPipe готовность: ${maskSystem.mediaReady}`, maskSystem.mediaReady ? 'success' : 'warning');
+                
+                // Проверяем маски
+                const faceMasks = maskSystem.getFaceMasks();
+                const backgroundMasks = maskSystem.getBackgroundMasks();
+                const advancedMasks = maskSystem.getAdvancedMasks();
+                
+                log(`📊 Маски загружены: Лица(${faceMasks.length}), Фон(${backgroundMasks.length}), AI(${advancedMasks.length})`, 'info');
+                
+                // Проверяем готовность MediaPipe компонентов
+                const components = ['faceMesh', 'pose', 'hands', 'holistic', 'selfieSegmentation'];
+                components.forEach(comp => {
+                    const ready = !!maskSystem[comp];
+                    log(`${ready ? '✅' : '❌'} ${comp}: ${ready ? 'готов' : 'не готов'}`, ready ? 'success' : 'error');
+                });
+                
+            } catch (error) {
+                log(`❌ Ошибка тестирования MaskSystem: ${error.message}`, 'error');
+            }
+        }
+
+        // Тест Background Engine
+        async function testBackgroundEngine() {
+            log('⚡ Тестирование Background Effects Engine...', 'info');
+            
+            try {
+                const engine = new BackgroundEffectsEngine();
+                log('✅ BackgroundEffectsEngine создан', 'success');
+                
+                const success = await engine.initialize();
+                if (success) {
+                    log('✅ BackgroundEffectsEngine инициализирован', 'success');
+                } else {
+                    log('⚠️ BackgroundEffectsEngine не смог инициализироваться', 'warning');
+                }
+                
+            } catch (error) {
+                log(`❌ Ошибка тестирования Background Engine: ${error.message}`, 'error');
+            }
+        }
+
+        // Быстрые тесты эффектов
+        async function quickTestFaceMesh() {
+            log('🎯 Быстрый тест Face Mesh...', 'info', 'testStatus');
+            
+            try {
+                const maskSystem = new MaskSystem();
+                await maskSystem.init();
+                
+                // Создаем тестовую маску Face Mesh
+                const faceMeshMask = { id: 'face-mesh', name: 'Face Mesh', type: 'mediapipe' };
+                
+                // Проверяем, что маска правильно обрабатывается
+                log('📝 Тестируем маску с ID: face-mesh', 'info', 'testStatus');
+                
+                if (maskSystem.faceMesh) {
+                    log('✅ Face Mesh готов к работе', 'success', 'testStatus');
+                } else {
+                    log('⚠️ Face Mesh не инициализирован (MediaPipe библиотеки)', 'warning', 'testStatus');
+                }
+                
+            } catch (error) {
+                log(`❌ Ошибка теста Face Mesh: ${error.message}`, 'error', 'testStatus');
+            }
+        }
+
+        async function quickTestPose() {
+            log('🏃 Быстрый тест Pose...', 'info', 'testStatus');
+            
+            try {
+                const maskSystem = new MaskSystem();
+                await maskSystem.init();
+                
+                if (maskSystem.pose) {
+                    log('✅ Pose готов к работе', 'success', 'testStatus');
+                } else {
+                    log('⚠️ Pose не инициализирован (MediaPipe библиотеки)', 'warning', 'testStatus');
+                }
+                
+            } catch (error) {
+                log(`❌ Ошибка теста Pose: ${error.message}`, 'error', 'testStatus');
+            }
+        }
+
+        async function quickTestBackground() {
+            log('🎨 Быстрый тест Background AI...', 'info', 'testStatus');
+            
+            try {
+                const maskSystem = new MaskSystem();
+                await maskSystem.init();
+                
+                if (maskSystem.backgroundEngineReady) {
+                    log('✅ Background Effects Engine готов', 'success', 'testStatus');
+                } else {
+                    log('⚠️ Background Effects Engine не готов', 'warning', 'testStatus');
+                }
+                
+                if (maskSystem.selfieSegmentation) {
+                    log('✅ Selfie Segmentation готов', 'success', 'testStatus');
+                } else {
+                    log('⚠️ Selfie Segmentation не готов', 'warning', 'testStatus');
+                }
+                
+            } catch (error) {
+                log(`❌ Ошибка теста Background: ${error.message}`, 'error', 'testStatus');
+            }
+        }
+
+        // Открыть основное приложение
+        function openMainApp() {
+            log('🚀 Открываем основное приложение...', 'info', 'testStatus');
+            window.open('http://localhost:8090', '_blank');
+        }
+
+        // Автоматическая проверка при загрузке
+        window.addEventListener('load', () => {
+            log('🚀 Тестовая страница загружена', 'info');
+            log('📋 Выполните проверку компонентов для начала', 'info');
+        });
+    </script>
+</body>
+</html> 

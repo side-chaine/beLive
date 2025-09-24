@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Финальный тест интеграции - Студия масок 2030</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        h1 {
+            text-align: center;
+            color: #FFD700;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .test-panel {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        .test-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #FFD700;
+            text-align: center;
+        }
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: #000;
+            transform: scaleX(-1);
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .effects-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        .effect-btn {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 15px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+        }
+        .effect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .effect-btn.active {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: #000;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .control-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 20px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .log-area {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #00FF00;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 2px solid rgba(0, 255, 0, 0.3);
+        }
+        .status-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .status-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        .status-title {
+            font-weight: bold;
+            color: #FFD700;
+            margin-bottom: 5px;
+        }
+        .status-value {
+            font-size: 1.2em;
+        }
+        .success { color: #4ECDC4; }
+        .error { color: #FF6B6B; }
+        .warning { color: #FFA500; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎭 Финальный тест интеграции - Студия масок 2030</h1>
+        
+        <div class="test-grid">
+            <!-- Панель тестирования основного приложения -->
+            <div class="test-panel">
+                <div class="test-title">🚀 Основное приложение</div>
+                <div class="video-container">
+                    <video id="mainVideo" autoplay muted playsinline></video>
+                    <canvas id="mainCanvas"></canvas>
+                </div>
+                <div class="effects-row">
+                    <button class="effect-btn" onclick="testMainApp('face-mesh')">Face Mesh</button>
+                    <button class="effect-btn" onclick="testMainApp('pose')">Pose</button>
+                    <button class="effect-btn" onclick="testMainApp('hands')">Hands</button>
+                    <button class="effect-btn" onclick="testMainApp('holistic')">Holistic</button>
+                </div>
+                <div class="effects-row">
+                    <button class="effect-btn" onclick="testMainApp('ai-blur')">AI Blur 2.0</button>
+                    <button class="effect-btn" onclick="testMainApp('ai-green')">AI Green 2.0</button>
+                    <button class="effect-btn" onclick="testMainApp('ai-matrix')">AI Matrix 2.0</button>
+                    <button class="effect-btn" onclick="testMainApp('ai-neon')">AI Neon 2.0</button>
+                </div>
+            </div>
+            
+            <!-- Панель тестирования нового движка -->
+            <div class="test-panel">
+                <div class="test-title">⚡ Background Effects Engine</div>
+                <div class="video-container">
+                    <video id="engineVideo" autoplay muted playsinline></video>
+                    <canvas id="engineCanvas"></canvas>
+                </div>
+                <div class="effects-row">
+                    <button class="effect-btn" onclick="testEngine('blur')">Blur</button>
+                    <button class="effect-btn" onclick="testEngine('green')">Green</button>
+                    <button class="effect-btn" onclick="testEngine('blue')">Blue</button>
+                    <button class="effect-btn" onclick="testEngine('gradient')">Gradient</button>
+                </div>
+                <div class="effects-row">
+                    <button class="effect-btn" onclick="testEngine('matrix')">Matrix</button>
+                    <button class="effect-btn" onclick="testEngine('neon')">Neon</button>
+                    <button class="effect-btn" onclick="testEngine('none')">Очистить</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Панель управления -->
+        <div class="controls">
+            <button class="control-btn" onclick="startAllTests()">🚀 Запустить все тесты</button>
+            <button class="control-btn" onclick="toggleMirroring()">🪞 Переключить зеркалирование</button>
+            <button class="control-btn" onclick="checkStatus()">📊 Проверить статус</button>
+            <button class="control-btn" onclick="clearAll()">🧹 Очистить все</button>
+            <button class="control-btn" onclick="exportLogs()">📋 Экспорт логов</button>
+        </div>
+        
+        <!-- Панель статуса -->
+        <div class="status-panel">
+            <div class="status-item">
+                <div class="status-title">MaskSystem</div>
+                <div class="status-value" id="maskSystemStatus">⏳ Загрузка...</div>
+            </div>
+            <div class="status-item">
+                <div class="status-title">Background Engine</div>
+                <div class="status-value" id="engineStatus">⏳ Загрузка...</div>
+            </div>
+            <div class="status-item">
+                <div class="status-title">MediaPipe</div>
+                <div class="status-value" id="mediapipeStatus">⏳ Загрузка...</div>
+            </div>
+            <div class="status-item">
+                <div class="status-title">Зеркалирование</div>
+                <div class="status-value" id="mirroringStatus">✅ Включено</div>
+            </div>
+        </div>
+        
+        <!-- Область логов -->
+        <div class="log-area" id="logArea">
+            <div>🎭 Финальный тест интеграции запущен...</div>
+            <div>🔍 Проверяем все компоненты...</div>
+        </div>
+    </div>
+
+    <!-- Подключение библиотек -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
+    
+    <!-- Основные модули -->
+    <script src="js/background-effects-engine.js"></script>
+    <script src="js/mask-system.js"></script>
+
+    <script>
+        // Глобальные перемены
+        let maskSystem = null;
+        let backgroundEngine = null;
+        let mainStream = null;
+        let engineStream = null;
+        let testResults = {
+            mainApp: {},
+            engine: {},
+            errors: []
+        };
+
+        // Функция логирования
+        function log(message, type = 'info') {
+            const logArea = document.getElementById('logArea');
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                info: '#00FF00',
+                warn: '#FFA500', 
+                error: '#FF6B6B',
+                success: '#4ECDC4'
+            };
+            
+            const logEntry = document.createElement('div');
+            logEntry.style.color = colors[type] || '#00FF00';
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logArea.appendChild(logEntry);
+            logArea.scrollTop = logArea.scrollHeight;
+            
+            console.log(`[FINAL_TEST] ${message}`);
+        }
+
+        // Инициализация при загрузке страницы
+        async function init() {
+            try {
+                log('🚀 Запуск финального теста интеграции...', 'info');
+                
+                // Запускаем видео потоки
+                await setupVideoStreams();
+                
+                // Инициализируем основное приложение
+                await initMainApp();
+                
+                // Инициализируем новый движок
+                await initBackgroundEngine();
+                
+                // Проверяем статус
+                checkStatus();
+                
+                log('✅ Финальный тест готов к работе!', 'success');
+                
+            } catch (error) {
+                log(`❌ Ошибка инициализации: ${error.message}`, 'error');
+                testResults.errors.push(`Init: ${error.message}`);
+            }
+        }
+
+        // Настройка видео потоков
+        async function setupVideoStreams() {
+            try {
+                log('📹 Настройка видео потоков...', 'info');
+                
+                // Основной поток
+                mainStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    },
+                    audio: false
+                });
+                
+                // Поток для движка
+                engineStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    },
+                    audio: false
+                });
+                
+                // Подключаем потоки к видео элементам
+                const mainVideo = document.getElementById('mainVideo');
+                const engineVideo = document.getElementById('engineVideo');
+                
+                mainVideo.srcObject = mainStream;
+                engineVideo.srcObject = engineStream;
+                
+                await new Promise(resolve => {
+                    mainVideo.onloadedmetadata = () => {
+                        mainVideo.play();
+                        resolve();
+                    };
+                });
+                
+                await new Promise(resolve => {
+                    engineVideo.onloadedmetadata = () => {
+                        engineVideo.play();
+                        resolve();
+                    };
+                });
+                
+                log('✅ Видео потоки настроены', 'success');
+                
+            } catch (error) {
+                log(`❌ Ошибка настройки видео: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        // Инициализация основного приложения
+        async function initMainApp() {
+            try {
+                log('🎭 Инициализация MaskSystem...', 'info');
+                
+                // Создаем контейнер для MaskSystem
+                const container = document.createElement('div');
+                container.style.display = 'none';
+                document.body.appendChild(container);
+                
+                // Инициализируем MaskSystem
+                maskSystem = new MaskSystem();
+                await maskSystem.init();
+                
+                // Подключаем видео
+                maskSystem.videoElement = document.getElementById('mainVideo');
+                maskSystem.overlayCanvas = document.getElementById('mainCanvas');
+                
+                log('✅ MaskSystem инициализирован', 'success');
+                document.getElementById('maskSystemStatus').innerHTML = '<span class="success">✅ Готов</span>';
+                
+            } catch (error) {
+                log(`❌ Ошибка MaskSystem: ${error.message}`, 'error');
+                document.getElementById('maskSystemStatus').innerHTML = '<span class="error">❌ Ошибка</span>';
+                throw error;
+            }
+        }
+
+        // Инициализация нового движка
+        async function initBackgroundEngine() {
+            try {
+                log('⚡ Инициализация Background Effects Engine...', 'info');
+                
+                // Проверяем доступность класса
+                if (typeof BackgroundEffectsEngine === 'undefined') {
+                    throw new Error('BackgroundEffectsEngine не найден');
+                }
+                
+                // Создаем экземпляр движка
+                backgroundEngine = new BackgroundEffectsEngine();
+                await backgroundEngine.initialize();
+                
+                // Настраиваем движок
+                const engineVideo = document.getElementById('engineVideo');
+                const engineCanvas = document.getElementById('engineCanvas');
+                
+                backgroundEngine.setTargetCanvas(engineCanvas);
+                backgroundEngine.setVideoSource(engineVideo);
+                
+                log('✅ Background Effects Engine инициализирован', 'success');
+                document.getElementById('engineStatus').innerHTML = '<span class="success">✅ Готов</span>';
+                
+            } catch (error) {
+                log(`❌ Ошибка Background Engine: ${error.message}`, 'error');
+                document.getElementById('engineStatus').innerHTML = '<span class="error">❌ Ошибка</span>';
+                throw error;
+            }
+        }
+
+        // Тестирование основного приложения
+        async function testMainApp(effectId) {
+            try {
+                log(`🎭 Тестирование основного приложения: ${effectId}`, 'info');
+                
+                if (!maskSystem) {
+                    throw new Error('MaskSystem не инициализирован');
+                }
+                
+                // Очищаем предыдущие эффекты
+                maskSystem.clearAllEffects();
+                
+                // Создаем маску для тестирования
+                const testMask = { id: effectId, name: effectId, type: 'mediapipe' };
+                
+                // Применяем маску
+                await maskSystem.applyMediaPipeMask(testMask);
+                
+                // Отмечаем активную кнопку
+                document.querySelectorAll('.effect-btn').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                
+                testResults.mainApp[effectId] = { status: 'success', timestamp: Date.now() };
+                log(`✅ Основное приложение: ${effectId} применен`, 'success');
+                
+            } catch (error) {
+                log(`❌ Ошибка тестирования ${effectId}: ${error.message}`, 'error');
+                testResults.mainApp[effectId] = { status: 'error', error: error.message, timestamp: Date.now() };
+            }
+        }
+
+        // Тестирование нового движка
+        async function testEngine(effectType) {
+            try {
+                log(`⚡ Тестирование движка: ${effectType}`, 'info');
+                
+                if (!backgroundEngine) {
+                    throw new Error('Background Effects Engine не инициализирован');
+                }
+                
+                // Останавливаем предыдущую обработку
+                backgroundEngine.stopProcessing();
+                
+                if (effectType === 'none') {
+                    log('🧹 Очистка эффектов движка', 'info');
+                    return;
+                }
+                
+                // Применяем эффект
+                backgroundEngine.setEffect(effectType);
+                backgroundEngine.startProcessing();
+                
+                // Отмечаем активную кнопку
+                document.querySelectorAll('.effect-btn').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                
+                testResults.engine[effectType] = { status: 'success', timestamp: Date.now() };
+                log(`✅ Движок: ${effectType} применен`, 'success');
+                
+            } catch (error) {
+                log(`❌ Ошибка тестирования движка ${effectType}: ${error.message}`, 'error');
+                testResults.engine[effectType] = { status: 'error', error: error.message, timestamp: Date.now() };
+            }
+        }
+
+        // Запуск всех тестов
+        async function startAllTests() {
+            log('🚀 Запуск полного тестирования...', 'info');
+            
+            // Тестируем основные эффекты
+            const mainEffects = ['face-mesh', 'pose', 'hands', 'ai-blur', 'ai-green'];
+            const engineEffects = ['blur', 'green', 'matrix', 'neon'];
+            
+            for (const effect of mainEffects) {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                await testMainApp(effect);
+            }
+            
+            for (const effect of engineEffects) {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                await testEngine(effect);
+            }
+            
+            log('✅ Все тесты завершены!', 'success');
+        }
+
+        // Переключение зеркалирования
+        function toggleMirroring() {
+            const videos = document.querySelectorAll('video');
+            videos.forEach(video => {
+                if (video.style.transform === 'scaleX(-1)') {
+                    video.style.transform = 'scaleX(1)';
+                    document.getElementById('mirroringStatus').innerHTML = '<span class="warning">❌ Выключено</span>';
+                    log('🪞 Зеркалирование выключено', 'warn');
+                } else {
+                    video.style.transform = 'scaleX(-1)';
+                    document.getElementById('mirroringStatus').innerHTML = '<span class="success">✅ Включено</span>';
+                    log('🪞 Зеркалирование включено', 'success');
+                }
+            });
+        }
+
+        // Проверка статуса
+        function checkStatus() {
+            log('📊 Проверка статуса всех компонентов...', 'info');
+            
+            // Проверяем MediaPipe
+            const hasMediaPipe = window.FaceMesh && window.Pose && window.Hands && window.SelfieSegmentation;
+            document.getElementById('mediapipeStatus').innerHTML = hasMediaPipe ? 
+                '<span class="success">✅ Загружен</span>' : 
+                '<span class="error">❌ Не загружен</span>';
+            
+            // Проверяем MaskSystem
+            const maskSystemReady = maskSystem && maskSystem.isReady && maskSystem.isReady();
+            document.getElementById('maskSystemStatus').innerHTML = maskSystemReady ? 
+                '<span class="success">✅ Готов</span>' : 
+                '<span class="warning">⚠️ Не готов</span>';
+            
+            // Проверяем Background Engine
+            const engineReady = backgroundEngine && backgroundEngine.isInitialized;
+            document.getElementById('engineStatus').innerHTML = engineReady ? 
+                '<span class="success">✅ Готов</span>' : 
+                '<span class="warning">⚠️ Не готов</span>';
+            
+            log(`📊 Статус: MediaPipe(${hasMediaPipe}), MaskSystem(${maskSystemReady}), Engine(${engineReady})`, 'info');
+        }
+
+        // Очистка всех эффектов
+        function clearAll() {
+            log('🧹 Очистка всех эффектов...', 'info');
+            
+            if (maskSystem) {
+                maskSystem.clearAllEffects();
+            }
+            
+            if (backgroundEngine) {
+                backgroundEngine.stopProcessing();
+            }
+            
+            // Убираем активные классы
+            document.querySelectorAll('.effect-btn').forEach(btn => btn.classList.remove('active'));
+            
+            log('✅ Все эффекты очищены', 'success');
+        }
+
+        // Экспорт логов
+        function exportLogs() {
+            const logData = {
+                timestamp: new Date().toISOString(),
+                testResults: testResults,
+                logs: document.getElementById('logArea').innerText
+            };
+            
+            const blob = new Blob([JSON.stringify(logData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `final-test-logs-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            log('📋 Логи экспортированы', 'success');
+        }
+
+        // Запуск при загрузке страницы
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html> 

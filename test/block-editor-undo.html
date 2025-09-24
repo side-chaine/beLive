@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8" />
+	<title>beLive - Test: Block Editor Undo/Redo</title>
+	<style>
+		body { background:#111; color:#ddd; font-family: sans-serif; }
+		#open { margin:16px; padding:8px 12px; }
+	</style>
+</head>
+<body>
+	<button id="open">Открыть редактор</button>
+	<script src="../js/modal-block-editor.js"></script>
+	<div id="modal-block-editor-container" class="hidden" style="position:fixed; inset:5% ; background:#222; border:1px solid #333; border-radius:12px; padding:12px;">
+		<div id="integrated-block-editor-content">
+			<div class="editor-layout">
+				<main class="editor-main-area">
+					<header class="editor-header"><h1>Тест редактора</h1></header>
+					<div class="block-list-area"></div>
+				</main>
+				<aside class="editor-sidebar">
+					<button id="add-block-btn" class="btn">Добавить блок</button>
+					<button id="edit-mode-toggle-btn" class="btn">Редактировать текст</button>
+					<button id="delete-selected-block-btn" class="btn" disabled>Удалить блок</button>
+					<button id="undo-block-btn" class="btn" disabled>↶ Undo</button>
+					<button id="redo-block-btn" class="btn" disabled>↷ Redo</button>
+					<button id="save-track-modal-btn" class="btn">Сохранить трек</button>
+					<button id="cancel-edit-modal-btn" class="btn">Отмена</button>
+					<div id="block-editor-status"></div>
+				</aside>
+			</div>
+		</div>
+	</div>
+	<script>
+		const mbe = new window.ModalBlockEditor();
+		document.getElementById('open').onclick = () => {
+			const text = `Первая строка кириллицей\nВторая строка\n\nТретий абзац\nЧетвертая строка`;
+			mbe.init(text, { id: 1, title: 'Тест' }, () => Promise.resolve(true), () => {});
+			mbe.show();
+		};
+	</script>
+</body>
+</html> 

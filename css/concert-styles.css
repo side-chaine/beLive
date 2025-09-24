@@ -1,0 +1,6 @@
+/* CSS-стили для режима "Концерт" */
+
+/* У concert не должно быть собственной плашки/заливки — фон берём с body */
+#lyrics-container.style-concert #lyrics-display {
+    background-color: transparent !important;
+}

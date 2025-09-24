@@ -1,0 +1,124 @@
+/*
+  Используем CSS Houdini @property для регистрации кастомного свойства,
+  что позволит браузеру плавно анимировать его значение (скорость анимации).
+  Это решает проблему "дерганности" при смене animation-duration.
+*/
+/*
+@property --gradient-animation-speed {
+  syntax: '<time>';
+  inherits: false;
+  initial-value: 8s;
+}
+*/
+
+/* Обновленные стили для кнопки beLIVE - стильный черный дизайн */
+.home-btn {
+    position: fixed !important;
+    top: 20px !important;
+    left: 20px !important;
+    z-index: 1001 !important;
+    background: linear-gradient(135deg, #000000 0%, #1a1a1a 25%, #2d2d2d 50%, #1a1a1a 75%, #000000 100%) !important;
+    background-size: 200% 200% !important;
+    animation: gradientFlow 4s ease-in-out infinite !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 15px !important;
+    padding: 10px 20px !important;
+    cursor: pointer !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+    backdrop-filter: blur(10px) !important;
+    overflow: hidden !important;
+}
+
+.home-btn:hover {
+    transform: translateY(-2px) translateX(5px) scale(1.05) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5) !important;
+}
+
+.home-btn::before {
+    content: '' !important;
+    position: absolute !important;
+    top: -50% !important;
+    left: -50% !important;
+    width: 200% !important;
+    height: 200% !important;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent) !important;
+    transform: rotate(45deg) !important;
+    transition: all 0.4s ease !important;
+    opacity: 0 !important;
+}
+
+.home-btn:hover::before {
+    opacity: 1 !important;
+    animation: shimmer 1.5s ease-in-out !important;
+}
+
+.home-logo {
+    font-size: 1.1rem !important;
+    font-weight: 800 !important;
+    background: linear-gradient(45deg, #ff3366, #00d4ff, #ff00ff, #00ff88, #ffaa00, #ff3366) !important;
+    background-size: 400% 400% !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    text-shadow: none !important;
+    letter-spacing: 0.5px !important;
+    position: relative !important;
+    z-index: 1 !important;
+    
+    /* Анимация по умолчанию - плавная прокрутка */
+    animation: slow-gradient-scroll 8s linear infinite !important;
+}
+
+.home-btn:hover .home-logo {
+    transform: scale(1.1) !important;
+    filter: drop-shadow(0 0 15px rgba(0, 212, 255, 0.6)) !important;
+
+    /* Анимация при наведении - "дыхание" или "качание" */
+    animation: rocking-gradient-scroll 2.5s ease-in-out infinite !important;
+}
+
+@keyframes gradientFlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* Новые @keyframes для двух состояний */
+
+/* Плавная, медленная прокрутка в одну сторону */
+@keyframes slow-gradient-scroll {
+    from {
+        background-position: 0% 50%;
+    }
+    to {
+        background-position: 400% 50%;
+    }
+}
+
+/* Быстрая, "качающаяся" анимация туда-обратно */
+@keyframes rocking-gradient-scroll {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 400% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes colorfulGradientFlow {
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 400% 50%;
+    }
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
+} 

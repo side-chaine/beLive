@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>beLIVE - Кокпит Pro</title>
+    <link rel="stylesheet" href="../css/avatar-page-cockpit-pro.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="cockpit-pro">
+        <!-- Верхняя панель навигации -->
+        <header class="cockpit-nav">
+            <button class="nav-btn">Концертный</button>
+            <button class="nav-btn active">Караоке</button>
+            <button class="nav-btn">Репетиция</button>
+        </header>
+
+        <!-- Карусель треков -->
+        <section class="track-carousel-container">
+            <div class="carousel-track-list">
+                <!-- Трек 1 -->
+                <div class="carousel-track-item active" onclick="selectTrack(this)" data-track-id="1">
+                    <div class="track-item-glow"></div>
+                    <div class="track-item-cover cover-1">
+                        <div class="live-singers">
+                            <a href="#" class="singer">Sveta</a>
+                            <a href="#" class="singer">Mike</a>
+                        </div>
+                    </div>
+                    <h4 class="track-item-title">Bohemian Rhapsody</h4>
+                </div>
+                <!-- Трек 2 -->
+                <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="2">
+                    <div class="track-item-glow"></div>
+                    <div class="track-item-cover cover-2"></div>
+                    <h4 class="track-item-title">Stairway to Heaven</h4>
+                </div>
+                <!-- Трек 3 -->
+                <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="3">
+                    <div class="track-item-glow"></div>
+                    <div class="track-item-cover cover-3">
+                        <div class="live-singers">
+                            <a href="#" class="singer">Vasya</a>
+                        </div>
+                    </div>
+                    <h4 class="track-item-title">Hallelujah</h4>
+                </div>
+                <!-- Трек 4 -->
+                <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="4">
+                    <div class="track-item-glow"></div>
+                    <div class="track-item-cover cover-4">
+                        <div class="live-singers">
+                            <a href="#" class="singer">John</a>
+                        </div>
+                    </div>
+                    <h4 class="track-item-title">Smells Like Teen Spirit</h4>
+                </div>
+                <!-- Трек 5 -->
+                <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="5">
+                    <div class="track-item-glow"></div>
+                    <div class="track-item-cover cover-5"></div>
+                    <h4 class="track-item-title">Hotel California</h4>
+                </div>
+                <!-- Трек 6 -->
+                <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="6">
+                    <div class="track-item-glow"></div>
+                    <div class="track-item-cover cover-6">
+                        <div class="live-singers">
+                            <a href="#" class="singer">Anna</a>
+                        </div>
+                    </div>
+                    <h4 class="track-item-title">Yesterday</h4>
+                </div>
+                
+                <!-- Дубликаты для бесконечной прокрутки -->
+                <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="1">
+                    <div class="track-item-glow"></div>
+                    <div class="track-item-cover cover-1">
+                        <div class="live-singers">
+                            <a href="#" class="singer">Sveta</a>
+                            <a href="#" class="singer">Mike</a>
+                        </div>
+                    </div>
+                    <h4 class="track-item-title">Bohemian Rhapsody</h4>
+                </div>
+                <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="2">
+                    <div class="track-item-glow"></div>
+                    <div class="track-item-cover cover-2"></div>
+                    <h4 class="track-item-title">Stairway to Heaven</h4>
+                </div>
+                <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="3">
+                    <div class="track-item-glow"></div>
+                    <div class="track-item-cover cover-3">
+                        <div class="live-singers">
+                            <a href="#" class="singer">Vasya</a>
+                        </div>
+                    </div>
+                    <h4 class="track-item-title">Hallelujah</h4>
+                </div>
+                <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="4">
+                    <div class="track-item-glow"></div>
+                    <div class="track-item-cover cover-4">
+                        <div class="live-singers">
+                            <a href="#" class="singer">John</a>
+                        </div>
+                    </div>
+                    <h4 class="track-item-title">Smells Like Teen Spirit</h4>
+                </div>
+                <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="5">
+                    <div class="track-item-glow"></div>
+                    <div class="track-item-cover cover-5"></div>
+                    <h4 class="track-item-title">Hotel California</h4>
+                </div>
+                <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="6">
+                    <div class="track-item-glow"></div>
+                    <div class="track-item-cover cover-6">
+                        <div class="live-singers">
+                            <a href="#" class="singer">Anna</a>
+                        </div>
+                    </div>
+                    <h4 class="track-item-title">Yesterday</h4>
+                </div>
+            </div>
+        </section>
+
+        <!-- Центральная рабочая область -->
+        <main class="cockpit-main-area">
+            <!-- Левая часть: Статистика пользователя по треку -->
+            <aside class="side-panel" id="user-track-stats">
+                <div class="panel-content-wrapper" id="user-track-stats-content">
+                    <!-- Контент будет меняться через JS -->
+                </div>
+            </aside>
+
+            <!-- Центральный Хаб -->
+            <div class="central-hub">
+                <div class="energy-ring ring-1"></div>
+                <div class="energy-ring ring-2"></div>
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face" alt="Артист" class="hub-avatar">
+            </div>
+            
+            <!-- Правая часть: Список поющих сейчас -->
+            <aside class="side-panel" id="live-session-list">
+                <div class="panel-content-wrapper" id="live-session-list-content">
+                    <!-- Контент будет меняться через JS -->
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Скрытые данные для треков -->
+    <div id="track-data-1" style="display: none;">
+        <div class="left-panel-data">
+            <h3 class="panel-title">Ваша статистика</h3>
+            <div class="stats-item">
+                <span class="stats-label">Лучшая точность</span>
+                <span class="stats-value">92%</span>
+            </div>
+            <div class="accuracy-bar"><div class="accuracy-fill" style="width: 92%;"></div></div>
+            <div class="stats-item">
+                <span class="stats-label">Исполнено раз</span>
+                <span class="stats-value">15</span>
+            </div>
+            <div class="ai-suggestion">
+                <div class="ai-header">💡 AI-Совет</div>
+                <p class="ai-text">Отличный фальцет! Сделай переход к основной партии плавнее в такте 34.</p>
+            </div>
+        </div>
+        <div class="right-panel-data">
+            <h3 class="panel-title">Сейчас поют</h3>
+            <ul class="live-list">
+                <li><a href="#">Sveta <span class="session-type duo">Дуэт?</span></a></li>
+                <li><a href="#">Mike <span class="session-type solo">Соло</span></a></li>
+            </ul>
+        </div>
+    </div>
+    <div id="track-data-2" style="display: none;">
+         <div class="left-panel-data">
+            <h3 class="panel-title">Ваша статистика</h3>
+             <div class="stats-item"><span class="stats-label">Лучшая точность</span><span class="stats-value">81%</span></div>
+             <div class="accuracy-bar"><div class="accuracy-fill" style="width: 81%;"></div></div>
+             <div class="stats-item"><span class="stats-label">Исполнено раз</span><span class="stats-value">7</span></div>
+             <div class="ai-suggestion"><div class="ai-header">💡 AI-Совет</div><p class="ai-text">Питч в крещендо почти идеален. Обрати внимание на "Соль" в бридже.</p></div>
+        </div>
+        <div class="right-panel-data">
+            <h3 class="panel-title">Сейчас поют</h3>
+            <p class="no-one-singing">Никого нет в эфире. <br>Будь первым!</p>
+        </div>
+    </div>
+    <div id="track-data-3" style="display: none;">
+         <div class="left-panel-data">
+            <h3 class="panel-title">Ваша статистика</h3>
+             <div class="stats-item"><span class="stats-label">Лучшая точность</span><span class="stats-value">88%</span></div>
+             <div class="accuracy-bar"><div class="accuracy-fill" style="width: 88%;"></div></div>
+             <div class="stats-item"><span class="stats-label">Исполнено раз</span><span class="stats-value">21</span></div>
+             <div class="ai-suggestion"><div class="ai-header">💡 AI-Совет</div><p class="ai-text">Великолепная динамика. Используй схожую технику для "Yesterday".</p></div>
+        </div>
+        <div class="right-panel-data">
+            <h3 class="panel-title">Сейчас поют</h3>
+            <ul class="live-list">
+                <li><a href="#">Vasya <span class="session-type solo">Соло</span></a></li>
+            </ul>
+        </div>
+    </div>
+    <div id="track-data-4" style="display: none;">
+        <div class="left-panel-data">
+            <h3 class="panel-title">Ваша статистика</h3>
+            <div class="stats-item"><span class="stats-label">Лучшая точность</span><span class="stats-value">76%</span></div>
+            <div class="accuracy-bar"><div class="accuracy-fill" style="width: 76%;"></div></div>
+            <div class="stats-item"><span class="stats-label">Исполнено раз</span><span class="stats-value">11</span></div>
+            <div class="ai-suggestion"><div class="ai-header">💡 AI-Совет</div><p class="ai-text">Хороший драйв. Для аутентичности добавь больше "хрипотцы".</p></div>
+        </div>
+        <div class="right-panel-data">
+            <h3 class="panel-title">Сейчас поют</h3>
+             <ul class="live-list">
+                <li><a href="#">John <span class="session-type solo">Соло</span></a></li>
+            </ul>
+        </div>
+    </div>
+    <div id="track-data-5" style="display: none;">
+        <div class="left-panel-data">
+             <h3 class="panel-title">Ваша статистика</h3>
+            <p class="no-one-singing">Вы еще не пели эту песню.</p>
+        </div>
+        <div class="right-panel-data">
+            <h3 class="panel-title">Сейчас поют</h3>
+            <p class="no-one-singing">Никого нет в эфире.</p>
+        </div>
+    </div>
+     <div id="track-data-6" style="display: none;">
+        <div class="left-panel-data">
+             <h3 class="panel-title">Ваша статистика</h3>
+             <div class="stats-item"><span class="stats-label">Лучшая точность</span><span class="stats-value">95%</span></div>
+             <div class="accuracy-bar"><div class="accuracy-fill" style="width: 95%;"></div></div>
+             <div class="stats-item"><span class="stats-label">Исполнено раз</span><span class="stats-value">34</span></div>
+             <div class="ai-suggestion"><div class="ai-header">💡 AI-Совет</div><p class="ai-text">Твое исполнение почти эталонное. Попробуй себя в режиме "Режиссер".</p></div>
+        </div>
+        <div class="right-panel-data">
+            <h3 class="panel-title">Сейчас поют</h3>
+             <ul class="live-list">
+                <li><a href="#">Anna <span class="session-type duo">Дуэт?</span></a></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const userStatsContent = document.getElementById('user-track-stats-content');
+        const liveSessionContent = document.getElementById('live-session-list-content');
+        
+        function selectTrack(element) {
+            // Снимаем выделение со всех
+            document.querySelectorAll('.carousel-track-item').forEach(el => el.classList.remove('active'));
+            // Выделяем текущий
+            element.classList.add('active');
+            
+            const trackId = element.dataset.trackId;
+            const trackDataSource = document.getElementById(`track-data-${trackId}`);
+
+            const leftPanelData = trackDataSource.querySelector('.left-panel-data').innerHTML;
+            const rightPanelData = trackDataSource.querySelector('.right-panel-data').innerHTML;
+            
+            // Анимация смены контента
+            userStatsContent.style.opacity = '0';
+            liveSessionContent.style.opacity = '0';
+
+            setTimeout(() => {
+                userStatsContent.innerHTML = leftPanelData;
+                liveSessionContent.innerHTML = rightPanelData;
+                userStatsContent.style.opacity = '1';
+                liveSessionContent.style.opacity = '1';
+            }, 300);
+        }
+
+        // Загрузка данных первого трека по умолчанию
+        document.addEventListener('DOMContentLoaded', () => {
+            selectTrack(document.querySelector('.carousel-track-item.active'));
+        });
+    </script>
+</body>
+</html> 

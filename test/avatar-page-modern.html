@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>beLIVE - Современный профиль</title>
+    <link rel="stylesheet" href="../css/avatar-page-modern.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="modern-profile">
+        <!-- Заголовок -->
+        <header class="profile-header">
+            <div class="header-glow"></div>
+            <h1 class="profile-title">
+                <span class="title-icon">✨</span>
+                <span class="title-text">Мой профиль</span>
+            </h1>
+            <div class="header-controls">
+                <button class="control-btn settings-btn">
+                    <span class="btn-glow"></span>
+                    <span>⚙️</span>
+                </button>
+                <button class="control-btn back-btn">
+                    <span class="btn-glow"></span>
+                    <span>← Трансляция</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Основная область -->
+        <main class="profile-main">
+            <!-- Левая зона - Профиль -->
+            <section class="profile-zone">
+                <div class="zone-glow"></div>
+                
+                <!-- Аватар -->
+                <div class="avatar-container">
+                    <div class="avatar-glow"></div>
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face" 
+                         alt="Профиль" class="main-avatar">
+                    <button class="avatar-change-btn">
+                        <span class="change-glow"></span>
+                        📷
+                    </button>
+                </div>
+
+                <!-- Варианты фото - карусель -->
+                <div class="photo-carousel">
+                    <div class="carousel-track" id="photoTrack">
+                        <div class="photo-option active">
+                            <div class="photo-glow"></div>
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop&crop=face" alt="1">
+                        </div>
+                        <div class="photo-option">
+                            <div class="photo-glow"></div>
+                            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop&crop=face" alt="2">
+                        </div>
+                        <div class="photo-option">
+                            <div class="photo-glow"></div>
+                            <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=60&h=60&fit=crop&crop=face" alt="3">
+                        </div>
+                        <div class="photo-option add-new">
+                            <div class="photo-glow"></div>
+                            <span>+</span>
+                        </div>
+                    </div>
+                    <button class="carousel-btn prev" onclick="moveCarousel('photoTrack', -1)">‹</button>
+                    <button class="carousel-btn next" onclick="moveCarousel('photoTrack', 1)">›</button>
+                </div>
+
+                <!-- Достижения - карусель -->
+                <div class="achievements-container">
+                    <h2 class="section-title">
+                        <span class="title-glow"></span>
+                        🏆 Достижения
+                    </h2>
+                    <div class="achievements-carousel">
+                        <div class="carousel-track" id="achievementsTrack">
+                            <div class="achievement-card">
+                                <div class="card-glow"></div>
+                                <span class="achievement-icon">🎤</span>
+                                <span class="achievement-value">47</span>
+                                <span class="achievement-label">Песен</span>
+                            </div>
+                            <div class="achievement-card">
+                                <div class="card-glow"></div>
+                                <span class="achievement-icon">⭐</span>
+                                <span class="achievement-value">8.7</span>
+                                <span class="achievement-label">Рейтинг</span>
+                            </div>
+                            <div class="achievement-card">
+                                <div class="card-glow"></div>
+                                <span class="achievement-icon">🏆</span>
+                                <span class="achievement-value">Хит</span>
+                                <span class="achievement-label">Лучший</span>
+                            </div>
+                            <div class="achievement-card">
+                                <div class="card-glow"></div>
+                                <span class="achievement-icon">👥</span>
+                                <span class="achievement-value">12</span>
+                                <span class="achievement-label">Дуэтов</span>
+                            </div>
+                            <div class="achievement-card">
+                                <div class="card-glow"></div>
+                                <span class="achievement-icon">🎯</span>
+                                <span class="achievement-value">156</span>
+                                <span class="achievement-label">Упражнений</span>
+                            </div>
+                            <div class="achievement-card">
+                                <div class="card-glow"></div>
+                                <span class="achievement-icon">🔥</span>
+                                <span class="achievement-value">23</span>
+                                <span class="achievement-label">Дней подряд</span>
+                            </div>
+                        </div>
+                        <button class="carousel-btn prev" onclick="moveCarousel('achievementsTrack', -1)">‹</button>
+                        <button class="carousel-btn next" onclick="moveCarousel('achievementsTrack', 1)">›</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Центральная зона - Возможности -->
+            <section class="capabilities-zone">
+                <div class="zone-glow"></div>
+                <h2 class="section-title">
+                    <span class="title-glow"></span>
+                    🎬 Возможности
+                </h2>
+                
+                <div class="capabilities-grid">
+                    <button class="capability-card primary">
+                        <div class="card-glow primary-glow"></div>
+                        <span class="capability-icon">🎭</span>
+                        <span class="capability-title">Режиссер</span>
+                    </button>
+                    <button class="capability-card">
+                        <div class="card-glow"></div>
+                        <span class="capability-icon">🎙️</span>
+                        <span class="capability-title">Студия</span>
+                    </button>
+                    <button class="capability-card">
+                        <div class="card-glow"></div>
+                        <span class="capability-icon">🎵</span>
+                        <span class="capability-title">Треки</span>
+                    </button>
+                    <button class="capability-card">
+                        <div class="card-glow"></div>
+                        <span class="capability-icon">📈</span>
+                        <span class="capability-title">Статистика</span>
+                    </button>
+                    <button class="capability-card">
+                        <div class="card-glow"></div>
+                        <span class="capability-icon">👥</span>
+                        <span class="capability-title">Друзья</span>
+                    </button>
+                    <button class="capability-card">
+                        <div class="card-glow"></div>
+                        <span class="capability-icon">🎪</span>
+                        <span class="capability-title">Конкурсы</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Правая зона - AI и статистика -->
+            <section class="ai-zone">
+                <div class="zone-glow"></div>
+                
+                <!-- AI Ассистент -->
+                <div class="ai-container">
+                    <h2 class="section-title">
+                        <span class="title-glow"></span>
+                        🤖 AI-Помощник
+                    </h2>
+                    <div class="ai-chat">
+                        <div class="ai-avatar">
+                            <div class="avatar-glow ai-glow"></div>
+                            <span>🤖</span>
+                        </div>
+                        <div class="ai-message">
+                            <p>Готов к тренировке? Поработаем над <strong>"Bohemian Rhapsody"</strong></p>
+                            <p>Прогресс +15% за неделю! 🎉</p>
+                        </div>
+                    </div>
+                    <div class="ai-actions">
+                        <button class="ai-btn">
+                            <span class="btn-glow"></span>
+                            💬 Чат
+                        </button>
+                        <button class="ai-btn">
+                            <span class="btn-glow"></span>
+                            🎯 Совет
+                        </button>
+                        <button class="ai-btn">
+                            <span class="btn-glow"></span>
+                            📚 Уроки
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Быстрая статистика -->
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <div class="stat-glow"></div>
+                        <span class="stat-value">2</span>
+                        <span class="stat-label">Сегодня</span>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-glow"></div>
+                        <span class="stat-value">14</span>
+                        <span class="stat-label">Неделя</span>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-glow"></div>
+                        <span class="stat-value">50</span>
+                        <span class="stat-label">Цель</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Нижняя панель действий -->
+        <footer class="action-bar">
+            <div class="bar-glow"></div>
+            <button class="action-btn live-btn">
+                <div class="btn-glow live-glow"></div>
+                <span>🔴</span>
+                <span>LIVE</span>
+            </button>
+            <button class="action-btn">
+                <div class="btn-glow"></div>
+                <span>🎤</span>
+                <span>Тренировка</span>
+            </button>
+            <button class="action-btn">
+                <div class="btn-glow"></div>
+                <span>🎵</span>
+                <span>Случайная</span>
+            </button>
+            <button class="action-btn">
+                <div class="btn-glow"></div>
+                <span>👥</span>
+                <span>Дуэт</span>
+            </button>
+        </footer>
+    </div>
+
+    <script>
+        // Карусель
+        function moveCarousel(trackId, direction) {
+            const track = document.getElementById(trackId);
+            const items = track.children;
+            const itemWidth = items[0].offsetWidth + 10; // ширина + gap
+            const currentTransform = getComputedStyle(track).transform;
+            let currentX = 0;
+            
+            if (currentTransform !== 'none') {
+                const matrix = currentTransform.match(/matrix\((.+)\)/);
+                if (matrix) {
+                    currentX = parseFloat(matrix[1].split(', ')[4]);
+                }
+            }
+            
+            const newX = currentX + (direction * itemWidth);
+            const maxX = 0;
+            const minX = -(itemWidth * (items.length - 3));
+            
+            const finalX = Math.max(minX, Math.min(maxX, newX));
+            track.style.transform = `translateX(${finalX}px)`;
+        }
+
+        // Анимации при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            const elements = document.querySelectorAll('.achievement-card, .capability-card, .photo-option');
+            elements.forEach((el, index) => {
+                el.style.animationDelay = `${index * 0.1}s`;
+            });
+        });
+
+        // Интерактивность фото
+        document.querySelectorAll('.photo-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.photo-option').forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+                
+                const img = this.querySelector('img');
+                if (img) {
+                    document.querySelector('.main-avatar').src = img.src.replace('60&h=60', '200&h=200');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

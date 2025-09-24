@@ -1,0 +1,5908 @@
+/* Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #000;
+    color: #fff;
+    overflow: hidden;
+    height: 100vh;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Lyrics Display */
+#lyrics-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0;
+    position: relative;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+#lyrics-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+#lyrics-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#lyrics-container::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+#lyrics-display {
+    font-size: 1.5rem; /* Увеличено с 1.2rem до 1.5rem */
+    line-height: 1.4; /* Увеличено с 1.3 до 1.4 */
+    text-align: center;
+    max-width: 80%;
+    width: 100%;
+    padding: 40px 0 120px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    word-wrap: break-word;
+}
+
+.lyric-line {
+    margin: 16px 0; /* Увеличено с 12px до 16px */
+    opacity: 0.5;
+    transition: all 0.3s ease;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: normal;
+    padding: 0 20px; /* Увеличено с 15px до 20px */
+    word-spacing: normal !important;
+    line-height: 1.4; /* Увеличено с 1.3 до 1.4 */
+}
+
+/* Style for active line */
+/* Новый стиль - без изменения геометрии */
+.lyric-line.active {
+    opacity: 1;
+    /* font-weight: bold; - Убрано */
+    /* transform: scale(1.05); - Убрано */
+    color: #fff; /* Убедимся, что цвет яркий белый */
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6), 0 0 15px rgba(255, 255, 255, 0.4); /* Усиленная тень */
+    transition: opacity 0.3s ease, color 0.3s ease, text-shadow 0.3s ease; /* Плавный переход */
+}
+
+/* Fix for lines with no spaces */
+.lyric-line:not(:has(* br, * span)) {
+    white-space: pre-wrap;
+}
+
+/* Prevent overflow for long words or strings */
+.lyric-line:not(:has(* span)) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Fix for RTF artifacts that might cause rendering issues */
+body, .lyric-line, #lyrics-display {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Transport Controls */
+#transport-controls {
+    display: flex;
+    align-items: center;
+    background-color: #1f1f1f;
+    border-top: 1px solid #333;
+    padding: 10px 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+    z-index: 10;
+    position: relative;
+}
+
+.transport-controls-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+.transport-btn, #play-pause, #reload-app, #marker-editor-btn {
+    background-color: #555555;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 5px;
+    transition: all 0.2s ease;
+}
+
+.transport-btn:hover, #play-pause:hover, #reload-app:hover, #marker-editor-btn:hover {
+    background-color: #666666;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+#reload-app {
+    font-size: 15px;
+    background-color: #555555;
+}
+
+#reload-app:hover {
+    background-color: #666666;
+}
+
+#marker-editor-btn {
+    background-color: #4CAF50;
+}
+
+#marker-editor-btn:hover {
+    background-color: #45a049;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+/* Volume Controls */
+.volume-controls {
+    display: flex;
+    flex-direction: column;
+    margin: 0 20px;
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+}
+
+.volume-control label {
+    width: 80px;
+    font-size: 0.9rem;
+}
+
+.volume-control input[type="range"] {
+    width: 150px;
+}
+
+/* Track Catalog */
+#track-catalog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(20, 20, 20, 0.95);
+    z-index: 9999;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+.catalog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#catalog-tracks {
+    margin-bottom: 30px;
+}
+
+.track-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #333;
+    cursor: pointer;
+}
+
+.track-item:hover {
+    background-color: #333;
+}
+
+.track-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    flex: 1;
+}
+
+.track-info {
+    display: flex;
+    align-items: center;
+}
+
+.track-info span {
+    margin-right: 15px;
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+.current-track {
+    background-color: #2a2a2a;
+    border-left: 3px solid #4CAF50;
+}
+
+/* Delete button */
+.delete-track {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    margin-left: 10px;
+}
+
+.delete-track:hover {
+    background-color: #c0392b;
+}
+
+/* Upload Section */
+.upload-container {
+    background-color: #222;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.upload-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -10px;
+}
+
+.upload-box {
+    flex: 1;
+    min-width: 250px;
+    padding: 0 10px;
+    margin-bottom: 15px;
+}
+
+.upload-box label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+/* Dropzone */
+.dropzone {
+    border: 2px dashed #666;
+    border-radius: 5px;
+    padding: 12px;
+    text-align: center;
+    background-color: #333;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dropzone:hover, .dropzone.dragover {
+    border-color: #4CAF50;
+    background-color: #3a3a3a;
+}
+
+.dropzone-content {
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.dropzone .icon {
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+}
+
+.dropzone p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.dropzone input[type="file"] {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* File selected state */
+.dropzone.file-selected {
+    border-color: #4CAF50;
+    background-color: #2c3e2c;
+}
+
+.dropzone.file-selected .icon {
+    color: #4CAF50;
+}
+
+/* Upload Button */
+#upload-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    width: 100%;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+#upload-btn:hover {
+    background-color: #45a049;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+/* Welcome message */
+.welcome-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    max-width: 90%;
+    width: 100%;
+    padding: 20px;
+    z-index: 10;
+}
+
+.welcome-message h1 {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #ff3b5c, #7331FF, #00b8ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-shift 8s ease infinite;
+    font-weight: 700;
+}
+
+.welcome-message p {
+    font-size: 1.8rem;
+    margin: 10px 0;
+    color: #fff;
+    opacity: 0.9;
+}
+
+/* Анимация градиента */
+@keyframes gradient-shift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Адаптивные стили для мобильных устройств */
+@media (max-width: 768px) {
+    .welcome-message h1 {
+        font-size: 2.5rem;
+    }
+    
+    .welcome-message p {
+        font-size: 1.3rem;
+    }
+}
+
+/* No lyrics message */
+.no-lyrics {
+    font-size: 2rem;
+    opacity: 0.7;
+    text-align: center;
+}
+
+/* No tracks message */
+.no-tracks {
+    text-align: center;
+    padding: 30px;
+    font-size: 1.2rem;
+    color: #888;
+}
+
+/* Time Display and Progress Bar */
+#time-display {
+    font-size: 0.9rem;
+    color: #ddd;
+    margin: 0 10px;
+    min-width: 100px;
+    text-align: center;
+}
+
+#progress-bar-container {
+    flex: 1;
+    height: 10px;
+    background-color: #333;
+    border-radius: 5px;
+    position: relative;
+    cursor: pointer;
+    overflow: visible; /* Изменено с overflow: hidden для отображения блоков */
+    z-index: 1; /* Добавлен z-index */
+}
+
+#progress-bar {
+    height: 100%;
+    background-color: #4CAF50;
+    width: 0;
+    border-radius: 5px;
+    transition: width 0.1s linear;
+    position: relative; /* Добавлено для правильного наложения */
+    z-index: 2; /* Выше, чем у контейнера, но ниже блоков */
+}
+
+/* Add hover effect for progress bar */
+#progress-bar-container:hover {
+    background-color: #444;
+}
+
+/* Progress bar timestamp tooltip */
+#progress-tooltip {
+    position: absolute;
+    background-color: #222;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    transform: translateX(-50%);
+    bottom: 15px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 10;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+#progress-bar-container:hover #progress-tooltip {
+    opacity: 1;
+}
+
+/* Waveform Editor & Synchronization UI */
+.waveform-editor {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    height: 250px;
+    background-color: #1a1a1a;
+    z-index: 100;
+    border-top: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.7);
+    color: #fff;
+    font-family: 'Arial', sans-serif;
+}
+
+.waveform-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 15px;
+    background-color: #222;
+    border-bottom: 1px solid #333;
+    flex-wrap: wrap;
+    gap: 10px;
+    height: 50px;
+}
+
+.waveform-header-left, 
+.waveform-header-center, 
+.waveform-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.waveform-header-left {
+    flex: 0 0 auto;
+}
+
+.waveform-header-center {
+    flex: 1 1 auto;
+    justify-content: center;
+}
+
+.waveform-header-right {
+    flex: 0 0 auto;
+}
+
+.waveform-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    margin-right: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.waveform-btn.back-btn {
+    background-color: #555555;
+    border-radius: 20px;
+    padding: 6px 15px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.waveform-btn.back-btn::before {
+    content: "←";
+    font-size: 14px;
+}
+
+.waveform-btn.back-btn:hover {
+    background-color: #666666;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.waveform-help {
+    font-size: 13px;
+    color: #aaa;
+    margin-right: 15px;
+    flex-grow: 1;
+}
+
+.waveform-controls {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    flex-wrap: wrap;
+    background-color: #2d2d2d;
+    border-radius: 6px;
+    padding: 3px;
+}
+
+.waveform-zoom-controls {
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+}
+
+.waveform-btn {
+    background-color: #555555;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.waveform-btn:hover {
+    background-color: #666666;
+    color: #fff;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.waveform-btn:active {
+    transform: translateY(1px);
+    background-color: #444444;
+}
+
+.waveform-btn.active {
+    background-color: #333333;
+    color: white;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.waveform-btn.save-btn {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+    padding: 6px 15px;
+    border-radius: 20px;
+}
+
+.waveform-btn.save-btn:hover {
+    background-color: #45a049;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+/* Кнопка редактирования текста */
+.waveform-btn.edit-text-btn {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 4px;
+    margin: 0 5px;
+}
+
+.waveform-btn.edit-text-btn:hover {
+    background-color: #45a049;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+.waveform-btn.edit-text-btn strong {
+    font-size: 15px;
+    font-family: serif;
+}
+
+.waveform-canvas-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background-color: #1a1a1a;
+}
+
+.waveform-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Playhead */
+.playhead {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background-color: rgba(255, 120, 50, 0.8);
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* В центрированном режиме показываем playhead более заметно */
+.waveform-editor.centered-playhead .playhead {
+    width: 3px;
+    background-color: rgba(255, 120, 50, 1);
+    box-shadow: 0 0 8px rgba(255, 120, 50, 0.8);
+}
+
+/* Отметка центрированного playhead */
+.waveform-editor.centered-playhead .playhead::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -2px;
+    width: 7px;
+    height: 7px;
+    background-color: rgb(255, 120, 50);
+    border-radius: 50%;
+}
+
+.waveform-editor.centered-playhead .playhead::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -2px;
+    width: 7px;
+    height: 7px;
+    background-color: rgb(255, 120, 50);
+    border-radius: 50%;
+}
+
+/* Стиль для отображения времени в центре */
+#waveform-time-display {
+    font-family: monospace;
+    background-color: rgba(45, 45, 45, 0.9);
+    border-radius: 20px;
+    padding: 6px 15px;
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    min-width: 80px;
+    text-align: center;
+    letter-spacing: 1px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.waveform-marker {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background-color: #4CAF50;
+    z-index: 4;
+    cursor: move;
+    transition: background-color 0.2s ease;
+}
+
+.waveform-marker::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -6px;
+    width: 12px;
+    height: 12px;
+    background-color: #4CAF50;
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.waveform-marker-label {
+    position: absolute;
+    top: 16px;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    border-left: 2px solid #4CAF50;
+}
+
+/* When marker editor is active, add bottom padding to lyrics container */
+body.waveform-active #lyrics-container {
+    padding-bottom: 270px !important;
+    transition: padding-bottom 0.3s ease;
+}
+
+/* Additional padding at top when in sync mode to ensure first line visibility */
+body.waveform-active #lyrics-display {
+    padding-top: 60px !important;
+}
+
+/* Highlight style for lines that already have markers assigned - only in edit mode */
+.waveform-active .lyric-line.has-marker {
+    color: #4CAF50 !important;
+    border-left: 3px solid #4CAF50;
+    padding-left: 5px;
+    transition: all 0.2s ease;
+}
+
+/* Стили для маркеров разных типов блоков */
+.waveform-active .lyric-line.marker-verse {
+    border-left-color: #4CAF50 !important;
+    color: #4CAF50 !important;
+}
+
+.waveform-active .lyric-line.marker-chorus {
+    border-left-color: #F44336 !important;
+    color: #F44336 !important;
+}
+
+.waveform-active .lyric-line.marker-bridge {
+    border-left-color: #6f42c1 !important;
+    color: #6f42c1 !important;
+}
+
+.waveform-active .lyric-line.marker-intro {
+    color: #2196F3 !important;
+    border-left: 3px solid #2196F3;
+}
+
+.waveform-active .lyric-line.marker-outro {
+    color: #FF9800 !important;
+    border-left: 3px solid #FF9800;
+}
+
+.waveform-active .lyric-line.marker-unknown {
+    color: #9E9E9E !important;
+    border-left: 3px solid #9E9E9E;
+}
+
+/* Flash highlight effect when adding a marker */
+@keyframes flash-highlight {
+    0% { background-color: rgba(76, 175, 80, 0); }
+    50% { background-color: rgba(76, 175, 80, 0.3); }
+    100% { background-color: rgba(76, 175, 80, 0); }
+}
+
+.lyric-line.flash-highlight {
+    animation: flash-highlight 0.5s ease;
+}
+
+/* Style for lines that have already played (past the current time) */
+.waveform-active .lyric-line.played-marker {
+    opacity: 0.6;
+}
+
+.waveform-active .lyric-line.played-marker.marker-verse {
+    color: rgba(76, 175, 80, 0.6) !important;
+}
+
+.waveform-active .lyric-line.played-marker.marker-chorus {
+    color: rgba(244, 67, 54, 0.6) !important;
+}
+
+.waveform-active .lyric-line.played-marker.marker-bridge {
+    color: rgba(111, 66, 193, 0.6) !important;
+}
+
+/* Стили для кнопок удаления и сброса маркеров */
+.waveform-btn.delete-btn {
+    background-color: #e74c3c;
+    color: white;
+    border-radius: 4px;
+}
+
+.waveform-btn.delete-btn:hover {
+    background-color: #c0392b;
+    box-shadow: 0 0 5px rgba(231, 76, 60, 0.5);
+}
+
+.waveform-btn.reset-btn {
+    background-color: #e74c3c;
+    color: white;
+    border-radius: 4px;
+}
+
+.waveform-btn.reset-btn:hover {
+    background-color: #c0392b;
+    box-shadow: 0 0 5px rgba(231, 76, 60, 0.5);
+}
+
+/* Стиль для выделения области */
+.waveform-selection {
+    background-color: rgba(76, 175, 80, 0.15);
+    border: 1px solid rgba(76, 175, 80, 0.5);
+    border-radius: 2px;
+}
+
+/* Стиль для выделенных маркеров */
+.waveform-marker.selected {
+    background-color: #ff9800;
+}
+
+/* Loop region styles */
+.waveform-loop-region {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background-color: transparent !important;
+    border-left: 1px solid rgba(255, 200, 50, 0.8) !important;
+    border-right: 1px solid rgba(255, 200, 50, 0.8) !important;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Loop handle styles */
+.waveform-loop-handle {
+    position: absolute;
+    z-index: 5;
+    transition: background-color 0.1s ease, border 0.1s ease, box-shadow 0.1s ease;
+    pointer-events: auto;
+}
+
+.waveform-loop-handle.bottom-handle {
+    position: absolute;
+    bottom: 0;
+    height: 12px;
+    background-color: rgba(255, 200, 50, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 3px 3px 0 0;
+    cursor: grab;
+}
+
+.waveform-loop-handle.start-handle,
+.waveform-loop-handle.end-handle {
+    top: 0;
+    height: 100%;
+    width: 5px;
+    background-color: rgba(255, 200, 50, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    cursor: ew-resize;
+}
+
+.waveform-loop-handle:hover,
+.waveform-loop-handle.hover,
+.waveform-loop-handle.dragging {
+    background-color: rgba(255, 200, 50, 0.9);
+    border: 2px solid white;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.waveform-loop-handle.bottom-handle:hover,
+.waveform-loop-handle.bottom-handle.hover,
+.waveform-loop-handle.bottom-handle.dragging {
+    background-color: rgba(255, 200, 50, 0.9);
+    cursor: grabbing;
+}
+
+/* Button style for loop controls */
+.waveform-btn.loop-btn {
+    background-color: #FF9800;
+    color: white;
+}
+
+.waveform-btn.loop-btn.active {
+    background-color: #F57C00;
+    box-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
+}
+
+/* Новые стили для улучшения внешнего вида */
+.sync-editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Группа кнопок управления */
+.btn-group {
+    display: flex;
+    background-color: #333333;
+    border-radius: 20px;
+    padding: 2px;
+    margin: 0 5px;
+    overflow: hidden;
+}
+
+.btn-group .waveform-btn {
+    border-radius: 0;
+    margin: 0;
+    border-right: 1px solid #222;
+    padding: 6px 10px;
+    background-color: #555555;
+}
+
+.btn-group .waveform-btn:first-child {
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+}
+
+.btn-group .waveform-btn:last-child {
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    border-right: none;
+}
+
+.btn-group .waveform-btn:hover {
+    background-color: #666666;
+}
+
+.btn-group .waveform-btn.active {
+    background-color: #333333;
+}
+
+/* Улучшения для кнопки Add Marker */
+.waveform-btn.add-marker-btn {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+    padding: 6px 15px;
+    border-radius: 20px;
+}
+
+.waveform-btn.add-marker-btn:hover {
+    background-color: #45a049;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+/* Стиль для кнопки переключения маркеров */
+.waveform-btn.markers-toggle-btn {
+    background-color: #555555;
+    color: #fff;
+    font-weight: bold;
+    padding: 6px 15px;
+    border-radius: 20px;
+}
+
+.waveform-btn.markers-toggle-btn.active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.waveform-btn.markers-toggle-btn:hover {
+    background-color: #666666;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+.waveform-btn.markers-toggle-btn.active:hover {
+    background-color: #45a049;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+/* Улучшенная разметка меток времени */
+.time-marker {
+    position: absolute;
+    bottom: 0;
+    width: 1px;
+    height: 5px;
+    background-color: rgba(255, 255, 255, 0.3);
+    pointer-events: none;
+}
+
+.time-marker.major {
+    height: 10px;
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.time-marker-label {
+    position: absolute;
+    bottom: 12px;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 10px;
+    font-family: monospace;
+}
+
+/* Add styles for backup system modals, notifications, etc. */
+
+/* Modal Dialog */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    transition: opacity 0.3s ease;
+}
+
+.modal-content {
+    position: relative;
+    background-color: #222;
+    margin: 10% auto;
+    padding: 0;
+    border: 1px solid #444;
+    width: 600px;
+    max-width: 90%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    animation: modalFadeIn 0.3s;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    padding: 15px;
+    background-color: #333;
+    color: white;
+    border-bottom: 1px solid #444;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.modal-body {
+    padding: 20px;
+    color: #ddd;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: white;
+    text-decoration: none;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 5px 0;
+    background-color: #555555;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.btn:hover {
+    background-color: #666666;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.btn:disabled {
+    background-color: #333333;
+    color: #777;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background-color: #4CAF50;
+}
+
+.btn-primary:hover {
+    background-color: #45a049;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+.btn-secondary {
+    background-color: #555555;
+}
+
+.btn-secondary:hover {
+    background-color: #666666;
+}
+
+.btn-small {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+/* Info text */
+.info-text {
+    font-size: 12px;
+    color: #999;
+    margin: 5px 0 15px;
+}
+
+/* Form Controls */
+.form-control {
+    display: block;
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 14px;
+    background-color: #333;
+    border: 1px solid #444;
+    color: #ddd;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+/* File Upload Container */
+.file-upload-container {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+}
+
+#selected-file-name {
+    margin-left: 10px;
+    font-style: italic;
+    color: #999;
+}
+
+/* Backup Table */
+.backup-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 14px;
+}
+
+.backup-table th, 
+.backup-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #444;
+}
+
+.backup-table th {
+    background-color: #333;
+    color: #ddd;
+}
+
+.backup-table tr:hover {
+    background-color: #333;
+}
+
+/* Notifications */
+.notifications-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1500;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 350px;
+}
+
+.notification {
+    padding: 12px 15px;
+    border-radius: 4px;
+    color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: notificationFadeIn 0.3s forwards;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.notification.notification-hidden {
+    opacity: 0;
+    transform: translateX(30px);
+}
+
+.notification.info {
+    background-color: #3366cc;
+}
+
+.notification.success {
+    background-color: #28a745;
+}
+
+.notification.error {
+    background-color: #dc3545;
+}
+
+.notification.warning {
+    background-color: #ffc107;
+    color: #333;
+}
+
+.notification-close {
+    margin-left: 10px;
+    cursor: pointer;
+    padding: 0 5px;
+}
+
+@keyframes notificationFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Backup and Restore buttons */
+#backup-btn, #restore-btn {
+    margin-left: 10px;
+}
+
+/* Horizontal divider */
+hr {
+    border: none;
+    border-top: 1px solid #444;
+    margin: 20px 0;
+}
+
+/* Import Markers Container */
+.import-markers-container {
+    margin-top: 20px;
+    padding-top: 10px;
+}
+
+.import-markers-container h3 {
+    font-size: 1.1rem;
+    margin: 10px 0;
+    color: #4CAF50;
+}
+
+.import-box {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+}
+
+#import-markers-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s;
+}
+
+#import-markers-btn:hover {
+    background-color: #45a049;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+#import-markers-btn .icon {
+    font-size: 1.1rem;
+}
+
+#import-file-name {
+    margin-left: 10px;
+    font-style: italic;
+    color: #999;
+    font-size: 0.9rem;
+}
+
+.btn-secondary {
+    background-color: #555;
+}
+
+.btn-secondary:hover {
+    background-color: #666;
+}
+
+/* Import Markers button in track listing */
+.import-track-markers {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 3px 7px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-right: 5px;
+    margin-left: 10px;
+    transition: background-color 0.2s;
+}
+
+.import-track-markers:hover {
+    background-color: #45a049;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+/* Load Markers button */
+#load-markers-btn {
+    margin-left: 10px;
+    background-color: #555555;
+}
+
+#load-markers-btn:hover {
+    background-color: #666666;
+}
+
+/* Message for Load Markers mode */
+.load-markers-message {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: rgba(52, 152, 219, 0.2);
+    border-radius: 4px;
+    color: #fff;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.load-markers-message button {
+    margin-left: 10px;
+}
+
+/* === Стили для текстовых сценариев === */
+
+/* Селектор стилей */
+#style-selector-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 900px;
+    max-height: 80vh;
+    background-color: rgba(20, 20, 20, 0.95);
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    overflow: hidden;
+    color: #fff;
+    font-family: Arial, sans-serif;
+}
+
+#style-selector-container.hidden {
+    display: none;
+}
+
+/* New flex layout for style selector */
+.style-selector-layout {
+    display: flex;
+    height: 100%;
+    max-height: 80vh;
+}
+
+/* Styles column (left side) */
+.styles-column {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    max-height: 80vh;
+}
+
+/* Transitions column (right side) */
+.transitions-column {
+    width: 220px;
+    background-color: rgba(30, 30, 30, 0.8);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+    overflow: hidden; /* Ensure proper containment */
+}
+
+.transitions-header {
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.transitions-header-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.transitions-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.transition-set-btn {
+    background-color: #444;
+    color: #ccc;
+    border: 1px solid #555;
+    border-radius: 4px; /* Square shape */
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    min-width: 30px; 
+    height: 30px;    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.transition-set-btn:hover {
+    background-color: #555;
+    border-color: #777;
+    color: #fff;
+}
+
+.transition-set-btn.active {
+    background-color: #007bff; /* Blue for active state */
+    color: white;
+    border-color: #0056b3;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.7);
+}
+
+.reset-transition-style-btn {
+    background-color: #333333;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-right: 10px;
+    margin-left: auto;
+    transition: all 0.2s ease;
+}
+
+.reset-transition-style-btn:hover {
+    background-color: #555555;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+/* Создаем крестик с помощью псевдоэлементов */
+.cancel-icon {
+    position: relative;
+    display: block;
+    width: 14px;
+    height: 14px;
+}
+
+.cancel-icon::before,
+.cancel-icon::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #fff;
+}
+
+.cancel-icon::before {
+    transform: rotate(45deg);
+}
+
+.cancel-icon::after {
+    transform: rotate(-45deg);
+}
+
+/* Добавляем подсказку при наведении */
+.reset-transition-btn::after {
+    content: 'Отменить переход';
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    pointer-events: none;
+}
+
+.reset-transition-btn:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+.transitions-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.transitions-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.transitions-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.transitions-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+/* Update transitions grid for the new layout */
+.transitions-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+    overflow-y: auto; /* Add vertical scrolling */
+    max-height: calc(70vh - 70px); /* Adjust height to fit more transitions */
+    padding: 5px 10px 20px 10px; /* Add more padding at bottom */
+    margin-right: 2px; /* Give space for scrollbar */
+}
+
+.style-selector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.style-selector-header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.close-style-selector {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px;
+    line-height: 1;
+}
+
+.close-style-selector:hover {
+    color: white;
+}
+
+.style-category-header {
+    margin: 15px 0 10px 0;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.style-category-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.style-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.style-card {
+    background-color: rgba(40, 40, 40, 0.6);
+    border-radius: 6px;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    display: flex;
+    flex-direction: column;
+}
+
+.style-card:hover {
+    background-color: rgba(60, 60, 60, 0.8);
+    transform: translateY(-2px);
+}
+
+.style-card.selected {
+    border-color: #4CAF50;
+    background-color: rgba(60, 60, 60, 0.8);
+}
+
+.style-preview {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.style-name {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.preview-line {
+    padding: 5px;
+    font-size: 16px;
+}
+
+/* Текстовые стили */
+
+/* Стандартный */
+.style-default {
+    font-family: 'Arial', sans-serif;
+    font-size: 1.2em; /* Увеличено с 0.7em до 1.2em */
+    letter-spacing: normal;
+    text-align: center;
+    font-weight: normal;
+}
+
+.style-default-active {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+/* Минималистичный */
+.style-minimalist {
+    font-family: 'Helvetica', sans-serif;
+    font-size: 1.1em; /* Увеличено с 0.6em до 1.1em */
+    letter-spacing: 0.05em;
+    text-align: center;
+    font-weight: 300;
+}
+
+.style-minimalist-active {
+    color: #ffffff;
+    opacity: 1;
+}
+
+.container-minimalist .lyric-line:not(.active) {
+    opacity: 0.3;
+}
+
+/* Караоке */
+.style-karaoke {
+    font-family: 'Arial', sans-serif;
+    font-size: 1.3em; /* Увеличено с 0.8em до 1.3em */
+    letter-spacing: 0.05em;
+    text-align: center;
+    font-weight: bold;
+}
+
+.style-karaoke-active {
+    color: #ffcc00;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 204, 0, 0.5);
+}
+
+/* Применяем scale только НЕ в режиме репетиции */
+.style-karaoke-active:not(.rehearsal-active-line) {
+    transform: scale(1.05);
+}
+
+.container-karaoke {
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 20px;
+}
+
+/* Концертный стиль - исправленный */
+.style-concert {
+    font-family: 'Impact', sans-serif;
+    font-size: 1.8em; /* Увеличено с 1.2em до 1.8em */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: bold;
+}
+
+.style-concert .lyric-line {
+    opacity: 0.2;
+    transition: all 0.4s ease;
+    margin: 0.5em 0;
+    position: relative;
+    transform: scale(0.85);
+    white-space: normal;
+    word-spacing: normal;
+}
+
+.style-concert .lyric-line.active {
+    opacity: 1;
+    margin-top: 1em;
+    margin-bottom: 0.8em;
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+    color: white;
+    word-spacing: normal;
+}
+
+/* Применяем scale только НЕ в режиме репетиции */
+.style-concert .lyric-line.active:not(.rehearsal-active-line) {
+    transform: scale(1);
+}
+
+/* Неоновое свечение */
+.style-neon-glow {
+    font-family: 'Arial', sans-serif;
+    font-size: 1.3em; /* Увеличено с 0.8em до 1.3em */
+    text-align: center;
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #0073e6, 0 0 20px #0073e6;
+}
+
+.style-neon-glow-active, .style-neon-glow.active {
+    color: #ffffff;
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #00ff00, 0 0 20px #00ff00, 0 0 25px #00ff00;
+}
+
+/* Новые креативные переходы */
+/* Заменим старые переходы на новые */
+
+/* 1. Explosion - разрыв текста на части */
+.transitions-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.transition-card {
+    background-color: rgba(30, 30, 30, 0.8);
+    border-radius: 6px;
+    padding: 6px;
+    text-align: center;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.transition-card:hover {
+    background-color: rgba(50, 50, 50, 0.9);
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.transition-card.selected {
+    border-color: #4CAF50;
+    background-color: rgba(45, 45, 45, 0.9);
+}
+
+.transition-preview-container {
+    height: 35px;
+    width: 100%;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background-color: rgba(20, 20, 20, 0.5);
+    border-radius: 4px;
+    position: relative; /* Required for pseudo-elements positioning */
+}
+
+.transition-preview-text {
+    font-size: 16px;
+    color: #fff;
+    padding: 2px 6px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    text-align: center;
+    position: relative; /* Needed for some effects */
+}
+
+.transition-name {
+    font-size: 14px;
+    color: #ddd;
+    text-align: center;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* Animation previews for each transition type */
+/* Explosion preview */
+.animate-preview.preview-explosion {
+    animation: preview-explosion 1.2s forwards;
+}
+
+@keyframes preview-explosion {
+    0% {
+        letter-spacing: normal;
+        transform: scale(0.8);
+        filter: blur(3px);
+        opacity: 0.3;
+    }
+    40% {
+        letter-spacing: 3px;
+        transform: scale(1.1);
+        filter: blur(0);
+        opacity: 0.8;
+    }
+    100% {
+        letter-spacing: normal;
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Burn preview */
+.animate-preview.preview-burn {
+    animation: preview-burn 1.5s forwards;
+}
+
+@keyframes preview-burn {
+    0% {
+        text-shadow: 0 0 0px rgba(255, 50, 0, 0);
+        color: rgba(255, 255, 255, 0.1);
+        transform: scale(0.95);
+    }
+    25% {
+        text-shadow: 0 0 10px rgba(255, 50, 0, 0.8), 0 0 15px rgba(255, 120, 0, 0.6);
+        color: rgba(255, 220, 100, 1);
+    }
+    80% {
+        text-shadow: 0 0 5px rgba(255, 220, 100, 0.5);
+        color: rgba(255, 255, 255, 0.9);
+        transform: scale(1.03);
+    }
+    100% {
+        text-shadow: 0 0 0px rgba(255, 220, 100, 0.3);
+        color: rgba(255, 255, 255, 1);
+        transform: scale(1);
+    }
+}
+
+/* Matrix preview */
+.animate-preview.preview-matrix {
+    animation: preview-matrix 1.5s forwards;
+}
+
+@keyframes preview-matrix {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px);
+        color: #0f0;
+        text-shadow: 0 0 5px #0f0;
+    }
+    50% {
+        color: #0f0;
+        text-shadow: 0 0 5px #0f0;
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        color: white;
+    }
+}
+
+/* Glitch preview */
+.animate-preview.preview-glitch {
+    animation: preview-glitch 1s infinite;
+}
+
+@keyframes preview-glitch {
+    0% {
+        transform: skew(0deg, 0deg);
+        text-shadow: -2px 0 #00fffc, 2px 0 #fc00ff;
+        opacity: 0.8;
+    }
+    20% {
+        transform: skew(-4deg, 0deg);
+        text-shadow: -4px 0 #00fffc, 4px 0 #fc00ff;
+        opacity: 0.9;
+    }
+    40% {
+        transform: skew(2deg, 0deg);
+        text-shadow: 2px 0 #00fffc, -2px 0 #fc00ff;
+        opacity: 1;
+    }
+    60% {
+        transform: skew(0deg, 2deg);
+        text-shadow: 0 0 #00fffc, 0 0 #fc00ff;
+        opacity: 1;
+    }
+    100% {
+        transform: skew(0deg, 0deg);
+        text-shadow: -2px 0 #00fffc, 2px 0 #fc00ff;
+        opacity: 0.8;
+    }
+}
+
+/* Typewriter preview */
+.animate-preview.preview-typewriter {
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: 2px solid white;
+    animation: typing 1.5s steps(20, end), blink-caret .75s step-end infinite;
+    width: 0;
+}
+
+@keyframes typing {
+    from { width: 0 }
+    to { width: 100% }
+}
+
+@keyframes blink-caret {
+    from, to { border-color: transparent }
+    50% { border-color: white; }
+}
+
+/* Стили для кнопок */
+#catalog-btn {
+    background-color: #555555;
+}
+
+#catalog-btn:hover {
+    background-color: #666666;
+}
+
+#style-selector-btn {
+    background-color: #555555;
+}
+
+#style-selector-btn:hover {
+    background-color: #666666;
+}
+
+#close-catalog {
+    background-color: #555555;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#close-catalog:hover {
+    background-color: #e74c3c;
+    box-shadow: 0 0 5px rgba(231, 76, 60, 0.5);
+}
+
+/* Креативные эффекты переходов для строк лирики */
+/* 1. Explosion - текст взрывается */
+.transition-explosion .lyric-line.becoming-active {
+    animation: text-explosion 0.8s forwards;
+    word-spacing: normal;
+    white-space: normal;
+}
+
+@keyframes text-explosion {
+    0% {
+        letter-spacing: normal;
+        transform: scale(0.8);
+        filter: blur(5px);
+        opacity: 0.3;
+    }
+    40% {
+        letter-spacing: 5px;
+        transform: scale(1.1);
+        filter: blur(0);
+        opacity: 0.8;
+    }
+    100% {
+        letter-spacing: normal;
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* 2. Burn - текст появляется с эффектом огня */
+.transition-burn .lyric-line.becoming-active {
+    animation: text-burn 1.2s forwards;
+    word-spacing: normal;
+}
+
+@keyframes text-burn {
+    0% {
+        text-shadow: 0 0 0px rgba(255, 50, 0, 0);
+        color: rgba(255, 255, 255, 0.1);
+        transform: scale(0.95);
+    }
+    25% {
+        text-shadow: 0 0 20px rgba(255, 50, 0, 0.8), 0 0 30px rgba(255, 120, 0, 0.6);
+        color: rgba(255, 220, 100, 1);
+    }
+    80% {
+        text-shadow: 0 0 5px rgba(255, 220, 100, 0.5);
+        color: rgba(255, 255, 255, 0.9);
+        transform: scale(1.03);
+    }
+    100% {
+        text-shadow: 0 0 0px rgba(255, 220, 100, 0.3);
+        color: rgba(255, 255, 255, 1);
+        transform: scale(1);
+    }
+}
+
+/* 3. Matrix - буквы падают как в Матрице */
+.transition-matrix .lyric-line.becoming-active {
+    opacity: 1;
+    animation: text-matrix 1s forwards;
+    white-space: normal;
+    word-spacing: normal;
+}
+
+.transition-matrix .lyric-line.becoming-active span {
+    display: inline-block;
+    animation: letter-drop 0.8s forwards;
+    opacity: 0;
+    white-space: normal;
+    word-spacing: normal;
+}
+
+/* Обеспечиваем, чтобы текст не терял пробелы */
+.lyric-line span {
+    white-space: normal;
+    display: inline-block;
+}
+
+.transition-matrix .lyric-line span {
+    white-space: normal;
+    display: inline-block;
+}
+
+/* 4. Glitch - текст с эффектом глюка */
+.transition-glitch .lyric-line.becoming-active {
+    animation: text-glitch 0.8s forwards;
+}
+
+@keyframes text-glitch {
+    0% {
+        transform: skew(0deg, 0deg);
+        text-shadow: -2px 0 #00fffc, 2px 0 #fc00ff;
+        opacity: 0.7;
+    }
+    20% {
+        transform: skew(-4deg, 0deg);
+        text-shadow: -4px 0 #00fffc, 4px 0 #fc00ff;
+        opacity: 0.8;
+    }
+    40% {
+        transform: skew(2deg, 0deg);
+        text-shadow: 2px 0 #00fffc, -2px 0 #fc00ff;
+        opacity: 0.9;
+    }
+    60% {
+        transform: skew(0deg, 2deg);
+        text-shadow: 0 0 #00fffc, 0 0 #fc00ff;
+        opacity: 1;
+    }
+    100% {
+        transform: skew(0deg, 0deg);
+        text-shadow: 0 0 #00fffc, 0 0 #fc00ff;
+        opacity: 1;
+    }
+}
+
+/* 5. Typewriter - текст печатается как на машинке */
+.transition-typewriter .lyric-line.becoming-active {
+    overflow: hidden;
+    white-space: nowrap;
+    animation: typing-text 0.8s steps(40, end) forwards;
+    border-right: 2px solid transparent;
+}
+
+@keyframes typing-text {
+    from {
+        width: 0;
+        border-right: 2px solid white;
+    }
+    to {
+        width: 100%;
+        border-right: 2px solid transparent;
+    }
+}
+
+@keyframes text-matrix {
+    0% {
+        opacity: 0.3;
+        color: #0f0;
+    }
+    70% {
+        color: #0f0;
+    }
+    100% {
+        opacity: 1;
+        color: white;
+    }
+}
+
+@keyframes letter-drop {
+    0% {
+        opacity: 0;
+        transform: translateY(-50px);
+        color: #0f0;
+    }
+    60% {
+        color: #0f0;
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        color: white;
+    }
+}
+
+/* Preview Animations for New Transitions */
+
+/* Neon Pulse preview */
+.animate-preview.preview-neonPulse {
+    animation: preview-neonPulse 1.5s infinite;
+}
+
+@keyframes preview-neonPulse {
+    0% {
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #00ffff;
+        color: #fff;
+    }
+    50% {
+        text-shadow: 0 0 15px #fff, 0 0 25px #00ffff, 0 0 35px #00ffff;
+        color: #cef;
+    }
+    100% {
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #00ffff;
+        color: #fff;
+    }
+}
+
+/* Liquid preview */
+.animate-preview.preview-liquid {
+    animation: preview-liquid 2s forwards;
+}
+
+@keyframes preview-liquid {
+    0% {
+        filter: blur(5px);
+        letter-spacing: -3px;
+        opacity: 0;
+        transform: scale(0.8);
+        color: #06c;
+    }
+    40% {
+        filter: blur(2px);
+        letter-spacing: 2px;
+        opacity: 0.8;
+        transform: scale(1.1);
+        color: #09f;
+    }
+    80% {
+        filter: blur(0);
+        letter-spacing: 0;
+        opacity: 1;
+        transform: scale(1);
+        color: #fff;
+    }
+    100% {
+        filter: blur(0);
+        letter-spacing: 0;
+        opacity: 1;
+        transform: scale(1);
+        color: #fff;
+    }
+}
+
+/* Vibration preview */
+.animate-preview.preview-vibration {
+    animation: preview-vibration 0.82s cubic-bezier(.36,.07,.19,.97) infinite;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+@keyframes preview-vibration {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+    40%, 60% { transform: translate3d(3px, 0, 0); }
+}
+
+/* Echo preview */
+.animate-preview.preview-echo {
+    position: relative;
+    animation: preview-echo 2s infinite;
+}
+
+.animate-preview.preview-echo::before,
+.animate-preview.preview-echo::after {
+    content: attr(data-content);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    opacity: 0;
+    animation: preview-echo-ghost 2s infinite;
+}
+
+.animate-preview.preview-echo::after {
+    animation-delay: 0.15s;
+}
+
+@keyframes preview-echo {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
+
+@keyframes preview-echo-ghost {
+    0% {
+        opacity: 0;
+        transform: translateX(0);
+    }
+    10% {
+        opacity: 0.1;
+    }
+    20% {
+        opacity: 0.5;
+        transform: translateX(10px);
+    }
+    30% {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(25px);
+    }
+}
+
+/* Sparkle preview */
+.animate-preview.preview-sparkle {
+    animation: preview-sparkle 2s infinite;
+}
+
+@keyframes preview-sparkle {
+    0% {
+        opacity: 0.3;
+        text-shadow: none;
+    }
+    20% {
+        opacity: 1;
+        text-shadow: 0 0 10px #fff, 0 0 20px #fff;
+    }
+    30% {
+        text-shadow: 0 0 5px gold, 0 0 10px gold, 0 0 15px gold;
+    }
+    50% {
+        text-shadow: 0 0 10px white, 0 0 15px white;
+    }
+    70% {
+        text-shadow: 0 0 5px gold, 0 0 10px gold, 0 0 15px gold;
+    }
+    80% {
+        opacity: 1;
+        text-shadow: 0 0 10px #fff, 0 0 20px #fff;
+    }
+    100% {
+        opacity: 0.3;
+        text-shadow: none;
+    }
+}
+
+/* Wave preview */
+.animate-preview.preview-wave {
+    animation: preview-wave 2s infinite;
+}
+
+@keyframes preview-wave {
+    0% {
+        transform: translateY(0);
+    }
+    25% {
+        transform: translateY(-6px);
+    }
+    50% {
+        transform: translateY(0);
+    }
+    75% {
+        transform: translateY(6px);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+/* Letter By Letter preview */
+.animate-preview.preview-letterByLetter {
+    overflow: hidden;
+    white-space: nowrap;
+        width: 0;
+    animation: preview-letterByLetter 2s forwards;
+    display: inline-block;
+}
+
+@keyframes preview-letterByLetter {
+    0% { width: 0; opacity: 0; }
+    10% { opacity: 1; }
+    100% { width: 100%; opacity: 1; }
+}
+
+/* Word By Word preview */
+.animate-preview.preview-wordByWord {
+    overflow: hidden;
+    white-space: nowrap;
+    animation: preview-wordByWord 2s forwards;
+    display: inline-block;
+}
+
+@keyframes preview-wordByWord {
+    0% { 
+        clip-path: inset(0 100% 0 0);
+        opacity: 0.3;
+    }
+    100% { 
+        clip-path: inset(0 0 0 0);
+        opacity: 1;
+    }
+}
+
+/* Elastic preview */
+.animate-preview.preview-elastic {
+    animation: preview-elastic 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    transform-origin: center;
+}
+
+@keyframes preview-elastic {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    60% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+    80% {
+        transform: scale(0.95);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Smoke preview */
+.animate-preview.preview-smoke {
+    animation: preview-smoke 2s forwards;
+    filter: blur(0);
+}
+
+@keyframes preview-smoke {
+    0% {
+        opacity: 0;
+        filter: blur(5px);
+        transform: translateY(10px) scale(0.9);
+        color: rgba(255, 255, 255, 0.2);
+    }
+    50% {
+        opacity: 0.8;
+        filter: blur(2px);
+        transform: translateY(0) scale(1.05);
+        color: rgba(255, 255, 255, 0.8);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0) scale(1);
+        color: white;
+    }
+}
+
+/* Active Line Transition Animations */
+
+/* Neon Pulse transition for active line */
+.transition-neonPulse .lyric-line.becoming-active {
+    animation: text-neonPulse 1.5s forwards;
+}
+
+@keyframes text-neonPulse {
+    0% {
+        opacity: 0.3;
+        color: #fff;
+        text-shadow: none;
+    }
+    40% {
+        opacity: 0.8;
+        color: #fff;
+        text-shadow: 0 0 10px #fff, 0 0 20px #00ffff, 0 0 30px #00ffff, 0 0 40px #00ffff;
+    }
+    70% {
+        opacity: 1;
+        color: #fff;
+        text-shadow: 0 0 20px #fff, 0 0 30px #00ffff, 0 0 40px #00ffff;
+    }
+    100% {
+        opacity: 1;
+        color: #fff;
+        text-shadow: 0 0 10px #fff, 0 0 20px #00ffff, 0 0 30px #00ffff;
+    }
+}
+
+/* Liquid transition for active line */
+.transition-liquid .lyric-line.becoming-active {
+    animation: text-liquid 1.5s forwards;
+}
+
+@keyframes text-liquid {
+    0% {
+        opacity: 0;
+        filter: blur(10px);
+        letter-spacing: -3px;
+        transform: scale(0.8);
+        color: #06c;
+    }
+    30% {
+        opacity: 0.5;
+        filter: blur(5px);
+        letter-spacing: 5px;
+        transform: scale(1.1);
+        color: #09f;
+    }
+    60% {
+        opacity: 0.8;
+        filter: blur(2px);
+        letter-spacing: 2px;
+        transform: scale(1.05);
+        color: #9cf;
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0);
+        letter-spacing: normal;
+        transform: scale(1);
+        color: #fff;
+    }
+}
+
+/* Vibration transition for active line */
+.transition-vibration .lyric-line.becoming-active {
+    animation: text-vibration 0.5s cubic-bezier(.36,.07,.19,.97) forwards;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+@keyframes text-vibration {
+    0% { 
+        opacity: 0.2;
+        transform: translate3d(0, 0, 0);
+    }
+    10%, 90% { 
+        opacity: 0.5;
+        transform: translate3d(-2px, 0, 0);
+    }
+    20%, 80% { 
+        opacity: 0.6;
+        transform: translate3d(4px, 0, 0);
+    }
+    30%, 50%, 70% { 
+        opacity: 0.8;
+        transform: translate3d(-6px, 0, 0);
+    }
+    40%, 60% { 
+        opacity: 1;
+        transform: translate3d(6px, 0, 0);
+    }
+    100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+/* Echo transition for active line */
+.transition-echo .lyric-line.becoming-active {
+    position: relative;
+    animation: text-echo 1s forwards;
+}
+
+.transition-echo .lyric-line.becoming-active::before,
+.transition-echo .lyric-line.becoming-active::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    opacity: 0;
+    animation: text-echo-ghost 2s forwards;
+}
+
+.transition-echo .lyric-line.becoming-active::after {
+    animation-delay: 0.15s;
+}
+
+@keyframes text-echo {
+    0% { opacity: 0; }
+    30% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+@keyframes text-echo-ghost {
+    0% {
+        opacity: 0;
+        transform: translateX(0);
+    }
+    20% {
+        opacity: 0.3;
+        transform: translateX(15px);
+    }
+    40% {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+}
+
+/* Sparkle transition for active line */
+.transition-sparkle .lyric-line.becoming-active {
+    animation: text-sparkle 1.5s forwards;
+}
+
+@keyframes text-sparkle {
+    0% {
+        opacity: 0;
+        text-shadow: none;
+    }
+    10% {
+        opacity: 0.3;
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff;
+    }
+    30% {
+        opacity: 0.6;
+        text-shadow: 0 0 10px gold, 0 0 20px gold, 0 0 30px gold;
+    }
+    50% {
+        opacity: 0.8;
+        text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff;
+    }
+    70% {
+        opacity: 1;
+        text-shadow: 0 0 10px gold, 0 0 20px gold, 0 0 30px gold;
+    }
+    100% {
+        opacity: 1;
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff;
+    }
+}
+
+/* Wave transition for active line */
+.transition-wave .lyric-line.becoming-active {
+    animation: text-wave 1s forwards;
+}
+
+@keyframes text-wave {
+    0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.8);
+    }
+    40% {
+        opacity: 0.7;
+        transform: translateY(-15px) scale(1.1);
+    }
+    70% {
+        opacity: 0.9;
+        transform: translateY(5px) scale(1.05);
+    }
+    90% {
+        opacity: 1;
+        transform: translateY(-2px) scale(1.02);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Letter By Letter transition for active line */
+.transition-letterByLetter .lyric-line.becoming-active span {
+    opacity: 0;
+    display: inline-block;
+    animation: text-letterByLetter 0.05s forwards;
+}
+
+@keyframes text-letterByLetter {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px);
+        filter: blur(5px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+/* Word By Word transition for active line */
+.transition-wordByWord .lyric-line.becoming-active span.word {
+    opacity: 0;
+    display: inline-block;
+    animation: text-wordByWord 0.3s forwards;
+}
+
+@keyframes text-wordByWord {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.9);
+    }
+    60% {
+        opacity: 0.8;
+        transform: translateY(5px) scale(1.05);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Elastic transition for active line */
+.transition-elastic .lyric-line.becoming-active {
+    animation: text-elastic 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+@keyframes text-elastic {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    40% {
+        opacity: 0.5;
+    }
+    60% {
+        opacity: 0.8;
+        transform: scale(1.15);
+    }
+    80% {
+        opacity: 0.9;
+        transform: scale(0.95);
+    }
+    90% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Smoke transition for active line */
+.transition-smoke .lyric-line.becoming-active {
+    animation: text-smoke 1.5s forwards;
+}
+
+@keyframes text-smoke {
+    0% {
+        opacity: 0;
+        filter: blur(15px);
+        transform: translateY(20px);
+        letter-spacing: 5px;
+        color: rgba(255, 255, 255, 0.1);
+    }
+    30% {
+        opacity: 0.3;
+        filter: blur(10px);
+        transform: translateY(15px);
+        letter-spacing: 3px;
+        color: rgba(255, 255, 255, 0.3);
+    }
+    60% {
+        opacity: 0.7;
+        filter: blur(5px);
+        transform: translateY(5px);
+        letter-spacing: 1px;
+        color: rgba(255, 255, 255, 0.7);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0);
+        letter-spacing: normal;
+        color: white;
+    }
+} 
+
+/* Ensure animation works for all transitions */
+.animate-preview {
+    animation-duration: 2s;
+    animation-fill-mode: forwards;
+    display: inline-block; /* Needed for proper animation */
+}
+
+/* Fix for transition-{type} to ensure proper application of animations */
+body .transition-neonPulse .lyric-line.becoming-active,
+body .transition-liquid .lyric-line.becoming-active,
+body .transition-vibration .lyric-line.becoming-active,
+body .transition-echo .lyric-line.becoming-active,
+body .transition-sparkle .lyric-line.becoming-active,
+body .transition-wave .lyric-line.becoming-active,
+body .transition-letterByLetter .lyric-line.becoming-active,
+body .transition-wordByWord .lyric-line.becoming-active,
+body .transition-smoke .lyric-line.becoming-active,
+body .transition-edgeGlow .lyric-line.becoming-active,
+body .transition-pulseRim .lyric-line.becoming-active,
+body .transition-fireEdge .lyric-line.becoming-active,
+body .transition-neonOutline .lyric-line.becoming-active,
+body .transition-starlight .lyric-line.becoming-active,
+body .transition-letterShine .lyric-line.becoming-active span,
+body .transition-electricEdges .lyric-line.becoming-active,
+body .transition-cometTail .lyric-line.becoming-active,
+body .transition-ghostlyAppear .lyric-line.becoming-active,
+body .transition-laserScan .lyric-line.becoming-active,
+body .transition-pixelateIn .lyric-line.becoming-active,
+body .transition-spotlightOn .lyric-line.becoming-active,
+body .transition-windySmoke .lyric-line.becoming-active,
+body .transition-starDust .lyric-line.becoming-active,
+body .transition-inkBleed .lyric-line.becoming-active {
+    /* Ensure animation completes properly */
+    animation-fill-mode: forwards;
+    animation-duration: 1.5s;
+    display: block;
+}
+
+/* Ensure all preview animations run properly */
+.animate-preview.preview-neonPulse,
+.animate-preview.preview-liquid,
+.animate-preview.preview-vibration,
+.animate-preview.preview-sparkle,
+.animate-preview.preview-wave,
+.animate-preview.preview-smoke,
+.animate-preview.preview-burn,
+.animate-preview.preview-explosion,
+.animate-preview.preview-matrix,
+.animate-preview.preview-glitch,
+.animate-preview.preview-edgeGlow,
+.animate-preview.preview-pulseRim,
+.animate-preview.preview-fireEdge,
+.animate-preview.preview-neonOutline,
+.animate-preview.preview-starlight,
+.animate-preview.preview-letterShine,
+.animate-preview.preview-electricEdges,
+.animate-preview.preview-cometTail,
+.animate-preview.preview-ghostlyAppear,
+.animate-preview.preview-laserScan,
+.animate-preview.preview-pixelateIn,
+.animate-preview.preview-spotlightOn,
+.animate-preview.preview-windySmoke,
+.animate-preview.preview-starDust,
+.animate-preview.preview-inkBleed {
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+    animation-fill-mode: forwards;
+    display: inline-block;
+}
+
+/* New edge effect transitions - preview animations */
+.animate-preview.preview-edgeGlow {
+    animation: preview-edgeGlow 2s infinite;
+    text-shadow: 0 0 2px #fff, 0 0 4px #fff, 0 0 6px #0073e6, 0 0 8px #0073e6;
+}
+
+@keyframes preview-edgeGlow {
+    0% { 
+        text-shadow: 0 0 2px #fff, 0 0 4px #fff, 0 0 6px #0073e6, 0 0 8px #0073e6;
+    }
+    50% { 
+        text-shadow: 0 0 4px #fff, 0 0 8px #fff, 0 0 12px #0073e6, 0 0 16px #0073e6, 0 0 20px #0073e6;
+    }
+    100% { 
+        text-shadow: 0 0 2px #fff, 0 0 4px #fff, 0 0 6px #0073e6, 0 0 8px #0073e6;
+    }
+}
+
+.animate-preview.preview-pulseRim {
+    animation: preview-pulseRim 2s infinite;
+    text-shadow: none;
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
+}
+
+@keyframes preview-pulseRim {
+    0% { 
+        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
+    }
+    50% { 
+        -webkit-text-stroke: 2px rgba(255, 255, 255, 1);
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+    }
+    100% { 
+        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.5);
+    }
+}
+
+.animate-preview.preview-fireEdge {
+    animation: preview-fireEdge 2s infinite;
+    text-shadow: 0 0 4px #ff0, 0 0 8px #ff0, 0 0 12px #f90, 0 0 16px #f50;
+}
+
+@keyframes preview-fireEdge {
+    0% { 
+        text-shadow: 0 0 4px #ff0, 0 0 8px #ff0, 0 0 12px #f90, 0 0 16px #f50;
+    }
+    25% {
+        text-shadow: 0 0 4px #ff0, 0 0 8px #ff0, 0 0 12px #f90, 0 0 16px #f50, 0 0 20px #f20;
+    }
+    50% { 
+        text-shadow: 0 0 4px #ff0, 0 0 8px #ff0, 0 0 12px #f90, 0 0 16px #f50, 0 0 20px #f20, 0 0 24px #f00;
+    }
+    75% {
+        text-shadow: 0 0 4px #ff0, 0 0 8px #ff0, 0 0 12px #f90, 0 0 16px #f50, 0 0 20px #f20;
+    }
+    100% { 
+        text-shadow: 0 0 4px #ff0, 0 0 8px #ff0, 0 0 12px #f90, 0 0 16px #f50;
+    }
+}
+
+.animate-preview.preview-neonOutline {
+    animation: preview-neonOutline 2s infinite;
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #ff00de, 0 0 20px #ff00de;
+    -webkit-text-stroke: 1px #ff00de;
+}
+
+@keyframes preview-neonOutline {
+    0%, 100% { 
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #ff00de, 0 0 20px #ff00de;
+        -webkit-text-stroke: 1px #ff00de;
+    }
+    50% { 
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #ff00de, 0 0 20px #ff00de, 0 0 30px #ff00de;
+        -webkit-text-stroke: 2px #ff00de;
+    }
+}
+
+.animate-preview.preview-starlight {
+    animation: preview-starlight 3s infinite;
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff;
+    position: relative;
+}
+
+@keyframes preview-starlight {
+    0%, 100% {
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff;
+    }
+    20% {
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff9c4, 2px -2px 15px #fff176;
+    }
+    40% {
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff9c4, -3px 1px 15px #ffee58;
+    }
+    60% {
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff9c4, 2px 2px 15px #ffd54f;
+    }
+    80% {
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff9c4, -2px -3px 15px #ffca28;
+    }
+}
+
+/* New edge effect transitions - active line animations */
+.transition-edgeGlow .lyric-line.becoming-active {
+    animation: text-edgeGlow 1.5s forwards;
+}
+
+@keyframes text-edgeGlow {
+    0% {
+        opacity: 0;
+        text-shadow: 0 0 0px #fff;
+    }
+    30% {
+        opacity: 0.7;
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff;
+    }
+    60% {
+        opacity: 1;
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #0073e6, 0 0 20px #0073e6;
+    }
+    100% {
+        opacity: 1;
+        text-shadow: 0 0 2px #fff, 0 0 4px #fff, 0 0 6px #0073e6, 0 0 8px #0073e6;
+    }
+}
+
+.transition-pulseRim .lyric-line.becoming-active {
+    animation: text-pulseRim 1.5s forwards;
+}
+
+@keyframes text-pulseRim {
+    0% {
+        opacity: 0;
+        -webkit-text-stroke: 0px rgba(255, 255, 255, 0);
+    }
+    30% {
+        opacity: 0.5;
+        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
+    }
+    70% {
+        opacity: 0.9;
+        -webkit-text-stroke: 2px rgba(255, 255, 255, 1);
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    }
+    100% {
+        opacity: 1;
+        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.7);
+        text-shadow: none;
+    }
+}
+
+.transition-fireEdge .lyric-line.becoming-active {
+    animation: text-fireEdge 1.5s forwards;
+}
+
+@keyframes text-fireEdge {
+    0% {
+        opacity: 0;
+        text-shadow: 0 0 0px #ff0;
+    }
+    40% {
+        opacity: 0.7;
+        text-shadow: 0 0 4px #ff0, 0 0 8px #ff0;
+    }
+    80% {
+        opacity: 1;
+        text-shadow: 0 0 4px #ff0, 0 0 8px #ff0, 0 0 12px #f90, 0 0 16px #f50, 0 0 20px #f00;
+    }
+    100% {
+        opacity: 1;
+        text-shadow: 0 0 4px #ff0, 0 0 8px #ff0, 0 0 12px #f90, 0 0 16px #f50;
+    }
+}
+
+.transition-neonOutline .lyric-line.becoming-active {
+    animation: text-neonOutline 1.5s forwards;
+}
+
+@keyframes text-neonOutline {
+    0% {
+        opacity: 0;
+        -webkit-text-stroke: 0px #ff00de;
+        text-shadow: none;
+    }
+    30% {
+        opacity: 0.5;
+        -webkit-text-stroke: 1px #ff00de;
+        text-shadow: 0 0 5px #fff;
+    }
+    70% {
+        opacity: 0.9;
+        -webkit-text-stroke: 2px #ff00de;
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #ff00de, 0 0 20px #ff00de, 0 0 30px #ff00de;
+    }
+    100% {
+        opacity: 1;
+        -webkit-text-stroke: 1px #ff00de;
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #ff00de, 0 0 20px #ff00de;
+    }
+}
+
+.transition-starlight .lyric-line.becoming-active {
+    animation: text-starlight 1.5s forwards;
+}
+
+@keyframes text-starlight {
+    0% {
+        opacity: 0;
+        text-shadow: none;
+    }
+    20% {
+        opacity: 0.3;
+        text-shadow: 0 0 5px #fff;
+    }
+    40% {
+        opacity: 0.6;
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff, 3px -3px 10px #fff9c4;
+    }
+    60% {
+        opacity: 0.8;
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff, -4px 1px 10px #ffee58, 3px 3px 10px #fff176;
+    }
+    80% {
+        opacity: 0.9;
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff9c4, -2px -3px 15px #ffca28, 4px 2px 15px #ffd54f;
+    }
+    100% {
+        opacity: 1;
+        text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 10px #fff9c4;
+    }
+}
+
+/* Gemini's New Transitions - Preview Animations */
+
+/* Letter Shine */
+.animate-preview.preview-letterShine {
+    animation: preview-letterShine 2s infinite alternate;
+}
+@keyframes preview-letterShine {
+    0%, 100% { text-shadow: 0 0 3px #fff, 0 0 5px #fff; color: #eee; }
+    50% { text-shadow: 0 0 8px #fff, 0 0 15px #fff, 0 0 20px #ffdd77; color: #fff; transform: scale(1.05); }
+}
+
+/* Electric Edges */
+.animate-preview.preview-electricEdges {
+    position: relative;
+    animation: preview-electricEdges-anim 0.5s infinite linear;
+}
+@keyframes preview-electricEdges-anim {
+    0% { text-shadow: 1px 1px 0px #0ff, -1px -1px 0px #0ff, 1px -1px 0px #0ff, -1px 1px 0px #0ff; }
+    25% { text-shadow: 1px -1px 0px #0ff, -1px 1px 0px #0ff, -1px -1px 0px #0ff, 1px 1px 0px #0ff; }
+    50% { text-shadow: -1px -1px 0px #0ff, 1px 1px 0px #0ff, -1px 1px 0px #0ff, 1px -1px 0px #0ff; }
+    75% { text-shadow: -1px 1px 0px #0ff, 1px -1px 0px #0ff, 1px 1px 0px #0ff, -1px -1px 0px #0ff; }
+    100% { text-shadow: 1px 1px 0px #0ff, -1px -1px 0px #0ff, 1px -1px 0px #0ff, -1px 1px 0px #0ff; }
+}
+
+/* Comet Tail */
+.animate-preview.preview-cometTail {
+    position: relative;
+    animation: preview-cometTail-text 2s infinite ease-in-out;
+}
+.animate-preview.preview-cometTail::after {
+    content: '';
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 0%; height: 2px;
+    background: linear-gradient(to right, transparent, rgba(255,255,224,0.8), transparent);
+    transform: translate(-50%, -50%) scaleX(0);
+    animation: preview-cometTail-trail 2s infinite ease-in-out;
+    animation-delay: 0.1s; /* Slight delay for the trail */
+}
+@keyframes preview-cometTail-text {
+    0%, 100% { opacity: 0.5; transform: translateX(-10px); }
+    50% { opacity: 1; transform: translateX(10px); }
+}
+@keyframes preview-cometTail-trail {
+    0% { width: 0%; transform: translate(-100%, -50%) scaleX(0); opacity: 0; }
+    40% { width: 80%; transform: translate(-50%, -50%) scaleX(1); opacity: 1; }
+    60% { width: 80%; transform: translate(-0%, -50%) scaleX(1); opacity: 1; }
+    100% { width: 0%; transform: translate(0%, -50%) scaleX(0); opacity: 0; }
+}
+
+/* Ghostly Appear */
+.animate-preview.preview-ghostlyAppear {
+    animation: preview-ghostlyAppear 3s infinite ease-in-out;
+}
+@keyframes preview-ghostlyAppear {
+    0%, 100% { opacity: 0.2; filter: blur(3px); color: #adc2ff; text-shadow: 0 0 10px #adc2ff; }
+    50% { opacity: 0.8; filter: blur(0.5px); color: #e0e8ff; text-shadow: 0 0 15px #e0e8ff, 0 0 25px #6699ff; }
+}
+
+/* Laser Scan */
+.animate-preview.preview-laserScan {
+    position: relative;
+    overflow: hidden; /* Important for the scan line */
+    color: transparent; /* Text initially hidden */
+    -webkit-text-stroke: 1px rgba(255,0,0,0.5); /* Outline */
+    animation: preview-laserScan-reveal 3s infinite linear;
+}
+.animate-preview.preview-laserScan::before {
+    content: attr(data-content);
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    color: #ff4444; /* Revealed text color */
+    clip-path: polygon(0 0, 0 0, 0 100%, 0% 100%); /* Initially clipped */
+    animation: preview-laserScan-clip 3s infinite linear;
+}
+.animate-preview.preview-laserScan::after { /* The laser line */
+    content: '';
+    position: absolute;
+    top: 0; left: -5%; /* Start off-screen */
+    width: 2px; height: 100%;
+    background-color: #ff0000;
+    box-shadow: 0 0 5px #ff0000, 0 0 10px #ff0000;
+    animation: preview-laserScan-line 3s infinite linear;
+}
+@keyframes preview-laserScan-reveal {
+    0%, 20% { color: transparent; -webkit-text-stroke: 1px rgba(255,0,0,0.5); }
+    80%, 100% { color: #ff4444; -webkit-text-stroke: 0px; }
+}
+@keyframes preview-laserScan-clip {
+    0% { clip-path: polygon(0 0, 0 0, 0 100%, 0% 100%); }
+    80%, 100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%); }
+}
+@keyframes preview-laserScan-line {
+    0% { left: -5%; }
+    80%, 100% { left: 105%; }
+}
+
+/* Pixelate In */
+.animate-preview.preview-pixelateIn {
+    animation: preview-pixelateIn 2s infinite steps(8);
+    filter: blur(3px); /* Initial blur for pixel effect */
+}
+@keyframes preview-pixelateIn {
+    0% { filter: blur(3px) contrast(10); opacity: 0.3; }
+    25% { filter: blur(2px) contrast(5); opacity: 0.5; }
+    50% { filter: blur(1px) contrast(2); opacity: 0.7; }
+    75% { filter: blur(0.5px) contrast(1); opacity: 0.9; }
+    100% { filter: blur(0px) contrast(1); opacity: 1; }
+}
+
+/* Spotlight On */
+.animate-preview.preview-spotlightOn {
+    position: relative;
+    background: radial-gradient(circle at 50% 50%, white 5%, rgba(255,255,255,0.5) 20%, transparent 50%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: preview-spotlightOn-anim 3s infinite ease-in-out;
+}
+@keyframes preview-spotlightOn-anim {
+    0%, 100% { background-position: -80% 50%; opacity: 0.7; }
+    50% { background-position: 180% 50%; opacity: 1; }
+}
+
+/* Windy Smoke */
+.animate-preview.preview-windySmoke {
+    text-shadow: 0 0 1px transparent; /* Hint for browser */
+    animation: preview-windySmoke-anim 3s infinite ease-in-out;
+}
+@keyframes preview-windySmoke-anim {
+    0% { opacity: 0; filter: blur(5px); transform: translateX(-20px) skewX(-15deg); color: #bbb; }
+    30% { opacity: 0.7; filter: blur(2px); transform: translateX(0px) skewX(0deg); color: #ddd; }
+    70% { opacity: 0.7; filter: blur(2px); transform: translateX(0px) skewX(0deg); color: #ddd; }
+    100% { opacity: 0; filter: blur(5px); transform: translateX(20px) skewX(15deg); color: #bbb; }
+}
+
+/* Star Dust */
+.animate-preview.preview-starDust {
+    position: relative;
+    color: #fff;
+    animation: preview-starDust-text 3s infinite ease-in-out;
+}
+.animate-preview.preview-starDust::before, .animate-preview.preview-starDust::after {
+    content: '*'; /* Use multiple for more dust */
+    position: absolute;
+    font-size: 8px;
+    color: yellow;
+    opacity: 0;
+    animation: preview-starDust-particles 3s infinite ease-out;
+}
+.animate-preview.preview-starDust::before { top: 20%; left: 10%; animation-delay: 0.2s; }
+.animate-preview.preview-starDust::after { top: 70%; left: 80%; animation-delay: 0.5s; }
+/* Add more pseudo-elements for more dust */
+@keyframes preview-starDust-text {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+@keyframes preview-starDust-particles {
+    0% { transform: translate(0,0) scale(0.5); opacity: 0; }
+    20% { opacity: 1; }
+    80% { transform: translate(20px * (rand() - 0.5), 10px * (rand() - 0.5)) scale(1); opacity: 0.5; } /* rand() isn't real CSS */
+    100% { opacity: 0; }
+}
+/* Note: True random particle movement in CSS is hard. This is a simplified visual. */
+
+/* Ink Bleed */
+.animate-preview.preview-inkBleed {
+    color: #111;
+    animation: preview-inkBleed-anim 3s infinite ease-in-out;
+    filter: blur(0.5px); /* Initial slight blur */
+}
+@keyframes preview-inkBleed-anim {
+    0% { color: #aaa; filter: blur(1px) opacity(0.3); }
+    50% { color: #333; filter: blur(0px) opacity(1); }
+    100% { color: #aaa; filter: blur(1px) opacity(0.3); }
+}
+
+/* Gemini's New Transitions - Active Line Animations */
+
+.transition-letterShine .lyric-line.becoming-active span {
+    display: inline-block; /* Ensure spans flow inline */
+    opacity: 0;
+    animation: text-letterShine-char 0.5s forwards;
+    white-space: pre-wrap; /* Help with space preservation if needed */
+}
+
+.transition-letterShine .lyric-line.becoming-active {
+    white-space: pre-wrap; /* Ensure line itself preserves spaces and wraps correctly */
+    word-break: normal; /* Prevent breaking words in strange ways */
+    overflow-wrap: normal; /* Prevent breaking words in strange ways */
+}
+
+@keyframes text-letterShine-char {
+    0% { opacity: 0; transform: translateY(10px); text-shadow: none; }
+    50% { opacity: 0.8; transform: translateY(-2px); text-shadow: 0 0 8px #fff, 0 0 15px #fff, 0 0 20px #ffdd77; }
+    100% { opacity: 1; transform: translateY(0); text-shadow: 0 0 3px #fff, 0 0 5px #fff; }
+}
+
+.transition-electricEdges .lyric-line.becoming-active {
+    animation: text-electricEdges-line 0.8s forwards;
+}
+@keyframes text-electricEdges-line {
+    0% { opacity: 0.3; transform: scale(0.95); }
+    20% { opacity: 1; transform: scale(1.02); text-shadow: 1px 1px 0px #66ffff, -1px -1px 0px #66ffff; }
+    40% { text-shadow: 1px -1px 0px #66ffff, -1px 1px 0px #66ffff; }
+    60% { text-shadow: -1px -1px 0px #66ffff, 1px 1px 0px #66ffff; }
+    80% { text-shadow: -1px 1px 0px #66ffff, 1px -1px 0px #66ffff; }
+    100% { opacity: 1; transform: scale(1); text-shadow: 0 0 5px #00ccff; }
+}
+
+.transition-cometTail .lyric-line.becoming-active {
+    position: relative;
+    opacity: 0;
+    animation: text-cometTail-appear 1s forwards;
+}
+.transition-cometTail .lyric-line.becoming-active::after {
+    content: '';
+    position: absolute;
+    right: 100%; top: 50%;
+    width: 50px; height: 3px;
+    background: linear-gradient(to right, rgba(255,255,224,0.8), transparent);
+    transform: translateY(-50%);
+    opacity: 0;
+    animation: text-cometTail-trailpass 1s forwards;
+    animation-delay: 0.2s; /* Trail appears slightly after text */
+}
+@keyframes text-cometTail-appear {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+@keyframes text-cometTail-trailpass {
+    0% { right: 100%; opacity: 0.8; }
+    100% { right: -50px; opacity: 0; }
+}
+
+.transition-ghostlyAppear .lyric-line.becoming-active {
+    animation: text-ghostlyAppear 2s forwards;
+}
+@keyframes text-ghostlyAppear {
+    0% { opacity: 0; filter: blur(10px); color: #6699ff; transform: scale(0.9); }
+    60% { opacity: 0.7; filter: blur(1px); color: #adc2ff; transform: scale(1.02); text-shadow: 0 0 20px #adc2ff; }
+    100% { opacity: 1; filter: blur(0); color: #e0e8ff; transform: scale(1); text-shadow: 0 0 10px #e0e8ff; }
+}
+
+.transition-laserScan .lyric-line.becoming-active {
+    position: relative;
+    overflow: hidden;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(255,0,0,0.7);
+}
+.transition-laserScan .lyric-line.becoming-active::before { /* Revealed text */
+    content: attr(data-text);
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    color: #ff3333;
+    clip-path: polygon(0 0, 0 0, 0 100%, 0% 100%);
+    animation: text-laserScan-revealText 1s forwards 0.2s;
+}
+.transition-laserScan .lyric-line.becoming-active::after { /* Laser line */
+    content: '';
+    position: absolute;
+    top: 0; left: -10%;
+    width: 3px; height: 100%;
+    background-color: #ff0000;
+    box-shadow: 0 0 8px #ff0000, 0 0 15px #ff0000;
+    animation: text-laserScan-moveLine 1.2s forwards;
+}
+@keyframes text-laserScan-moveLine {
+    0% { left: -10%; opacity: 0.8; }
+    100% { left: 110%; opacity: 0.8; }
+}
+@keyframes text-laserScan-revealText {
+    0% { clip-path: polygon(0 0, 0 0, 0 100%, 0% 100%); -webkit-text-stroke: 1px rgba(255,0,0,0.7); }
+    100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%); color: #ff3333; -webkit-text-stroke: 0; }
+}
+
+.transition-pixelateIn .lyric-line.becoming-active {
+    animation: text-pixelateIn-anim 1s forwards;
+}
+@keyframes text-pixelateIn-anim {
+    0% { filter: blur(8px) contrast(20) saturate(0); opacity: 0; transform: scale(0.8); }
+    25% { filter: blur(4px) contrast(10) saturate(0.2); opacity: 0.4; transform: scale(0.9); }
+    50% { filter: blur(2px) contrast(5) saturate(0.5); opacity: 0.7; transform: scale(0.95); }
+    75% { filter: blur(1px) contrast(2) saturate(0.8); opacity: 0.9; transform: scale(1.02); }
+    100% { filter: blur(0px) contrast(1) saturate(1); opacity: 1; transform: scale(1); }
+}
+
+.transition-spotlightOn .lyric-line.becoming-active {
+    background: radial-gradient(circle at 50% 50%, white 10%, rgba(255,255,255,0.7) 30%, transparent 60%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: text-spotlightOn-move 1.5s forwards;
+}
+@keyframes text-spotlightOn-move {
+    0% { background-position: -100% 50%; opacity: 0; }
+    30% { opacity: 1; }
+    100% { background-position: 100% 50%; opacity: 1; }
+}
+
+.transition-windySmoke .lyric-line.becoming-active {
+    animation: text-windySmoke-effect 2s forwards;
+}
+@keyframes text-windySmoke-effect {
+    0% { opacity: 0; filter: blur(15px); transform: translateX(-50px) skewX(-20deg) scale(0.8); color: #ccc; }
+    40% { opacity: 0.8; filter: blur(3px); transform: translateX(10px) skewX(5deg) scale(1.05); color: #eee; }
+    70% { opacity: 1; filter: blur(1px); transform: translateX(0px) skewX(0deg) scale(1); color: #fff; }
+    100% { opacity: 1; filter: blur(0px); transform: translateX(0px) skewX(0deg) scale(1); color: #fff; }
+}
+
+.transition-starDust .lyric-line.becoming-active {
+    position: relative; 
+    color: transparent; /* Initially hide text */
+    animation: text-starDust-revealText 1s forwards 0.5s; /* Delay text reveal */
+}
+.transition-starDust .lyric-line.becoming-active::before, 
+.transition-starDust .lyric-line.becoming-active::after {
+    content: '';
+    position: absolute;
+    width: 3px; height: 3px;
+    background: gold;
+    border-radius: 50%;
+    opacity: 0;
+    box-shadow: 0 0 5px gold, 0 0 10px gold;
+    animation: text-starDust-sparkle 1.5s forwards;
+}
+.transition-starDust .lyric-line.becoming-active::before {
+    top: 30%; left: 20%;
+    animation-delay: 0s;
+}
+.transition-starDust .lyric-line.becoming-active::after {
+    top: 60%; left: 70%;
+    animation-delay: 0.2s;
+}
+/* Add more pseudo elements for more dust if needed, adjusting delays */
+@keyframes text-starDust-sparkle {
+    0% { transform: scale(0) translateY(20px); opacity: 0; }
+    30% { transform: scale(1.5) translateY(0px); opacity: 1; }
+    100% { transform: scale(0) translateY(-20px); opacity: 0; }
+}
+@keyframes text-starDust-revealText {
+    from { color: transparent; }
+    to { color: white; }
+}
+
+.transition-inkBleed .lyric-line.becoming-active {
+    color: #111;
+    animation: text-inkBleed-effect 2s forwards;
+}
+@keyframes text-inkBleed-effect {
+    0% { color: transparent; filter: blur(8px); opacity: 0; transform: scale(1.2); }
+    30% { color: #666; filter: blur(3px); opacity: 0.6; transform: scale(1.05); }
+    70% { color: #222; filter: blur(0.5px); opacity: 0.9; transform: scale(1); }
+    100% { color: #fff; filter: blur(0px); opacity: 1; transform: scale(1); }
+}
+
+/* New transition: cinemaLights - Preview */
+.animate-preview.preview-cinemaLights {
+    animation: preview-cinemaLights-anim 3s infinite ease-in-out;
+    font-family: 'Impact', Haettenschweiler, 'Arial Narrow Bold', sans-serif; /* Classic cinema font */
+    letter-spacing: 1px;
+}
+@keyframes preview-cinemaLights-anim {
+    0%, 100% { text-shadow: 0 0 2px #fff, 0 0 4px #fff; }
+    10% { text-shadow: 0 0 3px #fff, 0 0 6px #fff, 1px -1px 5px #ffffe0, -1px 1px 5px #ffffe0; }
+    20% { text-shadow: 0 0 3px #fff, 0 0 6px #fff, 2px -2px 7px #ffffe0, -2px 2px 7px #ffffe0; }
+    30% { text-shadow: 0 0 3px #fff, 0 0 6px #fff, 3px -3px 9px #ffffe0, -3px 3px 9px #ffffe0; }
+    40% { text-shadow: 0 0 3px #fff, 0 0 6px #fff, 2px -2px 7px #ffffe0, -2px 2px 7px #ffffe0; }
+    50% { text-shadow: 0 0 3px #fff, 0 0 6px #fff, 1px -1px 5px #ffffe0, -1px 1px 5px #ffffe0; }
+    60% { text-shadow: 0 0 2px #fff, 0 0 4px #fff; }
+}
+
+/* New transition: cinemaLights - Active Line */
+.transition-cinemaLights .lyric-line.becoming-active {
+    font-family: 'Impact', Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    letter-spacing: 1px;
+    animation: text-cinemaLights-reveal 1.5s forwards;
+}
+
+.transition-cinemaLights .lyric-line.becoming-active span { /* For letter-by-letter reveal */
+    display: inline-block;
+    opacity: 0;
+    animation: text-cinemaLights-letter 0.1s forwards;
+}
+
+@keyframes text-cinemaLights-reveal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes text-cinemaLights-letter {
+    0% { opacity: 0; transform: translateY(5px); text-shadow: none; }
+    100% { opacity: 1; transform: translateY(0); text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #ffffe0; }
+} 
+
+/* Microphone Controls Styles */
+.mic-lamp-btn {
+    /* Стили для кнопки-лампочки, когда она ВЫКЛЮЧЕНА */
+    background-color: #555; /* Темно-серый фон */
+    color: #ccc; /* Светло-серый цвет иконки/текста */
+    border: 1px solid #444;
+    /* Можно добавить transition для плавности смены состояний */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.mic-lamp-btn.active {
+    /* Стили для кнопки-лампочки, когда она ВКЛЮЧЕНА */
+    background-color: #4CAF50; /* Зеленый цвет (или любой другой "активный") */
+    color: white;
+    border: 1px solid #3e8e41;
+}
+
+.mic-lamp-btn:hover {
+    opacity: 0.9;
+}
+
+.mic-volume-control {
+    /* Стили для контейнера ползунка громкости микрофона */
+    /* display: flex; /* Уже установлено в JS, но можно для надежности */
+    /* align-items: center; /* Уже установлено в JS */
+    padding: 0 5px; /* Небольшие отступы внутри контейнера, если нужно */
+    transition: opacity 0.3s ease; /* Для плавного появления/исчезновения при выключении микрофона */
+}
+
+.mic-volume-control label {
+    /* Стили для метки "Mic:" */
+    color: #eee; /* Цвет текста метки, подберите под ваш дизайн */
+    font-size: 0.85em; /* Чуть меньше основного текста */
+    margin-right: 5px;
+}
+
+.mic-volume-control input[type="range"] {
+    /* Стили для самого ползунка */
+    /* Можно настроить внешний вид ползунка, если стандартный не устраивает */
+    /* Например, width: 80px; или кастомные стили для thumb и track */
+    margin-left: 5px; /* Небольшой отступ слева от метки */
+}
+
+.editable-lyric-line {
+    padding: 5px;
+    margin: 2px 0;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+    /* Removed: position: relative; */
+    /* Removed: padding-left: 30px; */
+}
+
+.editable-lyric-line:focus {
+    /* ... existing code ... */
+}
+
+.editable-lyric-line.in-finalized-block {
+    background-color: rgba(80, 80, 80, 0.5); /* Slightly darker background */
+    border-left: 3px solid #fd7e14; /* Orange accent border */
+    opacity: 0.9;
+}
+
+.editable-lyric-line.in-finalized-block span[contenteditable] {
+    /* Optionally, slightly different text color if needed */
+    /* color: #ccc; */
+}
+
+/* Ensure buttons within lines are still clickable */
+.editable-lyric-line.in-finalized-block .block-line-btn {
+    opacity: 1; /* Ensure button is not affected by line opacity if different */
+}
+
+.lyric-block-active {
+    /* background-color: rgba(100, 100, 180, 0.2); */ /* Commented out */
+    /* border: 1px dashed rgba(100, 100, 180, 0.5); */ /* Optional: Keep or remove border */
+    /* Add other active block styles here if needed */
+}
+
+.style-rehearsal {
+    font-size: 1.4rem !important; /* Увеличено с 1.25rem до 1.4rem */
+    line-height: 1.4 !important; /* Увеличено с 1.3 до 1.4 */
+    font-family: 'Arial', sans-serif;
+    text-align: center;
+    margin: 18px 0 !important; /* Увеличено с 14px до 18px */
+    padding: 0 !important;
+    max-width: 100% !important;
+    /* ИСПРАВЛЕНО: разрешаем перенос строк */
+    white-space: pre-wrap !important; /* Изменено с nowrap на pre-wrap */
+    word-wrap: break-word !important; /* Добавлено для переноса длинных слов */
+    overflow-wrap: break-word !important; /* Добавлено для современных браузеров */
+}
+
+/* Стили для кнопки LoopBlock */
+#toggle-loopblock-mode {
+    background-color: #555555; /* Цвет как у других кнопок */
+}
+
+#toggle-loopblock-mode:hover {
+    background-color: #666666;
+}
+
+#toggle-loopblock-mode.active {
+    background-color: #4CAF50; /* Зеленый цвет при активации, как у кнопки Sync */
+    color: white;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.3), 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+/* Стили для блоков на транспортной панели в режиме LoopBlock */
+.loop-block-indicator {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background-color: rgba(255, 165, 0, 0.3);
+    border: 1px solid rgba(255, 165, 0, 0.7);
+    border-radius: 3px;
+    z-index: 5;
+    cursor: pointer;
+    transition: background-color 0.2s, border 0.2s, transform 0.1s;
+}
+
+.loop-block-indicator:hover {
+    background-color: rgba(255, 165, 0, 0.5);
+    box-shadow: 0 0 4px rgba(255, 165, 0, 0.7);
+}
+
+/* Стиль для выбранного блока */
+.loop-block-indicator.selected {
+    background-color: rgba(255, 165, 0, 0.5) !important;
+    border: 2px solid rgba(255, 140, 0, 0.9) !important;
+    box-shadow: 0 0 5px rgba(255, 140, 0, 0.5);
+    z-index: 6 !important;
+}
+
+/* Стили для активного зацикленного блока */
+.loop-block-indicator.active-loop {
+    background-color: rgba(255, 140, 0, 0.6) !important;
+    border: 2px solid rgba(255, 140, 0, 1) !important;
+    box-shadow: 0 0 8px rgba(255, 140, 0, 0.7);
+    z-index: 10 !important;
+    transform: scale(1.02);
+}
+
+/* Стили для блоков в последовательности */
+.loop-block-indicator.sequence-block {
+    background-color: rgba(255, 165, 0, 0.5);
+    border: 2px solid rgba(255, 140, 0, 0.7);
+    z-index: 8;
+}
+
+.sequence-number {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.9);
+    z-index: 25;
+    pointer-events: none;
+}
+
+/* Скрываем названия блоков, чтобы они не мешали интерфейсу */
+.loop-block-name {
+    display: none !important;
+}
+
+.loop-block-resizer-left,
+.loop-block-resizer-right {
+    position: absolute;
+    top: 0;
+    width: 5px;
+    height: 100%;
+    cursor: ew-resize;
+    z-index: 12; /* Должны быть выше, чем сам блок */
+}
+
+.loop-block-resizer-left {
+    left: 0;
+}
+
+.loop-block-resizer-right {
+    right: 0;
+}
+
+/* Стили для отображения перетаскивания */
+.loop-block-indicator.dragging {
+    opacity: 0.8;
+}
+
+/* LoopBlock mode notification */
+.loopblock-mode-message {
+    position: fixed;
+    bottom: 50px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: fit-content;
+    background-color: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    z-index: 15;
+    text-align: center;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+    transition: opacity 0.3s ease, transform 0.5s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Progress bar in LoopBlock mode */
+#progress-bar-container.loopblock-mode {
+    background-color: #444444;
+    cursor: default !important;
+    opacity: 0.8;
+}
+
+#progress-bar-container.loopblock-mode:hover {
+    background-color: #444444;
+}
+
+/* Прогресс-бар должен нормально отображаться в LoopBlock режиме */
+#progress-bar-container.loopblock-mode #progress-bar {
+    background-color: #4CAF50;
+    opacity: 1;
+    pointer-events: none;
+}
+
+/* Сообщение при клике на прогресс-бар в режиме LoopBlock */
+.loopblock-click-message {
+    animation: fadeInOut 2.5s ease-in-out;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(10px); }
+    10% { opacity: 1; transform: translateY(0); }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* Time Display and Progress Bar */
+#time-display {
+    font-size: 0.9rem;
+    color: #ddd;
+    margin: 0 10px;
+    min-width: 100px;
+    text-align: center;
+}
+
+/* Стили для отображения зацикленной области в WaveformEditor */
+.waveform-loop-region {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background-color: rgba(0, 120, 255, 0.2);
+    border: 1px dashed rgba(0, 100, 255, 0.5);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.waveform-loop-handle {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background-color: rgba(0, 100, 255, 0.8);
+    pointer-events: none;
+    z-index: 15;
+}
+
+.waveform-loop-handle.start-handle {
+    border-left: 1px solid rgba(0, 100, 255, 1);
+}
+
+.waveform-loop-handle.end-handle {
+    border-right: 1px solid rgba(0, 100, 255, 1);
+}
+
+/* Блоки с зацикливанием */
+.block-element.active-loop {
+    background-color: rgba(0, 176, 255, 0.4);
+    border: 2px solid #00b0ff;
+    box-shadow: 0 0 8px #00b0ff;
+    animation: pulse-loop 1.5s infinite;
+}
+
+@keyframes pulse-loop {
+    0% {
+        box-shadow: 0 0 5px #00b0ff;
+    }
+    50% {
+        box-shadow: 0 0 12px #00b0ff, 0 0 5px white;
+    }
+    100% {
+        box-shadow: 0 0 5px #00b0ff;
+    }
+}
+
+/* Выделенные блоки */
+.block-element.selected {
+    background-color: rgba(255, 215, 0, 0.3);
+    border: 2px solid #ffd700;
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.7);
+}
+
+/* Кнопка Play/Pause с фиксированной шириной */
+#play-pause {
+    width: 42px; /* Фиксированная ширина кнопки */
+    height: 32px; /* Фиксированная высота кнопки */
+    padding: 0; /* Убираем отступы */
+    position: relative; /* Для правильного позиционирования SVG */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* Скрываем выход за пределы кнопки */
+    box-sizing: border-box; /* Включаем padding в размер */
+}
+
+/* Общие стили для SVG иконок внутри кнопки Play/Pause */
+#play-pause svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+    position: absolute; /* Обе иконки позиционируются абсолютно */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Центрируем иконки */
+}
+
+/* Индивидуальные стили для каждой иконки */
+#play-pause .play-icon,
+#play-pause .pause-icon {
+    transition: none; /* Отключаем анимацию для мгновенного переключения */
+}
+
+/* Центральный режим отображения */
+.style-central {
+    font-family: 'Arial', sans-serif;
+    font-size: 2.0em;
+    letter-spacing: 0.02em;
+    text-align: center;
+    font-weight: normal;
+}
+
+.style-central-active {
+    color: #ffffff;
+    font-weight: bold;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+}
+
+/* Применяем scale только НЕ в режиме репетиции */
+.style-central-active:not(.rehearsal-active-line) {
+    transform: scale(1.05);
+}
+
+.container-central {
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 10px;
+}
+
+.container-central .lyric-line {
+    opacity: 0.5;
+    transition: all 0.4s ease;
+    margin: 0.6em 0;
+}
+
+/* Применяем scale только НЕ в режиме репетиции */
+.container-central .lyric-line:not(.rehearsal-active-line) {
+    transform: scale(0.9);
+}
+
+.container-central .lyric-line.active {
+    opacity: 1;
+    margin-top: 0.8em;
+    margin-bottom: 0.8em;
+}
+
+/* Применяем scale только НЕ в режиме репетиции */
+.container-central .lyric-line.active:not(.rehearsal-active-line) {
+    transform: scale(1);
+}
+
+/* Караоке */
+.style-karaoke {
+    font-family: 'Arial', sans-serif;
+    font-size: 1.3em; /* Увеличено с 0.8em до 1.3em */
+    letter-spacing: 0.05em;
+    text-align: center;
+    font-weight: bold;
+}
+
+.style-karaoke-active {
+    color: #ffcc00;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 204, 0, 0.5);
+}
+
+/* Применяем scale только НЕ в режиме репетиции */
+.style-karaoke-active:not(.rehearsal-active-line) {
+    transform: scale(1.05);
+}
+
+.container-karaoke {
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 20px;
+}
+
+/* Стили для кнопок режимов */
+.mode-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 0 10px;
+}
+
+.mode-button {
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.mode-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.mode-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+}
+
+.mode-button.active {
+    background-color: var(--accent-color, #ff3366);
+    box-shadow: 0 0 10px rgba(255, 51, 102, 0.5);
+}
+
+.btn-concert {
+    background-color: #3498db;
+}
+
+.btn-concert:hover {
+    background-color: #2980b9;
+}
+
+.btn-concert.active {
+    background-color: #2980b9;
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+}
+
+.btn-karaoke {
+    background-color: #9b59b6;
+}
+
+.btn-karaoke:hover {
+    background-color: #8e44ad;
+}
+
+.btn-karaoke.active {
+    background-color: #8e44ad;
+    box-shadow: 0 0 10px rgba(155, 89, 182, 0.5);
+}
+
+/* Кнопка репетиции - оранжевая */
+.btn-rehearsal {
+    background-color: #FF8C00; /* Оранжевый цвет для символа петли */
+    color: #fff;
+    border: 2px solid #FF8C00;
+}
+
+.btn-rehearsal:hover {
+    background-color: #FF7F00;
+    border-color: #FF7F00;
+    box-shadow: 0 0 8px rgba(255, 140, 0, 0.4);
+}
+
+.btn-rehearsal.active {
+    background-color: #FF6500;
+    border-color: #FF6500;
+    box-shadow: 0 0 12px rgba(255, 140, 0, 0.6);
+}
+
+.btn-live {
+    background-color: #e74c3c;
+}
+
+.btn-live:hover {
+    background-color: #c0392b;
+}
+
+.btn-live.active {
+    background-color: #c0392b;
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+}
+
+/* Стили для блока с действиями в каталоге */
+.catalog-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Стиль для кнопки Danger */
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.btn-danger:active {
+    background-color: #bd2130;
+}
+
+/* Styles for Modal Block Editor */
+#modal-block-editor-container {
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.8); /* Black w/ opacity */
+    display: flex; /* Use flexbox for centering content */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#modal-block-editor-container.hidden {
+    display: none;
+}
+
+#integrated-block-editor-content {
+    background-color: #fefefe;
+    padding: 12px; 
+    border: 1px solid #888;
+    width: 90%; /* Or a fixed width like 800px */
+    max-width: 810px; /* Немного увеличено с 780px для предотвращения переноса длинных строк */
+    height: 90%; 
+    overflow-y: auto; /* Scroll for content overflow */
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    border-radius: 8px;
+    display: flex; /* Добавлено для управления внутренним контентом */
+    flex-direction: column; /* Добавлено для управления внутренним контентом */
+}
+
+#modal-block-editor-container h2 {
+    color: white;
+    margin-bottom: 15px;
+}
+
+#modal-block-editor-container button {
+    padding: 10px 20px;
+    margin: 10px;
+    cursor: pointer;
+}
+
+.editor-layout {
+    display: flex;
+    flex: 1; /* Занимает все доступное пространство в #integrated-block-editor-content */
+    overflow: hidden; /* Предотвращает выход контента за пределы */
+}
+
+.editor-main-area {
+    flex-grow: 1; /* Занимает все доступное пространство, которое не занято сайдбаром */
+    padding: 15px;
+    overflow-y: auto; /* Позволяет прокручивать только эту область */
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-main-area .editor-header {
+    margin-bottom: 15px; /* Отступ под заголовком */
+}
+
+.editor-main-area .block-list-area {
+    flex: 1; /* Занимает все доступное пространство в editor-main-area */
+    overflow-y: auto; /* Если блоков много, появится скроллбар */
+}
+
+
+.editor-sidebar {
+    width: 160px; /* Фиксированная ширина для сайдбара */
+    flex-shrink: 0; /* Запрещаем сайдбару сжиматься */
+    padding: 15px 10px; 
+    background-color: #f0f0f0;
+    border-left: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+}
+
+.editor-sidebar .btn,
+.editor-sidebar #block-editor-status {
+    margin-bottom: 8px; 
+    width: 100%; 
+    padding: 8px 10px; 
+    box-sizing: border-box;
+    font-size: 13px; 
+}
+
+.editor-sidebar .btn.active-edit-mode {
+    background-color: #28a745; /* Зеленый цвет для активного режима редактирования */
+    color: white;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.editor-sidebar .btn.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.editor-sidebar .btn.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.editor-sidebar .btn.btn-danger:disabled {
+    background-color: #e9ecef;
+    color: #6c757d;
+    border-color: #ced4da;
+    opacity: 0.65;
+}
+
+/* Режим Репетиция - блочное отображение */
+.rehearsal-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.rehearsal-active-block {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 15px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-height: 75vh;
+    overflow-y: auto;
+    width: 90%;
+    max-width: 1200px;
+    /* КРИТИЧЕСКИ ВАЖНО: ФИКСИРУЕМ ВЫСОТУ БЛОКА */
+    min-height: 400px !important; /* Увеличена минимальная высота */
+    height: 65vh !important; /* ФИКСИРОВАННАЯ ВЫСОТА - блок не будет растягиваться */
+    margin-left: auto;
+    margin-right: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    /* БЛОКИРУЕМ ЛЮБЫЕ ИЗМЕНЕНИЯ РАЗМЕРА */
+    flex-shrink: 0 !important; /* Запрещаем сжатие */
+    flex-grow: 0 !important; /* Запрещаем рост */
+    position: relative; /* Для стабильного позиционирования */
+}
+
+.rehearsal-active-line {
+    margin: 6px 0;
+    opacity: 0.7;
+    /* ОТКЛЮЧАЕМ ВСЕ ПЕРЕХОДЫ, КОТОРЫЕ МОГУТ ВЛИЯТЬ НА РАЗМЕР */
+    transition: opacity 0.3s ease !important; /* ТОЛЬКО opacity */
+    line-height: 1.3;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    max-width: 100%;
+    overflow: hidden;
+    hyphens: auto;
+    /* КРИТИЧЕСКИ ВАЖНО: ФИКСИРУЕМ ГЕОМЕТРИЮ СТРОК */
+    padding: 0 !important; /* Никаких отступов */
+    transform: none !important; /* Никаких трансформаций */
+    font-size: inherit !important; /* Наследуем размер от блока */
+    font-weight: normal !important; /* Фиксированный вес шрифта */
+}
+
+/* КРИТИЧЕСКИ ВАЖНО: ПОЛНАЯ БЛОКИРОВКА ВСЕХ ЭФФЕКТОВ В РЕПЕТИЦИИ */
+.rehearsal-active-line.active {
+    opacity: 1 !important;
+    color: #fff !important;
+    text-shadow: none !important;
+    font-weight: normal !important;
+    transform: none !important;
+    margin: 6px 0 !important; /* СТРОГО ФИКСИРОВАННЫЕ ОТСТУПЫ */
+    padding: 0 !important;
+    transition: opacity 0.3s ease !important;
+    /* ДОПОЛНИТЕЛЬНАЯ ЗАЩИТА ОТ ИЗМЕНЕНИЙ РАЗМЕРА */
+    min-height: auto !important;
+    max-height: none !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: none !important;
+}
+
+/* БЛОКИРУЕМ ВСЕ АНИМАЦИИ ПЕРЕХОДОВ В РЕЖИМЕ РЕПЕТИЦИИ */
+.rehearsal-active-line.becoming-active {
+    /* ОТКЛЮЧАЕМ ВСЕ АНИМАЦИИ - ТОЛЬКО МГНОВЕННОЕ ПЕРЕКЛЮЧЕНИЕ */
+    animation: none !important;
+    transition: opacity 0.2s ease !important; /* Только быстрая смена прозрачности */
+    transform: none !important;
+    filter: none !important;
+    text-shadow: none !important;
+    font-weight: normal !important;
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+}
+
+/* ПЕРЕОПРЕДЕЛЯЕМ ВСЕ ЭФФЕКТЫ ПЕРЕХОДОВ ДЛЯ РЕПЕТИЦИИ */
+.transition-explosion .rehearsal-active-line.becoming-active,
+.transition-burn .rehearsal-active-line.becoming-active,
+.transition-matrix .rehearsal-active-line.becoming-active,
+.transition-glitch .rehearsal-active-line.becoming-active,
+.transition-typewriter .rehearsal-active-line.becoming-active,
+.transition-neonPulse .rehearsal-active-line.becoming-active,
+.transition-liquid .rehearsal-active-line.becoming-active,
+.transition-vibration .rehearsal-active-line.becoming-active,
+.transition-echo .rehearsal-active-line.becoming-active,
+.transition-sparkle .rehearsal-active-line.becoming-active,
+.transition-wave .rehearsal-active-line.becoming-active,
+.transition-elastic .rehearsal-active-line.becoming-active,
+.transition-smoke .rehearsal-active-line.becoming-active,
+.transition-edgeGlow .rehearsal-active-line.becoming-active,
+.transition-pulseRim .rehearsal-active-line.becoming-active,
+.transition-fireEdge .rehearsal-active-line.becoming-active,
+.transition-neonOutline .rehearsal-active-line.becoming-active,
+.transition-starlight .rehearsal-active-line.becoming-active,
+.transition-electricEdges .rehearsal-active-line.becoming-active,
+.transition-cometTail .rehearsal-active-line.becoming-active,
+.transition-ghostlyAppear .rehearsal-active-line.becoming-active,
+.transition-laserScan .rehearsal-active-line.becoming-active,
+.transition-pixelateIn .rehearsal-active-line.becoming-active,
+.transition-spotlightOn .rehearsal-active-line.becoming-active,
+.transition-windySmoke .rehearsal-active-line.becoming-active,
+.transition-starDust .rehearsal-active-line.becoming-active,
+.transition-inkBleed .rehearsal-active-line.becoming-active,
+.transition-letterShine .rehearsal-active-line.becoming-active,
+.transition-letterByLetter .rehearsal-active-line.becoming-active,
+.transition-wordByWord .rehearsal-active-line.becoming-active,
+.transition-cinemaLights .rehearsal-active-line.becoming-active {
+    /* ПОЛНОЕ ОТКЛЮЧЕНИЕ ВСЕХ АНИМАЦИЙ В РЕПЕТИЦИИ */
+    animation: none !important;
+    transition: opacity 0.2s ease !important;
+    transform: none !important;
+    filter: none !important;
+    text-shadow: none !important;
+    font-weight: normal !important;
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    opacity: 1 !important;
+    color: #fff !important;
+}
+
+/* БЛОКИРУЕМ АНИМАЦИИ ДЛЯ SPAN ЭЛЕМЕНТОВ В РЕПЕТИЦИИ */
+.transition-letterShine .rehearsal-active-line.becoming-active span,
+.transition-letterByLetter .rehearsal-active-line.becoming-active span,
+.transition-matrix .rehearsal-active-line.becoming-active span,
+.transition-cinemaLights .rehearsal-active-line.becoming-active span {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    display: inline !important;
+    font-weight: normal !important;
+    text-shadow: none !important;
+    color: inherit !important;
+}
+
+/* БЛОКИРУЕМ АНИМАЦИИ ДЛЯ WORD ЭЛЕМЕНТОВ В РЕПЕТИЦИИ */  
+.transition-wordByWord .rehearsal-active-line.becoming-active span.word {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    display: inline !important;
+    font-weight: normal !important;
+    text-shadow: none !important;
+    color: inherit !important;
+}
+
+.rehearsal-next-preview {
+    margin-top: 20px; /* Увеличен отступ с 8px до 20px для всех блоков */
+    padding: 12px;
+    /* border-top: 2px solid rgba(255, 255, 255, 0.2); */ /* УБРАНА отделительная полоса */
+    opacity: 0.6;
+    font-size: 1.0rem;
+    text-align: center;
+    max-height: 18vh;
+    overflow: hidden;
+    /* ФИКСИРУЕМ РАЗМЕР ПРЕВЬЮ */
+    flex-shrink: 0 !important;
+    position: absolute; /* Размещаем в фиксированной позиции */
+    bottom: 20px; /* Фиксированное расстояние от низа */
+    left: 25px;
+    right: 25px;
+    /* ДОБАВЛЯЕМ ДИНАМИЧЕСКИЙ ФОНОВЫЙ ЭФФЕКТ */
+    background: linear-gradient(
+        45deg,
+        rgba(255, 140, 0, 0.02),
+        rgba(255, 69, 0, 0.01),
+        rgba(255, 165, 0, 0.02)
+    );
+    border-radius: 12px;
+    backdrop-filter: blur(2px);
+    animation: previewAmbient 8s ease-in-out infinite;
+}
+
+.rehearsal-preview-line {
+    margin: 4px 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 300;
+    line-height: 1.2;
+    /* ФИКСИРУЕМ ГЕОМЕТРИЮ ПРЕВЬЮ */
+    padding: 0 !important;
+    transform: none !important;
+    transition: none !important;
+}
+
+.no-blocks {
+    text-align: center;
+    opacity: 0.7;
+    font-style: italic;
+}
+
+/* Специальные стили для очень больших блоков */
+.rehearsal-active-block.very-large-block {
+    border-left: 4px solid rgba(255, 165, 0, 0.6);
+    padding-left: 24px;
+    /* ФИКСИРОВАННАЯ ВЫСОТА ДАЖЕ ДЛЯ БОЛЬШИХ БЛОКОВ */
+    height: 70vh !important;
+}
+
+.rehearsal-active-block.extremely-large-block {
+    border-left: 4px solid rgba(255, 69, 0, 0.8);
+    padding-left: 24px;
+    background: rgba(255, 255, 255, 0.08);
+    /* ФИКСИРОВАННАЯ ВЫСОТА ДАЖЕ ДЛЯ ЭКСТРЕМАЛЬНЫХ БЛОКОВ */
+    height: 75vh !important;
+}
+
+.rehearsal-active-block.extremely-large-block .rehearsal-active-line {
+    margin: 2px 0 !important; /* Фиксированные отступы */
+}
+
+.rehearsal-active-block.very-large-block .rehearsal-active-line {
+    margin: 3px 0 !important; /* Фиксированные отступы */
+}
+
+/* ДОПОЛНИТЕЛЬНЫЕ ОТСТУПЫ ДЛЯ PREVIEW В БОЛЬШИХ БЛОКАХ */
+.rehearsal-active-block.very-large-block .rehearsal-next-preview {
+    margin-top: 70px !important; /* Увеличен отступ с 50px до 70px для больших блоков */
+}
+
+.rehearsal-active-block.extremely-large-block .rehearsal-next-preview {
+    margin-top: 85px !important; /* Увеличен отступ с 60px до 85px для экстремально больших блоков */
+}
+
+/* Продолжения блоков */
+.rehearsal-active-block.block-continuation {
+    border-top: 2px dashed rgba(255, 255, 255, 0.3);
+    padding-top: 15px;
+}
+
+.rehearsal-active-line.continuation-first-line {
+    font-size: 1.2em !important;
+    font-weight: 600;
+    color: inherit; /* Убираем зеленый цвет, используем обычный цвет */
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.rehearsal-active-line.continuation-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* Только стрелочка остается зеленой */
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+/* Превью продолжений блоков */
+.rehearsal-next-preview.preview-continuation {
+    border-top: 1px dashed rgba(255, 255, 255, 0.2);
+    margin-top: 25px;
+}
+
+.rehearsal-preview-line.preview-continuation-first-line {
+    font-size: 115%; /* Увеличиваем размер как у обычных */
+    font-weight: bold; /* Делаем жирным как у обычных */
+    color: #FF8C00; /* МЕНЯЕМ НА ОРАНЖЕВЫЙ - как у всех первых строк */
+    margin-top: 2cm; /* УВЕЛИЧЕН ОТСТУП С 1см ДО 2см для единообразия */
+    padding-top: 15px; /* Увеличен отступ с 8px до 15px */
+    /* ДОБАВЛЯЕМ АНАЛОГИЧНЫЕ КРУТЫЕ СВЕТОВЫЕ ЭФФЕКТЫ */
+    text-shadow: 
+        0 0 8px rgba(255, 140, 0, 0.6),
+        0 0 16px rgba(255, 140, 0, 0.4),
+        0 0 24px rgba(255, 140, 0, 0.2);
+    animation: nextBlockPulse 3.5s ease-in-out infinite; /* Немного другая скорость для разнообразия */
+    transition: all 0.5s ease;
+    position: relative;
+    background: linear-gradient(135deg, rgba(255, 140, 0, 0.08), rgba(255, 69, 0, 0.04));
+    border-radius: 8px;
+    padding: 10px 15px;
+    border: 1px solid rgba(255, 140, 0, 0.25);
+    box-shadow: 
+        0 4px 12px rgba(255, 140, 0, 0.15),
+        inset 0 2px 4px rgba(255, 255, 255, 0.08);
+}
+
+.rehearsal-preview-line.preview-continuation-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* СТРЕЛОЧКА ОСТАЕТСЯ ЗЕЛЕНОЙ - индикатор разделения */
+    font-size: 110%;
+    margin-right: 0.3em;
+    /* Усиливаем стрелочку световыми эффектами */
+    text-shadow: 
+        0 0 12px rgba(76, 175, 80, 0.8),
+        0 0 24px rgba(76, 175, 80, 0.4);
+    animation: continuationArrowGlow 2.5s ease-in-out infinite alternate;
+}
+
+/* АНИМАЦИЯ СВЕЧЕНИЯ СТРЕЛОЧКИ ПРОДОЛЖЕНИЯ */
+@keyframes continuationArrowGlow {
+    0% { 
+        text-shadow: 
+            0 0 12px rgba(76, 175, 80, 0.8),
+            0 0 24px rgba(76, 175, 80, 0.4);
+    }
+    100% { 
+        text-shadow: 
+            0 0 20px rgba(76, 175, 80, 1),
+            0 0 40px rgba(76, 175, 80, 0.6),
+            0 0 60px rgba(46, 125, 50, 0.3);
+    }
+}
+
+/* ЭФФЕКТ УСИЛЕНИЯ ДЛЯ ПРОДОЛЖЕНИЙ ПРИ НАВЕДЕНИИ */
+.rehearsal-preview-line.preview-continuation-first-line:hover {
+    animation: continuationIntense 1s ease-in-out infinite;
+    background: linear-gradient(135deg, rgba(255, 140, 0, 0.15), rgba(255, 69, 0, 0.08));
+    border-color: rgba(255, 140, 0, 0.4);
+}
+
+@keyframes continuationIntense {
+    0%, 100% { 
+        text-shadow: 
+            0 0 15px rgba(255, 140, 0, 0.8),
+            0 0 30px rgba(255, 140, 0, 0.6),
+            0 0 45px rgba(255, 69, 0, 0.3);
+        transform: scale(1.02);
+    }
+    50% { 
+        text-shadow: 
+            0 0 22px rgba(255, 140, 0, 1),
+            0 0 44px rgba(255, 140, 0, 0.7),
+            0 0 66px rgba(255, 69, 0, 0.4),
+            0 0 88px rgba(255, 165, 0, 0.2);
+        transform: scale(1.04);
+    }
+}
+
+/* КРУТАЯ ФОНОВАЯ АНИМАЦИЯ ДЛЯ ПРЕВЬЮ */
+@keyframes previewAmbient {
+    0%, 100% {
+        background: linear-gradient(
+            45deg,
+            rgba(255, 140, 0, 0.02),
+            rgba(255, 69, 0, 0.01),
+            rgba(255, 165, 0, 0.02)
+        );
+        box-shadow: 0 0 10px rgba(255, 140, 0, 0.1);
+    }
+    50% {
+        background: linear-gradient(
+            45deg,
+            rgba(255, 165, 0, 0.04),
+            rgba(255, 140, 0, 0.03),
+            rgba(255, 69, 0, 0.02)
+        );
+        box-shadow: 0 0 20px rgba(255, 140, 0, 0.2);
+    }
+}
+
+/* ДОБАВЛЯЕМ КРУТЫЕ ЭФФЕКТЫ ДЛЯ ВСЕГО ПРЕВЬЮ */
+.rehearsal-next-preview {
+    margin-top: 20px; /* Увеличен отступ с 8px до 20px для всех блоков */
+    padding: 12px;
+    /* border-top: 2px solid rgba(255, 255, 255, 0.2); */ /* УБРАНА отделительная полоса */
+    opacity: 0.6;
+    font-size: 1.0rem;
+    text-align: center;
+    max-height: 18vh;
+    overflow: hidden;
+    /* ФИКСИРУЕМ РАЗМЕР ПРЕВЬЮ */
+    flex-shrink: 0 !important;
+    position: absolute; /* Размещаем в фиксированной позиции */
+    bottom: 20px; /* Фиксированное расстояние от низа */
+    left: 25px;
+    right: 25px;
+    /* ДОБАВЛЯЕМ ДИНАМИЧЕСКИЙ ФОНОВЫЙ ЭФФЕКТ */
+    background: linear-gradient(
+        45deg,
+        rgba(255, 140, 0, 0.02),
+        rgba(255, 69, 0, 0.01),
+        rgba(255, 165, 0, 0.02)
+    );
+    border-radius: 12px;
+    backdrop-filter: blur(2px);
+    animation: previewAmbient 8s ease-in-out infinite;
+}
+
+/* Когда строка становится активной, убираем стили превью */
+.rehearsal-active-line.active {
+    color: #FFFFFF !important; /* Активная строка всегда белая */
+}
+
+.rehearsal-active-line.continuation-first-line.active {
+    color: #FFFFFF !important; /* Активная строка продолжения тоже белая */
+}
+
+.rehearsal-active-line.continuation-first-line.active::before {
+    color: #4CAF50; /* Стрелочка остается зеленой даже у активной строки */
+}
+
+/* Стили для первой строки следующего блока (оранжевая подсветка) */
+.rehearsal-preview-line.next-block-first-line {
+    font-size: 115%;
+    font-weight: bold;
+    color: #FF8C00 !important; /* Только оранжевый цвет */
+    margin-top: 15px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    /* Простое стабильное свечение без анимаций */
+    text-shadow: 
+        0 0 8px rgba(255, 140, 0, 0.6),
+        0 0 16px rgba(255, 140, 0, 0.3);
+    background: linear-gradient(135deg, rgba(255, 140, 0, 0.08), rgba(255, 69, 0, 0.04));
+    border: 1px solid rgba(255, 140, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(255, 140, 0, 0.15);
+    transition: none !important; /* Убираем все переходы */
+}
+
+.rehearsal-preview-line.next-block-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* Стрелочка остается зеленой */
+    font-size: 110%;
+    margin-right: 0.3em;
+    /* Простое свечение без анимаций */
+    text-shadow: 0 0 8px rgba(76, 175, 80, 0.8);
+}
+
+/* Стили для превью продолжений блоков */
+.rehearsal-preview-line.preview-continuation-first-line {
+    font-size: 115%; /* Увеличиваем размер как у обычных */
+    font-weight: bold; /* Делаем жирным как у обычных */
+    color: #FF8C00; /* МЕНЯЕМ НА ОРАНЖЕВЫЙ - как у всех первых строк */
+    margin-top: 2cm; /* УВЕЛИЧЕН ОТСТУП С 1см ДО 2см для единообразия */
+    padding-top: 15px; /* Увеличен отступ с 8px до 15px */
+    /* ДОБАВЛЯЕМ АНАЛОГИЧНЫЕ КРУТЫЕ СВЕТОВЫЕ ЭФФЕКТЫ */
+    text-shadow: 
+        0 0 8px rgba(255, 140, 0, 0.6),
+        0 0 16px rgba(255, 140, 0, 0.4),
+        0 0 24px rgba(255, 140, 0, 0.2);
+    animation: nextBlockPulse 3.5s ease-in-out infinite; /* Немного другая скорость для разнообразия */
+    transition: all 0.5s ease;
+    position: relative;
+    background: linear-gradient(135deg, rgba(255, 140, 0, 0.08), rgba(255, 69, 0, 0.04));
+    border-radius: 8px;
+    padding: 10px 15px;
+    border: 1px solid rgba(255, 140, 0, 0.25);
+    box-shadow: 
+        0 4px 12px rgba(255, 140, 0, 0.15),
+        inset 0 2px 4px rgba(255, 255, 255, 0.08);
+}
+
+.rehearsal-preview-line.preview-continuation-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* СТРЕЛОЧКА ОСТАЕТСЯ ЗЕЛЕНОЙ - индикатор разделения */
+    font-size: 110%;
+    margin-right: 0.3em;
+    /* Усиливаем стрелочку световыми эффектами */
+    text-shadow: 
+        0 0 12px rgba(76, 175, 80, 0.8),
+        0 0 24px rgba(76, 175, 80, 0.4);
+    animation: continuationArrowGlow 2.5s ease-in-out infinite alternate;
+}
+
+/* АНИМАЦИЯ СВЕЧЕНИЯ СТРЕЛОЧКИ ПРОДОЛЖЕНИЯ */
+@keyframes continuationArrowGlow {
+    0% { 
+        text-shadow: 
+            0 0 12px rgba(76, 175, 80, 0.8),
+            0 0 24px rgba(76, 175, 80, 0.4);
+    }
+    100% { 
+        text-shadow: 
+            0 0 20px rgba(76, 175, 80, 1),
+            0 0 40px rgba(76, 175, 80, 0.6),
+            0 0 60px rgba(46, 125, 50, 0.3);
+    }
+}
+
+/* ЭФФЕКТ УСИЛЕНИЯ ДЛЯ ПРОДОЛЖЕНИЙ ПРИ НАВЕДЕНИИ */
+.rehearsal-preview-line.preview-continuation-first-line:hover {
+    animation: continuationIntense 1s ease-in-out infinite;
+    background: linear-gradient(135deg, rgba(255, 140, 0, 0.15), rgba(255, 69, 0, 0.08));
+    border-color: rgba(255, 140, 0, 0.4);
+}
+
+@keyframes continuationIntense {
+    0%, 100% { 
+        text-shadow: 
+            0 0 15px rgba(255, 140, 0, 0.8),
+            0 0 30px rgba(255, 140, 0, 0.6),
+            0 0 45px rgba(255, 69, 0, 0.3);
+        transform: scale(1.02);
+    }
+    50% { 
+        text-shadow: 
+            0 0 22px rgba(255, 140, 0, 1),
+            0 0 44px rgba(255, 140, 0, 0.7),
+            0 0 66px rgba(255, 69, 0, 0.4),
+            0 0 88px rgba(255, 165, 0, 0.2);
+        transform: scale(1.04);
+    }
+}
+
+/* КРУТАЯ ФОНОВАЯ АНИМАЦИЯ ДЛЯ ПРЕВЬЮ */
+@keyframes previewAmbient {
+    0%, 100% {
+        background: linear-gradient(
+            45deg,
+            rgba(255, 140, 0, 0.02),
+            rgba(255, 69, 0, 0.01),
+            rgba(255, 165, 0, 0.02)
+        );
+        box-shadow: 0 0 10px rgba(255, 140, 0, 0.1);
+    }
+    50% {
+        background: linear-gradient(
+            45deg,
+            rgba(255, 165, 0, 0.04),
+            rgba(255, 140, 0, 0.03),
+            rgba(255, 69, 0, 0.02)
+        );
+        box-shadow: 0 0 20px rgba(255, 140, 0, 0.2);
+    }
+}
+
+/* ДОБАВЛЯЕМ КРУТЫЕ ЭФФЕКТЫ ДЛЯ ВСЕГО ПРЕВЬЮ */
+.rehearsal-next-preview {
+    margin-top: 20px; /* Увеличен отступ с 8px до 20px для всех блоков */
+    padding: 12px;
+    /* border-top: 2px solid rgba(255, 255, 255, 0.2); */ /* УБРАНА отделительная полоса */
+    opacity: 0.6;
+    font-size: 1.0rem;
+    text-align: center;
+    max-height: 18vh;
+    overflow: hidden;
+    /* ФИКСИРУЕМ РАЗМЕР ПРЕВЬЮ */
+    flex-shrink: 0 !important;
+    position: absolute; /* Размещаем в фиксированной позиции */
+    bottom: 20px; /* Фиксированное расстояние от низа */
+    left: 25px;
+    right: 25px;
+    /* ДОБАВЛЯЕМ ДИНАМИЧЕСКИЙ ФОНОВЫЙ ЭФФЕКТ */
+    background: linear-gradient(
+        45deg,
+        rgba(255, 140, 0, 0.02),
+        rgba(255, 69, 0, 0.01),
+        rgba(255, 165, 0, 0.02)
+    );
+    border-radius: 12px;
+    backdrop-filter: blur(2px);
+    animation: previewAmbient 8s ease-in-out infinite;
+}
+
+/* Когда строка становится активной, убираем стили превью */
+.rehearsal-active-line.active {
+    color: #FFFFFF !important; /* Активная строка всегда белая */
+}
+
+.rehearsal-active-line.continuation-first-line.active {
+    color: #FFFFFF !important; /* Активная строка продолжения тоже белая */
+}
+
+.rehearsal-active-line.continuation-first-line.active::before {
+    color: #4CAF50; /* Стрелочка остается зеленой даже у активной строки */
+}
+
+/* Основные стили для превью контейнера - простые без анимаций */
+.rehearsal-next-preview {
+    margin-top: 20px;
+    padding: 12px;
+    opacity: 0.6;
+    font-size: 1.0rem;
+    text-align: center;
+    max-height: 18vh;
+    overflow: hidden;
+    flex-shrink: 0 !important;
+    position: absolute;
+    bottom: 20px;
+    left: 25px;
+    right: 25px;
+    /* Простой фон без анимаций */
+    background: rgba(255, 140, 0, 0.02);
+    border-radius: 8px;
+    transition: none !important; /* Убираем все переходы */
+}
+
+/* =============== СИСТЕМА МАСОК =============== */
+
+.mask-controls {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #0f0f0f 100%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: none;
+    border-radius: 0;
+    margin: 0;
+    padding: 0;
+    max-width: 100vw;
+}
+
+.mask-controls h3 {
+    color: #fff;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+/* Кнопка закрытия */
+.mask-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.mask-close-btn:hover {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.1);
+}
+
+.mask-main-content {
+    flex: 1;
+    display: flex;
+    padding: 20px;
+    gap: 20px;
+    overflow: hidden;
+}
+
+/* Левая панель с видео */
+.mask-video-panel {
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.mask-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.mask-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.mask-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.mask-btn:hover::before {
+    left: 100%;
+}
+
+.mask-video-container {
+    text-align: center;
+    position: relative;
+    background: rgba(0,0,0,0.3);
+    border-radius: 15px;
+    padding: 15px;
+    border: 2px solid rgba(255,255,255,0.1);
+}
+
+#mask-video {
+    width: 100%;
+    max-width: 360px;
+    height: 270px;
+    border-radius: 12px;
+    border: 3px solid #444;
+    transition: all 0.3s ease;
+    object-fit: cover;
+}
+
+#mask-video:hover {
+    border-color: #667eea;
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+}
+
+/* Правая панель с категориями и масками */
+.mask-categories-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Категории */
+.mask-categories {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 0 10px;
+    flex-wrap: wrap;
+}
+
+.mask-category-btn {
+    background: rgba(255,255,255,0.1);
+    color: #ccc;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 12px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.mask-category-btn:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.mask-category-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: #667eea;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Область с масками */
+.masks-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 20px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(102, 126, 234, 0.5) transparent;
+}
+
+.masks-scroll-area::-webkit-scrollbar {
+    width: 8px;
+}
+
+.masks-scroll-area::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.masks-scroll-area::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.5);
+    border-radius: 4px;
+}
+
+.masks-scroll-area::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.7);
+}
+
+.masks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.mask-option-btn {
+    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.1) 100%);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 20px 15px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.mask-option-btn:hover {
+    transform: translateY(-3px);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+    border-color: rgba(102, 126, 234, 0.5);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.mask-option-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+}
+
+.mask-option-btn.active::before {
+    content: "✓";
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    background: rgba(0,0,0,0.3);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Иконки для категорий масок */
+.mask-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Анимация при переключении масок */
+#mask-video.mask-switching {
+    animation: maskSwitch 0.5s ease-in-out;
+}
+
+@keyframes maskSwitch {
+    0% { 
+        transform: scale(1) rotate(0deg);
+        filter: blur(0px);
+    }
+    50% { 
+        transform: scale(1.05) rotate(1deg);
+        filter: blur(2px);
+    }
+    100% { 
+        transform: scale(1) rotate(0deg);
+        filter: blur(0px);
+    }
+}
+
+/* Статус индикаторы */
+.mask-status {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    backdrop-filter: blur(10px);
+}
+
+.mask-status.active {
+    background: rgba(76, 175, 80, 0.8);
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+}
+
+.mask-status.inactive {
+    background: rgba(244, 67, 54, 0.8);
+}
+
+/* Эффект загрузки */
+.mask-loading {
+    position: relative;
+}
+
+.mask-loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255,255,255,0.1);
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .mask-main-content {
+        flex-direction: column;
+        padding: 10px;
+    }
+    
+    .mask-video-panel {
+        width: 100%;
+    }
+    
+    #mask-video {
+        max-width: 100%;
+        height: 220px;
+    }
+    
+    .masks-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+    }
+    
+    .mask-option-btn {
+        padding: 15px 10px;
+        min-height: 70px;
+        font-size: 13px;
+    }
+    
+    .mask-categories {
+        justify-content: center;
+    }
+    
+    .mask-category-btn {
+        padding: 10px 15px;
+        font-size: 13px;
+    }
+}
+
+/* Эффекты для preview масок */
+.mask-preview-effect {
+    position: relative;
+    overflow: hidden;
+}
+
+.mask-preview-effect::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    transition: left 0.5s ease;
+}
+
+.mask-option-btn:hover .mask-preview-effect::before {
+    left: 100%;
+}
+
+/* Специальные эффекты для продвинутых масок */
+.mask-advanced {
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 140, 0, 0.05) 100%);
+}
+
+.mask-advanced:hover {
+    border-color: rgba(255, 215, 0, 0.6);
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
+}
+
+/* Сообщения о камере */
+.camera-permission-message,
+.camera-error-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    z-index: 10001;
+    max-width: 500px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.camera-error-message {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+}
+
+.permission-content h3,
+.error-content h3 {
+    margin-top: 0;
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+}
+
+.permission-steps {
+    text-align: left;
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+}
+
+.permission-steps div {
+    margin: 8px 0;
+    font-size: 0.9rem;
+}
+
+.error-instructions {
+    text-align: left;
+    margin: 15px 0;
+}
+
+.browser-instructions {
+    background: rgba(255,255,255,0.1);
+    padding: 15px;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.browser-instructions strong {
+    color: #ffd700;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.browser-instructions ol {
+    margin: 5px 0;
+    padding-left: 20px;
+}
+
+.browser-instructions li {
+    margin: 5px 0;
+    font-size: 0.9rem;
+}
+
+.retry-camera-btn {
+    background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 15px;
+    transition: transform 0.2s ease;
+}
+
+.retry-camera-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0,114,255,0.4);
+}
+
+/* Стили для кнопки BlockLoopControl в режиме репетиции */
+.block-loop-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #ff9800;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 1000;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.block-loop-btn:hover {
+    background-color: #f57c00;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+.block-loop-btn.active {
+    background-color: #e74c3c;
+    color: white;
+    animation: pulse-button 1.5s infinite;
+}
+
+@keyframes pulse-button {
+    0% {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+        box-shadow: 0 3px 8px rgba(231, 76, 60, 0.6);
+    }
+    100% {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Стили для активного блока с зацикливанием в режиме репетиции */
+.rehearsal-active-block.loop-active {
+    border: 3px solid #ff9800 !important;
+    box-shadow: 0 0 12px rgba(255, 152, 0, 0.8) !important;
+    background-color: rgba(255, 152, 0, 0.1) !important;
+    animation: pulse-orange 2s infinite;
+}
+
+@keyframes pulse-orange {
+    0% {
+        box-shadow: 0 0 8px rgba(255, 152, 0, 0.6);
+    }
+    50% {
+        box-shadow: 0 0 16px rgba(255, 152, 0, 1), 0 0 8px rgba(255, 255, 255, 0.3);
+    }
+    100% {
+        box-shadow: 0 0 8px rgba(255, 152, 0, 0.6);
+    }
+}
+
+/* Дополнительные стили для preview блока при зацикливании */
+.rehearsal-preview-block.loop-active {
+    border: 2px solid rgba(255, 152, 0, 0.5) !important;
+    background-color: rgba(255, 152, 0, 0.05) !important;
+}
+
+/* Стили для отображения зацикленной области в WaveformEditor */
+
+/* Анимация для первой строки следующего блока */
+@keyframes nextBlockPulse {
+    0%, 100% {
+        text-shadow: 
+            0 0 8px rgba(255, 140, 0, 0.6),
+            0 0 16px rgba(255, 140, 0, 0.4),
+            0 0 24px rgba(255, 140, 0, 0.2);
+        opacity: 0.8;
+    }
+    50% {
+        text-shadow: 
+            0 0 12px rgba(255, 140, 0, 0.8),
+            0 0 24px rgba(255, 140, 0, 0.6),
+            0 0 36px rgba(255, 140, 0, 0.3);
+        opacity: 1;
+    }
+}
+
+/* Простые стили для первой строки следующего блока - ТОЛЬКО цвет, никаких эффектов */
+.rehearsal-preview-line.next-block-first-line {
+    font-size: 115%;
+    font-weight: bold;
+    color: #FF8C00 !important; /* Только оранжевый цвет */
+    margin-top: 15px;
+    /* УБИРАЕМ ВСЕ ЭФФЕКТЫ - никаких теней, фонов, анимаций */
+}
+
+.rehearsal-preview-line.next-block-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* Зеленая стрелочка */
+    font-size: 110%;
+    margin-right: 0.3em;
+    /* УБИРАЕМ ВСЕ ЭФФЕКТЫ */
+}
+
+/* Простые стили для продолжений блоков - ТОЛЬКО цвет */
+.rehearsal-preview-line.preview-continuation-first-line {
+    font-size: 115%;
+    font-weight: bold;
+    color: #FF8C00 !important; /* Только оранжевый цвет */
+    margin-top: 15px;
+    /* УБИРАЕМ ВСЕ ЭФФЕКТЫ - никаких теней, фонов, анимаций */
+}
+
+.rehearsal-preview-line.preview-continuation-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* Зеленая стрелочка */
+    font-size: 110%;
+    margin-right: 0.3em;
+    /* УБИРАЕМ ВСЕ ЭФФЕКТЫ */
+}
+
+/* Простой контейнер для превью - НИКАКИХ эффектов */
+.rehearsal-next-preview {
+    margin-top: 20px;
+    padding: 12px;
+    opacity: 0.6;
+    font-size: 1.0rem;
+    text-align: center;
+    max-height: 18vh;
+    overflow: hidden;
+    flex-shrink: 0 !important;
+    position: absolute; /* Размещаем в фиксированной позиции */
+    bottom: 20px; /* Фиксированное расстояние от низа */
+    left: 25px;
+    right: 25px;
+    /* НИКАКИХ фонов, анимаций, теней */
+}
+
+.rehearsal-preview-line.preview-continuation-first-line {
+    font-size: 115%;
+    font-weight: bold;
+    color: #FF8C00 !important; /* Только оранжевый цвет - никаких эффектов */
+    margin-top: 15px;
+}
+
+.rehearsal-preview-line.preview-continuation-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* Зеленая стрелочка - никаких эффектов */
+    font-size: 110%;
+    margin-right: 0.3em;
+}
+
+/* Простой превью контейнер - БЕЗ эффектов */
+.rehearsal-next-preview {
+    margin-top: 20px;
+    padding: 12px;
+    opacity: 0.6;
+    font-size: 1.0rem;
+    text-align: center;
+    max-height: 18vh;
+    overflow: hidden;
+    flex-shrink: 0 !important;
+    position: absolute; /* Размещаем в фиксированной позиции */
+    bottom: 20px; /* Фиксированное расстояние от низа */
+    left: 25px;
+    right: 25px;
+}
+
+/* ФИНАЛЬНЫЕ ПРОСТЫЕ СТИЛИ - ТОЛЬКО ЦВЕТ, НИКАКИХ ПОЛОС */
+.rehearsal-preview-line.next-block-first-line {
+    font-size: 115%;
+    font-weight: bold;
+    color: #FF8C00 !important; /* ТОЛЬКО цвет - НЕТ эффектов */
+    margin-top: 15px;
+}
+
+.rehearsal-preview-line.next-block-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* Зеленая стрелочка - НЕТ эффектов */
+    font-size: 110%;
+    margin-right: 0.3em;
+}
+
+.rehearsal-preview-line.preview-continuation-first-line {
+    font-size: 115%;
+    font-weight: bold;
+    color: #FF8C00 !important; /* ТОЛЬКО цвет - НЕТ эффектов */
+    margin-top: 15px;
+}
+
+.rehearsal-preview-line.preview-continuation-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* Зеленая стрелочка - НЕТ эффектов */
+    font-size: 110%;
+    margin-right: 0.3em;
+}
+
+/* Простой превью контейнер */
+.rehearsal-next-preview {
+    margin-top: 20px;
+    padding: 12px;
+    opacity: 0.6;
+    font-size: 1.0rem;
+    text-align: center;
+    max-height: 18vh;
+    overflow: hidden;
+    flex-shrink: 0 !important;
+    position: absolute; /* Размещаем в фиксированной позиции */
+    bottom: 20px; /* Фиксированное расстояние от низа */
+    left: 25px;
+    right: 25px;
+}
+
+/* Стили для первой строки следующего блока (оранжевая подсветка) */
+.rehearsal-preview-line.next-block-first-line {
+    font-size: 115%;
+    font-weight: bold;
+    color: #FF8C00 !important; /* Только оранжевый цвет - БЕЗ эффектов */
+    margin-top: 15px;
+}
+
+.rehearsal-preview-line.next-block-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* Зеленая стрелочка - БЕЗ эффектов */
+    font-size: 110%;
+    margin-right: 0.3em;
+}
+
+/* Стили для превью продолжений блоков */
+.rehearsal-preview-line.preview-continuation-first-line {
+    font-size: 115%;
+    font-weight: bold;
+    color: #FF8C00 !important; /* Только оранжевый цвет - БЕЗ эффектов */
+    margin-top: 15px;
+}
+
+.rehearsal-preview-line.preview-continuation-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* Зеленая стрелочка - БЕЗ эффектов */
+    font-size: 110%;
+    margin-right: 0.3em;
+}
+
+/* Простой превью контейнер - БЕЗ эффектов */
+.rehearsal-next-preview {
+    margin-top: 20px;
+    padding: 12px;
+    opacity: 0.6;
+    font-size: 1.0rem;
+    text-align: center;
+    max-height: 18vh;
+    overflow: hidden;
+    flex-shrink: 0 !important;
+    position: absolute; /* Размещаем в фиксированной позиции */
+    bottom: 20px; /* Фиксированное расстояние от низа */
+    left: 25px;
+    right: 25px;
+}
+
+/* ПРОСТЫЕ СТИЛИ БЕЗ АНИМАЦИЙ - ТОЛЬКО ЦВЕТ ТЕКСТА */
+.rehearsal-preview-line.next-block-first-line {
+    font-size: 115%;
+    font-weight: bold;
+    color: #FF8C00 !important; /* ТОЛЬКО оранжевый цвет - НИКАКИХ эффектов */
+    margin-top: 15px;
+}
+
+.rehearsal-preview-line.next-block-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* Зеленая стрелочка - НИКАКИХ эффектов */
+    font-size: 110%;
+    margin-right: 0.3em;
+}
+
+/* ПРОСТЫЕ стили для продолжений блоков - ТОЛЬКО цвет */
+.rehearsal-preview-line.preview-continuation-first-line {
+    font-size: 115%;
+    font-weight: bold;
+    color: #FF8C00 !important; /* ТОЛЬКО оранжевый цвет - НИКАКИХ эффектов */
+    margin-top: 15px;
+}
+
+.rehearsal-preview-line.preview-continuation-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* Зеленая стрелочка - НИКАКИХ эффектов */
+    font-size: 110%;
+    margin-right: 0.3em;
+}
+
+/* ПРОСТОЙ превью контейнер - БЕЗ всех эффектов */
+.rehearsal-next-preview {
+    margin-top: 20px;
+    padding: 12px;
+    opacity: 0.6;
+    font-size: 1.0rem;
+    text-align: center;
+    max-height: 18vh;
+    overflow: hidden;
+    flex-shrink: 0 !important;
+    position: absolute; /* Размещаем в фиксированной позиции */
+    bottom: 20px; /* Фиксированное расстояние от низа */
+    left: 25px;
+    right: 25px;
+}
+
+/* Стили для отображения зацикленной области в WaveformEditor */
+
+/* ФИНАЛЬНЫЕ ПРОСТЫЕ СТИЛИ - ТОЛЬКО ЦВЕТ ТЕКСТА, НИКАКИХ ЭФФЕКТОВ */
+.rehearsal-preview-line.next-block-first-line {
+    font-size: 115%;
+    font-weight: bold;
+    color: #FF8C00 !important; /* ТОЛЬКО оранжевый цвет */
+    margin-top: 15px;
+}
+
+.rehearsal-preview-line.next-block-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* Зеленая стрелочка */
+    font-size: 110%;
+    margin-right: 0.3em;
+}
+
+.rehearsal-preview-line.preview-continuation-first-line {
+    font-size: 115%;
+    font-weight: bold;
+    color: #FF8C00 !important; /* ТОЛЬКО оранжевый цвет */
+    margin-top: 15px;
+}
+
+.rehearsal-preview-line.preview-continuation-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* Зеленая стрелочка */
+    font-size: 110%;
+    margin-right: 0.3em;
+}
+
+/* ПРОСТОЙ превью контейнер - БЕЗ эффектов */
+.rehearsal-next-preview {
+    margin-top: 20px;
+    padding: 12px;
+    opacity: 0.6;
+    font-size: 1.0rem;
+    text-align: center;
+    max-height: 18vh;
+    overflow: hidden;
+    flex-shrink: 0 !important;
+    position: absolute; /* Размещаем в фиксированной позиции */
+    bottom: 20px; /* Фиксированное расстояние от низа */
+    left: 25px;
+    right: 25px;
+}
+
+/* ТОЛЬКО ПРОСТЫЕ СТИЛИ БЕЗ АНИМАЦИЙ И ЭФФЕКТОВ */
+
+/* Стили для первой строки следующего блока (простая оранжевая подсветка) */
+.rehearsal-preview-line.next-block-first-line {
+    font-size: 115%;
+    font-weight: bold;
+    color: #FF8C00 !important; /* ТОЛЬКО оранжевый цвет текста */
+    margin-top: 15px;
+}
+
+.rehearsal-preview-line.next-block-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* Зеленая стрелочка */
+    font-size: 110%;
+    margin-right: 0.3em;
+}
+
+/* Стили для превью продолжений блоков */
+.rehearsal-preview-line.preview-continuation-first-line {
+    font-size: 115%;
+    font-weight: bold;
+    color: #FF8C00 !important; /* ТОЛЬКО оранжевый цвет текста */
+    margin-top: 15px;
+}
+
+.rehearsal-preview-line.preview-continuation-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* Зеленая стрелочка */
+    font-size: 110%;
+    margin-right: 0.3em;
+}
+
+/* Простой превью контейнер */
+.rehearsal-next-preview {
+    margin-top: 20px;
+    padding: 12px;
+    opacity: 0.6;
+    font-size: 1.0rem;
+    text-align: center;
+    max-height: 18vh;
+    overflow: hidden;
+    flex-shrink: 0 !important;
+    position: absolute; /* Размещаем в фиксированной позиции */
+    bottom: 20px; /* Фиксированное расстояние от низа */
+    left: 25px;
+    right: 25px;
+}
+
+/* ФИНАЛЬНЫЕ ПРОСТЫЕ СТИЛИ - ТОЛЬКО ЦВЕТ, НИКАКИХ ПОЛОС И ЭФФЕКТОВ */
+
+/* Простые стили для первой строки следующего блока - ТОЛЬКО оранжевый цвет */
+.rehearsal-preview-line.next-block-first-line {
+    font-size: 115%;
+    font-weight: bold;
+    color: #FF8C00 !important; /* ТОЛЬКО цвет - НЕТ эффектов */
+    margin-top: 15px;
+}
+
+.rehearsal-preview-line.next-block-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* Зеленая стрелочка - НЕТ эффектов */
+    font-size: 110%;
+    margin-right: 0.3em;
+}
+
+/* Простые стили для продолжений блоков - ТОЛЬКО оранжевый цвет */
+.rehearsal-preview-line.preview-continuation-first-line {
+    font-size: 115%;
+    font-weight: bold;
+    color: #FF8C00 !important; /* ТОЛЬКО цвет - НЕТ эффектов */
+    margin-top: 15px;
+}
+
+.rehearsal-preview-line.preview-continuation-first-line::before {
+    content: "↳ ";
+    color: #4CAF50; /* Зеленая стрелочка - НЕТ эффектов */
+    font-size: 110%;
+    margin-right: 0.3em;
+}
+
+/* Простой превью контейнер - БЕЗ эффектов */
+.rehearsal-next-preview {
+    margin-top: 20px;
+    padding: 12px;
+    opacity: 0.6;
+    font-size: 1.0rem;
+    text-align: center;
+    max-height: 18vh;
+    overflow: hidden;
+    flex-shrink: 0 !important;
+    position: absolute; /* Размещаем в фиксированной позиции */
+    bottom: 20px; /* Фиксированное расстояние от низа */
+    left: 25px;
+    right: 25px;
+}
+
+/* ======= ПОЛНОСТЬЮ ОЧИЩЕННЫЕ СТИЛИ ДЛЯ ОРАНЖЕВЫХ СТРОК ======= */
+/* УДАЛЕНЫ ВСЕ АНИМАЦИИ: nextBlockPulse, continuationArrowGlow, continuationIntense, previewAmbient */
+
+/* Простые стили для первой строки следующего блока - ТОЛЬКО ЦВЕТ */
+.rehearsal-preview-line.next-block-first-line {
+    font-size: 115% !important;
+    font-weight: bold !important;
+    color: #FF8C00 !important; /* ТОЛЬКО цвет - БЕЗ эффектов */
+    margin-top: 15px !important;
+    /* УДАЛЕНЫ: animation, text-shadow, background, border, box-shadow */
+}
+
+.rehearsal-preview-line.next-block-first-line::before {
+    content: "↳ " !important;
+    color: #4CAF50 !important; /* Зеленая стрелочка - БЕЗ эффектов */
+    font-size: 110% !important;
+    margin-right: 0.3em !important;
+    /* УДАЛЕНЫ: animation, text-shadow, filter, glow */
+}
+
+/* Простые стили для продолжений блоков - ТОЛЬКО ЦВЕТ */
+.rehearsal-preview-line.preview-continuation-first-line {
+    font-size: 115% !important;
+    font-weight: bold !important;
+    color: #FF8C00 !important; /* ТОЛЬКО цвет - БЕЗ эффектов */
+    margin-top: 15px !important;
+    /* УДАЛЕНЫ: animation, text-shadow, background, border, box-shadow */
+}
+
+.rehearsal-preview-line.preview-continuation-first-line::before {
+    content: "↳ " !important;
+    color: #4CAF50 !important; /* Зеленая стрелочка - БЕЗ эффектов */
+    font-size: 110% !important;
+    margin-right: 0.3em !important;
+    /* УДАЛЕНЫ: animation, text-shadow, filter, glow */
+}
+
+/* Простой превью контейнер - НИКАКИХ эффектов */
+.rehearsal-next-preview {
+    margin-top: 20px !important;
+    padding: 12px !important;
+    opacity: 0.6 !important;
+    font-size: 1.0rem !important;
+    text-align: center !important;
+    max-height: 18vh !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+    position: absolute !important;
+    bottom: 20px !important;
+    left: 25px !important;
+    right: 25px !important;
+    /* УДАЛЕНЫ: background, animation, text-shadow, border, box-shadow */
+}
+
+/* =================================================================== */
+/* ФИНАЛЬНЫЕ ПРОСТЫЕ СТИЛИ БЕЗ АНИМАЦИЙ И ПОЛОС - ТОЛЬКО ЦВЕТА       */
+/* =================================================================== */
+
+/* Простые стили для оранжевых строк следующего блока */
+.rehearsal-preview-line.next-block-first-line {
+    font-size: 115% !important;
+    font-weight: bold !important;
+    color: #FF8C00 !important; /* ТОЛЬКО цвет - никаких эффектов */
+    margin-top: 15px !important;
+    /* УДАЛЕНЫ ВСЕ: animation, text-shadow, background, border, box-shadow */
+}
+
+.rehearsal-preview-line.next-block-first-line::before {
+    content: "↳ " !important;
+    color: #4CAF50 !important; /* Зеленая стрелочка - никаких эффектов */
+    font-size: 110% !important;
+    margin-right: 0.3em !important;
+    /* УДАЛЕНЫ ВСЕ: animation, text-shadow, filter */
+}
+
+/* Простые стили для оранжевых строк продолжений */
+.rehearsal-preview-line.preview-continuation-first-line {
+    font-size: 115% !important;
+    font-weight: bold !important;
+    color: #FF8C00 !important; /* ТОЛЬКО цвет - никаких эффектов */
+    margin-top: 15px !important;
+    /* УДАЛЕНЫ ВСЕ: animation, text-shadow, background, border, box-shadow */
+}
+
+.rehearsal-preview-line.preview-continuation-first-line::before {
+    content: "↳ " !important;
+    color: #4CAF50 !important; /* Зеленая стрелочка - никаких эффектов */
+    font-size: 110% !important;
+    margin-right: 0.3em !important;
+    /* УДАЛЕНЫ ВСЕ: animation, text-shadow, filter */
+}
+
+/* Простой превью контейнер */
+.rehearsal-next-preview {
+    margin-top: 20px !important;
+    padding: 12px !important;
+    opacity: 0.6 !important;
+    font-size: 1.0rem !important;
+    text-align: center !important;
+    max-height: 18vh !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+    position: absolute !important;
+    bottom: 20px !important;
+    left: 25px !important;
+    right: 25px !important;
+    /* УДАЛЕНЫ ВСЕ: background, animation, border-radius, backdrop-filter */
+}
+
+/* Простые стили для активных строк */
+.rehearsal-active-line.active {
+    color: #FFFFFF !important;
+}
+
+.rehearsal-active-line.continuation-first-line.active {
+    color: #FFFFFF !important;
+}
+
+.rehearsal-active-line.continuation-first-line.active::before {
+    color: #4CAF50 !important;
+}
+
+/* КОНЕЦ ФАЙЛА - ВСЕ АНИМАЦИИ И ЭФФЕКТЫ УДАЛЕНЫ */
+
+.rehearsal-next-preview.preview-continuation {
+    border-top: 1px dashed rgba(255, 255, 255, 0.2);
+    margin-top: 25px;
+}
+
+/* ============================================================ */
+/* ФИНАЛЬНЫЕ СТИЛИ - ТОЛЬКО ЦВЕТА БЕЗ АНИМАЦИЙ И ЭФФЕКТОВ     */
+/* ============================================================ */
+
+/* Простые стили для оранжевых строк следующего блока */
+.rehearsal-preview-line.next-block-first-line {
+    font-size: 115% !important;
+    font-weight: bold !important;
+    color: #FF8C00 !important;
+    margin-top: 15px !important;
+}
+
+.rehearsal-preview-line.next-block-first-line::before {
+    content: "↳ " !important;
+    color: #4CAF50 !important;
+    font-size: 110% !important;
+    margin-right: 0.3em !important;
+}
+
+/* Простые стили для оранжевых строк продолжений */
+.rehearsal-preview-line.preview-continuation-first-line {
+    font-size: 115% !important;
+    font-weight: bold !important;
+    color: #FF8C00 !important;
+    margin-top: 15px !important;
+}
+
+.rehearsal-preview-line.preview-continuation-first-line::before {
+    content: "↳ " !important;
+    color: #4CAF50 !important;
+    font-size: 110% !important;
+    margin-right: 0.3em !important;
+}
+
+/* Простой превью контейнер */
+.rehearsal-next-preview {
+    margin-top: 20px !important;
+    padding: 12px !important;
+    opacity: 0.6 !important;
+    font-size: 1.0rem !important;
+    text-align: center !important;
+    max-height: 18vh !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+    position: absolute !important;
+    bottom: 20px !important;
+    left: 25px !important;
+    right: 25px !important;
+}
+
+/* Простые стили для активных строк */
+.rehearsal-active-line.active {
+    color: #FFFFFF !important;
+}
+
+.rehearsal-active-line.continuation-first-line.active {
+    color: #FFFFFF !important;
+}
+
+.rehearsal-active-line.continuation-first-line.active::before {
+    color: #4CAF50 !important;
+}
+
+/* ФИНАЛЬНЫЙ ЧИСТЫЙ БЛОК - ТОЛЬКО ЦВЕТ, БЕЗ ПОЛОС */
+.rehearsal-next-preview.preview-continuation {
+    border-top: 2px dashed rgba(255, 140, 0, 0.4) !important;
+}
+
+.rehearsal-preview-line.next-block-first-line {
+    color: #FF8C00 !important;
+    font-size: 115% !important;
+    font-weight: bold !important;
+}
+
+.rehearsal-preview-line.next-block-first-line::before {
+    content: "↳ ";
+    color: #4CAF50 !important;
+}
+
+.rehearsal-preview-line.preview-continuation-first-line {
+    color: #FF8C00 !important;
+    font-size: 115% !important;
+    font-weight: bold !important;
+}
+
+.rehearsal-preview-line.preview-continuation-first-line::before {
+    content: "↳ ";
+    color: #4CAF50 !important;
+}
+
+.rehearsal-next-preview {
+    margin-top: 20px;
+    padding: 12px;
+    opacity: 0.6;
+    font-size: 1.0rem;
+    text-align: center;
+    max-height: 18vh;
+    overflow: hidden;
+    flex-shrink: 0 !important;
+    position: absolute;
+    bottom: 20px;
+    left: 25px;
+    right: 25px;
+}
+
+.rehearsal-active-line.active {
+    color: #FFFFFF !important;
+}
+
+.rehearsal-active-line.continuation-first-line.active {
+    color: #FFFFFF !important;
+}
+
+.rehearsal-active-line.continuation-first-line.active::before {
+    color: #4CAF50 !important;
+}
+

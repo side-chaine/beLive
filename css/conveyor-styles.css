@@ -1,0 +1,80 @@
+/* Переопределение стилей для основных кнопок режимов */
+.mode-buttons {
+    margin-left: 1cm !important;
+}
+
+.mode-button {
+    background: transparent !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    backdrop-filter: blur(5px) !important;
+}
+
+.btn-concert,
+.btn-karaoke,
+.btn-rehearsal,
+.btn-live {
+    background: transparent !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    backdrop-filter: blur(5px) !important;
+}
+
+.btn-concert:hover,
+.btn-karaoke:hover,
+.btn-rehearsal:hover,
+.btn-live:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Стиль для партий второго исполнителя (дуэт/бэк-вокал) */
+.duet-partner {
+    color: #DC143C !important; /* Малиновый цвет */
+    font-weight: bold;
+}
+
+/* --- Стили для режима "Концертный конвейер" --- */
+
+.conveyor-belt-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.conveyor-slot {
+    width: 100%;
+    padding: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 2.2em;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.6);
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    flex-grow: 1;
+    margin: 5px 0;
+}
+
+.conveyor-slot.active-slot {
+    border-color: #00ff88;
+    color: #ffffff;
+    background: rgba(0, 255, 136, 0.1);
+    transform: scale(1.03);
+    box-shadow: 0 0 25px rgba(0, 255, 136, 0.4);
+    font-weight: 700;
+}
+
+.conveyor-slot .slot-content {
+    transition: transform 0.3s ease;
+}
+
+.conveyor-slot.active-slot .slot-content {
+    transform: scale(1.05);
+} 

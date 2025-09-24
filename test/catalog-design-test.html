@@ -1,0 +1,3015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>beLive - Тестовая Страница Каталога</title>
+    <link rel="stylesheet" href="../css/styles.css"> <!-- Подключаем основные стили -->
+    <!-- <link rel="stylesheet" href="../css/track-catalog.css"> 🔧 ЗАКОММЕНТИРОВАНО: Файл не найден -->
+    
+    <!-- 🎵 CDN для wavesurfer.js - предпрослушка -->
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.umd.min.js"></script>
+    
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column; /* Stack header and main content */
+            min-height: 100vh; /* Full viewport height */
+            box-sizing: border-box;
+        }
+
+        /* Top navigation for modes */
+        .mode-nav {
+            background-color: #2a2a2a;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            border-bottom: 1px solid #3a3a3a;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        .mode-btn {
+            background-color: #4a4a4a;
+            color: #f0f0f0;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s, color 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .mode-btn:hover {
+            background-color: #00e676;
+            color: #1a1a1a;
+            transform: translateY(-2px);
+        }
+        .mode-btn.active {
+            background-color: #00e676;
+            color: #1a1a1a;
+            box-shadow: 0 0 10px #00e676;
+        }
+
+        .catalog-main-content {
+            flex-grow: 1;
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .catalog-column {
+            flex: 1;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            max-height: 100%;
+            position: relative;
+        }
+
+        .column-header {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #00e676;
+            text-align: center;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #00e676;
+        }
+
+        /* Specific styles for My Music */
+        .my-music-column .artist-group {
+            background-color: #3a3a3a;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            overflow: hidden;
+        }
+        .my-music-column .artist-group:hover {
+            background-color: #4a4a4a;
+        }
+        .my-music-column .artist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            color: #eee;
+            padding-right: 5px;
+        }
+        .my-music-column .artist-header span:last-child {
+            color: #bbb;
+            font-size: 0.9em;
+        }
+        .my-music-column .toggle-icon {
+            display: inline-block;
+            width: 1em;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .my-music-column .artist-group.expanded .toggle-icon {
+            transform: rotate(90deg);
+        }
+        .my-music-column .track-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 10px;
+            border-top: 1px solid #4a4a4a;
+            padding-top: 10px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding-top 0.3s ease-out, margin-top 0.3s ease-out;
+        }
+        .my-music-column .track-list.expanded {
+            max-height: 500px;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        .my-music-column .track-item {
+            padding: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+            color: #bbb;
+            border-bottom: 1px dashed #4a4a4a;
+        }
+        .my-music-column .track-item:last-child {
+            border-bottom: none;
+        }
+        .my-music-column .track-item-controls button {
+            background: none;
+            border: none; /* Removed border */
+            color: #00e676;
+            padding: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 5px; /* Adjusted margin */
+            transition: background-color 0.2s, color 0.2s;
+            font-size: 1.1em; /* Larger icons */
+        }
+        .my-music-column .track-item-controls button:hover {
+            background-color: rgba(0, 230, 118, 0.2); /* Subtle hover */
+            color: #00ff8c;
+        }
+        .my-music-column .track-item-controls button.favorite {
+            color: #ffc107; /* Star color */
+        }
+        .my-music-column .track-item-controls button.favorite.active {
+            background-color: #ffc107;
+            color: #1a1a1a;
+        }
+        .my-music-column .track-meta-info {
+            font-size: 0.8em;
+            color: #888;
+            margin-left: 10px;
+        }
+
+        /* Specific styles for Trends & Suggestions */
+        .trends-suggestions-column .section-title {
+            font-size: 1.2em;
+            color: #00e676;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #4a4a4a;
+            padding-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .trends-suggestions-column .track-card {
+            background-color: #3a3a3a;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        .trends-suggestions-column .track-card:hover {
+            background-color: #4a4a4a;
+            transform: translateY(-3px);
+        }
+        .trends-suggestions-column .album-art-placeholder {
+            width: 60px;
+            height: 60px;
+            background-color: #555;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            color: #ccc;
+            flex-shrink: 0;
+            border: 1px solid #666;
+            background-image: url('https://via.placeholder.com/60'); /* Placeholder image */
+            background-size: cover;
+            background-position: center;
+            text-indent: -9999px; /* Hide text, show background image */
+        }
+        .trends-suggestions-column .track-details {
+            flex-grow: 1;
+        }
+        .trends-suggestions-column .track-details .title {
+            font-weight: bold;
+            color: #eee;
+            margin-bottom: 3px;
+            font-size: 1.05em;
+        }
+        .trends-suggestions-column .track-details .artist {
+            font-size: 0.85em;
+            color: #aaa;
+        }
+        .trends-suggestions-column .trend-indicator {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #00e676, #00b0ff); /* Gradient for trend */
+            border-radius: 0 0 8px 8px;
+            transform-origin: left;
+            animation: trend-pulse 2s infinite alternate;
+        }
+        @keyframes trend-pulse {
+            from { width: 0%; opacity: 0.5; }
+            to { width: 100%; opacity: 1; }
+        }
+
+        /* Specific styles for Smart Search */
+        .smart-search-column input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #555;
+            border-radius: 8px;
+            background-color: #3a3a3a;
+            color: #f0f0f0;
+            font-size: 1.1em;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .smart-search-column input[type="text"]:focus {
+            border-color: #00e676;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 8px rgba(0, 230, 118, 0.5);
+        }
+        .search-results {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            border-bottom: 1px solid #4a4a4a;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            font-size: 0.9em;
+        }
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+        .search-result-item:hover {
+            background-color: #4a4a4a;
+            transform: translateY(-1px);
+        }
+        .search-result-item .track-icon {
+            font-size: 1.1em;
+            color: #bbb;
+            flex-shrink: 0;
+            width: 20px;
+            text-align: center;
+        }
+        .search-result-item .track-details {
+            flex-grow: 1;
+            min-width: 0; /* Для правильного сжатия текста */
+        }
+        .search-result-item .track-title {
+            font-weight: bold;
+            color: #eee;
+            font-size: 1em;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .search-result-item .track-artist {
+            font-size: 0.8em;
+            color: #888;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .search-result-item .track-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .search-result-item .preview-btn,
+        .search-result-item .add-to-setlist-btn {
+            background: none;
+            border: none;
+            color: #bbb;
+            font-size: 1.1em;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 3px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .search-result-item .preview-btn:hover {
+            background-color: rgba(0, 230, 118, 0.2);
+            color: #00e676;
+        }
+        .search-result-item .add-to-setlist-btn:hover {
+            background-color: rgba(51, 170, 255, 0.2);
+            color: #33aaff;
+        }
+        .highlight-exact {
+            color: #00e676;
+            font-weight: bold;
+        }
+        .highlight-partial {
+            color: #a2f900;
+        }
+        .search-icon {
+            font-size: 1.2em;
+            color: #bbb;
+            flex-shrink: 0;
+        }
+
+        /* 🔧 НОВЫЕ СТИЛИ: Конструктор Плейлиста */
+        .playlist-builder-column {
+            flex: 1.2; /* Делаем его немного шире */
+            background-color: #252525; /* Немного другой фон для выделения */
+            border-left: 2px solid #00e676;
+            transition: all 0.5s ease-in-out;
+        }
+        .playlist-controls {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #4a4a4a;
+        }
+        .playlist-btn {
+            background-color: #4a4a4a;
+            color: #f0f0f0;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+        .playlist-btn:hover {
+            background-color: #00e676;
+            color: #1a1a1a;
+        }
+        .playlist-tracks-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            min-height: 200px; /* Чтобы было видно область для перетаскивания */
+        }
+        .playlist-track-item {
+            background-color: #3a3a3a;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+            cursor: grab;
+            border-left: 4px solid #33aaff; /* Индикатор плейлиста */
+        }
+        .playlist-track-item:active {
+            cursor: grabbing;
+        }
+        .playlist-track-item.dragging {
+            opacity: 0.5;
+            background: #555;
+        }
+        /* 🔧 НОВЫЙ СТИЛЬ: Плавный переход и индикатор дроп-зоны */
+        .playlist-track-item {
+            transition: transform 0.2s ease-in-out, background-color 0.2s;
+        }
+        .drop-indicator {
+            height: 4px;
+            background-color: #00e676;
+            border-radius: 2px;
+            margin: 4px 0;
+            transition: all 0.2s;
+        }
+        .playlist-summary {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #4a4a4a;
+            text-align: right;
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #00e676;
+        }
+        .my-music-column .track-item-controls button.add-to-playlist-btn {
+            color: #33aaff;
+        }
+        .my-music-column .track-item-controls button.add-to-playlist-btn:hover {
+            background-color: rgba(51, 170, 255, 0.2);
+            color: #66ccff;
+        }
+
+        /* 🔧 НОВЫЕ СТИЛИ: Динамическая колонка с табами */
+        .center-dynamic-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .tab-navigation {
+            display: flex;
+            gap: 10px;
+            background-color: #3a3a3a;
+            border-radius: 8px;
+            padding: 8px 10px;
+            border: 1px solid #4a4a4a;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .tab-btn {
+            background-color: #4a4a4a;
+            color: #f0f0f0;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s, color 0.3s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .tab-btn:hover {
+            background-color: #00e676;
+            color: #1a1a1a;
+        }
+        .tab-btn.active {
+            background-color: #00e676;
+            color: #1a1a1a;
+            box-shadow: 0 0 10px #00e676;
+        }
+        .tab-content {
+            flex-grow: 1;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+            overflow-y: auto;
+            max-height: 100%;
+        }
+        .tab-panel {
+            display: none;
+        }
+        .tab-panel.active {
+            display: block;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #888;
+        }
+        .empty-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+        }
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #eee;
+        }
+        .empty-state p {
+            font-size: 1em;
+            margin-bottom: 20px;
+            color: #bbb;
+        }
+        .drop-zone {
+            width: 100%;
+            height: 150px;
+            border: 2px dashed #555;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            font-size: 1.2em;
+            text-align: center;
+            transition: border-color 0.3s ease-in-out;
+        }
+        .drop-zone.drag-over {
+            border-color: #00e676;
+            background-color: rgba(0, 230, 118, 0.1);
+        }
+
+        /* 🔧 НОВЫЕ СТИЛИ: Активный сет-лист (док) */
+        .setlist-dock {
+            position: fixed;
+            top: 0;
+            right: -400px; /* Скрыт по умолчанию */
+            width: 350px;
+            height: 100%;
+            background-color: #2a2a2a;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
+            transition: right 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+        .setlist-dock.active {
+            right: 0;
+        }
+        .dock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #4a4a4a;
+            background-color: #3a3a3a;
+            border-radius: 8px 8px 0 0;
+        }
+        .dock-header h3 {
+            margin: 0;
+            color: #00e676;
+            font-size: 1.2em;
+        }
+        .dock-close-btn {
+            background: none;
+            border: none;
+            color: #f0f0f0;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .dock-close-btn:hover {
+            color: #ff5555;
+        }
+        .dock-controls {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 20px;
+            border-bottom: 1px solid #4a4a4a;
+        }
+        .dock-btn {
+            background-color: #4a4a4a;
+            color: #f0f0f0;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+        .dock-btn:hover {
+            background-color: #00e676;
+            color: #1a1a1a;
+        }
+        .dock-tracks-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            min-height: 200px; /* Чтобы было видно область для перетаскивания */
+        }
+        .dock-track-item {
+            background-color: #3a3a3a;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+            cursor: grab;
+            border-left: 4px solid #33aaff; /* Индикатор плейлиста */
+        }
+        .dock-track-item:active {
+            cursor: grabbing;
+        }
+        .dock-track-item.dragging {
+            opacity: 0.5;
+            background: #555;
+        }
+        /* 🔧 НОВЫЙ СТИЛЬ: Плавный переход и индикатор дроп-зоны */
+        .dock-track-item {
+            transition: transform 0.2s ease-in-out, background-color 0.2s;
+        }
+        .drop-indicator {
+            height: 4px;
+            background-color: #00e676;
+            border-radius: 2px;
+            margin: 4px 0;
+            transition: all 0.2s;
+        }
+        .dock-summary {
+            padding: 10px 20px;
+            border-top: 1px solid #4a4a4a;
+            text-align: right;
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #00e676;
+        }
+        .dock-summary span {
+            color: #888;
+        }
+        .dock-track-count {
+            color: #00e676;
+        }
+        .dock-duration {
+            color: #00e676;
+        }
+
+        /* 🔧 НОВЫЕ СТИЛИ: Элементы истории */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .history-item {
+            background-color: #3a3a3a;
+            border-radius: 5px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+        .history-item:hover {
+            background-color: #4a4a4a;
+            transform: translateY(-2px);
+        }
+        .history-track {
+            font-weight: bold;
+            color: #eee;
+            flex-grow: 1;
+        }
+        .history-time {
+            font-size: 0.8em;
+            color: #888;
+            margin-right: 10px;
+        }
+        .add-to-current-btn {
+            background: none;
+            border: none;
+            color: #33aaff;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 3px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .add-to-current-btn:hover {
+            background-color: rgba(51, 170, 255, 0.2);
+            color: #66ccff;
+        }
+
+        /* 🔧 СТИЛИ ДЛЯ КНОПОК В ТРЕНДАХ */
+        .trend-add-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1em;
+            z-index: 2;
+        }
+        .trends-suggestions-column .track-card {
+            position: relative; /* Для позиционирования кнопки */
+        }
+
+        /* 🔧 АДАПТИВНОСТЬ: Сжатие поиска при активном доке */
+        .search-column-compressed {
+            flex: 0.7; /* Сжимаем колонку поиска */
+            transition: flex 0.3s ease-in-out;
+        }
+
+        /* 🔧 ВИЗУАЛЬНЫЕ ЭФФЕКТЫ: Режим конструктора */
+        .catalog-column.building-mode {
+            border: 2px solid #00e676;
+            box-shadow: 0 0 15px rgba(0, 230, 118, 0.3);
+            transition: border 0.3s, box-shadow 0.3s;
+        }
+
+        /* 🔧 АНИМАЦИЯ: Пульсация кнопок ➕ в режиме конструктора */
+        .add-btn-pulse {
+            animation: pulse-green 1.5s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { 
+                background-color: rgba(51, 170, 255, 0.1);
+                transform: scale(1);
+            }
+            50% { 
+                background-color: rgba(0, 230, 118, 0.3);
+                transform: scale(1.1);
+            }
+            100% { 
+                background-color: rgba(51, 170, 255, 0.1);
+                transform: scale(1);
+            }
+        }
+
+        /* 🔧 СТИЛИ: Треки в конструкторе */
+        .constructor-track-item {
+            background-color: #3a3a3a;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+            cursor: grab;
+            border-left: 4px solid #00e676;
+            transition: transform 0.2s ease-in-out, background-color 0.2s;
+        }
+        .constructor-track-item:active {
+            cursor: grabbing;
+        }
+        .constructor-track-item.dragging {
+            opacity: 0.5;
+            background: #555;
+        }
+        .constructor-track-item:hover {
+            background-color: #4a4a4a;
+            transform: translateY(-2px);
+        }
+
+        .constructor-summary {
+            padding: 10px 0;
+            border-top: 1px solid #4a4a4a;
+            text-align: right;
+            font-weight: bold;
+            font-size: 1em;
+            color: #00e676;
+        }
+
+        /* 🔧 ОВЕРЛЕЙ ДЛЯ ЗАТЕМНЕНИЯ ПРИ ОТКРЫТОМ ДОКЕ */
+        .dock-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .dock-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 🔧 НОВЫЕ СТИЛИ: Конструктор Плейлиста */
+        .playlist-constructor {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 15px;
+            border-top: 1px solid #4a4a4a;
+            border-bottom: 1px solid #4a4a4a;
+        }
+        .constructor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+        .playlist-name-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #555;
+            border-radius: 8px;
+            background-color: #3a3a3a;
+            color: #f0f0f0;
+            font-size: 1.1em;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .playlist-name-input:focus {
+            border-color: #00e676;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 8px rgba(0, 230, 118, 0.5);
+        }
+        .constructor-controls {
+            display: flex;
+            gap: 10px;
+        }
+        .constructor-btn {
+            background-color: #4a4a4a;
+            color: #f0f0f0;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s, color 0.3s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .constructor-btn:hover {
+            background-color: #00e676;
+            color: #1a1a1a;
+        }
+        .constructor-btn.confirm-btn {
+            color: #00e676;
+        }
+        .constructor-btn.confirm-btn:hover {
+            background-color: #00e676;
+            color: #1a1a1a;
+        }
+        .constructor-btn.cancel-btn {
+            color: #ff5555;
+        }
+        .constructor-btn.cancel-btn:hover {
+            background-color: #ff5555;
+            color: #1a1a1a;
+        }
+        .constructor-tracks {
+            flex-grow: 1;
+            overflow-y: auto;
+            min-height: 200px; /* Чтобы было видно область для перетаскивания */
+        }
+        .drop-zone-message {
+            text-align: center;
+            padding: 50px 20px;
+            color: #888;
+        }
+        .drop-zone-message .drop-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        .drop-zone-message p {
+            font-size: 1em;
+            margin-bottom: 20px;
+            color: #bbb;
+        }
+        .saved-playlists {
+            margin-top: 20px;
+        }
+        .playlist-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            background-color: #3a3a3a;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.2s; /* 🔧 НОВОЕ: Плавный переход для подсветки */
+            cursor: pointer; /* 🔧 НОВОЕ: Курсор-указатель */
+        }
+        .playlist-item:hover {
+            background-color: #4a4a4a; /* 🔧 НОВОЕ: Подсветка при наведении */
+        }
+        .playlist-item:hover .playlist-title {
+            color: #00e676; /* 🔧 НОВОЕ: Выделяем заголовок цветом */
+        }
+        .playlist-item:last-child {
+            margin-bottom: 0;
+        }
+        .playlist-info {
+            flex-grow: 1;
+        }
+        .playlist-title {
+            font-weight: bold;
+            color: #eee;
+            font-size: 1.05em;
+            margin-bottom: 3px;
+        }
+        .playlist-meta {
+            font-size: 0.8em;
+            color: #888;
+        }
+        .playlist-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .playlist-action-btn {
+            background: none;
+            border: none;
+            color: #bbb;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 3px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .playlist-action-btn:hover {
+            background-color: rgba(170, 170, 170, 0.2);
+            color: #fff;
+        }
+        .create-playlist-btn {
+            background-color: #00e676;
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .create-playlist-btn:hover {
+            background-color: #00cc66;
+            transform: translateY(-2px);
+        }
+        .create-playlist-btn:active {
+            transform: translateY(0);
+        }
+        .btn-icon {
+            font-size: 1.2em;
+        }
+        .btn-text {
+            font-size: 0.9em;
+        }
+
+        /* 🔧 НОВЫЕ СТИЛИ: Предпрослушка */
+        .preview-player {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #2a2a2a;
+            border-top: 1px solid #4a4a4a;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(100%); /* Скрываем по умолчанию */
+            transition: transform 0.3s ease-in-out;
+        }
+        .preview-player.active {
+            transform: translateY(0);
+        }
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            border-bottom: 1px solid #4a4a4a;
+            background-color: #3a3a3a;
+            border-radius: 8px 8px 0 0;
+        }
+        .preview-track-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .preview-title {
+            font-weight: bold;
+            color: #eee;
+            font-size: 1.05em;
+        }
+        .preview-artist {
+            font-size: 0.8em;
+            color: #aaa;
+        }
+        .preview-close {
+            background: none;
+            border: none;
+            color: #f0f0f0;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .preview-close:hover {
+            color: #ff5555;
+        }
+        .preview-waveform {
+            flex-grow: 1;
+            width: 100%;
+            height: 100px; /* Высота для волны */
+            background-color: #1a1a1a;
+            border-bottom: 1px solid #4a4a4a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .preview-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            border-top: 1px solid #4a4a4a;
+            background-color: #3a3a3a;
+            border-radius: 0 0 8px 8px;
+        }
+        .preview-control-btn {
+            background: none;
+            border: none;
+            color: #00e676;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .preview-control-btn:hover {
+            color: #00ff8c;
+        }
+        .preview-time {
+            font-size: 0.9em;
+            color: #888;
+        }
+        .preview-current, .preview-total {
+            font-weight: bold;
+            color: #00e676;
+        }
+        /* 🔧 ИСПРАВЛЕНИЕ: Предотвращение выделения текста при DnD */
+        .track-item, .search-result-item {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* 🔧 НОВЫЕ СТИЛИ: Drag & Drop визуальные эффекты */
+        .track-item.dragging, .search-result-item.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+            background-color: #4a4a4a;
+        }
+
+        /* 🔧 ДРОП-ЗОНА: Конструктор готов к приему */
+        .constructor-tracks.drag-over {
+            background-color: rgba(0, 230, 118, 0.1);
+            border: 2px dashed #00e676;
+            border-radius: 8px;
+        }
+
+        .drop-zone-message.drag-over {
+            color: #00e676;
+            transform: scale(1.1);
+        }
+
+        /* 🔧 НОВЫЕ СТИЛИ: Теги плейлистов на треках */
+        .playlist-tag-container {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .playlist-tag {
+            background-color: #555;
+            color: #ccc;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 0.7em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            position: relative;
+        }
+        .playlist-tag:hover {
+            background-color: #00e676;
+            color: #1a1a1a;
+        }
+
+        /* 🔧 НОВЫЕ СТИЛИ: Всплывающая подсказка (Tooltip) */
+        .playlist-tooltip {
+            position: absolute;
+            bottom: 120%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            z-index: 2000; /* выше поисковой строки */
+            width: max-content;
+            min-width: 150px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, bottom 0.2s, top 0.2s;
+            pointer-events: none;
+        }
+        .playlist-tooltip.visible {
+            opacity: 1;
+            visibility: visible;
+            bottom: 130%;
+        }
+        /* Вариант тултипа, который открывается вниз */
+        .playlist-tooltip.below {
+            bottom: auto;
+            top: 120%;
+        }
+        .playlist-tooltip.below.visible {
+            top: 130%;
+        }
+        .playlist-tooltip h4 {
+            margin: 0 0 8px 0;
+            font-size: 1em;
+            color: #00e676;
+            border-bottom: 1px solid #4a4a4a;
+            padding-bottom: 5px;
+        }
+        .playlist-tooltip ul {
+            margin: 0;
+            padding: 0 0 0 15px;
+            list-style: '🎵  ';
+        }
+        .playlist-tooltip li {
+            margin-bottom: 4px;
+            font-size: 0.9em;
+        }
+
+        /* 🎵 UPLOAD MODE STYLES - Система загрузки треков */
+        .upload-mode-container {
+            display: none; /* Скрыт по умолчанию */
+            flex-direction: column;
+            gap: 20px;
+            padding: 20px 0;
+        }
+        
+        .upload-mode-container.active {
+            display: flex;
+        }
+        
+        /* Кнопка активации Upload Mode */
+        .upload-mode-trigger {
+            background: linear-gradient(135deg, #00e676, #00c853);
+            color: #1a1a1a;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 230, 118, 0.3);
+            margin: 10px 0;
+        }
+        
+        .upload-mode-trigger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 230, 118, 0.4);
+        }
+        
+        /* Заголовок режима загрузки */
+        .upload-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #00e676;
+        }
+        
+        .upload-title {
+            font-size: 1.4em;
+            color: #00e676;
+            font-weight: bold;
+        }
+        
+        .upload-back-btn {
+            background: #4a4a4a;
+            color: #f0f0f0;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .upload-back-btn:hover {
+            background-color: #666;
+        }
+        
+        /* Основные файловые ячейки */
+        .upload-cells {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .upload-cell {
+            background-color: #333;
+            border: 2px dashed #555;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .upload-cell:hover {
+            border-color: #00e676;
+            background-color: #2a3a2a;
+        }
+        
+        .upload-cell.drag-over {
+            border-color: #00e676;
+            background-color: rgba(0, 230, 118, 0.1);
+            transform: scale(1.02);
+        }
+        
+        .upload-cell.has-file {
+            border-color: #00e676;
+            border-style: solid;
+            background-color: #1a2a1a;
+        }
+        
+        .upload-cell.processing {
+            border-color: #ffab00;
+            background-color: #2a2a1a;
+        }
+        
+        .upload-cell.error {
+            border-color: #f44336;
+            background-color: #2a1a1a;
+        }
+        
+        /* Лирика занимает всю ширину */
+        .upload-cell.lyrics-cell {
+            grid-column: span 2;
+        }
+        
+        .cell-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            opacity: 0.7;
+        }
+        
+        .cell-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #f0f0f0;
+        }
+        
+        .cell-subtitle {
+            font-size: 0.9em;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        
+        .cell-status {
+            font-size: 0.8em;
+            margin-top: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            background-color: #4a4a4a;
+            color: #f0f0f0;
+        }
+        
+        .cell-status.processing {
+            background-color: #ff9800;
+            color: #1a1a1a;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .cell-status.success {
+            background-color: #4caf50;
+            color: #1a1a1a;
+        }
+        
+        .cell-status.error {
+            background-color: #f44336;
+            color: #fff;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Прогресс бар для загрузки */
+        .upload-progress {
+            width: 100%;
+            height: 4px;
+            background-color: #555;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .upload-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00e676, #00c853);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        /* Дополнительные кнопки */
+        .upload-additional {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .upload-additional-btn {
+            background-color: #4a4a4a;
+            color: #f0f0f0;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .upload-additional-btn:hover {
+            background-color: #666;
+            transform: translateY(-1px);
+        }
+        
+        .upload-additional-btn.json-btn:hover {
+            background-color: #2196f3;
+        }
+        
+        .upload-additional-btn.stems-btn:hover {
+            background-color: #9c27b0;
+        }
+        
+        /* JSON Preview Panel */
+        .json-preview {
+            display: none;
+            background-color: #2a2a2a;
+            border: 1px solid #4a4a4a;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .json-preview.active {
+            display: block;
+        }
+        
+        .json-preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .json-preview-title {
+            font-weight: bold;
+            color: #00e676;
+        }
+        
+        .json-preview-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .json-preview-btn {
+            background: #4a4a4a;
+            color: #f0f0f0;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        
+        .json-preview-btn.apply:hover {
+            background-color: #4caf50;
+        }
+        
+        .json-preview-btn.revert:hover {
+            background-color: #f44336;
+        }
+        
+        .json-markers-list {
+            max-height: 150px;
+            overflow-y: auto;
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        
+        .json-marker-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+            font-size: 0.9em;
+        }
+        
+        .json-marker-item:last-child {
+            border-bottom: none;
+        }
+        
+        .marker-time {
+            color: #00e676;
+            font-weight: bold;
+        }
+        
+        .marker-text {
+            color: #f0f0f0;
+        }
+        
+        /* Final Upload Actions */
+        .upload-final-actions {
+            display: none;
+            padding-top: 20px;
+            border-top: 1px solid #4a4a4a;
+            margin-top: 20px;
+        }
+        
+        .upload-final-actions.show {
+            display: block;
+        }
+        
+        .track-metadata {
+            background-color: #333;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .metadata-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .metadata-label {
+            color: #888;
+            font-weight: bold;
+        }
+        
+        .metadata-value {
+            color: #f0f0f0;
+        }
+        
+        .upload-final-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .upload-final-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+        
+        .upload-final-btn.save {
+            background: linear-gradient(135deg, #00e676, #00c853);
+            color: #1a1a1a;
+        }
+        
+        .upload-final-btn.save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 230, 118, 0.4);
+        }
+        
+        .upload-final-btn.cancel {
+            background: #666;
+            color: #f0f0f0;
+        }
+        
+        .upload-final-btn.cancel:hover {
+            background: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="mode-nav">
+        <button class="mode-btn">КОНЦЕРТНЫЙ</button>
+        <button class="mode-btn">КАРАОКЕ</button>
+        <button class="mode-btn active">РЕПЕТИЦИЯ</button>
+        <button class="mode-btn">LIVE</button>
+        <button class="mode-btn">КАТАЛОГ</button>
+    </div>
+
+    <div class="catalog-main-content">
+        <!-- Первая колонка: My Music / My Box -->
+        <div class="catalog-column my-music-column">
+            <h2 class="column-header">Моя Музыка</h2>
+            <div id="my-music-list">
+                <!-- Динамически загружаемый контент будет здесь -->
+            </div>
+        </div>
+
+        <!-- Вторая колонка: Динамическая с табами -->
+        <div class="catalog-column center-dynamic-column">
+            <!-- Табы для переключения контента -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-tab="playlists">Плейлисты</button>
+                <button class="tab-btn" data-tab="history">История</button>
+                <button class="tab-btn" data-tab="trends">Тренды</button>
+            </div>
+
+            <!-- Контент табов -->
+            <div class="tab-content">
+                <!-- Таб: Плейлисты -->
+                <div class="tab-panel active" id="playlists-panel">
+                    <!-- Кнопка создания нового плейлиста -->
+                    <div class="create-playlist-section">
+                        <button class="create-playlist-btn" id="create-playlist-btn">
+                            <span class="btn-icon">📂</span>
+                            <span class="btn-text">Создать новый сет-лист</span>
+                        </button>
+                    </div>
+
+                    <!-- Область конструктора (скрыта по умолчанию) -->
+                    <div class="playlist-constructor" id="playlist-constructor" style="display: none;">
+                        <div class="constructor-header">
+                            <input type="text" class="playlist-name-input" id="playlist-name-input" 
+                                   placeholder="Название сет-листа..." value="Новый сет-лист">
+                            <div class="constructor-controls">
+                                <button class="constructor-btn confirm-btn" id="confirm-playlist" title="Сохранить сет-лист">✅</button>
+                                <button class="constructor-btn cancel-btn" id="cancel-playlist" title="Отменить">❌</button>
+                            </div>
+                        </div>
+                        <div class="constructor-tracks" id="constructor-tracks">
+                            <div class="drop-zone-message">
+                                <span class="drop-icon">🎵</span>
+                                <p>Добавляйте треки кнопкой ➕ или перетаскиванием</p>
+                            </div>
+                        </div>
+                        <div class="constructor-summary">
+                            Треков: <span id="constructor-track-count">0</span> | 
+                            Время: <span id="constructor-duration">00:00</span>
+                        </div>
+                    </div>
+
+                    <!-- Список сохраненных плейлистов -->
+                    <div class="saved-playlists" id="saved-playlists">
+                        <!-- Плейлисты будут добавляться динамически ниже -->
+                    </div>
+                </div>
+
+                <!-- Таб: История -->
+                <div class="tab-panel" id="history-panel">
+                    <div class="section-title">🕒 Недавно проигранные</div>
+                    <div class="history-list">
+                        <div class="history-item">
+                            <span class="history-track">Bohemian Rhapsody - Queen</span>
+                            <span class="history-time">2 часа назад</span>
+                            <button class="add-to-current-btn" title="Добавить в текущий сет-лист">➕</button>
+                        </div>
+                        <div class="history-item">
+                            <span class="history-track">Stairway to Heaven - Led Zeppelin</span>
+                            <span class="history-time">Вчера</span>
+                            <button class="add-to-current-btn" title="Добавить в текущий сет-лист">➕</button>
+                        </div>
+                        <div class="history-item">
+                            <span class="history-track">New Divide - Linkin Park</span>
+                            <span class="history-time">2 дня назад</span>
+                            <button class="add-to-current-btn" title="Добавить в текущий сет-лист">➕</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Таб: Тренды -->
+                <div class="tab-panel" id="trends-panel">
+            <div class="section-title">📈 Тренды</div>
+            <div class="track-card">
+                <div class="album-art-placeholder"></div>
+                <div class="track-details">
+                    <div class="title">Bohemian Rhapsody</div>
+                    <div class="artist">Queen</div>
+                </div>
+                        <button class="add-to-current-btn trend-add-btn" title="Добавить в текущий сет-лист">➕</button>
+                <div class="trend-indicator"></div>
+            </div>
+            <div class="track-card">
+                <div class="album-art-placeholder"></div>
+                <div class="track-details">
+                    <div class="title">Stairway to Heaven</div>
+                    <div class="artist">Led Zeppelin</div>
+                </div>
+                        <button class="add-to-current-btn trend-add-btn" title="Добавить в текущий сет-лист">➕</button>
+                <div class="trend-indicator"></div>
+            </div>
+            <div class="track-card">
+                <div class="album-art-placeholder"></div>
+                <div class="track-details">
+                    <div class="title">Shape of You</div>
+                    <div class="artist">Ed Sheeran</div>
+                </div>
+                        <button class="add-to-current-btn trend-add-btn" title="Добавить в текущий сет-лист">➕</button>
+                <div class="trend-indicator"></div>
+            </div>
+
+                    <div class="section-title" style="margin-top: 20px;">💡 Предложения для тебя</div>
+            <div class="track-card">
+                <div class="album-art-placeholder"></div>
+                <div class="track-details">
+                    <div class="title">Yesterday</div>
+                    <div class="artist">The Beatles</div>
+                </div>
+                        <button class="add-to-current-btn trend-add-btn" title="Добавить в текущий сет-лист">➕</button>
+            </div>
+            <div class="track-card">
+                <div class="album-art-placeholder"></div>
+                <div class="track-details">
+                    <div class="title">Hallelujah</div>
+                    <div class="artist">Leonard Cohen</div>
+                </div>
+                        <button class="add-to-current-btn trend-add-btn" title="Добавить в текущий сет-лист">➕</button>
+            </div>
+                </div>
+            </div>
+                </div>
+
+        <!-- Третья колонка: Умный Поиск (сжимается при активном сет-листе) -->
+        <div class="catalog-column smart-search-column" id="search-column">
+            <input type="text" placeholder="Поиск треков, исполнителей, текстов..." id="search-input">
+            
+            <!-- 🎵 НОВЫЙ БЛОК: Кнопка активации Upload Mode -->
+            <button class="upload-mode-trigger" id="upload-mode-trigger">
+                📁 Загрузить Новый Трек
+            </button>
+            
+            <!-- 🎵 НОВЫЙ БЛОК: Upload Mode Container -->
+            <div class="upload-mode-container" id="upload-mode-container">
+                <div class="upload-header">
+                    <div class="upload-title">📁 Загрузка Нового Трека</div>
+                    <button class="upload-back-btn" id="upload-back-btn">← Назад к поиску</button>
+            </div>
+                
+                <!-- Основные файловые ячейки -->
+                <div class="upload-cells">
+                    <!-- Инструментальная дорожка -->
+                    <div class="upload-cell" id="instrumental-cell" data-file-type="instrumental">
+                        <div class="cell-icon">🎵</div>
+                        <div class="cell-title">Инструментал</div>
+                        <div class="cell-subtitle">MP3, WAV, FLAC</div>
+                        <div class="cell-status">Перетащите или кликните</div>
+                        <div class="upload-progress">
+                            <div class="upload-progress-bar"></div>
+                </div>
+                        <input type="file" accept="audio/*" style="display: none;" id="instrumental-input">
+            </div>
+                    
+                    <!-- Вокальная дорожка -->
+                    <div class="upload-cell" id="vocal-cell" data-file-type="vocal">
+                        <div class="cell-icon">🎤</div>
+                        <div class="cell-title">Вокал</div>
+                        <div class="cell-subtitle">MP3, WAV, FLAC</div>
+                        <div class="cell-status">Перетащите или кликните</div>
+                        <div class="upload-progress">
+                            <div class="upload-progress-bar"></div>
+                        </div>
+                        <input type="file" accept="audio/*" style="display: none;" id="vocal-input">
+        </div>
+
+                    <!-- Лирика -->
+                    <div class="upload-cell lyrics-cell" id="lyrics-cell" data-file-type="lyrics">
+                        <div class="cell-icon">📝</div>
+                        <div class="cell-title">Лирика</div>
+                        <div class="cell-subtitle">RTF, TXT, LRC</div>
+                        <div class="cell-status">Перетащите или кликните</div>
+                        <div class="upload-progress">
+                            <div class="upload-progress-bar"></div>
+                </div>
+                        <input type="file" accept=".rtf,.txt,.lrc" style="display: none;" id="lyrics-input">
+                </div>
+                </div>
+                
+                <!-- Дополнительные кнопки -->
+                <div class="upload-additional">
+                    <button class="upload-additional-btn json-btn" id="add-json-btn">
+                        📊 Добавить JSON
+                        <input type="file" accept=".json" style="display: none;" id="json-input">
+                    </button>
+                    <button class="upload-additional-btn stems-btn" id="add-stems-btn">
+                        🥁 Тригеры (stems)
+                        <input type="file" accept="audio/*" multiple style="display: none;" id="stems-input">
+                    </button>
+                </div>
+                
+                <!-- JSON Preview Panel -->
+                <div class="json-preview" id="json-preview">
+                    <div class="json-preview-header">
+                        <div class="json-preview-title">🔍 Превью маркеров JSON</div>
+                        <div class="json-preview-actions">
+                            <button class="json-preview-btn apply" id="json-apply">✅ Применить</button>
+                            <button class="json-preview-btn revert" id="json-revert">❌ Отменить</button>
+                </div>
+                </div>
+                    <div class="json-markers-list" id="json-markers-list">
+                        <!-- Маркеры будут добавлены динамически -->
+                </div>
+                </div>
+                
+                <!-- Финальные действия -->
+                <div class="upload-final-actions" id="upload-final-actions">
+                    <div class="track-metadata" id="track-metadata">
+                        <div class="metadata-row">
+                            <span class="metadata-label">Название:</span>
+                            <span class="metadata-value" id="track-title-meta">Новый трек</span>
+                </div>
+                        <div class="metadata-row">
+                            <span class="metadata-label">Исполнитель:</span>
+                            <span class="metadata-value" id="track-artist-meta">Неизвестен</span>
+                </div>
+                        <div class="metadata-row">
+                            <span class="metadata-label">Длительность:</span>
+                            <span class="metadata-value" id="track-duration-meta">--:--</span>
+                </div>
+                        <div class="metadata-row">
+                            <span class="metadata-label">Размер:</span>
+                            <span class="metadata-value" id="track-size-meta">-- MB</span>
+                        </div>
+                    </div>
+                    <div class="upload-final-buttons">
+                        <button class="upload-final-btn save" id="upload-save-btn">💾 Сохранить в каталог</button>
+                        <button class="upload-final-btn cancel" id="upload-cancel-btn">❌ Отменить</button>
+            </div>
+        </div>
+    </div>
+            
+            <!-- 🔧 БЛОК: Предпрослушка (скрыт в Upload Mode) -->
+            <div class="preview-player" id="preview-player" style="display: none;">
+                <div class="preview-header">
+                    <div class="preview-track-info">
+                        <div class="preview-title" id="preview-title">New Divide</div>
+                        <div class="preview-artist" id="preview-artist">Linkin Park</div>
+            </div>
+                    <button class="preview-close" id="preview-close">✕</button>
+                </div>
+                <div class="preview-waveform" id="preview-waveform">
+                    <!-- Здесь будет wavesurfer.js -->
+            </div>
+                <div class="preview-controls">
+                    <button class="preview-control-btn" id="preview-play-pause">▶️</button>
+                    <span class="preview-time">
+                        <span id="preview-current">0:00</span> / <span id="preview-total">0:00</span>
+                    </span>
+                </div>
+        </div>
+
+            <div class="search-results" id="search-results">
+                <!-- 🔧 ОБНОВЛЕННЫЕ результаты поиска -->
+                <div class="search-result-item" draggable="true" data-track-id="New Divide-Linkin Park">
+                    <div class="track-icon">🎵</div>
+                    <div class="track-details">
+                        <div class="track-title">New Divide</div>
+                        <div class="track-artist">Linkin Park</div>
+                </div>
+                    <div class="track-actions">
+                        <button class="preview-btn" title="Предпрослушка">▶️</button>
+                        <button class="add-to-setlist-btn" title="Добавить в сет-лист">➕</button>
+                </div>
+                </div>
+                <div class="search-result-item" draggable="true" data-track-id="When They Come For Me-Linkin Park">
+                    <div class="track-icon">🎤</div>
+                    <div class="track-details">
+                        <div class="track-title">When They Come For Me</div>
+                        <div class="track-artist">Linkin Park</div>
+                </div>
+                    <div class="track-actions">
+                        <button class="preview-btn" title="Предпрослушка">▶️</button>
+                        <button class="add-to-setlist-btn" title="Добавить в сет-лист">➕</button>
+                </div>
+                </div>
+                <div class="search-result-item" draggable="true" data-track-id="Love The Way You Lie-Eminem">
+                    <div class="track-icon">✍️</div>
+                    <div class="track-details">
+                        <div class="track-title">Love The Way You Lie</div>
+                        <div class="track-artist">Eminem feat. Rihanna</div>
+                </div>
+                    <div class="track-actions">
+                        <button class="preview-btn" title="Предпрослушка">▶️</button>
+                        <button class="add-to-setlist-btn" title="Добавить в сет-лист">➕</button>
+                </div>
+                </div>
+                <div class="search-result-item" draggable="true" data-track-id="Dream On-Aerosmith">
+                    <div class="track-icon">🎵</div>
+                    <div class="track-details">
+                        <div class="track-title">Dream On</div>
+                        <div class="track-artist">Aerosmith</div>
+                </div>
+                    <div class="track-actions">
+                        <button class="preview-btn" title="Предпрослушка">▶️</button>
+                        <button class="add-to-setlist-btn" title="Добавить в сет-лист">➕</button>
+                </div>
+            </div>
+                <div class="search-result-item" draggable="true" data-track-id="Bohemian Rhapsody-Queen">
+                    <div class="track-icon">🎤</div>
+                    <div class="track-details">
+                        <div class="track-title">Bohemian Rhapsody</div>
+                        <div class="track-artist">Queen</div>
+                    </div>
+                    <div class="track-actions">
+                        <button class="preview-btn" title="Предпрослушка">▶️</button>
+                        <button class="add-to-setlist-btn" title="Добавить в сет-лист">➕</button>
+                    </div>
+                </div>
+        </div>
+    </div>
+
+        <!-- 🔧 УДАЛЕНО: Старый правый док полностью убран -->
+    </div>
+
+    <!-- 🔧 ОВЕРЛЕЙ ДЛЯ ЗАТЕМНЕНИЯ -->
+    <div class="dock-overlay" id="dock-overlay"></div>
+
+    <script>
+        // 🚀 НОВАЯ АРХИТЕКТУРА: EventBus + Modular System
+        
+        // 📡 EventBus - Централизованная система событий
+        class EventBus {
+            constructor() {
+                this.events = {};
+            }
+            
+            on(event, callback) {
+                if (!this.events[event]) this.events[event] = [];
+                this.events[event].push(callback);
+            }
+            
+            emit(event, data) {
+                if (this.events[event]) {
+                    this.events[event].forEach(callback => callback(data));
+                }
+                console.log(`📡 Event: ${event}`, data);
+            }
+            
+            off(event, callback) {
+                if (this.events[event]) {
+                    this.events[event] = this.events[event].filter(cb => cb !== callback);
+                }
+            }
+        }
+
+        // 🗂️ StateManager - Глобальное состояние
+        class StateManager {
+            constructor() {
+                this.state = {
+                    isBuildingPlaylist: false,
+                    currentBuildingPlaylist: [],
+                    savedPlaylists: [], // 🔧 НОВОЕ: Храним сохраненные плейлисты
+                    trackPlaylistMapping: {}, // 🔧 НОВОЕ: Отслеживаем треки в плейлистах
+                    addedTracks: new Set()
+                };
+            }
+            
+            setState(newState) {
+                this.state = { ...this.state, ...newState };
+                console.log('🗂️ State updated:', this.state);
+            }
+            
+            getState() {
+                return this.state;
+            }
+        }
+
+        // 🎵 PlaylistBuilder - Управление конструктором плейлистов
+        class PlaylistBuilder {
+            constructor(eventBus, stateManager) {
+                this.eventBus = eventBus;
+                this.stateManager = stateManager;
+                this.elementBeingEdited = null; // 🔧 НОВОЕ: Отслеживаем редактируемый плейлист
+                this.initElements();
+                this.initEvents();
+            }
+            
+            initElements() {
+                this.createBtn = document.getElementById('create-playlist-btn');
+                this.constructor = document.getElementById('playlist-constructor');
+                this.nameInput = document.getElementById('playlist-name-input');
+                this.confirmBtn = document.getElementById('confirm-playlist');
+                this.cancelBtn = document.getElementById('cancel-playlist');
+                this.tracksContainer = document.getElementById('constructor-tracks');
+                this.trackCount = document.getElementById('constructor-track-count');
+                this.duration = document.getElementById('constructor-duration');
+                this.initDropZone();
+            }
+            
+            initEvents() {
+                this.createBtn.addEventListener('click', () => this.startBuilding());
+                this.confirmBtn.addEventListener('click', () => this.confirmPlaylist());
+                this.cancelBtn.addEventListener('click', () => this.cancelBuilding());
+                
+                this.eventBus.on('track:add-to-building', (trackData) => this.addTrack(trackData));
+                this.eventBus.on('track:remove-from-building', (trackData) => this.removeTrack(trackData));
+                this.eventBus.on('playlist:edit', (payload) => this.editPlaylist(payload)); // 🔧 НОВОЕ: Слушаем событие редактирования
+            }
+            
+            initDropZone() {
+                this.tracksContainer.addEventListener('dragover', (event) => {
+                    event.preventDefault();
+                    if (this.stateManager.getState().isBuildingPlaylist) {
+                        this.tracksContainer.classList.add('drag-over');
+                    }
+                });
+                
+                this.tracksContainer.addEventListener('dragleave', () => {
+                    this.tracksContainer.classList.remove('drag-over');
+                });
+                
+                this.tracksContainer.addEventListener('drop', (event) => {
+                    event.preventDefault();
+                    if (!this.stateManager.getState().isBuildingPlaylist) return;
+
+                    this.tracksContainer.classList.remove('drag-over');
+                    const trackId = event.dataTransfer.getData('text/plain');
+
+                    if (trackId) {
+                        const [title, artist] = trackId.split('-');
+                        const originalTrack = myMusicData.find(a => a.artist === artist)?.tracks.find(t => t.title === title);
+                        
+                        if (originalTrack) {
+                            const trackData = {
+                                title: originalTrack.title,
+                                artist: artist,
+                                duration: originalTrack.duration || 0
+                            };
+                            this.eventBus.emit('track:add-to-building', trackData);
+                        }
+                    }
+                });
+            }
+            
+            startBuilding() {
+                this.stateManager.setState({ isBuildingPlaylist: true });
+                this.constructor.style.display = 'flex';
+                this.createBtn.style.display = 'none';
+                this.eventBus.emit('playlist:build-start');
+                this.updateSummary();
+            }
+            
+            addTrack(trackData) {
+                const state = this.stateManager.getState();
+                const trackId = `${trackData.title}-${trackData.artist}`;
+
+                if (state.addedTracks.has(trackId)) {
+                    alert(`${trackData.title} уже в сет-листе!`);
+                    return;
+                }
+                
+                state.currentBuildingPlaylist.push(trackData);
+                state.addedTracks.add(trackId);
+                this.stateManager.setState(state);
+                
+                this.renderTrack(trackData);
+                this.updateSummary();
+                this.eventBus.emit('playlist:item-added', trackData);
+            }
+            
+            removeTrack(trackData) {
+                const state = this.stateManager.getState();
+                const trackId = `${trackData.title}-${trackData.artist}`;
+                
+                state.currentBuildingPlaylist = state.currentBuildingPlaylist.filter(t => `${t.title}-${t.artist}` !== trackId);
+                state.addedTracks.delete(trackId);
+                this.stateManager.setState(state);
+                
+                this.updateSummary();
+                this.eventBus.emit('playlist:item-removed', trackData);
+            }
+            
+            renderTrack(trackData) {
+                const dropMessage = this.tracksContainer.querySelector('.drop-zone-message');
+                if (dropMessage) dropMessage.style.display = 'none';
+                
+                const trackElement = document.createElement('div');
+                trackElement.className = 'constructor-track-item';
+                trackElement.draggable = true;
+                trackElement.dataset.trackId = `${trackData.title}-${trackData.artist}`;
+                
+                trackElement.innerHTML = `
+                    <span>${trackData.title} - ${trackData.artist}</span>
+                    <button class="remove-track-btn" title="Удалить">❌</button>
+                `;
+                
+                trackElement.querySelector('.remove-track-btn').addEventListener('click', () => {
+                    trackElement.remove();
+                    this.removeTrack(trackData);
+                    
+                    if (this.stateManager.getState().currentBuildingPlaylist.length === 0) {
+                        const message = this.tracksContainer.querySelector('.drop-zone-message');
+                        if (message) message.style.display = 'block';
+                    }
+                });
+                
+                this.tracksContainer.appendChild(trackElement);
+            }
+            
+            updateSummary() {
+                const playlist = this.stateManager.getState().currentBuildingPlaylist;
+                const totalSeconds = playlist.reduce((total, track) => total + (track.duration || 0), 0);
+                
+                this.trackCount.textContent = playlist.length;
+                this.duration.textContent = this.formatTime(totalSeconds);
+            }
+            
+            confirmPlaylist() {
+                const state = this.stateManager.getState();
+                const playlistName = this.nameInput.value.trim() || 'Новый сет-лист';
+                
+                if (state.currentBuildingPlaylist.length === 0) {
+                    alert('Добавьте хотя бы один трек в сет-лист!');
+                    return;
+                }
+                
+                const playlistData = {
+                    id: Date.now(),
+                    name: playlistName,
+                    tracks: [...state.currentBuildingPlaylist]
+                };
+
+                if (this.elementBeingEdited) {
+                    // 🔧 ОБНОВЛЕНО: Обновляем существующий плейлист
+                    const originalId = this.elementBeingEdited.dataset.playlistId;
+                    playlistData.id = originalId;
+                    
+                    const playlistIndex = state.savedPlaylists.findIndex(p => p.id == originalId);
+                    if (playlistIndex > -1) {
+                        state.savedPlaylists[playlistIndex] = playlistData;
+                    }
+                    this.updatePlaylistInList(this.elementBeingEdited, playlistData);
+                    this.elementBeingEdited = null;
+                } else {
+                    // 🔧 ОБНОВЛЕНО: Сохраняем новый плейлист
+                    state.savedPlaylists.push(playlistData);
+                    this.savePlaylistToList(playlistData);
+                }
+                
+                // 🔧 НОВОЕ: Обновляем карту треков
+                this.updateTrackMapping();
+                
+                this.cancelBuilding();
+                this.eventBus.emit('playlist:confirmed', playlistData);
+            }
+
+            // 🔧 НОВЫЙ МЕТОД: Обновление карты треков
+            updateTrackMapping() {
+                const { savedPlaylists } = this.stateManager.getState();
+                const newMapping = {};
+
+                savedPlaylists.forEach(playlist => {
+                    playlist.tracks.forEach(track => {
+                        const trackId = `${track.title}-${track.artist}`;
+                        if (!newMapping[trackId]) {
+                            newMapping[trackId] = [];
+                        }
+                        newMapping[trackId].push(playlist.name);
+                    });
+                });
+                
+                this.stateManager.setState({ trackPlaylistMapping: newMapping });
+                this.eventBus.emit('state:track-mapping-updated');
+            }
+
+            savePlaylistToList(playlistData) {
+                const savedPlaylistsContainer = document.getElementById('saved-playlists');
+                const totalSeconds = playlistData.tracks.reduce((total, track) => total + (track.duration || 0), 0);
+                const formattedTime = this.formatTime(totalSeconds);
+                
+                const playlistElement = document.createElement('div');
+                playlistElement.className = 'playlist-item';
+                playlistElement.dataset.playlistId = playlistData.id; // 🔧 НОВОЕ: ID для связи
+                playlistElement.dataset.playlistData = JSON.stringify(playlistData);
+
+                playlistElement.innerHTML = `
+                    <div class="playlist-info">
+                        <div class="playlist-title">${playlistData.name}</div>
+                        <div class="playlist-meta">${playlistData.tracks.length} треков • ${formattedTime}</div>
+                    </div>
+                    <div class="playlist-actions">
+                        <button class="playlist-action-btn play-btn" title="Воспроизвести">▶️</button>
+                        <button class="playlist-action-btn delete-btn" title="Удалить">🗑️</button>
+                    </div>
+                `;
+                
+                this.addPlaylistActionListeners(playlistElement);
+                
+                const sectionTitle = savedPlaylistsContainer.querySelector('.section-title');
+                if (sectionTitle) {
+                    sectionTitle.insertAdjacentElement('afterend', playlistElement);
+                } else {
+                    savedPlaylistsContainer.appendChild(playlistElement);
+                }
+                
+                alert(`💾 Сет-лист "${playlistData.name}" сохранен!`);
+            }
+            
+            editPlaylist({ element, data }) {
+                this.startBuilding();
+                this.elementBeingEdited = element;
+                this.nameInput.value = data.name;
+                
+                data.tracks.forEach(track => {
+                    this.addTrack(track); 
+                    
+                    const trackId = `${track.title}-${track.artist}`;
+                    document.querySelectorAll(`[data-track-id="${trackId}"]`).forEach(trackElement => {
+                        const button = trackElement.querySelector('.add-to-playlist-btn, .add-to-setlist-btn');
+                        if (button) {
+                            button.textContent = '✅';
+                            button.disabled = true;
+                            button.classList.remove('add-btn-pulse'); // ✅ ИСПРАВЛЕНО: Принудительно убираем пульсацию
+                        }
+                    });
+                });
+            }
+
+            updatePlaylistInList(element, playlistData) {
+                const totalSeconds = playlistData.tracks.reduce((total, track) => total + (track.duration || 0), 0);
+                const formattedTime = this.formatTime(totalSeconds);
+                
+                element.dataset.playlistData = JSON.stringify(playlistData);
+                element.querySelector('.playlist-title').textContent = playlistData.name;
+                element.querySelector('.playlist-meta').textContent = `${playlistData.tracks.length} треков • ${formattedTime}`;
+                
+                element.style.display = 'flex';
+                alert(`💾 Сет-лист "${playlistData.name}" обновлен!`);
+            }
+
+            addPlaylistActionListeners(element) {
+                // 🔧 ИСПРАВЛЕНО: Весь элемент кликабельный для редактирования
+                element.addEventListener('click', (event) => {
+                    if (event.target.closest('.playlist-action-btn')) {
+                        return; // Игнорируем клики по кнопкам
+                    }
+                    const data = JSON.parse(element.dataset.playlistData);
+                    element.style.display = 'none';
+                    this.eventBus.emit('playlist:edit', { element, data });
+                });
+
+                element.querySelector('.delete-btn').addEventListener('click', (event) => {
+                    event.stopPropagation(); // Предотвращаем "всплытие", чтобы не сработало редактирование
+                    const data = JSON.parse(element.dataset.playlistData);
+                    if (confirm(`Удалить плейлист "${data.name}"?`)) {
+                        element.remove();
+                    }
+                });
+
+                element.querySelector('.play-btn').addEventListener('click', (event) => {
+                    event.stopPropagation(); // Предотвращаем "всплытие"
+                    const data = JSON.parse(element.dataset.playlistData);
+                    alert(`▶️ Воспроизведение плейлиста "${data.name}"`);
+                });
+            }
+            
+            cancelBuilding() {
+                // 🔧 ИСПРАВЛЕНО: Если мы редактировали плейлист, он больше не удаляется при отмене
+                if (this.elementBeingEdited) {
+                    this.elementBeingEdited.style.display = 'flex';
+                    this.elementBeingEdited = null;
+                }
+
+                this.stateManager.setState({ 
+                    isBuildingPlaylist: false, 
+                    currentBuildingPlaylist: [],
+                    addedTracks: new Set()
+                });
+                
+                this.constructor.style.display = 'none';
+                this.createBtn.style.display = 'flex';
+                this.tracksContainer.innerHTML = '<div class="drop-zone-message"><span class="drop-icon">🎵</span><p>Добавляйте треки кнопкой ➕ или перетаскиванием</p></div>';
+                this.nameInput.value = 'Новый сет-лист';
+                
+                this.eventBus.emit('playlist:build-cancelled');
+            }
+            
+            formatTime(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+                return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+            }
+        }
+
+        // 🏷️ TrackTagsView - Управление тегами на треках
+        class TrackTagsView {
+            constructor(eventBus, stateManager) {
+                this.eventBus = eventBus;
+                this.stateManager = stateManager;
+                this.eventBus.on('state:track-mapping-updated', () => this.renderAllTags());
+                this.eventBus.on('playlist:confirmed', () => this.renderAllTags());
+                this.eventBus.on('playlist:build-cancelled', () => this.renderAllTags());
+            }
+
+            renderAllTags() {
+                const { trackPlaylistMapping } = this.stateManager.getState();
+                
+                const allTracks = document.querySelectorAll('.track-item, .search-result-item');
+                const firstMyMusicTrack = document.querySelector('.track-item'); // 🔧 Находим первый трек в "Моя Музыка"
+                const firstSearchResult = document.querySelector('.search-result-item');
+
+                allTracks.forEach(trackElement => {
+                    const trackId = trackElement.dataset.trackId;
+                    const playlists = trackPlaylistMapping[trackId] || [];
+                    
+                    let controls = trackElement.querySelector('.track-item-controls, .track-actions');
+                    if (!controls) return;
+                    
+                    controls.querySelectorAll('.playlist-tag-container').forEach(tag => tag.remove());
+                    
+                    if (playlists.length > 0) {
+                        const tagContainer = document.createElement('span');
+                        tagContainer.className = 'playlist-tag-container';
+                        
+                        const tag = document.createElement('span');
+                        tag.className = 'playlist-tag';
+                        tag.textContent = 'Mix List';
+                        
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'playlist-tooltip';
+
+                        // 🔧 ИСПРАВЛЕНО: Применяем класс .below к первым трекам в ОБЕИХ колонках
+                        if (trackElement === firstSearchResult || trackElement === firstMyMusicTrack) {
+                            tooltip.classList.add('below');
+                        }
+
+                        tooltip.innerHTML = `
+                            <h4>Входит в:</h4>
+                            <ul>
+                                ${playlists.map(p => `<li>${p}</li>`).join('')}
+                            </ul>
+                        `;
+                        tag.appendChild(tooltip);
+                        
+                        tag.addEventListener('mouseenter', () => tooltip.classList.add('visible'));
+                        tag.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+
+                        tagContainer.appendChild(tag);
+                        controls.prepend(tagContainer);
+                    }
+                });
+            }
+        }
+
+        // 🎨 UIFeedback - Визуальные эффекты
+        class UIFeedback {
+            constructor(eventBus) {
+                this.eventBus = eventBus;
+                this.initEvents();
+            }
+            
+            initEvents() {
+                this.eventBus.on('playlist:build-start', () => this.activateBuildingMode());
+                this.eventBus.on('playlist:build-cancelled', () => this.deactivateBuildingMode());
+                this.eventBus.on('playlist:confirmed', () => this.deactivateBuildingMode()); // 🔧 ИСПРАВЛЕНО: Слушаем и подтверждение
+            }
+            
+            activateBuildingMode() {
+                // Добавляем зеленые обводки всем колонкам
+                document.querySelectorAll('.catalog-column').forEach(column => {
+                    column.classList.add('building-mode');
+                });
+                
+                // 🔧 ИСПРАВЛЕНО: Добавляем пульсацию только активным кнопкам ➕
+                document.querySelectorAll('.add-to-playlist-btn:not(:disabled), .add-to-current-btn:not(:disabled), .add-to-setlist-btn:not(:disabled)').forEach(btn => {
+                    btn.classList.add('add-btn-pulse');
+                });
+                
+                console.log('🎨 Режим конструктора активирован!');
+            }
+            
+            deactivateBuildingMode() {
+                // Убираем обводки
+                document.querySelectorAll('.catalog-column').forEach(column => {
+                    column.classList.remove('building-mode');
+                });
+                
+                // Убираем пульсацию
+                document.querySelectorAll('.add-btn-pulse').forEach(btn => {
+                    btn.classList.remove('add-btn-pulse');
+                });
+
+                // Сбрасываем все временные кнопки "✅" обратно в "➕"
+                document.querySelectorAll('.add-to-playlist-btn, .add-to-current-btn, .add-to-setlist-btn').forEach(btn => {
+                    // 🔧 ИСПРАВЛЕНО: Проверяем, есть ли у трека тег. Если да, кнопку не трогаем.
+                    const controls = btn.closest('.track-item-controls, .track-actions');
+                    if (controls && !controls.querySelector('.playlist-tag-container')) {
+                        btn.textContent = '➕';
+                        btn.disabled = false;
+                        btn.title = 'Добавить в сет-лист';
+                    }
+                });
+
+                // Сворачиваем все открытые группы артистов
+                document.querySelectorAll('.artist-group.expanded').forEach(group => {
+                    group.classList.remove('expanded');
+                    group.querySelector('.track-list').classList.remove('expanded');
+                    group.querySelector('.toggle-icon').textContent = '+';
+                });
+                
+                console.log('🎨 Режим конструктора деактивирован, UI сброшен!');
+            }
+        }
+
+        // 🎧 Данные треков
+        const myMusicData = [
+            {
+                artist: "Linkin Park",
+                tracks: [
+                    { title: "New Divide", played: 12, favorite: true, duration: 268 },
+                    { title: "When They Come For Me", played: 8, favorite: false, duration: 293 },
+                ]
+            },
+            {
+                artist: "Eminem",
+                tracks: [
+                    { title: "Love The Way You Lie", played: 25, favorite: true, duration: 263 },
+                ]
+            },
+            {
+                artist: "Queen",
+                tracks: [
+                    { title: "Bohemian Rhapsody", played: 30, favorite: true, duration: 355 },
+                    { title: "Don't Stop Me Now", played: 20, favorite: false, duration: 209 },
+                ]
+            },
+            {
+                artist: "Aerosmith",
+                tracks: [
+                    { title: "Dream On", played: 5, favorite: false, duration: 267 },
+                ]
+            }
+        ];
+
+        // 🚀 Инициализация системы
+        const eventBus = new EventBus();
+        const stateManager = new StateManager();
+        const playlistBuilder = new PlaylistBuilder(eventBus, stateManager);
+        const uiFeedback = new UIFeedback(eventBus);
+        const trackTagsView = new TrackTagsView(eventBus, stateManager); // 🔧 НОВОЕ: Инициализируем View для тегов
+
+        // 🔧 НОВОЕ: Инициализация кнопок на существующих плейлистах
+        function initSavedPlaylistActions() {
+            document.querySelectorAll('#saved-playlists .playlist-item').forEach(item => {
+                const playBtn = item.querySelector('.playlist-action-btn[title="Воспроизвести"]');
+                const editBtn = item.querySelector('.playlist-action-btn[title="Редактировать"]');
+                const deleteBtn = item.querySelector('.playlist-action-btn[title="Удалить"]');
+
+                if (playBtn) {
+                    playBtn.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        const title = item.querySelector('.playlist-title').textContent;
+                        alert(`▶️ Воспроизведение плейлиста "${title}"`);
+                    });
+                }
+                
+                // Просто удаляем кнопку редактирования
+                if (editBtn) {
+                    editBtn.remove();
+                }
+                
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        const title = item.querySelector('.playlist-title').textContent;
+                        if (confirm(`Удалить плейлист "${title}"?`)) {
+                            item.remove();
+                        }
+                    });
+                }
+            });
+        }
+
+        // 📱 Универсальная функция добавления трека
+        function addTrackToBuilding(trackData, buttonElement = null) {
+            if (!stateManager.getState().isBuildingPlaylist) {
+                alert('Сначала создайте новый сет-лист!');
+                return;
+            }
+            
+            const trackId = `${trackData.title}-${trackData.artist}`;
+            if (stateManager.getState().addedTracks.has(trackId)) {
+                return; // Трек уже добавлен
+            }
+            
+            eventBus.emit('track:add-to-building', trackData);
+            
+            // Обновляем кнопку если есть
+            if (buttonElement) {
+                buttonElement.textContent = '✅';
+                buttonElement.disabled = true;
+                buttonElement.title = "Уже в сет-листе";
+            }
+        }
+
+        // 🎵 Инициализация "Моей музыки"
+        function renderMyMusic() {
+            const myMusicList = document.getElementById('my-music-list');
+            myMusicList.innerHTML = '';
+
+            myMusicData.forEach(artistData => {
+                const artistGroup = document.createElement('div');
+                artistGroup.className = 'artist-group';
+
+                const artistHeader = document.createElement('div');
+                artistHeader.className = 'artist-header';
+                artistHeader.innerHTML = `<span>${artistData.artist}</span><span>${artistData.tracks.length} трека <span class="toggle-icon">+</span></span>`;
+
+                const trackList = document.createElement('ul');
+                trackList.className = 'track-list';
+
+                artistData.tracks.forEach(track => {
+                    const trackItem = document.createElement('li');
+                    trackItem.className = 'track-item';
+                    trackItem.draggable = true; // Добавляем draggable
+                    trackItem.dataset.trackId = `${track.title}-${artistData.artist}`; // Для DnD
+                    const favoriteClass = track.favorite ? 'active' : '';
+                    trackItem.innerHTML = `
+                        <span>${track.title} <span class="track-meta-info">(Исполнено ${track.played} раз)${track.played > 20 ? ' 🔥' : ''}</span></span>
+                        <span class="track-item-controls">
+                            <button class="add-to-playlist-btn" title="Добавить в сет-лист" data-track-title="${track.title}" data-artist="${artistData.artist}">➕</button>
+                            <button class="play-button" title="Воспроизвести">▶</button>
+                            <button class="favorite-button ${favoriteClass}" title="В избранное">⭐</button>
+                        </span>
+                    `;
+                    trackList.appendChild(trackItem);
+                });
+                
+                artistGroup.appendChild(artistHeader);
+                artistGroup.appendChild(trackList);
+                myMusicList.appendChild(artistGroup);
+                
+                // 🔧 ВОССТАНОВЛЕНО: Обработчик раскрытия группы
+                artistHeader.addEventListener('click', () => {
+                    const toggleIcon = artistHeader.querySelector('.toggle-icon');
+                    const isExpanded = artistGroup.classList.toggle('expanded');
+                    trackList.classList.toggle('expanded', isExpanded);
+                    toggleIcon.textContent = isExpanded ? '−' : '+';
+                });
+            });
+
+            // Обработчики кнопок добавления
+            document.querySelectorAll('.add-to-playlist-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    
+                    const trackTitle = event.target.dataset.trackTitle;
+                    const artist = event.target.dataset.artist;
+                    const originalTrack = myMusicData.find(a => a.artist === artist)?.tracks.find(t => t.title === trackTitle);
+                    
+                    if (originalTrack) {
+                        const trackData = {
+                            title: originalTrack.title,
+                            artist: artist,
+                            duration: originalTrack.duration || 0
+                        };
+                        addTrackToBuilding(trackData, event.target);
+                    }
+                });
+            });
+
+            // 🔧 НОВОЕ: Обработчики DnD для "Моей музыки"
+            document.querySelectorAll('.my-music-column .track-item').forEach(track => {
+                track.addEventListener('dragstart', (event) => {
+                    event.dataTransfer.setData('text/plain', track.dataset.trackId);
+                    track.classList.add('dragging');
+                });
+                track.addEventListener('dragend', () => {
+                    track.classList.remove('dragging');
+                });
+            });
+        }
+
+        // 📊 Инициализация табов
+        function initTabSystem() {
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabPanels = document.querySelectorAll('.tab-panel');
+
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetTab = btn.dataset.tab;
+                    
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    tabPanels.forEach(p => p.classList.remove('active'));
+                    
+                    btn.classList.add('active');
+                    document.getElementById(targetTab + '-panel').classList.add('active');
+                });
+            });
+        }
+
+        // 🔍 Инициализация кнопок в истории и трендах
+        function initHistoryAndTrendsButtons() {
+            document.querySelectorAll('#history-panel .add-to-current-btn, #trends-panel .trend-add-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const isHistory = event.target.closest('#history-panel');
+                    let title, artist;
+                    
+                    if (isHistory) {
+                        const trackText = event.target.closest('.history-item').querySelector('.history-track').textContent;
+                        [title, artist] = trackText.split(' - ');
+                    } else {
+                        const trackCard = event.target.closest('.track-card');
+                        title = trackCard.querySelector('.title').textContent;
+                        artist = trackCard.querySelector('.artist').textContent;
+                    }
+                    
+                    const originalTrack = myMusicData.find(a => a.artist === artist)?.tracks.find(t => t.title === title);
+                    const trackData = {
+                        title: title,
+                        artist: artist,
+                        duration: originalTrack?.duration || 210
+                    };
+                    
+                    addTrackToBuilding(trackData, event.target);
+                });
+            });
+        }
+
+        // 🔍 Инициализация поиска
+        function initSearchButtons() {
+            document.querySelectorAll('.search-result-item .add-to-setlist-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    
+                    const searchItem = event.target.closest('.search-result-item');
+                    const title = searchItem.querySelector('.track-title').textContent;
+                    const artist = searchItem.querySelector('.track-artist').textContent;
+                    
+                    const originalTrack = myMusicData.find(a => a.artist === artist)?.tracks.find(t => t.title === title);
+                    const trackData = {
+                        title: title,
+                        artist: artist,
+                        duration: originalTrack?.duration || 180
+                    };
+                    
+                    addTrackToBuilding(trackData, event.target);
+                });
+            });
+
+            // 🔧 НОВОЕ: Обработчики DnD для результатов поиска
+            document.querySelectorAll('.search-result-item').forEach(track => {
+                track.addEventListener('dragstart', (event) => {
+                    event.dataTransfer.setData('text/plain', track.dataset.trackId);
+                    track.classList.add('dragging');
+                });
+                track.addEventListener('dragend', () => {
+                    track.classList.remove('dragging');
+                });
+            });
+        }
+
+        // 🚀 Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            initTabSystem();
+            renderMyMusic();
+            initHistoryAndTrendsButtons();
+            initSearchButtons();
+            // initSavedPlaylistActions(); // 🔧 УДАЛЕНО: Вызов функции тоже убираем
+            
+            // 🎵 НОВОЕ: Инициализация Upload Manager
+            uploadManager = new UploadManager();
+            
+            console.log('🚀 Новая модульная система каталога готова!');
+            console.log('📡 EventBus инициализирован');
+            console.log('🗂️ StateManager готов');
+            console.log('🎵 PlaylistBuilder активен');
+            console.log('🎨 UIFeedback подключен');
+            console.log('🏷️ TrackTagsView активен');
+            console.log('📁 UploadManager готов к работе');
+        });
+
+        // 🎵 UPLOAD MODE SYSTEM - Система загрузки треков
+        // Разработано с учетом предложений от GPT (структура), Gemini (машина состояний), Claude (архитектура)
+        
+        class UploadManager {
+            constructor() {
+                this.isActive = false;
+                this.uploadSession = {
+                    files: {},
+                    metadata: {},
+                    status: 'idle' // idle, collecting, processing, ready, saving
+                };
+                this.currentQuota = null;
+                
+                this.initElements();
+                this.initEventListeners();
+                this.checkStorageQuota();
+            }
+            
+            initElements() {
+                this.triggerBtn = document.getElementById('upload-mode-trigger');
+                this.container = document.getElementById('upload-mode-container');
+                this.backBtn = document.getElementById('upload-back-btn');
+                this.searchInput = document.getElementById('search-input');
+                this.searchResults = document.getElementById('search-results');
+                this.previewPlayer = document.getElementById('preview-player');
+                
+                // Upload cells
+                this.cells = {
+                    instrumental: document.getElementById('instrumental-cell'),
+                    vocal: document.getElementById('vocal-cell'),
+                    lyrics: document.getElementById('lyrics-cell')
+                };
+                
+                // File inputs
+                this.inputs = {
+                    instrumental: document.getElementById('instrumental-input'),
+                    vocal: document.getElementById('vocal-input'),
+                    lyrics: document.getElementById('lyrics-input'),
+                    json: document.getElementById('json-input'),
+                    stems: document.getElementById('stems-input')
+                };
+                
+                // Additional controls
+                this.jsonBtn = document.getElementById('add-json-btn');
+                this.stemsBtn = document.getElementById('add-stems-btn');
+                this.jsonPreview = document.getElementById('json-preview');
+                this.finalActions = document.getElementById('upload-final-actions');
+                this.saveBtn = document.getElementById('upload-save-btn');
+                this.cancelBtn = document.getElementById('upload-cancel-btn');
+            }
+            
+            initEventListeners() {
+                // Активация/деактивация Upload Mode
+                this.triggerBtn.addEventListener('click', () => this.activateUploadMode());
+                this.backBtn.addEventListener('click', () => this.deactivateUploadMode());
+                this.cancelBtn.addEventListener('click', () => this.deactivateUploadMode());
+                
+                // Upload cells
+                Object.keys(this.cells).forEach(type => {
+                    const cell = this.cells[type];
+                    const input = this.inputs[type];
+                    
+                    // Click to select file
+                    cell.addEventListener('click', () => input.click());
+                    
+                    // File input change
+                    input.addEventListener('change', (e) => this.handleFileSelect(type, e.target.files[0]));
+                    
+                    // Drag & Drop
+                    cell.addEventListener('dragover', (e) => this.handleDragOver(e, cell));
+                    cell.addEventListener('dragleave', (e) => this.handleDragLeave(e, cell));
+                    cell.addEventListener('drop', (e) => this.handleDrop(e, type, cell));
+                });
+                
+                // Additional buttons
+                this.jsonBtn.addEventListener('click', () => this.inputs.json.click());
+                this.stemsBtn.addEventListener('click', () => this.inputs.stems.click());
+                this.inputs.json.addEventListener('change', (e) => this.handleJsonFile(e.target.files[0]));
+                this.inputs.stems.addEventListener('change', (e) => this.handleStemsFiles(e.target.files));
+                
+                // Final actions
+                this.saveBtn.addEventListener('click', () => this.saveToLibrary());
+                
+                // JSON preview actions
+                document.getElementById('json-apply').addEventListener('click', () => this.applyJsonMarkers());
+                document.getElementById('json-revert').addEventListener('click', () => this.revertJsonMarkers());
+            }
+            
+            async checkStorageQuota() {
+                try {
+                    if ('storage' in navigator && 'estimate' in navigator.storage) {
+                        const estimate = await navigator.storage.estimate();
+                        this.currentQuota = {
+                            used: estimate.usage,
+                            available: estimate.quota,
+                            percentage: (estimate.usage / estimate.quota) * 100
+                        };
+                        console.log('📊 Storage quota:', this.currentQuota);
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Не удалось получить информацию о квоте хранилища:', error);
+                }
+            }
+            
+            activateUploadMode() {
+                console.log('📁 Активация Upload Mode');
+                this.isActive = true;
+                this.uploadSession.status = 'collecting';
+                
+                // UI переключение
+                this.triggerBtn.style.display = 'none';
+                this.container.classList.add('active');
+                this.searchInput.style.display = 'none';
+                this.searchResults.style.display = 'none';
+                if (this.previewPlayer) this.previewPlayer.style.display = 'none';
+                
+                // Emit event
+                eventBus.emit('upload:mode-activated');
+            }
+            
+            deactivateUploadMode() {
+                console.log('🔙 Деактивация Upload Mode');
+                this.isActive = false;
+                this.uploadSession.status = 'idle';
+                
+                // UI возврат
+                this.triggerBtn.style.display = 'block';
+                this.container.classList.remove('active');
+                this.searchInput.style.display = 'block';
+                this.searchResults.style.display = 'block';
+                
+                // Очистка сессии
+                this.clearUploadSession();
+                
+                // Emit event
+                eventBus.emit('upload:mode-deactivated');
+            }
+            
+            clearUploadSession() {
+                this.uploadSession = {
+                    files: {},
+                    metadata: {},
+                    status: 'idle'
+                };
+                
+                // Сброс UI
+                Object.values(this.cells).forEach(cell => {
+                    cell.classList.remove('has-file', 'processing', 'error');
+                    const status = cell.querySelector('.cell-status');
+                    const progress = cell.querySelector('.upload-progress-bar');
+                    status.textContent = 'Перетащите или кликните';
+                    status.className = 'cell-status';
+                    progress.style.width = '0%';
+                });
+                
+                this.jsonPreview.classList.remove('active');
+                this.finalActions.classList.remove('show');
+            }
+            
+            handleDragOver(e, cell) {
+                e.preventDefault();
+                cell.classList.add('drag-over');
+            }
+            
+            handleDragLeave(e, cell) {
+                cell.classList.remove('drag-over');
+            }
+            
+            handleDrop(e, type, cell) {
+                e.preventDefault();
+                cell.classList.remove('drag-over');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    this.handleFileSelect(type, files[0]);
+                }
+            }
+            
+            async handleFileSelect(type, file) {
+                if (!file) return;
+                
+                console.log(`📁 Выбран файл для ${type}:`, file.name);
+                
+                // Проверка квоты
+                if (this.currentQuota && file.size > (this.currentQuota.available - this.currentQuota.used)) {
+                    alert('❌ Недостаточно места для загрузки файла!');
+                    return;
+                }
+                
+                const cell = this.cells[type];
+                const status = cell.querySelector('.cell-status');
+                const progress = cell.querySelector('.upload-progress-bar');
+                
+                try {
+                    // Машина состояний: Ожидание -> Обработка
+                    cell.classList.add('processing');
+                    status.textContent = 'Обработка...';
+                    status.className = 'cell-status processing';
+                    
+                    // Имитация асинхронной обработки (Web Worker)
+                    const processedFile = await this.processFile(file, type, (progressPercent) => {
+                        progress.style.width = `${progressPercent}%`;
+                    });
+                    
+                    // Сохранение в сессии
+                    this.uploadSession.files[type] = processedFile;
+                    
+                    // Машина состояний: Обработка -> Готово
+                    cell.classList.remove('processing');
+                    cell.classList.add('has-file');
+                    status.textContent = `✅ ${file.name}`;
+                    status.className = 'cell-status success';
+                    progress.style.width = '100%';
+                    
+                    // Проверка готовности к сохранению
+                    this.checkReadyToSave();
+                    
+                } catch (error) {
+                    console.error('❌ Ошибка обработки файла:', error);
+                    
+                    // Машина состояний: Обработка -> Ошибка
+                    cell.classList.remove('processing');
+                    cell.classList.add('error');
+                    status.textContent = `❌ Ошибка: ${error.message}`;
+                    status.className = 'cell-status error';
+                    progress.style.width = '0%';
+                }
+            }
+            
+            async processFile(file, type, progressCallback) {
+                return new Promise((resolve, reject) => {
+                    // Имитация Web Worker обработки
+                    let progress = 0;
+                    const interval = setInterval(() => {
+                        progress += Math.random() * 20;
+                        if (progress >= 100) {
+                            progress = 100;
+                            clearInterval(interval);
+                            
+                            // Симуляция извлечения метаданных
+                            setTimeout(() => {
+                                const metadata = this.extractMetadata(file, type);
+                                resolve({
+                                    file: file,
+                                    metadata: metadata,
+                                    url: URL.createObjectURL(file),
+                                    type: type
+                                });
+                            }, 200);
+                        }
+                        progressCallback(Math.floor(progress));
+                    }, 100);
+                });
+            }
+            
+            extractMetadata(file, type) {
+                const metadata = {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    lastModified: file.lastModified
+                };
+                
+                if (type === 'instrumental' || type === 'vocal') {
+                    // Для аудио - добавляем примерную длительность (в реальности через Web Audio API)
+                    metadata.duration = 180 + Math.random() * 60; // 3-4 минуты
+                    metadata.bitrate = '320 kbps';
+                    metadata.sampleRate = '44.1 kHz';
+                }
+                
+                return metadata;
+            }
+            
+            async handleJsonFile(file) {
+                if (!file) return;
+                
+                try {
+                    const text = await file.text();
+                    const jsonData = JSON.parse(text);
+                    
+                    // Валидация JSON структуры
+                    if (!jsonData.markers || !Array.isArray(jsonData.markers)) {
+                        throw new Error('JSON должен содержать массив markers');
+                    }
+                    
+                    this.uploadSession.jsonMarkers = jsonData.markers;
+                    this.renderJsonPreview(jsonData.markers);
+                    this.jsonPreview.classList.add('active');
+                    
+                    console.log('📊 JSON маркеры загружены:', jsonData.markers.length);
+                    
+                } catch (error) {
+                    console.error('❌ Ошибка чтения JSON:', error);
+                    alert(`❌ Ошибка в JSON файле: ${error.message}`);
+                }
+            }
+            
+            renderJsonPreview(markers) {
+                const markersList = document.getElementById('json-markers-list');
+                markersList.innerHTML = '';
+                
+                markers.forEach(marker => {
+                    const item = document.createElement('div');
+                    item.className = 'json-marker-item';
+                    item.innerHTML = `
+                        <span class="marker-time">${this.formatTime(marker.time)}</span>
+                        <span class="marker-text">${marker.text || marker.label || 'Маркер'}</span>
+                    `;
+                    markersList.appendChild(item);
+                });
+            }
+            
+            formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+            
+            async handleStemsFiles(files) {
+                if (files.length === 0) return;
+                
+                console.log('🥁 Stems файлы загружены (макет):', files.length);
+                
+                // Пока что просто сохраняем информацию
+                this.uploadSession.stems = Array.from(files).map(file => ({
+                    name: file.name,
+                    size: file.size,
+                    type: file.type
+                }));
+                
+                alert(`🥁 Загружено ${files.length} stems файлов (функция в разработке)`);
+            }
+            
+            applyJsonMarkers() {
+                if (this.uploadSession.jsonMarkers) {
+                    this.uploadSession.metadata.markers = this.uploadSession.jsonMarkers;
+                    alert('✅ JSON маркеры применены к треку');
+                    this.checkReadyToSave();
+                }
+            }
+            
+            revertJsonMarkers() {
+                delete this.uploadSession.metadata.markers;
+                this.jsonPreview.classList.remove('active');
+                alert('❌ JSON маркеры отменены');
+            }
+            
+            checkReadyToSave() {
+                // Проверяем минимальные требования (хотя бы инструментал)
+                const hasMinimum = this.uploadSession.files.instrumental;
+                
+                if (hasMinimum) {
+                    this.updateMetadataDisplay();
+                    this.finalActions.classList.add('show');
+                    this.uploadSession.status = 'ready';
+                }
+            }
+            
+            updateMetadataDisplay() {
+                const instrumental = this.uploadSession.files.instrumental;
+                if (!instrumental) return;
+                
+                const title = instrumental.metadata.name.replace(/\.[^/.]+$/, ""); // Убираем расширение
+                const artist = "Неизвестен"; // В будущем из ID3 тегов
+                const duration = this.formatTime(instrumental.metadata.duration || 180);
+                const size = ((instrumental.file.size / 1024 / 1024).toFixed(1)) + ' MB';
+                
+                document.getElementById('track-title-meta').textContent = title;
+                document.getElementById('track-artist-meta').textContent = artist;
+                document.getElementById('track-duration-meta').textContent = duration;
+                document.getElementById('track-size-meta').textContent = size;
+            }
+            
+            async saveToLibrary() {
+                if (this.uploadSession.status !== 'ready') {
+                    alert('❌ Загрузка не готова к сохранению');
+                    return;
+                }
+                
+                try {
+                    this.uploadSession.status = 'saving';
+                    this.saveBtn.textContent = '💾 Сохранение...';
+                    this.saveBtn.disabled = true;
+                    
+                    // Имитация сохранения в IndexedDB
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    // В реальности здесь будет интеграция с TrackCatalog
+                    console.log('💾 Трек сохранен в библиотеку:', this.uploadSession);
+                    
+                    alert('✅ Трек успешно добавлен в вашу библиотеку!');
+                    
+                    // Emit событие добавления трека
+                    eventBus.emit('track:uploaded', {
+                        files: this.uploadSession.files,
+                        metadata: this.uploadSession.metadata
+                    });
+                    
+                    this.deactivateUploadMode();
+                    
+                } catch (error) {
+                    console.error('❌ Ошибка сохранения:', error);
+                    alert('❌ Ошибка при сохранении трека');
+                    
+                    this.saveBtn.textContent = '💾 Сохранить в каталог';
+                    this.saveBtn.disabled = false;
+                }
+            }
+        }
+        
+        // Инициализация Upload Manager
+        let uploadManager;
+    </script>
+</body>
+</html> 
