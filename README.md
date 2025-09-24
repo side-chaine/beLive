@@ -48,7 +48,7 @@ Here are some visuals of **beLive** in action:
 ---
 
 ## Quick start (local)
-1. Open `index.html` in a browser for a quick preview (Pages demo / placeholder).  
+1. Open `index.html` in a browser for a quick preview (Pages demo / placeholder). As a purely client-side application, it does not require `npm install` or `npm run dev` at this stage.
 2. Try POC demos in `test/` (e.g. `test/live-avatar-poc.html`) — many run without a build system.  
 3. If/when a `package.json` is added, follow typical `npm install` / `npm run dev` flow (to be documented).
 
@@ -81,7 +81,7 @@ This project is licensed under the MIT License — see `LICENSE`.
 ---
 
 ## Contact
-Owner / Author: **Nikita Cheremisinov** — GitHub: [@side-chaine](https://github.com/side-chaine)
+Owner / Author: **Nikita Cheremisinov** — GitHub: [@side-chaine](https://github.com/side-chaine) | Email: nikitosss007@gmail.com
 
 ---
 
