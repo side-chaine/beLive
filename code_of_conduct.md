@@ -1,13 +1,30 @@
-# Кодекс поведения проекта
+# Code of Conduct
 
-Мы придерживаемся принципов уважительного и безопасного сообщества. Все участники и контрибьюторы должны соблюдать базовые правила вежливости и профессионализма.
+## Our Pledge
+We as contributors and maintainers pledge to make participation in our project a welcoming and friendly experience for everyone.
 
-Принципы:
-- Уважение ко всем участникам проекта.
-- Корректное поведение в обсуждениях, отсутствие оскорблений, домогательств и дискриминации.
-- Конструктивная критика с фокусом на коде и фактах, а не на личности.
+## Our Standards
+We expect the following standards of behavior from contributors:
 
-Сообщение о нарушении
-Если вы столкнулись с нарушением — пожалуйста, свяжитесь с командой проекта по e‑mail: nikitosss007@gmail.com или используйте механизм GitHub (при необходимости приватное сообщение/администрация).
+- Be respectful and constructive in all communications.
+- Use inclusive and welcoming language.
+- Assume good faith when others make mistakes.
+- Give and accept feedback gracefully.
 
-Полный текст и источник: https://www.contributor-covenant.org/version/2/1/code_of_conduct/
+Unacceptable behaviors include, but are not limited to:
+
+- Harassment, bullying, or discriminatory comments.
+- Personal attacks, insults, or demeaning language.
+- Threats of violence or hate speech.
+
+## Reporting and Enforcement
+If you experience or witness unacceptable behavior, please report it by emailing: **security@belive.dev** (replace with the preferred contact).
+
+Reports will be handled confidentially. The project maintainers will review reports and take appropriate action, which may include warnings, temporary or permanent bans from the project, or removal of content.
+
+## Scope
+This Code of Conduct applies to all project spaces, including GitHub issues, pull requests, project discussions, chat channels, and in-person events organized by the project.
+
+## Attribution
+This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org/), version 2.1.
+

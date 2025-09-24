@@ -161,11 +161,40 @@ class App {
         // Initialize mask controls
         this._initMaskControls();
         
-        // Initialize Live Feed functionality
+        // Ленту инициализируем лениво после прогрева или по клику beLIVE
+        window.addEventListener('warmup:done', () => {
+            try {
+                if (!window.__liveFeedInit) {
         this._initLiveFeedConcept();
-        
-        // Show Live Feed as starting page
-        this._showLiveFeedConcept();
+                    window.__liveFeedInit = true;
+                }
+            } catch(_) {}
+        });
+
+        // Как только пользователь ответил на запрос камеры — закрываем Live и открываем Каталог
+        window.addEventListener('camera-permission-resolved', async (e) => {
+            // Цель после Live: открыть каталог (и не возвращаться в live)
+            window.__forceAfterLiveMode = 'catalog';
+            // Ждём фактической активации live, чтобы корректно выключить
+            const waitForActive = async () => {
+                const start = Date.now();
+                while (Date.now() - start < 1500) {
+                    if (window.liveMode && window.liveMode.isActive) return true;
+                    await new Promise(r => setTimeout(r, 50));
+                }
+                return false;
+            };
+            try { await waitForActive(); } catch(_) {}
+            try {
+                if (window.liveMode && window.liveMode.isActive) {
+                    await window.liveMode.deactivate();
+                } else {
+                    // Если Live не активировался — вручную открываем каталог
+                    try { this._enableResidualLiveOverlay(true); } catch(_) {}
+                    try { window.openCatalog?.(); } catch(_) {}
+                }
+            } catch(_) {}
+        }, { once: true });
         
         this.initComplete = true;
         console.log('beLive App initialized');
@@ -173,7 +202,7 @@ class App {
         // Экспортируем экземпляр app глобально
         window.app = this;
         
-        // Show welcome message if no tracks
+        // Покажем Welcome (без автоперехода на ленту)
         this._showWelcomeIfNoTracks();
 
         // Инициализация менеджера фона для караоке
@@ -250,6 +279,69 @@ class App {
         ];
         this.concertBackgroundManager = new ConcertBackgroundManager(concertImages, 60000);
     }
+
+    /**
+     * Управляет «остаточной» плашкой Live (#live-lyrics-container)
+     * @param {boolean} show
+     * @private
+     */
+    _enableResidualLiveOverlay(show) {
+        try {
+            const liveLayer = document.getElementById('live-lyrics-container');
+            if (!liveLayer) { return; }
+            liveLayer.style.pointerEvents = 'none';
+            liveLayer.style.zIndex = '9200';
+            if (show) {
+                liveLayer.classList.remove('hidden');
+                liveLayer.style.display = '';
+            } else {
+                liveLayer.classList.add('hidden');
+                liveLayer.style.display = 'none';
+            }
+        } catch(_) {}
+    }
+
+    /**
+     * Скрытый прогрев Live, оставляет остаточную плашку
+     * @private
+     */
+    async _bootstrapLiveWarmup() {
+        try {
+            if (window.__liveBootstrapped) { return; }
+            window.__liveBootstrapped = true;
+            // Показан Welcome, даём стабилизироваться
+            await new Promise(r => setTimeout(r, 300));
+            // Прячем UI live
+            try { document.getElementById('live-video-container')?.classList.add('hidden'); } catch(_) {}
+            // Активируем Live (один запрос камеры)
+            this._activateLiveMode();
+            // Ждём фактической активации или таймаут
+            const started = await (async () => {
+                const start = Date.now();
+                while (Date.now() - start < 2500) {
+                    if (window.liveMode && window.liveMode.isActive) return true;
+                    await new Promise(r => setTimeout(r, 50));
+                }
+                return false;
+            })();
+            if (started) await new Promise(r => setTimeout(r, 150));
+            // Сразу обратно в предыдущий режим (по умолчанию — концерт) и оставляем слой
+            if (window.liveMode && window.liveMode.isActive) {
+                try { await window.liveMode.deactivate(); } catch(_) {}
+            }
+            // Включим остаточную плашку на будущее
+            this._enableResidualLiveOverlay(true);
+            // ВАЖНО: остаёмся на Welcome (не показываем ленту)
+            try {
+                this._hideLiveFeedConcept();
+                this._showWelcomeIfNoTracks();
+            } catch(_) {}
+            // Сигнал для ленивой инициализации ленты
+            try { window.dispatchEvent(new CustomEvent('warmup:done')); } catch(_) {}
+        } catch (e) {
+            console.warn('bootstrapLiveWarmup failed:', e);
+        }
+    }
     
     initCatalogV2() {
         if (window.CatalogV2) {
@@ -299,6 +391,9 @@ class App {
         // Инициализация BPM системы
         this.currentBPM = 100; // 100% - оригинальная скорость
         this._updateBPMDisplay();
+
+        // Инициализируем кнопку Monitor
+        try { this._initMonitorButton(); } catch(e) { console.warn('Monitor button init failed', e); }
     }
     
     _setupEventListeners() {
@@ -614,13 +709,20 @@ class App {
     }
     
     _initReloadButton() {
-        const reloadButton = document.getElementById('reload-app');
-        if (reloadButton) {
-            reloadButton.addEventListener('click', () => {
-                // Reload the page
-                window.location.reload();
+        // Заменено на Monitor — совместимость для старых макетов
+        const monitorBtn = document.getElementById('monitor-btn') || document.getElementById('reload-app');
+        if (monitorBtn) {
+            monitorBtn.id = 'monitor-btn';
+            monitorBtn.textContent = 'Monitor';
+            monitorBtn.title = 'Monitor settings';
+            monitorBtn.addEventListener('click', () => {
+                try { window.monitorUI?.toggle(); } catch(e) { console.warn('Monitor UI not ready', e); }
             });
         }
+    }
+
+    _initMonitorButton() {
+        this._initReloadButton();
     }
     
     /**
@@ -934,6 +1036,8 @@ class App {
      */
     _activateConcertMode() {
         console.log('Activating concert mode');
+        // Включаем «остаточную» плашку от Live
+        this._enableResidualLiveOverlay(true);
         const previousMode = this._getCurrentMode?.() || this._detectBodyMode?.() || null;
         
         // Деактивируем Live режим если он активен
@@ -976,6 +1080,8 @@ class App {
      */
     _activateKaraokeMode() {
         console.log('Activating karaoke mode');
+        // В караоке плашка не нужна
+        this._enableResidualLiveOverlay(false);
         const previousMode = this._getCurrentMode?.() || this._detectBodyMode?.() || null;
         
         if (window.liveMode && window.liveMode.isActive) {
@@ -1016,6 +1122,8 @@ class App {
      */
     _activateRehearsalMode() {
         console.log('Activating rehearsal mode');
+        // Включаем «остаточную» плашку от Live
+        this._enableResidualLiveOverlay(true);
         const previousMode = this._getCurrentMode?.() || this._detectBodyMode?.() || null;
         
         if (window.liveMode && window.liveMode.isActive) {
@@ -1151,7 +1259,15 @@ class App {
      */
     switchToLastMode() {
         console.log(`App: Переключение на предыдущий режим: ${this.previousMode}`);
-        this._handleModeChange(this.previousMode || 'live-feed');
+        // После warmup возвращаем только на Welcome
+        if (window.__liveBootstrapped && !this.initComplete) {
+            try {
+                this._hideLiveFeedConcept();
+                this._showWelcomeIfNoTracks();
+                return;
+            } catch(_) {}
+        }
+        this._handleModeChange(this.previousMode || 'concert');
     }
 
     /**
@@ -2699,6 +2815,8 @@ function initializeApp() {
         // Initialize the main app
         window.app = new App();
         console.log('App initialized successfully');
+        // Запускаем скрытый прогрев Live (один раз)
+        try { window.app._bootstrapLiveWarmup?.(); } catch(_) {}
     } catch (error) {
         console.error('Error initializing app:', error);
     }
@@ -2778,9 +2896,12 @@ window.addAudioToTrack = function() {
 };
 
 window.openCatalog = function() {
-    if (window.trackCatalog) {
+    if (window.catalogV2 && typeof window.catalogV2.open === 'function') {
+        try { window.trackCatalog?.closeCatalog?.(); } catch(_) {}
+        window.catalogV2.open();
+    } else if (window.trackCatalog && typeof window.trackCatalog.openCatalog === 'function') {
         window.trackCatalog.openCatalog();
     } else {
-        console.error('TrackCatalog не инициализирован');
+        console.error('Каталог не инициализирован');
     }
 }; 
