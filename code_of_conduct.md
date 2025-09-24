@@ -18,7 +18,7 @@ Unacceptable behaviors include, but are not limited to:
 - Threats of violence or hate speech.
 
 ## Reporting and Enforcement
-If you experience or witness unacceptable behavior, please report it by emailing: **security@belive.dev** (replace with the preferred contact).
+If you experience or witness unacceptable behavior, please report it by emailing: **nikitosss007@gmail.com**.
 
 Reports will be handled confidentially. The project maintainers will review reports and take appropriate action, which may include warnings, temporary or permanent bans from the project, or removal of content.
 
