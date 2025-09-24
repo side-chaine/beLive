@@ -1,0 +1,53 @@
+name: 🚀 Deploy beLive to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  pages: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v3
+      
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: 📦 Install dependencies
+      run: |
+        if [ -f package.json ]; then
+          npm ci
+        else
+          echo "No package.json found, skipping npm install"
+        fi
+        
+    - name: 🧪 Run tests
+      run: |
+        echo "🧪 Running basic checks..."
+        test -f index.html || (echo "❌ index.html not found" && exit 1)
+        test -d js || (echo "❌ js directory not found" && exit 1)
+        test -d css || (echo "❌ css directory not found" && exit 1)
+        echo "✅ Basic structure check passed"
+        
+    - name: 🚀 Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GH_PAGES_TOKEN }}
+        publish_dir: .
+        
+    - name: 📊 Report deployment
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "🎉 beLive successfully deployed!"
+        echo "🌐 Site URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"

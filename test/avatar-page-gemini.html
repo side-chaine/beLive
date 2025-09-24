@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>beLIVE - Кокпит Артиста</title>
+    <link rel="stylesheet" href="../css/avatar-page-gemini.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="artist-cockpit">
+        <!-- Верхняя панель навигации -->
+        <header class="cockpit-nav">
+            <div class="nav-glow"></div>
+            <button class="nav-btn">Концертный</button>
+            <button class="nav-btn active">Караоке</button>
+            <button class="nav-btn">Репетиция</button>
+        </header>
+
+        <!-- Центральная рабочая область -->
+        <main class="cockpit-main">
+            <!-- SVG для линий-связей -->
+            <svg class="connection-lines" width="100%" height="100%">
+                <!-- Линии будут добавлены/управляться через CSS/JS для динамичности -->
+            </svg>
+
+            <!-- Центральный Хаб -->
+            <div class="central-hub" id="centralHub">
+                <div class="energy-ring ring-1"></div>
+                <div class="energy-ring ring-2"></div>
+                <div class="energy-ring ring-3"></div>
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face" alt="Артист" class="hub-avatar">
+                <div class="hub-status">Online</div>
+            </div>
+
+            <!-- Сателлитные Модули -->
+            <div class="satellite-module module-progress" id="moduleProgress">
+                <div class="module-glow"></div>
+                <div class="module-content">
+                    <h3 class="module-title">Прогресс</h3>
+                    <div class="progress-chart">
+                        <!-- Место для диаграммы -->
+                        <svg viewBox="0 0 36 36" class="circular-chart orange">
+                            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="circle" stroke-dasharray="75, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <text x="18" y="20.35" class="percentage">75%</text>
+                        </svg>
+                    </div>
+                    <p class="module-summary">Цель недели</p>
+                </div>
+            </div>
+
+            <div class="satellite-module module-ai" id="moduleAi">
+                <div class="module-glow"></div>
+                <div class="module-content">
+                    <h3 class="module-title">AI-Сценарист</h3>
+                    <div class="ai-suggestion">
+                        <span class="ai-icon">💡</span>
+                        <p>"Попробуй добавить вибрато в припеве"</p>
+                    </div>
+                    <button class="module-btn">Новая идея</button>
+                </div>
+            </div>
+
+            <div class="satellite-module module-community" id="moduleCommunity">
+                <div class="module-glow"></div>
+                <div class="module-content">
+                    <h3 class="module-title">Сообщество</h3>
+                    <div class="community-info">
+                        <p><span class="community-value">3</span> новых дуэта</p>
+                        <p><span class="community-value">12</span> лайков</p>
+                    </div>
+                    <button class="module-btn">Обзор</button>
+                </div>
+            </div>
+
+            <div class="satellite-module module-start" id="moduleStart">
+                <div class="module-glow"></div>
+                <div class="module-content">
+                    <h3 class="module-title">Быстрый Старт</h3>
+                    <div class="start-actions">
+                        <button class="start-btn live">
+                            <span class="btn-icon">🔴</span> LIVE
+                        </button>
+                        <button class="start-btn training">
+                            <span class="btn-icon">🎤</span> Тренировка
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const main = document.querySelector('.cockpit-main');
+            const hub = document.getElementById('centralHub');
+            const modules = document.querySelectorAll('.satellite-module');
+            const linesSvg = document.querySelector('.connection-lines');
+
+            function updateLines() {
+                linesSvg.innerHTML = ''; // Очищаем старые линии
+                const hubRect = hub.getBoundingClientRect();
+                const mainRect = main.getBoundingClientRect();
+
+                const hubX = hubRect.left + hubRect.width / 2 - mainRect.left;
+                const hubY = hubRect.top + hubRect.height / 2 - mainRect.top;
+
+                modules.forEach(module => {
+                    const moduleRect = module.getBoundingClientRect();
+                    const moduleX = moduleRect.left + moduleRect.width / 2 - mainRect.left;
+                    const moduleY = moduleRect.top + moduleRect.height / 2 - mainRect.top;
+
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', hubX);
+                    line.setAttribute('y1', hubY);
+                    line.setAttribute('x2', moduleX);
+                    line.setAttribute('y2', moduleY);
+                    line.setAttribute('class', 'connection-line');
+                    linesSvg.appendChild(line);
+                });
+            }
+
+            // Обновляем линии при загрузке и изменении размера окна
+            updateLines();
+            window.addEventListener('resize', updateLines);
+
+            // Эффект при наведении на модуль
+            modules.forEach(module => {
+                module.addEventListener('mouseenter', () => {
+                    main.classList.add('is-focused');
+                    module.classList.add('is-active');
+                });
+                module.addEventListener('mouseleave', () => {
+                    main.classList.remove('is-focused');
+                    module.classList.remove('is-active');
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

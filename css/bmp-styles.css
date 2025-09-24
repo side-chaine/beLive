@@ -1,0 +1,84 @@
+/* Улучшенная версия 8.0 - Анимация-презентация "B-P-M" */
+
+/* КРИТИЧНОЕ ИСПРАВЛЕНИЕ: Переопределяем overflow и создаем контекст наложения */
+.bmp-btn {
+    overflow: visible !important;
+    position: relative !important;
+    /* Это гарантирует, что ::before с z-index: -1 останется внутри кнопки */
+    isolation: isolate;
+}
+
+/* Общий стиль для всех фоновых букв - Эффект "Гравировка" */
+.bmp-btn::before {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -53%);
+    font-size: 2.6em; 
+    font-family: 'Arial Black', sans-serif;
+    font-weight: 900;
+    
+    /* Базовое состояние - темная гравировка */
+    color: rgba(0, 0, 0, 0.35);
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+    filter: blur(0);
+    
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Конкретные буквы для каждой кнопки */
+#bpm-down::before  { content: "B"; }
+#bpm-value::before { content: "P"; }
+#bpm-up::before    { content: "M"; }
+
+/* 
+   Анимация-презентация "B-P-M". 
+   Запускается раз в ~60 секунд, плавно и стильно.
+*/
+@keyframes bpm-showcase {
+    /* Эффект свечения занимает ~3% времени (1.8с из 60с) */
+    0%, 3%, 100% {
+        color: rgba(0, 0, 0, 0.35);
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+    }
+    1.5% { /* Пик свечения */
+        color: rgba(255, 255, 255, 0.95);
+        text-shadow: 
+            0 0 4px #fff,
+            0 0 12px #ff8c00,
+            0 0 25px #ff8c00;
+    }
+}
+
+/* Применяем анимацию-презентацию к каждой кнопке с разной задержкой */
+#bpm-down::before {
+    animation: bpm-showcase 60s ease-in-out infinite;
+    animation-delay: 0s;
+}
+
+#bpm-value::before {
+    animation: bpm-showcase 60s ease-in-out infinite;
+    animation-delay: 2s; /* Загорается через 2с после B */
+}
+
+#bpm-up::before {
+    animation: bpm-showcase 60s ease-in-out infinite;
+    animation-delay: 4s; /* Загорается через 2с после P */
+}
+
+/* 
+   Эффекты при наведении - "Неоновый взрыв".
+   Отключает основную анимацию и применяет стили ховера.
+*/
+.bmp-btn:hover::before {
+    animation: none; /* Отключаем презентацию, даем приоритет ховеру */
+    transition: all 0.3s ease-out; /* Плавный переход для ховера */
+
+    color: rgba(255, 255, 255, 0.95);
+    transform: translate(-50%, -53%) scale(1.05);
+    text-shadow: 
+        0 0 4px #fff,
+        0 0 12px #ff8c00,
+        0 0 25px #ff8c00;
+} 

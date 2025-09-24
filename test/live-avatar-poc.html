@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Live Avatar - Enhanced Prototype</title>
+    <script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #eee;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        h1 {
+            color: #00d4ff;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+            margin-bottom: 10px;
+        }
+        .status {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-bottom: 12px;
+            border: 1px solid #333;
+            min-width: 320px;
+            text-align: center;
+        }
+        .status.active {
+            border-color: #00ff88;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        }
+        .main-layout {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            width: 100%;
+            max-width: 1400px;
+            justify-content: center;
+        }
+        .customization-panel {
+            width: 280px;
+            background: rgba(0, 20, 40, 0.9);
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: all 0.5s ease;
+            pointer-events: none;
+        }
+        .customization-panel.visible {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+        }
+        .customization-panel.right {
+            transform: translateX(50px);
+        }
+        .customization-panel.right.visible {
+            transform: translateX(0);
+        }
+        .panel-title {
+            color: #00ff88;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .carrier-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .carrier-item {
+            background: rgba(20, 30, 50, 0.8);
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .carrier-item:hover {
+            border-color: #00d4ff;
+            background: rgba(30, 45, 70, 0.9);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+        }
+        .carrier-item.selected {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+        }
+        .carrier-emoji {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .carrier-name {
+            color: #fff;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .carrier-3d {
+            width: 100%;
+            height: 80px;
+            border-radius: 8px;
+            margin: 8px 0;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        .approved-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+        .approved-info {
+            flex: 1;
+        }
+        .approved-name {
+            color: #00ff88;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .approved-settings {
+            color: #aaa;
+            font-size: 10px;
+        }
+        .remove-btn {
+            background: #ff4444;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .settings-panel {
+            background: rgba(20, 30, 50, 0.9);
+            border: 2px solid #00d4ff;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .setting-group {
+            margin-bottom: 12px;
+        }
+        .setting-label {
+            color: #00d4ff;
+            font-size: 12px;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .setting-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #333;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        .setting-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00d4ff;
+            cursor: pointer;
+        }
+        .setting-value {
+            color: #fff;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+            padding: 2px 6px;
+        }
+        .save-btn {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+        }
+        .container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+            background: radial-gradient(circle at center, rgba(26, 26, 46, 0.8), rgba(22, 33, 62, 0.9));
+        }
+        #video-tracking, #canvas-output {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #video-tracking {
+            display: none;
+        }
+        #canvas-output {
+            background: transparent;
+            pointer-events: none;
+        }
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button {
+            background: linear-gradient(45deg, #6a1b9a, #8e24aa);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(106, 27, 154, 0.4);
+        }
+        .customize-btn {
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            font-size: 16px;
+            padding: 12px 24px;
+        }
+        .customize-btn:hover {
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+        }
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            font-style: italic;
+        }
+        .hud {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: rgba(0,0,0,0.6);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #fff;
+            z-index: 20;
+        }
+        .bg-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .bg-controls button { padding: 6px 10px; font-size: 12px; border-radius: 8px; }
+        input[type="file"] { display: none; }
+    </style>
+</head>
+<body>
+    <h1>🎭 Live Avatar - Enhanced Prototype</h1>
+    <div class="status" id="status">Инициализация...</div>
+
+    <div class="main-layout">
+        <!-- LEFT PANEL -->
+        <div class="customization-panel" id="testPanel">
+            <div class="panel-title">🧪 Тестовые носители</div>
+            <div class="carrier-grid" id="testCarriers"></div>
+
+            <div class="settings-panel">
+                <div class="setting-group">
+                    <label class="setting-label">Ширина</label>
+                    <input type="range" class="setting-slider" id="widthSlider" min="0.5" max="3" step="0.1" value="1">
+                    <div class="setting-value" id="widthValue">1.0</div>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">Высота</label>
+                    <input type="range" class="setting-slider" id="heightSlider" min="0.5" max="3" step="0.1" value="1">
+                    <div class="setting-value" id="heightValue">1.0</div>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">Смещение</label>
+                    <input type="range" class="setting-slider" id="offsetSlider" min="-100" max="100" step="5" value="0">
+                    <div class="setting-value" id="offsetValue">0</div>
+                </div>
+                <button class="save-btn" onclick="saveCurrentCarrier()">💾 СОХРАНИТЬ В КОЛЛЕКЦИЮ</button>
+            </div>
+        </div>
+
+        <!-- CENTER -->
+        <div>
+            <div class="container">
+                <video id="video-tracking" autoplay muted playsinline></video>
+                <canvas id="canvas-output" width="800" height="600"></canvas>
+
+                <div class="hud" id="hud">
+                    <div>FPS: <span id="fps">–</span></div>
+                    <div>Res: <span id="res">800x600</span></div>
+                    <div>Mode: <span id="bgModeLabel">transparent</span></div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="customize-btn" onclick="toggleCustomization()">🎨 Кастомизация</button>
+                <button onclick="toggleDebug()">Debug Mode</button>
+                <button onclick="changeAvatarColor()">Сменить цвет</button>
+                <button onclick="toggleLimbs()">Вкл/Выкл Конечности</button>
+                <button onclick="setGesture('default')" title="Default">🖐️</button>
+                <button onclick="setGesture('peace')" title="Peace">✌️</button>
+                <button onclick="setGesture('rock')" title="Rock">🤘</button>
+                <button onclick="setGesture('yo')" title="Yo!">👉</button>
+
+                <!-- Background controls -->
+                <div style="display:flex; align-items:center; gap:8px; margin-left:8px;">
+                    <div class="bg-controls" id="bgControls">
+                        <button onclick="setBackgroundMode('transparent')">Transparent</button>
+                        <button onclick="setBackgroundMode('blur')">Blur</button>
+                        <button onclick="setBackgroundMode('image')">Image</button>
+                        <button onclick="setBackgroundMode('color')">Color</button>
+                        <input type="file" id="bgImageInput" accept="image/*">
+                    </div>
+                    <button id="captureBtn" onclick="toggleCapture()">Start Stream</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="customization-panel right" id="approvedPanel">
+            <div class="panel-title">✅ Одобренная коллекция</div>
+            <div id="approvedCarriers" class="carrier-grid">
+                <div class="empty-state">Пока нет одобренных носителей</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MediaPipe -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1640029074/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1620248257/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1635988162/pose.js"></script>
+
+    <script>
+        // DOM
+        const videoTrackingElement = document.getElementById('video-tracking');
+        const canvasElement = document.getElementById('canvas-output');
+        const canvasCtx = canvasElement.getContext('2d');
+        const statusElement = document.getElementById('status');
+        const fpsLabel = document.getElementById('fps');
+        const resLabel = document.getElementById('res');
+        const bgModeLabel = document.getElementById('bgModeLabel');
+        const bgImageInput = document.getElementById('bgImageInput');
+        const captureBtn = document.getElementById('captureBtn');
+
+        const canvasWidth = canvasElement.width;
+        const canvasHeight = canvasElement.height;
+
+        // STATE
+        let debugMode = false;
+        let avatarColors = ['#6a1b9a', '#e91e63', '#2196f3', '#4caf50', '#ff9800'];
+        let currentColorIndex = 0;
+        let showLimbs = true;
+        let avatarHorizontalOffset = 0;
+        let avatarRunPhase = 0;
+        let previousAvatarHorizontalOffset = 0;
+        let currentGesture = 'default';
+        let smoothedPoints = {};
+        const smoothingFactor = 0.4;
+
+        let customizationVisible = false;
+        let currentCarrier = null;
+        let approvedCarriers = JSON.parse(localStorage.getItem('approvedCarriers') || '[]');
+        let scene, renderer, threeCamera;
+
+        // Background compositing
+        let bgMode = 'transparent'; // 'transparent' | 'blur' | 'image' | 'color'
+        let bgColor = '#0a0a0a';
+        let bgImage = null;
+
+        // Adaptive input resolution (we'll downscale before sending to MediaPipe)
+        let inputScale = 1; // 1.0 original, 0.75, 0.5
+        const minScale = 0.5;
+        const maxScale = 1;
+        const targetFPS = 24;
+
+        // FPS measurement
+        let lastFrameTimes = [];
+        const fpsWindow = 20;
+
+        // Mask temporal smoothing (offscreen canvas)
+        const maskCanvas = document.createElement('canvas');
+        maskCanvas.width = canvasWidth;
+        maskCanvas.height = canvasHeight;
+        const maskCtx = maskCanvas.getContext('2d');
+        let previousMaskImage = null;
+        const maskBlendFactor = 0.75; // how much weight prev mask has (0..1)
+
+        // Capture processed stream
+        let processedStream = null;
+        let isCapturing = false;
+
+        // Test carriers
+        const TEST_CARRIERS = [
+            { id: 'jets', name: 'Реактивные двигатели', emoji: '🚀', type: 'jets' },
+            { id: 'hoverboard', name: 'Ховерборд', emoji: '🛸', type: 'hoverboard' },
+            { id: 'mech_legs', name: 'Механические ноги', emoji: '🦾', type: 'mech_legs' },
+            { id: 'dragon_wings', name: 'Крылья дракона', emoji: '🐉', type: 'dragon_wings' },
+            { id: 'rocket_boots', name: 'Ракетные сапоги', emoji: '👢', type: 'rocket_boots' },
+            { id: 'energy_platform', name: 'Энергетическая платформа', emoji: '⚡', type: 'energy_platform' },
+            { id: 'spider_legs', name: 'Паучьи ноги', emoji: '🕷️', type: 'spider_legs' },
+            { id: 'flame_wheels', name: 'Огненные колеса', emoji: '🔥', type: 'flame_wheels' }
+        ];
+
+        // --- DRAW HELPERS (unchanged major parts) ---
+        function drawHand(ctx, wristX, wristY, elbowX, elbowY, gesture, limbColor) {
+            const angle = Math.atan2(wristY - elbowY, wristX - elbowX) + Math.PI / 2;
+            ctx.fillStyle = '#ffcc80';
+            ctx.save();
+            ctx.translate(wristX, wristY);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            ctx.moveTo(-12, -10);
+            ctx.lineTo(12, -10);
+            ctx.lineTo(15, 10);
+            ctx.lineTo(-15, 10);
+            ctx.closePath();
+            ctx.fill();
+
+            const fingerLength = 22;
+            const fingerWidth = 8;
+            const thumbLength = 16;
+            ctx.fillStyle = limbColor;
+
+            const drawFinger = (x, y, length, width, fingerAngle = 0) => {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(fingerAngle);
+                ctx.beginPath();
+                // fallback if roundRect not available
+                const r = width / 2;
+                ctx.moveTo(-width / 2 + r, -length);
+                ctx.lineTo(width / 2 - r, -length);
+                ctx.quadraticCurveTo(width / 2, -length, width / 2, -length + r);
+                ctx.lineTo(width / 2, 0 - r);
+                ctx.quadraticCurveTo(width / 2, 0, width / 2 - r, 0);
+                ctx.lineTo(-width / 2 + r, 0);
+                ctx.quadraticCurveTo(-width / 2, 0, -width / 2, -r);
+                ctx.lineTo(-width / 2, -length + r);
+                ctx.quadraticCurveTo(-width / 2, -length, -width / 2 + r, -length);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            };
+
+            switch (gesture) {
+                case 'peace':
+                    drawFinger(-7, -8, fingerLength, fingerWidth);
+                    drawFinger(7, -8, fingerLength, fingerWidth);
+                    break;
+                case 'rock':
+                    drawFinger(-10, -8, fingerLength, fingerWidth);
+                    drawFinger(10, -8, fingerLength * 0.8, fingerWidth);
+                    drawFinger(-2, -2, thumbLength, fingerWidth, Math.PI / 3);
+                    break;
+                case 'yo':
+                    drawFinger(0, -8, fingerLength * 1.1, fingerWidth);
+                    break;
+                case 'fist':
+                    break;
+                default:
+                    drawFinger(-11, -8, fingerLength * 0.9, fingerWidth, -0.1);
+                    drawFinger(-3, -9, fingerLength, fingerWidth);
+                    drawFinger(5, -9, fingerLength, fingerWidth, 0.1);
+                    drawFinger(12, -8, fingerLength * 0.8, fingerWidth, 0.2);
+                    drawFinger(-14, 0, thumbLength, fingerWidth, Math.PI / 2.5);
+                    break;
+            }
+            ctx.restore();
+        }
+
+        function drawJetEngines(ctx, centerX, baseY, width, runPhase, isRunning, velocity) {
+            ctx.save();
+            const platformHeight = 20;
+            const platformWidth = width * 1.3;
+            const platformY = baseY + 5;
+
+            ctx.fillStyle = '#78909c';
+            ctx.strokeStyle = '#455a64';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            // fallback roundRect
+            const rx = centerX - platformWidth / 2, ry = platformY, rw = platformWidth, rh = platformHeight, r = 8;
+            ctx.moveTo(rx + r, ry);
+            ctx.lineTo(rx + rw - r, ry);
+            ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + r);
+            ctx.lineTo(rx + rw, ry + rh - r);
+            ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - r, ry + rh);
+            ctx.lineTo(rx + r, ry + rh);
+            ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - r);
+            ctx.lineTo(rx, ry + r);
+            ctx.quadraticCurveTo(rx, ry, rx + r, ry);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            const engineWidth = platformWidth / 2.2;
+            const engineHeight = 70;
+
+            const drawEngine = (xOffset) => {
+                const engineX = centerX + xOffset;
+                const engineY = platformY - engineHeight + 10;
+                ctx.fillStyle = '#b0bec5';
+                ctx.strokeStyle = '#546e7a';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.rect(engineX - engineWidth / 2, engineY, engineWidth, engineHeight);
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = '#78909c';
+                ctx.beginPath();
+                ctx.rect(engineX - engineWidth / 2, engineY, engineWidth, 15);
+                ctx.fill();
+                const nozzleY = engineY + engineHeight;
+                ctx.fillStyle = '#455a64';
+                ctx.beginPath();
+                ctx.moveTo(engineX - engineWidth / 2 + 5, nozzleY);
+                ctx.lineTo(engineX + engineWidth / 2 - 5, nozzleY);
+                ctx.lineTo(engineX + engineWidth / 2 - 10, nozzleY + 15);
+                ctx.lineTo(engineX - engineWidth / 2 + 10, nozzleY + 15);
+                ctx.closePath();
+                ctx.fill();
+
+                const flameAngle = -velocity * 0.08;
+                const flameLength = 40 + (isRunning ? 80 : 0) + Math.abs(velocity * 2);
+
+                ctx.save();
+                ctx.translate(engineX, nozzleY + 10);
+                ctx.rotate(flameAngle);
+
+                const grad = ctx.createLinearGradient(0, 0, 0, flameLength);
+                grad.addColorStop(0, 'rgba(0, 255, 255, 1)');
+                grad.addColorStop(0.5, 'rgba(100, 181, 246, 0.7)');
+                grad.addColorStop(1, 'rgba(30, 136, 229, 0)');
+
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.moveTo(-engineWidth / 2 + 15, 0);
+                ctx.lineTo(engineWidth / 2 - 15, 0);
+                ctx.lineTo(0, flameLength);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.restore();
+            };
+
+            drawEngine(-platformWidth / 4);
+            drawEngine(platformWidth / 4);
+
+            ctx.restore();
+        }
+
+        function updateStatus(message, isActive = false) {
+            statusElement.textContent = message;
+            statusElement.className = isActive ? 'status active' : 'status';
+        }
+
+        // --- BACKGROUND HANDLING ---
+        function setBackgroundMode(mode) {
+            bgMode = mode;
+            bgModeLabel.textContent = mode;
+            if (mode === 'image') {
+                bgImageInput.click();
+            }
+        }
+        bgImageInput.addEventListener('change', (ev) => {
+            const file = ev.target.files && ev.target.files[0];
+            if (!file) return;
+            const img = new Image();
+            img.onload = () => {
+                bgImage = img;
+            };
+            img.src = URL.createObjectURL(file);
+        });
+
+        // Composite pipeline: take input image (video or downscaled canvas) + smoothed mask -> draw composed result to main canvas
+        function compositeWithBackground(image, maskCanvasToUse) {
+            // We assume canvasCtx origin is already transformed for avatar scale/offset
+            // Step 1: draw mask into main canvas to use for shadow/glow if needed
+            // We'll use maskCanvasToUse which is a canvas with the blended mask
+            if (maskCanvasToUse) {
+                // Add glow around user
+                canvasCtx.save();
+                canvasCtx.shadowColor = avatarColors[currentColorIndex];
+                canvasCtx.shadowBlur = 20;
+                canvasCtx.shadowOffsetX = 0;
+                canvasCtx.shadowOffsetY = 0;
+                // Draw mask to create glow silhouette
+                canvasCtx.globalCompositeOperation = 'source-over';
+                canvasCtx.drawImage(maskCanvasToUse, 0, 0, canvasWidth, canvasHeight);
+                canvasCtx.restore();
+            }
+
+            // Step 2: Use source-in to draw person pixels from image
+            canvasCtx.save();
+            canvasCtx.globalCompositeOperation = 'source-in';
+            canvasCtx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
+            canvasCtx.restore();
+
+            // Step 3: Draw background behind (destination-over)
+            canvasCtx.save();
+            canvasCtx.globalCompositeOperation = 'destination-over';
+            if (bgMode === 'image' && bgImage) {
+                canvasCtx.drawImage(bgImage, 0, 0, canvasWidth, canvasHeight);
+            } else if (bgMode === 'color') {
+                canvasCtx.fillStyle = bgColor;
+                canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+            } else if (bgMode === 'blur') {
+                // Draw video blurred in background
+                canvasCtx.filter = 'blur(10px)';
+                canvasCtx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
+                canvasCtx.filter = 'none';
+            }
+            canvasCtx.restore();
+
+            // Reset composite
+            canvasCtx.globalCompositeOperation = 'source-over';
+        }
+
+        // Blend latest segmentation mask with previous to reduce flicker
+        function blendSegmentationMask(currentSegmentationBitmap) {
+            // currentSegmentationBitmap: can be an ImageBitmap or HTMLImageElement/canvas
+            // We draw previous mask with weight maskBlendFactor, then draw current with (1-maskBlendFactor)
+            maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+
+            if (previousMaskImage) {
+                maskCtx.globalAlpha = maskBlendFactor;
+                maskCtx.drawImage(previousMaskImage, 0, 0, maskCanvas.width, maskCanvas.height);
+            }
+
+            maskCtx.globalAlpha = 1 - maskBlendFactor;
+            maskCtx.drawImage(currentSegmentationBitmap, 0, 0, maskCanvas.width, maskCanvas.height);
+
+            maskCtx.globalAlpha = 1;
+            // Save blended as previous
+            previousMaskImage = document.createElement('canvas');
+            previousMaskImage.width = maskCanvas.width;
+            previousMaskImage.height = maskCanvas.height;
+            const tmpCtx = previousMaskImage.getContext('2d');
+            tmpCtx.drawImage(maskCanvas, 0, 0);
+            return maskCanvas;
+        }
+
+        // --- MAIN DRAW: uses compositeWithBackground, mask blending, adaptive input scaling ---
+        function drawAvatar(results) {
+            const poseLandmarks = results.poseLandmarks;
+            const segmentationMask = results.segmentationMask;
+            const image = results.image;
+
+            canvasCtx.save();
+
+            // Mirrored landmarks for intuitive control
+            const mirroredLandmarks = poseLandmarks ? 
+                poseLandmarks.map(lm => ({...lm, visibility: lm.visibility, x: 1 - lm.x, y: lm.y })) : null;
+
+            // Horizontal offset logic (unchanged)
+            const horizontalVelocity = avatarHorizontalOffset - previousAvatarHorizontalOffset;
+            previousAvatarHorizontalOffset = avatarHorizontalOffset;
+            if (mirroredLandmarks && mirroredLandmarks[0] && mirroredLandmarks[0].visibility > 0.6) {
+                const deviation = 0.5 - mirroredLandmarks[0].x;
+                avatarHorizontalOffset = avatarHorizontalOffset * 0.9 + (deviation * 600) * 0.1;
+            } else {
+                avatarHorizontalOffset *= 0.95;
+            }
+
+            // Clear canvas
+            canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            // Scale & center avatar area (unchanged)
+            const scale = 0.4;
+            const verticalLift = -60;
+            const newWidth = canvasWidth * scale;
+            const newHeight = canvasHeight * scale;
+            const offsetX = (canvasWidth - newWidth) / 2;
+            const offsetY = (canvasHeight - newHeight) / 2 + verticalLift;
+            canvasCtx.translate(offsetX + avatarHorizontalOffset, offsetY);
+            canvasCtx.scale(scale, scale);
+
+            // Process segmentation mask temporally
+            let maskToUse = null;
+            if (segmentationMask && image) {
+                try {
+                    // segmentationMask from MediaPipe is a HTMLCanvasElement - we can blend it
+                    maskToUse = blendSegmentationMask(segmentationMask);
+                } catch (e) {
+                    // fallback: use current mask directly
+                    maskToUse = segmentationMask;
+                }
+                compositeWithBackground(image, maskToUse);
+            } else if (image) {
+                // fallback: draw full image (no segmentation)
+                canvasCtx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
+            }
+
+            // Reset composite op
+            canvasCtx.globalCompositeOperation = 'source-over';
+
+            // Draw avatar decorations (jets, limbs) on top
+            const poseDetected = mirroredLandmarks && mirroredLandmarks.length > 0;
+            if (poseDetected) {
+                const limbColor = '#ffab40';
+                if (showLimbs) {
+                    canvasCtx.strokeStyle = limbColor;
+                    canvasCtx.lineWidth = 18;
+                    canvasCtx.lineCap = 'round';
+
+                    const smoothPoint = (key, newPoint) => {
+                        if (!newPoint) return null;
+                        const oldPoint = smoothedPoints[key];
+                        const newSmoothedPoint = { x: newPoint.x, y: newPoint.y };
+                        if (oldPoint) {
+                            newSmoothedPoint.x = oldPoint.x * (1 - smoothingFactor) + newPoint.x * smoothingFactor;
+                            newSmoothedPoint.y = oldPoint.y * (1 - smoothingFactor) + newPoint.y * smoothingFactor;
+                        }
+                        smoothedPoints[key] = { x: newSmoothedPoint.x, y: newSmoothedPoint.y };
+                        return { ...newSmoothedPoint, visibility: newPoint.visibility };
+                    };
+
+                    const leftShoulder = mirroredLandmarks[11];
+                    const rightShoulder = mirroredLandmarks[12];
+                    const leftHip = mirroredLandmarks[23];
+                    const rightHip = mirroredLandmarks[24];
+
+                    let hipCenterX = canvasWidth / 2;
+                    if (leftShoulder && rightShoulder && leftShoulder.visibility > 0.3) {
+                        hipCenterX = ((leftShoulder.x + rightShoulder.x) / 2) * canvasWidth;
+                    }
+
+                    let avatarBaseY = 500;
+                    let avatarWidth = 150;
+                    if (leftShoulder && rightShoulder && leftShoulder.visibility > 0.4) {
+                        avatarWidth = Math.abs(leftShoulder.x - rightShoulder.x) * canvasWidth;
+                    }
+                    if (leftHip && rightHip && leftHip.visibility > 0.4) {
+                        avatarBaseY = Math.max(leftHip.y, rightHip.y) * canvasHeight + 10;
+                    } else if (leftShoulder && rightShoulder) {
+                        avatarBaseY = ((leftShoulder.y + rightShoulder.y) / 2) * canvasHeight + 150;
+                    }
+
+                    const isRunning = Math.abs(horizontalVelocity) > 1;
+                    if (isRunning) avatarRunPhase += 0.4;
+
+                    drawJetEngines(canvasCtx, hipCenterX, avatarBaseY, avatarWidth, avatarRunPhase, isRunning, horizontalVelocity);
+
+                    updateStatus(`✅ Поза обнаружена!`, true);
+                } else {
+                    updateStatus(`✅ Поза обнаружена!`, true);
+                }
+            } else {
+                updateStatus(`🧍‍♂️ Пошевелитесь для управления`, false);
+                smoothedPoints = {};
+            }
+
+            // Debug overlays
+            if (debugMode && mirroredLandmarks) {
+                drawConnectors(canvasCtx, mirroredLandmarks, POSE_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
+                drawLandmarks(canvasCtx, mirroredLandmarks, {color: '#FF0000', lineWidth: 1, radius: 3});
+            }
+
+            canvasCtx.restore();
+        }
+
+        function onResults(results) {
+            recordFrameTime();
+            drawAvatar(results);
+        }
+
+        // --- Performance / FPS ---
+        function recordFrameTime() {
+            const now = performance.now();
+            lastFrameTimes.push(now);
+            if (lastFrameTimes.length > fpsWindow) lastFrameTimes.shift();
+            if (lastFrameTimes.length >= 2) {
+                const delta = lastFrameTimes[lastFrameTimes.length - 1] - lastFrameTimes[0];
+                const avgFps = (lastFrameTimes.length - 1) / (delta / 1000);
+                fpsLabel.textContent = avgFps.toFixed(1);
+                // Adaptive resolution
+                if (avgFps < targetFPS - 6 && inputScale > minScale) {
+                    inputScale = Math.max(minScale, inputScale - 0.25);
+                    resLabel.textContent = `${Math.round(800*inputScale)}x${Math.round(600*inputScale)}`;
+                    console.log('Adaptive: lowering input scale to', inputScale);
+                } else if (avgFps > targetFPS + 6 && inputScale < maxScale) {
+                    inputScale = Math.min(maxScale, inputScale + 0.25);
+                    resLabel.textContent = `${Math.round(800*inputScale)}x${Math.round(600*inputScale)}`;
+                    console.log('Adaptive: increasing input scale to', inputScale);
+                }
+            }
+        }
+
+        // toggle debug/limbs/color/gesture
+        function toggleDebug() { debugMode = !debugMode; }
+        function toggleLimbs() { showLimbs = !showLimbs; }
+        function changeAvatarColor() { currentColorIndex = (currentColorIndex + 1) % avatarColors.length; }
+        function setGesture(gesture) { currentGesture = gesture; console.log(`Gesture set to: ${gesture}`); }
+
+        // --- Init MediaPipe + camera handling with adaptive input scaling and fallback ---
+        async function initializeMediaPipe() {
+            try {
+                updateStatus("Загрузка MediaPipe Pose...");
+                const pose = new Pose({
+                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1635988162/${file}`
+                });
+                pose.setOptions({
+                    modelComplexity: 1,
+                    smoothLandmarks: true,
+                    minDetectionConfidence: 0.5,
+                    minTrackingConfidence: 0.5,
+                    enableSegmentation: true,
+                    selfieMode: true
+                });
+                pose.onResults(onResults);
+
+                updateStatus("Запуск камеры...");
+
+                // Try to get camera
+                let stream;
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: { width: 800, height: 600, facingMode: 'user' },
+                        audio: false
+                    });
+                } catch (e) {
+                    console.warn('Camera access failed, user may provide a video file as fallback', e);
+                    updateStatus("Не удалось получить камеру. Загрузите видео или разрешите доступ.", false);
+                    // stop initialization - user can provide video file or retry
+                    return;
+                }
+
+                videoTrackingElement.srcObject = stream;
+
+                // We will feed to MediaPipe a downscaled input canvas for adaptive resolution.
+                const inputCanvas = document.createElement('canvas');
+                let inputCtx = inputCanvas.getContext('2d');
+
+                const camera = new Camera(videoTrackingElement, {
+                    onFrame: async () => {
+                        // Draw into input canvas at reduced resolution
+                        const w = Math.round(800 * inputScale);
+                        const h = Math.round(600 * inputScale);
+                        inputCanvas.width = w;
+                        inputCanvas.height = h;
+                        inputCtx.drawImage(videoTrackingElement, 0, 0, w, h);
+
+                        // Optionally, we can upscale when sending (pose accepts image/canvas)
+                        await pose.send({ image: inputCanvas });
+                    },
+                    width: 800,
+                    height: 600
+                });
+
+                await camera.start();
+                updateStatus("🎥 Камера активна - Технология POSE!", true);
+                resLabel.textContent = `${Math.round(800*inputScale)}x${Math.round(600*inputScale)}`;
+            } catch (error) {
+                console.error('Ошибка инициализации:', error);
+                updateStatus("❌ Ошибка загрузки. Проверьте камеру и подключение.");
+            }
+        }
+
+        // --- UI Helpers: carriers, selection fix ---
+        function initThreeJS() {
+            if (typeof THREE === 'undefined') {
+                console.error('THREE.js не загружен!');
+                return false;
+            }
+            scene = new THREE.Scene();
+            console.log('ThreeJS ready');
+            return true;
+        }
+
+        function create3DPreview(container, carrierType) {
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            const sceneLocal = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            const rendererLocal = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            rendererLocal.setSize(width, height);
+            rendererLocal.setClearColor(0x000000, 0);
+            container.appendChild(rendererLocal.domElement);
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+            sceneLocal.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(5, 10, 5);
+            sceneLocal.add(directionalLight);
+            const carrier = createCarrierModel(carrierType);
+            sceneLocal.add(carrier);
+            camera.position.set(0, 2, 5);
+            camera.lookAt(0, 0, 0);
+            (function animate() {
+                requestAnimationFrame(animate);
+                if (carrier) carrier.rotation.y += 0.02;
+                rendererLocal.render(sceneLocal, camera);
+            })();
+            return { scene: sceneLocal, renderer: rendererLocal, camera, carrier };
+        }
+
+        function createCarrierModel(type) {
+            const group = new THREE.Group();
+            switch (type) {
+                case 'jets': {
+                    const jetGeometry = new THREE.CylinderGeometry(0.3, 0.4, 1, 8);
+                    const jetMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
+                    const jet1 = new THREE.Mesh(jetGeometry, jetMaterial);
+                    jet1.position.x = -0.5;
+                    const jet2 = new THREE.Mesh(jetGeometry, jetMaterial);
+                    jet2.position.x = 0.5;
+                    group.add(jet1, jet2);
+                    break;
+                }
+                case 'hoverboard': {
+                    const boardGeometry = new THREE.BoxGeometry(2, 0.1, 0.6);
+                    const boardMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff88 });
+                    const board = new THREE.Mesh(boardGeometry, boardMaterial);
+                    group.add(board);
+                    break;
+                }
+                case 'energy_platform': {
+                    const platformGeometry = new THREE.CylinderGeometry(1, 1, 0.2, 8);
+                    const platformMaterial = new THREE.MeshPhongMaterial({
+                        color: 0x6600ff,
+                        emissive: 0x220066
+                    });
+                    const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+                    group.add(platform);
+                    break;
+                }
+                default: {
+                    const defaultGeometry = new THREE.BoxGeometry(1, 0.5, 1);
+                    const defaultMaterial = new THREE.MeshPhongMaterial({ color: 0x0099ff });
+                    const defaultMesh = new THREE.Mesh(defaultGeometry, defaultMaterial);
+                    group.add(defaultMesh);
+                }
+            }
+            return group;
+        }
+
+        function renderTestCarriers() {
+            const container = document.getElementById('testCarriers');
+            container.innerHTML = '';
+            TEST_CARRIERS.forEach(carrier => {
+                const item = document.createElement('div');
+                item.className = 'carrier-item';
+                item.onclick = (ev) => selectCarrier(ev, carrier);
+                item.innerHTML = `
+                    <span class="carrier-emoji">${carrier.emoji}</span>
+                    <div class="carrier-name">${carrier.name}</div>
+                    <div class="carrier-3d" id="preview-${carrier.id}"></div>
+                `;
+                container.appendChild(item);
+                setTimeout(() => {
+                    const previewContainer = document.getElementById(`preview-${carrier.id}`);
+                    if (previewContainer) create3DPreview(previewContainer, carrier.type);
+                }, 100);
+            });
+        }
+
+        function selectCarrier(evt, carrier) {
+            document.querySelectorAll('.carrier-item').forEach(item => item.classList.remove('selected'));
+            const el = evt.currentTarget || evt.target.closest('.carrier-item');
+            if (el) el.classList.add('selected');
+            currentCarrier = carrier;
+            console.log(`🎯 Выбран носитель: ${carrier.name}`);
+        }
+
+        function saveCurrentCarrier() {
+            if (!currentCarrier) {
+                alert('Выберите носитель для сохранения!');
+                return;
+            }
+            const settings = {
+                width: parseFloat(document.getElementById('widthSlider').value),
+                height: parseFloat(document.getElementById('heightSlider').value),
+                offset: parseInt(document.getElementById('offsetSlider').value)
+            };
+            const approvedCarrier = {
+                ...currentCarrier,
+                settings,
+                id: `${currentCarrier.id}_${Date.now()}`
+            };
+            approvedCarriers.push(approvedCarrier);
+            localStorage.setItem('approvedCarriers', JSON.stringify(approvedCarriers));
+            renderApprovedCarriers();
+            const saveBtn = document.querySelector('.save-btn');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = '✅ СОХРАНЕНО!';
+            saveBtn.style.background = 'linear-gradient(45deg, #4caf50, #66bb6a)';
+            setTimeout(() => {
+                saveBtn.textContent = originalText;
+                saveBtn.style.background = 'linear-gradient(45deg, #ff6b35, #f7931e)';
+            }, 1600);
+        }
+
+        function renderApprovedCarriers() {
+            const container = document.getElementById('approvedCarriers');
+            if (approvedCarriers.length === 0) {
+                container.innerHTML = '<div class="empty-state">Пока нет одобренных носителей</div>';
+                return;
+            }
+            container.innerHTML = '';
+            approvedCarriers.forEach(c => {
+                const el = document.createElement('div');
+                el.className = 'approved-item';
+                el.innerHTML = `<div class="approved-info"><div class="approved-name">${c.name}</div><div class="approved-settings">W:${c.settings.width} H:${c.settings.height} Off:${c.settings.offset}</div></div>
+                    <button class="remove-btn" title="Удалить" onclick="removeApproved('${c.id}')">×</button>`;
+                container.appendChild(el);
+            });
+        }
+
+        function removeApproved(id) {
+            approvedCarriers = approvedCarriers.filter(c => c.id !== id);
+            localStorage.setItem('approvedCarriers', JSON.stringify(approvedCarriers));
+            renderApprovedCarriers();
+        }
+
+        // Toggle customization panels
+        function toggleCustomization() {
+            customizationVisible = !customizationVisible;
+            const testPanel = document.getElementById('testPanel');
+            const approvedPanel = document.getElementById('approvedPanel');
+            if (customizationVisible) {
+                testPanel.classList.add('visible');
+                approvedPanel.classList.add('visible');
+                if (!scene) initThreeJS();
+                renderTestCarriers();
+                renderApprovedCarriers();
+            } else {
+                testPanel.classList.remove('visible');
+                approvedPanel.classList.remove('visible');
+            }
+        }
+
+        // --- Capture processed canvas stream for WebRTC / preview ---
+        function toggleCapture() {
+            if (!isCapturing) {
+                processedStream = canvasElement.captureStream(30);
+                // For demo, open a new window with a video element showing the stream
+                const w = window.open('', 'processedStream');
+                if (w) {
+                    w.document.title = 'Processed Stream';
+                    const v = w.document.createElement('video');
+                    v.autoplay = true;
+                    v.controls = true;
+                    v.srcObject = processedStream;
+                    v.style.width = '640px';
+                    v.style.height = '480px';
+                    w.document.body.appendChild(v);
+                }
+                captureBtn.textContent = 'Stop Stream';
+                isCapturing = true;
+            } else {
+                if (processedStream) {
+                    processedStream.getTracks().forEach(t => t.stop());
+                    processedStream = null;
+                }
+                captureBtn.textContent = 'Start Stream';
+                isCapturing = false;
+            }
+        }
+
+        // Setup sliders UI
+        function setupSettingsHandlers() {
+            const widthSlider = document.getElementById('widthSlider');
+            const heightSlider = document.getElementById('heightSlider');
+            const offsetSlider = document.getElementById('offsetSlider');
+            const widthValue = document.getElementById('widthValue');
+            const heightValue = document.getElementById('heightValue');
+            const offsetValue = document.getElementById('offsetValue');
+            widthSlider.addEventListener('input', () => widthValue.textContent = parseFloat(widthSlider.value).toFixed(1));
+            heightSlider.addEventListener('input', () => heightValue.textContent = parseFloat(heightSlider.value).toFixed(1));
+            offsetSlider.addEventListener('input', () => offsetValue.textContent = parseInt(offsetSlider.value));
+        }
+
+        // Boot
+        window.addEventListener('load', () => {
+            initializeMediaPipe();
+            setupSettingsHandlers();
+            renderTestCarriers();
+            renderApprovedCarriers();
+        });
+    </script>
+</body>
+</html>

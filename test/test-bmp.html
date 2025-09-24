@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест BMP кнопок</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/bmp-styles.css">
+    <style>
+        body { 
+            background: #1a1a1a; 
+            color: white; 
+            font-family: Arial, sans-serif;
+            padding: 50px;
+        }
+        .test-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            align-items: center;
+        }
+        .bpm-controls {
+            display: flex !important;
+            align-items: center;
+            gap: 5px;
+            position: relative;
+            z-index: 10;
+        }
+        h1 { text-align: center; }
+        .info {
+            background: #333;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎵 Тест BMP кнопок с фоновыми буквами</h1>
+        
+        <div class="info">
+            <p><strong>Ожидаемый результат:</strong></p>
+            <ul>
+                <li>Левая кнопка (−5) должна иметь фоновую букву <strong>"B"</strong> красного цвета</li>
+                <li>Средняя кнопка (100%) должна иметь фоновую букву <strong>"P"</strong> зеленого цвета с пульсацией</li>
+                <li>Правая кнопка (+5) должна иметь фоновую букву <strong>"M"</strong> синего цвета</li>
+                <li>При наведении буквы должны становиться ярче и увеличиваться</li>
+            </ul>
+        </div>
+        
+        <div class="bpm-controls" id="bpm-controls">
+            <button class="bmp-btn" id="bpm-down" title="Замедлить темп на 5%">−5</button>
+            <button class="bmp-btn bpm-value-btn" id="bpm-value" title="Сбросить к оригинальному темпу">100%</button>
+            <button class="bmp-btn" id="bpm-up" title="Ускорить темп на 5%">+5</button>
+        </div>
+        
+        <div class="info">
+            <p><strong>Проверь:</strong></p>
+            <ol>
+                <li>Видны ли фоновые буквы B-P-M за кнопками?</li>
+                <li>Пульсирует ли буква "P" в средней кнопке?</li>
+                <li>Изменяются ли буквы при наведении мыши?</li>
+                <li>Работают ли hover эффекты на кнопках?</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html> 

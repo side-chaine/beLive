@@ -1,0 +1,7 @@
+name: DCO Placeholder
+on: [push,pull_request]
+jobs:
+  dco:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "DCO placeholder - please install GitHub DCO App"

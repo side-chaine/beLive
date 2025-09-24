@@ -1,0 +1,447 @@
+{
+  "branch": "work/clean-start",
+  "generated_by": "Assistant",
+  "note": "Sizes are exact where taken from ls -la output; others are null and should be verified locally.",
+  "markdown_files": [
+    {
+      "path": "./code_of_conduct.md",
+      "size_bytes": 1229,
+      "summary": ""
+    },
+    {
+      "path": "./js/audio-engine/README.md",
+      "size_bytes": null,
+      "summary": ""
+    },
+    {
+      "path": "./js/piano-keyboard-integration-plan.md",
+      "size_bytes": null,
+      "summary": ""
+    },
+    {
+      "path": "./Docs/EXPORT_POC.md",
+      "size_bytes": null,
+      "summary": ""
+    },
+    {
+      "path": "./Docs/PITCH_GUIDE.md",
+      "size_bytes": null,
+      "summary": ""
+    },
+    {
+      "path": "./Docs/QUICK_START.md",
+      "size_bytes": null,
+      "summary": ""
+    },
+    {
+      "path": "./README.md",
+      "size_bytes": 4799,
+      "summary": ""
+    },
+    {
+      "path": "./PROJECT_OVERVIEW_FOR_AI_COUNCIL.md",
+      "size_bytes": 10017,
+      "summary": ""
+    },
+    {
+      "path": "./ROADMAP.md",
+      "size_bytes": 3938,
+      "summary": ""
+    },
+    {
+      "path": "./contributing.md",
+      "size_bytes": 2491,
+      "summary": ""
+    },
+    {
+      "path": "./.github/PULL_REQUEST_TEMPLATE.md",
+      "size_bytes": null,
+      "summary": ""
+    },
+    {
+      "path": "./.github/PULL_REQUEST_TEMPLATE/pull_request_template.md",
+      "size_bytes": null,
+      "summary": ""
+    },
+    {
+      "path": "./.github/ISSUE_TEMPLATE/feature_request.md",
+      "size_bytes": null,
+      "summary": ""
+    },
+    {
+      "path": "./.github/ISSUE_TEMPLATE/bug_report.md",
+      "size_bytes": null,
+      "summary": ""
+    },
+    {
+      "path": "./.github/ISSUE_TEMPLATE/issue_template.md",
+      "size_bytes": null,
+      "summary": ""
+    },
+    {
+      "path": "./.github/ISSUE_TEMPLATE/research.md",
+      "size_bytes": null,
+      "summary": ""
+    },
+    {
+      "path": "./BUG_FIX_ROADMAP.md",
+      "size_bytes": 12768,
+      "summary": ""
+    },
+    {
+      "path": "./IMPLEMENTATION_PLAN.md",
+      "size_bytes": 3956,
+      "summary": ""
+    },
+    {
+      "path": "./SECURITY.md",
+      "size_bytes": 1196,
+      "summary": ""
+    }
+  ],
+  "large_files": [
+    {
+      "path": "./Docs/screenshots/concert_room.png",
+      "size_bytes": null
+    }
+  ],
+  "media_files": [
+    {
+      "path": "./Karaoke/pexels-maumascaro-1154189.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Karaoke/pexels-marcin-dampc-807808-1684187.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Karaoke/pexels-amit-batra-3062797-4658541.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Karaoke/pexels-pixabay-164879.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Karaoke/pexels-suvan-chowdhury-37305-144429.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Karaoke/yichen-wang-aBeTfQ65ycQ-unsplash.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Karaoke/kane-reinholdtsen-LETdkk7wHQk-unsplash.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Karaoke/prince-abid-LeZItQhwFks-unsplash.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Karaoke/pexels-mccutcheon-1191710.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Karaoke/bruno-cervera-Gi6-m_t_W-E-unsplash.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Karaoke/boliviainteligente-NFY0BeronrE-unsplash.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Karaoke/pexels-pixabay-164960.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Karaoke/pexels-clemlep-13659549.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Karaoke/pexels-katriengrevendonck-2101487.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Karaoke/pexels-trinitykubassek-341858.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Karaoke/pexels-capturexpression-26530062.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Karaoke/pexels-isabella-mendes-107313-332688.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Concert/pexels-jackgittoes-761543.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Concert/pexels-picjumbo-com-55570-196652.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Concert/pexels-wendywei-1677710.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Concert/pexels-markusspiske-92078.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Concert/pexels-teddy-2263436.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Concert/pexels-rahulp9800-1652353.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Concert/pexels-mark-angelo-sampan-738078-1587927.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Concert/pexels-apasaric-2078071.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Concert/pexels-wendywei-1190297.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Concert/pexels-thibault-trillet-44912-167491.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/4b8023db-3000-4084-bef9-b7aec2a804da.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/vinilovaia_plastinka_tonarm_kartridzh_107810_2560x1440.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-pixabay-210766.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/fotoapparat_obektiv_remeshok_145518_1600x900.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-pixabay-164716.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/noty_griaznyj_bumaga_124163_2560x1440.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-didsss-1653090.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-david-bartus-43782-844928.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/didzhej_muzyka_diskoteka_160929_2560x1440.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/dvoichnyj_kod_kod_tsifry_147523_2560x1440.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/soty_obem_zheleznyj_167098_2560x1440.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-pixabay-164853.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-reneterp-1327430.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-pixabay-290660.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/naushniki_ustanovka_muzyka_104587_1280x1024.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-antonh-145707.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-joshsorenson-995301.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-nikita-khandelwal-178978-632656.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-pixabay-159376.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/krolik_naushniki_muzyka_130283_2560x1440.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-pixabay-159613.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/dj_naushniki_ustanovka_122020_2560x1440.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-everson-mayer-478307-1481309.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/naushniki_knigi_obrazovanie_121501_2560x1600.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/muzykalnyj_instrument_muzyka_udarnye_106370_2560x1440.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-pixabay-257904.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/gitara_bas_gitara_struny_106722_2560x1440.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-pixabay-164769.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-conojeghuo-375893.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-pixabay-164938.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-bclarkphoto-1135995.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Rehearsal/pexels-pixabay-270288.jpg",
+      "size_bytes": null
+    },
+    {
+      "path": "./Docs/screenshots/rehearsal_Pitch_view.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./Docs/screenshots/karaoke_view.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./Docs/screenshots/rehearsal_Loop_Control_view.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./Docs/screenshots/concert_room2.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./Docs/screenshots/concert_room.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./Docs/screenshots/rehearsal_view.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./Docs/screenshots/rehearsal_Sync_view.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./Docs/screenshots/avatar_demo.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./img/masks/gradient.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./img/masks/sepia.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./img/masks/grayscale.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./img/masks/blue.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./img/masks/blur.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./img/masks/party.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./img/masks/concert.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./img/masks/matrix.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./img/masks/studio.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./img/masks/placeholder.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./img/masks/green.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./img/masks/vintage.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./img/masks/nature.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./img/masks/none.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./img/masks/stars.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./img/masks/sunset.png",
+      "size_bytes": null
+    },
+    {
+      "path": "./img/masks/neon.png",
+      "size_bytes": null
+    }
+  ],
+  "critical_files": []
+}
