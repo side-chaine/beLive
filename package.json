@@ -35,7 +35,7 @@
     "fast-levenshtein": "^2.0.6",
     "file-entry-cache": "^8.0.0",
     "find-up": "^5.0.0",
-    "flat-cache": "^4.0.1",
+    "flat-cache": "^6.1.14",
     "flatted": "^3.3.3",
     "glob-parent": "^6.0.2",
     "globals": "^14.0.0",
