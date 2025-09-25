@@ -110,27 +110,6 @@ class RtfParser {
         
         console.log('Extracting English text from RTF...');
         
-        // Проверка на известные песни Linkin Park
-        if (rtfContent.includes('Crawling in my skin') || 
-            rtfContent.includes('These wounds') || 
-            rtfContent.toLowerCase().includes('crawling')) {
-            console.log('Detected Linkin Park - Crawling');
-            return 'Crawling in my skin\n' +
-                   'These wounds, they will not heal\n' +
-                   // ... полный текст песни
-                   'Controlling (confusing what is real)';
-        }
-        
-        if (rtfContent.includes('Waiting for the end') || 
-            rtfContent.includes('This is not the end') || 
-            rtfContent.toLowerCase().includes('waiting for the end')) {
-            console.log('Detected Linkin Park - Waiting for the End');
-            return 'Yeah\n' +
-                   'This is not the end, this is not the beginning\n' +
-                   // ... полный текст песни
-                   'Holding on to what I haven\'t got';
-        }
-        
         // Используем универсальный метод извлечения для стандартных RTF
         let extractedText = this._extractBasicTextFromRtf(rtfContent);
         
@@ -156,17 +135,6 @@ class RtfParser {
         if (!rtfContent) return '';
         
         console.log('Extracting Russian text from RTF...');
-        
-        // Проверка на известные песни
-        if ((rtfContent.includes('Звери') || rtfContent.includes('звери')) && 
-            (rtfContent.includes('Дожди') || rtfContent.includes('дожди'))) {
-            console.log('Detected Zveri - Dozhdi-Pistolety');
-            return 'Звери - Дожди-Пистолеты\n\n' +
-                   'В нашем доме поселился странный страх,\n' +
-                   'Вместо туч на небе вертолет.\n' +
-                   // ... полный текст песни
-                   'Дожди-пистолеты, дожди-пистолеты, дожди.';
-        }
         
         // Пробуем извлечь юникод-символы для кириллицы
         let extractedText = this._extractUnicodeFromRtf(rtfContent);
