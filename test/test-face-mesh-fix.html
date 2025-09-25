@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Тест исправления Face Mesh</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        h1 {
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .video-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        #video {
+            width: 640px;
+            height: 480px;
+            transform: scaleX(-1); /* Зеркалируем только видео */
+            border-radius: 15px;
+        }
+        
+        .test-btn {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .test-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .status {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+        
+        .log {
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .instructions {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Тест исправления Face Mesh</h1>
+        
+        <div class="instructions">
+            <h3>📋 Инструкции:</h3>
+            <ol>
+                <li>Нажмите "Запустить камеру"</li>
+                <li>Дождитесь загрузки MediaPipe</li>
+                <li>Нажмите "Тест Face Mesh"</li>
+                <li>Двигайте головой - точки должны повторять движения лица</li>
+                <li>Если точки двигаются в противоположную сторону - есть проблема зеркалирования</li>
+            </ol>
+        </div>
+        
+        <div class="video-container">
+            <video id="video" autoplay muted playsinline></video>
+        </div>
+        
+        <div class="controls">
+            <button class="test-btn" onclick="startCamera()">📷 Запустить камеру</button>
+            <button class="test-btn" onclick="waitForMediaPipe()">⏳ Дождаться MediaPipe</button>
+            <button class="test-btn" onclick="testFaceMesh()">🎯 Тест Face Mesh</button>
+            <button class="test-btn" onclick="stopTest()">⏹️ Остановить</button>
+            <button class="test-btn" onclick="clearLog()">🧹 Очистить лог</button>
+        </div>
+        
+        <div class="status" id="status">
+            Готов к тестированию. Запустите камеру.
+        </div>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <!-- Скрипты основного приложения -->
+    <script src="js/background-effects-engine.js"></script>
+    <script src="js/mask-system.js"></script>
+    
+    <!-- MediaPipe библиотеки -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
+
+    <script>
+        let maskSystem = null;
+        let isTestActive = false;
+
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            logElement.innerHTML += `[${timestamp}] ${icon} ${message}<br>`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+            log(`Status: ${message}`);
+        }
+
+        async function startCamera() {
+            try {
+                log('📷 Запуск камеры...');
+                updateStatus('Запуск камеры...');
+                
+                // Создаем MaskSystem если еще не создан
+                if (!maskSystem) {
+                    maskSystem = new MaskSystem();
+                    await maskSystem.init();
+                    log('✅ MaskSystem инициализирован', 'success');
+                }
+                
+                // Запускаем видео захват
+                await maskSystem.setupVideoCapture();
+                log('✅ Камера запущена', 'success');
+                updateStatus('Камера активна. Дождитесь загрузки MediaPipe.');
+                
+            } catch (error) {
+                log(`❌ Ошибка запуска камеры: ${error.message}`, 'error');
+                updateStatus('Ошибка запуска камеры');
+            }
+        }
+
+        async function waitForMediaPipe() {
+            if (!maskSystem) {
+                log('❌ Сначала запустите камеру', 'error');
+                return;
+            }
+            
+            log('⏳ Ожидание загрузки MediaPipe библиотек...');
+            updateStatus('Загрузка MediaPipe библиотек...');
+            
+            let attempts = 0;
+            const maxAttempts = 100; // 10 секунд
+            
+            const checkInterval = setInterval(() => {
+                attempts++;
+                
+                const ready = maskSystem.mediaReady && 
+                             maskSystem.faceMesh && 
+                             window.FaceMesh;
+                
+                if (ready) {
+                    clearInterval(checkInterval);
+                    log('✅ MediaPipe Face Mesh готов!', 'success');
+                    updateStatus('MediaPipe готов. Можете запустить тест Face Mesh.');
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(checkInterval);
+                    log('⚠️ MediaPipe не готов за отведенное время', 'warning');
+                    log(`📊 Статус: mediaReady=${maskSystem.mediaReady}, faceMesh=${!!maskSystem.faceMesh}, window.FaceMesh=${!!window.FaceMesh}`);
+                    updateStatus('MediaPipe не готов');
+                } else {
+                    if (attempts % 10 === 0) {
+                        log(`⏳ Ожидание... (${attempts * 100}мс)`);
+                    }
+                }
+            }, 100);
+        }
+
+        async function testFaceMesh() {
+            if (!maskSystem || !maskSystem.mediaReady) {
+                log('❌ MaskSystem или MediaPipe не готов', 'error');
+                return;
+            }
+            
+            try {
+                log('🎯 Запуск теста Face Mesh...');
+                updateStatus('Тестирование Face Mesh...');
+                
+                // Создаем тестовую маску Face Mesh
+                const faceMeshMask = {
+                    id: 'face-mesh',
+                    name: 'Face Mesh Test',
+                    type: 'mediapipe'
+                };
+                
+                // Применяем маску через MaskSystem
+                await maskSystem.applyMask(faceMeshMask);
+                
+                isTestActive = true;
+                log('✅ Face Mesh тест запущен!', 'success');
+                log('👁️ Смотрите на видео - зеленые точки должны повторять движения лица', 'success');
+                updateStatus('Face Mesh активен. Двигайте головой для проверки синхронизации.');
+                
+            } catch (error) {
+                log(`❌ Ошибка теста Face Mesh: ${error.message}`, 'error');
+                updateStatus('Ошибка теста Face Mesh');
+            }
+        }
+
+        function stopTest() {
+            if (maskSystem) {
+                maskSystem.clearAllEffects();
+                isTestActive = false;
+                log('⏹️ Тест остановлен', 'success');
+                updateStatus('Тест остановлен');
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            log('🧹 Лог очищен');
+        }
+
+        // Автоинициализация
+        window.addEventListener('load', () => {
+            log('🚀 Тестовая страница Face Mesh загружена');
+            log('📋 Следуйте инструкциям для тестирования');
+        });
+    </script>
+</body>
+</html> 

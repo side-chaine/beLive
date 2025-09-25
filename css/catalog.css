@@ -1,0 +1,434 @@
+/* 🎵 CATALOG V2 OVERLAY STYLES */
+.catalog-v2-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.catalog-v2-overlay.hidden {
+    display: none;
+}
+
+.catalog-v2-container {
+    background-color: #1a1a1a;
+    border-radius: 10px;
+    padding: 20px;
+    max-width: 95vw;
+    max-height: 85vh;
+    width: 1200px;
+    height: 700px;
+    color: #f0f0f0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.catalog-v2-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #00e676;
+    padding-bottom: 10px;
+}
+
+.catalog-v2-header h2 {
+    color: #00e676;
+    margin: 0;
+}
+
+.catalog-v2-close-btn {
+    background: #666;
+    color: #f0f0f0;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.catalog-v2-close-btn:hover {
+    background: #888;
+}
+
+.catalog-v2-content {
+    color: #f0f0f0;
+    height: calc(100% - 60px);
+    overflow: hidden;
+}
+
+/* 3-КОЛОНОЧНАЯ СЕТКА */
+.catalog-v2-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    height: 100%;
+}
+
+.catalog-column {
+    background: #2a2a2a;
+    border-radius: 8px;
+    padding: 15px;
+    overflow-y: auto;
+    border: 1px solid #333;
+}
+
+.catalog-column h3 {
+    color: #00e676;
+    margin: 0 0 15px 0;
+    font-size: 1.1em;
+    border-bottom: 1px solid #333;
+    padding-bottom: 8px;
+}
+
+.empty-state {
+    color: #888;
+    text-align: center;
+    font-style: italic;
+    margin: 20px 0;
+}
+
+/* ТАБЫ В ЦЕНТРАЛЬНОЙ КОЛОНКЕ */
+.tab-navigation {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.tab-btn {
+    flex: 1;
+    background: #333;
+    color: #ccc;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.tab-btn.active {
+    background: #00e676;
+    color: #000;
+}
+
+.tab-btn:hover:not(.active) {
+    background: #444;
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+/* ПЕРЕКЛЮЧАТЕЛЬ ПОИСК/ЗАГРУЗКА */
+.search-upload-toggle {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.toggle-btn {
+    flex: 1;
+    background: #333;
+    color: #ccc;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.toggle-btn.active {
+    background: #ff6b35;
+    color: #fff;
+}
+
+.toggle-btn:hover:not(.active) {
+    background: #444;
+}
+
+.search-mode-content,
+.upload-mode-content {
+    display: none;
+}
+
+.search-mode-content.active,
+.upload-mode-content.active {
+    display: block;
+}
+
+.search-input {
+    width: 100%;
+    background: #333;
+    color: #f0f0f0;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 15px;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #00e676;
+}
+
+.upload-placeholder {
+    color: #888;
+    text-align: center;
+    font-style: italic;
+    margin: 20px 0;
+}
+
+/* СТИЛИ ДЛЯ ТРЕКОВ В "МОЯ МУЗЫКА" */
+.artist-group {
+    margin-bottom: 10px;
+    border: 1px solid #444;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.artist-header {
+    background: #333;
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.3s;
+}
+
+.artist-header:hover {
+    background: #444;
+}
+
+.artist-name {
+    flex: 1;
+    font-weight: bold;
+    color: #00e676;
+}
+
+.track-count {
+    color: #888;
+    font-size: 0.9em;
+}
+
+.expand-icon {
+    color: #00e676;
+    transition: transform 0.3s;
+}
+
+.artist-group.expanded .expand-icon {
+    transform: rotate(180deg);
+}
+
+.artist-tracks {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.artist-group.expanded .artist-tracks {
+    max-height: 500px;
+}
+
+.track-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid #444;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background-color 0.3s;
+}
+
+.track-item:last-child {
+    border-bottom: none;
+}
+
+.track-item:hover {
+    background: #3a3a3a;
+}
+
+.track-title {
+    flex: 1;
+    color: #f0f0f0;
+    font-size: 0.9em;
+}
+
+.track-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.track-action-btn {
+    background: #555;
+    color: #f0f0f0;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: all 0.3s;
+}
+
+.track-action-btn:hover {
+    background: #666;
+}
+
+.track-action-btn.play-btn:hover {
+    background: #00e676;
+    color: #000;
+}
+
+.track-action-btn.add-btn:hover {
+    background: #ff6b35;
+}
+
+/* UPLOAD MODE СТИЛИ */
+.upload-mode-container {
+    padding: 15px;
+}
+
+.upload-header h4 {
+    color: #ff6b35;
+    margin: 0 0 5px 0;
+    font-size: 1.1em;
+}
+
+.upload-subtitle {
+    color: #888;
+    font-size: 0.9em;
+    margin: 0 0 20px 0;
+}
+
+.upload-cells {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.upload-cell {
+    border: 2px dashed #555;
+    border-radius: 8px;
+    padding: 15px;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.upload-cell:hover {
+    border-color: #777;
+    background: #333;
+}
+
+.upload-cell.has-file {
+    border-color: #00e676;
+    border-style: solid;
+    background: rgba(0, 230, 118, 0.1);
+}
+
+.upload-cell.drag-over {
+    border-color: #ff6b35;
+    background: rgba(255, 107, 53, 0.1);
+}
+
+.upload-cell-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.cell-icon {
+    font-size: 1.2em;
+}
+
+.cell-title {
+    font-weight: bold;
+    color: #f0f0f0;
+}
+
+.upload-cell-content {
+    position: relative;
+}
+
+.file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.upload-drop-zone {
+    padding: 20px;
+    text-align: center;
+    border-radius: 6px;
+    background: #444;
+    transition: background-color 0.3s;
+}
+
+.upload-cell:hover .upload-drop-zone {
+    background: #555;
+}
+
+.drop-text {
+    color: #bbb;
+    font-size: 0.9em;
+}
+
+.upload-cell.has-file .drop-text {
+    color: #00e676;
+    font-weight: bold;
+}
+
+.upload-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.upload-action-btn {
+    flex: 1;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.cancel-btn {
+    background: #666;
+    color: #f0f0f0;
+}
+
+.cancel-btn:hover {
+    background: #777;
+}
+
+.save-btn {
+    background: #00e676;
+    color: #000;
+}
+
+.save-btn:hover:not(:disabled) {
+    background: #00cc66;
+}
+
+.save-btn:disabled {
+    background: #333;
+    color: #666;
+    cursor: not-allowed;
+} 

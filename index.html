@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>beLive - Трансляции для музыкантов</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/loop-button-styles.css">
+    <link rel="stylesheet" href="css/transport-controls.css">
+    <link rel="stylesheet" href="css/karaoke-styles.css">
+    <link rel="stylesheet" href="css/live-mode.css">
+    <link rel="stylesheet" href="css/mode-buttons-override.css">
+    <link rel="stylesheet" href="css/font-selector.css">
+    <link rel="stylesheet" href="css/waveform-source-switcher.css">
+    <link rel="stylesheet" href="css/avatar-page.css">
+    <link rel="stylesheet" href="css/home-button-enhanced.css">
+    <link rel="stylesheet" href="css/bmp-styles.css">
+    <link rel="stylesheet" href="css/catalog-v2.css">
+    <link rel="stylesheet" href="css/dark-overlay.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    
+    <!-- MediaPipe Official CDN Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+    
+    <!-- Pitchy Library for Professional Pitch Detection -->
+    <script type="module">
+        import { PitchDetector } from "https://esm.sh/pitchy@4";
+        window.PitchDetector = PitchDetector;
+        console.log('✅ Pitchy библиотека загружена в beLive');
+    </script>
+    <link rel="stylesheet" href="css/rehearsal-styles.css">
+    <link rel="stylesheet" href="css/concert-styles.css">
+    <link rel="stylesheet" href="css/karaoke-styles.css">
+
+    <!-- Google Fonts for Font Selector -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@400;700&family=Open+Sans:wght@400;700&family=Bebas+Neue&family=Playfair+Display:wght@400;700&family=Merriweather:wght@400;700&family=Lora:wght@400;700&family=PT+Serif:wght@400;700&family=Oswald:wght@400;700&family=Lobster&family=Pacifico&family=Caveat&display=swap" rel="stylesheet">
+    <!-- Orbitron font for cockpit design -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="js/dev-flags.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 1. Верхняя панель с логотипом и кнопками режимов -->
+        <header class="app-header">
+            <div class="header-content glass-effect">
+                <!-- Группа 1: Логотип и левые элементы -->
+                <div class="header-left-group">
+                <button id="home-btn" class="home-btn" title="Вернуться на стартовую страницу">
+                    <span class="home-logo">beLIVE</span>
+                </button>
+                </div>
+                
+                <!-- BPM контроль для режима репетиции (между логотипом и режимами) -->
+                <div class="bpm-controls" id="bpm-controls" style="display: none;">
+                    <button class="bmp-btn" id="bpm-down" title="Замедлить темп на 5%">−5</button>
+                    <button class="bmp-btn bpm-value-btn" id="bpm-value" title="Сбросить к оригинальному темпу">100%</button>
+                    <button class="bmp-btn" id="bpm-up" title="Ускорить темп на 5%">+5</button>
+                </div>
+                
+                <!-- Группа 2: Центральные кнопки режимов (позиционируются абсолютно) -->
+                <div class="mode-buttons">
+                    <button id="concert-mode" class="mode-button btn-concert" data-mode="concert">Концертный</button>
+                    <button id="karaoke-mode" class="mode-button btn-karaoke" data-mode="karaoke">Караоке</button>
+                    <button id="rehearsal-mode" class="mode-button btn-rehearsal" data-mode="rehearsal">Репетиция</button>
+                    <button id="live-mode" class="mode-button btn-live" data-mode="live">LIVE</button>
+                </div>
+                
+                <!-- Группа 3: Правые элементы (Каталог и Масштаб) -->
+                <div class="header-right-group">
+                <div class="scale-controls">
+                        <button class="scale-btn" id="scale-down" title="Уменьшить шрифт">-</button>
+                        <button class="scale-btn scale-value-btn" id="scale-value" title="Сбросить масштаб">100%</button>
+                        <button class="scale-btn" id="scale-up" title="Увеличить шрифт">+</button>
+                    </div>
+                    <button id="catalog-btn" class="animated-gradient-btn">Catalog</button>
+                    <div class="user-avatar" id="avatar-btn" title="Avatar Studio">👤</div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- 3. Основной контейнер для текста -->
+        <div id="lyrics-container">
+            <div id="base-text-overlay" style="display:none"></div>
+            <div id="lyrics-display">
+                <div class="welcome-message">
+                    <h1>Welcome to beLIVE</h1>
+                    <p>Your lyrics assistant for live performances</p>
+                    <p>Click the Catalog button to start adding tracks</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 4. Нижняя панель управления плеером (ПЕРЕМЕЩЕНА ВНИЗ) -->
+        <div id="transport-controls">
+            <div class="transport-controls-row" id="main-control-groups">
+                <!-- Group 1: Playback -->
+                <div class="control-group">
+                    <button id="play-pause" class="unified-btn">Play</button>
+                    <button id="monitor-btn" class="unified-btn" title="Monitor settings">🎧 Monitor</button>
+                </div>
+                
+                <!-- Group 2: Volume -->
+                <div class="control-group">
+                <div class="volume-controls">
+                    <div class="volume-control">
+                        <label>Instrumental</label>
+                            <input type="range" id="instrumental-volume" class="volume-slider" min="0" max="100" value="100">
+                    </div>
+                    <div class="volume-control">
+                        <label>Vocals</label>
+                            <input type="range" id="vocals-volume" class="volume-slider" min="0" max="100" value="100">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Group 3: Core Tools -->
+                <div class="control-group">
+                    <button id="toggle-loopblock-mode" class="unified-btn" title="Toggle LoopBlock Mode">Loop</button>
+                    <button id="style-selector-btn" class="unified-btn" title="Select text style">
+                    <i class="fas fa-text-height"></i> Styles
+                </button>
+                    <button id="piano-keyboard-btn" class="unified-btn" title="Анализ тональности">
+                        <i class="fas fa-chart-line"></i> Pitch
+                </button>
+                    <button id="mask-mode-btn" class="unified-btn" title="Маски и эффекты">
+                        <i class="fas fa-theater-masks"></i> Маски
+                </button>
+                </div>
+
+                <!-- Group 4: Sync & Mic -->
+                <div class="control-group">
+                    <button id="sync-btn" class="unified-btn" title="Синхронизация текста и музыки">Sync</button>
+                    <div class="mic-control">
+                        <span>Mic:</span>
+                        <input type="range" id="mic-volume" class="mic-volume-slider volume-slider" min="0" max="100" value="70" title="Громкость микрофона">
+                        <button id="mic-toggle-btn" class="unified-btn" title="Включить/выключить микрофон">
+                            <i class="fas fa-microphone"></i>
+                </button>
+                    </div>
+                </div>
+
+                <!-- Group 5: Catalog -->
+                <div class="control-group">
+                    <!-- BUTTON MOVED TO HEADER -->
+                </div>
+            </div>
+            
+            <div class="transport-controls-row" id="progress-and-toggle-row">
+                <div id="transport-toggle" title="Показать/скрыть панель управления">
+                    <i class="fas fa-sliders-h"></i>
+                </div>
+                <div id="time-display">0:00 / 0:00</div>
+                <div id="progress-bar-container">
+                    <div id="progress-bar-loaded"></div>
+                    <div id="progress-bar"></div>
+                    <div id="progress-tooltip">0:00</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Piano Keyboard Container (initially hidden) -->
+        <div id="piano-keyboard-container" class="hidden">
+            <div class="piano-header">
+                <button id="back-to-transport" class="back-button" title="Вернуться к транспортной панели">
+                    <i class="fas fa-arrow-left"></i> Транспорт
+                </button>
+                <h2>🎹 Анализ вокала в реальном времени</h2>
+                <div class="piano-status" id="piano-status">Готов к анализу</div>
+            </div>
+            
+            <!-- Professional Settings (compact) -->
+            <div class="piano-settings">
+                <div class="setting-group">
+                    <label>🎵 Диапазон: <span id="piano-freq-range">65-1050 Hz</span></label>
+                    <input type="range" id="piano-freq-range-slider" min="50" max="2000" value="1050" step="50">
+                </div>
+                <div class="setting-group">
+                    <label>🎯 Чувствительность: <span id="piano-sensitivity">80%</span></label>
+                    <input type="range" id="piano-sensitivity-slider" min="50" max="95" value="80" step="5">
+                </div>
+                <div class="setting-group">
+                    <label>🧹 Фильтр: <span id="piano-filter">200мс</span></label>
+                    <input type="range" id="piano-filter-slider" min="50" max="500" value="200" step="50">
+                </div>
+            </div>
+            
+            <!-- Piano Visualization Area -->
+            <div class="piano-visualization">
+                <canvas id="piano-canvas"></canvas>
+            </div>
+        </div>
+        
+        <!-- Track Catalog (initially hidden) -->
+        <div id="track-catalog" class="hidden">
+            <div class="catalog-header">
+                <h2>Track Catalog</h2>
+                <div class="catalog-actions">
+                    <button id="clear-catalog" class="btn-danger" title="Удалить все треки из каталога">Очистить каталог</button>
+                    <button id="close-catalog">Закрыть</button>
+                </div>
+            </div>
+            <div id="catalog-tracks"></div>
+            <div id="upload-section">
+                <h3>Upload New Track</h3>
+                <div class="upload-container">
+                    <div class="upload-row">
+                        <div class="upload-box">
+                            <label>Instrumental Track</label>
+                            <div id="instrumental-dropzone" class="dropzone">
+                                <div class="dropzone-content">
+                                    <div class="icon">🎹</div>
+                                    <p>Drop track file</p>
+                                </div>
+                                <input type="file" id="instrumental-upload" accept="audio/*">
+                            </div>
+                        </div>
+                        
+                        <div class="upload-box">
+                            <label>Vocals Track (optional)</label>
+                            <div id="vocals-dropzone" class="dropzone">
+                                <div class="dropzone-content">
+                                    <div class="icon">🎤</div>
+                                    <p>Drop vocals file</p>
+                                </div>
+                                <input type="file" id="vocals-upload" accept="audio/*">
+                            </div>
+                        </div>
+                        
+                        <div class="upload-box">
+                            <label>Lyrics</label>
+                            <div id="lyrics-dropzone" class="dropzone">
+                                <div class="dropzone-content">
+                                    <div class="icon">📝</div>
+                                    <p>Drop text file</p>
+                                </div>
+                                <input type="file" id="lyrics-upload" accept=".txt,.text,.lrc,.md,.rtf,.doc,.docx,.srt,.sub,.vtt,.ass,.ssa,.xml,.json,.csv,text/plain,text/rtf,application/rtf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/*,application/json,application/xml">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="upload-btn">Upload Track</button>
+                    
+                    <div class="import-markers-container">
+                        <hr>
+                        <h3>Restore Track Markers</h3>
+                        <p class="info-text">Import track markers from a previously saved JSON file</p>
+                        <div class="import-box">
+                            <input type="file" id="import-markers-input" accept=".json" style="display:none">
+                            <button id="import-markers-btn" class="btn-secondary">
+                                <span class="icon">📥</span> Import Markers
+                            </button>
+                            <span id="import-file-name">No file selected</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Style Selector Container (initially hidden) - REMOVED, handled by JS -->
+        
+        <!-- Концепция "Живая Лента" (скрыта по умолчанию) -->
+        <div id="live-feed-concept" class="hidden">
+            <!-- Заголовок -->
+            <header class="live-feed-header">
+                <div class="logo">
+                    <span class="logo-text">beLIVE</span>
+                    <span class="tagline">Живая лента</span>
+                </div>
+                <div class="user-info">
+                    <div class="progress-ring">
+                        <div class="daily-progress">
+                            <span class="progress-text">3/5</span>
+                            <span class="progress-label">цели</span>
+                        </div>
+                    </div>
+                    <div class="user-avatar">👤</div>
+                </div>
+                <button id="back-to-hall" class="back-to-hall-btn" title="Вернуться в классический зал">
+                    ← Классический зал
+                </button>
+            </header>
+            
+            <!-- Основной контент -->
+            <main class="live-feed-main">
+                <!-- Левая панель: Live потоки -->
+                <section class="live-streams">
+                    <div class="section-header">
+                        <h2>🔴 Live Streams</h2>
+                        <div class="filter-tabs">
+                            <button class="tab active" data-filter="karaoke">Караоке</button>
+                            <button class="tab" data-filter="training">Обучение</button>
+                            <button class="tab" data-filter="duet">Дуэты</button>
+                        </div>
+                    </div>
+                    
+                    <div class="streams-grid">
+                        <div class="stream-card" data-type="karaoke">
+                            <div class="stream-preview">
+                                <div class="stream-thumbnail">🎤</div>
+                                <div class="live-indicator">LIVE</div>
+                                <div class="viewer-count">1.2K</div>
+                            </div>
+                            <div class="stream-info">
+                                <h3>Анна поет рок-хиты</h3>
+                                <p>Присоединяйтесь к караоке!</p>
+                                <div class="stream-actions">
+                                    <button class="join-btn">🎵 Спеть дуэт</button>
+                                    <button class="watch-btn">👁️ Смотреть</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stream-card" data-type="training">
+                            <div class="stream-preview">
+                                <div class="stream-thumbnail">🎭</div>
+                                <div class="live-indicator">LIVE</div>
+                                <div class="viewer-count">856</div>
+                            </div>
+                            <div class="stream-info">
+                                <h3>Урок вокала: дыхание</h3>
+                                <p>Базовые техники для начинающих</p>
+                                <div class="stream-actions">
+                                    <button class="join-btn">📚 Учиться</button>
+                                    <button class="watch-btn">👁️ Смотреть</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stream-card" data-type="karaoke">
+                            <div class="stream-preview">
+                                <div class="stream-thumbnail">🌟</div>
+                                <div class="live-indicator">LIVE</div>
+                                <div class="viewer-count">2.1K</div>
+                            </div>
+                            <div class="stream-info">
+                                <h3>Битва голосов</h3>
+                                <p>Кто споет лучше? Голосуй!</p>
+                                <div class="stream-actions">
+                                    <button class="join-btn">⚔️ Участвовать</button>
+                                    <button class="watch-btn">👁️ Смотреть</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stream-card" data-type="duet">
+                            <div class="stream-preview">
+                                <div class="stream-thumbnail">🎸</div>
+                                <div class="live-indicator">LIVE</div>
+                                <div class="viewer-count">643</div>
+                            </div>
+                            <div class="stream-info">
+                                <h3>Джем-сессия</h3>
+                                <p>Импровизация с инструментами</p>
+                                <div class="stream-actions">
+                                    <button class="join-btn">🎶 Играть</button>
+                                    <button class="watch-btn">👁️ Смотреть</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Правая панель -->
+                <aside class="live-feed-sidebar">
+                    <section>
+                        <h3>🚀 Быстрый старт</h3>
+                        <div class="action-buttons">
+                            <button class="quick-btn concert" data-mode="concert">Концерт</button>
+                            <button class="quick-btn karaoke" data-mode="karaoke">Караоке</button>
+                            <button class="quick-btn practice" data-mode="rehearsal">Репетиция</button>
+                            <button class="quick-btn live" data-mode="live">LIVE</button>
+                        </div>
+                    </section>
+                    
+                    <section>
+                        <h3>📊 Ваш прогресс</h3>
+                        <p>Сегодня вы уже спели <strong>23 минуты</strong> и выполнили <strong>7 песен</strong> с точностью <strong>91%</strong>.</p>
+                    </section>
+                    
+                    <section>
+                        <h3>🔥 Тренды недели</h3>
+                        <p><strong>#1</strong> Bohemian Rhapsody (+1,847)</p>
+                        <p><strong>#2</strong> Someone Like You (+1,523)</p>
+                        <p><strong>#3</strong> Perfect (+1,401)</p>
+                    </section>
+                    
+                    <section>
+                        <h3>👥 Друзья онлайн</h3>
+                        <div class="friends-list">
+                            <div class="friend-item">
+                                <span class="friend-name">🟢 Мария</span>
+                                <button class="friend-join-btn">Присоединиться</button>
+                            </div>
+                            <div class="friend-item">
+                                <span class="friend-name">🟢 Алексей</span>
+                                <button class="friend-join-btn">Присоединиться</button>
+                            </div>
+                            <div class="friend-item">
+                                <span class="friend-name">🟡 Екатерина</span>
+                                <button class="friend-join-btn">Присоединиться</button>
+                            </div>
+                        </div>
+                    </section>
+                </aside>
+            </main>
+        </div>
+        
+        <!-- Live Mode Containers -->
+        <div id="live-video-container" class="hidden">
+            <div class="live-header">
+                <h1 class="live-title">LIVE</h1>
+            </div>
+            <video id="live-video" autoplay muted playsinline disablepictureinpicture disableremoteplayback webkit-playsinline x-webkit-airplay="deny"></video>
+            <div id="lyrics-overlay"></div>
+            <div class="live-controls">
+                <button id="record-button" class="live-control-btn">
+                    <i class="fas fa-record-vinyl"></i> Запись
+                </button>
+                <button id="stream-button" class="live-control-btn">
+                    <i class="fas fa-broadcast-tower"></i> Стрим
+                </button>
+                <button id="toggle-effects" class="live-control-btn">
+                    <i class="fas fa-mask"></i> Эффекты
+                </button>
+                <button id="settings-button" class="live-control-btn">
+                    <i class="fas fa-cog"></i> Настройки
+                </button>
+            </div>
+            <div id="recording-indicator" class="hidden">REC</div>
+        </div>
+        
+        <!-- Masks Panel -->
+        <div id="masks-panel" class="hidden">
+            <div class="masks-header">
+                <button class="back-button"><i class="fas fa-arrow-left"></i> Назад</button>
+                <h2>Маски и эффекты</h2>
+            </div>
+            <div class="categories">
+                <!-- Категории будут добавлены динамически -->
+            </div>
+            <div id="masks-container">
+                <!-- Маски будут добавлены динамически -->
+            </div>
+        </div>
+        
+        <!-- Modal Container -->
+        <div id="modal-container" class="hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Настройки</h3>
+                    <button id="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <!-- Содержимое будет добавлено динамически -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status Display for Live mode -->
+        <div id="live-status-display" class="hidden"></div>
+    </div>
+
+    <!-- Avatar Studio Page Container -->
+    <div id="avatar-page-container" class="hidden">
+        <div class="cockpit-pro">
+            <!-- Унифицированная навигация как в основном приложении -->
+            <header class="cockpit-nav">
+                <!-- Группа 1: Логотип и левые элементы -->
+                <div class="header-left-group">
+                    <button class="home-btn" title="beLIVE Avatar Studio">
+                        <span class="home-logo">beLIVE</span>
+                    </button>
+                </div>
+                
+                <!-- Группа 2: Центральные кнопки режимов -->
+                <div class="mode-buttons">
+                    <button class="mode-button btn-concert" data-mode="concert">Концертный</button>
+                    <button class="mode-button btn-karaoke active" data-mode="karaoke">Караоке</button>
+                    <button class="mode-button btn-rehearsal" data-mode="rehearsal">Репетиция</button>
+                    <button class="mode-button btn-live" data-mode="live">LIVE</button>
+                </div>
+                
+                <!-- Группа 3: Правые элементы -->
+                <div class="header-right-group">
+                    <div class="scale-controls">
+                        <button class="scale-btn">-</button>
+                        <button class="scale-btn scale-value-btn">120%</button>
+                        <button class="scale-btn">+</button>
+                    </div>
+                    <button class="animated-gradient-btn">Catalog</button>
+                    <div class="progress-ring">
+                        <div class="daily-progress">
+                            <span class="progress-text">3/5</span>
+                            <span class="progress-label">цели</span>
+                        </div>
+                    </div>
+                    <div class="user-avatar active">👤</div>
+                </div>
+                
+                <!-- Кнопка возврата -->
+                <button id="back-to-live-feed" class="back-button">← Live Feed</button>
+            </header>
+
+            <!-- Карусель треков -->
+            <section class="track-carousel-container">
+                <div class="carousel-track-list">
+                    <!-- Первый набор треков -->
+                    <!-- Трек 1 -->
+                    <div class="carousel-track-item active" onclick="selectTrack(this)" data-track-id="1">
+                        <div class="track-item-glow"></div>
+                        <div class="track-item-cover cover-1">
+                            <div class="live-singers">
+                                <a href="#" class="singer">Sveta</a>
+                                <a href="#" class="singer">Mike</a>
+                            </div>
+                        </div>
+                        <h4 class="track-item-title">Bohemian Rhapsody</h4>
+                    </div>
+                    <!-- Трек 2 -->
+                    <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="2">
+                        <div class="track-item-glow"></div>
+                        <div class="track-item-cover cover-2"></div>
+                        <h4 class="track-item-title">Stairway to Heaven</h4>
+                    </div>
+                    <!-- Трек 3 -->
+                    <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="3">
+                        <div class="track-item-glow"></div>
+                        <div class="track-item-cover cover-3">
+                            <div class="live-singers">
+                                <a href="#" class="singer">Vasya</a>
+                            </div>
+                        </div>
+                        <h4 class="track-item-title">Hallelujah</h4>
+                    </div>
+                    <!-- Трек 4 -->
+                    <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="4">
+                        <div class="track-item-glow"></div>
+                        <div class="track-item-cover cover-4">
+                            <div class="live-singers">
+                                <a href="#" class="singer">John</a>
+                                <a href="#" class="singer">Lisa</a>
+                                <a href="#" class="singer">Max</a>
+                            </div>
+                        </div>
+                        <h4 class="track-item-title">Smells Like Teen Spirit</h4>
+                    </div>
+                    <!-- Трек 5 -->
+                    <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="5">
+                        <div class="track-item-glow"></div>
+                        <div class="track-item-cover cover-5"></div>
+                        <h4 class="track-item-title">Hotel California</h4>
+                    </div>
+                    <!-- Трек 6 -->
+                    <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="6">
+                        <div class="track-item-glow"></div>
+                        <div class="track-item-cover cover-6">
+                            <div class="live-singers">
+                                <a href="#" class="singer">Anna</a>
+                            </div>
+                        </div>
+                        <h4 class="track-item-title">Yesterday</h4>
+                    </div>
+                    
+                    <!-- Дублированный набор треков для бесконечной прокрутки -->
+                    <!-- Трек 1 (дубль) -->
+                    <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="1">
+                        <div class="track-item-glow"></div>
+                        <div class="track-item-cover cover-1">
+                            <div class="live-singers">
+                                <a href="#" class="singer">Sveta</a>
+                                <a href="#" class="singer">Mike</a>
+                            </div>
+                        </div>
+                        <h4 class="track-item-title">Bohemian Rhapsody</h4>
+                    </div>
+                    <!-- Трек 2 (дубль) -->
+                    <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="2">
+                        <div class="track-item-glow"></div>
+                        <div class="track-item-cover cover-2"></div>
+                        <h4 class="track-item-title">Stairway to Heaven</h4>
+                    </div>
+                    <!-- Трек 3 (дубль) -->
+                    <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="3">
+                        <div class="track-item-glow"></div>
+                        <div class="track-item-cover cover-3">
+                            <div class="live-singers">
+                                <a href="#" class="singer">Vasya</a>
+                            </div>
+                        </div>
+                        <h4 class="track-item-title">Hallelujah</h4>
+                    </div>
+                    <!-- Трек 4 (дубль) -->
+                    <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="4">
+                        <div class="track-item-glow"></div>
+                        <div class="track-item-cover cover-4">
+                            <div class="live-singers">
+                                <a href="#" class="singer">John</a>
+                                <a href="#" class="singer">Lisa</a>
+                                <a href="#" class="singer">Max</a>
+                            </div>
+                        </div>
+                        <h4 class="track-item-title">Smells Like Teen Spirit</h4>
+                    </div>
+                    <!-- Трек 5 (дубль) -->
+                    <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="5">
+                        <div class="track-item-glow"></div>
+                        <div class="track-item-cover cover-5"></div>
+                        <h4 class="track-item-title">Hotel California</h4>
+                    </div>
+                    <!-- Трек 6 (дубль) -->
+                    <div class="carousel-track-item" onclick="selectTrack(this)" data-track-id="6">
+                        <div class="track-item-glow"></div>
+                        <div class="track-item-cover cover-6">
+                            <div class="live-singers">
+                                <a href="#" class="singer">Anna</a>
+                            </div>
+                        </div>
+                        <h4 class="track-item-title">Yesterday</h4>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Центральная рабочая область -->
+            <main class="cockpit-main-area">
+                <!-- Левая часть: Статистика пользователя по треку -->
+                <aside class="side-panel" id="user-track-stats">
+                    <div class="panel-content-wrapper" id="user-track-stats-content">
+                        <!-- Контент будет меняться через JS -->
+                    </div>
+                </aside>
+
+                <!-- Центральный Хаб -->
+                <div class="central-hub">
+                    <div class="energy-ring ring-1"></div>
+                    <div class="energy-ring ring-2"></div>
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face" alt="Артист" class="hub-avatar">
+                </div>
+                
+                <!-- Правая часть: Список поющих сейчас -->
+                <aside class="side-panel" id="live-session-list">
+                    <div class="panel-content-wrapper" id="live-session-list-content">
+                        <!-- Контент будет меняться через JS -->
+                    </div>
+                </aside>
+            </main>
+        </div>
+
+        <!-- Скрытые данные для треков -->
+        <div id="track-data-1" style="display: none;">
+            <div class="left-panel-data">
+                <h3 class="panel-title">Ваша статистика</h3>
+                <div class="stats-item">
+                    <span class="stats-label">Лучшая точность</span>
+                    <span class="stats-value">92%</span>
+                </div>
+                <div class="accuracy-bar"><div class="accuracy-fill" style="width: 92%;"></div></div>
+                <div class="stats-item">
+                    <span class="stats-label">Исполнено раз</span>
+                    <span class="stats-value">15</span>
+                </div>
+                <div class="ai-suggestion">
+                    <div class="ai-header">💡 AI-Совет</div>
+                    <p class="ai-text">Отличный фальцет! Сделай переход к основной партии плавнее в такте 34.</p>
+                </div>
+            </div>
+            <div class="right-panel-data">
+                <h3 class="panel-title">Сейчас поют</h3>
+                <ul class="live-list">
+                    <li><a href="#">Sveta <span class="session-type duo">Дуэт?</span></a></li>
+                    <li><a href="#">Mike <span class="session-type solo">Соло</span></a></li>
+                </ul>
+            </div>
+        </div>
+        <div id="track-data-2" style="display: none;">
+            <div class="left-panel-data">
+                <h3 class="panel-title">Ваша статистика</h3>
+                <div class="stats-item"><span class="stats-label">Лучшая точность</span><span class="stats-value">81%</span></div>
+                <div class="accuracy-bar"><div class="accuracy-fill" style="width: 81%;"></div></div>
+                <div class="stats-item"><span class="stats-label">Исполнено раз</span><span class="stats-value">7</span></div>
+                <div class="ai-suggestion"><div class="ai-header">💡 AI-Совет</div><p class="ai-text">Питч в крещендо почти идеален. Обрати внимание на "Соль" в бридже.</p></div>
+            </div>
+            <div class="right-panel-data">
+                <h3 class="panel-title">Сейчас поют</h3>
+                <p class="no-one-singing">Никого нет в эфире. <br>Будь первым!</p>
+            </div>
+        </div>
+        <div id="track-data-3" style="display: none;">
+            <div class="left-panel-data">
+                <h3 class="panel-title">Ваша статистика</h3>
+                <div class="stats-item"><span class="stats-label">Лучшая точность</span><span class="stats-value">88%</span></div>
+                <div class="accuracy-bar"><div class="accuracy-fill" style="width: 88%;"></div></div>
+                <div class="stats-item"><span class="stats-label">Исполнено раз</span><span class="stats-value">21</span></div>
+                <div class="ai-suggestion"><div class="ai-header">💡 AI-Совет</div><p class="ai-text">Великолепная динамика. Используй схожую технику для "Yesterday".</p></div>
+            </div>
+            <div class="right-panel-data">
+                <h3 class="panel-title">Сейчас поют</h3>
+                <ul class="live-list">
+                    <li><a href="#">Vasya <span class="session-type solo">Соло</span></a></li>
+                </ul>
+            </div>
+        </div>
+        <div id="track-data-4" style="display: none;">
+            <div class="left-panel-data">
+                <h3 class="panel-title">Ваша статистика</h3>
+                <div class="stats-item"><span class="stats-label">Лучшая точность</span><span class="stats-value">76%</span></div>
+                <div class="accuracy-bar"><div class="accuracy-fill" style="width: 76%;"></div></div>
+                <div class="stats-item"><span class="stats-label">Исполнено раз</span><span class="stats-value">11</span></div>
+                <div class="ai-suggestion"><div class="ai-header">💡 AI-Совет</div><p class="ai-text">Хороший драйв. Для аутентичности добавь больше "хрипотцы".</p></div>
+            </div>
+            <div class="right-panel-data">
+                <h3 class="panel-title">Сейчас поют</h3>
+                <ul class="live-list">
+                    <li><a href="#">John <span class="session-type trio">Трио</span></a></li>
+                    <li><a href="#">Lisa <span class="session-type trio">Трио</span></a></li>
+                    <li><a href="#">Max <span class="session-type trio">Трио</span></a></li>
+                </ul>
+            </div>
+        </div>
+        <div id="track-data-5" style="display: none;">
+            <div class="left-panel-data">
+                <h3 class="panel-title">Ваша статистика</h3>
+                <p class="no-one-singing">Вы еще не пели эту песню.</p>
+            </div>
+            <div class="right-panel-data">
+                <h3 class="panel-title">Сейчас поют</h3>
+                <p class="no-one-singing">Никого нет в эфире.</p>
+            </div>
+        </div>
+        <div id="track-data-6" style="display: none;">
+            <div class="left-panel-data">
+                <h3 class="panel-title">Ваша статистика</h3>
+                <div class="stats-item"><span class="stats-label">Лучшая точность</span><span class="stats-value">95%</span></div>
+                <div class="accuracy-bar"><div class="accuracy-fill" style="width: 95%;"></div></div>
+                <div class="stats-item"><span class="stats-label">Исполнено раз</span><span class="stats-value">34</span></div>
+                <div class="ai-suggestion"><div class="ai-header">💡 AI-Совет</div><p class="ai-text">Твое исполнение почти эталонное. Попробуй себя в режиме "Режиссер".</p></div>
+            </div>
+            <div class="right-panel-data">
+                <h3 class="panel-title">Сейчас поют</h3>
+                <ul class="live-list">
+                    <li><a href="#">Anna <span class="session-type duo">Дуэт?</span></a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transport Panel Toggle Button - MOVED -->
+
+    <!-- Modal Block Editor Container (initially hidden) -->
+    <div id="modal-block-editor-container" class="hidden">
+        <!-- Содержимое редактора блоков будет здесь -->
+        <div id="integrated-block-editor-content">
+            <div class="editor-layout">  <!-- Новый flex-контейнер -->
+                <main class="editor-main-area"> <!-- Область для блоков текста -->
+                    <header class="editor-header">
+                        <h1>Режим Создания Блоков</h1>
+                        <!-- Кнопка "Добавить блок" перенесена в editor-sidebar -->
+                    </header>
+                    <div class="block-list-area">
+                        <!-- Сюда будут добавляться блоки текста -->
+                    </div>
+                </main>
+                <aside class="editor-sidebar"> <!-- Новая боковая панель для кнопок -->
+                    <button id="add-block-btn" class="btn">Добавить блок</button>
+                    <button id="edit-mode-toggle-btn" class="btn">Редактировать текст</button>
+                    <button id="delete-selected-block-btn" class="btn btn-danger" disabled>Удалить блок</button>
+                    <button id="undo-block-btn" class="btn" title="Отменить (Ctrl/⌘+Z)" disabled>↶ Undo</button>
+                    <button id="redo-block-btn" class="btn" title="Повторить (Ctrl/⌘+Shift+Z)" disabled>↷ Redo</button>
+                    <button id="save-track-modal-btn" class="btn btn-primary">Сохранить трек</button>
+                    <button id="cancel-edit-modal-btn" class="btn">Отмена</button>
+                    <div id="block-editor-status" style="margin-top: 10px; font-size: 0.9em; color: #555;">Редактор неактивен.</div>
+                </aside>
+            </div>
+        </div>
+    </div>
+
+    <!-- Component Scripts -->
+    <script>
+        // Ensure scripts load in the correct order with proper initialization
+        window.addEventListener('load', function() {
+            console.log('Application fully loaded, components initialized');
+            
+            // Проверяем флаг активации Live режима
+            if (sessionStorage.getItem('activateLiveMode') === 'true') {
+                console.log('Auto-activating Live mode from redirect');
+                sessionStorage.removeItem('activateLiveMode');
+                
+                // Даем время для инициализации всех компонентов
+                setTimeout(function() {
+                    // Находим и активируем кнопку Live
+                    const liveButton = document.querySelector('.mode-button[data-mode="live"]');
+                    if (liveButton) {
+                        liveButton.click();
+                    } else {
+                        console.error('Live mode button not found');
+                    }
+                }, 1000);
+            }
+        });
+    </script>
+    <script src="js/debug-config.js"></script>
+    <script src="js/overlay.js"></script>
+
+    <!-- 🎵 CORE ENGINE & UTILITIES -->
+    <!-- КРИТИЧЕСКИ ВАЖНЫЙ ПОРЯДОК ЗАГРУЗКИ -->
+    <!-- StateManager и ViewManager должны быть загружены ДО app.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/rtf.js@0.4.0/dist/rtf.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/state-manager.js"></script>
+    <script src="js/view-manager.js"></script> <!-- ДОБАВЛЕН ViewManager -->
+    
+    <!-- Глобальные константы и логгер -->
+    <script src="js/constants.js"></script>
+    <script src="js/logger.js"></script>
+    <script src="js/audio-source-adapter.js"></script>
+    
+    <!-- 🎵 COMPONENT SCRIPTS -->
+    <script src="js/color-service.js"></script>
+    <script src="js/audio-engine.js"></script>
+    <script src="js/enhanced-rtf-processor.js"></script>
+    <script src="js/rtf-parser.js"></script>
+    <script src="js/rtf-parser-adapter.js"></script>
+    <script src="js/lyrics-display.js"></script>
+    <script src="js/enhanced-text-processor.js"></script>
+    <script src="js/text-processor-integrator.js"></script>
+    <script src="js/track-catalog.js"></script>
+    <script src="js/marker-manager.js"></script>
+    <script src="js/waveform-editor.js"></script>
+    <script src="js/text-style-manager.js"></script>
+    <script src="js/drag-boundary-controller.js"></script>
+    <script src="js/block-loop-control.js"></script>
+    <script src="js/background-effects-engine.js"></script>
+    <script src="js/mask-system.js"></script>
+    <script src="js/rtf-parser-integration.js"></script>
+    <script src="js/modal-block-editor.js"></script>
+    <script src="js/piano-keyboard.js"></script>
+    <script src="js/karaoke-background.js"></script>
+    <script src="js/rehearsal-background.js"></script>
+    <script src="js/concert-background.js"></script>
+    <script src="js/monitor-mix.js"></script>
+    <script src="js/monitor-ui.js"></script>
+ 
+    <!-- Live Mode Scripts -->
+    <script src="js/live-mode.js"></script>
+    <script src="js/live-feed.js"></script>
+
+    <!-- 🎵 CATALOG V2 SCRIPT (MUST BE BEFORE APP.JS) -->
+    <script src="js/catalog-v2.js?v=2.0"></script>
+
+    <!-- 🚀 MAIN APPLICATION SCRIPT (MUST BE LAST) -->
+    <script src="js/app.js"></script>
+    
+    <!-- Инициализация приложения -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Принудительная инициализация CatalogV2 после готовности DOM
+            try {
+                if (window.CatalogV2) {
+                    window.catalogV2 = new CatalogV2();
+                    console.log('✅ CatalogV2 успешно инициализирован в DOMContentLoaded');
+                } else {
+                    console.error('❌ CatalogV2 class не найден после загрузки скрипта');
+                }
+            } catch (error) {
+                console.error('❌ Ошибка при инициализации CatalogV2:', error);
+            }
+        });
+    </script>
+
+    <div id="block-editor-container" class="hidden"></div>
+    <div id="font-selector-modal" class="hidden"></div>
+    <div id="loading-overlay" class="hidden">
+        <div class="loading-spinner"></div>
+        <p>Загрузка трека...</p>
+    </div>
+
+    <!-- 🎵 CATALOG V2 OVERLAY -->
+    <div id="catalog-v2-overlay" class="catalog-v2-overlay hidden">
+        <div class="catalog-v2-container">
+            <div class="catalog-v2-header">
+                <h2>🎵 Каталог треков</h2>
+                <button id="catalog-v2-close" class="catalog-v2-close-btn">✕ Закрыть</button>
+            </div>
+            <div class="catalog-v2-content">
+                <!-- 3-КОЛОНОЧНАЯ СТРУКТУРА -->
+                <div class="catalog-v2-grid">
+                    <!-- КОЛОНКА 1: МОЯ МУЗЫКА -->
+                    <div class="catalog-column my-music-column">
+                        <h3>🎵 Моя музыка</h3>
+                        <div class="my-music-content">
+                            <p class="empty-state">Загрузите треки через "Upload Track" →</p>
+                        </div>
+                    </div>
+                    
+                    <!-- КОЛОНКА 2: ПЛЕЙЛИСТЫ/ИСТОРИЯ/ТРЕНДЫ -->
+                    <div class="catalog-column center-dynamic-column">
+                        <div class="tab-navigation">
+                            <button class="tab-btn active" data-tab="playlists">Плейлисты</button>
+                            <button class="tab-btn" data-tab="history">История</button>
+                            <button class="tab-btn" data-tab="trends">Тренды</button>
+                        </div>
+                        <div class="tab-panels">
+                            <div class="tab-panel active" id="playlists-panel">
+                                <p class="empty-state">Создайте свой первый плейлист</p>
+                            </div>
+                            <div class="tab-panel" id="history-panel">
+                                <p class="empty-state">История воспроизведения пуста</p>
+                                <!-- Admin-only: кнопка очистки БД скрыта для пользователей. Включать только в dev-сборке. -->
+                            </div>
+                            <div class="tab-panel" id="trends-panel">
+                                <p class="empty-state">Загружаются тренды...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- КОЛОНКА 3: ПОИСК/ЗАГРУЗКА -->
+                    <div class="catalog-column smart-search-column">
+                        <div class="search-upload-toggle">
+                            <button class="toggle-btn active" data-mode="search">Поиск</button>
+                            <button class="toggle-btn" data-mode="upload">Upload Track</button>
+                        </div>
+                        <div class="search-mode-content active">
+                            <input type="text" class="search-input" placeholder="Поиск треков...">
+                            <div class="search-results">
+                                <p class="empty-state">Введите запрос для поиска</p>
+                            </div>
+                        </div>
+                        <div class="upload-mode-content">
+                            <div class="upload-mode-container">
+                                
+                                <div class="upload-grid compact">
+                                    <!-- INSTRUMENTAL CELL -->
+                                    <div class="upload-cell" data-type="instrumental">
+                                        <div class="upload-icon">🎵</div>
+                                        <input type="file" id="instrumental-input" class="file-input" accept="audio/*">
+                                        <label for="instrumental-input" class="file-label">Instrumental</label>
+                                    </div>
+                                    
+                                    <!-- VOCAL CELL -->
+                                    <div class="upload-cell" data-type="vocal">
+                                        <div class="upload-icon">🎤</div>
+                                        <input type="file" id="vocal-input" class="file-input" accept="audio/*">
+                                        <label for="vocal-input" class="file-label">Vocals</label>
+                                    </div>
+                                    
+                                    <!-- LYRICS CELL -->
+                                    <div class="upload-cell" data-type="lyrics">
+                                        <div class="upload-icon">📝</div>
+                                        <input type="file" id="lyrics-input" class="file-input" accept=".txt,.rtf">
+                                        <label for="lyrics-input" class="file-label">Lyrics</label>
+                                    </div>
+ 
+                                    <!-- JSON MARKERS CELL -->
+                                    <div class="upload-cell" data-type="json">
+                                        <div class="upload-icon">📊</div>
+                                        <input type="file" id="json-input" class="file-input" accept=".json">
+                                        <label for="json-input" class="file-label">Markers JSON</label>
+                                    </div>
+ 
+                                    <!-- STEMS CELL (placeholder) -->
+                                    <div class="upload-cell disabled" data-type="stems" title="Скоро">
+                                        <div class="upload-icon">🧬</div>
+                                        <input type="file" id="stems-input" class="file-input" style="display:none">
+                                        <label for="stems-input" class="file-label">Stems (N/A)</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="upload-controls">
+                                    <button id="upload-cancel" class="upload-btn cancel-btn">❌ Отмена</button>
+                                    <button id="upload-save" class="upload-btn save-btn" disabled>💾 Сохранить трек</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

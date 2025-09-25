@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>beLIVE - Студия Артиста</title>
+    <link rel="stylesheet" href="../css/avatar-page-final.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="artist-studio">
+        <!-- Верхняя панель навигации, как в основном приложении -->
+        <header class="studio-nav">
+            <div class="nav-logo">beLIVE</div>
+            <div class="nav-buttons">
+                <button class="nav-btn">Концертный</button>
+                <button class="nav-btn active">Караоке</button>
+                <button class="nav-btn">Репетиция</button>
+            </div>
+            <div class="nav-user">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face" alt="Аватар" class="user-avatar">
+            </div>
+        </header>
+
+        <!-- Основная рабочая область -->
+        <main class="studio-main">
+            <!-- Левая колонка с ключевыми модулями -->
+            <aside class="side-modules">
+                <!-- Модуль Режиссер -->
+                <div class="module director-module">
+                    <div class="module-glow"></div>
+                    <h3 class="module-title">Режиссер</h3>
+                    <p class="module-description">Создавай уникальные шоу, управляя "вагонами" эффектов для каждого трека.</p>
+                    <div class="train-icon">🚂<span>...</span> вагоны</div>
+                    <button class="module-btn">Войти в режим</button>
+                </div>
+                
+                <!-- Модуль Быстрый старт -->
+                <div class="module start-module">
+                     <div class="module-glow"></div>
+                    <h3 class="module-title">Быстрый Старт</h3>
+                    <div class="start-actions">
+                        <button class="start-btn live">
+                            <span class="btn-icon">🔴</span> LIVE
+                        </button>
+                        <button class="start-btn training">
+                            <span class="btn-icon">🎤</span> Тренировка
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Центральная колонка - Каталог треков -->
+            <section class="track-catalog">
+                <h2 class="catalog-title">Мои Треки</h2>
+                <div class="track-list">
+                    <!-- Трек 1 -->
+                    <div class="track-item">
+                        <div class="track-info">
+                            <div class="track-cover"></div>
+                            <div class="track-details">
+                                <h4 class="track-title">Bohemian Rhapsody</h4>
+                                <p class="track-artist">Queen</p>
+                            </div>
+                        </div>
+                        <div class="track-performance">
+                            <p class="accuracy-label">Точность: 92%</p>
+                            <div class="accuracy-bar">
+                                <div class="accuracy-fill" style="width: 92%;"></div>
+                            </div>
+                        </div>
+                        <div class="track-ai-suggestion">
+                            <div class="ai-header">
+                                <span class="ai-icon">💡</span> AI-Совет
+                            </div>
+                            <p class="ai-text">Отличная работа с фальцетом! Попробуй сделать переход к основной партии более плавным в такте 34.</p>
+                        </div>
+                    </div>
+                    <!-- Трек 2 -->
+                    <div class="track-item active">
+                        <div class="track-info">
+                            <div class="track-cover"></div>
+                            <div class="track-details">
+                                <h4 class="track-title">Stairway to Heaven</h4>
+                                <p class="track-artist">Led Zeppelin</p>
+                            </div>
+                        </div>
+                        <div class="track-performance">
+                            <p class="accuracy-label">Точность: 81%</p>
+                            <div class="accuracy-bar">
+                                <div class="accuracy-fill" style="width: 81%;"></div>
+                            </div>
+                        </div>
+                        <div class="track-ai-suggestion">
+                             <div class="ai-header">
+                                <span class="ai-icon">💡</span> AI-Совет
+                            </div>
+                            <p class="ai-text">Твой питч в крещендо почти идеален. Обрати внимание на высоту ноты "Соль" в бридже – она немного занижена.</p>
+                        </div>
+                    </div>
+                    <!-- Трек 3 -->
+                    <div class="track-item">
+                        <div class="track-info">
+                            <div class="track-cover"></div>
+                            <div class="track-details">
+                                <h4 class="track-title">Hallelujah</h4>
+                                <p class="track-artist">Leonard Cohen</p>
+                            </div>
+                        </div>
+                        <div class="track-performance">
+                            <p class="accuracy-label">Точность: 88%</p>
+                            <div class="accuracy-bar">
+                                <div class="accuracy-fill" style="width: 88%;"></div>
+                            </div>
+                        </div>
+                        <div class="track-ai-suggestion">
+                             <div class="ai-header">
+                                <span class="ai-icon">💡</span> AI-Совет
+                            </div>
+                            <p class="ai-text">Великолепная динамика! Предлагаю использовать схожую технику "субтон" для песни "Yesterday" The Beatles.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script>
+        document.querySelectorAll('.track-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.track-item').forEach(el => el.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html> 

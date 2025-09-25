@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Демо масок для режима Live</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .video-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .video-box {
+            position: relative;
+            width: 640px;
+            height: 480px;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .video-box video,
+        .video-box canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .control-group label {
+            font-weight: bold;
+            min-width: 120px;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        button.active {
+            background-color: #2196F3;
+        }
+        
+        .mask-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .status {
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+            margin-top: 20px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            height: 200px;
+            overflow-y: auto;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 18px;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .video-box {
+                width: 100%;
+                height: 0;
+                padding-bottom: 75%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Демо масок для режима Live</h1>
+        
+        <div class="video-container">
+            <div class="video-box">
+                <video id="inputVideo" autoplay muted playsinline></video>
+                <div id="loading" class="loading">Загрузка камеры...</div>
+            </div>
+            <div class="video-box">
+                <canvas id="outputCanvas"></canvas>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Камера:</label>
+                <div class="button-group">
+                    <button id="startCamera">Запустить камеру</button>
+                    <button id="stopCamera" disabled>Остановить камеру</button>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Обработка:</label>
+                <div class="button-group">
+                    <button id="toggleProcessing" disabled>Включить обработку</button>
+                    <button id="toggleMirror" disabled>Отразить по горизонтали</button>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Маски:</label>
+                <div class="mask-buttons" id="maskButtons">
+                    <button data-mask="none" class="active">Без маски</button>
+                    <!-- Маски будут добавлены динамически -->
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Фильтры:</label>
+                <div class="filter-buttons" id="filterButtons">
+                    <button data-filter="none" class="active">Без фильтра</button>
+                    <button data-filter="blur">Размытие</button>
+                    <button data-filter="bw">Ч/Б</button>
+                    <button data-filter="vintage">Винтаж</button>
+                    <button data-filter="concert">Концерт</button>
+                    <button data-filter="sharp">Резкость</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status" id="status">Инициализация...</div>
+    </div>
+    
+    <!-- Загрузка скриптов -->
+    <script src="../js/lib/video-processor.js"></script>
+    <script src="../js/lib/face-mesh.js"></script>
+    <script src="../js/lib/live-masks.js"></script>
+    
+    <script>
+        // Основные элементы
+        const inputVideo = document.getElementById('inputVideo');
+        const outputCanvas = document.getElementById('outputCanvas');
+        const loadingElement = document.getElementById('loading');
+        const statusElement = document.getElementById('status');
+        const maskButtonsContainer = document.getElementById('maskButtons');
+        const filterButtonsContainer = document.getElementById('filterButtons');
+        
+        // Кнопки управления
+        const startCameraButton = document.getElementById('startCamera');
+        const stopCameraButton = document.getElementById('stopCamera');
+        const toggleProcessingButton = document.getElementById('toggleProcessing');
+        const toggleMirrorButton = document.getElementById('toggleMirror');
+        
+        // Глобальные объекты
+        let videoProcessor = null;
+        let faceMeshDetector = null;
+        let liveMasks = null;
+        let mediaStream = null;
+        let animationFrameId = null;
+        let processingEnabled = false;
+        
+        // Логирование в статус
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            statusElement.innerHTML = `[${timestamp}] ${message}\n` + statusElement.innerHTML;
+        }
+        
+        // Инициализация видеопроцессора
+        async function initVideoProcessor() {
+            try {
+                log('Инициализация VideoProcessor...');
+                videoProcessor = new VideoProcessor();
+                
+                // Устанавливаем размеры холста
+                videoProcessor.setDimensions(640, 480);
+                
+                log('VideoProcessor инициализирован');
+                return true;
+            } catch (error) {
+                log(`Ошибка инициализации VideoProcessor: ${error.message}`);
+                return false;
+            }
+        }
+        
+        // Инициализация детектора лиц
+        async function initFaceMeshDetector() {
+            try {
+                log('Инициализация FaceMeshDetector...');
+                faceMeshDetector = new FaceMeshDetector();
+                
+                // Инициализируем модель
+                const initialized = await faceMeshDetector.initialize();
+                
+                if (initialized) {
+                    log('FaceMeshDetector инициализирован');
+                    videoProcessor.setFaceDetector(faceMeshDetector);
+                    return true;
+                } else {
+                    log('Не удалось инициализировать FaceMeshDetector');
+                    return false;
+                }
+            } catch (error) {
+                log(`Ошибка инициализации FaceMeshDetector: ${error.message}`);
+                return false;
+            }
+        }
+        
+        // Инициализация библиотеки масок
+        async function initLiveMasks() {
+            try {
+                log('Инициализация LiveMasks...');
+                liveMasks = new LiveMasks(videoProcessor);
+                
+                // Инициализируем маски
+                const initialized = await liveMasks.initialize();
+                
+                if (initialized) {
+                    log('LiveMasks инициализирован');
+                    
+                    // Добавляем кнопки для масок
+                    const masks = liveMasks.getAvailableMasks();
+                    masks.forEach(mask => {
+                        const button = document.createElement('button');
+                        button.textContent = mask.name;
+                        button.dataset.mask = mask.id;
+                        button.title = mask.description;
+                        maskButtonsContainer.appendChild(button);
+                    });
+                    
+                    return true;
+                } else {
+                    log('Не удалось инициализировать LiveMasks');
+                    return false;
+                }
+            } catch (error) {
+                log(`Ошибка инициализации LiveMasks: ${error.message}`);
+                return false;
+            }
+        }
+        
+        // Запуск камеры
+        async function startCamera() {
+            try {
+                log('Запуск камеры...');
+                loadingElement.style.display = 'flex';
+                
+                // Запрашиваем доступ к камере
+                mediaStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'user'
+                    },
+                    audio: false
+                });
+                
+                // Подключаем поток к видео
+                inputVideo.srcObject = mediaStream;
+                
+                // Ждем, когда видео будет готово
+                await new Promise(resolve => {
+                    inputVideo.onloadedmetadata = resolve;
+                });
+                
+                // Запускаем видео
+                await inputVideo.play();
+                
+                // Обновляем состояние кнопок
+                startCameraButton.disabled = true;
+                stopCameraButton.disabled = false;
+                toggleProcessingButton.disabled = false;
+                toggleMirrorButton.disabled = false;
+                
+                // Запускаем обработку
+                toggleProcessing(true);
+                
+                // Скрываем загрузку
+                loadingElement.style.display = 'none';
+                
+                log('Камера запущена');
+            } catch (error) {
+                log(`Ошибка запуска камеры: ${error.message}`);
+                loadingElement.style.display = 'none';
+            }
+        }
+        
+        // Остановка камеры
+        function stopCamera() {
+            try {
+                log('Остановка камеры...');
+                
+                // Останавливаем обработку
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+                
+                // Останавливаем все треки
+                if (mediaStream) {
+                    mediaStream.getTracks().forEach(track => track.stop());
+                    mediaStream = null;
+                }
+                
+                // Очищаем видео
+                inputVideo.srcObject = null;
+                
+                // Очищаем холст
+                const ctx = outputCanvas.getContext('2d');
+                ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+                
+                // Обновляем состояние кнопок
+                startCameraButton.disabled = false;
+                stopCameraButton.disabled = true;
+                toggleProcessingButton.disabled = true;
+                toggleMirrorButton.disabled = true;
+                
+                log('Камера остановлена');
+            } catch (error) {
+                log(`Ошибка остановки камеры: ${error.message}`);
+            }
+        }
+        
+        // Включение/выключение обработки
+        function toggleProcessing(forceState = null) {
+            processingEnabled = forceState !== null ? forceState : !processingEnabled;
+            
+            // Обновляем состояние кнопки
+            toggleProcessingButton.textContent = processingEnabled ? 'Отключить обработку' : 'Включить обработку';
+            toggleProcessingButton.classList.toggle('active', processingEnabled);
+            
+            // Обновляем состояние видеопроцессора
+            if (videoProcessor) {
+                videoProcessor.processing.enabled = processingEnabled;
+            }
+            
+            log(`Обработка ${processingEnabled ? 'включена' : 'отключена'}`);
+            
+            // Запускаем или останавливаем цикл обработки
+            if (processingEnabled && !animationFrameId) {
+                processVideo();
+            }
+        }
+        
+        // Включение/выключение зеркального отображения
+        function toggleMirror() {
+            if (!videoProcessor) return;
+            
+            videoProcessor.processing.mirror = !videoProcessor.processing.mirror;
+            
+            // Обновляем состояние кнопки
+            toggleMirrorButton.classList.toggle('active', videoProcessor.processing.mirror);
+            
+            log(`Зеркальное отображение ${videoProcessor.processing.mirror ? 'включено' : 'отключено'}`);
+        }
+        
+        // Установка активной маски
+        function setActiveMask(maskId) {
+            if (!liveMasks) return;
+            
+            // Активируем маску
+            liveMasks.activateMask(maskId);
+            
+            // Обновляем состояние кнопок
+            const buttons = maskButtonsContainer.querySelectorAll('button');
+            buttons.forEach(button => {
+                button.classList.toggle('active', button.dataset.mask === maskId);
+            });
+            
+            log(`Маска: ${maskId === 'none' ? 'отключена' : maskId}`);
+        }
+        
+        // Установка активного фильтра
+        function setActiveFilter(filterId) {
+            if (!videoProcessor) return;
+            
+            // Активируем фильтр
+            videoProcessor.setActiveFilter(filterId === 'none' ? null : filterId);
+            
+            // Обновляем состояние кнопок
+            const buttons = filterButtonsContainer.querySelectorAll('button');
+            buttons.forEach(button => {
+                button.classList.toggle('active', button.dataset.filter === filterId);
+            });
+            
+            log(`Фильтр: ${filterId === 'none' ? 'отключен' : filterId}`);
+        }
+        
+        // Цикл обработки видео
+        async function processVideo() {
+            if (!videoProcessor || !inputVideo || !outputCanvas) return;
+            
+            try {
+                // Проверяем, готово ли видео
+                if (inputVideo.readyState >= 2) {
+                    // Обрабатываем видео
+                    const processedCanvas = videoProcessor.processVideo(inputVideo);
+                    
+                    // Если есть детектор лиц, обновляем данные о лице
+                    if (faceMeshDetector && processingEnabled) {
+                        // Получаем данные о лице для маски
+                        const faceData = await faceMeshDetector.getFaceMaskData(inputVideo);
+                        
+                        // Если лицо найдено, применяем маску
+                        if (faceData) {
+                            videoProcessor._applyMask(faceData);
+                        }
+                    }
+                    
+                    // Отображаем результат
+                    const outputCtx = outputCanvas.getContext('2d');
+                    outputCtx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+                    outputCtx.drawImage(processedCanvas, 0, 0);
+                }
+            } catch (error) {
+                console.error('Ошибка обработки видео:', error);
+            }
+            
+            // Продолжаем цикл обработки
+            if (processingEnabled) {
+                animationFrameId = requestAnimationFrame(processVideo);
+            }
+        }
+        
+        // Инициализация приложения
+        async function initApp() {
+            try {
+                log('Инициализация приложения...');
+                
+                // Инициализируем компоненты
+                const videoProcessorInitialized = await initVideoProcessor();
+                if (!videoProcessorInitialized) {
+                    throw new Error('Не удалось инициализировать VideoProcessor');
+                }
+                
+                const faceMeshInitialized = await initFaceMeshDetector();
+                if (!faceMeshInitialized) {
+                    log('Предупреждение: FaceMeshDetector не инициализирован. Маски не будут работать.');
+                }
+                
+                const liveMasksInitialized = await initLiveMasks();
+                if (!liveMasksInitialized) {
+                    log('Предупреждение: LiveMasks не инициализирован. Маски не будут доступны.');
+                }
+                
+                // Устанавливаем обработчики событий
+                startCameraButton.addEventListener('click', startCamera);
+                stopCameraButton.addEventListener('click', stopCamera);
+                toggleProcessingButton.addEventListener('click', () => toggleProcessing());
+                toggleMirrorButton.addEventListener('click', toggleMirror);
+                
+                // Обработчики для кнопок масок
+                maskButtonsContainer.addEventListener('click', event => {
+                    if (event.target.tagName === 'BUTTON') {
+                        setActiveMask(event.target.dataset.mask);
+                    }
+                });
+                
+                // Обработчики для кнопок фильтров
+                filterButtonsContainer.addEventListener('click', event => {
+                    if (event.target.tagName === 'BUTTON') {
+                        setActiveFilter(event.target.dataset.filter);
+                    }
+                });
+                
+                log('Приложение инициализировано. Нажмите "Запустить камеру" для начала работы.');
+            } catch (error) {
+                log(`Ошибка инициализации приложения: ${error.message}`);
+            }
+        }
+        
+        // Запускаем инициализацию при загрузке страницы
+        window.addEventListener('load', initApp);
+    </script>
+</body>
+</html> 

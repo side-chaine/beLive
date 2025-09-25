@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTF Процессор - Тестирование</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .panel {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        .control-panel {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .result-panel {
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <h1>RTF Процессор - Тестирование</h1>
+    
+    <div class="control-panel">
+        <h2>Загрузка RTF файла</h2>
+        <input type="file" id="rtf-file" accept=".rtf,.txt">
+        <div>
+            <button id="process-btn">Обработать</button>
+            <button id="clear-btn">Очистить</button>
+        </div>
+        <div class="status" id="status-message"></div>
+    </div>
+    
+    <div class="container">
+        <div class="panel">
+            <h3>Исходный RTF</h3>
+            <textarea id="rtf-input" placeholder="Вставьте RTF-код сюда или загрузите файл..."></textarea>
+        </div>
+        <div class="panel">
+            <h3>Результат</h3>
+            <div class="result-panel" id="result-output"></div>
+        </div>
+    </div>
+    
+    <div class="control-panel">
+        <h2>Выбор процессора</h2>
+        <label>
+            <input type="radio" name="processor" value="enhanced" checked> EnhancedRtfProcessor
+        </label>
+        <label>
+            <input type="radio" name="processor" value="adapter"> RtfParserAdapter
+        </label>
+        <label>
+            <input type="radio" name="processor" value="legacy"> Стандартный RtfParser
+        </label>
+    </div>
+
+    <!-- Подключаем скрипты -->
+    <script src="js/enhanced-rtf-processor.js"></script>
+    <script src="js/rtf-parser-adapter.js"></script>
+    <script src="js/rtf-parser.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const rtfInput = document.getElementById('rtf-input');
+            const resultOutput = document.getElementById('result-output');
+            const fileInput = document.getElementById('rtf-file');
+            const processBtn = document.getElementById('process-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const statusMessage = document.getElementById('status-message');
+            
+            // Обработка загрузки файла
+            fileInput.addEventListener('change', async (event) => {
+                if (event.target.files && event.target.files.length > 0) {
+                    const file = event.target.files[0];
+                    
+                    try {
+                        const text = await readFile(file);
+                        rtfInput.value = text;
+                        showStatus('Файл успешно загружен', 'info');
+                    } catch (error) {
+                        showStatus(`Ошибка при чтении файла: ${error.message}`, 'error');
+                    }
+                }
+            });
+            
+            // Обработка нажатия на кнопку "Обработать"
+            processBtn.addEventListener('click', async () => {
+                const rtfContent = rtfInput.value.trim();
+                
+                if (!rtfContent) {
+                    showStatus('Пожалуйста, введите RTF-код или загрузите файл', 'error');
+                    return;
+                }
+                
+                try {
+                    const processorType = document.querySelector('input[name="processor"]:checked').value;
+                    showStatus('Обработка...', 'info');
+                    
+                    let result = '';
+                    const startTime = performance.now();
+                    
+                    if (processorType === 'enhanced' && typeof EnhancedRtfProcessor !== 'undefined') {
+                        result = await EnhancedRtfProcessor.parse(rtfContent);
+                    } else if (processorType === 'adapter' && typeof RtfParserAdapter !== 'undefined') {
+                        result = await RtfParserAdapter.parse(rtfContent);
+                    } else if (processorType === 'legacy' && typeof RtfParser !== 'undefined') {
+                        result = RtfParser.parse(rtfContent);
+                    } else {
+                        throw new Error('Выбранный процессор недоступен');
+                    }
+                    
+                    const endTime = performance.now();
+                    const processingTime = (endTime - startTime).toFixed(2);
+                    
+                    resultOutput.textContent = result;
+                    showStatus(`Обработка завершена за ${processingTime} мс`, 'success');
+                } catch (error) {
+                    showStatus(`Ошибка при обработке RTF: ${error.message}`, 'error');
+                    resultOutput.textContent = 'Произошла ошибка при обработке RTF-кода';
+                }
+            });
+            
+            // Обработка нажатия на кнопку "Очистить"
+            clearBtn.addEventListener('click', () => {
+                rtfInput.value = '';
+                resultOutput.textContent = '';
+                statusMessage.textContent = '';
+                statusMessage.className = 'status';
+                fileInput.value = '';
+            });
+            
+            // Функция для чтения файла
+            function readFile(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    
+                    reader.onload = (event) => {
+                        resolve(event.target.result);
+                    };
+                    
+                    reader.onerror = (error) => {
+                        reject(error);
+                    };
+                    
+                    reader.readAsText(file);
+                });
+            }
+            
+            // Функция для отображения статуса
+            function showStatus(message, type) {
+                statusMessage.textContent = message;
+                statusMessage.className = `status ${type}`;
+            }
+        });
+    </script>
+</body>
+</html> 

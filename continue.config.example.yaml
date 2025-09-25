@@ -1,0 +1,17 @@
+name: Local Assistant
+version: 1.0.0
+schema: v1
+models:
+  - name: Claude 3.5 Sonnet (Anthropic)
+    provider: anthropic
+    model: claude-3-5-sonnet-latest
+    apiKey: YOUR_ANTHROPIC_API_KEY_HERE
+context:
+  - provider: code
+  - provider: docs
+  - provider: diff
+  - provider: terminal
+  - provider: problems
+  - provider: folder
+  - provider: codebase
+defaultModel: Claude 3.5 Sonnet (Anthropic) 
