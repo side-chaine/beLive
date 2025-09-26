@@ -1,25 +1,7 @@
-# big assets
 Docs/screenshots/
 Docs/loop-learn/
 Karaoke/*.jpg
-
-# node / build
 node_modules/
 dist/
-build/
-
-# env / secrets
 .env
-*.pem
-*.key
-secrets/
-*.log
-
-# OS / IDE
 .DS_Store
-.vscode/
-.idea/
-
-# backups
-*.bak
-*.backup
