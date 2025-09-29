@@ -1,6 +1,5 @@
 Docs/screenshots/
 Docs/loop-learn/
-Karaoke/*.jpg
 node_modules/
 dist/
 .env
