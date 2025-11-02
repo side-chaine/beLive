@@ -14,7 +14,7 @@
     "argparse": "^2.0.1",
     "balanced-match": "^1.0.2",
     "brace-expansion": "^1.1.12",
-    "callsites": "^3.1.0",
+    "callsites": "^4.2.0",
     "chalk": "^4.1.2",
     "color-convert": "^2.0.1",
     "color-name": "^1.1.4",
