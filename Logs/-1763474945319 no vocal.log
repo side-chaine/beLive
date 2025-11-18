@@ -1,0 +1,544 @@
+index.html:1 Access to script at 'file:///C:/Users/PRO/Downloads/Telegram%20Desktop/beLive%C2%A02%20-%201.0/beLive%C2%A02%20-%201.0/js/audio-exporter.js' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-extension, chrome-untrusted, data, http, https, isolated-app.
+audio-exporter.js:1  Failed to load resource: net::ERR_FAILED
+index.html:1 Access to script at 'file:///C:/src/main.ts' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: chrome, chrome-extension, chrome-untrusted, data, http, https, isolated-app.
+main.ts:1  Failed to load resource: net::ERR_FAILED
+ 🔧 DEBUG_CONFIG загружен. Используйте toggleDebugLogs(true) для включения логов
+ 📦 Utils module loaded
+ StateManager initialized
+ 📦 StateManager module loaded
+ 🚀 AudioEngine (Hybrid Engine) - Гибридная архитектура восстановлена
+ Space bar handler attached
+ ❌ VocalMix не активен: стандартная маршрутизация
+index.html:871 Access to script at 'https://esm.sh/pitchy@4' from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+esm.sh/pitchy@4:1  Failed to load resource: net::ERR_FAILED
+ LyricsDisplay initialized
+ TextProcessorIntegrator: v2.1 инициализация
+ RtfParserAdapter: Инициализация (динамическая детекция в момент parse)
+ 🔄 TrackCatalog: Начинаем инициализацию базы данных...
+ ✅ TrackCatalog: IndexedDB доступен, открываем базу данных...
+ 🔄 TrackCatalog: Открываем стабильную базу: TextAppDB_DEV v6
+ TrackCatalog initialized
+ MarkerManager initialized
+ WaveformEditor loaded
+ 🎨 Создаю кнопку выбора цвета, ColorService доступен: true
+ 🎨 ColorService найден, создаю схемы...
+ 🎨 Доступные схемы: 7
+ WaveformEditor initialized
+ BlockLoopControl: Класс загружен
+ [DragBoundary] Инициализирован с интерактивными линиями и предпоказом
+ 🎛️ BlockLoopControl initialized with seeking flag and seek buffer
+ RTF Parser Integration: Инициализация интеграции улучшенного RTF-парсера (после определения объекта)
+ RTF Parser Integration: Начало интеграции
+ RTF Parser Integration: TrackCatalog уже использует RtfParserAdapter если он доступен
+ RTF Parser Integration: Интеграция завершена успешно
+ MonitorUI: script loaded
+ LiveFeed module loaded (placeholder)
+ 🔄 ЗАГРУЗКА: catalog-v2.js начинает загрузку...
+ ✅ ЗАГРУЗКА: catalog-v2.js загружен, класс CatalogV2 определен
+ All components ready, initializing app...
+ ExportUI: Конструктор вызван.
+ ExportUI: _initUI вызван. Текущий this.btn: null
+ ExportUI: tryCreateButton вызван.
+ ✅ ExportUI: Найден контейнер .header-content.glass-effect
+ ✅ ExportUI: Кнопка и модалка успешно созданы.
+ ExportUI: _updateVisibility вызван.
+ ExportUI: _updateVisibility - isRehearsalMode: false bpmControls: 
+ ExportUI: Кнопка экспорта - display: none
+ ExportUI: BPM Controls - display: none
+ ExportUI: _bindModeChanges вызван.
+ ExportUI initialized OK
+ [tryInitExporter] Начало инициализации. app.audioEngine: AudioEngine app.audioEngine?.audioContext: AudioContext
+ [tryInitExporter] Все зависимости готовы, попытка инициализации AudioExporter.
+ AudioExporter init failed 
+tryInitExporter @ app.js:3023
+ LiveMode: Маски инициализированы без использования изображений
+ LiveMode: getUserMedia поддерживается: true
+ LiveMode: Безопасный контекст: true
+ LiveMode: Определен localhost, разрешен HTTP
+ LiveMode: Базовая инициализация завершена
+ LiveMode: экземпляр создан
+ LiveFeed initialized
+ 🎵 CatalogV2 инициализирован
+ ✅ CatalogV2 успешно инициализирован в DOMContentLoaded
+ MonitorUI: button bound
+ DOM content loaded, waiting for components
+ ✅ TrackCatalog: База данных успешно инициализирована
+ ✅ TrackCatalog: Database name: TextAppDB_DEV
+ ✅ TrackCatalog: Database version: 6
+ TrackCatalog: _finalizeUploadFromBlockEditor CALLED - should be obsolete now.
+ 🎵 CatalogV2: База данных подключена
+ TrackCatalog: Loaded 0 tracks from DB
+ 🎵 CatalogV2: Загружено 0 треков
+ TrackCatalog: After migrate loaded 0 tracks
+ 🎵 CatalogV2: После миграции загружено 0 треков
+ Application fully loaded, components initialized
+ All components ready, initializing app...
+ Initializing beLive App
+ StateManager initialized
+ StateManager component ready
+ 🎛️ ViewManager: Конструктор выполнен
+ 🔗 ViewManager: Инициализация с зависимостями
+ ✅ ViewManager: Зависимости успешно подключены
+ ViewManager component ready
+ 🎯 ViewManager: Инициализация обработчиков событий
+ ✅ ViewManager: Обработчик кнопки аватара (основное приложение) подключен
+ ✅ ViewManager: Обработчик кнопки аватара в Live Feed подключен
+ ✅ ViewManager: Обработчик кнопки возврата подключен
+ ✅ ViewManager: Обработчик кнопки beLIVE в Avatar Studio подключен
+ 🎵 ViewManager: Карусель треков инициализирована
+ 🎵 ViewManager: Карусель треков инициализирована
+ 🎯 ViewManager: Все обработчики событий готовы
+ 🎯 ViewManager event handlers initialized
+ WordAlignerV2 not found, creating placeholder
+App @ app.js:84
+ 🎛️ Transport toggle инициализирован
+ LyricsDisplay: Setting style to Стандартный
+ Rendering lyrics. Current style ID: default
+ Applied style 'Стандартный'
+ TextStyleManager initialized with 8 styles and 29 total transitions
+ Text style manager initialized
+ Initializing Microphone UI...
+ Microphone UI initialized using existing DOM elements.
+ VocalMix UI initialized.
+ [DragBoundary] Инициализирован с интерактивными линиями и предпоказом
+ 🎛️ BlockLoopControl initialized with seeking flag and seek buffer
+ BlockLoopControl component ready
+ 🎭 MaskSystem: Инициализация продвинутой системы масок
+ 🎭 MaskSystem: Конструктор завершен
+ 🎭 MaskSystem создан
+ 🎭 MaskSystem component ready
+ Initializing LoopBlock controls
+ 🎭 MaskSystem: Обработчик кнопки подключен
+ beLive App initialized
+ App initialized successfully
+ ⚠️ ExportUI: Не удалось инициализировать, зависимости не готовы в app.js или уже инициализирован
+initializeApp @ app.js:2875
+ 🎭 MediaPipe: Начинаем загрузку библиотек...
+ 🎭 MediaPipe: Ожидание загрузки библиотек...
+ 🎭 MediaPipe: Все библиотеки загружены успешно
+ 🎭 MaskSystem: Официальный MediaPipe FaceMesh готов
+ 🏃 MaskSystem: MediaPipe Pose готов
+ ✋ MaskSystem: MediaPipe Hands готов
+ 🤖 MaskSystem: MediaPipe Holistic готов
+ 🎨 MaskSystem: MediaPipe Selfie Segmentation готов
+ 🎭 MaskSystem: MediaPipe готов к использованию
+ 🎯 Background Effects Engine v2.0 инициализирован
+ 🔄 Инициализация Background Effects Engine...
+ ✅ Background Effects Engine готов
+ Activating live mode
+ Karaoke Background Manager: Stopping slideshow...
+ Applying style: Live with scale 1.00
+ TextStyleManager: Scaled font size from 1.6em to 1.60em
+ LyricsDisplay: Setting style to Live
+ Rendering lyrics. Current style ID: live
+ Applied style class to lyrics-container: style-live
+ 🚀 Скрываю Живую Ленту
+ ✅ Возврат в классический зал
+ Initializing LiveMode without camera activation...
+ LiveMode: Начало активации режима
+ LiveMode: Сохранен предыдущий режим: concert
+ LiveMode: Созданы элементы для видео в современном стиле
+ LiveMode: Версия компонентов обновлена: 1763474847918
+ LiveMode: Контейнер видео отображен с плавным переходом
+ LiveMode: Стили обновлены в караоке-формате (версия 1763474847918)
+ LiveMode: Запрашиваем доступ к камере...
+ 🎵 ИНСТРУМЕНТАЛ: Громкость установлена 100%
+ 🎤 ВОКАЛ: Громкость установлена 0%
+ ExportUI: _updateVisibility вызван.
+ ExportUI: _updateVisibility - isRehearsalMode: false bpmControls: 
+ ExportUI: Кнопка экспорта - display: none
+ ExportUI: BPM Controls - display: none
+ Проверка треков завершена успешно, проблем не обнаружено
+ LiveMode: Ошибка инициализации камеры: 
+_initCamera @ live-mode.js:1106
+ LiveMode: Не удалось инициализировать камеру: Requested device not found
+_showErrorMessage @ live-mode.js:1799
+ LiveMode: Ошибка при активации режима: 
+activate @ live-mode.js:871
+ LiveMode: Ошибка активации Live режима: Не удалось инициализировать камеру
+_showErrorMessage @ live-mode.js:1799
+ Не удалось активировать Live режим
+(anonymous) @ app.js:1283
+ 📁 CatalogV2: Overlay открыт
+ 🚀 Скрываю Живую Ленту
+ ✅ Возврат в классический зал
+ 🚀 Инициализация Живой Ленты
+ ✅ Живая Лента инициализирована
+ ExportUI: _updateVisibility вызван.
+ ExportUI: _updateVisibility - isRehearsalMode: false bpmControls: 
+ ExportUI: Кнопка экспорта - display: none
+ ExportUI: BPM Controls - display: none
+ 🔄 CatalogV2: Переключен на режим upload
+ 🗜️ Выбран ZIP файл: Frank Sinatra-Thats Life.zip
+ 🗜️ ZIP: Найден файл: Frank Sinatra-Thats Life/.DS_Store
+ 🗜️ ZIP: Найден файл: Frank Sinatra-Thats Life/Frank Sinatra - Thats Life.mp3
+ 🗜️ ZIP: Найден файл: Frank Sinatra-Thats Life/Frank Sinatra-Thats Life.rtf
+ 🗜️ ZIP: Найден файл: Frank Sinatra-Thats Life/Frank Sinatra-Thats Life_Vocals_.mp3
+ 🗜️ ZIP: Найден файл: Frank Sinatra-Thats Life/text_track_Frank Sinatra - Thats Life (1).json
+ 🗜️ ZIP: Инструментал (по умолчанию):  Frank Sinatra-Thats Life/Frank Sinatra - Thats Life.mp3
+ 🗜️ ZIP: Найден текст: Frank Sinatra-Thats Life/Frank Sinatra-Thats Life.rtf
+ 🗜️ ZIP: Потенциальный вокал (высокий приоритет):  Frank Sinatra-Thats Life/Frank Sinatra-Thats Life_Vocals_.mp3
+ 🗜️ ZIP: Найден JSON: Frank Sinatra-Thats Life/text_track_Frank Sinatra - Thats Life (1).json
+ 🗜️ ZIP (Vocal): Найдена запись вокала: Frank Sinatra-Thats Life/Frank Sinatra-Thats Life_Vocals_.mp3
+ 🗜️ ZIP (Vocal): Blob создан. Тип:  Размер: 7420992
+ 🗜️ ZIP (Vocal): File объект создан: Frank Sinatra-Thats Life_Vocals_.mp3 Тип:  Размер: 7420992
+ 🗜️ ZIP (Lyrics): Найдена запись лирики: Frank Sinatra-Thats Life/Frank Sinatra-Thats Life.rtf
+ 🗜️ ZIP (JSON): Найдена запись JSON: Frank Sinatra-Thats Life/text_track_Frank Sinatra - Thats Life (1).json
+ ❌ Ошибка обработки ZIP файла: 
+handleZipFileSelect @ catalog-v2.js?v=2.0:1622
+ 🔔 CatalogV2: ❌ Ошибка обработки ZIP файла
+ 🎵 Файл выбран для instrumental: Frank Sinatra - Thats Life.mp3
+ 🎵 Файл выбран для vocal: Frank Sinatra-Thats Life_Vocals_.mp3
+ 🎵 Файл выбран для lyrics: Frank Sinatra-Thats Life.rtf
+ 🎵 Файл выбран для json: text_track_Frank Sinatra - Thats Life (1).json
+ CatalogV2: Обнаружен RTF файл для лирики. Парсинг...
+ RtfParserAdapter: Инициализация (динамическая детекция в момент parse)
+ RtfParserAdapter: Используем SimpleRtf
+ 💾 CatalogV2: Сохранение трека...
+ 🔧 CatalogV2: Обработка файлов...
+ ✅ CatalogV2: Вокал прочитан
+ ✅ CatalogV2: Текст прочитан
+ ✅ CatalogV2: Инструментал прочитан
+ 📝 CatalogV2: Данные трека готовы: Frank Sinatra - Thats Life
+ 🔄 CatalogV2: Сохранение в IndexedDB...
+ Track request successful, ID: 1763474883654
+ Transaction completed successfully for track: Frank Sinatra - Thats Life
+ ✅ CatalogV2: Трек сохранен в IndexedDB с ID: 1763474883654
+ ✅ CatalogV2: Трек добавлен в локальный массив
+ RTF Integration: Загрузка текста, длина: 1255
+ RTF Integration: Обработка текста, длина: 1255
+ Processing lyrics, text length: 1255
+ Определен тип текста: RTF: false, LRC: false, Unicode: false
+ Применяем стандартную обработку текста
+ Original text length: 1255
+ Text processing: BOM detected: false RTF detected: false
+ Performing standard text cleaning for non-RTF text
+ Количество русских букв: 0, английских: 918
+ Количество русских ключевых слов: 0, английских: 50
+ Определен язык текста: english
+ Образец текста: That's life (that's life), that's what all the people say
+You're ridin' high in April, shot down in ...
+ Всего сырых строк: 36
+ Финальный результат обработки: 30 строк
+ Первые строки: "That's life (that's life), that's what all the people say", "You're ridin' high in April, shot down in May", "But I know I'm gonna change that tune"
+ ✅ CatalogV2: Лирика загружена в LyricsDisplay перед обработкой маркеров.
+ Validating 29 markers for 30 lyric lines
+ Kept 29 valid markers out of 29
+ MarkerManager: Synthesized 5 textBlocks from JSON markers.
+ 🔄 CatalogV2: Переключен на режим search
+ ✅ CatalogV2: Трек добавлен в результаты поиска
+ 🔔 CatalogV2: ✅ Трек "Frank Sinatra - Thats Life" успешно сохранен!
+ 🔔 CatalogV2: ✅ Трек "Frank Sinatra - Thats Life" успешно сохранен!
+ 🧹 Очистка ячеек загрузки...
+ ✅ Ячейки загрузки очищены.
+ 🔄 Upload session сброшена
+ ✅ CatalogV2: JSON маркеры присутствуют, пропускаем редактор блоков. Трек доступен в поиске и "Моей музыке" (если добавите).
+ Validating 29 markers for 30 lyric lines
+ Kept 29 valid markers out of 29
+ Activating Rehearsal Display with blocks: Array(5)
+ ❌ CatalogV2: Ошибка при сохранении трека: 
+saveTrack @ catalog-v2.js?v=2.0:1244
+ 🔔 CatalogV2: ❌ Ошибка при сохранении трека
+ Rendering lyrics. Current style ID: live
+ Rendering standard line [0]: 'That's life (that's life), that's what all the people say'
+ Rendering standard line [1]: 'You're ridin' high in April, shot down in May'
+ Rendering standard line [2]: 'But I know I'm gonna change that tune'
+ Rendering standard line [3]: 'When I'm back on top, back on top in June'
+ Rendering standard line [4]: 'I said that's life (that's life), and as funny as it may seem'
+ Rendering standard line [5]: 'Some people get their kicks stompin' on a dream'
+ Rendering standard line [6]: 'But I don't let it, let it get me down'
+ Rendering standard line [7]: ''cause this fine old world, it keeps spinnin' around'
+ Rendering standard line [8]: 'I've been a puppet, a pauper,'
+ Rendering standard line [9]: 'a pirate, a poet, a pawn and a king'
+ Rendering standard line [10]: 'I've been up and down and over and out'
+ Rendering standard line [11]: 'and I know one thing'
+ Rendering standard line [12]: 'Each time I find myself flat on my face'
+ Rendering standard line [13]: 'I pick myself up and get back in the race'
+ Rendering standard line [14]: 'That's life (that's life), I tell you I can't deny it'
+ Rendering standard line [15]: 'I thought of quitting, baby,'
+ Rendering standard line [16]: 'but my heart just ain't gonna buy it'
+ Rendering standard line [17]: 'And if I didn't think it was worth one single try'
+ Rendering standard line [18]: 'I'd jump right on a big bird and then I'd fly'
+ Rendering standard line [19]: 'I've been a puppet, a pauper,'
+ Rendering standard line [20]: 'a pirate, a poet, a pawn and a king'
+ Rendering standard line [21]: 'I've been up and down and over and out'
+ Rendering standard line [22]: 'and I know one thing'
+ Rendering standard line [23]: 'Each time I find myself flat on my face'
+ Rendering standard line [24]: 'I pick myself up and get back in the race'
+ Rendering standard line [25]: 'That's life (that's life), that's life and I can't deny it'
+ Rendering standard line [26]: 'Many times I thought of cuttin' out but my heart won't buy it'
+ Rendering standard line [27]: 'But if there's nothin' shakin' come this here July'
+ Rendering standard line [28]: 'I'm gonna roll myself up in a big ball a-and die'
+ Rendering standard line [29]: 'My My'
+ RTF Integration: Текст успешно загружен и отображен
+ Activating karaoke mode
+ Applying style: Караоке with scale 1.20
+ TextStyleManager: Scaled font size from 1.4em to 1.68em
+ LyricsDisplay: Setting style to Караоке
+ [KARAOKE] DOM not found or empty in _renderLyrics, creating it.
+ TextStyleManager: Scaled font size from 1.4em to 1.68em
+ Applied style class to lyrics-container: style-karaoke
+ 🚀 Скрываю Живую Ленту
+ ✅ Возврат в классический зал
+ Karaoke Background Manager: Starting slideshow...
+ 🎵 ИНСТРУМЕНТАЛ: Громкость установлена 100%
+ 🎤 ВОКАЛ: Громкость установлена 0%
+ 🎵 CatalogV2: Загружается трек "Frank Sinatra - Thats Life" (ID: 1763474883654)
+ 🔄 CatalogV2: Overlay закрыт
+ 🎵 CatalogV2: Найден индекс 0 в оригинальном каталоге
+ Activating karaoke mode
+ Applying style: Караоке with scale 1.20
+ TextStyleManager: Scaled font size from 1.4em to 1.68em
+ LyricsDisplay: Setting style to Караоке
+ TextStyleManager: Scaled font size from 1.4em to 1.68em
+ Applied style class to lyrics-container: style-karaoke
+ 🚀 Скрываю Живую Ленту
+ ✅ Возврат в классический зал
+ Karaoke Background Manager: Starting slideshow...
+ 🎵 ИНСТРУМЕНТАЛ: Громкость установлена 100%
+ 🎤 ВОКАЛ: Громкость установлена 0%
+ LyricsDisplay.clearAllTextBlocks called
+clearAllTextBlocks @ lyrics-display.js:2682
+loadTrack @ track-catalog.js:1380
+playTrack @ catalog-v2.js?v=2.0:885
+(anonymous) @ catalog-v2.js?v=2.0:678
+ All text blocks cleared.
+ Defined Blocks UI needs to be updated. Current blocks: Array(0)
+ 💥 LyricsDisplay: Performing full reset.
+ ✅ LyricsDisplay: Full reset complete. All lyric data and DOM elements cleared.
+ 🔄 Loading track: "Frank Sinatra - Thats Life"
+ 🔄 StateManager: Starting HARD RESET of all components
+ 1. Resetting AudioEngine...
+ AudioEngine: Starting reset...
+ isPlaying property set to: false
+ ⏹️ ГИБРИД: Остановлен и сброшен
+ 🧹 СПРИНТЕР: Ресурсы очищены
+ AudioEngine: Reset completed successfully
+ ExportUI: _updateVisibility вызван.
+ ExportUI: _updateVisibility - isRehearsalMode: false bpmControls: 
+ ExportUI: Кнопка экспорта - display: none
+ ExportUI: BPM Controls - display: none
+ ✅ AudioEngine reset complete
+ 2. Resetting LyricsDisplay...
+ 💥 LyricsDisplay: Performing full reset.
+ ✅ LyricsDisplay: Full reset complete. All lyric data and DOM elements cleared.
+ ✅ LyricsDisplay full reset complete
+ 3. Resetting TextStyleManager...
+ 💥 TextStyleManager: Full reset initiated.
+rtf-parser.js:849 ✅ TextStyleManager: Reset complete. All states and caches cleared.
+rtf-parser.js:849 ✅ TextStyleManager reset complete.
+rtf-parser.js:849 4. Cleaning up Transport Controls...
+rtf-parser.js:849 🧹 Transport toggle очищен
+rtf-parser.js:849 ✅ Transport Controls cleanup complete
+rtf-parser.js:849 🎉 StateManager: HARD RESET completed successfully
+rtf-parser.js:849 ✅ All components ready for new track
+track-catalog.js:1398 ⏱️ HARD_RESET_TIME: 2.610107421875 ms
+rtf-parser.js:849 TrackCatalog: Set waveformEditor.lastLoadedFile to Frank Sinatra-Thats Life.rtf
+rtf-parser.js:849 TrackCatalog: Set waveformEditor.currentTrackId to 1763474883654
+rtf-parser.js:849 TrackCatalog: Found 6 blocks. Preparing them for rendering after audio load.
+rtf-parser.js:849 LyricsDisplay: Loading 6 imported blocks.
+rtf-parser.js:849 LyricsDisplay: Successfully loaded 6 blocks, total lyric lines: 36.
+track-catalog.js:1445 ⏱️ LYRICS_PREPARE_TIME: 0.97412109375 ms
+track-catalog.js:1457 ⏱️ BLOB_CREATION_TIME: 7.177001953125 ms
+rtf-parser.js:849 🚀 ГИБРИД: Загрузка двойного потока
+rtf-parser.js:849 isPlaying property set to: false
+rtf-parser.js:849 ⏹️ ГИБРИД: Остановлен и сброшен
+rtf-parser.js:849 🔧 БЕЗОПАСНЫЙ URL: Конвертируем blob:null в data URL: blob:null/15de8443-0f39-4268-be43-bc3e2ac3729c...
+rtf-parser.js:849 ✅ Karaoke Background Manager: SUCCESSFULLY set background to Karaoke/yichen-wang-aBeTfQ65ycQ-unsplash.jpg
+rtf-parser.js:849 ✅ Karaoke Background Manager: SUCCESSFULLY set background to Karaoke/pexels-clemlep-13659549.jpg
+rtf-parser.js:849 ✅ ИНСТРУМЕНТАЛ ГОТОВ! Длительность: 185.45с
+rtf-parser.js:849 ✅ БЕЗОПАСНЫЙ URL: Создан data URL размером 7420992 байт
+rtf-parser.js:849 🔧 БЕЗОПАСНЫЙ URL: Конвертируем blob:null в data URL: blob:null/528c3741-c7cc-4e68-9473-932a64aac177...
+rtf-parser.js:849 ✅ БЕЗОПАСНЫЙ URL: Создан data URL размером 7420992 байт
+audio-engine.js:433 ⏱️ HYBRID_ENGINE_LOAD_TIME: 347.22900390625 ms
+rtf-parser.js:849 🎯 ГИБРИД: Рассинхронизация устранена!
+app.js:2980 ExportUI: already initialized
+tryInitExportUI @ app.js:2980
+rtf-parser.js:849 [tryInitExporter] Начало инициализации. app.audioEngine: AudioEngine app.audioEngine?.audioContext: AudioContext
+rtf-parser.js:849 [tryInitExporter] Все зависимости готовы, попытка инициализации AudioExporter.
+app.js:3023 AudioExporter init failed ReferenceError: AudioExporter is not defined
+    at tryInitExporter (app.js:3013:37)
+    at HTMLDocument.<anonymous> (app.js:3042:5)
+    at AudioEngine._notifyTrackLoaded (audio-engine.js:241:18)
+    at AudioEngine.loadTrack (audio-engine.js:436:18)
+    at async TrackCatalog.loadTrack (track-catalog.js:1462:28)
+tryInitExporter @ app.js:3023
+rtf-parser.js:849 🚀 Скрываю Живую Ленту
+rtf-parser.js:849 ✅ Возврат в классический зал
+rtf-parser.js:849 Applying style: Караоке with scale 1.20
+rtf-parser.js:849 TextStyleManager: Scaled font size from 1.4em to 1.68em
+rtf-parser.js:849 LyricsDisplay: Setting style to Караоке
+rtf-parser.js:849 TextStyleManager: Scaled font size from 1.4em to 1.68em
+rtf-parser.js:849 🔄 Track loaded, reinitializing transport controls
+rtf-parser.js:849 🎛️ Transport toggle инициализирован
+rtf-parser.js:849 ExportUI: _updateVisibility вызван.
+rtf-parser.js:849 ExportUI: _updateVisibility - isRehearsalMode: false bpmControls: <div class=​"bpm-controls" id=​"bpm-controls" style=​"position:​ relative;​ display:​ flex;​ align-items:​ center;​ gap:​ 8px;​">​…​</div>​flex
+rtf-parser.js:849 ExportUI: Кнопка экспорта - display: none
+rtf-parser.js:849 ExportUI: BPM Controls - display: none
+track-catalog.js:1463 ⏱️ AUDIO_LOAD_TIME: 358.324951171875 ms
+rtf-parser.js:849 Loading 29 markers for track Frank Sinatra - Thats Life
+rtf-parser.js:849 Validating 29 markers for 36 lyric lines
+rtf-parser.js:849 Kept 29 valid markers out of 29
+rtf-parser.js:849 🎵 АВТОПЛЕЙ: Запуск воспроизведения...
+rtf-parser.js:849 ✅ Track "Frank Sinatra - Thats Life" loaded successfully
+audio-engine.js:351 ❌ Ошибка загрузки вокала: Event
+(anonymous) @ audio-engine.js:351
+audio-engine.js:352 🎯 Переходим в instrumental-only режим
+(anonymous) @ audio-engine.js:352
+app.js:1460 🎤 Vocal Error: Вокальная дорожка недоступна. Режим: только инструментал.
+showVocalError @ app.js:1460
+rtf-parser.js:849 App: Уведомление (error): Вокальная дорожка недоступна. Режим: только инструментал.
+live-mode.js:1799 LiveMode: Вокальная дорожка недоступна. Режим: только инструментал.
+_showErrorMessage @ live-mode.js:1799
+rtf-parser.js:849 🎯 Режим instrumental-only активирован
+rtf-parser.js:849 🎨 StateManager: Forcing text rerender in current mode
+rtf-parser.js:849 🎤 Karaoke mode detected, should work correctly
+track-catalog.js:1496 ⏱️ FINAL_RENDER_TIME: 101.828857421875 ms
+track-catalog.js:1497 ⏱️ TOTAL_TRACK_LOAD_TIME: 472.60107421875 ms
+rtf-parser.js:849 ▶️ ИНСТРУМЕНТАЛ: Воспроизведение начато
+rtf-parser.js:849 isPlaying property set to: true
+rtf-parser.js:849 ✅ АВТОПЛЕЙ: Воспроизведение начато успешно
+rtf-parser.js:849 Switching to rehearsal mode
+rtf-parser.js:849 App: Сохраняем предыдущий режим: karaoke
+rtf-parser.js:849 Activating rehearsal mode
+rtf-parser.js:849 Karaoke Background Manager: Stopping slideshow...
+rtf-parser.js:849 Applying style: Репетиция with scale 1.00
+rtf-parser.js:849 LyricsDisplay: Setting style to Репетиция
+rtf-parser.js:849 Activating Rehearsal Display with blocks: Array(6)
+rtf-parser.js:849 Rendering lyrics. Current style ID: rehearsal
+rtf-parser.js:849 🔧 Block "Block 1": original=[0,1,2,3], sorted=[0,1,2,3]
+rtf-parser.js:849 🔧 Block "Block 2": original=[4,5,6,7], sorted=[4,5,6,7]
+rtf-parser.js:849 🔧 Block "Block 3": original=[8,9,10,11,12,13], sorted=[8,9,10,11,12,13]
+rtf-parser.js:849 🔧 Block "Block 4": original=[14,15,16,17,18], sorted=[14,15,16,17,18]
+rtf-parser.js:849 🔧 Block "Block 5": original=[19,20,21,22,23,24], sorted=[19,20,21,22,23,24]
+rtf-parser.js:849 🔧 Block "Block 6": original=[25,26,27,28], sorted=[25,26,27,28]
+rtf-parser.js:849 Rehearsal: Current line: 0, Total blocks: 6
+rtf-parser.js:849 Rehearsal: DETAILED Block structure:
+rtf-parser.js:849   Block 0 (block-1755896016705-0-w6yxtqs33s8): name="Block 1", lines=[0,1,2,3]
+rtf-parser.js:849     Content preview: "That's life (that's life), that's what all the people say
+You're ridin' high in April, shot down in "
+rtf-parser.js:849       Line 0: "That's life (that's life), that's what all the people say"
+rtf-parser.js:849       Line 1: "You're ridin' high in April, shot down in May"
+rtf-parser.js:849       Line 2: "But I know I'm gonna change that tune"
+rtf-parser.js:849       Line 3: "When I'm back on top, back on top in June"
+rtf-parser.js:849   Block 1 (1): name="Block 2", lines=[4,5,6,7]
+rtf-parser.js:849     Content preview: "
+I said that's life (that's life), and as funny as it may seem
+Some people get their kicks stompin' "
+rtf-parser.js:849       Line 5: "I said that's life (that's life), and as funny as it may seem"
+rtf-parser.js:849       Line 6: "Some people get their kicks stompin' on a dream"
+rtf-parser.js:849       Line 7: "But I don't let it, let it get me down"
+rtf-parser.js:849   Block 2 (2): name="Block 3", lines=[8,9,10,11,12,13]
+rtf-parser.js:849     Content preview: "'cause this fine old world, it keeps spinnin' around
+
+I've been a puppet, a pauper,"
+rtf-parser.js:849       Line 8: "'cause this fine old world, it keeps spinnin' around"
+rtf-parser.js:849       Line 10: "I've been a puppet, a pauper,"
+rtf-parser.js:849       Line 11: "a pirate, a poet, a pawn and a king"
+rtf-parser.js:849       Line 12: "I've been up and down and over and out"
+rtf-parser.js:849       Line 13: "and I know one thing"
+rtf-parser.js:849   Block 3 (3): name="Block 4", lines=[14,15,16,17,18]
+rtf-parser.js:849     Content preview: "Each time I find myself flat on my face
+I pick myself up and get back in the race
+"
+rtf-parser.js:849       Line 14: "Each time I find myself flat on my face"
+rtf-parser.js:849       Line 15: "I pick myself up and get back in the race"
+rtf-parser.js:849       Line 17: "That's life (that's life), I tell you I can't deny it"
+rtf-parser.js:849       Line 18: "I thought of quitting, baby,"
+rtf-parser.js:849   Block 4 (4): name="Block 5", lines=[19,20,21,22,23,24]
+rtf-parser.js:849     Content preview: "but my heart just ain't gonna buy it
+And if I didn't think it was worth one single try
+I'd jump righ"
+rtf-parser.js:849       Line 19: "but my heart just ain't gonna buy it"
+rtf-parser.js:849       Line 20: "And if I didn't think it was worth one single try"
+rtf-parser.js:849       Line 21: "I'd jump right on a big bird and then I'd fly"
+rtf-parser.js:849       Line 23: "I've been a puppet, a pauper,"
+rtf-parser.js:849       Line 24: "a pirate, a poet, a pawn and a king"
+rtf-parser.js:849   Block 5 (5): name="Block 6", lines=[25,26,27,28]
+rtf-parser.js:849     Content preview: "I've been up and down and over and out
+and I know one thing
+Each time I find myself flat on my face"
+rtf-parser.js:849       Line 25: "I've been up and down and over and out"
+rtf-parser.js:849       Line 26: "and I know one thing"
+rtf-parser.js:849       Line 27: "Each time I find myself flat on my face"
+rtf-parser.js:849       Line 28: "I pick myself up and get back in the race"
+rtf-parser.js:849 Rehearsal: Looking for block containing line 0
+rtf-parser.js:849   Checking block 0: lineIndices=[0,1,2,3]
+rtf-parser.js:849   ✓ Found! Block 0 contains line 0
+rtf-parser.js:849 Rehearsal: Found active block at index 0 with lines: Array(4)
+rtf-parser.js:849 Rehearsal: Active block 0: Object
+rtf-parser.js:849 >>> FONT_CALC_DEBUG >>> Lines: 4, FontSize: 2.66rem, LineHeight: 3.23rem
+rtf-parser.js:849 Rehearsal: Activated line 0 in block with transition: none
+rtf-parser.js:849 Rehearsal: Next block preview for block 1: Object
+rtf-parser.js:849 Rehearsal: Preview lines: Array(2)
+rtf-parser.js:849 Rehearsal: Adding preview line 5: "I said that's life (that's life), and as funny as it may seem"
+rtf-parser.js:849 Rehearsal: Preview container added with 2 lines
+rtf-parser.js:849 Rehearsal mode: Rendered active block 0 with next block preview
+rtf-parser.js:849 BlockLoopControl: Активирован
+rtf-parser.js:849 BlockLoopControl: _createLoopButtonForCurrentBlock called
+rtf-parser.js:849 BlockLoopControl: lyricsDisplay.currentActiveBlock: Object
+rtf-parser.js:849 BlockLoopControl: lyricsDisplay.textBlocks: Array(6)
+rtf-parser.js:849 BlockLoopControl: Создаем кнопку для активного блока репетиции: Block 1
+rtf-parser.js:849 BlockLoopControl: _createLoopButton called for block: Block 1
+rtf-parser.js:849 BlockLoopControl: Кнопка удалена, drag boundaries остаются активными
+rtf-parser.js:849 BlockLoopControl: blockElement found: true
+rtf-parser.js:849 ✅ DragBoundaryController activated for block: Block 1
+rtf-parser.js:849 📊 Block line indices: [0,1,2,3]
+rtf-parser.js:849 🎯 Initial boundaries received: null
+rtf-parser.js:849 ✅ Set default boundaries from sorted indices: start=0, end=3
+rtf-parser.js:849 [DragBoundary] ✅ Применены переданные границы: Object
+rtf-parser.js:849 [DragBoundary] 🎯 Создание интерактивных линий границ
+rtf-parser.js:849 [DragBoundary] 📍 Блок: Block 1, границы: 0-3
+rtf-parser.js:849 [DragBoundary] 📋 Найдено строк в блоке: 4
+rtf-parser.js:849 [DragBoundary] 📝 Строка 0: data-index="0", текст: "That's life (that's life), tha"
+rtf-parser.js:849 [DragBoundary] 📝 Строка 1: data-index="1", текст: "You're ridin' high in April, s"
+rtf-parser.js:849 [DragBoundary] 📝 Строка 2: data-index="2", текст: "But I know I'm gonna change th"
+rtf-parser.js:849 [DragBoundary] 📝 Строка 3: data-index="3", текст: "When I'm back on top, back on "
+rtf-parser.js:849 [DragBoundary] 🎯 Поиск startLine (index 0): ✅ найден
+rtf-parser.js:849 [DragBoundary] 📝 StartLine текст: "That's life (that's life), that's what all the peo"
+rtf-parser.js:849 [DragBoundary] 📐 StartLine rect: DOMRect
+rtf-parser.js:849 [DragBoundary] 🎯 Поиск endLine (index 3): ✅ найден
+rtf-parser.js:849 [DragBoundary] 📝 EndLine текст: "When I'm back on top, back on top in June"
+rtf-parser.js:849 [DragBoundary] 📐 EndLine rect: DOMRect
+rtf-parser.js:849 [DragBoundary] ✅ Создана стартовая линия для строки 0
+rtf-parser.js:849 [DragBoundary] ✅ Создана конечная линия для строки 3
+rtf-parser.js:849 [DragBoundary] ✅ Обе линии успешно созданы
+rtf-parser.js:849 [DragBoundary] 📐 StartLine позиция: top=273.46875, bottom=277.46875
+rtf-parser.js:849 [DragBoundary] 📐 EndLine позиция: top=532.78125, bottom=536.78125
+rtf-parser.js:849 [DragBoundary] Обновлены визуальные состояния. Диапазон: 0-3
+rtf-parser.js:849 [DragBoundary] ✅ Контроллер активирован
+rtf-parser.js:849 BlockLoopControl: Создана кнопка для блока: Block 1
+rtf-parser.js:849 BlockLoopControl: Кнопка создана для блока: Block 1
+rtf-parser.js:849 🛡️ AUTO RECOVERY: System started (checking every 2s)
+rtf-parser.js:849 🚀 Скрываю Живую Ленту
+rtf-parser.js:849 ✅ Возврат в классический зал
+rtf-parser.js:849 🔧 Block "Block 1": original=[0,1,2,3], sorted=[0,1,2,3]
+rtf-parser.js:849 🔧 Block "Block 2": original=[4,5,6,7], sorted=[4,5,6,7]
+rtf-parser.js:849 🔧 Block "Block 3": original=[8,9,10,11,12,13], sorted=[8,9,10,11,12,13]
+rtf-parser.js:849 🔧 Block "Block 4": original=[14,15,16,17,18], sorted=[14,15,16,17,18]
+rtf-parser.js:849 🔧 Block "Block 5": original=[19,20,21,22,23,24], sorted=[19,20,21,22,23,24]
+rtf-parser.js:849 🔧 Block "Block 6": original=[25,26,27,28], sorted=[25,26,27,28]
+rtf-parser.js:849 🎵 ИНСТРУМЕНТАЛ: Громкость установлена 100%
+rtf-parser.js:849 🎤 ВОКАЛ: Громкость установлена 100%
+rtf-parser.js:849 ExportUI: _updateVisibility вызван.
+rtf-parser.js:849 ExportUI: _updateVisibility - isRehearsalMode: true bpmControls: <div class=​"bpm-controls" id=​"bpm-controls" style=​"position:​ relative;​ display:​ flex;​ align-items:​ center;​ gap:​ 8px;​">​…​</div>​flex
+rtf-parser.js:849 ExportUI: Кнопка экспорта - display: block
+rtf-parser.js:849 ExportUI: BPM Controls - display: flex
+rtf-parser.js:849 ✅ Rehearsal Background: set Rehearsal/pexels-david-bartus-43782-844928.jpg
+rtf-parser.js:849 Key pressed: Space
+rtf-parser.js:849 Space bar pressed, toggling playback
+rtf-parser.js:849 ⏸️ ИНСТРУМЕНТАЛ: Пауза
+rtf-parser.js:849 isPlaying property set to: false
+rtf-parser.js:849 Key pressed:  , key code: 32, waveform active: false
+rtf-parser.js:849 Key pressed: MetaLeft
+rtf-parser.js:849 Key pressed: Meta, key code: 91, waveform active: false
+rtf-parser.js:849 Key pressed: AltLeft
+rtf-parser.js:849 Key pressed: Alt, key code: 18, waveform active: false
+rtf-parser.js:849 Key pressed: KeyJ
+rtf-parser.js:849 Key pressed: о, key code: 74, waveform active: false
+rtf-parser.js:849 Key pressed: ControlLeft
+rtf-parser.js:849 Key pressed: Control, key code: 17, waveform active: false
+rtf-parser.js:849 Key pressed: MetaLeft
+rtf-parser.js:849 Key pressed: Meta, key code: 91, waveform active: false
+rtf-parser.js:849 Key pressed: F12
+rtf-parser.js:849 Key pressed: F12, key code: 123, waveform active: false

@@ -1,0 +1,31 @@
+name: Basic CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies (placeholder)
+        run: echo "Installing dependencies... (replace with actual install commands like npm ci)"
+
+      - name: Run Lint (placeholder)
+        run: echo "Running lint... (replace with actual lint commands like npm run lint)"
+
+      - name: Build Check (placeholder)
+        run: echo "Running build check... (replace with actual build commands like npm run build)"

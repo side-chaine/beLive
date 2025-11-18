@@ -1397,44 +1397,28 @@ class LyricsDisplay {
         const seen = new Set();
         const result = [];
         const allowedTypes = new Set(['verse', 'chorus', 'bridge']);
-
         (blocks || []).forEach((blk, idx) => {
-            if (!blk) { return; }
-
-            const sorted = Array.isArray(blk.lineIndices)
-                ? [...blk.lineIndices]
-                    .map(v => Number(v))
-                    .filter(Number.isFinite)
-                    .sort((a,b) => a - b)
-                    .filter((v,i,arr) => (i === 0 || v !== arr[i-1]) && (lyricsLen === 0 ? v >= 0 : (v >= 0 && v < lyricsLen)))
-                : [];
-
-            if (sorted.length === 0) { return; }
-
-            // Теперь назначаем blk.lineIndices = sorted (или пустой массив)
-            blk.lineIndices = sorted;
-
-            // Используем ключ по диапазону для отбраковки полных дублей
-            const key = `${sorted[0]}-${sorted[sorted.length-1]}`;
-            if (seen.has(key)) { return; } // Skip if duplicate range
-            seen.add(key);
-
-            // Обновляем тип блока, если он невалиден
-            if (!allowedTypes.has(blk.type)) { blk.type = 'verse'; }
-
-            // Если блок имеет контент и он не пустой (после возможного восстановления), сохраняем
-            if (blk.content && blk.content.length > 0) {
-                result.push(blk);
-            } else if (blk.lineIndices.length > 0) {
-                // Если content пуст, но есть lineIndices, сохраняем, так как content может быть восстановлен позже
-                result.push(blk);
-            } else {
-                // В остальных случаях, если нет контента и нет индексов, пропускаем блок
-                console.warn(`LyricsDisplay: Санитизация удалила пустой блок с ID: ${blk.id || idx}`);
+            if (!blk || !Array.isArray(blk.lineIndices) || blk.lineIndices.length === 0) {
+                return; // пустой блок
             }
+            // сортируем и уникализируем индексы, оставляем только валидные в пределах текста
+            const sorted = [...blk.lineIndices].sort((a,b)=>a-b)
+                .filter((v,i,arr)=> (i===0 || v!==arr[i-1]) && v>=0 && v<lyricsLen);
+            if (sorted.length === 0) {return;}
+            // используем ключ по диапазону для отбраковки полных дублей
+            const key = `${sorted[0]}-${sorted[sorted.length-1]}`;
+            if (seen.has(key)) {return;}
+            seen.add(key);
+            // сохраняем и валидируем тип блока (важно для окраски маркеров и панели)
+            const rawType = typeof blk.type === 'string' ? blk.type.toLowerCase() : undefined;
+            const type = allowedTypes.has(rawType) ? rawType : (blk.type ? rawType : undefined);
+            result.push({
+                id: blk.id || `blk-${idx}-${sorted[0]}`,
+                name: blk.name || `Block ${idx+1}`,
+                lineIndices: sorted,
+                ...(type ? { type } : {})
+            });
         });
-
-        console.log(`LyricsDisplay: _sanitizeBlocks: ${blocks.length} -> ${result.length} blocks after sanitation.`);
         return result;
     }
 
@@ -2674,7 +2658,7 @@ class LyricsDisplay {
             id: blockId,
             name: blockName || `Block ${this.textBlocks.length + 1}`,
             // Use the correct array: this.currentBlockCreation
-            lineIndices: Array.isArray(this.currentBlockCreation) ? this.currentBlockCreation.map(v => Number(v)).filter(Number.isFinite) : []
+            lineIndices: [...this.currentBlockCreation] 
         };
         this.textBlocks.push(blockData);
         console.log('LyricsDisplay.finalizeCurrentBlock - Current blocks after push:', JSON.stringify(this.textBlocks)); // Added for debugging
@@ -2702,109 +2686,109 @@ class LyricsDisplay {
         return this.textBlocks;
     }
 
-    async loadImportedBlocks(blocksData = []) {
-        console.log('LyricsDisplay: Loading', blocksData.length, 'imported blocks. Input blocksData:', blocksData);
-
-        // 1) Не затираем this.lyrics сразу — проверяем, есть ли они
-        const existingLyricsLen = Array.isArray(this.lyrics) ? this.lyrics.length : 0;
-        console.log('LyricsDisplay: loadImportedBlocks - Saved', existingLyricsLen, 'current lyrics lines before clearing.');
-
-        // 2) Если нет текста, попробуем получить сырой текст из trackCatalog (fallback)
-        if (!existingLyricsLen) {
-            try {
-                const getTrackRawText = () => {
-                    try {
-                        const trackId = window.waveformEditor && window.waveformEditor.currentTrackId;
-                        if (!trackId || !window.trackCatalog) return null;
-                        const tr = window.trackCatalog.getTrack(trackId);
-                        if (!tr) return null;
-                        // возможные поля, где может быть текст
-                        return tr.rawText || tr.text || tr.lyricsText || tr.rtf || null;
-                    } catch (e) {
-                        console.warn('Error fetching track raw text from TrackCatalog', e);
-                        return null;
-                    }
-                };
-
-                // Если rawText найден — назначаем this.lyrics сразу
-                let raw = getTrackRawText();
-                if (!raw) {
-                    // Делает короткий retry — ждём до 3 секунд (60 попыток по 50ms)
-                    const maxAttempts = 160;
-                    let attempts = 0;
-                    await new Promise(resolve => {
-                        const tick = setInterval(() => {
-                            attempts++;
-                            raw = getTrackRawText();
-                            if (raw || attempts >= maxAttempts) {
-                                clearInterval(tick);
-                                resolve();
-                            }
-                        }, 50);
-                    });
+    async loadImportedBlocks(blocksData, shouldRender = true) { // Добавлен флаг shouldRender
+        return new Promise((resolve) => { // Возвращаем Promise
+            if (!blocksData || !Array.isArray(blocksData)) {
+                console.warn('LyricsDisplay: Invalid or empty blocksData provided to loadImportedBlocks.');
+                this.textBlocks = [];
+                this.lyrics = []; // Clear lyrics if blocks are invalid
+                if (shouldRender) {
+                this._renderLyrics(); // Re-render (will show "no lyrics" or empty)
                 }
+                if (typeof this.updateDefinedBlocksDisplay === 'function') {
+                    this.updateDefinedBlocksDisplay([]); // Update external UI
+                }
+                resolve(); // Разрешаем Promise, даже если данные невалидны
+                return;
+            }
 
-                if (raw) {
-                    // Если raw — это RTF, возможно потребуется парсер; но чаще это plain text
-                    // Попытка извлечь строки
-                    if (typeof raw === 'string') {
-                        this.lyrics = raw.split(/\r?\n/).map(l => l.replace(/\t/g, ' ').trim()).filter(l => l.length > 0);
-                        console.log('LyricsDisplay: loadImportedBlocks - Restored lyrics from track raw text. lines:', this.lyrics.length);
-                    }
+            console.log(`LyricsDisplay: Loading ${blocksData.length} imported blocks.`);
+            this.textBlocks = JSON.parse(JSON.stringify(blocksData)); // Deep copy
+
+            // Reconstruct this.lyrics from the blocksData
+            this.lyrics = [];
+            this.textBlocks.forEach((block, blockIndex) => {
+                // ИСПРАВЛЕНО: Генерируем ID и имя если их нет
+                if (!block.id) {
+                    block.id = `block-${Date.now()}-${blockIndex}-${Math.random().toString(36).substring(2, 15)}`;
+                }
+                if (!block.name) {
+                    block.name = `Block ${blockIndex + 1}`;
+                }
+                
+                // ИСПРАВЛЕНО: Ищем поле content вместо text
+                const blockText = block.content || block.text || '';
+                if (blockText && typeof blockText === 'string') {
+                    const blockLines = blockText.split('\n').map(line => line.trim());
+                    block.lineIndices = []; // Reset/initialize lineIndices for this block
+                    blockLines.forEach(line => {
+                        if (line) { // Only add non-empty lines
+                            this.lyrics.push(line);
+                            block.lineIndices.push(this.lyrics.length - 1); // Store the new global index
+                        }
+                    });
+                } else {
+                    // Если у блока нет текста, или он не строка, добавляем пустой массив индексов
+                    block.lineIndices = [];
+                }
+                
+                console.log(`Block ${blockIndex} loaded: id="${block.id}", name="${block.name}", lines=${block.lineIndices?.length || 0}`);
+            });
+            
+            // Санитизация импортированных блоков ДО рендера, чтобы устранить пустые/дубли и неверные индексы
+            try {
+                this.textBlocks = this._sanitizeBlocks(this.textBlocks);
+            } catch(_) {}
+
+            this.currentLine = 0; // Reset current line
+            this.currentlyFocusedBlockId = null; // Reset focused block
+
+            // Очищаем контейнер перед новой отрисовкой
+            if (this.lyricsContainer) {
+                this.lyricsContainer.innerHTML = '';
+            }
+            // Force scroll to top
+            if (this.containerElement) {
+                this.containerElement.scrollTop = 0;
+            }
+            
+            if (shouldRender) {
+            this._renderLyrics(); // This will render based on the new this.lyrics
+            // 🎯 Обеспечиваем появление Loop-кнопки сразу после первичного рендера в режиме репетиции
+            try {
+                if (window.app && window.app.blockLoopControl && typeof window.app.blockLoopControl._createLoopButtonForCurrentBlock === 'function') {
+                    window.app.blockLoopControl._createLoopButtonForCurrentBlock();
                 }
             } catch (e) {
-                console.warn('LyricsDisplay: fallback text extraction failed', e);
+                console.warn('LyricsDisplay: Не удалось создать Loop-кнопку после рендера:', e);
             }
+            } else {
+                console.log('LyricsDisplay: Skipping render as requested by shouldRender=false');
+            }
+
+            if (typeof this.updateDefinedBlocksDisplay === 'function') {
+                this.updateDefinedBlocksDisplay(this.textBlocks); // Update any external UI for defined blocks
+            }
+            console.log(`LyricsDisplay: Successfully loaded ${this.textBlocks.length} blocks, total lyric lines: ${this.lyrics.length}.`);
+            
+            // Обновляем цвета маркеров после загрузки блоков
+            if (window.markerManager && typeof window.markerManager.updateMarkerColors === 'function') {
+                window.markerManager.updateMarkerColors();
+                console.log('LyricsDisplay: Updated marker colors after loading blocks');
+            }
+            
+            resolve(); // Разрешаем Promise после завершения всех операций
+        });
+    }
+
+    _renderTextBlocksUI() {
+        // This is a placeholder. The actual UI update for the "Defined Blocks" list
+        // will likely happen in waveform-editor.js or a dedicated UI manager.
+        // For now, just log.
+        console.log("Defined Blocks UI needs to be updated. Current blocks:", this.textBlocks);
+        if (window.waveformEditor && typeof window.waveformEditor.updateDefinedBlocksDisplay === 'function') {
+            window.waveformEditor.updateDefinedBlocksDisplay(this.textBlocks);
         }
-
-        // 3) Теперь идёт стандартная логика восстановления блоков, но с учётом того, что this.lyrics может быть уже заполнен
-        // (оставляем оригинальную логику, за исключением преждевременного обнуления this.lyrics)
-        const allLyricsLines = Array.isArray(this.lyrics) ? [...this.lyrics] : [];
-
-        // Build this.textBlocks from blocksData (restoring content if possible)
-        this.textBlocks = blocksData.map(blk => {
-            const contentFromLines = Array.isArray(blk.lineIndices) && allLyricsLines.length > 0
-                ? blk.lineIndices.map(i => allLyricsLines[i] || '').join('\n').trim()
-                : (blk.content || '');
-            return {
-                id: blk.id,
-                name: blk.name || blk.id,
-                type: blk.type || 'verse',
-                lineIndices: Array.isArray(blk.lineIndices) ? [...blk.lineIndices] : [],
-                content: contentFromLines || ''
-            };
-        });
-
-        console.log('LyricsDisplay: loadImportedBlocks - this.textBlocks after first pass (with restored content):', this.textBlocks);
-
-        // 4) Если после попыток текст всё ещё пуст — не санитизируем агрессивно; просто делаем мягкую санитизацию
-        const lyricsLenNow = Array.isArray(this.lyrics) ? this.lyrics.length : 0;
-        this.textBlocks = this.textBlocks.filter(blk => {
-            // Если блок имеет content — сохраняем
-            if (blk.content && blk.content.length) return true;
-            // Если нет строк и нет content — но у блока есть lineIndices — сохраняем (ждём реиндексации)
-            if (Array.isArray(blk.lineIndices) && blk.lineIndices.length) {
-                // если есть lyric lines — фильтруем невалидные индексы
-                if (lyricsLenNow > 0) {
-                    const valid = blk.lineIndices.some(i => Number.isFinite(i) && i >= 0 && i < lyricsLenNow);
-                    return valid;
-                }
-                // если lyricsLenNow == 0 — сохраняем блокы, т.к. реиндексация произойдёт позже
-                return true;
-            }
-            // В остальных случаях — выкидываем пустые блоки
-            return false;
-        });
-
-        console.log('LyricsDisplay: loadImportedBlocks - Final this.lyrics array:', this.lyrics || []);
-        console.log('LyricsDisplay: loadImportedBlocks - this.textBlocks after sanitation:', this.textBlocks);
-
-        // 5) Если после всего текста нет, но блоки есть — оставляем их и вернём управление.
-        // Остальная часть оригинальной логики (рендер дом, обновление UI) должна выполняться здесь.
-        this._renderBlocksUI && this._renderBlocksUI();
-
-        // Возвращаем промис, чтобы вызывающий код мог await при необходимости
-        return Promise.resolve();
     }
 
     // --- Rehearsal Mode Activation ---
@@ -3551,135 +3535,6 @@ class LyricsDisplay {
         }
 
         // ... остальной код renderLyrics ...
-    }
-
-    /**
-     * Finalize the current block creation process
-     * @param {string} blockName - The name of the block
-     */
-    finalizeCurrentBlock(blockName) {
-        const MAX_LINES_PER_BLOCK = 8; // Set to 8 as per user request
-
-        // Use the correct array: this.currentBlockCreation
-        if (!this.currentBlockCreation || this.currentBlockCreation.length === 0) {
-            console.warn("Attempted to finalize an empty block.");
-            // Optionally show a notification to the user
-            if (typeof showNotification === 'function') {
-                showNotification("Cannot create an empty block.", "warning");
-            }
-            return;
-        }
-
-        // Use the correct array: this.currentBlockCreation
-        if (this.currentBlockCreation.length > MAX_LINES_PER_BLOCK) {
-             console.warn(`Attempted to finalize a block with ${this.currentBlockCreation.length} lines. Maximum allowed is ${MAX_LINES_PER_BLOCK}.`);
-            // Show notification to the user
-            if (typeof showNotification === 'function') {
-                 showNotification(`Blocks cannot contain more than ${MAX_LINES_PER_BLOCK} lines. Please reduce the number of lines.`, "warning");
-            }
-            return; // Stop finalization if the block is too large
-        }
-
-
-        const blockId = `block-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-        const blockData = {
-            id: blockId,
-            name: blockName || `Block ${this.textBlocks.length + 1}`,
-            // Use the correct array: this.currentBlockCreation
-            lineIndices: Array.isArray(this.currentBlockCreation) ? this.currentBlockCreation.map(v => Number(v)).filter(Number.isFinite) : []
-        };
-        this.textBlocks.push(blockData);
-        console.log('LyricsDisplay.finalizeCurrentBlock - Current blocks after push:', JSON.stringify(this.textBlocks)); // Added for debugging
-        
-        // Clear the correct array after finalization
-        this.currentBlockCreation = []; 
-        
-        console.log("Block finalized:", blockData);
-        // TODO: Update "Defined Blocks\" UI list
-        // TODO: Potentially refresh block buttons in editor if lines are now part of a finalized block
-        this._renderTextBlocksUI(); // Placeholder for UI update
-        return blockData;
-    }
-
-    // Method to update the UI display of defined text blocks
-    // This is typically called after adding, editing, or deleting blocks
-    _renderTextBlocksUI() {
-        // Placeholder implementation for now
-        console.log("Defined Blocks UI needs to be updated. Current blocks:", this.textBlocks);
-        // In a full implementation, this would update a DOM element showing the list of blocks
-        // e.g., create a list of buttons for each block and append to a container
-    }
-
-    /**
-     * Сохраняет стили блоков, полученные из TextStyleManager, в this.textBlocks.
-     * @param {Object} blockStyles - Объект, где ключ - blockId, значение - { fontFamily, transitions }.
-     * @public
-     */
-    saveBlockStyles(blockStyles) {
-        // console.log("LyricsDisplay: Сохраняем стили блоков:", blockStyles);
-        if (!blockStyles || Object.keys(blockStyles).length === 0) {
-            // console.log("LyricsDisplay: Нет стилей блоков для сохранения.");
-            return;
-        }
-
-        this.textBlocks = this.textBlocks.map(block => {
-            // Удалены лишние логи для продакшена
-            // console.log("LyricsDisplay.saveBlockStyles: Обрабатываем блок (из this.textBlocks):");
-            // console.log("  block.id:", block.id);
-            // console.log("  block.name:", block.name);
-            // console.log("  blockStyles (полный объект, переданный в saveBlockStyles):", blockStyles);
-            // console.log("  blockStyles[block.id] (стиль для текущего блока из переданного объекта):", blockStyles[block.id]);
-
-            if (blockStyles[block.id]) {
-                const updatedBlock = { ...block, blockStyle: blockStyles[block.id] };
-                // console.log("LyricsDisplay.saveBlockStyles: Обновленный блок:", updatedBlock);
-                return updatedBlock;
-            }
-            return block;
-        });
-
-        // console.log("LyricsDisplay: textBlocks обновлены со стилями блоков:", this.textBlocks);
-        // console.log("LyricsDisplay: textBlocks перед сохранением в TrackCatalog:", 
-        //     JSON.stringify(this.textBlocks.map(b => ({ id: b.id, blockStyle: b.blockStyle }))));
-
-        if (window.trackCatalog && typeof window.trackCatalog.saveLyricsBlocks === 'function') {
-            const currentTrackId = window.waveformEditor.currentTrackId; // Нейросовет: Исправлено на получение ID из waveformEditor
-            if (currentTrackId) {
-                window.trackCatalog.saveLyricsBlocks(currentTrackId, this.textBlocks);
-                // console.log("LyricsDisplay: Вызван window.trackCatalog.saveLyricsBlocks для сохранения стилей блоков.");
-            } else {
-                // console.warn("LyricsDisplay: Не удалось получить ID текущего трека из trackCatalog. Стили блоков не будут сохранены персистентно.");
-            }
-        } else {
-            // console.warn("LyricsDisplay: window.trackCatalog или метод saveLyricsBlocks не найден. Стили блоков не будут сохранены персистентно.");
-        }
-    }
-
-    /**
-     * Полностью загружает и рендерит блоки для текущего трека.
-     * Используется для обновления this.textBlocks перед операциями сохранения.
-     */
-    async _loadAndRenderBlocks() {
-        console.log("LyricsDisplay: _loadAndRenderBlocks called.");
-        const currentTrackId = window.waveformEditor.currentTrackId;
-        console.log("LyricsDisplay: _loadAndRenderBlocks - currentTrackId:", currentTrackId);
-        // Check if textBlocks are already loaded in the current session to avoid unnecessary re-loading
-        // This preserves any in-session changes that haven't been saved yet.
-        if (!this.textBlocks || this.textBlocks.length === 0) {
-            console.log("LyricsDisplay: _loadAndRenderBlocks - textBlocks are empty, attempting to load from TrackCatalog.");
-            // Only if blocksData yet to be loaded in the session
-            const track = window.trackCatalog.getTrack(currentTrackId);
-            if (track && Array.isArray(track.blocksData) && track.blocksData.length > 0) {
-                console.log(`LyricsDisplay: _loadAndRenderBlocks - Found ${track.blocksData.length} blocks in TrackCatalog for ${currentTrackId}.`);
-                console.log("LyricsDisplay: _loadAndRenderBlocks - Calling loadImportedBlocks with blocksData:", JSON.stringify(track.blocksData));
-                await this.loadImportedBlocks(track.blocksData, false); // Load without re-rendering everything yet
-            } else {
-                console.log("LyricsDisplay: _loadAndRenderBlocks - No blocksData found in TrackCatalog or it's empty.");
-            }
-        }
-
-        // Ensure lyrics are rendered after blocks are loaded
-        this._renderLyrics();
     }
 }
 
