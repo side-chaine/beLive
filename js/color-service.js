@@ -134,14 +134,6 @@ class ColorService {
         return `linear-gradient(45deg, ${this.currentScheme.instrumental}, ${this.currentScheme.vocals})`;
     }
 
-    getInstrumentalAlpha() {
-        return this.currentScheme.instrumentalAlpha ?? 0.85;
-    }
-
-    getVocalsAlpha() {
-        return this.currentScheme.vocalsAlpha ?? 0.9;
-    }
-
     /**
      * Применить цвета к CSS переменным
      */

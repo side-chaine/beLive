@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎭 Тестирование Эффектов Удаления Фона - MediaPipe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        h1 {
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .video-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        #video, #canvas {
+            width: 640px;
+            height: 480px;
+            display: block;
+            transform: scaleX(-1); /* Зеркалирование */
+        }
+        
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+        
+        .controls {
+            margin: 20px 0;
+        }
+        
+        .effect-btn {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            margin: 5px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .effect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .effect-btn.active {
+            background: linear-gradient(45deg, #FF8A80, #81C784);
+            transform: scale(1.05);
+        }
+        
+        .status {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+        
+        .log {
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .version-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="version-info">
+        📅 Версия: v2.0 - Исправлено зеркалирование<br>
+        🔗 Резервная тестовая страница
+    </div>
+
+    <div class="container">
+        <h1>🎭 Тестирование Эффектов Удаления Фона</h1>
+        
+        <div class="video-container">
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="canvas"></canvas>
+        </div>
+        
+        <div class="controls">
+            <button class="effect-btn active" onclick="applyEffect('none')">❌ Без эффекта</button>
+            <button class="effect-btn" onclick="applyEffect('blur')">🌫️ Размытие</button>
+            <button class="effect-btn" onclick="applyEffect('green')">💚 Зеленый</button>
+            <button class="effect-btn" onclick="applyEffect('blue')">💙 Синий</button>
+            <button class="effect-btn" onclick="applyEffect('gradient')">🌈 Градиент</button>
+            <button class="effect-btn" onclick="applyEffect('matrix')">🔋 Матрица</button>
+            <button class="effect-btn" onclick="applyEffect('neon')">⚡ Неон</button>
+        </div>
+        
+        <div class="status" id="status">
+            🔄 Инициализация...
+        </div>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <!-- MediaPipe библиотеки -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
+
+    <script>
+        let video, canvas, ctx;
+        let selfieSegmentation;
+        let currentEffect = 'none';
+        let isProcessing = false;
+
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}<br>`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+            log(`Status: ${message}`);
+        }
+
+        async function initCamera() {
+            try {
+                video = document.getElementById('video');
+                canvas = document.getElementById('canvas');
+                ctx = canvas.getContext('2d');
+
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        width: 640, 
+                        height: 480,
+                        facingMode: 'user'
+                    }
+                });
+
+                video.srcObject = stream;
+                
+                return new Promise((resolve) => {
+                    video.onloadedmetadata = () => {
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        log('✅ Камера инициализирована');
+                        resolve(true);
+                    };
+                });
+            } catch (error) {
+                log(`❌ Ошибка камеры: ${error.message}`);
+                updateStatus('❌ Ошибка доступа к камере');
+                return false;
+            }
+        }
+
+        async function initMediaPipe() {
+            try {
+                updateStatus('🔄 Инициализация MediaPipe...');
+                
+                selfieSegmentation = new SelfieSegmentation({
+                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
+                });
+
+                await selfieSegmentation.setOptions({
+                    modelSelection: 1,
+                    selfieMode: true,
+                });
+
+                selfieSegmentation.onResults(onResults);
+                
+                log('✅ MediaPipe Selfie Segmentation готов');
+                return true;
+            } catch (error) {
+                log(`❌ Ошибка MediaPipe: ${error.message}`);
+                updateStatus('❌ Ошибка MediaPipe');
+                return false;
+            }
+        }
+
+        function onResults(results) {
+            if (!canvas || !ctx) return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (results.segmentationMask && currentEffect !== 'none') {
+                const mask = results.segmentationMask;
+                
+                // Создаем временный canvas для маски
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // ВАЖНО: Зеркалируем маску для соответствия CSS-зеркалированному видео
+                tempCtx.save();
+                tempCtx.scale(-1, 1);
+                tempCtx.drawImage(mask, -canvas.width, 0, canvas.width, canvas.height);
+                tempCtx.restore();
+                
+                const imageData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
+                const maskData = imageData.data;
+                
+                // Применяем эффект
+                switch (currentEffect) {
+                    case 'blur':
+                        applyBlurEffect(maskData);
+                        break;
+                    case 'green':
+                        applyColorEffect(maskData, '#00FF00');
+                        break;
+                    case 'blue':
+                        applyColorEffect(maskData, '#0000FF');
+                        break;
+                    case 'gradient':
+                        applyGradientEffect(maskData);
+                        break;
+                    case 'matrix':
+                        applyMatrixEffect(maskData);
+                        break;
+                    case 'neon':
+                        applyNeonEffect(maskData);
+                        break;
+                }
+            }
+        }
+
+        function applyBlurEffect(maskData) {
+            ctx.save();
+            ctx.filter = 'blur(15px)';
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            ctx.filter = 'none';
+            ctx.restore();
+            
+            overlayPerson(maskData);
+        }
+
+        function applyColorEffect(maskData, color) {
+            ctx.save();
+            ctx.fillStyle = color;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            overlayPerson(maskData);
+            ctx.restore();
+        }
+
+        function applyGradientEffect(maskData) {
+            ctx.save();
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, '#FF0080');
+            gradient.addColorStop(0.5, '#7928CA');
+            gradient.addColorStop(1, '#FF8A80');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            overlayPerson(maskData);
+            ctx.restore();
+        }
+
+        function applyMatrixEffect(maskData) {
+            ctx.save();
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Зеленые символы
+            ctx.fillStyle = '#00FF41';
+            ctx.font = '14px monospace';
+            const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノ';
+            for (let i = 0; i < 50; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const char = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(char, x, y);
+            }
+            
+            overlayPerson(maskData);
+            ctx.restore();
+        }
+
+        function applyNeonEffect(maskData) {
+            ctx.save();
+            const gradient = ctx.createRadialGradient(
+                canvas.width / 2, canvas.height / 2, 0,
+                canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height)
+            );
+            gradient.addColorStop(0, '#FF00FF');
+            gradient.addColorStop(0.5, '#00FFFF');
+            gradient.addColorStop(1, '#000033');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            overlayPerson(maskData);
+            ctx.restore();
+        }
+
+        function overlayPerson(maskData) {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Рисуем видео БЕЗ дополнительного зеркалирования
+            tempCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < maskData.length; i += 4) {
+                const alpha = maskData[i] > 128 ? imageData.data[i + 3] : 0;
+                imageData.data[i + 3] = alpha;
+            }
+            
+            tempCtx.putImageData(imageData, 0, 0);
+            ctx.drawImage(tempCanvas, 0, 0);
+        }
+
+        function applyEffect(effect) {
+            // Обновляем активную кнопку
+            document.querySelectorAll('.effect-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            currentEffect = effect;
+            log(`✨ Применен эффект: ${effect}`);
+            
+            if (effect === 'none') {
+                if (canvas) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+                isProcessing = false;
+                return;
+            }
+            
+            if (!isProcessing && selfieSegmentation && video) {
+                isProcessing = true;
+                processFrame();
+            }
+        }
+
+        async function processFrame() {
+            if (!isProcessing || !selfieSegmentation || !video) return;
+            
+            try {
+                await selfieSegmentation.send({ image: video });
+            } catch (error) {
+                log(`❌ Ошибка обработки кадра: ${error.message}`);
+            }
+            
+            if (isProcessing) {
+                requestAnimationFrame(processFrame);
+            }
+        }
+
+        // Инициализация
+        async function init() {
+            log('🚀 Запуск тестовой системы эффектов...');
+            
+            const cameraOk = await initCamera();
+            if (!cameraOk) return;
+            
+            const mediaPipeOk = await initMediaPipe();
+            if (!mediaPipeOk) return;
+            
+            updateStatus('✅ Готов к работе! Выберите эффект.');
+            log('🎉 Система готова к тестированию!');
+        }
+
+        // Запуск при загрузке страницы
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html> 

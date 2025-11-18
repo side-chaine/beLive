@@ -13,11 +13,7 @@
 
     // Пороговые значения
     MIN_EMPTY_LINES_FOR_BLOCKS: 1,
-
-    // Глобальный гейт для режима экспорта
-    __EXPORT_SELECT_MODE__: false,
   };
 
   global.AppConstants = Constants;
-  global.isExportSelectMode = () => !!global.AppConstants.__EXPORT_SELECT_MODE__;
 })(window); 

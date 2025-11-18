@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>beLive - Трансляции для музыкантов</title>
-    <link rel="icon" href="data:, ">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/loop-button-styles.css">
     <link rel="stylesheet" href="css/transport-controls.css">
     <link rel="stylesheet" href="css/karaoke-styles.css">
-    <link rel="stylesheet" href="css/block-type-markers.css">
     <link rel="stylesheet" href="css/live-mode.css">
     <link rel="stylesheet" href="css/mode-buttons-override.css">
     <link rel="stylesheet" href="css/font-selector.css">
@@ -49,53 +47,24 @@
     <!-- Orbitron font for cockpit design -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
     <script src="js/dev-flags.js"></script>
-
-    <!-- Export Feature Styles -->
-    <style>
-        .glass-btn.export-blocks-btn { /* стеклянная, как у вас */
-             background: rgba(255, 255, 255, 0.1);
-             border: 1px solid rgba(255, 255, 255, 0.2);
-             color: white;
-             padding: 8px 15px;
-             border-radius: 8px;
-             cursor: pointer;
-             font-size: 1em;
-             backdrop-filter: blur(5px);
-             transition: all 0.3s ease;
-          }
-          .glass-btn.export-blocks-btn.active { background: rgba(255,180,68,0.2); border-color: rgba(255,180,68,0.8); }
-          .loop-wagon.is-export-selected { outline: 2px solid #ffb444; outline-offset: -2px; background-color: rgba(255,180,68,0.15); }
-          .export-mini { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); backdrop-filter: blur(6px); background: rgba(30,30,30,0.6); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 10px; z-index: 99999; min-width: 200px; }
-        .export-mini.hidden { display:none; }
-        .export-mini__row { display:flex; gap:8px; margin-bottom:6px; }
-        .export-mini__hint { font-size: 0.8em; color: rgba(255,255,255,0.7); margin-top: 8px; text-align: center; }
-        .export-mini .mini-opt, .export-mini .mini-confirm, .export-mini .mini-cancel { /* стили для кнопок внутри модалки, можно использовать .unified-btn или .glass-btn если они уже есть */ padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(50,50,50,0.4); color: white; cursor: pointer; flex-grow: 1; }
-        .export-mini .mini-confirm { background: linear-gradient(90deg, #ffa53a, #ffe08e); border-color: #ffb444; }
-        .export-mini .mini-cancel { background: rgba(80,80,80,0.4); }
-        .export-mini .mini-opt:hover, .export-mini .mini-confirm:hover, .export-mini .mini-cancel:hover { opacity: 0.8; }
-        /* Прогресс-бар */
-        .export-mini__progress { position: relative; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow:hidden; margin-top: 8px;}
-        .export-mini__progress .bar { display:block; height:100%; width:0%; background: linear-gradient(90deg, #ffa53a, #ffe08e); }
-        .export-mini.busy .mini-confirm, .export-mini.busy .mini-cancel, .export-mini.busy .mini-opt { opacity: 0.6; pointer-events:none; }
-    </style>
 </head>
 <body>
-    <div class="app-container" id="app-root">
+    <div class="app-container">
         <!-- 1. Верхняя панель с логотипом и кнопками режимов -->
         <header class="app-header">
             <div class="header-content glass-effect">
                 <!-- Группа 1: Логотип и левые элементы -->
-                <div class="header-left-group" style="display: flex; align-items: center; gap: 5px;">
+                <div class="header-left-group">
                 <button id="home-btn" class="home-btn" title="Вернуться на стартовую страницу">
                     <span class="home-logo">beLIVE</span>
                 </button>
+                </div>
                 
                 <!-- BPM контроль для режима репетиции (между логотипом и режимами) -->
-                <div class="bpm-controls" id="bpm-controls" style="position: relative; display: flex; align-items: center; gap: 8px;">
+                <div class="bpm-controls" id="bpm-controls" style="display: none;">
                     <button class="bmp-btn" id="bpm-down" title="Замедлить темп на 5%">−5</button>
                     <button class="bmp-btn bpm-value-btn" id="bpm-value" title="Сбросить к оригинальному темпу">100%</button>
                     <button class="bmp-btn" id="bpm-up" title="Ускорить темп на 5%">+5</button>
-                </div>
                 </div>
                 
                 <!-- Группа 2: Центральные кнопки режимов (позиционируются абсолютно) -->
@@ -156,10 +125,7 @@
                 
                 <!-- Group 3: Core Tools -->
                 <div class="control-group">
-                    <button id="toggle-loopblock-mode" class="unified-btn">Operator</button>
-                    <div id="ai-model-selection-hub" class="ai-model-dropdown hidden">
-                        <div class="ai-model-dropdown-list" id="ai-model-selection-hub-list"></div>
-                    </div>
+                    <button id="toggle-loopblock-mode" class="unified-btn" title="Toggle LoopBlock Mode">Loop</button>
                     <button id="style-selector-btn" class="unified-btn" title="Select text style">
                     <i class="fas fa-text-height"></i> Styles
                 </button>
@@ -180,13 +146,6 @@
                         <button id="mic-toggle-btn" class="unified-btn" title="Включить/выключить микрофон">
                             <i class="fas fa-microphone"></i>
                 </button>
-                    </div>
-                    <div class="vocal-mix-control">
-                        <label class="switch">
-                            <input type="checkbox" id="vocal-mix-toggle">
-                            <span class="slider round"></span>
-                        </label>
-                        <span class="vocal-mix-label">VocalMix</span>
                     </div>
                 </div>
 
@@ -870,10 +829,9 @@
     <script src="js/audio-engine.js"></script>
     <script src="js/enhanced-rtf-processor.js"></script>
     <script src="js/rtf-parser.js"></script>
-    <script src="js/rtf-simple-parser.js?v=2025-11-18"></script> <!-- ДОБАВЛЕНО: SimpleRtf Parser -->
-    <script src="js/rtf-parser-adapter.js?v=2025-11-18"></script>
+    <script src="js/rtf-parser-adapter.js"></script>
     <script src="js/lyrics-display.js"></script>
-    <script src="js/enhanced-text-processor.js?v=2025-11-18"></script>
+    <script src="js/enhanced-text-processor.js"></script>
     <script src="js/text-processor-integrator.js"></script>
     <script src="js/track-catalog.js"></script>
     <script src="js/marker-manager.js"></script>
@@ -881,8 +839,6 @@
     <script src="js/text-style-manager.js"></script>
     <script src="js/drag-boundary-controller.js"></script>
     <script src="js/block-loop-control.js"></script>
-    <script type="module" src="js/audio-exporter.js"></script>
-    <script src="js/export-ui.js"></script>
     <script src="js/background-effects-engine.js"></script>
     <script src="js/mask-system.js"></script>
     <script src="js/rtf-parser-integration.js"></script>
@@ -900,9 +856,6 @@
 
     <!-- 🎵 CATALOG V2 SCRIPT (MUST BE BEFORE APP.JS) -->
     <script src="js/catalog-v2.js?v=2.0"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
-    <!-- Export Feature UI -->
 
     <!-- 🚀 MAIN APPLICATION SCRIPT (MUST BE LAST) -->
     <script src="js/app.js"></script>
@@ -1014,14 +967,6 @@
                                         <label for="json-input" class="file-label">Markers JSON</label>
                                     </div>
  
-                                    <!-- ZIP FILE CELL (новый) -->
-                                    <div class="upload-cell" data-type="zip">
-                                        <div class="upload-icon">🗜️</div>
-                                        <p class="drop-text">Drop ZIP file</p>
-                                        <input type="file" id="zip-input" class="file-input" accept=".zip">
-                                        <label for="zip-input" class="file-label">ZIP Archive</label>
-                                    </div>
- 
                                     <!-- STEMS CELL (placeholder) -->
                                     <div class="upload-cell disabled" data-type="stems" title="Скоро">
                                         <div class="upload-icon">🧬</div>
@@ -1040,63 +985,6 @@
                 </div>
             </div>
         </div>
-    </div>
-    <script type="module" src="/src/main.ts"></script>
-
-    <!-- AI Chat Window -->
-    <div id="ai-chat-window" class="ai-chat-window hidden" role="dialog" aria-modal="true" aria-labelledby="ai-chat-title">
-      <div class="ai-chat-header">
-        <div class="ai-chat-title">
-          <span class="ai-status-indicator"></span>
-          <span id="ai-chat-title-text">AI Оператор</span>
-        </div>
-        
-        <!-- 👇 Интеграция model picker в хедер -->
-        <div class="ai-header-controls">
-          <button class="ai-model-switch-btn" title="Сменить модель">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M8 2a6 6 0 100 12A6 6 0 008 2zm0 1a5 5 0 110 10A5 5 0 018 3z"/>
-            </svg>
-          </button>
-          <button class="ai-close-btn" title="Закрыть">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="2"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <div class="ai-chat-messages" id="ai-chat-messages" role="log" aria-live="polite"></div>
-      
-      <div class="ai-chat-input-area">
-        <button class="ai-voice-btn" title="Голосовой ввод">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10 2a3 3 0 00-3 3v5a3 3 0 006 0V5a3 3 0 00-3-3z"/>
-            <path d="M5 10a5 5 0 0010 0"/>
-          </svg>
-        </button>
-        
-        <div class="ai-input-wrapper">
-          <input 
-            type="text" 
-            class="ai-chat-input" 
-            placeholder="Спроси меня что-нибудь..."
-            autocomplete="off"
-            id="ai-input"
-          />
-        </div>
-        
-        <button class="ai-send-btn" title="Отправить" id="ai-send-button">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M2 10l16-8-8 16-2-8-6-0z"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- Model Picker (позиционируется через JS при клике на ai-model-switch-btn) -->
-    <div id="belive-ai-picker" class="belive-model-picker hidden">
-      <div class="model-list"></div>
     </div>
 </body>
 </html> 

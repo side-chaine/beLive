@@ -710,16 +710,14 @@ class CatalogV2 {
             instrumental: document.getElementById('instrumental-input'),
             vocal: document.getElementById('vocal-input'),
             lyrics: document.getElementById('lyrics-input'),
-            json: document.getElementById('json-input'),
-            zip: document.getElementById('zip-input') // Добавляем ZIP input
+            json: document.getElementById('json-input')
         };
         
         const uploadCells = {
             instrumental: document.querySelector('.upload-cell[data-type="instrumental"]'),
             vocal: document.querySelector('.upload-cell[data-type="vocal"]'),
             lyrics: document.querySelector('.upload-cell[data-type="lyrics"]'),
-            json: document.querySelector('.upload-cell[data-type="json"]'),
-            zip: document.querySelector('.upload-cell[data-type="zip"]') // Добавляем ZIP cell
+            json: document.querySelector('.upload-cell[data-type="json"]')
         };
         
         const saveButton = document.getElementById('upload-save');
@@ -740,11 +738,7 @@ class CatalogV2 {
                 input.addEventListener('change', (e) => {
                     const file = e.target.files[0];
                     if (file) {
-                        if (type === 'zip') {
-                            this.handleZipFileSelect(file, cell); // Специальный обработчик для ZIP
-                        } else {
                         this.handleFileSelect(type, file, cell);
-                        }
                     }
                 });
                 
@@ -766,11 +760,7 @@ class CatalogV2 {
                     const file = e.dataTransfer.files[0];
                     if (file) {
                         input.files = e.dataTransfer.files;
-                        if (type === 'zip') {
-                            this.handleZipFileSelect(file, cell); // Специальный обработчик для ZIP
-                        } else {
                         this.handleFileSelect(type, file, cell);
-                        }
                     }
                 });
             }
@@ -962,16 +952,15 @@ class CatalogV2 {
         });
     }
     
-    handleFileSelect(type, file, cell, fromZip = false) {
+    handleFileSelect(type, file, cell) {
         // Показываем анимацию загрузки
         cell.classList.add('processing');
         
         setTimeout(() => {
             cell.classList.remove('processing');
             cell.classList.add('file-selected');
-            cell.classList.add('has-file'); // Добавляем класс для стилизации
             
-            // Обновляем UI ячейки, теперь всегда, если это не ZIP-файл
+            // Обновляем UI ячейки
             this.updateCellUI(cell, file);
             
             // Сохраняем файл в сессию
@@ -980,34 +969,7 @@ class CatalogV2 {
             } else if (type === 'vocal') {
                 this.uploadSession.vocal = file;
             } else if (type === 'lyrics') {
-                this.uploadSession.lyrics = file; // Сохраняем оригинальный файл
-                const isRtf = file.name.toLowerCase().endsWith('.rtf') || file.type === 'application/rtf';
-                this.readFileAsText(file).then(async (rawText) => { // Добавляем async
-                    let processedText = rawText;
-                    if (isRtf) {
-                        console.log('CatalogV2: Обнаружен RTF файл для лирики. Парсинг...');
-                        try {
-                            // 🎯 ИСПРАВЛЕНО: Корректный вызов статического асинхронного метода parse
-                            processedText = await RtfParserAdapter.parse(rawText);
-                            if (!processedText) {
-                                console.warn('CatalogV2: RTF парсер вернул пустой контент. Используем сырой текст как запасной вариант.');
-                                processedText = rawText; // Fallback to raw if parsing fails
-                            }
-                        } catch (e) {
-                            console.error('CatalogV2: Ошибка парсинга RTF в handleFileSelect, используем сырой текст. Ошибка:', e);
-                            processedText = rawText; // Fallback to raw on error
-                        }
-                    } else {
-                        console.log('CatalogV2: Загружен текстовый файл для лирики (не RTF).');
-                    }
-                    this.uploadSession.parsedLyricsContent = processedText; // Сохраняем распарсенный текст
-                    this.updateSaveButton(); // Обновляем кнопку после парсинга
-                }).catch(e => {
-                    console.error('CatalogV2: Ошибка чтения файла лирики:', e);
-                    this.showNotification('❌ Ошибка чтения файла лирики');
-                    this.uploadSession.lyrics = null;
-                    this.uploadSession.parsedLyricsContent = null;
-                });
+                this.uploadSession.lyrics = file;
             } else if (type === 'json') {
                 this.uploadSession.json = file;
                 // Пробуем прочитать JSON и валидировать
@@ -1016,25 +978,16 @@ class CatalogV2 {
                         const data = JSON.parse(text);
                         if (Array.isArray(data)) {
                             this.uploadSession.jsonMarkers = data;
-                            this.uploadSession.jsonTextBlocks = []; // Если JSON это просто массив маркеров, блоков нет
                         } else if (data && Array.isArray(data.markers)) {
                             this.uploadSession.jsonMarkers = data.markers;
-                            // 🎯 ВАЖНО: СОХРАНЯЕМ TEXTBLOCKS ИЗ JSON
-                            if (data.textBlocks && Array.isArray(data.textBlocks)) {
-                                this.uploadSession.jsonTextBlocks = data.textBlocks;
-                            } else {
-                                this.uploadSession.jsonTextBlocks = [];
-                            }
                         } else {
                             this.showNotification('❌ JSON должен содержать массив markers');
                             this.uploadSession.jsonMarkers = null;
-                            this.uploadSession.jsonTextBlocks = null;
                         }
                     } catch (e) {
                         console.error('JSON parse error:', e);
                         this.showNotification('❌ Некорректный JSON файл');
                         this.uploadSession.jsonMarkers = null;
-                        this.uploadSession.jsonTextBlocks = null;
                     }
                 });
             }
@@ -1053,20 +1006,14 @@ class CatalogV2 {
             dropText.textContent = '✅ Файл загружен';
         }
         
-        // Обновляем label файла
-        const fileLabel = cell.querySelector('.file-label');
-        if (fileLabel) {
-            fileLabel.textContent = this._getFileNameWithoutExtension(file.name);
-        }
-        
         // Добавляем имя файла
-        let fileNameDisplay = cell.querySelector('.file-name');
-        if (!fileNameDisplay) {
-            fileNameDisplay = document.createElement('div');
-            fileNameDisplay.className = 'file-name';
-            cell.appendChild(fileNameDisplay);
+        let fileName = cell.querySelector('.file-name');
+        if (!fileName) {
+            fileName = document.createElement('div');
+            fileName.className = 'file-name';
+            cell.appendChild(fileName);
         }
-        fileNameDisplay.textContent = file.name;
+        fileName.textContent = file.name;
     }
     
     updateSaveButton() {
@@ -1084,9 +1031,40 @@ class CatalogV2 {
     }
     
     cancelUpload() {
-        this._clearUploadCells();
+        // Очищаем сессию
+        this.uploadSession = {
+            instrumental: null,
+            vocal: null,
+            lyrics: null
+        };
+        
+        // Сбрасываем UI всех ячеек
+        const cells = document.querySelectorAll('.upload-cell');
+        cells.forEach(cell => {
+            cell.classList.remove('file-selected', 'processing');
+            
+            const dropText = cell.querySelector('.drop-text');
+            const fileLabel = cell.querySelector('.file-label');
+            const fileName = cell.querySelector('.file-name');
+            
+            if (dropText) {
+                dropText.textContent = 'Перетащите файл или нажмите для выбора';
+            }
+            
+            if (fileName) {
+                fileName.remove();
+            }
+        });
+        
+        // Очищаем input'ы
+        const inputs = document.querySelectorAll('.upload-mode-content .file-input');
+        inputs.forEach(input => {
+            input.value = '';
+        });
+        
         // Сбрасываем кнопку сохранения
         this.updateSaveButton();
+        
         console.log('🔄 Upload session сброшена');
     }
     
@@ -1164,10 +1142,10 @@ class CatalogV2 {
                 vocalsType: vocalsType,
                 lyricsFileName: lyricsFileName,
                 dateAdded: new Date().toISOString(),
-                lyricsOriginalContent: this.uploadSession.parsedLyricsContent || lyricsOriginalContent, // 🎯 ИСПРАВЛЕНО: Используем распарсенный текст
+                lyricsOriginalContent: lyricsOriginalContent,
                 // 🎯 ВАЖНО: Добавляем пустой массив блоков для последующего редактирования
-                blocksData: Array.isArray(this.uploadSession?.jsonTextBlocks) ? this.uploadSession.jsonTextBlocks : [],
-                lyrics: this.uploadSession.parsedLyricsContent || lyricsOriginalContent, // 🎯 ИСПРАВЛЕНО: Используем распарсенный текст
+                blocksData: [],
+                lyrics: lyricsOriginalContent, // Изначально lyrics = оригинальному тексту
                 lastModified: new Date().toISOString(),
                 // Если приложены маркеры JSON — сохраняем их сразу
                 syncMarkers: Array.isArray(this.uploadSession?.jsonMarkers) ? this.uploadSession.jsonMarkers : []
@@ -1182,17 +1160,8 @@ class CatalogV2 {
             
             // Добавляем в массив основного каталога
             window.trackCatalog.tracks.push(savedTrack);
+            this.tracks.push(savedTrack);
             console.log('✅ CatalogV2: Трек добавлен в локальный массив');
-
-            // --- ДОБАВЛЕНО: Загружаем лирику в LyricsDisplay перед установкой маркеров ---
-            if (window.lyricsDisplay && savedTrack.lyrics && savedTrack.lyrics.length > 0) {
-                // Если duration не задан, пытаемся получить его из audioEngine (если трек уже загружен туда)
-                // Или просто передаем 0, так как lyricsDisplay справится без него для init
-                const trackDuration = savedTrack.duration || (window.audioEngine?.duration || 0);
-                window.lyricsDisplay.loadLyrics(savedTrack.lyrics, trackDuration, false); // Загружаем, но пока не рендерим
-                console.log('✅ CatalogV2: Лирика загружена в LyricsDisplay перед обработкой маркеров.');
-            }
-            // --- КОНЕЦ ДОБАВЛЕНИЯ ---
 
             // Если есть маркеры — применяем в UI сразу
             try {
@@ -1230,7 +1199,7 @@ class CatalogV2 {
                     }
                 } catch (e) { console.warn('CatalogV2: post-save JSON handling failed', e); }
                 this.switchToSearch();
-                // this.addTrackToSearchResults(savedTrack); // Отключено, так как вызывается в _saveTrackToDB
+                this.addTrackToSearchResults(savedTrack);
                 return; // Не открываем редакторы
             } else {
                 // Иначе — старое поведение: открыть редактор блоков
@@ -1508,193 +1477,6 @@ class CatalogV2 {
             store.delete(trackId);
             this.myMusicIds.delete(trackId);
         } catch(_) {}
-    }
-
-    // НОВЫЙ МЕТОД: Обработка ZIP-файлов
-    async handleZipFileSelect(file, cell) {
-        console.log('🗜️ Выбран ZIP файл:', file.name);
-        cell.classList.add('processing');
-        
-        try {
-            const zip = await JSZip.loadAsync(file);
-            const files = [];
-            zip.forEach((relativePath, zipEntry) => {
-                if (!zipEntry.dir) {
-                    // Игнорируем файлы из папки __MACOSX и файлы, начинающиеся с '._'
-                    if (relativePath.startsWith('__MACOSX/') || zipEntry.name.split('/').pop().startsWith('._')) {
-                        return; 
-                    }
-                    files.push({ relativePath, zipEntry });
-                    console.log('🗜️ ZIP: Найден файл:', relativePath);
-                }
-            });
-            
-            // Логика для определения вокальной дорожки с приоритетом _Vocals_ / _Vocal_
-            let instrumentalFile = null;
-            let vocalFile = null;
-            let lyricsFile = null;
-            let jsonFile = null;
-            
-            const audioExtensions = ['mp3', 'wav', 'flac', 'ogg', 'aac'];
-            const textExtensions = ['txt', 'text', 'lrc', 'md', 'rtf', 'doc', 'docx', 'srt', 'sub', 'vtt', 'ass', 'ssa', 'xml', 'json', 'csv'];
-            
-            const potentialVocals = [];
-            
-            for (const { relativePath, zipEntry } of files) {
-                const fileName = relativePath.toLowerCase();
-                const fileExt = this._getFileExtension(fileName); // Используем this._getFileExtension
-                
-                if (audioExtensions.includes(fileExt)) {
-                    if (fileName.includes('_vocals_') || fileName.includes('_vocal')) {
-                        potentialVocals.unshift({ relativePath, zipEntry }); // Приоритет в начало
-                        console.log('🗜️ ZIP: Потенциальный вокал (высокий приоритет): ', relativePath);
-                    } else if (fileName.includes('vocals')) {
-                        potentialVocals.push({ relativePath, zipEntry });
-                        console.log('🗜️ ZIP: Потенциальный вокал (средний приоритет): ', relativePath);
-                    } else if (!instrumentalFile) {
-                        instrumentalFile = { relativePath, zipEntry };
-                        console.log('🗜️ ZIP: Инструментал (по умолчанию): ', relativePath);
-                    }
-                } else if (fileExt === 'json') {
-                    if (!jsonFile) {jsonFile = { relativePath, zipEntry }; console.log('🗜️ ZIP: Найден JSON:', relativePath);}
-                } else if (textExtensions.includes(fileExt)) {
-                    if (!lyricsFile) {lyricsFile = { relativePath, zipEntry }; console.log('🗜️ ZIP: Найден текст:', relativePath);}
-                }
-            }
-            
-            // Выбираем лучшую вокальную дорожку из потенциальных
-            if (potentialVocals.length > 0) {
-                vocalFile = potentialVocals[0];
-                // Если вокальный файл занял место инструментала, очищаем инструментал
-                if (instrumentalFile && instrumentalFile.relativePath === vocalFile.relativePath) {
-                    instrumentalFile = null;
-                }
-            }
-            
-            // Если инструментал еще не найден, ищем его среди оставшихся аудиофайлов
-            if (!instrumentalFile) {
-                for (const { relativePath, zipEntry } of files) {
-                    const fileName = relativePath.toLowerCase();
-                    const fileExt = this._getFileExtension(fileName); // Используем this._getFileExtension
-                    if (audioExtensions.includes(fileExt) &&
-                        (!vocalFile || vocalFile.relativePath !== relativePath)) {
-                        instrumentalFile = { relativePath, zipEntry };
-                        break;
-                    }
-                }
-            }
-            
-            // Распределяем файлы по ячейкам
-            if (instrumentalFile) {
-                const blob = await instrumentalFile.zipEntry.async('blob');
-                const fileObj = new File([blob], this._getBaseNameFromPath(instrumentalFile.zipEntry.name), { type: blob.type });
-                this.handleFileSelect('instrumental', fileObj, document.querySelector('.upload-cell[data-type="instrumental"]'), true); // ОБНОВЛЯЕМ UI
-            }
-            if (vocalFile) {
-                console.log('🗜️ ZIP (Vocal): Найдена запись вокала:', vocalFile.relativePath);
-                const blob = await vocalFile.zipEntry.async('blob');
-                console.log('🗜️ ZIP (Vocal): Blob создан. Тип:', blob.type, 'Размер:', blob.size);
-                if (blob.size === 0) {
-                    console.warn('🗜️ ZIP (Vocal): Создан пустой Blob для вокальной дорожки!');
-                }
-                const fileObj = new File([blob], this._getBaseNameFromPath(vocalFile.zipEntry.name), { type: blob.type });
-                console.log('🗜️ ZIP (Vocal): File объект создан:', fileObj.name, 'Тип:', fileObj.type, 'Размер:', fileObj.size);
-                this.handleFileSelect('vocal', fileObj, document.querySelector('.upload-cell[data-type="vocal"]'), true); // ОБНОВЛЯЕМ UI
-            }
-            if (lyricsFile) {
-                console.log('🗜️ ZIP (Lyrics): Найдена запись лирики:', lyricsFile.relativePath);
-                const text = await lyricsFile.zipEntry.async('string');
-                const fileObj = new File([new Blob([text], { type: 'text/plain' })], this._getBaseNameFromPath(lyricsFile.zipEntry.name), { type: 'text/plain' });
-                this.handleFileSelect('lyrics', fileObj, document.querySelector('.upload-cell[data-type="lyrics"]'), true); // ОБНОВЛЯЕМ UI
-            }
-            if (jsonFile) {
-                console.log('🗜️ ZIP (JSON): Найдена запись JSON:', jsonFile.relativePath);
-                const text = await jsonFile.zipEntry.async('string');
-                const fileObj = new File([new Blob([text], { type: 'application/json' })], this._getBaseNameFromPath(jsonFile.zipEntry.name), { type: 'application/json' });
-                this.handleFileSelect('json', fileObj, document.querySelector('.upload-cell[data-type="json"]'), true); // ОБНОВЛЯЕМ UI
-            }
-            
-            this._showNotification('success', '✅ ZIP архив успешно распакован и файлы распределены!');
-            // Очищаем только ZIP-ячейку после успешной загрузки ZIP
-            this._clearUploadCells('zip');
-
-        } catch (error) {
-            console.error('❌ Ошибка обработки ZIP файла:', error);
-            this.showNotification('❌ Ошибка обработки ZIP файла');
-        } finally {
-            cell.classList.remove('processing');
-            cell.classList.remove('file-selected'); // Удаляем 'file-selected' для ZIP-ячейки
-        }
-    }
-
-    _getFileNameWithoutExtension(fileName) {
-        if (!fileName) return '';
-        const lastDotIndex = fileName.lastIndexOf('.');
-        return lastDotIndex !== -1 ? fileName.substring(0, lastDotIndex) : fileName;
-    }
-
-    _getFileExtension(fileName) {
-        if (!fileName) return '';
-        const lastDotIndex = fileName.lastIndexOf('.');
-        return lastDotIndex !== -1 ? fileName.substring(lastDotIndex + 1) : '';
-    }
-
-    // Helper methods for file processing (now part of the class)
-    _getBaseNameFromPath(fullPath) {
-        if (!fullPath) return '';
-        const lastSlashIndex = fullPath.lastIndexOf('/');
-        return lastSlashIndex !== -1 ? fullPath.substring(lastSlashIndex + 1) : fullPath;
-    }
-
-    _getFileNameWithoutExtension(fileName) {
-        if (!fileName) return '';
-        const baseName = this._getBaseNameFromPath(fileName); // Get base name first
-        const lastDotIndex = baseName.lastIndexOf('.');
-        return lastDotIndex !== -1 ? baseName.substring(0, lastDotIndex) : baseName;
-    }
-
-    _getFileExtension(fileName) {
-        if (!fileName) return '';
-        const baseName = this._getBaseNameFromPath(fileName); // Get extension from base name
-        const lastDotIndex = baseName.lastIndexOf('.');
-        return lastDotIndex !== -1 ? baseName.substring(lastDotIndex + 1) : '';
-    }
-
-    _clearUploadCells(type) {
-        console.log('🧹 Очистка ячеек загрузки...');
-        // Clear uploadSession
-        this.uploadSession = {};
-
-        // Clear UI for all upload cells
-        const uploadCellTypes = ['instrumental', 'vocal', 'lyrics', 'json', 'zip'];
-        uploadCellTypes.forEach(type => {
-            const cell = document.querySelector(`.upload-cell[data-type="${type}"]`);
-            if (cell) {
-                cell.classList.remove('has-file', 'processing');
-                const icon = cell.querySelector('.icon');
-                if (icon) {
-                    icon.style.display = ''; // Reset to default display
-                }
-                const dropText = cell.querySelector('.drop-text');
-                if (dropText) {
-                    dropText.style.display = ''; // Reset to default display
-                }
-                const fileLabel = cell.querySelector('.file-label');
-                if (fileLabel) {
-                    fileLabel.textContent = type === 'zip' ? 'Drop ZIP file' : `Upload ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-                }
-                let fileNameDisplay = cell.querySelector('.file-name');
-                if (fileNameDisplay) {
-                    fileNameDisplay.remove(); // Remove the file name display
-                }
-                // Reset file input value to allow re-uploading the same file
-                const input = cell.querySelector('input[type="file"]');
-                if (input) {
-                    input.value = '';
-                }
-            }
-        });
-        console.log('✅ Ячейки загрузки очищены.');
     }
 }
 

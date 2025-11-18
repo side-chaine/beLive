@@ -1412,35 +1412,21 @@ class TrackCatalog {
 
         // КРИТИЧНО: Подготавливаем данные для рендеринга, но НЕ РЕНДЕРИМ сразу
         console.time('⏱️ LYRICS_PREPARE_TIME'); // Диагностика подготовки текста
-        // Получаем оригинальный RTF текст из трека
-        let rawLyricsContent = track.lyricsOriginalContent || track.lyrics;
-        let processedLyricsContent = rawLyricsContent;
-
-        // 🎯 ИСПРАВЛЕНО: Используем RtfParserAdapter.parse() для парсинга RTF
-        if (rawLyricsContent && typeof rawLyricsContent === 'string' && rawLyricsContent.startsWith('{\rtf')) {
-            console.log('TrackCatalog: Detected RTF lyrics. Parsing using RtfParserAdapter.parse()...');
-            try {
-                // ИСПРАВЛЕНО: Корректный вызов статического асинхронного метода parse
-                processedLyricsContent = await RtfParserAdapter.parse(rawLyricsContent);
-                if (!processedLyricsContent) {
-                    console.warn('TrackCatalog: RTF parser returned empty content. Using raw text as fallback.');
-                    processedLyricsContent = rawLyricsContent; // Fallback to raw if parsing fails
-                }
-            } catch (e) {
-                console.error('TrackCatalog: Error parsing RTF lyrics with RtfParserAdapter.parse(), using raw text. Error:', e);
-                processedLyricsContent = rawLyricsContent; // Fallback to raw on error
-            }
-        }
-
         if (track.blocksData && Array.isArray(track.blocksData) && track.blocksData.length > 0 && window.lyricsDisplay) {
             console.log(`TrackCatalog: Found ${track.blocksData.length} blocks. Preparing them for rendering after audio load.`);
-            // 🎯 ИСПРАВЛЕНО: ЗАГРУЖАЕМ БЛОКИ С УЖЕ ОБРАБОТАННЫМ ТЕКСТОМ ЛИРИКИ
-            await window.lyricsDisplay.loadImportedBlocks(track.blocksData, processedLyricsContent, false);
+            // ЗАГРУЖАЕМ БЛОКИ БЕЗ РЕНДЕРИНГА (false вместо true)
+            await window.lyricsDisplay.loadImportedBlocks(track.blocksData, false);
         } else if (window.lyricsDisplay) {
-            // Если блоков нет, подготавливаем стандартную обработку текста
+             // Если блоков нет, подготавливаем стандартную обработку текста
             console.log(`TrackCatalog: No blocks found for "${track.title}". Preparing text for processing.`);
-            // 🎯 ИСПРАВЛЕНО: Используем уже обработанный текст
-            await window.lyricsDisplay.reloadLyrics(processedLyricsContent, track.duration, false);
+            if (track.lyrics || track.lyricsOriginalContent) {
+                 let textToProcess = track.lyricsOriginalContent || track.lyrics;
+                 // Подготавливаем текст БЕЗ рендеринга
+                 await window.lyricsDisplay.reloadLyrics(textToProcess, track.duration, false);
+            } else {
+                 // Если нет ни блоков, ни текста
+                 await window.lyricsDisplay.reloadLyrics('', track.duration, false);
+            }
         }
         console.timeEnd('⏱️ LYRICS_PREPARE_TIME');
         
@@ -1466,18 +1452,22 @@ class TrackCatalog {
                     if (track.syncMarkers && track.syncMarkers.length > 0) {
                         console.log(`Loading ${track.syncMarkers.length} markers for track ${track.title}`);
                         
-                        // 🎯 ИСПРАВЛЕНО: Используем markerManager.setMarkers напрямую, чтобы избежать повторной валидации и синтеза
-                        if (window.markerManager) {
-                            window.markerManager.setMarkers(track.syncMarkers);
-                            // 🎯 ВАЖНО: Обновляем цвета маркеров после того, как lyricsDisplay получил blocks
-                            window.markerManager.updateMarkerColors(); 
-                        }
+                        // Dispatch event to load markers in MarkerManager
+                        const event = new CustomEvent('track-loaded', {
+                            detail: {
+                                markers: track.syncMarkers
+                            }
+                        });
+                        document.dispatchEvent(event);
                     } else {
                         console.log(`No markers available for track ${track.title}`);
                         // Reset any existing markers
-                        if (window.markerManager) {
-                            window.markerManager.resetMarkers();
-                        }
+                        const event = new CustomEvent('track-loaded', {
+                            detail: {
+                                markers: []
+                            }
+                        });
+                        document.dispatchEvent(event);
                     }
                     
             // КРИТИЧНО: ТЕПЕРЬ рендерим текст с правильными стилями
@@ -2350,31 +2340,22 @@ class TrackCatalog {
         }
     }
 
-    // 🎯 ИСПРАВЛЕНО: Добавлен newLyricsText для сохранения текста
-    saveLyricsBlocks(trackId, blocksData, newLyricsText) {
+    saveLyricsBlocks(trackId, blocksData) {
         const track = this.tracks.find(t => t.id === trackId);
         if (track) {
             track.blocksData = blocksData;
-            // 🎯 ИСПРАВЛЕНО: Сохраняем новый текст, если он передан
-            if (newLyricsText !== undefined) {
-                track.lyrics = newLyricsText;
-                // Также можно обновить lyricsOriginalContent, если это был RTF-текст
-                // Но пока оставим так, чтобы не нарушать существующую логику сохранения RTF
-                // track.lyricsOriginalContent = newLyricsText; 
-            }
             track.lastModified = new Date();
             this._saveTrackToDB(track).then(() => {
                 // 🎯 ИСПРАВЛЕННОЕ уведомление
                 if (window.app && typeof window.app.showNotification === 'function') {
-                    window.app.showNotification(`Lyric blocks and lyrics for "${track.title}" saved.`, 'success');
+                    window.app.showNotification(`Lyric blocks for "${track.title}" saved.`, 'success');
                 } else {
-                    console.log(`✅ Lyric blocks and lyrics for "${track.title}" saved.`);
+                    console.log(`✅ Lyric blocks for "${track.title}" saved.`);
                 }
                 // If it's the current track and rehearsal mode is active, we might want to refresh its display
                 if (this.tracks[this.currentTrackIndex] && this.tracks[this.currentTrackIndex].id === trackId) {
                     if (this.lyricsDisplay) {
-                        // 🎯 ИСПРАВЛЕНО: Передаем ОБА аргумента - блоки И ТЕКСТ
-                        this.lyricsDisplay.loadImportedBlocks(track.blocksData, track.lyrics, false); // Reload blocks
+                        this.lyricsDisplay.loadImportedBlocks(track.blocksData); // Reload blocks
                         if (this.lyricsDisplay.currentStyle && this.lyricsDisplay.currentStyle.id === 'rehearsal') {
                            this.lyricsDisplay.activateRehearsalDisplay();
                         }
@@ -2394,17 +2375,17 @@ class TrackCatalog {
             }).catch(err => {
                 // 🎯 ИСПРАВЛЕННОЕ уведомление об ошибке
                 if (window.app && typeof window.app.showNotification === 'function') {
-                    window.app.showNotification(`Error saving lyric blocks and lyrics: ${err.message}`, 'error');
+                    window.app.showNotification(`Error saving lyric blocks: ${err.message}`, 'error');
                 } else {
-                    console.error(`❌ Error saving lyric blocks and lyrics: ${err.message}`);
+                    console.error(`❌ Error saving lyric blocks: ${err.message}`);
                 }
             });
         } else {
             // 🎯 ИСПРАВЛЕННОЕ уведомление об ошибке
             if (window.app && typeof window.app.showNotification === 'function') {
-                window.app.showNotification('Track not found for saving blocks and lyrics.', 'error');
+                window.app.showNotification('Track not found for saving blocks.', 'error');
             } else {
-                console.error('❌ Track not found for saving blocks and lyrics.');
+                console.error('❌ Track not found for saving blocks.');
             }
         }
     }
@@ -2646,46 +2627,16 @@ class TrackCatalog {
     }
 
     /**
-     * Конвертирует массив объектов блоков в единый текст, используя массив всех строк.
+     * Конвертирует массив объектов блоков в единый текст.
      * @param {Array<Object>} blocks - Массив блоков.
-     * @param {Array<string>} allLyricsLines - Полный массив всех строк лирики.
      * @returns {string} - Отформатированный текст.
      */
-    _convertBlocksToPlainText(blocks, allLyricsLines) {
+    _convertBlocksToPlainText(blocks) {
         if (!blocks || !Array.isArray(blocks)) {
-            console.warn('TrackCatalog: _convertBlocksToPlainText received invalid blocks input:', blocks);
+            console.warn('TrackCatalog: _convertBlocksToPlainText received invalid input:', blocks);
             return '';
         }
-        if (!allLyricsLines || !Array.isArray(allLyricsLines)) {
-            console.warn('TrackCatalog: _convertBlocksToPlainText received invalid allLyricsLines input:', allLyricsLines);
-            // Если нет полного массива строк, пытаемся использовать block.content как запасной вариант (если он есть)
-            return blocks.map(block => block.content || '').filter(Boolean).join('\n\n');
-        }
-
-        const lines = [];
-        const addedLineIndices = new Set(); // Для отслеживания уже добавленных строк
-
-        blocks.forEach(block => {
-            if (block.lineIndices && Array.isArray(block.lineIndices)) {
-                block.lineIndices.forEach(idx => {
-                    if (idx >= 0 && idx < allLyricsLines.length && !addedLineIndices.has(idx)) {
-                        lines.push(allLyricsLines[idx]);
-                        addedLineIndices.add(idx);
-                    }
-                });
-            }
-            // Добавляем двойной перенос после каждого блока, если это не последний блок и есть строки
-            if (block.lineIndices && block.lineIndices.length > 0) {
-                lines.push(''); 
-            }
-        });
-        
-        // Удаляем последний двойной перенос, если он есть
-        if (lines.length > 0 && lines[lines.length - 1] === '') {
-            lines.pop();
-        }
-
-        return lines.join('\n');
+        return blocks.map(block => block.content).join('\n\n');
     }
 
     async _initializeDB() {

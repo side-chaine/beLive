@@ -23,10 +23,6 @@ class MarkerManager {
             markersReset: []
         };
         
-        // Добавляем поля для секций и длительности трека
-        this.sections = [];
-        this.trackDuration = 0;
-        
         // Initialize event listeners
         this._initEventListeners();
         
@@ -43,20 +39,10 @@ class MarkerManager {
     _initEventListeners() {
         // Listen for track changes to update markers
         document.addEventListener('track-loaded', (event) => {
-            if (event.detail) {
-                if (event.detail.markers) {
-                    this.setMarkers(event.detail.markers);
-                } else {
-                    this.resetMarkers();
-                }
-                this.trackDuration = event.detail.duration || 0; // Сохраняем длительность трека
-                this.sections = this._computeSections(this.markers, this.trackDuration); // Вычисляем секции
-                document.dispatchEvent(new CustomEvent('sections-updated', { detail: { sections: this.sections }})); // Диспатчим событие
+            if (event.detail && event.detail.markers) {
+                this.setMarkers(event.detail.markers);
             } else {
                 this.resetMarkers();
-                this.trackDuration = 0;
-                this.sections = [];
-                document.dispatchEvent(new CustomEvent('sections-updated', { detail: { sections: this.sections }}));
             }
         });
         
@@ -248,8 +234,8 @@ class MarkerManager {
         // Ищем блок, содержащий данную строку
         for (const block of this.lyricsDisplay.textBlocks) {
             if (block.lineIndices && block.lineIndices.includes(lineIndex)) {
-                // Разрешённые типы - ДОБАВЛЯЕМ НОВЫЕ ТИПЫ
-                const allowed = new Set(['verse','chorus','bridge','prechorus','intro','outro','blank']);
+                // Разрешённые типы
+                const allowed = new Set(['verse','chorus','bridge']);
                 if (block.type && allowed.has(block.type)) {return block.type;}
                 return 'unknown';
             }
@@ -269,14 +255,9 @@ class MarkerManager {
             'verse': '#4CAF50',     // Зеленый для куплетов
             'chorus': '#F44336',    // Красный для припевов
             'bridge': '#6f42c1',    // Фиолетовый для бриджей
-            'prechorus': '#FF9800', // Оранжевый для пред-припева
-            'intro': '#03A9F4',      // Светло-синий для интро
-            'outro': '#9E9E9E',      // Серый для аутро
-            'blank': 'rgba(255,255,255,0.1)', // Прозрачный для пустых блоков
         };
         
-        // Возвращаем цвет, если он есть, иначе дефолтный или прозрачный для unknown
-        return colorMap[blockType] || 'rgba(255,255,255,0.1)';
+        return colorMap[blockType]; // Без дефолта, чтобы не ломать соответствие
     }
     
     /**
@@ -417,27 +398,19 @@ class MarkerManager {
         
         // Если блоки ещё не загружены, но в маркерах есть типы — синтезируем textBlocks из маркеров
         try {
-            // 🎯 ИСПРАВЛЕНО: Добавляем проверку this.lyricsDisplay.textBlocks.length
-            // Не синтезируем, если lyricsDisplay УЖЕ имеет блоки.
-            const hasExistingBlocks = !!(this.lyricsDisplay && Array.isArray(this.lyricsDisplay.textBlocks) && this.lyricsDisplay.textBlocks.length > 0);
+            const hasBlocks = !!(this.lyricsDisplay && Array.isArray(this.lyricsDisplay.textBlocks) && this.lyricsDisplay.textBlocks.length > 0);
             const hasTypedMarkers = this.markers.some(m => m.blockType && m.blockType !== 'unknown');
-            
-            // Синтезируем блоки ТОЛЬКО если нет существующих блоков в lyricsDisplay И есть типизированные маркеры.
-            if (!hasExistingBlocks && this.lyricsDisplay && hasTypedMarkers) {
+            if (!hasBlocks && this.lyricsDisplay && hasTypedMarkers) {
                 const synthesized = this._buildBlocksFromMarkers(this.markers);
                 if (synthesized.length > 0) {
                     this.lyricsDisplay.textBlocks = synthesized;
-                    // Также очищаем кэш текущего блока, чтобы обновилось отображение
-                    this.lyricsDisplay.currentActiveBlock = null; 
-                    if (typeof this.lyricsDisplay?.updateDefinedBlocksDisplay === 'function') {
-                        this.lyricsDisplay.updateDefinedBlocksDisplay();
+                    if (typeof this.lyricsDisplay.updateDefinedBlocksDisplay === 'function') {
+                        this.lyricsDisplay.updateDefinedBlocksDisplay(synthesized);
                     }
                     console.log(`MarkerManager: Synthesized ${synthesized.length} textBlocks from JSON markers.`);
                 }
             }
-        } catch (e) {
-            console.warn('MarkerManager: Error synthesizing blocks from markers:', e);
-        }
+        } catch (e) { console.warn('MarkerManager: Failed to synthesize blocks from markers', e); }
 
         this._notifySubscribers('markersReset', this.markers);
         
@@ -833,11 +806,9 @@ class MarkerManager {
         const sorted = [...markers].sort((a,b)=>a.lineIndex-b.lineIndex);
         const blocks = [];
         let current = null;
-        // Расширяем счетчики для новых типов блоков
-        const counters = { verse:0, chorus:0, bridge:0, prechorus:0, intro:0, outro:0, blank:0 };
+        const counters = { verse:0, chorus:0, bridge:0 };
         for (const m of sorted) {
-            // Учитываем новые типы блоков, если они заданы
-            const t = (m.blockType && m.blockType !== 'unknown') ? m.blockType : 'verse'; // Дефолт на 'verse' пока
+            const t = (m.blockType && m.blockType !== 'unknown') ? m.blockType : 'verse';
             if (!current || current.type !== t || m.lineIndex !== current._lastLineIndex + 1) {
                 // Закрываем предыдущий
                 if (current) {
@@ -860,54 +831,6 @@ class MarkerManager {
         if (current) { delete current._lastLineIndex; blocks.push(current); }
         return blocks;
     }
-
-    _computeSections(markers, trackDuration = 0) {
-        const res = [];
-        if (!markers || !markers.length) return res;
-        const sorted = [...markers].sort((a, b) => a.time - b.time);
-        // Расширяем индексы для новых типов
-        const idxByType = { verse: 0, chorus: 0, bridge: 0, prechorus:0, intro:0, outro:0, blank:0 };
-        let i = 0;
-        while (i < sorted.length) {
-            const t = sorted[i].blockType;
-            const color = sorted[i].color;
-            // Обновляем проверку на разрешенные типы секций
-            const allowedSectionTypes = ['verse', 'chorus', 'bridge', 'prechorus', 'intro', 'outro', 'blank'];
-            if (!allowedSectionTypes.includes(t)) { i++; continue; }
-            const start = sorted[i].time;
-            const markerIds = [sorted[i].id];
-            let j = i + 1;
-            while (j < sorted.length && sorted[j].blockType === t) {
-                markerIds.push(sorted[j].id);
-                j++;
-            }
-            idxByType[t] = (idxByType[t] || 0) + 1;
-            // Обновляем метки для новых типов блоков
-            let labelPrefix = '';
-            switch (t) {
-                case 'verse': labelPrefix = 'V'; break;
-                case 'chorus': labelPrefix = 'C'; break;
-                case 'bridge': labelPrefix = 'B'; break;
-                case 'prechorus': labelPrefix = 'PC'; break;
-                case 'intro': labelPrefix = 'I'; break;
-                case 'outro': labelPrefix = 'O'; break;
-                case 'blank': labelPrefix = 'BL'; break;
-                default: labelPrefix = 'U'; // Unknown
-            }
-            const label = labelPrefix + idxByType[t];
-            const nextStart = j < sorted.length ? sorted[j].time : (trackDuration || null);
-            res.push({
-                id: label, type: t, index: idxByType[t],
-                label, color, start, end: nextStart, markerIds
-            });
-            i = j;
-        }
-        return res;
-    }
-
-    getSections() { return [...this.sections]; }
-    getSectionsByType(type) { return this.sections.filter(s => s.type === type); }
-    getSectionById(id) { return this.sections.find(s => s.id === id) || null; }
 }
 
 // Create global marker manager instance

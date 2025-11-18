@@ -274,7 +274,7 @@ class ModalBlockEditor {
         this.selectedBlock.classList.add('selected-block-highlight'); // Сначала выделяем
         
         // Сбрасываем классы типов и применяем сохраненный тип, если он был
-        this.selectedBlock.classList.remove('block-type-verse', 'block-type-chorus', 'block-type-bridge', 'block-type-prechorus', 'block-type-intro', 'block-type-outro');
+        this.selectedBlock.classList.remove('block-type-verse', 'block-type-chorus', 'block-type-bridge');
         if (typeOfKeptBlock && typeOfKeptBlock !== 'null' && typeOfKeptBlock !== 'none') {
             this.selectedBlock.classList.add(`block-type-${typeOfKeptBlock}`);
         }
@@ -302,7 +302,7 @@ class ModalBlockEditor {
         newBlock.innerText = text; 
         newBlock.setAttribute('data-placeholder', placeholder);
         newBlock.setAttribute('data-block-type', blockType); 
-        newBlock.classList.add(`block-type-${blockType}`); // РАСКОММЕНТИРОВАНО: Добавляем класс типа блока здесь
+        // newBlock.classList.add(`block-type-${blockType}`); // Удаляем добавление класса здесь
         
         // Удален вызов this._addDeleteButtonToBlock(newBlock);
         
@@ -314,20 +314,14 @@ class ModalBlockEditor {
         if (!text || text.trim() === '') {return [];}
         
         console.log('🔍 ModalBlockEditor: _splitTextIntoBlocks получил текст длиной:', text.length);
-        console.log('🔍 Первые 400 символов входного текста:', text.substring(0, 400));
-        console.log('🔍 Количество \n\n в тексте:', (text.match(/\n\n/g) || []).length);
         
         // Нормализуем переносы строк
         const normalizedText = text.replace(/\r\n|\r/g, '\n');
         
-        // ИСПРАВЛЕНО: Разбиение по двум или более последовательным переносам строк (для абзацев)
-        const potentialBlocks = normalizedText.split(/\n{2,}/);
-
-        // Фильтруем пустые блоки, но сохраняем пустые строки, если они являются частью блока
+        // ОСНОВНОЙ И ЕДИНСТВЕННЫЙ МЕТОД РАЗДЕЛЕНИЯ: двойные переносы (пустая строка)
+        const potentialBlocks = normalizedText.split(/\n\s*\n/);
         const blocks = potentialBlocks.map(b => b.trim()).filter(b => b !== '');
-        console.log(`🔍 ModalBlockEditor: Разделение по абзацам дало ${blocks.length} блоков`);
-        console.log('🔍 Первый блок:', blocks[0]);
-        console.log('🔍 Второй блок:', blocks[1]);
+        console.log(`🔍 ModalBlockEditor: Разделение по пустым строкам дало ${blocks.length} блоков`);
         
         // Определяем типы блоков на основе содержимого
         return blocks.map((content, index) => {
@@ -335,23 +329,12 @@ class ModalBlockEditor {
             
             // Простая эвристика для определения типа
             const lowerContent = content.toLowerCase();
-            
-            // Расширенная эвристика для новых типов блоков
             if (lowerContent.includes('chorus') || lowerContent.includes('припев') || 
                 this._isRepeatingContent(content, blocks)) {
                 type = 'chorus';
             } else if (lowerContent.includes('bridge') || lowerContent.includes('бридж') || 
-                       (index > 0 && index < blocks.length - 1 && content.length < blocks[0].length * 0.7 && !this._isRepeatingContent(content, blocks))) {
+                       index > 0 && index < blocks.length - 1 && content.length < blocks[0].length * 0.7) {
                 type = 'bridge';
-            } else if (lowerContent.includes('prechorus') || lowerContent.includes('предприпев') ||
-                       (index > 0 && content.length < blocks[0].length * 0.5 && !this._isRepeatingContent(content, blocks))) {
-                type = 'prechorus';
-            } else if (lowerContent.includes('intro') || lowerContent.includes('интро')) {
-                type = 'intro';
-            } else if (lowerContent.includes('outro') || lowerContent.includes('аутро')) {
-                type = 'outro';
-            } else if (content.trim() === '') {
-                type = 'blank'; // Если блок пустой, назначаем тип blank
             }
             
             return { content: content, type: type };
@@ -384,9 +367,6 @@ class ModalBlockEditor {
         this.selectedBlock = null;   
 
         this.blockListArea.innerHTML = ''; 
-
-        // 🎯 ИСПРАВЛЕНО: Сохраняем распарсенный текст в виде массива строк
-        this.lyricsLines = (lyricsText || '').split('\n').map(line => line.trim());
 
         const blocks = this._splitTextIntoBlocks(lyricsText || '');
 
@@ -501,16 +481,6 @@ class ModalBlockEditor {
                 .option-bridge {
                     background-color: #6f42c1; /* Фиолетовый */
                 }
-                .option-pre-chorus {
-                    background-color: #ffc107; /* Желтый */
-                }
-                .option-intro,
-                .option-outro {
-                    background-color: #17a2b8; /* Бирюзовый */
-                }
-                .option-blank {
-                    background-color: #6c757d; /* Серый для пустых */
-                }
 
                 /* Стили для отображения типа блока на самом блоке (пока просто цвет фона) */
                 .block-type-verse {
@@ -530,22 +500,6 @@ class ModalBlockEditor {
                     background-color: #f1eff7 !important; /* Светло-фиолетовый фон */
                     border-left: 5px solid #6f42c1 !important; /* Фиолетовая полоса слева */
                     box-shadow: 0 0 8px rgba(111, 66, 193, 0.2); /* Легкое фиолетовое свечение */
-                }
-                .block-type-pre-chorus {
-                    background-color: #fff3cd !important; /* Светло-желтый фон */
-                    border-left: 5px solid #ffc107 !important; /* Желтая полоса слева */
-                    box-shadow: 0 0 8px rgba(255, 193, 7, 0.2); /* Легкое желтое свечение */
-                }
-                .block-type-intro,
-                .block-type-outro {
-                    background-color: #dbeff3 !important; /* Светло-бирюзовый фон */
-                    border-left: 5px solid #17a2b8 !important; /* Бирюзовая полоса слева */
-                    box-shadow: 0 0 8px rgba(23, 162, 184, 0.2); /* Легкое бирюзовое свечение */
-                }
-                .block-type-blank {
-                    background-color: rgba(255,255,255,0.05) !important; /* Очень светло-серый или почти прозрачный */
-                    border-left: 5px solid rgba(108, 117, 125, 0.4) !important; /* Полупрозрачная серая полоса */
-                    box-shadow: none;
                 }
             `;
             document.head.appendChild(style);
@@ -621,36 +575,11 @@ class ModalBlockEditor {
         await new Promise(resolve => setTimeout(resolve, 300));
 
         const blocks = this.blockListArea.querySelectorAll('.text-block');
-        const editedBlocks = [];
-        let currentLineIndex = 0;
-
-        Array.from(blocks).forEach((blockElement, blockIndex) => {
-            const blockContent = blockElement.innerText.trim();
-            const blockType = blockElement.getAttribute('data-block-type') || 'verse';
-            const blockLineIndices = [];
-            
-            // 🎯 ИСПРАВЛЕНО: Определяем lineIndices для каждого блока
-            const blockLines = blockContent.split('\n').map(line => line.trim());
-            blockLines.forEach(line => {
-                if (line !== '') { // Игнорируем пустые строки при сопоставлении
-                    const globalLineIndex = this.lyricsLines.indexOf(line, currentLineIndex);
-                    if (globalLineIndex !== -1) {
-                        blockLineIndices.push(globalLineIndex);
-                        currentLineIndex = globalLineIndex + 1; // Начинаем поиск со следующей строки
-                    } else {
-                        // Если строка не найдена, это может указывать на новое содержание или ошибку
-                        console.warn(`ModalBlockEditor: Line "${line}" not found in global lyrics starting from index ${currentLineIndex}.`);
-                    }
-                }
-            });
-
-            editedBlocks.push({
-                id: `block-${Date.now()}-${blockIndex}-${Math.random().toString(36).substring(2, 15)}`, // Генерируем уникальный ID
-                name: `Block ${blockIndex + 1}`, // Или используем другое имя
-                lineIndices: blockLineIndices,
-                type: blockType
-            });
-        });
+        const editedBlocks = Array.from(blocks).map((block, index) => ({
+            id: index,
+                    content: block.innerText.trim(),
+                    type: block.getAttribute('data-block-type') || 'verse'
+                }));
             
         // Обновляем информацию о треке, но не сам текст. Этим займется TrackCatalog
         console.log('ModalBlockEditor: Saving blocks:', editedBlocks);
@@ -659,9 +588,7 @@ class ModalBlockEditor {
         // Вызываем колбэк с правильными параметрами: (editedBlocks, savedTrackInfo)
         if (this.onSave) {
             try {
-                // 🎯 ИСПРАВЛЕНО: Передаем оригинальный текст, который был в редакторе,
-                // чтобы TrackCatalog мог его сохранить и передать в LyricsDisplay.
-                const result = await this.onSave(editedBlocks, this.lyricsLines.join('\n'), this.currentTrackInfo);
+                const result = await this.onSave(editedBlocks, this.currentTrackInfo);
                 console.log('ModalBlockEditor: Save callback result:', result);
                 this.hide();
 
@@ -810,10 +737,6 @@ class ModalBlockEditor {
             { name: 'Куплет', type: 'verse', className: 'option-verse' },
             { name: 'Припев', type: 'chorus', className: 'option-chorus' },
             { name: 'Бридж', type: 'bridge', className: 'option-bridge' },
-            { name: 'Pre-chorus', type: 'prechorus', className: 'option-prechorus' }, // ИСПРАВЛЕНО НА prechorus
-            { name: 'Intro', type: 'intro', className: 'option-intro' },
-            { name: 'Outro', type: 'outro', className: 'option-outro' },
-            { name: 'Пустой', type: 'blank', className: 'option-blank' }, // Добавлен blank
         ];
 
         types.forEach(item => {
@@ -917,8 +840,8 @@ class ModalBlockEditor {
 
     _setBlockType(blockElement, type) {
         if (!blockElement) {return;}
-        // Удаляем старые классы типов - ОБНОВЛЕНЫ ВСЕ ТИПЫ
-        blockElement.classList.remove('block-type-verse', 'block-type-chorus', 'block-type-bridge', 'block-type-prechorus', 'block-type-intro', 'block-type-outro', 'block-type-blank');
+        // Удаляем старые классы типов
+        blockElement.classList.remove('block-type-verse', 'block-type-chorus', 'block-type-bridge');
         // Добавляем новый класс типа
         if (type && type !== 'none' && type !== 'default') { // Добавляем класс, только если тип валидный
             blockElement.classList.add(`block-type-${type}`);

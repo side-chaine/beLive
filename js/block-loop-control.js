@@ -4,14 +4,10 @@
  */
 
 class BlockLoopControl {
-    constructor(audioEngine, lyricsDisplay, markerManager, exportUI) {
+    constructor(audioEngine, lyricsDisplay, markerManager) {
         this.audioEngine = audioEngine;
         this.lyricsDisplay = lyricsDisplay;
         this.markerManager = markerManager;
-        this.exportUI = exportUI; // Сохраняем экземпляр ExportUI
-        
-        // 🎯 НОВОЕ: Флаг для режима выбора экспорта (из рекомендаций Нейросовета)
-        this._exportSelectionMode = false;
         
         // Состояние компонента
         this.isActive = false;
@@ -74,17 +70,6 @@ class BlockLoopControl {
 
         // Флаг открытого Sync Editor (гибридный режим) — поезд скрываем полностью
         this._isSyncEditorOpen = false;
-    }
-    
-    // 🎯 НОВОЕ: Публичный метод для установки режима выбора экспорта (из рекомендаций Нейросовета)
-    setExportSelectionMode(flag) {
-      this._exportSelectionMode = !!flag;
-      // можно добавить визуальный признак на контейнер
-      try {
-        const train = document.querySelector('.loop-train');
-        if (train) train.toggleAttribute('data-export-select', this._exportSelectionMode);
-      } catch (_) {}
-      console.log('BlockLoopControl: ExportSelectionMode установлен в', this._exportSelectionMode);
     }
     
     /**
@@ -444,15 +429,7 @@ class BlockLoopControl {
         this.loopButton.title = `Зациклить блок "${block.name}"`;
         
         // Обработчик клика (Stop должен полностью сбрасывать систему)
-        this.loopButton.addEventListener('click', (e) => {
-            // 🎯 НОВОЕ: Если активен режим выбора экспорта, игнорируем клики по кнопке Loop
-            if (this._exportSelectionMode) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-                console.log('BlockLoopControl: GUARDED - Игнорируем клик по Loop-кнопке в режиме Export Select.');
-                return;
-            }
+        this.loopButton.addEventListener('click', () => {
             this.toggleLooping(block);
             if (!this.isLooping) {
                 // Если произошла остановка — очистить паровозик и UI
@@ -982,22 +959,7 @@ class BlockLoopControl {
      * @param {Event} event - событие изменения блока
      */
     handleBlockChange(event) {
-        // 🎯 НОВОЕ: Если активен режим выбора экспорта, BlockLoopControl полностью игнорирует смену блоков.
-        if (window.isExportSelectMode()) {
-            console.log('BlockLoopControl: GUARDED - Игнорируем смену блока в режиме Export Select.');
-            return;
-        }
-
         if (!this.isActive) {return;}
-
-        // 🎯 НОВОЕ: Если активен режим экспорта, то BlockLoopControl не должен реагировать на смену блоков.
-        // ExportUI уже управляет кликами и выделением.
-        if (this.exportUI && this.exportUI.isMode) {
-            console.log('BlockLoopControl: IGNORING BLOCK CHANGE: Export mode is active.');
-            // Тем не менее, нужно обновить подсветку текущего вагона, если она не обновляется ExportUI
-            try { this._updateTrainPlayingHighlight(); } catch(_) {}
-            return;
-        }
         
         // Обновляем мягкую подсветку текущего вагона
         try { this._updateTrainPlayingHighlight(); } catch(_) {}
@@ -1819,12 +1781,6 @@ class BlockLoopControl {
 
     // ====== V2: Поезд вагончиков ======
     _renderLoopTrain() {
-        // 🎯 НОВОЕ: Жёсткий тормоз для режима экспорта
-        if (window.isExportSelectMode && window.isExportSelectMode()) {
-            console.log('BlockLoopControl: GUARDED - Пропуск _renderLoopTrain в режиме Export Select.');
-            return;
-        }
-
         // Отображаем поезд только в режиме репетиции и только когда есть блоки
         const isRehearsal = document.body.classList.contains('mode-rehearsal');
         const catalogOverlay = document.getElementById('catalog-v2-overlay') || document.querySelector('#catalog-v2-overlay, .catalog-v2-overlay');
@@ -1994,21 +1950,15 @@ class BlockLoopControl {
             try { this._trimTitleToFit(titleEl, fullText); } catch(_) {}
 
             // Пока без логики диапазона — только навигация по клику
-            // Если режим экспорта активен, убираем любой стандартный onclick, 
-            // так как ExportUI._handleWagonClick будет обрабатывать клики через document.addEventListener
-            if (this.exportUI && this.exportUI.isMode) {
-                wagon.onclick = null;
-            } else {
-                wagon.onclick = () => {
-                    const tr = this._getBlockTimeRange(block);
-                    if (tr && typeof tr.startTime === 'number') {
-                        try { this.audioEngine.setCurrentTime(tr.startTime); } catch (e) {}
-                    }
-                };
-            }
+            wagon.onclick = () => {
+                const tr = this._getBlockTimeRange(block);
+                if (tr && typeof tr.startTime === 'number') {
+                    try { this.audioEngine.setCurrentTime(tr.startTime); } catch (e) {}
+                }
+            };
 
 			// Применяем состояние выделения (цепочки) при рендере
-  			if (this.selectedBlocks && this.selectedBlocks.includes(block.id)) {
+			if (this.selectedBlocks && this.selectedBlocks.includes(block.id)) {
 				wagon.classList.add('is-in-loop');
 				toggleBtn.classList.add('is-on');
 				toggleBtn.title = 'Убрать из лупа';
@@ -2025,11 +1975,8 @@ class BlockLoopControl {
         this._updateTrainPlayingHighlight();
 		// Синхронизация стилей выбранных вагонов
 		try { this._updateTrainSelectionStyles(); } catch(_) {}
-        // Вызываем новый метод из ExportUI для восстановления выделения экспорта
-        try { if (this.exportUI) { this.exportUI.updateExportSelectionDisplay(); } } catch(_) {}
-  
         // и плавно центрируем активный вагон
-		try { this._scrollActiveWagonIntoView(); } catch(_) {}
+        try { this._scrollActiveWagonIntoView(); } catch(_) {}
     }
 
     /**
@@ -2047,17 +1994,6 @@ class BlockLoopControl {
      * @private
      */
     _onWagonToggle(block) {
-        // 🎯 НОВОЕ: Жёсткий тормоз для режима экспорта
-        if (window.isExportSelectMode && window.isExportSelectMode()) {
-            console.log('BlockLoopControl: GUARDED - Пропуск _onWagonToggle в режиме Export Select.');
-            // Нейтрализуем событие, если оно пришло сюда
-            if (arguments[0] && typeof arguments[0].preventDefault === 'function') {
-                arguments[0].preventDefault();
-                arguments[0].stopPropagation();
-                if (arguments[0].stopImmediatePropagation) arguments[0].stopImmediatePropagation();
-            }
-            return;
-        }
         if (!block || block.id === undefined || block.id === null) {return;}
 
         const blocks = this._getProcessedBlocks();
@@ -2123,11 +2059,6 @@ class BlockLoopControl {
      * @private
      */
     _updateTrainSelectionStyles() {
-        // 🎯 НОВОЕ: Жёсткий тормоз для режима экспорта
-        if (window.isExportSelectMode && window.isExportSelectMode()) {
-            console.log('BlockLoopControl: GUARDED - Пропуск _updateTrainSelectionStyles в режиме Export Select.');
-            return; // не трогаем классы is-in-loop/is-on/active в экспорт-режиме
-        }
         if (!this.loopTrainContainer) {return;}
         const selected = new Set(this.selectedBlocks || []);
         const wagons = this.loopTrainContainer.querySelectorAll('.loop-wagon');
@@ -2317,12 +2248,6 @@ class BlockLoopControl {
     }
 
     _updateTrainPlayingHighlight() {
-        // 🎯 НОВОЕ: Жёсткий тормоз для режима экспорта
-        if (window.isExportSelectMode && window.isExportSelectMode()) {
-            console.log('BlockLoopControl: GUARDED - Пропуск _updateTrainPlayingHighlight в режиме Export Select.');
-            return;
-        }
-
         if (!this.loopTrainContainer) {return;}
         const blocks = this._getProcessedBlocks();
         if (!blocks || blocks.length === 0) {return;}
@@ -2461,5 +2386,3 @@ class BlockLoopControl {
 window.BlockLoopControl = BlockLoopControl;
 
 console.log('BlockLoopControl: Класс загружен'); 
-
-window.blockLoopControl = new BlockLoopControl(window.audioEngine, window.lyricsDisplay, window.markerManager, window.exportUI);

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест режима Live</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button.active {
+            background-color: #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Тест режима Live</h1>
+        
+        <div class="button-container">
+            <button id="start-live-mode">Запустить режим Live</button>
+        </div>
+        
+        <div id="live-mode-container"></div>
+    </div>
+    
+    <!-- Загрузка скриптов -->
+    <script src="../js/lib/video-processor.js"></script>
+    <script src="../js/lib/face-mesh.js"></script>
+    <script src="../js/lib/live-masks.js"></script>
+    <script src="../js/live-mode.js"></script>
+    
+    <script>
+        // Основные элементы
+        const startLiveModeButton = document.getElementById('start-live-mode');
+        
+        // Создаем экземпляр LiveMode
+        const liveMode = new LiveMode();
+        
+        // Обработчик нажатия на кнопку запуска режима Live
+        startLiveModeButton.addEventListener('click', async () => {
+            // Меняем текст кнопки
+            if (startLiveModeButton.textContent === 'Запустить режим Live') {
+                startLiveModeButton.textContent = 'Остановить режим Live';
+                startLiveModeButton.classList.add('active');
+                
+                // Инициализируем и показываем режим Live
+                await liveMode.initialize();
+                liveMode.show();
+            } else {
+                startLiveModeButton.textContent = 'Запустить режим Live';
+                startLiveModeButton.classList.remove('active');
+                
+                // Скрываем режим Live
+                liveMode.hide();
+            }
+        });
+    </script>
+</body>
+</html> 

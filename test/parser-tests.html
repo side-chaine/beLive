@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8" />
+	<title>beLive - Parser & Blocks Tests</title>
+	<style>body{background:#0e0e0e;color:#ddd;font-family:sans-serif} pre{background:#1b1b1b;padding:10px;border-radius:8px} .ok{color:#6dd96d} .fail{color:#ff6b6b}</style>
+</head>
+<body>
+	<h2>Parser & Blocks Tests</h2>
+	<div id="out"></div>
+	<script src="../js/rtf-simple-parser.js"></script>
+	<script>
+		function assert(name, cond){
+			const p=document.createElement('p');
+			p.innerHTML = (cond?'<b class="ok">OK</b>':'<b class="fail">FAIL</b>')+` — ${name}`;
+			document.getElementById('out').appendChild(p);
+		}
+		// 1) RTF кириллица и пустые строки
+		const rtf = "{\\rtf1\\ansi \\u1050?\\u1080?\\u1088?\\u1080?\\u1083?\\u1083?\\u1080?\\u1094?\\u1072? \\par \\par \\u1058?\\u1077?\\u1089?\\u1090?}";
+		const txt = window.SimpleRtf.toText(rtf);
+		assert('RTF→Text содержит двойной перенос', /\n\n/.test(txt));
+		assert('RTF→Text содержит кириллицу', /Кириллица|Кирил/.test(txt));
+		// 2) Деление на блоки: по пустым строкам
+		function splitBlocks(t){
+			const normalized = (t||'').replace(/\r\n|\r/g,'\n');
+			return normalized.split(/\n\s*\n/).map(s=>s.trim()).filter(Boolean);
+		}
+		const blocks = splitBlocks("a\nb\n\nс\nд");
+		assert('Split 2 blocks', blocks.length===2);
+		// 3) Кириллица не ломается при split
+		const ruBlocks = splitBlocks(txt);
+		assert('RU blocks >= 1', ruBlocks.length>=1);
+	</script>
+</body>
+</html> 

@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Отладка Selfie Segmentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .video-container {
+            position: relative;
+            display: inline-block;
+            margin: 20px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        #video {
+            width: 400px;
+            height: 300px;
+            transform: scaleX(-1);
+            border-radius: 15px;
+        }
+        
+        .debug-btn {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            margin: 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .debug-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .status {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .log {
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4ECDC4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Отладка Selfie Segmentation</h1>
+        
+        <div class="video-container">
+            <video id="video" autoplay muted playsinline></video>
+        </div>
+        
+        <div class="controls">
+            <button class="debug-btn" onclick="startCamera()">📷 Запустить камеру</button>
+            <button class="debug-btn" onclick="testSelfieSegmentation()">🎨 Тест Selfie Segmentation</button>
+            <button class="debug-btn" onclick="checkMediaPipe()">🔍 Проверить MediaPipe</button>
+            <button class="debug-btn" onclick="stopTest()">⏹️ Остановить</button>
+            <button class="debug-btn" onclick="clearLog()">🧹 Очистить лог</button>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="frameCount">0</div>
+                <div>Кадров обработано</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="resultCount">0</div>
+                <div>Результатов получено</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="errorCount">0</div>
+                <div>Ошибок</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="fps">0</div>
+                <div>FPS</div>
+            </div>
+        </div>
+        
+        <div class="status" id="status">
+            Готов к тестированию. Запустите камеру.
+        </div>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <!-- MediaPipe библиотеки -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
+
+    <script>
+        let video;
+        let selfieSegmentation;
+        let isProcessing = false;
+        let frameCount = 0;
+        let resultCount = 0;
+        let errorCount = 0;
+        let lastFrameTime = 0;
+        let fps = 0;
+
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            logElement.innerHTML += `[${timestamp}] ${icon} ${message}<br>`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+
+        function updateStats() {
+            document.getElementById('frameCount').textContent = frameCount;
+            document.getElementById('resultCount').textContent = resultCount;
+            document.getElementById('errorCount').textContent = errorCount;
+            document.getElementById('fps').textContent = fps;
+        }
+
+        async function startCamera() {
+            try {
+                log('📷 Запуск камеры...', 'info');
+                
+                video = document.getElementById('video');
+                
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        width: 640, 
+                        height: 480,
+                        facingMode: 'user'
+                    }
+                });
+
+                video.srcObject = stream;
+                
+                return new Promise((resolve) => {
+                    video.onloadedmetadata = () => {
+                        log('✅ Камера запущена', 'success');
+                        updateStatus('Камера активна. Можете тестировать Selfie Segmentation.');
+                        resolve(true);
+                    };
+                });
+            } catch (error) {
+                log(`❌ Ошибка камеры: ${error.message}`, 'error');
+                errorCount++;
+                updateStats();
+            }
+        }
+
+        async function checkMediaPipe() {
+            log('🔍 Проверка MediaPipe библиотек...', 'info');
+            
+            const libraries = {
+                'SelfieSegmentation': !!window.SelfieSegmentation,
+                'Camera': !!window.Camera,
+                'drawConnectors': !!window.drawConnectors,
+                'drawLandmarks': !!window.drawLandmarks
+            };
+            
+            Object.entries(libraries).forEach(([name, available]) => {
+                log(`${available ? '✅' : '❌'} ${name}: ${available ? 'доступен' : 'недоступен'}`, available ? 'success' : 'error');
+            });
+            
+            const allAvailable = Object.values(libraries).every(Boolean);
+            updateStatus(allAvailable ? 'Все MediaPipe библиотеки загружены' : 'Некоторые библиотеки недоступны');
+        }
+
+        async function testSelfieSegmentation() {
+            if (!video || video.readyState < 2) {
+                log('❌ Сначала запустите камеру', 'error');
+                return;
+            }
+            
+            if (!window.SelfieSegmentation) {
+                log('❌ SelfieSegmentation недоступен', 'error');
+                errorCount++;
+                updateStats();
+                return;
+            }
+            
+            try {
+                log('🎨 Инициализация Selfie Segmentation...', 'info');
+                
+                selfieSegmentation = new SelfieSegmentation({
+                    locateFile: (file) => {
+                        return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
+                    }
+                });
+                
+                selfieSegmentation.setOptions({
+                    modelSelection: 0, // Стабильная модель
+                    selfieMode: true
+                });
+                
+                let lastResultTime = Date.now();
+                
+                selfieSegmentation.onResults((results) => {
+                    try {
+                        resultCount++;
+                        
+                        const now = Date.now();
+                        const deltaTime = now - lastResultTime;
+                        fps = Math.round(1000 / deltaTime);
+                        lastResultTime = now;
+                        
+                        updateStats();
+                        
+                        if (results.segmentationMask) {
+                            log(`📊 Результат получен: маска ${results.segmentationMask.width}x${results.segmentationMask.height}`, 'success');
+                        } else {
+                            log('⚠️ Результат без маски сегментации', 'warning');
+                        }
+                        
+                        // Логируем каждые 30 результатов
+                        if (resultCount % 30 === 0) {
+                            log(`📈 Обработано ${resultCount} результатов, FPS: ${fps}`, 'info');
+                        }
+                        
+                    } catch (error) {
+                        log(`❌ Ошибка обработки результата: ${error.message}`, 'error');
+                        errorCount++;
+                        updateStats();
+                    }
+                });
+                
+                log('✅ Selfie Segmentation инициализирован', 'success');
+                log('🚀 Начинаем обработку кадров...', 'info');
+                
+                isProcessing = true;
+                processFrame();
+                
+                updateStatus('Selfie Segmentation активен');
+                
+            } catch (error) {
+                log(`❌ Ошибка инициализации: ${error.message}`, 'error');
+                errorCount++;
+                updateStats();
+            }
+        }
+
+        function processFrame() {
+            if (!isProcessing || !video || !selfieSegmentation) {
+                return;
+            }
+            
+            if (video.readyState >= 2) {
+                try {
+                    frameCount++;
+                    updateStats();
+                    
+                    selfieSegmentation.send({ image: video }).then(() => {
+                        // Успешно отправлено
+                        if (isProcessing) {
+                            requestAnimationFrame(processFrame);
+                        }
+                    }).catch((error) => {
+                        log(`❌ Ошибка отправки кадра: ${error.message}`, 'error');
+                        errorCount++;
+                        updateStats();
+                        
+                        // Продолжаем через некоторое время
+                        if (isProcessing) {
+                            setTimeout(() => {
+                                if (isProcessing) {
+                                    processFrame();
+                                }
+                            }, 100);
+                        }
+                    });
+                } catch (error) {
+                    log(`❌ Критическая ошибка: ${error.message}`, 'error');
+                    errorCount++;
+                    updateStats();
+                }
+            } else {
+                // Видео не готово
+                setTimeout(() => {
+                    if (isProcessing) {
+                        processFrame();
+                    }
+                }, 50);
+            }
+        }
+
+        function stopTest() {
+            isProcessing = false;
+            log('⏹️ Тест остановлен', 'info');
+            updateStatus('Тест остановлен');
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            frameCount = 0;
+            resultCount = 0;
+            errorCount = 0;
+            fps = 0;
+            updateStats();
+            log('🧹 Лог и статистика очищены', 'info');
+        }
+
+        // Автоинициализация
+        window.addEventListener('load', () => {
+            log('🚀 Диагностическая страница загружена', 'info');
+            updateStats();
+            updateStatus('Готов к диагностике');
+        });
+    </script>
+</body>
+</html> 
