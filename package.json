@@ -60,7 +60,7 @@
     "optionator": "^0.9.4",
     "p-limit": "^3.1.0",
     "p-locate": "^5.0.0",
-    "parent-module": "^1.0.1",
+    "parent-module": "^3.2.0",
     "path-exists": "^4.0.0",
     "path-key": "^3.1.1",
     "prelude-ls": "^1.2.1",
