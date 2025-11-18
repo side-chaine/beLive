@@ -12,9 +12,10 @@ class AudioEngine {
         this.vocalsGain = this.audioContext.createGain();
         this.microphoneGain = this.audioContext.createGain();
         
-        this.instrumentalGain.connect(this.audioContext.destination);
-        this.vocalsGain.connect(this.audioContext.destination);
-        this.microphoneGain.connect(this.audioContext.destination);
+        // Узлы усиления теперь не подключаются напрямую к destination
+        // this.instrumentalGain.connect(this.audioContext.destination);
+        // this.vocalsGain.connect(this.audioContext.destination);
+        // this.microphoneGain.connect(this.audioContext.destination);
         
         this._isPlaying = false;
         this.duration = 0;
@@ -43,14 +44,27 @@ class AudioEngine {
         this.microphoneSource = null;
         this.microphoneStream = null;
         this.microphoneGain.gain.value = this.microphoneVolume;
+        this.vocalMixEnabled = false; // Новое свойство для VocalMix
+        this.vocalMixFirstActivated = true; // Флаг для отслеживания первого включения VocalMix
+
+        // Создаем узлы для стерео разделения/смешивания
+        this.stereoSplitter = this.audioContext.createChannelSplitter(2); // Разделяем на 2 канала
+        this.stereoMerger = this.audioContext.createChannelMerger(2);   // Объединяем 2 канала
+
+        // Подключаем мержер к выходу AudioContext, но по умолчанию он будет просто смешивать
+        this.stereoMerger.connect(this.audioContext.destination);
         
         console.log("🚀 AudioEngine (Hybrid Engine) - Гибридная архитектура восстановлена");
         this._setupEventListeners();
+        this._updateAudioRouting(); // Вызываем для первоначальной настройки маршрутизации
 
         // Служебные структуры для синхронизации
         this._syncNudgeInterval = null;   // периодические мелкие коррекции времени
         this._seekInProgress = false;     // барьер seek
         this._lastSeekTime = 0;           // последний момент seek
+        this._lastLoopJumpTime = 0;       // Добавляем для отслеживания последнего автоматического прыжка цикла
+        this._loopGen = 0;                // Добавляем счётчик поколений лупа
+        // this._isLoopClearing = false;     // Новый флаг для отслеживания процесса отключения цикла - УДАЛЕНО
 
         // Колбэки завершения обоих потоков
         this._onBothEndedCallbacks = [];
@@ -73,6 +87,7 @@ class AudioEngine {
             this.microphoneSource.connect(this.microphoneGain);
             this.microphoneEnabled = true;
             this._emitMicState();
+            this._updateAudioRouting(); // Обновляем маршрутизацию при включении микрофона
             return { enabled: true, volume: this.microphoneVolume };
         } catch (e) {
             console.warn('Microphone enable failed:', e);
@@ -89,6 +104,7 @@ class AudioEngine {
         } finally {
             this.microphoneEnabled = false;
             this._emitMicState();
+            this._updateAudioRouting(); // Обновляем маршрутизацию при выключении микрофона
         }
     }
 
@@ -269,7 +285,10 @@ class AudioEngine {
 
         // Create instrumental audio element (priority)
         this.instrumentalAudio = new Audio();
-        this.instrumentalAudio.crossOrigin = "anonymous";
+        this.instrumentalAudio.crossOrigin = "anonymous"; // Важно для CORS и Web Audio API
+        this.instrumentalAudio.preload = 'auto'; // Загружать метаданные и небольшой кусок аудио
+        this.instrumentalAudio.playsInline = true; // Для iOS, чтобы играло без полноэкранного режима
+        this._applyPreservePitch(this.instrumentalAudio);
 
         // Track blob URLs for cleanup
         if (instrumentalUrl.startsWith('blob:')) {this.activeBlobUrls.push(instrumentalUrl);}
@@ -320,7 +339,10 @@ class AudioEngine {
         
             if (vocalsUrl) {
             this.vocalsAudio = new Audio();
-            this.vocalsAudio.crossOrigin = "anonymous";
+            this.vocalsAudio.crossOrigin = 'anonymous'; // Важно для CORS и Web Audio API
+            this.vocalsAudio.preload = 'auto'; // Загружать метаданные и небольшой кусок аудио
+            this.vocalsAudio.playsInline = true; // Для iOS
+            this._applyPreservePitch(this.vocalsAudio);
             
             if (vocalsUrl.startsWith('blob:')) {this.activeBlobUrls.push(vocalsUrl);}
 
@@ -494,6 +516,12 @@ class AudioEngine {
             // Устанавливаем точки зацикливания
             this.loopStart = safeStartTime;
             this.loopEnd = safeEndTime;
+            this.loopActive = true; // Явно устанавливаем флаг активности цикла
+            this._lastLoopJumpTime = 0; // Сбрасываем при установке нового цикла
+            if (window.audioEngine) {
+                window.audioEngine._lastLoopJumpTime = 0; // Также сбрасываем глобальную версию
+            }
+            this._loopGen++;            // новое поколение лупа
             
             // Сбрасываем счетчик ошибок
             this.loopErrors = 0;
@@ -522,28 +550,57 @@ class AudioEngine {
      */
     clearLoop() {
         console.log('AudioEngine: Clearing loop');
-        
+
         try {
-            // Сбрасываем точки зацикливания
-            this.loopStart = null;
-            this.loopEnd = null;
-            
-            // Если есть активные источники, обновляем их состояние
-            if (this.instrumentalSourceNode) {
-                this.instrumentalSourceNode.disconnect();
+            // Остановить проверку цикла немедленно и инвалидировать старые тики
+            if (this._loopCheckInterval) {
+                clearInterval(this._loopCheckInterval);
+                this._loopCheckInterval = null;
             }
-            
-            // Сбрасываем счетчики ошибок
-            this.loopErrors = 0;
-            
-            // Отправляем событие о сбросе зацикливания
-            const event = new CustomEvent('loop-cleared', {
-                detail: {
-                    time: this.getCurrentTime()
+            this._loopGen++; // любое уже стоящее в очереди срабатывание будет проигнорировано
+
+            const wasLoopActive = this.loopActive;
+            const lastStart = this.loopStart;
+            const lastEnd   = this.loopEnd;
+            const nowBefore = this.getCurrentTime();
+
+            // Выключаем цикл и сбрасываем точки
+            this.loopActive = false;
+            this.loopStart  = null;
+            this.loopEnd    = null;
+
+            // Сброс служебных флагов
+            this._lastLoopJumpTime = 0;
+            this._lastSeekTime = 0;
+
+            // ВАЖНО: Больше не трогаем граф WebAudio здесь — НИКАКИХ disconnect()
+            // if (this.instrumentalSourceNode) { this.instrumentalSourceNode.disconnect(); } // УДАЛИТЬ
+
+            // Если мы были в цикле, и текущее время не ушло далеко вперёд —
+            // мягко переносим позицию чуть за конец бывшего лупа, чтобы не "заикалось"
+            if (wasLoopActive &&
+                typeof lastStart === 'number' &&
+                typeof lastEnd === 'number') {
+
+                const epsilon = 0.03; // 30мс за концом лупа
+                const shouldJumpPastEnd =
+                    // Если мы ещё в пределах бывшего окна лупа
+                    (nowBefore <= lastEnd + 0.05) ||
+                    // Или прямо на его старте
+                    (Math.abs(nowBefore - lastStart) < 0.15);
+
+                if (shouldJumpPastEnd) {
+                    const safeDuration = this.getDuration() || lastEnd;
+                    const resumeAt = Math.min(lastEnd + epsilon, Math.max(0, safeDuration - 0.02));
+                    console.log(`AudioEngine: resume after loop at ${resumeAt.toFixed(3)}s`);
+                    this.setCurrentTime(resumeAt);
                 }
-            });
+            }
+
+            // Событие о сбросе
+            const event = new CustomEvent('loop-cleared', { detail: { time: this.getCurrentTime() } });
             document.dispatchEvent(event);
-            
+
             return true;
         } catch (error) {
             console.error('AudioEngine: Error clearing loop:', error);
@@ -560,36 +617,29 @@ class AudioEngine {
             clearInterval(this._loopCheckInterval);
             this._loopCheckInterval = null;
         }
-        
-        // Проверяем состояние цикла каждые 50 мс
+
+        const gen = ++this._loopGen; // новое поколение
+
         this._loopCheckInterval = setInterval(() => {
-            if (!this._isPlaying) {
-                return;
-            }
-            
-            try {
-                const currentTime = this.getCurrentTime();
-                
-                // Пропускаем проверку, если недавно был выполнен переход
-                if (this._lastSeekTime && (Date.now() - this._lastSeekTime) < 300) {
-                    return;
-                }
-                
-                // Если вышли за пределы цикла, возвращаемся в начало
-                if (currentTime >= this.loopEnd - 0.01) {
-                    // Проверка на null перед вызовом toFixed
-                    const currentTimeStr = currentTime ? currentTime.toFixed(2) : '0.00';
-                    const loopStartStr = this.loopStart ? this.loopStart.toFixed(2) : '0.00';
-                    
-                    console.log(`Loop triggered at ${currentTimeStr}s, returning to ${loopStartStr}s`);
-                    this._lastSeekTime = Date.now();
-                    this.setCurrentTime(this.loopStart);
-                    
-                    // Отправляем событие о срабатывании цикла
-                    this._dispatchLoopEvent(currentTime, this.loopStart);
-                }
-            } catch (error) {
-                console.error('AudioEngine: Error in loop check:', error);
+            // тик старого поколения — сразу выходим
+            if (gen !== this._loopGen) { return; }
+            if (!this.loopActive || !this._isPlaying) { return; }
+
+            const loopStart = this.loopStart;
+            const loopEnd   = this.loopEnd;
+            if (typeof loopStart !== 'number' || typeof loopEnd !== 'number') { return; }
+
+            // защита от только что выполненного seek-а
+            if (this._lastSeekTime && (Date.now() - this._lastSeekTime) < 120) { return; }
+
+            const now = this.getCurrentTime();
+
+            if (now >= loopEnd - 0.01) {
+                const target = Math.max(0, loopStart + 0.005); // маленький эпсилон
+                this._lastSeekTime = Date.now();
+                this._lastLoopJumpTime = Date.now();
+                this.setCurrentTime(target);
+                this._dispatchLoopEvent(now, target);
             }
         }, 50);
     }
@@ -680,6 +730,24 @@ class AudioEngine {
             this.vocalsAudio.currentTime = 0;
         }
 
+        // Отключаем MediaElementSourceNode от AudioContext и обнуляем их
+        if (this.instrumentalSourceNode) {
+            this.instrumentalSourceNode.disconnect();
+            this.instrumentalSourceNode = null;
+        }
+        if (this.vocalsSourceNode) {
+            this.vocalsSourceNode.disconnect();
+            this.vocalsSourceNode = null;
+        }
+
+        // Обнуляем HTMLMediaElement, чтобы новые создавались при следующем loadTrack
+        this.instrumentalAudio = null;
+        this.vocalsAudio = null;
+
+        // Отзываем все активные blob-URL-ы, чтобы избежать утечек памяти
+        this.activeBlobUrls.forEach(url => URL.revokeObjectURL(url));
+        this.activeBlobUrls = [];
+
         this.isPlaying = false;
         this._notifyPlaybackStateChanged();
         console.log('⏹️ ГИБРИД: Остановлен и сброшен');
@@ -750,6 +818,17 @@ class AudioEngine {
         console.log(`isPlaying property set to: ${this._isPlaying}`);
     }
     
+    _applyPreservePitch(el) {
+      try {
+        if (!el) return;
+        if ('preservesPitch' in el) el.preservesPitch = true;
+        if ('mozPreservesPitch' in el) el.mozPreservesPitch = true;
+        if ('webkitPreservesPitch' in el) el.webkitPreservesPitch = true;
+      } catch (e) {
+        console.warn('preservePitch set failed', e);
+      }
+    }
+    
     /**
      * Set vocals volume (0.0 to 1.0)
      * @param {number} volume - Volume level (0.0 = muted, 1.0 = full)
@@ -798,12 +877,12 @@ class AudioEngine {
         this.activeBlobUrls.forEach(url => URL.revokeObjectURL(url));
         this.activeBlobUrls = [];
         
-        // Disconnect media element source
-        if (this.instrumentalSourceNode) {
-            this.instrumentalSourceNode.disconnect();
-        }
-        this.instrumentalAudio = null;
-        this.instrumentalSourceNode = null;
+        // Disconnect media element source (эта логика теперь в stop())
+        // if (this.instrumentalSourceNode) {
+        //     this.instrumentalSourceNode.disconnect();
+        // }
+        this.instrumentalAudio = null; // Эта логика теперь в stop()
+        this.instrumentalSourceNode = null; // Эта логика теперь в stop()
         
         console.log('🧹 СПРИНТЕР: Ресурсы очищены');
     }
@@ -869,11 +948,13 @@ class AudioEngine {
         
         if (this.instrumentalAudio) {
             this.instrumentalAudio.playbackRate = clampedRate;
+            this._applyPreservePitch(this.instrumentalAudio);
             console.log(`🎵 ИНСТРУМЕНТАЛ: Скорость установлена ${(clampedRate * 100).toFixed(0)}%`);
         }
         
         if (this.vocalsAudio) {
             this.vocalsAudio.playbackRate = clampedRate;
+            this._applyPreservePitch(this.vocalsAudio);
             console.log(`🎤 ВОКАЛ: Скорость установлена ${(clampedRate * 100).toFixed(0)}%`);
         }
         
@@ -1012,6 +1093,95 @@ class AudioEngine {
                 }
             } catch(_) {}
         }, 200);
+    }
+
+    _updateAudioRouting() {
+        // Отключаем все существующие соединения
+        this.instrumentalGain.disconnect();
+        this.vocalsGain.disconnect();
+        this.microphoneGain.disconnect();
+
+        // Отключаем все входы от StereoMerger, чтобы переподключить их
+        for (let i = 0; i < this.stereoMerger.numberOfInputs; i++) {
+            try { this.stereoMerger.disconnect(this.audioContext.destination, i); } catch (e) { /* ignore */ }
+        }
+
+        // Снова подключаем мержер к выходу AudioContext
+        this.stereoMerger.connect(this.audioContext.destination);
+
+        // Подключаем микрофон к своему усилителю, если он активен
+        if (this.microphoneSource) {
+            try { this.microphoneSource.disconnect(); } catch (_) { /* ignore */ }
+            this.microphoneSource.connect(this.microphoneGain);
+        }
+
+        if (this.vocalMixEnabled) {
+            console.log('✅ VocalMix активен: маршрутизация стерео');
+
+            // Инструментал в оба канала
+            this.instrumentalGain.connect(this.stereoMerger, 0, 0); // Левый канал
+            this.instrumentalGain.connect(this.stereoMerger, 0, 1); // Правый канал
+
+            // Вокал только в левый канал
+            this.vocalsGain.connect(this.stereoMerger, 0, 0); // Левый канал
+
+            // Микрофон только в правый канал
+            if (this.microphoneEnabled) {
+                this.microphoneGain.connect(this.stereoMerger, 0, 1); // Правый канал
+            }
+        } else {
+            console.log('❌ VocalMix не активен: стандартная маршрутизация');
+
+            // Стандартная маршрутизация (все в оба канала)
+            this.instrumentalGain.connect(this.stereoMerger, 0, 0);
+            this.instrumentalGain.connect(this.stereoMerger, 0, 1);
+
+            this.vocalsGain.connect(this.stereoMerger, 0, 0);
+            this.vocalsGain.connect(this.stereoMerger, 0, 1);
+
+            if (this.microphoneEnabled) {
+                this.microphoneGain.connect(this.stereoMerger, 0, 0);
+                this.microphoneGain.connect(this.stereoMerger, 0, 1);
+            }
+        }
+    }
+
+    // ===== VocalMix: управление состоянием =====
+    enableVocalMix() {
+        this.vocalMixEnabled = true;
+        // Если VocalMix включается в первый раз, автоматически включаем микрофон
+        if (this.vocalMixFirstActivated) {
+            console.log('💡 Первое включение VocalMix: автоматически включаем микрофон');
+            this.enableMicrophone().catch(e => console.error('Ошибка при автоматическом включении микрофона:', e));
+            this.vocalMixFirstActivated = false; // Сбрасываем флаг, чтобы не включать микрофон при следующих активациях
+        }
+        this._updateAudioRouting();
+        this._emitVocalMixState();
+        console.log('🎤 VocalMix включен');
+    }
+
+    disableVocalMix() {
+        this.vocalMixEnabled = false;
+        this._updateAudioRouting();
+        this._emitVocalMixState();
+        console.log('🎤 VocalMix выключен');
+    }
+
+    toggleVocalMix() {
+        if (this.vocalMixEnabled) {
+            this.disableVocalMix();
+        } else {
+            this.enableVocalMix();
+        }
+    }
+
+    getVocalMixState() {
+        return this.vocalMixEnabled;
+    }
+
+    _emitVocalMixState() {
+        const evt = new CustomEvent('vocalmix-state-changed', { detail: { enabled: this.vocalMixEnabled } });
+        document.dispatchEvent(evt);
     }
 }
 

@@ -6,6 +6,12 @@
 	window.SimpleRtf.toText = function toText(rtfContent){
 		if (typeof rtfContent !== 'string') {return '';}
 		let txt = rtfContent;
+		// Удаляем RTF-заголовок и группы, которые часто содержат метаданные
+		txt = txt.replace(/^{\\rtf1[^{}]*}/, '');
+		txt = txt.replace(/{\\.*?}/g, ''); // Удаляем все RTF-группы
+		txt = txt.replace(/\\ansicpg\d+/g, ''); // Удаляем информацию о кодировке
+		txt = txt.replace(/\\deff?\d+/g, ''); // Удаляем дефолтные шрифты
+		txt = txt.replace(/\\nouicompat/g, ''); // Удаляем режим совместимости UI
 		// Двойные переносы как разделители блоков
 		txt = txt.replace(/\\par\b\s*\\par\b/g, '\n\n').replace(/\\line\b\s*\\line\b/g, '\n\n');
 		// Одиночные переносы

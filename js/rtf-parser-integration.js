@@ -149,7 +149,7 @@ const rtfParserIntegration = {
 if (typeof LyricsDisplay === 'undefined') {
     console.error('RTF Parser Integration: LyricsDisplay не обнаружен, интеграция невозможна');
 } else if (typeof RtfParserAdapter === 'undefined') {
-    console.error('RTF Parser Integration: RtfParserAdapter не обнаружен, интеграция невозможна');
+    console.error('RTF Integration: RtfParserAdapter не обнаружен, интеграция невозможна');
 } else if (typeof rtfParserIntegration === 'undefined' || typeof rtfParserIntegration.init !== 'function') {
     console.error('RTF Parser Integration: rtfParserIntegration не определен или не имеет метода init()');
 } else {

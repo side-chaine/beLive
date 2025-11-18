@@ -118,12 +118,12 @@ class EnhancedTextProcessor {
             }
             try {
                 // Проверка на доступность EnhancedRtfProcessor (внешнего)
-                if (typeof window.EnhancedRtfProcessor !== 'undefined' && window.EnhancedRtfProcessor.parseRtf) {
+                if (typeof window.EnhancedRtfProcessor !== 'undefined' && window.EnhancedTextProcessor.parseRtf) {
                     console.log("EnhancedTextProcessor: используется внешний EnhancedRtfProcessor (window.EnhancedRtfProcessor)");
                     
                     try {
                         // Предполагаем, что внешний EnhancedRtfProcessor возвращает Promise
-                        window.EnhancedRtfProcessor.parseRtf(rtfText).then(result => {
+                        window.EnhancedTextProcessor.parseRtf(rtfText).then(result => {
                             console.log("EnhancedTextProcessor: RTF успешно обработан через внешний EnhancedRtfProcessor");
                             resolve(result);
                         }).catch(err => {
@@ -180,9 +180,11 @@ class EnhancedTextProcessor {
             text = text.replace(/\\tab\s?/g, '\t');   // Табуляция
 
             // Обработка Unicode символов (например, \u1088?)
-            text = text.replace(/\\u([0-9]+)\??/g, (match, code) => {
+            text = text.replace(/\\u(-?\d+)\??/g, (match, code) => {
                 try {
-                    return String.fromCharCode(parseInt(code, 10));
+                    let n = parseInt(code, 10);
+                    if (n < 0) n = 65536 + n;
+                    return String.fromCharCode(n);
                 } catch (e) {
                     return ''; // Возвращаем пустую строку, если код невалидный
                 }
@@ -209,7 +211,7 @@ class EnhancedTextProcessor {
             
             // Нормализуем переносы строк и пробелы
             text = text.replace(/\r\n|\r/g, '\n');
-            text = text.replace(/\n{2,}/g, '\n'); // Заменяем несколько последовательных переносов на один
+            text = text.replace(/\n{3,}/g, '\n\n'); // Сохраняем абзацы: 3+ переносов -> 2
             text = text.replace(/[ \t]{2,}/g, ' '); // Множественные пробелы/табы на один пробел
             
             console.log("EnhancedTextProcessor: базовое извлечение RTF завершено, длина результата:", text.length);

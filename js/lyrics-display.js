@@ -1095,20 +1095,16 @@ class LyricsDisplay {
 
     _renderBlocksForRehearsal() {
         const lyricsContainer = this.lyricsContainer;
-        if (!lyricsContainer) {return;}
+        if (!lyricsContainer) {
+            console.error('LyricsDisplay: lyricsContainer not found for _renderRehearsalDisplay');
+            return;
+        }
 
-        // Очищаем контейнер
-        lyricsContainer.innerHTML = '';
-        
-        // ДОБАВЛЕНО: Применяем класс перехода к контейнеру репетиции
-        if (this.currentTransition && this.currentTransition !== 'none') {
-            // Убираем существующие классы переходов
-            const existingClasses = Array.from(lyricsContainer.classList)
-                .filter(c => c.startsWith('transition-'));
-            existingClasses.forEach(c => lyricsContainer.classList.remove(c));
-            
-            // Добавляем новый класс перехода
-            lyricsContainer.classList.add('transition-' + this.currentTransition);
+        // 🎯 НОВОЕ: Guard-условие для предотвращения полной перерисовки в режиме экспорта
+        if (!window.isExportSelectMode()) {
+            lyricsContainer.innerHTML = ''; // Clear previous content
+        } else {
+            console.log('LyricsDisplay: GUARDED - Пропуск очистки innerHTML в режиме Export Select.');
         }
 
         if (!this.textBlocks || this.textBlocks.length === 0) {
@@ -1396,7 +1392,7 @@ class LyricsDisplay {
         const lyricsLen = Array.isArray(this.lyrics) ? this.lyrics.length : 0;
         const seen = new Set();
         const result = [];
-        const allowedTypes = new Set(['verse', 'chorus', 'bridge']);
+        const allowedTypes = new Set(['verse', 'chorus', 'bridge', 'prechorus', 'intro', 'outro']);
         (blocks || []).forEach((blk, idx) => {
             if (!blk || !Array.isArray(blk.lineIndices) || blk.lineIndices.length === 0) {
                 return; // пустой блок
@@ -1884,6 +1880,15 @@ class LyricsDisplay {
         
         // Загружаем текст заново
         this.loadLyrics(text, duration, shouldRender);
+
+        // Если блоки уже есть, выводим их для отладки (УДАЛЕНО)
+        // if (this.textBlocks.length > 0) {
+        //     console.log('LyricsDisplay: Reloaded text with existing blocks. Total blocks:', this.textBlocks.length);
+        //     console.log('LyricsDisplay: Existing blocks detailed:', this.textBlocks);
+        // }
+
+        // Применяем стили
+        this.setStyle({ id: 'default', name: 'По умолчанию' });
     }
     
     /**
@@ -2686,14 +2691,15 @@ class LyricsDisplay {
         return this.textBlocks;
     }
 
-    async loadImportedBlocks(blocksData, shouldRender = true) { // Добавлен флаг shouldRender
+    async loadImportedBlocks(blocksData, lyricsContent, shouldRender = true) { // Добавляем lyricsContent
         return new Promise((resolve) => { // Возвращаем Promise
             if (!blocksData || !Array.isArray(blocksData)) {
                 console.warn('LyricsDisplay: Invalid or empty blocksData provided to loadImportedBlocks.');
                 this.textBlocks = [];
-                this.lyrics = []; // Clear lyrics if blocks are invalid
+                // 🎯 ИСПРАВЛЕНО: НЕ ОЧИЩАЕМ this.lyrics здесь, так как оно должно прийти извне
+                // this.lyrics = []; 
                 if (shouldRender) {
-                this._renderLyrics(); // Re-render (will show "no lyrics" or empty)
+                    this._renderLyrics(); // Re-render (will show "no lyrics" or empty)
                 }
                 if (typeof this.updateDefinedBlocksDisplay === 'function') {
                     this.updateDefinedBlocksDisplay([]); // Update external UI
@@ -2705,79 +2711,42 @@ class LyricsDisplay {
             console.log(`LyricsDisplay: Loading ${blocksData.length} imported blocks.`);
             this.textBlocks = JSON.parse(JSON.stringify(blocksData)); // Deep copy
 
-            // Reconstruct this.lyrics from the blocksData
-            this.lyrics = [];
-            this.textBlocks.forEach((block, blockIndex) => {
-                // ИСПРАВЛЕНО: Генерируем ID и имя если их нет
-                if (!block.id) {
-                    block.id = `block-${Date.now()}-${blockIndex}-${Math.random().toString(36).substring(2, 15)}`;
-                }
-                if (!block.name) {
-                    block.name = `Block ${blockIndex + 1}`;
-                }
-                
-                // ИСПРАВЛЕНО: Ищем поле content вместо text
-                const blockText = block.content || block.text || '';
-                if (blockText && typeof blockText === 'string') {
-                    const blockLines = blockText.split('\n').map(line => line.trim());
-                    block.lineIndices = []; // Reset/initialize lineIndices for this block
-                    blockLines.forEach(line => {
-                        if (line) { // Only add non-empty lines
-                            this.lyrics.push(line);
-                            block.lineIndices.push(this.lyrics.length - 1); // Store the new global index
-                        }
-                    });
-                } else {
-                    // Если у блока нет текста, или он не строка, добавляем пустой массив индексов
-                    block.lineIndices = [];
-                }
-                
-                console.log(`Block ${blockIndex} loaded: id="${block.id}", name="${block.name}", lines=${block.lineIndices?.length || 0}`);
-            });
+            // 🎯 ИСПРАВЛЕНО: Устанавливаем this.lyrics из переданного lyricsContent
+            if (lyricsContent && typeof lyricsContent === 'string') {
+                this.lyrics = lyricsContent.split('\n').map(line => line.trim());
+            } else {
+                this.lyrics = []; // Если текста нет, очищаем
+            }
+            
+            // Устанавливаем textBlocks
+            this.textBlocks = blocksData.map(block => ({
+                ...block,
+                originalLineIndices: block.lineIndices ? [...block.lineIndices] : [] // Сохраняем оригинал для отладки
+            }));
+            // УДАЛЕНО: Логирование для отладки
+            // console.log('LyricsDisplay: Successfully loaded', this.textBlocks.length, 'blocks, total lyric lines:', this.lyrics.length);
+            // console.log('LyricsDisplay: Loaded blocks detailed:', this.textBlocks); // УДАЛЕНО: Детальный лог
             
             // Санитизация импортированных блоков ДО рендера, чтобы устранить пустые/дубли и неверные индексы
             try {
                 this.textBlocks = this._sanitizeBlocks(this.textBlocks);
-            } catch(_) {}
-
-            this.currentLine = 0; // Reset current line
-            this.currentlyFocusedBlockId = null; // Reset focused block
-
-            // Очищаем контейнер перед новой отрисовкой
-            if (this.lyricsContainer) {
-                this.lyricsContainer.innerHTML = '';
-            }
-            // Force scroll to top
-            if (this.containerElement) {
-                this.containerElement.scrollTop = 0;
-            }
-            
-            if (shouldRender) {
-            this._renderLyrics(); // This will render based on the new this.lyrics
-            // 🎯 Обеспечиваем появление Loop-кнопки сразу после первичного рендера в режиме репетиции
-            try {
-                if (window.app && window.app.blockLoopControl && typeof window.app.blockLoopControl._createLoopButtonForCurrentBlock === 'function') {
-                    window.app.blockLoopControl._createLoopButtonForCurrentBlock();
-                }
             } catch (e) {
-                console.warn('LyricsDisplay: Не удалось создать Loop-кнопку после рендера:', e);
+                console.warn('LyricsDisplay: Error during block sanitization:', e);
             }
-            } else {
-                console.log('LyricsDisplay: Skipping render as requested by shouldRender=false');
-            }
+            
+            // 🎯 ИСПРАВЛЕНО: Обновляем количество лирических строк для валидации маркеров
+            // Эта строка не нужна, так как this.lyrics.length уже обновлен
+            // if (window.markerManager) { window.markerManager.totalLyricLines = this.lyrics.length; } 
 
-            if (typeof this.updateDefinedBlocksDisplay === 'function') {
-                this.updateDefinedBlocksDisplay(this.textBlocks); // Update any external UI for defined blocks
-            }
             console.log(`LyricsDisplay: Successfully loaded ${this.textBlocks.length} blocks, total lyric lines: ${this.lyrics.length}.`);
-            
-            // Обновляем цвета маркеров после загрузки блоков
-            if (window.markerManager && typeof window.markerManager.updateMarkerColors === 'function') {
-                window.markerManager.updateMarkerColors();
-                console.log('LyricsDisplay: Updated marker colors after loading blocks');
+
+            if (shouldRender) {
+                this._renderLyrics(); // Render lyrics with new blocks
             }
-            
-            resolve(); // Разрешаем Promise после завершения всех операций
+            if (typeof this.updateDefinedBlocksDisplay === 'function') {
+                this.updateDefinedBlocksDisplay(this.textBlocks);
+            }
+            resolve();
         });
     }
 
