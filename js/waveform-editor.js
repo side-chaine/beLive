@@ -1299,7 +1299,7 @@ class WaveformEditor {
         this._drawGrid(ctx);
         
         // Draw waveform
-            this._drawWaveformData(ctx);
+            this._drawWaveformData(ctx, this.currentWaveformSource);
         
         // Draw loop region (if active)
         this._drawLoopRegion(ctx);
@@ -1428,36 +1428,66 @@ class WaveformEditor {
     }
     
     /**
-     * Draw the waveform data
-     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     * Рисует волну(ы) на основе выбранного источника: 'instrumental' | 'vocals' | 'master'
      * @private
      */
-    _drawWaveformData(ctx) {
+    _drawWaveformData(ctx, mode = this.currentWaveformSource) {
         const width = this.canvas.width;
         const middle = this.canvas.height / 2;
+
+        // Цвета и альфы из ColorService (с фолбэками)
+        const scheme = (window.colorService && window.colorService.getCurrentScheme())
+            ? window.colorService.getCurrentScheme()
+            : null;
+
+        const instrColor = this._getSourceColor('instrumental'); // из ColorService или дефолт
+        const vocalColor = this._getSourceColor('vocals');       // из ColorService или дефолт
+
+        // Поддержка альф из схемы (если заданы), иначе разумные дефолты
+        const instrAlpha = scheme?.instrumentalAlpha ?? 0.85;
+        const vocalAlpha = scheme?.vocalsAlpha ?? 0.9;
+
+        // Хелперы для фолбэков текста
         const dpr = window.devicePixelRatio || 1;
-        
-        ctx.clearRect(0, 0, width, this.canvas.height);
-
-        // 1. Отрисовка инструментальной дорожки (если есть)
-        if (this.instrumentalAudioData) {
-            this._drawSingleWaveform(ctx, middle, this.instrumentalAudioData, "#4497ff", 0.8);
-        }
-
-        // 2. Отрисовка вокальной дорожки поверх (если есть)
-        if (this.vocalAudioData) {
-            // Если нет инструментала, рисуем вокал по центру. 
-            // Если есть, рисуем его как мастер-трек (например, немного сместив или другим стилем)
-            const isMasterVocal = !!this.instrumentalAudioData;
-            this._drawSingleWaveform(ctx, middle, this.vocalAudioData, "#FFD700", 1.0, isMasterVocal);
-        }
-
-        if (!this.instrumentalAudioData && !this.vocalAudioData) {
-            console.log("WaveformEditor: Vocal audio data not available");
-            ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+        const drawText = (txt) => {
+            ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
             ctx.font = `${14 * dpr}px Arial`;
             ctx.textAlign = "center";
-            ctx.fillText("Аудиоданные недоступны", width / 2, middle);
+            ctx.fillText(txt, width / 2, middle);
+        };
+
+        // Отрисовываем в зависимости от выбранного режима
+        switch (mode) {
+            case 'instrumental': {
+                if (this.instrumentalAudioData) {
+                    this._drawSingleWaveform(ctx, middle, this.instrumentalAudioData, instrColor, instrAlpha, false);
+                } else {
+                    drawText("Инструментальная дорожка не загружена");
+                }
+                break;
+            }
+            case 'vocals': {
+                if (this.vocalAudioData) {
+                    this._drawSingleWaveform(ctx, middle, this.vocalAudioData, vocalColor, vocalAlpha, false);
+                } else {
+                    drawText("Вокальная дорожка не загружена");
+                }
+                break;
+            }
+            case 'master':
+            default: {
+                // Наложение: сначала инструментал, поверх — вокал
+                if (this.instrumentalAudioData) {
+                    this._drawSingleWaveform(ctx, middle, this.instrumentalAudioData, instrColor, instrAlpha, false);
+                }
+                if (this.vocalAudioData) {
+                    this._drawSingleWaveform(ctx, middle, this.vocalAudioData, vocalColor, vocalAlpha, false);
+                }
+                if (!this.instrumentalAudioData && !this.vocalAudioData) {
+                    drawText("Аудиоданные недоступны");
+                }
+                break;
+            }
         }
     }
     
@@ -1502,11 +1532,7 @@ class WaveformEditor {
 
         // Если это вокал для мастер-дорожки, сначала "вырезаем" фон
         if (isMasterVocal) {
-            const bgGradient = ctx.createLinearGradient(0, 0, 0, this.canvasHeight);
-            bgGradient.addColorStop(0, "#1e1e1e");
-            bgGradient.addColorStop(1, "#171717");
-            ctx.fillStyle = bgGradient;
-            ctx.fill(); // Заполняем путь фоном, "стирая" все, что под ним
+            // Блок "стирания" фона удален, чтобы волны нормально накладывались.
         }
         
         // Используем градиент для всех дорожек (включая мастер-вид)
@@ -2901,23 +2927,24 @@ class WaveformEditor {
             if (track.lyricsOriginalContent.trim().startsWith("{\\rtf")) {
                 console.log("WaveformEditor: Парсим RTF перед передачей в редактор блоков");
                 try {
-                    // Специальный упрощённый парсер для редактора блоков: сохраняем пустые строки как границы
-                    if (typeof track.lyricsOriginalContent === "string") {
-                        const raw = track.lyricsOriginalContent;
-                        // Сначала превращаем двойные \par в двойные переносы
-                        let txt = raw
+                    const raw = String(track.lyricsOriginalContent);
+                    let txt;
+                    if (window.SimpleRtf && typeof window.SimpleRtf.toText === "function") {
+                        // Предпочтительно: синхронный парс с сохранением абзацев
+                        txt = window.SimpleRtf.toText(raw);
+                    } else {
+                        // Фоллбэк: ваш ручной парсинг
+                        txt = raw
                             .replace(/\\par\b\s*\\par\b/g, "\n\n")
-                            .replace(/\\line\b\s*\\line\b/g, "\n\n");
-                        // Затем одиночные \par/\line в одиночные переносы
-                        txt = txt.replace(/\\par\b/g, "\n").replace(/\\line\b/g, "\n");
-                        // Декодируем Unicode-последовательности \uXXXX (RTF), включая отрицательные
-                        txt = txt.replace(/\\u(-?\d+)\s?/g, (m, numStr) => {
+                            .replace(/\\line\b\s*\\line\b/g, "\n\n")
+                            .replace(/\\par\b/g, "\n")
+                            .replace(/\\line\b/g, "\n")
+                            .replace(/\\u(-?\d+)\s?/g, (m, numStr) => {
                             let code = parseInt(numStr, 10);
-                            if (code < 0) {code = 65536 + code;} // корректировка отрицательных
+                                if (code < 0) { code = 65536 + code; } // корректировка отрицательных
                             try { return String.fromCharCode(code); } catch (_) { return ""; }
-                        });
-                        // Декодируем CP1251 байты в \'HH через TextDecoder (fallback: fromCharCode)
-                        txt = txt.replace(/\\'([0-9a-fA-F]{2})/g, (m, hex) => {
+                            })
+                            .replace(/\\'([0-9a-fA-F]{2})/g, (m, hex) => {
                             try {
                                 if (typeof TextDecoder !== "undefined") {
                                     const dec = new TextDecoder("windows-1251");
@@ -2926,29 +2953,27 @@ class WaveformEditor {
                                 }
                             } catch (_) { /* ignore */ }
                             return String.fromCharCode(parseInt(hex, 16));
-                        });
-                        // Удаляем управляющие последовательности, не затрагивая переводы строк
-                        txt = txt
-                            .replace(/\{\\[^}]*\}/g, "")
-                            .replace(/\\u-?\d+\s?/g, "")
-                            .replace(/\\'[0-9a-fA-F]{2}/g, "")
+                            })
+                            // Удаляем управляющие слова, не трогая переводы строк
                             .replace(/\\[a-zA-Z]+-?\d*\s?/g, "")
-                            .replace(/[{}]/g, "")
-                            .replace(/\r\n|\r/g, "\n");
-                        // Нормализуем: 3+ переносов -> 2 переноса
-                        txt = txt.replace(/\n{3,}/g, "\n\n");
-                        // Удаляем слэш в конце строк и строки, состоящие только из слэша
-                        txt = txt.replace(/\\\s*$/gm, ""); // trailing backslash at EOL
-                        txt = txt.replace(/^\s*\\\s*$/gm, ""); // lines that are only backslash
-                        // Если встречается "\\\n" считаем это «пустой разделитель» -> просто перевод строки
-                        txt = txt.replace(/\\\s*\n/g, "\n");
-                        currentLyrics = txt.trim();
-                        console.log("WaveformEditor: SIMPLE-RTF parsed for BlockEditor, length:", currentLyrics.length);
-                    } else {
-                        // Fallback к базовой очистке RTF
-                        currentLyrics = this._basicRtfCleanup(track.lyricsOriginalContent);
-                        console.log("WaveformEditor: Использована базовая очистка RTF");
+                            .replace(/[{}]/g, "");
                     }
+                    // Нормализуем переносы: CRLF→LF, 3+ → 2 (сохраняем абзацы)
+                    txt = txt.replace(/\r\n|\r/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+                    currentLyrics = txt;
+                        console.log("WaveformEditor: SIMPLE-RTF parsed for BlockEditor, length:", currentLyrics.length);
+
+                    // ✅ ОТЛАДКА: Проверяем результат парсинга
+                    console.log('=== ОТЛАДКА: Результат парсинга RTF для редактора блоков ===');
+                    console.log('Длина текста:', currentLyrics.length);
+                    console.log('Количество строк:', currentLyrics.split('\n').length);
+                    console.log('Количество двойных переносов (\\n\\n):', (currentLyrics.match(/\n\n/g) || []).length);
+                    console.log('Есть ли RTF-теги (\\\\):', currentLyrics.includes('\\'));
+                    console.log('Есть ли фигурные скобки:', currentLyrics.includes('{') || currentLyrics.includes('}'));
+                    console.log('Первые 400 символов:');
+                    console.log(currentLyrics.substring(0, 400));
+                    console.log('=====================================================');
+
                 } catch (error) {
                     console.error("WaveformEditor: Ошибка парсинга RTF:", error);
                     currentLyrics = track.lyricsOriginalContent;
@@ -2998,50 +3023,48 @@ class WaveformEditor {
         this.modalBlockEditor.init(
             currentLyrics,
             track,
-            // 🎯 ИСПРАВЛЕННЫЙ Callback для сохранения (новый формат)
-            async (editedBlocks, savedTrackInfo) => {
+            // 🎯 ИСПРАВЛЕННЫЙ Callback для сохранения (новый формат: editedBlocks, newLyricsText, savedTrackInfo)
+            async (editedBlocks, newLyricsText, savedTrackInfo) => { // Добавляем newLyricsText
                 console.log("WaveformEditor: Block editor save callback triggered");
                 console.log("WaveformEditor: Edited blocks:", editedBlocks);
+                console.log("WaveformEditor: New lyrics text from editor:", newLyricsText ? newLyricsText.substring(0, 50) + '...' : 'No text');
                 console.log("WaveformEditor: Track info:", savedTrackInfo);
                 
                 if (window.trackCatalog && this.currentTrackId) {
                     try {
-                        // 🎯 СОХРАНЯЕМ БЛОКИ ЧЕРЕЗ ПРАВИЛЬНЫЙ МЕТОД
-                        console.log("WaveformEditor: Сохраняем блоки через saveLyricsBlocks...");
-                        window.trackCatalog.saveLyricsBlocks(this.currentTrackId, editedBlocks);
+                        // 🎯 СОХРАНЯЕМ БЛОКИ И ТЕКСТ НАПРЯМУЮ, ИСПОЛЬЗУЯ newLyricsText ИЗ РЕДАКТОРА
+                        console.log("WaveformEditor: Сохраняем блоки и текст через saveLyricsBlocks...");
+                        window.trackCatalog.saveLyricsBlocks(this.currentTrackId, editedBlocks, newLyricsText);
                         
-                        // 🎯 ОБНОВЛЯЕМ ТЕКСТ ЧЕРЕЗ updateTrackLyrics
-                        const updatedLyrics = window.trackCatalog._convertBlocksToPlainText(editedBlocks);
-                        console.log("WaveformEditor: Обновляем текст трека...");
-                        window.trackCatalog.updateTrackLyrics(this.currentTrackId, updatedLyrics);
-
-                        // 🎯 СРАЗУ ПРИМЕНЯЕМ БЛОКИ К ОТОБРАЖЕНИЮ, ЧТОБЫ МАРКЕРЫ ЗНАЛИ ТИПЫ
+                        // 🎯 СРАЗУ ПРИМЕНЯЕМ БЛОКИ И ТЕКСТ К ОТОБРАЖЕНИЮ LYRICSDISPLAY
                         if (window.lyricsDisplay && typeof window.lyricsDisplay.loadImportedBlocks === "function") {
-                            await window.lyricsDisplay.loadImportedBlocks(editedBlocks, true);
+                            window.lyricsDisplay.loadImportedBlocks(editedBlocks, newLyricsText, true); // true для рендера
                         }
+
+                        // 🎯 ОБНОВЛЯЕМ ЦВЕТА МАРКЕРОВ ПОСЛЕ ПРИМЕНЕНИЯ БЛОКОВ
                         if (window.markerManager && typeof window.markerManager.updateMarkerColors === "function") {
                             window.markerManager.updateMarkerColors();
                         }
 
-                        this._showNotification("Текст и блоки сохранены успешно!", "success");
-                        
-                        // 🎯 ВОЗВРАЩАЕМ РЕЗУЛЬТАТ ДЛЯ АВТООТКРЫТИЯ SYNC EDITOR
-                        return { trackId: this.currentTrackId, success: true };
-                        
+                        if (window.app && typeof window.app.showNotification === 'function') {
+                        window.app.showNotification("Текст и блоки сохранены успешно!", 'success'); // Добавляем уведомление
+                        }
+                        console.log("WaveformEditor: Текст и блоки сохранены успешно!");
+
                     } catch (error) {
-                        console.error("WaveformEditor: Ошибка при сохранении блоков:", error);
-                        this._showNotification("Ошибка при сохранении блоков!", "error");
-                        return { trackId: this.currentTrackId, success: false, error };
+                        console.error("WaveformEditor: Ошибка при сохранении блоков или текста:", error);
+                        if (window.app && typeof window.app.showNotification === 'function') {
+                            window.app.showNotification(`Ошибка сохранения: ${error.message || error}`, 'error');
+                        }
                     }
-                } else {
-                    console.warn("WaveformEditor: TrackCatalog или currentTrackId недоступны");
-                    this._showNotification("Ошибка: нет доступа к каталогу треков", "error");
-                    return { success: false, error: "TrackCatalog unavailable" };
                 }
             },
-            // Callback для отмены
             () => {
-                console.log("WaveformEditor: Block editor cancelled");
+                console.log("WaveformEditor: Block editor cancel callback triggered");
+                // TODO: Handle cancel if needed
+                if (window.app && typeof window.app.showNotification === 'function') {
+                window.app.showNotification("Редактирование блоков отменено.", 'info'); // Добавляем уведомление
+                }
             }
         );
         
@@ -3335,7 +3358,14 @@ class WaveformEditor {
      * Скрыть выпадающее меню цветов
      */
     _hideColorDropdown() {
-        console.log("🎨 _hideColorDropdown вызван");
+        // console.log("🎨 _hideColorDropdown вызван. Скрывает дропдаун цвета."); // Удаляем эту строку
+        // Добавляем проверку, чтобы не закрывать наш AI picker, если он существует
+        const aiPicker = document.getElementById('belive-ai-picker');
+        if (aiPicker && aiPicker.classList.contains('open')) {
+            // Если наш AI picker открыт, мы его не трогаем
+            return;
+        }
+
         if (this.colorDropdown) {
             this.colorDropdown.classList.remove("active");
         }
@@ -3468,6 +3498,40 @@ class WaveformEditor {
             console.error("WaveformEditor: Ошибка базовой очистки RTF:", error);
             return rtfText;
         }
+    }
+
+    /**
+     * Helper to get color from ColorService or fallback to default
+     * @param {string} source - 'instrumental' or 'vocals'
+     * @returns {string} color HEX
+     */
+    _getSourceColor(source) {
+        if (window.colorService) {
+            if (source === 'instrumental') {
+                return window.colorService.getInstrumentalColor();
+            } else if (source === 'vocals') {
+                return window.colorService.getVocalsColor();
+            }
+        }
+        // Fallback colors
+        return source === 'instrumental' ? "#4497ff" : "#FFD700";
+    }
+
+    /**
+     * Helper to get alpha from ColorService or fallback to default
+     * @param {string} source - 'instrumental' or 'vocals'
+     * @returns {number} alpha value (0-1)
+     */
+    _getSourceAlpha(source) {
+        if (window.colorService) {
+            if (source === 'instrumental') {
+                return window.colorService.getInstrumentalAlpha();
+            } else if (source === 'vocals') {
+                return window.colorService.getVocalsAlpha();
+            }
+        }
+        // Fallback alpha
+        return source === 'instrumental' ? 0.85 : 0.9;
     }
 }
 

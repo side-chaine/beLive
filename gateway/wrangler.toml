@@ -1,0 +1,22 @@
+name = "belive-gateway"
+main = "src/index.ts"
+compatibility_date = "2024-01-10"
+
+[vars]
+ALLOWED_ORIGIN = "https://side-chaine.github.io" # Утверждено Оператором
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "dbd280f45fc7472480f648a841a09c11"
+
+[[kv_namespaces]]
+binding = "CACHE_KV"
+id = "80657206c732480fbbff3b59ac20b652"
+
+[[kv_namespaces]]
+binding = "OPERATOR_PROMPT_KV"
+id = "203a726f1ba54b23975b4b2355f9cd77"
+
+[[kv_namespaces]]
+binding = "EPHEMERAL_KV"
+id = "bd9b1fdbafd64d9d9018da2aa478d99c"

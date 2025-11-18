@@ -3,16 +3,6 @@
  * Модуль для работы с камерой, видеоэффектами и трансляцией
  */
 
-// Автоматически создаём экземпляр без запроса доступа к камере
-document.addEventListener('DOMContentLoaded', () => {
-    try {
-        if (typeof LiveMode === 'undefined') { return; }
-        if (!window.liveMode) {
-            window.liveMode = new LiveMode();
-        }
-    } catch (_) {}
-});
-
 class LiveMode {
     constructor() {
         // Получаем элементы DOM или создаем их если необходимо
@@ -672,40 +662,15 @@ class LiveMode {
                 return false;
             }
             
-        } catch (error) {
-            console.error('LiveMode: Ошибка предварительной инициализации камеры:', error.name, error.message);
-            
-            // Проверяем, не заблокирован ли доступ на уровне браузера
-            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-                console.warn('LiveMode: Доступ к камере отклонен пользователем');
-                // Показываем специальное уведомление, если нужно повторить запрос
-                if (document.querySelector('.lyrics-container')) {
-                    const notificationDiv = document.createElement('div');
-                    notificationDiv.className = 'camera-permission-notice';
-                    notificationDiv.innerHTML = `
-                        <div class="notification-content">
-                            <p>Для работы режима Live требуется доступ к камере.</p>
-                            <button id="retry-camera-access">Повторить запрос</button>
-                        </div>
-                    `;
-                    document.querySelector('.lyrics-container').appendChild(notificationDiv);
-                    
-                    // Добавляем обработчик для кнопки повторного запроса
-                    setTimeout(() => {
-                        const retryButton = document.getElementById('retry-camera-access');
-                        if (retryButton) {
-                            retryButton.addEventListener('click', () => {
-                                this._preInitCamera();
-                                notificationDiv.remove();
-                            });
-                        }
-                    }, 100);
-                }
+        } catch (e) {
+            if (e?.name === "NotAllowedError") {
+                console.info("LiveMode: доступ к камере отклонен пользователем.");
+            } else {
+                console.error("LiveMode: Ошибка при предварительной инициализации камеры:", e);
             }
-            
-            // Не показываем ошибку пользователю, т.к. это предварительная инициализация
             return false;
         }
+        return true;
     }
     
     /**
@@ -1096,31 +1061,13 @@ class LiveMode {
      * Инициализация доступа к камере
      */
     async _initCamera() {
-        try {
-            console.log('LiveMode: Запрос доступа к камере...');
-            
-            // Проверяем, есть ли уже инициализированный поток
-            if (this.isCameraInitialized && this.videoStream) {
-                console.log('LiveMode: Используем уже инициализированный поток');
-                
-                // Включаем треки, если они были отключены
-                const videoTracks = this.videoStream.getVideoTracks();
-                videoTracks.forEach(track => {
-                    track.enabled = true;
-                });
-                
-                // Настраиваем поток для UI
-                this._setupVideoStreamAndUI(this.videoStream);
-                
-                return true;
-            }
-            
             // Очищаем предыдущий поток, если он был
             if (this.videoStream && !this.isCameraInitialized) {
                 this._cleanupVideoStream(true);
                 console.log('LiveMode: Предыдущий неинициализированный поток очищен');
             }
             
+        try {
             // Простой запрос камеры без лишних опций
             this.videoStream = await navigator.mediaDevices.getUserMedia({
                 video: true,
@@ -1150,25 +1097,16 @@ class LiveMode {
             
             return true;
             
-        } catch (error) {
-            try { window.dispatchEvent(new CustomEvent('camera-permission-resolved', { detail: { allowed: false } })); } catch(_) {}
-            console.error('LiveMode: Ошибка доступа к камере:', error.name, error.message);
-            
-            // Проверяем, не заблокирован ли доступ на уровне браузера или ОС
-            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-                this._showErrorMessage('Доступ к камере отклонен. Пожалуйста, разрешите доступ в настройках браузера.', 'error');
-                // Устанавливаем флаг отказа в разрешении
-                this.isCameraAccessDenied = true;
+        } catch (e) {
+            try { window.dispatchEvent(new CustomEvent('camera-permission-resolved', { detail: { allowed: false, error: e.name } })); } catch(_) {}
+            if (e?.name === "NotAllowedError") {
+                console.info("LiveMode: доступ к камере отклонен пользователем.");
+                this._showErrorMessage('Доступ к камере отклонен. Пожалуйста, разрешите доступ в настройках браузера.', 'info');
             } else {
-                this._showErrorMessage(`Ошибка доступа к камере: ${error.message}`, 'error');
+                console.error("LiveMode: Ошибка инициализации камеры:", e);
+                this._showErrorMessage(`Не удалось инициализировать камеру: ${e.message || e.name}`, 'error');
             }
-            
-            // Ошибка с устройством
-            if (error.name === 'NotFoundError') {
-                this._showErrorMessage('Камера не найдена. Проверьте подключение.', 'error');
-            }
-            
-            return false;
+            throw new Error('Не удалось инициализировать камеру');
         }
     }
     
@@ -3213,3 +3151,13 @@ class LiveMode {
         }
     }
 } 
+
+// Автоматически создаём экземпляр без запроса доступа к камере
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        // Здесь не нужна проверка typeof LiveMode === 'undefined', так как класс уже определен
+        if (!window.liveMode) {
+            window.liveMode = new LiveMode();
+        }
+    } catch (_) {}
+}); 

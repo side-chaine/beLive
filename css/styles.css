@@ -633,7 +633,6 @@ body, .lyric-line, #lyrics-display {
 #progress-bar-container:hover {
     background-color: #444;
 }
-
 /* Progress bar timestamp tooltip */
 #progress-tooltip {
     position: absolute;
@@ -795,12 +794,10 @@ body, .lyric-line, #lyrics-display {
     padding: 6px 15px;
     border-radius: 20px;
 }
-
 .waveform-btn.save-btn:hover {
     background-color: #45a049;
     box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
 }
-
 /* Кнопка редактирования текста */
 .waveform-btn.edit-text-btn {
     background-color: #4CAF50;
@@ -1283,7 +1280,6 @@ body.waveform-active #lyrics-display {
     font-weight: bold;
     cursor: pointer;
 }
-
 .close:hover,
 .close:focus {
     color: white;
@@ -1595,14 +1591,12 @@ hr {
 #style-selector-container.hidden {
     display: none;
 }
-
 /* New flex layout for style selector */
 .style-selector-layout {
     display: flex;
     height: 100%;
     max-height: 80vh;
 }
-
 /* Styles column (left side) */
 .styles-column {
     flex: 1;
@@ -1934,7 +1928,6 @@ hr {
     letter-spacing: 0.05em;
     font-weight: bold;
 }
-
 .style-concert .lyric-line {
     opacity: 0.2;
     transition: all 0.4s ease;
@@ -2393,7 +2386,6 @@ hr {
 .animate-preview.preview-liquid {
     animation: preview-liquid 2s forwards;
 }
-
 @keyframes preview-liquid {
     0% {
         filter: blur(5px);
@@ -2584,7 +2576,6 @@ hr {
     animation: preview-elastic 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
     transform-origin: center;
 }
-
 @keyframes preview-elastic {
     0% {
         transform: scale(0);
@@ -3192,7 +3183,6 @@ body .transition-inkBleed .lyric-line.becoming-active {
 .transition-neonOutline .lyric-line.becoming-active {
     animation: text-neonOutline 1.5s forwards;
 }
-
 @keyframes text-neonOutline {
     0% {
         opacity: 0;
@@ -3219,7 +3209,6 @@ body .transition-inkBleed .lyric-line.becoming-active {
 .transition-starlight .lyric-line.becoming-active {
     animation: text-starlight 1.5s forwards;
 }
-
 @keyframes text-starlight {
     0% {
         opacity: 0;
@@ -3864,7 +3853,6 @@ body .transition-inkBleed .lyric-line.becoming-active {
 #progress-bar-container.loopblock-mode:hover {
     background-color: #444444;
 }
-
 /* Прогресс-бар должен нормально отображаться в LoopBlock режиме */
 #progress-bar-container.loopblock-mode #progress-bar {
     background-color: #4CAF50;
@@ -3990,7 +3978,6 @@ body .transition-inkBleed .lyric-line.becoming-active {
     text-align: center;
     font-weight: normal;
 }
-
 .style-central-active {
     color: #ffffff;
     font-weight: bold;
@@ -4516,7 +4503,6 @@ body, .lyric-line, #lyrics-display {
     flex-direction: column;
     margin: 0 20px;
 }
-
 .volume-control {
     display: flex;
     align-items: center;
@@ -4786,7 +4772,6 @@ body, .lyric-line, #lyrics-display {
     font-size: 1.2rem;
     color: #888;
 }
-
 /* Time Display and Progress Bar */
 #time-display {
     font-size: 0.9rem;
@@ -5168,7 +5153,6 @@ body.waveform-active #lyrics-display {
     color: #9E9E9E !important;
     border-left: 3px solid #9E9E9E;
 }
-
 /* Flash highlight effect when adding a marker */
 @keyframes flash-highlight {
     0% { background-color: rgba(76, 175, 80, 0); }
@@ -5581,7 +5565,6 @@ body.waveform-active #lyrics-display {
 .backup-table tr:hover {
     background-color: #333;
 }
-
 /* Notifications */
 .notifications-container {
     position: fixed;
@@ -5816,7 +5799,6 @@ hr {
     text-align: center;
     flex-shrink: 0; /* Prevent header from shrinking */
 }
-
 .transitions-header-content {
     display: flex;
     justify-content: center;
@@ -6374,7 +6356,6 @@ hr {
 #style-selector-btn:hover {
     background-color: #666666;
 }
-
 #close-catalog {
     background-color: #555555;
     color: white;
@@ -6384,7 +6365,6 @@ hr {
     cursor: pointer;
     transition: all 0.2s ease;
 }
-
 #close-catalog:hover {
     background-color: #e74c3c;
     box-shadow: 0 0 5px rgba(231, 76, 60, 0.5);
@@ -6467,7 +6447,6 @@ hr {
     white-space: normal;
     display: inline-block;
 }
-
 .transition-matrix .lyric-line span {
     white-space: normal;
     display: inline-block;
@@ -7102,7 +7081,6 @@ hr {
 .transition-smoke .lyric-line.becoming-active {
     animation: text-smoke 1.5s forwards;
 }
-
 @keyframes text-smoke {
     0% {
         opacity: 0;
@@ -7171,7 +7149,6 @@ body .transition-inkBleed .lyric-line.becoming-active {
     animation-duration: 1.5s;
     display: block;
 }
-
 /* Ensure all preview animations run properly */
 .animate-preview.preview-neonPulse,
 .animate-preview.preview-liquid,
@@ -7973,14 +7950,12 @@ body .transition-inkBleed .lyric-line.becoming-active {
     z-index: 10 !important;
     transform: scale(1.02);
 }
-
 /* Стили для блоков в последовательности */
 .loop-block-indicator.sequence-block {
     background-color: rgba(255, 165, 0, 0.5);
     border: 2px solid rgba(255, 140, 0, 0.7);
     z-index: 8;
 }
-
 .sequence-number {
     position: absolute;
     top: 50%;
@@ -8388,7 +8363,6 @@ body .transition-inkBleed .lyric-line.becoming-active {
     padding: 20px;
     box-sizing: border-box;
 }
-
 .rehearsal-active-block {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 15px;
@@ -8771,181 +8745,9 @@ body .transition-inkBleed .lyric-line.becoming-active {
 .rehearsal-active-line.active {
     color: #FFFFFF !important; /* Активная строка всегда белая */
 }
-
-.rehearsal-active-line.continuation-first-line.active {
-    color: #FFFFFF !important; /* Активная строка продолжения тоже белая */
-}
-
 .rehearsal-active-line.continuation-first-line.active::before {
     color: #4CAF50; /* Стрелочка остается зеленой даже у активной строки */
 }
-
-/* Стили для первой строки следующего блока (оранжевая подсветка) */
-.rehearsal-preview-line.next-block-first-line {
-    font-size: 115%;
-    font-weight: bold;
-    color: #FF8C00 !important; /* Только оранжевый цвет */
-    margin-top: 15px;
-    padding: 8px 12px;
-    border-radius: 6px;
-    /* Простое стабильное свечение без анимаций */
-    text-shadow: 
-        0 0 8px rgba(255, 140, 0, 0.6),
-        0 0 16px rgba(255, 140, 0, 0.3);
-    background: linear-gradient(135deg, rgba(255, 140, 0, 0.08), rgba(255, 69, 0, 0.04));
-    border: 1px solid rgba(255, 140, 0, 0.2);
-    box-shadow: 0 2px 8px rgba(255, 140, 0, 0.15);
-    transition: none !important; /* Убираем все переходы */
-}
-
-.rehearsal-preview-line.next-block-first-line::before {
-    content: "↳ ";
-    color: #4CAF50; /* Стрелочка остается зеленой */
-    font-size: 110%;
-    margin-right: 0.3em;
-    /* Простое свечение без анимаций */
-    text-shadow: 0 0 8px rgba(76, 175, 80, 0.8);
-}
-
-/* Стили для превью продолжений блоков */
-.rehearsal-preview-line.preview-continuation-first-line {
-    font-size: 115%; /* Увеличиваем размер как у обычных */
-    font-weight: bold; /* Делаем жирным как у обычных */
-    color: #FF8C00; /* МЕНЯЕМ НА ОРАНЖЕВЫЙ - как у всех первых строк */
-    margin-top: 2cm; /* УВЕЛИЧЕН ОТСТУП С 1см ДО 2см для единообразия */
-    padding-top: 15px; /* Увеличен отступ с 8px до 15px */
-    /* ДОБАВЛЯЕМ АНАЛОГИЧНЫЕ КРУТЫЕ СВЕТОВЫЕ ЭФФЕКТЫ */
-    text-shadow: 
-        0 0 8px rgba(255, 140, 0, 0.6),
-        0 0 16px rgba(255, 140, 0, 0.4),
-        0 0 24px rgba(255, 140, 0, 0.2);
-     /* Немного другая скорость для разнообразия */
-    transition: all 0.5s ease;
-    position: relative;
-    background: linear-gradient(135deg, rgba(255, 140, 0, 0.08), rgba(255, 69, 0, 0.04));
-    border-radius: 8px;
-    padding: 10px 15px;
-    border: 1px solid rgba(255, 140, 0, 0.25);
-    box-shadow: 
-        0 4px 12px rgba(255, 140, 0, 0.15),
-        inset 0 2px 4px rgba(255, 255, 255, 0.08);
-}
-
-.rehearsal-preview-line.preview-continuation-first-line::before {
-    content: "↳ ";
-    color: #4CAF50; /* СТРЕЛОЧКА ОСТАЕТСЯ ЗЕЛЕНОЙ - индикатор разделения */
-    font-size: 110%;
-    margin-right: 0.3em;
-    /* Усиливаем стрелочку световыми эффектами */
-    text-shadow: 
-        0 0 12px rgba(76, 175, 80, 0.8),
-        0 0 24px rgba(76, 175, 80, 0.4);
-    animation: continuationArrowGlow 2.5s ease-in-out infinite alternate;
-}
-
-/* АНИМАЦИЯ СВЕЧЕНИЯ СТРЕЛОЧКИ ПРОДОЛЖЕНИЯ */
-@keyframes continuationArrowGlow {
-    0% { 
-        text-shadow: 
-            0 0 12px rgba(76, 175, 80, 0.8),
-            0 0 24px rgba(76, 175, 80, 0.4);
-    }
-    100% { 
-        text-shadow: 
-            0 0 20px rgba(76, 175, 80, 1),
-            0 0 40px rgba(76, 175, 80, 0.6),
-            0 0 60px rgba(46, 125, 50, 0.3);
-    }
-}
-
-/* ЭФФЕКТ УСИЛЕНИЯ ДЛЯ ПРОДОЛЖЕНИЙ ПРИ НАВЕДЕНИИ */
-.rehearsal-preview-line.preview-continuation-first-line:hover {
-    animation: continuationIntense 1s ease-in-out infinite;
-    background: linear-gradient(135deg, rgba(255, 140, 0, 0.15), rgba(255, 69, 0, 0.08));
-    border-color: rgba(255, 140, 0, 0.4);
-}
-
-@keyframes continuationIntense {
-    0%, 100% { 
-        text-shadow: 
-            0 0 15px rgba(255, 140, 0, 0.8),
-            0 0 30px rgba(255, 140, 0, 0.6),
-            0 0 45px rgba(255, 69, 0, 0.3);
-        transform: scale(1.02);
-    }
-    50% { 
-        text-shadow: 
-            0 0 22px rgba(255, 140, 0, 1),
-            0 0 44px rgba(255, 140, 0, 0.7),
-            0 0 66px rgba(255, 69, 0, 0.4),
-            0 0 88px rgba(255, 165, 0, 0.2);
-        transform: scale(1.04);
-    }
-}
-
-/* КРУТАЯ ФОНОВАЯ АНИМАЦИЯ ДЛЯ ПРЕВЬЮ */
-@keyframes previewAmbient {
-    0%, 100% {
-        background: linear-gradient(
-            45deg,
-            rgba(255, 140, 0, 0.02),
-            rgba(255, 69, 0, 0.01),
-            rgba(255, 165, 0, 0.02)
-        );
-        box-shadow: 0 0 10px rgba(255, 140, 0, 0.1);
-    }
-    50% {
-        background: linear-gradient(
-            45deg,
-            rgba(255, 165, 0, 0.04),
-            rgba(255, 140, 0, 0.03),
-            rgba(255, 69, 0, 0.02)
-        );
-        box-shadow: 0 0 20px rgba(255, 140, 0, 0.2);
-    }
-}
-
-/* ДОБАВЛЯЕМ КРУТЫЕ ЭФФЕКТЫ ДЛЯ ВСЕГО ПРЕВЬЮ */
-.rehearsal-next-preview {
-    margin-top: 20px; /* Увеличен отступ с 8px до 20px для всех блоков */
-    padding: 12px;
-    /* border-top: 2px solid rgba(255, 255, 255, 0.2); */ /* УБРАНА отделительная полоса */
-    opacity: 0.6;
-    font-size: 1.0rem;
-    text-align: center;
-    max-height: 18vh;
-    overflow: hidden;
-    /* ФИКСИРУЕМ РАЗМЕР ПРЕВЬЮ */
-    flex-shrink: 0 !important;
-    position: absolute; /* Размещаем в фиксированной позиции */
-    bottom: 20px; /* Фиксированное расстояние от низа */
-    left: 25px;
-    right: 25px;
-    /* ДОБАВЛЯЕМ ДИНАМИЧЕСКИЙ ФОНОВЫЙ ЭФФЕКТ */
-    background: linear-gradient(
-        45deg,
-        rgba(255, 140, 0, 0.02),
-        rgba(255, 69, 0, 0.01),
-        rgba(255, 165, 0, 0.02)
-    );
-    border-radius: 12px;
-    backdrop-filter: blur(2px);
-    animation: previewAmbient 8s ease-in-out infinite;
-}
-
-/* Когда строка становится активной, убираем стили превью */
-.rehearsal-active-line.active {
-    color: #FFFFFF !important; /* Активная строка всегда белая */
-}
-
-.rehearsal-active-line.continuation-first-line.active {
-    color: #FFFFFF !important; /* Активная строка продолжения тоже белая */
-}
-
-.rehearsal-active-line.continuation-first-line.active::before {
-    color: #4CAF50; /* Стрелочка остается зеленой даже у активной строки */
-}
-
 /* Основные стили для превью контейнера - простые без анимаций */
 .rehearsal-next-preview {
     margin-top: 20px;
@@ -9207,7 +9009,6 @@ body .transition-inkBleed .lyric-line.becoming-active {
     transform: translateY(-3px) scale(1.05);
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
 }
-
 .mask-option-btn.active::before {
     content: "✓";
     position: absolute;
@@ -9572,7 +9373,6 @@ body .transition-inkBleed .lyric-line.becoming-active {
     font-size: 110% !important;
     margin-right: 0.3em !important;
 }
-
 .rehearsal-preview-line.preview-continuation-first-line {
     color: #FF8C00 !important;
     font-size: 115% !important;
@@ -9747,6 +9547,147 @@ body .transition-inkBleed .lyric-line.becoming-active {
     color: #FF8C00 !important;
     font-size: 115% !important;
     font-weight: bold !important;
+}
+
+.rehearsal-preview-line.preview-continuation-first-line::before {
+    content: "↳ ";
+    color: #4CAF50 !important;
+    font-size: 110% !important;
+    margin-right: 0.3em !important;
+}
+
+.rehearsal-next-preview {
+    margin-top: 20px !important;
+    padding: 12px !important;
+    opacity: 0.6 !important;
+    font-size: 1.0rem !important;
+    text-align: center !important;
+    max-height: 18vh !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+    position: absolute !important;
+    bottom: 20px !important;
+    
+    
+}
+
+.rehearsal-active-line.active {
+    color: #FFFFFF !important;
+}
+
+.rehearsal-active-line.continuation-first-line.active {
+    color: #FFFFFF !important;
+}
+
+.rehearsal-active-line.continuation-first-line.active::before {
+    color: #4CAF50 !important;
+}
+
+/* 🎯 НОВОЕ: Стиль для подсветки выбранных блоков в режиме экспорта */
+.loop-train .loop-wagon[data-export-selected="1"] {
+  position: relative;
+  outline: 2px solid transparent; /* резерв */
+}
+
+.loop-train .loop-wagon[data-export-selected="1"]::after {
+  content: '';
+  position: absolute;
+  inset: -2px; /* слегка за пределы */
+  border: 2px solid #ffa53a;
+  box-shadow: 0 0 0 3px rgba(255,165,58,0.35);
+  pointer-events: none;
+  border-radius: 6px; /* если у кнопок скругления */
+  z-index: 5; /* выше любых внутренних кнопок */
+}
+
+/* Экспортный режим на контейнере поезда */
+.loop-train[data-export-select="1"] .wagon-loop-toggle {
+  pointer-events: none !important;  /* нельзя кликнуть/фокуснуть */
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  z-index: 0 !important;
+}
+
+/* Убираем визуальные состояния на всякий случай */
+.loop-train[data-export-select="1"] .wagon-loop-toggle:focus,
+.loop-train[data-export-select="1"] .wagon-loop-toggle:active,
+.loop-train[data-export-select="1"] .wagon-loop-toggle.is-on {
+  outline: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.rehearsal-preview-line.preview-continuation-first-line::before {
+    content: "↳ ";
+    color: #4CAF50 !important;
+    font-size: 110% !important;
+    margin-right: 0.3em !important;
+}
+
+.rehearsal-next-preview {
+    margin-top: 20px !important;
+    padding: 12px !important;
+    opacity: 0.6 !important;
+    font-size: 1.0rem !important;
+    text-align: center !important;
+    max-height: 18vh !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+    position: absolute !important;
+    bottom: 20px !important;
+    
+    
+}
+
+.rehearsal-active-line.active {
+    color: #FFFFFF !important;
+}
+
+.rehearsal-active-line.continuation-first-line.active {
+    color: #FFFFFF !important;
+}
+
+.rehearsal-active-line.continuation-first-line.active::before {
+    color: #4CAF50 !important;
+}
+
+/* 🎯 НОВОЕ: Стиль для подсветки выбранных блоков в режиме экспорта */
+.loop-train .loop-wagon[data-export-selected="1"] {
+  position: relative;
+  outline: 2px solid transparent; /* резерв */
+}
+.loop-train .loop-wagon[data-export-selected="1"]::after {
+  content: '';
+  position: absolute;
+  inset: -2px; /* слегка за пределы */
+  border: 2px solid #ffa53a;
+  box-shadow: 0 0 0 3px rgba(255,165,58,0.35);
+  pointer-events: none;
+  border-radius: 6px; /* если у кнопок скругления */
+  z-index: 5; /* выше любых внутренних кнопок */
+}
+
+/* Экспортный режим на контейнере поезда */
+.loop-train[data-export-select="1"] .wagon-loop-toggle {
+  pointer-events: none !important;  /* нельзя кликнуть/фокуснуть */
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  z-index: 0 !important;
+}
+
+/* Убираем визуальные состояния на всякий случай */
+.loop-train[data-export-select="1"] .wagon-loop-toggle:focus,
+.loop-train[data-export-select="1"] .wagon-loop-toggle:active,
+.loop-train[data-export-select="1"] .wagon-loop-toggle.is-on {
+  outline: none !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .rehearsal-preview-line.preview-continuation-first-line::before {
@@ -10357,7 +10298,6 @@ body .transition-inkBleed .lyric-line.becoming-active {
     font-size: 0.7rem;
     color: rgba(255, 255, 255, 0.7);
 }
-
 .user-avatar {
     width: 50px;
     height: 50px;
@@ -10370,7 +10310,6 @@ body .transition-inkBleed .lyric-line.becoming-active {
     cursor: pointer;
     transition: transform 0.2s;
 }
-
 .user-avatar:hover {
     transform: scale(1.1);
 }
@@ -10497,7 +10436,6 @@ body .transition-inkBleed .lyric-line.becoming-active {
     font-size: 3rem;
     animation: float 3s ease-in-out infinite;
 }
-
 @keyframes float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
@@ -10547,7 +10485,6 @@ body .transition-inkBleed .lyric-line.becoming-active {
     color: rgba(255, 255, 255, 0.7);
     font-size: 0.9rem;
 }
-
 .stream-actions {
     display: flex;
     gap: 10px;
@@ -10849,9 +10786,8 @@ body.mode-rehearsal .scale-value-btn:hover {
     align-items: center;
     gap: 5px;
     position: absolute;
-    left: 200px;
-    top: 50%;
-    transform: translateY(-50%);
+    left: 170px;
+    top: 25px;
     z-index: 10;
 }
 
@@ -11006,7 +10942,6 @@ body.mode-rehearsal .scale-value-btn:hover {
     border-left: 2px solid rgba(33, 150, 243, 0.3);
     border-right: 2px solid rgba(33, 150, 243, 0.3);
 }
-
 .rehearsal-active-block .lyric-line.boundary-outside {
     opacity: 0.3;
     background: rgba(158, 158, 158, 0.05);
@@ -11171,7 +11106,6 @@ body.mode-rehearsal .scale-value-btn:hover {
 .loop-start-line {
     top: -3px;
 }
-
 .loop-end-line {
     bottom: -3px;
 }

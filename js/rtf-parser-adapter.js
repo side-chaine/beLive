@@ -9,21 +9,7 @@ class RtfParserAdapter {
      * @constructor
      */
     constructor() {
-        /**
-         * Проверяет доступность улучшенного процессора RTF
-         * @type {boolean}
-         */
-        this.isEnhancedProcessorAvailable = typeof EnhancedRtfProcessor !== 'undefined';
-        
-        /**
-         * Проверяет доступность стандартного процессора RTF
-         * @type {boolean}
-         */
-        this.isLegacyProcessorAvailable = typeof RtfParser !== 'undefined';
-        
-        console.log('RtfParserAdapter: Инициализация');
-        console.log(`- EnhancedRtfProcessor доступен: ${this.isEnhancedProcessorAvailable}`);
-        console.log(`- Стандартный RtfParser доступен: ${this.isLegacyProcessorAvailable}`);
+        console.log('RtfParserAdapter: Инициализация (динамическая детекция в момент parse)');
     }
     
     /**
@@ -31,7 +17,10 @@ class RtfParserAdapter {
      * @returns {boolean} true если доступен хотя бы один парсер
      */
     isAvailable() {
-        return this.isEnhancedProcessorAvailable || this.isLegacyProcessorAvailable;
+        const enhanced = typeof EnhancedTextProcessor !== 'undefined';
+        const legacy = typeof RtfParser !== 'undefined';
+        const simple = (typeof window.SimpleRtf !== 'undefined' && typeof window.SimpleRtf.toText === 'function');
+        return enhanced || legacy || simple;
     }
     
     /**
@@ -53,40 +42,51 @@ class RtfParserAdapter {
                 return rtfContent; // Возвращаем исходный текст, если это не RTF
             }
             
-            // Анализируем структуру RTF файла для выбора оптимального обработчика
-            const fileStructureInfo = this._analyzeRtfStructure(rtfContent);
+            // Динамическая детекция доступных парсеров (без кеша конструктора)
+            const simpleAvailable = !!(window.SimpleRtf && typeof window.SimpleRtf.toText === 'function');
+            const enhancedAvailable = (typeof EnhancedTextProcessor !== 'undefined');
+            const legacyAvailable = (typeof RtfParser !== 'undefined');
+            
+            // 1) SimpleRtf — приоритет для редактора блоков (сохраняет пустые строки)
+            if (simpleAvailable) {
+                console.log('RtfParserAdapter: Используем SimpleRtf');
+                return this._normalizeNewlines(window.SimpleRtf.toText(rtfContent), /*preserveParagraphs*/ true);
+            }
             
             // Используем улучшенный процессор, если он доступен
-            if (this.isEnhancedProcessorAvailable) {
-                console.log('RtfParserAdapter: Используем EnhancedRtfProcessor');
-                return await EnhancedRtfProcessor.parse(rtfContent);
+            if (enhancedAvailable) {
+                console.log('RtfParserAdapter: Используем EnhancedTextProcessor');
+                const txt = await EnhancedTextProcessor.parse(rtfContent);
+                return this._normalizeNewlines(txt, true);
             }
             
             // Используем стандартный парсер, если он доступен
-            if (this.isLegacyProcessorAvailable) {
+            if (legacyAvailable) {
                 console.log('RtfParserAdapter: Используем стандартный RtfParser');
-                return RtfParser.parse(rtfContent);
+                const txt = RtfParser.parse(rtfContent);
+                return this._normalizeNewlines(txt, true);
             }
             
             // Если нет доступных парсеров, используем простую очистку от тегов
             console.warn('RtfParserAdapter: Нет доступных парсеров, выполняем базовую очистку');
-            return this._basicCleanup(rtfContent);
+            return this._normalizeNewlines(this._basicCleanup(rtfContent), true);
         } catch (error) {
             console.error('RtfParserAdapter: Ошибка при парсинге RTF', error);
             
             // В случае ошибки пытаемся использовать другой доступный парсер
-            if (this.isLegacyProcessorAvailable && this.isEnhancedProcessorAvailable) {
+            if ((typeof RtfParser !== 'undefined') && (typeof EnhancedRtfProcessor !== 'undefined')) {
                 // Если произошла ошибка с улучшенным процессором, попробуем стандартный
                 try {
                     console.log('RtfParserAdapter: Пробуем резервный парсер');
-                    return RtfParser.parse(rtfContent);
+                    const txt = RtfParser.parse(rtfContent);
+                    return this._normalizeNewlines(txt, true);
                 } catch (fallbackError) {
                     console.error('RtfParserAdapter: Резервный парсер также не справился', fallbackError);
                 }
             }
             
             // Если все парсеры не справились, возвращаем результат базовой очистки
-            return this._basicCleanup(rtfContent);
+            return this._normalizeNewlines(this._basicCleanup(rtfContent), true);
         }
     }
     
@@ -144,7 +144,7 @@ class RtfParserAdapter {
             .replace(/\\[a-z0-9]+\s?/g, '')          // Удаляем RTF-команды
             .replace(/[{}\\]/g, '')                  // Удаляем управляющие символы
             .replace(/\s+/g, ' ')                    // Нормализуем пробелы
-            .replace(/\n{3,}/g, '\n\n')              // Удаляем лишние переносы строк
+            // .replace(/\n{3,}/g, '\n\n')              // Удаляем лишние переносы строк - перемещено в _normalizeNewlines
             .trim();
         
         // Проверяем наличие строк в результате
@@ -154,6 +154,16 @@ class RtfParserAdapter {
         }
         
         return cleanedText;
+    }
+
+    _normalizeNewlines(s, preserveParagraphs = true) {
+        if (!s) return '';
+        let out = String(s).replace(/\r\n|\r/g, '\n');
+        // Сохраняем абзацы: схлопываем только 3+ переводов до двух
+        if (preserveParagraphs) {
+            out = out.replace(/\n{3,}/g, '\n\n');
+        }
+        return out.trim();
     }
     
     /**

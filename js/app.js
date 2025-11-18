@@ -138,8 +138,13 @@ class App {
         // LoopBlockManager (legacy) отключен. Кнопка Loop используется для новой логики (позже).
         // Initialize BlockLoopControl
         if (window.BlockLoopControl && window.markerManager) {
-            this.blockLoopControl = new BlockLoopControl(this.audioEngine, this.lyricsDisplay, window.markerManager);
+            this.blockLoopControl = new BlockLoopControl(this.audioEngine, this.lyricsDisplay, window.markerManager, this.exportUI);
             console.log('BlockLoopControl component ready');
+
+            // 🎯 НОВОЕ: Передаем ссылку на BlockLoopControl в ExportUI
+            if (this.exportUI) {
+                this.exportUI.registerBlockLoopControl(this.blockLoopControl);
+            }
         } else {
             console.warn('BlockLoopControl class or MarkerManager not found');
         }
@@ -908,6 +913,33 @@ class App {
         });
 
         console.log('Microphone UI initialized using existing DOM elements.');
+
+        // --- VocalMix UI Initialization ---
+        this.vocalMixToggleButton = document.getElementById('vocal-mix-toggle');
+        const vocalMixControlContainer = document.querySelector('.vocal-mix-control');
+
+        if (!this.vocalMixToggleButton || !vocalMixControlContainer) {
+            console.warn('VocalMix UI elements not found in the DOM.');
+            return;
+        }
+
+        this.vocalMixToggleButton.addEventListener('change', () => {
+            this.audioEngine.toggleVocalMix();
+        });
+
+        // Устанавливаем начальное состояние VocalMix
+        const initialVocalMixState = this.audioEngine.getVocalMixState();
+        this.vocalMixToggleButton.checked = initialVocalMixState;
+        this._updateVocalMixToggleButtonState(initialVocalMixState);
+
+        // Слушаем изменения состояния VocalMix из AudioEngine
+        document.addEventListener('vocalmix-state-changed', (e) => {
+            const det = e.detail || {};
+            this.vocalMixToggleButton.checked = !!det.enabled;
+            this._updateVocalMixToggleButtonState(!!det.enabled);
+        });
+
+        console.log('VocalMix UI initialized.');
     }
 
     /**
@@ -926,6 +958,22 @@ class App {
             } else {
                 this.micToggleButton.title = 'Microphone OFF - Click to enable';
                 if (micControl) {micControl.style.opacity = '0.6';}
+            }
+        }
+    }
+
+    /**
+     * Update VocalMix toggle button visual state
+     * @param {boolean} isEnabled - Current state of VocalMix
+     * @private
+     */
+    _updateVocalMixToggleButtonState(isEnabled) {
+        if (this.vocalMixToggleButton) {
+            const vocalMixControl = this.vocalMixToggleButton.closest('.vocal-mix-control');
+            if (isEnabled) {
+                if (vocalMixControl) { vocalMixControl.classList.add('active'); }
+            } else {
+                if (vocalMixControl) { vocalMixControl.classList.remove('active'); }
             }
         }
     }
@@ -2815,6 +2863,17 @@ function initializeApp() {
         // Initialize the main app
         window.app = new App();
         console.log('App initialized successfully');
+
+        // Инициализация ExportUI после загрузки всех зависимостей
+        if (window.audioExporter && window.blockLoopControl && !window.exportUI) {
+            window.exportUI = new ExportUI({
+                exporter: window.audioExporter,
+                blockLoopControl: window.blockLoopControl
+            });
+            console.log('✅ ExportUI успешно инициализирован в app.js');
+        } else {
+            console.warn('⚠️ ExportUI: Не удалось инициализировать, зависимости не готовы в app.js или уже инициализирован');
+        }
         // Запускаем скрытый прогрев Live (один раз)
         try { window.app._bootstrapLiveWarmup?.(); } catch(_) {}
     } catch (error) {
@@ -2905,3 +2964,84 @@ window.openCatalog = function() {
         console.error('Каталог не инициализирован');
     }
 }; 
+
+// 🎯 НОВОЕ: Функция для безопасной инициализации ExportUI
+function tryInitExportUI(app) {
+    const ready = !!(app.audioEngine && app.markerManager && app.lyricsDisplay);
+    if (!ready) {
+        console.warn('ExportUI: deps not ready', {
+            engine: !!app.audioEngine,
+            markers: !!app.markerManager,
+            lyrics: !!app.lyricsDisplay
+        });
+        return;
+    }
+    if (app.exportUI) {
+        console.warn('ExportUI: already initialized');
+        return;
+    }
+    try {
+        app.exportUI = new ExportUI({
+            audioEngine: app.audioEngine,
+            markerManager: app.markerManager,
+            lyricsDisplay: app.lyricsDisplay,
+            blockLoopControl: app.blockLoopControl // Передаем blockLoopControl
+        });
+        app.exportUI.init?.();
+        console.log('ExportUI initialized OK');
+    } catch (e) {
+        console.error('ExportUI init failed', e);
+    }
+}
+
+// 🎯 НОВОЕ: Функция для безопасной инициализации AudioExporter и связи его с ExportUI
+function tryInitExporter(app) {
+    console.log('[tryInitExporter] Начало инициализации. app.audioEngine:', app.audioEngine, 'app.audioEngine?.audioContext:', app.audioEngine?.audioContext);
+    const ready = !!(app.audioEngine && app.markerManager && app.lyricsDisplay && app.audioEngine.audioContext && app.blockLoopControl); // 🎯 НОВОЕ: Добавлена проверка blockLoopControl
+    if (!ready) {
+        console.warn('Exporter deps not ready', {
+            engine: app.audioEngine, // 🎯 ИЗМЕНЕНО: Логируем реальное значение
+            audioContext: app.audioEngine?.audioContext, // 🎯 НОВОЕ: Логируем состояние AudioContext
+            markers: !!app.markerManager,
+            lyrics: !!app.lyricsDisplay
+        });
+        return;
+    }
+    console.log('[tryInitExporter] Все зависимости готовы, попытка инициализации AudioExporter.');
+    if (!app.audioExporter) {
+        try {
+            app.audioExporter = new AudioExporter({
+                engine: app.audioEngine ?? null, // 🎯 ИСПРАВЛЕНО: Явный fallback на null
+                markerManager: app.markerManager,
+                lyricsDisplay: app.lyricsDisplay,
+                blockLoopControl: app.blockLoopControl // 🎯 НОВОЕ: Передаем blockLoopControl
+            });
+            app.audioExporter.DEBUG = true; // оставим включённым пока отлаживаем
+            window.audioExporter = app.audioExporter; // для прямых тестов из консоли
+            console.log('AudioExporter initialized OK. app.audioExporter.engine:', app.audioExporter.engine, 'app.audioExporter.engine.audioContext:', app.audioExporter.engine?.audioContext); // 🎯 НОВОЕ: Лог после инициализации
+        } catch (e) {
+            console.error('AudioExporter init failed', e);
+        }
+    }
+    if (app.exportUI && app.audioExporter && typeof app.exportUI.registerExporter === 'function') {
+        app.exportUI.registerExporter(app.audioExporter);
+        console.log('ExportUI linked to AudioExporter');
+    }
+}
+
+// Инициализация основных компонентов
+// ... existing code ...
+
+console.log('All components ready, initializing app...');
+tryInitExportUI(this);
+tryInitExporter(this); // 🎯 НОВОЕ: Вызов инициализации экспортера
+
+// 🎯 НОВОЕ: Вызываем tryInitExportUI при загрузке трека и смене режима
+document.addEventListener('track-loaded', () => {
+    tryInitExportUI(this);
+    tryInitExporter(this); // 🎯 НОВОЕ: Вызов инициализации экспортера
+});
+document.addEventListener('mode-changed', () => {
+    tryInitExportUI(this);
+    tryInitExporter(this); // 🎯 НОВОЕ: Вызов инициализации экспортера
+});

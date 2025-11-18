@@ -1,27 +1,17 @@
-# Security Policy
+# Политика безопасности
 
-At beLive, we take security seriously. If you discover a security vulnerability, we appreciate your help in disclosing it to us in a responsible manner.
+Пожалуйста, не создавайте публичный issue для сообщения об уязвимости.
 
-## Reporting a Vulnerability
+Как сообщить:
+- Отправьте подробности на: nikitosss007@gmail.com  
+- В теме письма укажите: [beLive] Security issue — краткое описание
 
-If you find a security issue, please do not disclose it publicly until we've had a chance to address it. Instead, please report it directly to us via:
+Процесс обработки:
+1. Подтверждаем получение в течение 48 часов.
+2. Обсуждаем детали и при необходимости запрашиваем дополнительную информацию.
+3. Готовим исправление и планируем публичное раскрытие.
+4. После фикса публикуем advisory / release с рекомендациями по обновлению.
 
-**Email:** CONTACT_EMAIL (placeholder, will be replaced with actual security contact)
-
-We will acknowledge your report within 48 hours and provide a more detailed response after investigating the issue. We aim to fix critical vulnerabilities as quickly as possible.
-
-## Responsible Disclosure
-
-We encourage responsible disclosure practices, including:
-
-*   Giving us reasonable time to respond and fix the vulnerability before public disclosure.
-*   Avoiding privacy violations, destruction of data, and interruption or degradation of our services during your research.
-*   Not exploiting any vulnerability you discover.
-
-## Scope
-
-This policy applies to the beLive web application and its associated services.
-
-## Thanks
-
-We extend our gratitude to security researchers and ethical hackers who help us keep beLive secure for everyone.
+Рекомендации для исследователей безопасности:
+- По возможности приложите PoC / шаги для воспроизведения.
+- Не публикуйте данные, позволяющие эксплуатацию уязвимости, до выпуска фикса.

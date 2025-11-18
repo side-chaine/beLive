@@ -77,7 +77,13 @@
     "yocto-queue": "^0.1.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && gh-pages -d dist",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "repository": {
     "type": "git",
@@ -90,5 +96,9 @@
     "url": "https://github.com/side-chaine/beLive/issues"
   },
   "homepage": "https://github.com/side-chaine/beLive#readme",
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "vite-tsconfig-paths": "^5.1.4"
+  }
 }
