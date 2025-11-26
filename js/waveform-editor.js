@@ -2940,19 +2940,19 @@ class WaveformEditor {
                             .replace(/\\par\b/g, "\n")
                             .replace(/\\line\b/g, "\n")
                             .replace(/\\u(-?\d+)\s?/g, (m, numStr) => {
-                                let code = parseInt(numStr, 10);
+                            let code = parseInt(numStr, 10);
                                 if (code < 0) { code = 65536 + code; } // корректировка отрицательных
-                                try { return String.fromCharCode(code); } catch (_) { return ""; }
+                            try { return String.fromCharCode(code); } catch (_) { return ""; }
                             })
                             .replace(/\\'([0-9a-fA-F]{2})/g, (m, hex) => {
-                                try {
-                                    if (typeof TextDecoder !== "undefined") {
-                                        const dec = new TextDecoder("windows-1251");
-                                        const u8 = new Uint8Array([parseInt(hex, 16)]);
-                                        return dec.decode(u8);
-                                    }
-                                } catch (_) { /* ignore */ }
-                                return String.fromCharCode(parseInt(hex, 16));
+                            try {
+                                if (typeof TextDecoder !== "undefined") {
+                                    const dec = new TextDecoder("windows-1251");
+                                    const u8 = new Uint8Array([parseInt(hex, 16)]);
+                                    return dec.decode(u8);
+                                }
+                            } catch (_) { /* ignore */ }
+                            return String.fromCharCode(parseInt(hex, 16));
                             })
                             // Удаляем управляющие слова, не трогая переводы строк
                             .replace(/\\[a-zA-Z]+-?\d*\s?/g, "")
@@ -2961,7 +2961,7 @@ class WaveformEditor {
                     // Нормализуем переносы: CRLF→LF, 3+ → 2 (сохраняем абзацы)
                     txt = txt.replace(/\r\n|\r/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
                     currentLyrics = txt;
-                    console.log("WaveformEditor: SIMPLE-RTF parsed for BlockEditor, length:", currentLyrics.length);
+                        console.log("WaveformEditor: SIMPLE-RTF parsed for BlockEditor, length:", currentLyrics.length);
 
                     // ✅ ОТЛАДКА: Проверяем результат парсинга
                     console.log('=== ОТЛАДКА: Результат парсинга RTF для редактора блоков ===');
@@ -3047,7 +3047,7 @@ class WaveformEditor {
                         }
 
                         if (window.app && typeof window.app.showNotification === 'function') {
-                            window.app.showNotification("Текст и блоки сохранены успешно!", 'success'); // Добавляем уведомление
+                        window.app.showNotification("Текст и блоки сохранены успешно!", 'success'); // Добавляем уведомление
                         }
                         console.log("WaveformEditor: Текст и блоки сохранены успешно!");
 
@@ -3063,7 +3063,7 @@ class WaveformEditor {
                 console.log("WaveformEditor: Block editor cancel callback triggered");
                 // TODO: Handle cancel if needed
                 if (window.app && typeof window.app.showNotification === 'function') {
-                    window.app.showNotification("Редактирование блоков отменено.", 'info'); // Добавляем уведомление
+                window.app.showNotification("Редактирование блоков отменено.", 'info'); // Добавляем уведомление
                 }
             }
         );

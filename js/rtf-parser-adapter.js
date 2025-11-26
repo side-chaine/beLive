@@ -52,7 +52,7 @@ class RtfParserAdapter {
                 console.log('RtfParserAdapter: Используем SimpleRtf');
                 return this._normalizeNewlines(window.SimpleRtf.toText(rtfContent), /*preserveParagraphs*/ true);
             }
- 
+            
             // Используем улучшенный процессор, если он доступен
             if (enhancedAvailable) {
                 console.log('RtfParserAdapter: Используем EnhancedTextProcessor');
@@ -165,7 +165,7 @@ class RtfParserAdapter {
         }
         return out.trim();
     }
-
+    
     /**
      * Интеллектуальное разделение текста на строки
      * @param {string} text - Текст для разделения

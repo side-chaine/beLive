@@ -963,23 +963,20 @@ class CatalogV2 {
     }
     
     handleFileSelect(type, file, cell, fromZip = false) {
-        // Показываем анимацию загрузки
-        cell.classList.add('processing');
-        
-        setTimeout(() => {
-            cell.classList.remove('processing');
-            cell.classList.add('file-selected');
-            cell.classList.add('has-file'); // Добавляем класс для стилизации
-            
-            // Обновляем UI ячейки, теперь всегда, если это не ZIP-файл
-            this.updateCellUI(cell, file);
-            
-            // Сохраняем файл в сессию
-            if (type === 'instrumental') {
+        console.log(`CatalogV2: handleFileSelect вызван для типа: ${type}, файла: ${file.name}, из ZIP: ${fromZip}`);
+        this.uploadSession = this.uploadSession || {};
+        console.log('CatalogV2: uploadSession до обработки файла:', JSON.parse(JSON.stringify(this.uploadSession)));
+
+        switch (type) {
+            case 'instrumental':
                 this.uploadSession.instrumental = file;
-            } else if (type === 'vocal') {
+                this.showNotification('info', `Инструментал ${file.name} загружен.`);
+                break;
+            case 'vocal':
                 this.uploadSession.vocal = file;
-            } else if (type === 'lyrics') {
+                this.showNotification('info', `Вокал ${file.name} загружен.`);
+                break;
+            case 'lyrics':
                 this.uploadSession.lyrics = file; // Сохраняем оригинальный файл
                 const isRtf = file.name.toLowerCase().endsWith('.rtf') || file.type === 'application/rtf';
                 this.readFileAsText(file).then(async (rawText) => { // Добавляем async
@@ -1008,7 +1005,8 @@ class CatalogV2 {
                     this.uploadSession.lyrics = null;
                     this.uploadSession.parsedLyricsContent = null;
                 });
-            } else if (type === 'json') {
+                break;
+            case 'json':
                 this.uploadSession.json = file;
                 // Пробуем прочитать JSON и валидировать
                 this.readFileAsText(file).then(text => {
@@ -1037,13 +1035,17 @@ class CatalogV2 {
                         this.uploadSession.jsonTextBlocks = null;
                     }
                 });
-            }
-            
-            // Обновляем состояние кнопки сохранения
-            this.updateSaveButton();
-            
-            console.log(`🎵 Файл выбран для ${type}:`, file.name);
-        }, 800);
+                break;
+            case 'zip':
+                this.uploadSession.zip = file;
+                this.showNotification('info', `ZIP архив ${file.name} загружен.`);
+                break;
+        }
+        console.log('CatalogV2: uploadSession после обработки файла:', JSON.parse(JSON.stringify(this.uploadSession)));
+        // Обновляем состояние кнопки сохранения
+        this.updateSaveButton();
+        
+        console.log(`🎵 Файл выбран для ${type}:`, file.name);
     }
     
     updateCellUI(cell, file) {
@@ -1092,9 +1094,11 @@ class CatalogV2 {
     
     async saveTrack() {
         console.log('💾 CatalogV2: Сохранение трека...');
+        console.log('💾 CatalogV2: uploadSession в начале saveTrack:', this.uploadSession);
         
         if (!this.uploadSession.instrumental) {
             this.showNotification('❌ Выберите инструментальную дорожку');
+            console.error('💾 CatalogV2: Отмена сохранения - инструментал отсутствует.');
             return;
         }
         
@@ -1130,6 +1134,7 @@ class CatalogV2 {
             }
             
             console.log('🔧 CatalogV2: Обработка файлов...');
+            console.log('💾 CatalogV2: Чтение инструментала из uploadSession:', this.uploadSession.instrumental);
             
             // Читаем все файлы
             const instrumentalData = await this.readFileAsArrayBuffer(this.uploadSession.instrumental);
@@ -1138,6 +1143,7 @@ class CatalogV2 {
             let vocalsData = null;
             let vocalsType = null;
             if (this.uploadSession.vocal) {
+                console.log('💾 CatalogV2: Чтение вокала из uploadSession:', this.uploadSession.vocal);
                 vocalsData = await this.readFileAsArrayBuffer(this.uploadSession.vocal);
                 vocalsType = this.uploadSession.vocal.type;
                 console.log('✅ CatalogV2: Вокал прочитан');
@@ -1146,12 +1152,20 @@ class CatalogV2 {
             let lyricsFileName = null;
             let lyricsOriginalContent = null;
             if (this.uploadSession.lyrics) {
+                console.log('💾 CatalogV2: Чтение текста из uploadSession:', this.uploadSession.lyrics);
                 lyricsOriginalContent = await this.readFileAsText(this.uploadSession.lyrics);
                 lyricsFileName = this.uploadSession.lyrics.name;
                 console.log('✅ CatalogV2: Текст прочитан');
             }
             
-            console.log('✅ CatalogV2: Инструментал прочитан');
+            let jsonFileName = null;
+            let jsonContent = null;
+            if (this.uploadSession.json) {
+                console.log('💾 CatalogV2: Чтение JSON из uploadSession:', this.uploadSession.json);
+                jsonContent = await this.readFileAsText(this.uploadSession.json);
+                jsonFileName = this.uploadSession.json.name;
+                console.log('✅ CatalogV2: JSON прочитан');
+            }
             
             // Создаем объект трека
             const trackTitle = this.uploadSession.instrumental.name.replace(/\.[^/.]+$/, "");
@@ -1243,13 +1257,20 @@ class CatalogV2 {
         } catch (error) {
             console.error('❌ CatalogV2: Ошибка при сохранении трека:', error);
             this.showNotification('❌ Ошибка при сохранении трека');
-            
-            // Восстанавливаем кнопку
+        } finally {
+            // Сбрасываем индикатор загрузки и включаем кнопку сохранения
             const saveBtn = document.getElementById('upload-save');
             if (saveBtn) {
                 saveBtn.textContent = '💾 Сохранить трек';
                 saveBtn.disabled = false;
             }
+            // Полная очистка всех ячеек после сохранения
+            // this._clearUploadCells(); // УДАЛЕНО: Теперь очистка происходит только для ZIP-ячейки в handleZipFileSelect
+            console.log('💾 CatalogV2: uploadSession после сохранения и очистки всех ячеек:', this.uploadSession);
+            
+            // Перенаправляем в каталог после успешного сохранения
+            // this.cancelUpload(); // УДАЛЕНО: Этот вызов приводил к преждевременной очистке uploadSession
+            // window.app.viewManager.showView('catalog'); // Assuming this is the correct way to navigate
         }
     }
     
@@ -1512,11 +1533,12 @@ class CatalogV2 {
 
     // НОВЫЙ МЕТОД: Обработка ZIP-файлов
     async handleZipFileSelect(file, cell) {
-        console.log('🗜️ Выбран ZIP файл:', file.name);
-        cell.classList.add('processing');
-        
+        console.log('🗜️ CatalogV2: Начало обработки ZIP файла:', file.name);
+        cell.classList.add('processing', 'file-selected');
         try {
             const zip = await JSZip.loadAsync(file);
+            console.log('🗜️ ZIP: Архив успешно загружен.');
+            
             const files = [];
             zip.forEach((relativePath, zipEntry) => {
                 if (!zipEntry.dir) {
@@ -1585,9 +1607,12 @@ class CatalogV2 {
             }
             
             // Распределяем файлы по ячейкам
+            console.log('🗜️ ZIP: Распределение файлов по ячейкам.');
             if (instrumentalFile) {
                 const blob = await instrumentalFile.zipEntry.async('blob');
+                console.log('🗜️ ZIP (Instrumental): Blob создан. Тип:', blob.type, 'Размер:', blob.size);
                 const fileObj = new File([blob], this._getBaseNameFromPath(instrumentalFile.zipEntry.name), { type: blob.type });
+                console.log('🗜️ ZIP (Instrumental): File объект создан:', fileObj.name, 'Тип:', fileObj.type, 'Размер:', fileObj.size);
                 this.handleFileSelect('instrumental', fileObj, document.querySelector('.upload-cell[data-type="instrumental"]'), true); // ОБНОВЛЯЕМ UI
             }
             if (vocalFile) {
@@ -1614,14 +1639,19 @@ class CatalogV2 {
                 this.handleFileSelect('json', fileObj, document.querySelector('.upload-cell[data-type="json"]'), true); // ОБНОВЛЯЕМ UI
             }
             
-            this._showNotification('success', '✅ ZIP архив успешно распакован и файлы распределены!');
-            // Очищаем только ZIP-ячейку после успешной загрузки ZIP
-            this._clearUploadCells('zip');
+            console.log('CatalogV2: uploadSession после распределения файлов:', this.uploadSession);
+            this.showNotification('success', '✅ ZIP архив успешно распакован и файлы распределены!');
+            
+            console.log('CatalogV2: ZIP архив успешно распакован. Вызов saveTrack напрямую.');
+            await this.saveTrack();
 
         } catch (error) {
             console.error('❌ Ошибка обработки ZIP файла:', error);
             this.showNotification('❌ Ошибка обработки ZIP файла');
         } finally {
+            // Очищаем только ZIP-ячейку после полного завершения обработки
+            console.log('CatalogV2: Очистка ZIP-ячейки в finally блоке.');
+            this._clearUploadCells('zip');
             cell.classList.remove('processing');
             cell.classList.remove('file-selected'); // Удаляем 'file-selected' для ZIP-ячейки
         }
@@ -1660,13 +1690,21 @@ class CatalogV2 {
         return lastDotIndex !== -1 ? baseName.substring(lastDotIndex + 1) : '';
     }
 
-    _clearUploadCells(type) {
-        console.log('🧹 Очистка ячеек загрузки...');
+    _clearUploadCells(typeToClear) {
+        console.log('🧹 Очистка ячеек загрузки...', typeToClear ? `только тип: ${typeToClear}` : 'все');
         // Clear uploadSession
-        this.uploadSession = {};
+        if (typeToClear) {
+            if (this.uploadSession[typeToClear]) {
+                console.log(`🧹 Очистка uploadSession для типа: ${typeToClear}`);
+                this.uploadSession[typeToClear] = null;
+            }
+        } else {
+            console.log('🧹 Полная очистка uploadSession.');
+            this.uploadSession = {};
+        }
 
-        // Clear UI for all upload cells
-        const uploadCellTypes = ['instrumental', 'vocal', 'lyrics', 'json', 'zip'];
+        // Clear UI for upload cells
+        const uploadCellTypes = typeToClear ? [typeToClear] : ['instrumental', 'vocal', 'lyrics', 'json', 'zip'];
         uploadCellTypes.forEach(type => {
             const cell = document.querySelector(`.upload-cell[data-type="${type}"]`);
             if (cell) {

@@ -494,6 +494,9 @@ class ExportUI {
       return;
     }
     const wagons = this._trainContainer.querySelectorAll('.loop-wagon');
+    const allBlocks = this.blockLoopControl?.lyricsDisplay?.textBlocks || [];
+    const blockMap = new Map(allBlocks.map(block => [String(block.id), block]));
+
     console.log(`ExportUI: _applyHighlightToCurrentWagons - Найдено ${wagons.length} вагонов. Selected IDs: ${Array.from(this._selectedIds).join(', ')}`);
     wagons.forEach(w => {
       const id = w.dataset.blockId || w.getAttribute('data-block-id') || w.id;
@@ -501,15 +504,28 @@ class ExportUI {
         console.warn('ExportUI: _applyHighlightToCurrentWagons - Вагон без ID.', w);
         return;
       }
+
+      // 🎯 НОВОЕ: Определяем тип блока и применяем соответствующий класс
+      const blockData = blockMap.get(id);
+      const blockType = blockData?.type || 'verse'; // По умолчанию 'verse'
+
+      // Удаляем все предыдущие классы типов
+      w.classList.remove(
+        'block-type-verse', 'block-type-chorus', 'block-type-bridge',
+        'block-type-prechorus', 'block-type-intro', 'block-type-outro', 'block-type-blank'
+      );
+      // Добавляем новый класс типа
+      if (blockType !== 'unknown' && blockType !== 'default') {
+        w.classList.add(`block-type-${blockType}`);
+      }
+
       const hasHighlight = this._selectedIds.has(id);
       const isCurrentlyHighlighted = w.hasAttribute('data-export-selected');
 
       if (hasHighlight && !isCurrentlyHighlighted) {
         w.setAttribute('data-export-selected', '1');
-        console.log(`ExportUI: _applyHighlightToCurrentWagons - Добавлен data-export-selected для блока ${id}.`);
       } else if (!hasHighlight && isCurrentlyHighlighted) {
         w.removeAttribute('data-export-selected');
-        console.log(`ExportUI: _applyHighlightToCurrentWagons - Удален data-export-selected для блока ${id}.`);
       }
     });
     console.log('ExportUI: _applyHighlightToCurrentWagons завершен.');
@@ -519,6 +535,13 @@ class ExportUI {
     if (!this._trainContainer) return;
     this._trainContainer.querySelectorAll('.loop-wagon[data-export-selected]')
       .forEach(w => w.removeAttribute('data-export-selected'));
+    // 🎯 НОВОЕ: Также удаляем классы типов при очистке выделения
+    this._trainContainer.querySelectorAll('.loop-wagon').forEach(w => {
+      w.classList.remove(
+        'block-type-verse', 'block-type-chorus', 'block-type-bridge',
+        'block-type-prechorus', 'block-type-intro', 'block-type-outro', 'block-type-blank'
+      );
+    });
     this._selectedIds.clear();
   }
 

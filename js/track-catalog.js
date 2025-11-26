@@ -1832,13 +1832,14 @@ class TrackCatalog {
      */
     async importTracks(backupFile) {
         try {
+            let result;
             // Check if file is JSON
             if (backupFile.name.endsWith('.json')) {
-                return this._importFromJson(backupFile);
+                result = await this._importFromJson(backupFile);
             } 
             // Check if file is ZIP (individual track with audio)
             else if (backupFile.name.endsWith('.zip')) {
-                return this._importFromZip(backupFile);
+                result = await this._importFromZip(backupFile);
             } 
             else {
                 return {
@@ -1847,13 +1848,10 @@ class TrackCatalog {
                     imported: 0
                 };
             }
+            return result;
         } catch (error) {
             console.error('Error importing tracks:', error);
-            return {
-                success: false,
-                message: `Error importing tracks: ${error.message}`,
-                imported: 0
-            };
+            return { success: false, message: error.message, imported: 0 };
         }
     }
     

@@ -68,7 +68,7 @@ class RehearsalBackgroundManager {
 		}
 		const apply = () => {
 			if (!this.isActive || !this.body.classList.contains('mode-rehearsal')) {return;}
-			this.body.style.setProperty('background-image', `url('${imagePath}')`, 'important');
+			this.body.style.setProperty('background-image', `url('${imagePath}')`);
 			console.log(`✅ Rehearsal Background: set ${imagePath}`);
 		};
 		if (img.complete && img.naturalWidth > 0) {
