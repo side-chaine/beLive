@@ -1,0 +1,165 @@
+debug-config.js:69 🔧 DEBUG_CONFIG загружен. Используйте toggleDebugLogs(true) для включения логов
+utils.js:91 📦 Utils module loaded
+state-manager.js:9 StateManager initialized
+state-manager.js:141 📦 StateManager module loaded
+audio-engine.js:57 🚀 AudioEngine (Hybrid Engine) - Гибридная архитектура восстановлена
+audio-engine.js:134 Space bar handler attached
+audio-engine.js:1143 ❌ VocalMix не активен: стандартная маршрутизация
+rtf-parser.js:849 LyricsDisplay initialized
+rtf-parser.js:849 TextProcessorIntegrator: v2.1 инициализация
+rtf-parser.js:849 RtfParserAdapter: Инициализация (динамическая детекция в момент parse)
+rtf-parser.js:849 🔄 TrackCatalog: Начинаем инициализацию базы данных...
+rtf-parser.js:849 ✅ TrackCatalog: IndexedDB доступен, открываем базу данных...
+rtf-parser.js:849 🔄 TrackCatalog: Открываем стабильную базу: TextAppDB v6
+rtf-parser.js:849 TrackCatalog initialized
+rtf-parser.js:849 MarkerManager initialized
+rtf-parser.js:849 ✅ TrackCatalog: База данных успешно инициализирована
+rtf-parser.js:849 ✅ TrackCatalog: Database name: TextAppDB
+rtf-parser.js:849 ✅ TrackCatalog: Database version: 6
+rtf-parser.js:849 TrackCatalog: _finalizeUploadFromBlockEditor CALLED - should be obsolete now.
+rtf-parser.js:849 TrackCatalog: Loaded 0 tracks from DB
+rtf-parser.js:849 TrackCatalog: After migrate loaded 0 tracks
+rtf-parser.js:849 WaveformEditor loaded
+rtf-parser.js:849 🎨 Создаю кнопку выбора цвета, ColorService доступен: true
+rtf-parser.js:849 🎨 ColorService найден, создаю схемы...
+rtf-parser.js:849 🎨 Доступные схемы: 7
+rtf-parser.js:849 WaveformEditor initialized
+rtf-parser.js:849 BlockLoopControl: Класс загружен
+rtf-parser.js:849 [DragBoundary] Инициализирован с интерактивными линиями и предпоказом
+rtf-parser.js:849 🎛️ BlockLoopControl initialized with seeking flag and seek buffer
+rtf-parser.js:849 RTF Parser Integration: Инициализация интеграции улучшенного RTF-парсера (после определения объекта)
+rtf-parser.js:849 RTF Parser Integration: Начало интеграции
+rtf-parser.js:849 RTF Parser Integration: TrackCatalog уже использует RtfParserAdapter если он доступен
+rtf-parser.js:849 RTF Parser Integration: Интеграция завершена успешно
+rtf-parser.js:849 MonitorUI: script loaded
+rtf-parser.js:849 LiveFeed module loaded (placeholder)
+rtf-parser.js:849 🔄 ЗАГРУЗКА: catalog-v2.js начинает загрузку...
+rtf-parser.js:849 ✅ ЗАГРУЗКА: catalog-v2.js загружен, класс CatalogV2 определен
+rtf-parser.js:849 All components ready, initializing app...
+rtf-parser.js:849 ExportUI: Конструктор вызван.
+rtf-parser.js:849 ExportUI: _initUI вызван. Текущий this.btn: null
+rtf-parser.js:849 ExportUI: tryCreateButton вызван.
+rtf-parser.js:849 ✅ ExportUI: Найден контейнер .header-content.glass-effect
+rtf-parser.js:849 ✅ ExportUI: Кнопка и модалка успешно созданы.
+rtf-parser.js:849 ExportUI: _updateVisibility вызван.
+rtf-parser.js:849 ExportUI: _updateVisibility - isRehearsalMode: false bpmControls: <div class=​"bpm-controls" id=​"bpm-controls" style=​"position:​ relative;​ display:​ none;​ align-items:​ center;​ gap:​ 8px;​">​…​</div>​
+rtf-parser.js:849 ExportUI: Кнопка экспорта - display: none
+rtf-parser.js:849 ExportUI: BPM Controls - display: none
+rtf-parser.js:849 ExportUI: _bindModeChanges вызван.
+rtf-parser.js:849 ExportUI initialized OK
+rtf-parser.js:849 [tryInitExporter] Начало инициализации. app.audioEngine: AudioEngine app.audioEngine?.audioContext: AudioContext
+rtf-parser.js:849 [tryInitExporter] Все зависимости готовы, попытка инициализации AudioExporter.
+app.js:3023 AudioExporter init failed ReferenceError: AudioExporter is not defined
+    at tryInitExporter (app.js:3013:37)
+    at app.js:3037:1
+tryInitExporter @ app.js:3023
+rtf-parser.js:849 Проверка треков завершена успешно, проблем не обнаружено
+photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face:1  Failed to load resource: net::ERR_TIMED_OUT
+esm.sh/pitchy@4:1  Failed to load resource: net::ERR_TIMED_OUT
+rtf-parser.js:849 [AudioExporter Constructor] Received engine: AudioEngine engine.audioContext: AudioContext
+rtf-parser.js:849 [AudioExporter Constructor] this.engine after assignment: AudioEngine this.engine.audioContext: AudioContext
+rtf-parser.js:849 LiveMode: Маски инициализированы без использования изображений
+rtf-parser.js:849 LiveMode: getUserMedia поддерживается: false
+rtf-parser.js:849 LiveMode: Безопасный контекст: false
+rtf-parser.js:849 LiveMode: Определен localhost, разрешен HTTP
+rtf-parser.js:849 LiveMode: Базовая инициализация завершена
+rtf-parser.js:849 LiveMode: экземпляр создан
+rtf-parser.js:849 LiveFeed initialized
+rtf-parser.js:849 🎵 CatalogV2 инициализирован
+rtf-parser.js:849 ✅ CatalogV2 успешно инициализирован в DOMContentLoaded
+rtf-parser.js:849 MonitorUI: button bound
+rtf-parser.js:849 DOM content loaded, waiting for components
+rtf-parser.js:849 Application fully loaded, components initialized
+rtf-parser.js:849 🎵 CatalogV2: База данных подключена
+rtf-parser.js:849 🎵 CatalogV2: Загружено 0 треков
+rtf-parser.js:849 🎵 CatalogV2: После миграции загружено 0 треков
+rtf-parser.js:849 All components ready, initializing app...
+rtf-parser.js:849 Initializing beLive App
+rtf-parser.js:849 StateManager initialized
+rtf-parser.js:849 StateManager component ready
+rtf-parser.js:849 🎛️ ViewManager: Конструктор выполнен
+rtf-parser.js:849 🔗 ViewManager: Инициализация с зависимостями
+rtf-parser.js:849 ✅ ViewManager: Зависимости успешно подключены
+rtf-parser.js:849 ViewManager component ready
+rtf-parser.js:849 🎯 ViewManager: Инициализация обработчиков событий
+rtf-parser.js:849 ✅ ViewManager: Обработчик кнопки аватара (основное приложение) подключен
+rtf-parser.js:849 ✅ ViewManager: Обработчик кнопки аватара в Live Feed подключен
+rtf-parser.js:849 ✅ ViewManager: Обработчик кнопки возврата подключен
+rtf-parser.js:849 ✅ ViewManager: Обработчик кнопки beLIVE в Avatar Studio подключен
+rtf-parser.js:849 🎵 ViewManager: Карусель треков инициализирована
+rtf-parser.js:849 🎵 ViewManager: Карусель треков инициализирована
+rtf-parser.js:849 🎯 ViewManager: Все обработчики событий готовы
+rtf-parser.js:849 🎯 ViewManager event handlers initialized
+app.js:84 WordAlignerV2 not found, creating placeholder
+App @ app.js:84
+rtf-parser.js:849 🎛️ Transport toggle инициализирован
+rtf-parser.js:849 LyricsDisplay: Setting style to Стандартный
+rtf-parser.js:849 Rendering lyrics. Current style ID: default
+rtf-parser.js:849 Applied style 'Стандартный'
+rtf-parser.js:849 TextStyleManager initialized with 8 styles and 29 total transitions
+rtf-parser.js:849 Text style manager initialized
+rtf-parser.js:849 Initializing Microphone UI...
+rtf-parser.js:849 Microphone UI initialized using existing DOM elements.
+rtf-parser.js:849 VocalMix UI initialized.
+rtf-parser.js:849 [DragBoundary] Инициализирован с интерактивными линиями и предпоказом
+rtf-parser.js:849 🎛️ BlockLoopControl initialized with seeking flag and seek buffer
+rtf-parser.js:849 BlockLoopControl component ready
+rtf-parser.js:849 🎭 MaskSystem: Инициализация продвинутой системы масок
+rtf-parser.js:849 🎭 MaskSystem: Конструктор завершен
+mask-system.js:362 🎭 MaskSystem: WebRTC не поддерживается
+setupVideoCapture @ mask-system.js:362
+rtf-parser.js:849 🎭 MaskSystem создан
+rtf-parser.js:849 🎭 MaskSystem component ready
+rtf-parser.js:849 Initializing LoopBlock controls
+rtf-parser.js:849 🎭 MaskSystem: Обработчик кнопки подключен
+rtf-parser.js:849 beLive App initialized
+rtf-parser.js:849 App initialized successfully
+app.js:2875 ⚠️ ExportUI: Не удалось инициализировать, зависимости не готовы в app.js или уже инициализирован
+initializeApp @ app.js:2875
+rtf-parser.js:849 🎭 MediaPipe: Начинаем загрузку библиотек...
+rtf-parser.js:849 🎭 MediaPipe: Ожидание загрузки библиотек...
+rtf-parser.js:849 🎭 MediaPipe: Все библиотеки загружены успешно
+rtf-parser.js:849 🎭 MaskSystem: Официальный MediaPipe FaceMesh готов
+rtf-parser.js:849 🏃 MaskSystem: MediaPipe Pose готов
+rtf-parser.js:849 ✋ MaskSystem: MediaPipe Hands готов
+rtf-parser.js:849 🤖 MaskSystem: MediaPipe Holistic готов
+rtf-parser.js:849 🎨 MaskSystem: MediaPipe Selfie Segmentation готов
+rtf-parser.js:849 🎭 MaskSystem: MediaPipe готов к использованию
+rtf-parser.js:849 🎯 Background Effects Engine v2.0 инициализирован
+rtf-parser.js:849 🔄 Инициализация Background Effects Engine...
+rtf-parser.js:849 ✅ Background Effects Engine готов
+rtf-parser.js:849 Activating live mode
+rtf-parser.js:849 Karaoke Background Manager: Stopping slideshow...
+rtf-parser.js:849 Applying style: Live with scale 1.00
+rtf-parser.js:849 TextStyleManager: Scaled font size from 1.6em to 1.60em
+rtf-parser.js:849 LyricsDisplay: Setting style to Live
+rtf-parser.js:849 Rendering lyrics. Current style ID: live
+rtf-parser.js:849 Applied style class to lyrics-container: style-live
+rtf-parser.js:849 🚀 Скрываю Живую Ленту
+rtf-parser.js:849 ✅ Возврат в классический зал
+rtf-parser.js:849 Initializing LiveMode without camera activation...
+rtf-parser.js:849 LiveMode: Начало активации режима
+rtf-parser.js:849 LiveMode: Сохранен предыдущий режим: concert
+live-mode.js:1799 LiveMode: Ваш браузер не поддерживает доступ к камере
+_showErrorMessage @ live-mode.js:1799
+rtf-parser.js:849 🎵 ИНСТРУМЕНТАЛ: Громкость установлена 100%
+rtf-parser.js:849 🎤 ВОКАЛ: Громкость установлена 0%
+app.js:1283 Не удалось активировать Live режим
+(анонимная) @ app.js:1283
+rtf-parser.js:849 ExportUI: _updateVisibility вызван.
+rtf-parser.js:849 ExportUI: _updateVisibility - isRehearsalMode: false bpmControls: <div class=​"bpm-controls" id=​"bpm-controls" style=​"position:​ relative;​ display:​ none;​ align-items:​ center;​ gap:​ 8px;​">​…​</div>​
+rtf-parser.js:849 ExportUI: Кнопка экспорта - display: none
+rtf-parser.js:849 ExportUI: BPM Controls - display: none
+rtf-parser.js:849 🚀 Скрываю Живую Ленту
+rtf-parser.js:849 ✅ Возврат в классический зал
+rtf-parser.js:849 🚀 Инициализация Живой Ленты
+rtf-parser.js:849 ✅ Живая Лента инициализирована
+rtf-parser.js:849 ExportUI: _updateVisibility вызван.
+rtf-parser.js:849 ExportUI: _updateVisibility - isRehearsalMode: false bpmControls: <div class=​"bpm-controls" id=​"bpm-controls" style=​"position:​ relative;​ display:​ none;​ align-items:​ center;​ gap:​ 8px;​">​…​</div>​
+rtf-parser.js:849 ExportUI: Кнопка экспорта - display: none
+rtf-parser.js:849 ExportUI: BPM Controls - display: none
+rtf-parser.js:849 📁 CatalogV2: Overlay открыт
+rtf-parser.js:849 🔄 CatalogV2: Overlay закрыт
+rtf-parser.js:849 📁 CatalogV2: Overlay открыт
+rtf-parser.js:849 🔄 CatalogV2: Переключен на режим upload
+rtf-parser.js:849 🔄 CatalogV2: Переключен на режим search

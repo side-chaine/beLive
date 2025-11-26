@@ -302,7 +302,7 @@ class ModalBlockEditor {
         newBlock.innerText = text; 
         newBlock.setAttribute('data-placeholder', placeholder);
         newBlock.setAttribute('data-block-type', blockType); 
-        newBlock.classList.add(`block-type-${blockType}`); // РАСКОММЕНТИРОВАНО: Добавляем класс типа блока здесь
+        // newBlock.classList.add(`block-type-${blockType}`); // РАСКОММЕНТИРОВАНО: Добавляем класс типа блока здесь
         
         // Удален вызов this._addDeleteButtonToBlock(newBlock);
         
@@ -461,9 +461,12 @@ class ModalBlockEditor {
                     border: 1px solid #dee2e6; /* Светлее рамка */
                     border-radius: 5px; /* Чуть больше скругление */
                     box-shadow: 0 3px 8px rgba(0,0,0,0.1); /* Мягче тень */
-                    display: flex;
-                    flex-direction: column; /* Вертикальное расположение */
-                    padding: 2px; /* ЕЩЕ УМЕНЬШЕН внутренний отступ селектора */
+                    display: grid; /* Используем Grid для точного контроля колонок */
+                    grid-template-columns: 1fr 1fr; /* Две колонки с равной шириной */
+                    gap: 4px; /* Отступ между элементами Grid */
+                    padding: 4px; /* Внутренний отступ селектора */
+                    width: 240px; /* Оптимальная ширина контейнера для 2-х колонок */
+                    box-sizing: border-box; /* Важно для корректного расчета ширины */
                     opacity: 0;
                     transform: translateY(5px); /* Анимация "сверху вниз" */
                     transition: opacity 0.15s ease-out, transform 0.15s ease-out;
@@ -478,15 +481,23 @@ class ModalBlockEditor {
                     pointer-events: auto; /* Делаем кликабельным, когда видим */
                 }
                 .selector-option {
-                    padding: 3px 6px; /* ЕЩЕ УМЕНЬШЕНЫ паддинги кнопок */
-                    margin: 1px;  /* Отступ между кнопками */
+                    padding: 3px 6px; /* Паддинги кнопок */
+                    margin: 0;  /* Убираем индивидуальные маржины, используем gap Grid */
                     border: none;
                     border-radius: 3px; 
                     cursor: pointer;
                     font-size: 10px; 
                     color: #fff;
+                    /* Ширина будет автоматически определяться Grid-ом */
+                    flex-grow: 0; 
+                    flex-shrink: 0; 
+                    box-sizing: border-box; /* Важно для корректного расчета ширины */
+                    text-align: center; /* Центрирование текста в кнопках */
+                    white-space: normal; /* Разрешаем перенос текста внутри кнопки */
+                    word-break: break-word; /* Принудительный перенос слов */
+                    overflow: hidden; /* Скрывать переполняющий контент */
+                    text-overflow: ellipsis; /* Добавлять многоточие для переполняющего текста */
                     transition: opacity 0.2s, transform 0.1s ease-in-out;
-                    white-space: nowrap; 
                 }
                 .selector-option:hover {
                     opacity: 0.85;
@@ -501,7 +512,7 @@ class ModalBlockEditor {
                 .option-bridge {
                     background-color: #6f42c1; /* Фиолетовый */
                 }
-                .option-pre-chorus {
+                .option-prechorus {
                     background-color: #ffc107; /* Желтый */
                 }
                 .option-intro,
@@ -531,7 +542,7 @@ class ModalBlockEditor {
                     border-left: 5px solid #6f42c1 !important; /* Фиолетовая полоса слева */
                     box-shadow: 0 0 8px rgba(111, 66, 193, 0.2); /* Легкое фиолетовое свечение */
                 }
-                .block-type-pre-chorus {
+                .block-type-prechorus {
                     background-color: #fff3cd !important; /* Светло-желтый фон */
                     border-left: 5px solid #ffc107 !important; /* Желтая полоса слева */
                     box-shadow: 0 0 8px rgba(255, 193, 7, 0.2); /* Легкое желтое свечение */
@@ -808,12 +819,12 @@ class ModalBlockEditor {
 
         const types = [
             { name: 'Куплет', type: 'verse', className: 'option-verse' },
+            { name: 'Pre-chorus', type: 'prechorus', className: 'option-prechorus' }, // Перемещено
             { name: 'Припев', type: 'chorus', className: 'option-chorus' },
+            { name: 'Intro', type: 'intro', className: 'option-intro' }, // Перемещено
             { name: 'Бридж', type: 'bridge', className: 'option-bridge' },
-            { name: 'Pre-chorus', type: 'prechorus', className: 'option-prechorus' }, // ИСПРАВЛЕНО НА prechorus
-            { name: 'Intro', type: 'intro', className: 'option-intro' },
-            { name: 'Outro', type: 'outro', className: 'option-outro' },
-            { name: 'Пустой', type: 'blank', className: 'option-blank' }, // Добавлен blank
+            { name: 'Outro', type: 'outro', className: 'option-outro' }, // Перемещено
+            // { name: 'Пустой', type: 'blank', className: 'option-blank' }, // Удален blank
         ];
 
         types.forEach(item => {

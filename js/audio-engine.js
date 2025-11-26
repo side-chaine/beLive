@@ -306,15 +306,25 @@ class AudioEngine {
             });
         });
 
-        // Set source to start loading instrumental
-        this.instrumentalAudio.src = instrumentalUrl;
-
         // Создаем безопасные URL для WaveformEditor СРАЗУ
         const safeInstrumentalUrl = await this._createSafeUrlFromOriginal(instrumentalUrl);
         let safeVocalsUrl = null;
         
         if (vocalsUrl) {
             safeVocalsUrl = await this._createSafeUrlFromOriginal(vocalsUrl);
+        }
+
+        // Устанавливаем источник для загрузки инструментала, предпочитая безопасный URL
+        // Если safeInstrumentalUrl является data URL, используем его, иначе - оригинальный URL
+        let playbackInstrumentalUrl = instrumentalUrl;
+        if (safeInstrumentalUrl && safeInstrumentalUrl.startsWith('data:')) {
+            playbackInstrumentalUrl = safeInstrumentalUrl;
+        }
+        this.instrumentalAudio.src = playbackInstrumentalUrl;
+
+        // Track blob URLs for cleanup. Только если оригинальный URL был blob и он не был заменен на data URL
+        if (instrumentalUrl.startsWith('blob:') && playbackInstrumentalUrl === instrumentalUrl) {
+            this.activeBlobUrls.push(instrumentalUrl);
         }
 
         // Инициализируем hybridEngine с безопасными URL

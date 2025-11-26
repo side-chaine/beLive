@@ -2030,6 +2030,12 @@ class BlockLoopControl {
   
         // и плавно центрируем активный вагон
 		try { this._scrollActiveWagonIntoView(); } catch(_) {}
+
+        // На всякий случай обновим подсветку вагона
+        this._updateTrainPlayingHighlight();
+
+        // 🎯 НОВОЕ: Применяем классы типа блока к вагонам
+        this._updateWagonBlockTypes();
     }
 
     /**
@@ -2454,6 +2460,45 @@ class BlockLoopControl {
         const targetLeft = wagon.offsetLeft - (container.clientWidth - wagon.clientWidth) / 2;
         const clamped = Math.max(0, Math.min(targetLeft, container.scrollWidth - container.clientWidth));
         container.scrollTo({ left: clamped, behavior: 'smooth' });
+    }
+
+    /**
+     * Применяет классы типа блока (verse, chorus и т.д.) к элементам .loop-wagon.
+     * @private
+     */
+    _updateWagonBlockTypes() {
+        console.log('BlockLoopControl: _updateWagonBlockTypes вызван.');
+        const trainContainer = document.querySelector('.loop-train');
+        if (!trainContainer) {
+            console.warn('BlockLoopControl: _updateWagonBlockTypes - .loop-train контейнер не найден.');
+            return;
+        }
+
+        const wagons = trainContainer.querySelectorAll('.loop-wagon');
+        const allBlocks = this.lyricsDisplay?.textBlocks || [];
+        const blockMap = new Map(allBlocks.map(block => [String(block.id), block]));
+
+        wagons.forEach(w => {
+            const id = w.dataset.blockId || w.getAttribute('data-block-id') || w.id;
+            if (!id) {
+                console.warn('BlockLoopControl: _updateWagonBlockTypes - Вагон без ID.', w);
+                return;
+            }
+
+            const blockData = blockMap.get(id);
+            const blockType = blockData?.type || 'verse'; // По умолчанию 'verse'
+
+            // Удаляем все предыдущие классы типов
+            w.classList.remove(
+                'block-type-verse', 'block-type-chorus', 'block-type-bridge',
+                'block-type-prechorus', 'block-type-intro', 'block-type-outro', 'block-type-blank'
+            );
+            // Добавляем новый класс типа
+            if (blockType !== 'unknown' && blockType !== 'default') {
+                w.classList.add(`block-type-${blockType}`);
+            }
+        });
+        console.log('BlockLoopControl: _updateWagonBlockTypes завершен.');
     }
 }
 

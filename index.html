@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=0.5, maximum-scale=0.5, user-scalable=no">
     <title>beLive - Трансляции для музыкантов</title>
+    <link rel="manifest" href="/manifest.json"> <!-- Добавлено для PWA -->
     <link rel="icon" href="data:, ">
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/loop-button-styles.css">
     <link rel="stylesheet" href="css/transport-controls.css">
     <link rel="stylesheet" href="css/karaoke-styles.css">
     <link rel="stylesheet" href="css/block-type-markers.css">
@@ -41,6 +41,8 @@
     <link rel="stylesheet" href="css/rehearsal-styles.css">
     <link rel="stylesheet" href="css/concert-styles.css">
     <link rel="stylesheet" href="css/karaoke-styles.css">
+    <link rel="stylesheet" href="css/conveyor-styles.css"> <!-- MOVED: Стили для конвейера -->
+    <link rel="stylesheet" href="css/loop-button-styles.css">
 
     <!-- Google Fonts for Font Selector -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1042,6 +1044,21 @@
         </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
+
+    <!-- Service Worker Registration для PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker зарегистрирован успешно:', registration);
+                    })
+                    .catch(error => {
+                        console.error('❌ Ошибка при регистрации Service Worker:', error);
+                    });
+            });
+        }
+    </script>
 
     <!-- AI Chat Window -->
     <div id="ai-chat-window" class="ai-chat-window hidden" role="dialog" aria-modal="true" aria-labelledby="ai-chat-title">

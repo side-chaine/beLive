@@ -62,6 +62,34 @@
     margin: 5px 0;
 }
 
+.loop-wagon.block-type-verse {
+    background: rgba(76, 175, 80, 0.5) !important; /* Зеленый */
+}
+
+.loop-wagon.block-type-chorus {
+    background: rgba(244, 67, 54, 0.5) !important; /* Красный */
+}
+
+.loop-wagon.block-type-bridge {
+    background: rgba(111, 66, 193, 0.5) !important; /* Фиолетовый */
+}
+
+.loop-wagon.block-type-prechorus {
+    background: rgba(255, 152, 0, 0.5) !important; /* Оранжевый */
+}
+
+.loop-wagon.block-type-intro {
+    background: rgba(3, 169, 244, 0.5) !important; /* Голубой */
+}
+
+.loop-wagon.block-type-outro {
+    background: rgba(158, 158, 158, 0.5) !important; /* Серый */
+}
+
+.loop-wagon.block-type-blank {
+    background: rgba(255, 255, 255, 0.3) !important; /* Полупрозрачный белый */
+}
+
 .conveyor-slot.active-slot {
     border-color: #00ff88;
     color: #ffffff;
