@@ -36,7 +36,7 @@ export class ModelDropdownUI {
         const models = aiHub.getAllModels();
         const activeModelId = aiHub.getActiveModel()?.id;
 
-        models.forEach(model => {
+        models.forEach((model: ModelInfo) => {
             const modelItem = document.createElement('div');
             modelItem.className = 'model-item';
             if (model.id === activeModelId) {
