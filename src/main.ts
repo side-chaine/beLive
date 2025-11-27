@@ -17,8 +17,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const gatewayProvider = new GatewayProvider(GATEWAY_URL);
   aiHub.register(gatewayProvider);
 
-  const aiChatUI = new AIChatUI(); // Инициализация AIChatUI
-  const modelDropdownUI = new ModelDropdownUI(); // Инициализация ModelDropdownUI
+  new AIChatUI(); // Инициализация AIChatUI
+  new ModelDropdownUI(); // Инициализация ModelDropdownUI
 
   // Обработчик для кнопки AI Operator. Теперь он будет открывать чат.
   const aiOperatorButton = document.getElementById('toggle-loopblock-mode');
