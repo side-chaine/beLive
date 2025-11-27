@@ -4,21 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=0.5, maximum-scale=0.5, user-scalable=no">
     <title>beLive - Трансляции для музыкантов</title>
-    <link rel="manifest" href="/manifest.json"> <!-- Добавлено для PWA -->
+    <link rel="manifest" href="./manifest.json"> <!-- Добавлено для PWA -->
     <link rel="icon" href="data:, ">
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/transport-controls.css">
-    <link rel="stylesheet" href="css/karaoke-styles.css">
-    <link rel="stylesheet" href="css/block-type-markers.css">
-    <link rel="stylesheet" href="css/live-mode.css">
-    <link rel="stylesheet" href="css/mode-buttons-override.css">
-    <link rel="stylesheet" href="css/font-selector.css">
-    <link rel="stylesheet" href="css/waveform-source-switcher.css">
-    <link rel="stylesheet" href="css/avatar-page.css">
-    <link rel="stylesheet" href="css/home-button-enhanced.css">
-    <link rel="stylesheet" href="css/bmp-styles.css">
-    <link rel="stylesheet" href="css/catalog-v2.css">
-    <link rel="stylesheet" href="css/dark-overlay.css">
+    <link rel="stylesheet" href="public/css/styles.css">
+    <link rel="stylesheet" href="public/css/transport-controls.css">
+    <link rel="stylesheet" href="public/css/karaoke-styles.css">
+    <link rel="stylesheet" href="public/css/block-type-markers.css">
+    <link rel="stylesheet" href="public/css/live-mode.css">
+    <link rel="stylesheet" href="public/css/mode-buttons-override.css">
+    <link rel="stylesheet" href="public/css/font-selector.css">
+    <link rel="stylesheet" href="public/css/waveform-source-switcher.css">
+    <link rel="stylesheet" href="public/css/avatar-page.css">
+    <link rel="stylesheet" href="public/css/home-button-enhanced.css">
+    <link rel="stylesheet" href="public/css/bmp-styles.css">
+    <link rel="stylesheet" href="public/css/catalog-v2.css">
+    <link rel="stylesheet" href="public/css/dark-overlay.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     
     <!-- MediaPipe Official CDN Libraries -->
@@ -38,11 +38,11 @@
         window.PitchDetector = PitchDetector;
         console.log('✅ Pitchy библиотека загружена в beLive');
     </script>
-    <link rel="stylesheet" href="css/rehearsal-styles.css">
-    <link rel="stylesheet" href="css/concert-styles.css">
-    <link rel="stylesheet" href="css/karaoke-styles.css">
-    <link rel="stylesheet" href="css/conveyor-styles.css"> <!-- MOVED: Стили для конвейера -->
-    <link rel="stylesheet" href="css/loop-button-styles.css">
+    <link rel="stylesheet" href="public/css/rehearsal-styles.css">
+    <link rel="stylesheet" href="public/css/concert-styles.css">
+    <link rel="stylesheet" href="public/css/karaoke-styles.css">
+    <link rel="stylesheet" href="public/css/conveyor-styles.css"> <!-- MOVED: Стили для конвейера -->
+    <link rel="stylesheet" href="public/css/loop-button-styles.css">
 
     <!-- Google Fonts for Font Selector -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,7 +50,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@400;700&family=Open+Sans:wght@400;700&family=Bebas+Neue&family=Playfair+Display:wght@400;700&family=Merriweather:wght@400;700&family=Lora:wght@400;700&family=PT+Serif:wght@400;700&family=Oswald:wght@400;700&family=Lobster&family=Pacifico&family=Caveat&display=swap" rel="stylesheet">
     <!-- Orbitron font for cockpit design -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <script src="js/dev-flags.js"></script>
+    <script src="public/js/dev-flags.js"></script>
 
     <!-- Export Feature Styles -->
     <style>
@@ -850,64 +850,64 @@
             }
         });
     </script>
-    <script src="js/debug-config.js"></script>
-    <script src="js/overlay.js"></script>
+    <script src="public/js/debug-config.js"></script>
+    <script src="public/js/overlay.js"></script>
 
     <!-- 🎵 CORE ENGINE & UTILITIES -->
     <!-- КРИТИЧЕСКИ ВАЖНЫЙ ПОРЯДОК ЗАГРУЗКИ -->
     <!-- StateManager и ViewManager должны быть загружены ДО app.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/rtf.js@0.4.0/dist/rtf.min.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/state-manager.js"></script>
-    <script src="js/view-manager.js"></script> <!-- ДОБАВЛЕН ViewManager -->
+    <script src="public/js/utils.js"></script>
+    <script src="public/js/state-manager.js"></script>
+    <script src="public/js/view-manager.js"></script> <!-- ДОБАВЛЕН ViewManager -->
     
     <!-- Глобальные константы и логгер -->
-    <script src="js/constants.js"></script>
-    <script src="js/logger.js"></script>
-    <script src="js/audio-source-adapter.js"></script>
+    <script src="public/js/constants.js"></script>
+    <script src="public/js/logger.js"></script>
+    <script src="public/js/audio-source-adapter.js"></script>
     
     <!-- 🎵 COMPONENT SCRIPTS -->
-    <script src="js/color-service.js"></script>
-    <script src="js/audio-engine.js"></script>
-    <script src="js/enhanced-rtf-processor.js"></script>
-    <script src="js/rtf-parser.js"></script>
-    <script src="js/rtf-simple-parser.js?v=2025-11-18"></script> <!-- ДОБАВЛЕНО: SimpleRtf Parser -->
-    <script src="js/rtf-parser-adapter.js?v=2025-11-18"></script>
-    <script src="js/lyrics-display.js"></script>
-    <script src="js/enhanced-text-processor.js?v=2025-11-18"></script>
-    <script src="js/text-processor-integrator.js"></script>
-    <script src="js/track-catalog.js"></script>
-    <script src="js/marker-manager.js"></script>
-    <script src="js/waveform-editor.js"></script>
-    <script src="js/text-style-manager.js"></script>
-    <script src="js/drag-boundary-controller.js"></script>
-    <script src="js/block-loop-control.js"></script>
-    <script type="module" src="js/audio-exporter.js"></script>
-    <script src="js/export-ui.js"></script>
-    <script src="js/background-effects-engine.js"></script>
-    <script src="js/mask-system.js"></script>
-    <script src="js/rtf-parser-integration.js"></script>
-    <script src="js/modal-block-editor.js"></script>
-    <script src="js/piano-keyboard.js"></script>
-    <script src="js/karaoke-background.js"></script>
-    <script src="js/rehearsal-background.js"></script>
-    <script src="js/concert-background.js"></script>
-    <script src="js/monitor-mix.js"></script>
-    <script src="js/monitor-ui.js"></script>
+    <script src="public/js/color-service.js"></script>
+    <script src="public/js/audio-engine.js"></script>
+    <script src="public/js/enhanced-rtf-processor.js"></script>
+    <script src="public/js/rtf-parser.js"></script>
+    <script src="public/js/rtf-simple-parser.js?v=2025-11-18"></script> <!-- ДОБАВЛЕНО: SimpleRtf Parser -->
+    <script src="public/js/rtf-parser-adapter.js?v=2025-11-18"></script>
+    <script src="public/js/lyrics-display.js"></script>
+    <script src="public/js/enhanced-text-processor.js?v=2025-11-18"></script>
+    <script src="public/js/text-processor-integrator.js"></script>
+    <script src="public/js/track-catalog.js"></script>
+    <script src="public/js/marker-manager.js"></script>
+    <script src="public/js/waveform-editor.js"></script>
+    <script src="public/js/text-style-manager.js"></script>
+    <script src="public/js/drag-boundary-controller.js"></script>
+    <script src="public/js/block-loop-control.js"></script>
+    <script type="module" src="public/js/audio-exporter.js"></script>
+    <script src="public/js/export-ui.js"></script>
+    <script src="public/js/background-effects-engine.js"></script>
+    <script src="public/js/mask-system.js"></script>
+    <script src="public/js/rtf-parser-integration.js"></script>
+    <script src="public/js/modal-block-editor.js"></script>
+    <script src="public/js/piano-keyboard.js"></script>
+    <script src="public/js/karaoke-background.js"></script>
+    <script src="public/js/rehearsal-background.js"></script>
+    <script src="public/js/concert-background.js"></script>
+    <script src="public/js/monitor-mix.js"></script>
+    <script src="public/js/monitor-ui.js"></script>
  
     <!-- Live Mode Scripts -->
-    <script src="js/live-mode.js"></script>
-    <script src="js/live-feed.js"></script>
+    <script src="public/js/live-mode.js"></script>
+    <script src="public/js/live-feed.js"></script>
 
     <!-- 🎵 CATALOG V2 SCRIPT (MUST BE BEFORE APP.JS) -->
-    <script src="js/catalog-v2.js?v=2.0"></script>
+    <script src="public/js/catalog-v2.js?v=2.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <!-- Export Feature UI -->
 
     <!-- 🚀 MAIN APPLICATION SCRIPT (MUST BE LAST) -->
-    <script src="js/app.js"></script>
+    <script src="public/js/app.js"></script>
     
     <!-- Инициализация приложения -->
     <script>
@@ -1044,20 +1044,23 @@
         </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
-
-    <!-- Service Worker Registration для PWA -->
+    
+    <!-- Service Worker с правильным путём -->
     <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(registration => {
-                        console.log('✅ Service Worker зарегистрирован успешно:', registration);
-                    })
-                    .catch(error => {
-                        console.error('❌ Ошибка при регистрации Service Worker:', error);
-                    });
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          // ВАЖНО: Используем относительный путь или корректный префикс
+          const swPath = './service-worker.js'; 
+          
+          navigator.serviceWorker.register(swPath, { scope: './' })
+            .then(registration => {
+              console.log('✅ SW зарегистрирован, scope:', registration.scope);
+            })
+            .catch(error => {
+              console.error('❌ Ошибка SW:', error);
             });
-        }
+        });
+      }
     </script>
 
     <!-- AI Chat Window -->
