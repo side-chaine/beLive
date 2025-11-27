@@ -1043,16 +1043,16 @@
             </div>
         </div>
     </div>
-    <script type="module" src="./src/main.ts"></script>
+    <script src="/beLive/src/main.ts"></script>
     
     <!-- Service Worker с правильным путём -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          // ВАЖНО: Используем относительный путь или корректный префикс
-          const swPath = './service-worker.js'; 
+          // ВАЖНО: Используем абсолютный путь для GitHub Pages подпапки
+          const swPath = '/beLive/service-worker.js'; 
           
-          navigator.serviceWorker.register(swPath, { scope: './' })
+          navigator.serviceWorker.register(swPath, { scope: '/beLive/' })
             .then(registration => {
               console.log('✅ SW зарегистрирован, scope:', registration.scope);
             })
