@@ -6,6 +6,11 @@ on:
       - main  # Наблюдаем за изменениями в ветке main
   workflow_dispatch: # Позволяет запускать вручную из вкладки Actions
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write # Добавлено разрешение на запись id-token
+
 jobs:
   build:
     runs-on: ubuntu-latest
