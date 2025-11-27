@@ -1,4 +1,3 @@
-import type { AIProvider } from '../types';
 import { aiHub } from '../ai/registry';
 import { streamOpenAI } from '../utils/stream-openai';
 import { VoiceInput } from '../utils/voice-input';

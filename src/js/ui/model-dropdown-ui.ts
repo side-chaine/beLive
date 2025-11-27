@@ -1,4 +1,4 @@
-import { ModelInfo, AIProvider } from '../ai/types';
+import { ModelInfo } from '../ai/types';
 import { aiHub } from '../ai/registry';
 
 export class ModelDropdownUI {
