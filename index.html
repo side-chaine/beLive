@@ -4,21 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=0.5, maximum-scale=0.5, user-scalable=no">
     <title>beLive - Трансляции для музыкантов</title>
-    <link rel="manifest" href="./manifest.json"> <!-- Добавлено для PWA -->
+    <link rel="manifest" href="/beLive/manifest.json?v=3"> <!-- Добавлено для PWA -->
     <link rel="icon" href="data:, ">
-    <link rel="stylesheet" href="public/css/styles.css">
-    <link rel="stylesheet" href="public/css/transport-controls.css">
-    <link rel="stylesheet" href="public/css/karaoke-styles.css">
-    <link rel="stylesheet" href="public/css/block-type-markers.css">
-    <link rel="stylesheet" href="public/css/live-mode.css">
-    <link rel="stylesheet" href="public/css/mode-buttons-override.css">
-    <link rel="stylesheet" href="public/css/font-selector.css">
-    <link rel="stylesheet" href="public/css/waveform-source-switcher.css">
-    <link rel="stylesheet" href="public/css/avatar-page.css">
-    <link rel="stylesheet" href="public/css/home-button-enhanced.css">
-    <link rel="stylesheet" href="public/css/bmp-styles.css">
-    <link rel="stylesheet" href="public/css/catalog-v2.css">
-    <link rel="stylesheet" href="public/css/dark-overlay.css">
+    <link rel="stylesheet" href="/beLive/css/styles.css">
+    <link rel="stylesheet" href="/beLive/css/transport-controls.css">
+    <link rel="stylesheet" href="/beLive/css/karaoke-styles.css">
+    <link rel="stylesheet" href="/beLive/css/block-type-markers.css">
+    <link rel="stylesheet" href="/beLive/css/live-mode.css">
+    <link rel="stylesheet" href="/beLive/css/mode-buttons-override.css">
+    <link rel="stylesheet" href="/beLive/css/font-selector.css">
+    <link rel="stylesheet" href="/beLive/css/waveform-source-switcher.css">
+    <link rel="stylesheet" href="/beLive/css/avatar-page.css">
+    <link rel="stylesheet" href="/beLive/css/home-button-enhanced.css">
+    <link rel="stylesheet" href="/beLive/css/bmp-styles.css">
+    <link rel="stylesheet" href="/beLive/css/catalog-v2.css">
+    <link rel="stylesheet" href="/beLive/css/dark-overlay.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     
     <!-- MediaPipe Official CDN Libraries -->
@@ -38,11 +38,11 @@
         window.PitchDetector = PitchDetector;
         console.log('✅ Pitchy библиотека загружена в beLive');
     </script>
-    <link rel="stylesheet" href="public/css/rehearsal-styles.css">
-    <link rel="stylesheet" href="public/css/concert-styles.css">
-    <link rel="stylesheet" href="public/css/karaoke-styles.css">
-    <link rel="stylesheet" href="public/css/conveyor-styles.css"> <!-- MOVED: Стили для конвейера -->
-    <link rel="stylesheet" href="public/css/loop-button-styles.css">
+    <link rel="stylesheet" href="/beLive/css/rehearsal-styles.css">
+    <link rel="stylesheet" href="/beLive/css/concert-styles.css">
+    <link rel="stylesheet" href="/beLive/css/karaoke-styles.css">
+    <link rel="stylesheet" href="/beLive/css/conveyor-styles.css"> <!-- MOVED: Стили для конвейера -->
+    <link rel="stylesheet" href="/beLive/css/loop-button-styles.css">
 
     <!-- Google Fonts for Font Selector -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,7 +50,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@400;700&family=Open+Sans:wght@400;700&family=Bebas+Neue&family=Playfair+Display:wght@400;700&family=Merriweather:wght@400;700&family=Lora:wght@400;700&family=PT+Serif:wght@400;700&family=Oswald:wght@400;700&family=Lobster&family=Pacifico&family=Caveat&display=swap" rel="stylesheet">
     <!-- Orbitron font for cockpit design -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <script src="public/js/dev-flags.js"></script>
+    <script src="/beLive/js/dev-flags.js"></script>
 
     <!-- Export Feature Styles -->
     <style>
@@ -850,64 +850,64 @@
             }
         });
     </script>
-    <script src="public/js/debug-config.js"></script>
-    <script src="public/js/overlay.js"></script>
+    <script src="/beLive/js/debug-config.js"></script>
+    <script src="/beLive/js/overlay.js"></script>
 
     <!-- 🎵 CORE ENGINE & UTILITIES -->
     <!-- КРИТИЧЕСКИ ВАЖНЫЙ ПОРЯДОК ЗАГРУЗКИ -->
     <!-- StateManager и ViewManager должны быть загружены ДО app.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/rtf.js@0.4.0/dist/rtf.min.js"></script>
-    <script src="public/js/utils.js"></script>
-    <script src="public/js/state-manager.js"></script>
-    <script src="public/js/view-manager.js"></script> <!-- ДОБАВЛЕН ViewManager -->
+    <script src="/beLive/js/utils.js"></script>
+    <script src="/beLive/js/state-manager.js"></script>
+    <script src="/beLive/js/view-manager.js"></script> <!-- ДОБАВЛЕН ViewManager -->
     
     <!-- Глобальные константы и логгер -->
-    <script src="public/js/constants.js"></script>
-    <script src="public/js/logger.js"></script>
-    <script src="public/js/audio-source-adapter.js"></script>
+    <script src="/beLive/js/constants.js"></script>
+    <script src="/beLive/js/logger.js"></script>
+    <script src="/beLive/js/audio-source-adapter.js"></script>
     
     <!-- 🎵 COMPONENT SCRIPTS -->
-    <script src="public/js/color-service.js"></script>
-    <script src="public/js/audio-engine.js"></script>
-    <script src="public/js/enhanced-rtf-processor.js"></script>
-    <script src="public/js/rtf-parser.js"></script>
-    <script src="public/js/rtf-simple-parser.js?v=2025-11-18"></script> <!-- ДОБАВЛЕНО: SimpleRtf Parser -->
-    <script src="public/js/rtf-parser-adapter.js?v=2025-11-18"></script>
-    <script src="public/js/lyrics-display.js"></script>
-    <script src="public/js/enhanced-text-processor.js?v=2025-11-18"></script>
-    <script src="public/js/text-processor-integrator.js"></script>
-    <script src="public/js/track-catalog.js"></script>
-    <script src="public/js/marker-manager.js"></script>
-    <script src="public/js/waveform-editor.js"></script>
-    <script src="public/js/text-style-manager.js"></script>
-    <script src="public/js/drag-boundary-controller.js"></script>
-    <script src="public/js/block-loop-control.js"></script>
-    <script type="module" src="public/js/audio-exporter.js"></script>
-    <script src="public/js/export-ui.js"></script>
-    <script src="public/js/background-effects-engine.js"></script>
-    <script src="public/js/mask-system.js"></script>
-    <script src="public/js/rtf-parser-integration.js"></script>
-    <script src="public/js/modal-block-editor.js"></script>
-    <script src="public/js/piano-keyboard.js"></script>
-    <script src="public/js/karaoke-background.js"></script>
-    <script src="public/js/rehearsal-background.js"></script>
-    <script src="public/js/concert-background.js"></script>
-    <script src="public/js/monitor-mix.js"></script>
-    <script src="public/js/monitor-ui.js"></script>
+    <script src="/beLive/js/color-service.js"></script>
+    <script src="/beLive/js/audio-engine.js"></script>
+    <script src="/beLive/js/enhanced-rtf-processor.js"></script>
+    <script src="/beLive/js/rtf-parser.js"></script>
+    <script src="/beLive/js/rtf-simple-parser.js?v=2025-11-18"></script> <!-- ДОБАВЛЕНО: SimpleRtf Parser -->
+    <script src="/beLive/js/rtf-parser-adapter.js?v=2025-11-18"></script>
+    <script src="/beLive/js/lyrics-display.js"></script>
+    <script src="/beLive/js/enhanced-text-processor.js?v=2025-11-18"></script>
+    <script src="/beLive/js/text-processor-integrator.js"></script>
+    <script src="/beLive/js/track-catalog.js"></script>
+    <script src="/beLive/js/marker-manager.js"></script>
+    <script src="/beLive/js/waveform-editor.js"></script>
+    <script src="/beLive/js/text-style-manager.js"></script>
+    <script src="/beLive/js/drag-boundary-controller.js"></script>
+    <script src="/beLive/js/block-loop-control.js"></script>
+    <script type="module" src="/beLive/js/audio-exporter.js"></script>
+    <script src="/beLive/js/export-ui.js"></script>
+    <script src="/beLive/js/background-effects-engine.js"></script>
+    <script src="/beLive/js/mask-system.js"></script>
+    <script src="/beLive/js/rtf-parser-integration.js"></script>
+    <script src="/beLive/js/modal-block-editor.js"></script>
+    <script src="/beLive/js/piano-keyboard.js"></script>
+    <script src="/beLive/js/karaoke-background.js"></script>
+    <script src="/beLive/js/rehearsal-background.js"></script>
+    <script src="/beLive/js/concert-background.js"></script>
+    <script src="/beLive/js/monitor-mix.js"></script>
+    <script src="/beLive/js/monitor-ui.js"></script>
  
     <!-- Live Mode Scripts -->
-    <script src="public/js/live-mode.js"></script>
-    <script src="public/js/live-feed.js"></script>
+    <script src="/beLive/js/live-mode.js"></script>
+    <script src="/beLive/js/live-feed.js"></script>
 
     <!-- 🎵 CATALOG V2 SCRIPT (MUST BE BEFORE APP.JS) -->
-    <script src="public/js/catalog-v2.js?v=2.0"></script>
+    <script src="/beLive/js/catalog-v2.js?v=2.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <!-- Export Feature UI -->
 
     <!-- 🚀 MAIN APPLICATION SCRIPT (MUST BE LAST) -->
-    <script src="public/js/app.js"></script>
+    <script src="/beLive/js/app.js"></script>
     
     <!-- Инициализация приложения -->
     <script>
@@ -1008,14 +1008,14 @@
                                         <input type="file" id="lyrics-input" class="file-input" accept=".txt,.rtf">
                                         <label for="lyrics-input" class="file-label">Lyrics</label>
                                     </div>
- 
+                                    
                                     <!-- JSON MARKERS CELL -->
                                     <div class="upload-cell" data-type="json">
                                         <div class="upload-icon">📊</div>
                                         <input type="file" id="json-input" class="file-input" accept=".json">
                                         <label for="json-input" class="file-label">Markers JSON</label>
                                     </div>
- 
+                                    
                                     <!-- ZIP FILE CELL (новый) -->
                                     <div class="upload-cell" data-type="zip">
                                         <div class="upload-icon">🗜️</div>
@@ -1023,7 +1023,7 @@
                                         <input type="file" id="zip-input" class="file-input" accept=".zip">
                                         <label for="zip-input" class="file-label">ZIP Archive</label>
                                     </div>
- 
+                                    
                                     <!-- STEMS CELL (placeholder) -->
                                     <div class="upload-cell disabled" data-type="stems" title="Скоро">
                                         <div class="upload-icon">🧬</div>
@@ -1043,22 +1043,22 @@
             </div>
         </div>
     </div>
-    <script src="/beLive/src/main.ts"></script>
+    <script src="/beLive/js/main.js"></script>
     
     <!-- Service Worker с правильным путём -->
     <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          // ВАЖНО: Используем абсолютный путь для GitHub Pages подпапки
-          const swPath = '/beLive/service-worker.js'; 
-          
-          navigator.serviceWorker.register(swPath, { scope: '/beLive/' })
-            .then(registration => {
-              console.log('✅ SW зарегистрирован, scope:', registration.scope);
-            })
-            .catch(error => {
-              console.error('❌ Ошибка SW:', error);
-            });
+        window.addEventListener('load', function() {
+          // Путь БЕЗ /public/
+          navigator.serviceWorker.register('/beLive/service-worker.js', {
+            scope: '/beLive/'
+          })
+          .then(function(registration) {
+            console.log('✅ SW registered:', registration.scope);
+          })
+          .catch(function(error) {
+            console.error('❌ SW failed:', error);
+          });
         });
       }
     </script>

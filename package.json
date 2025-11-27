@@ -79,7 +79,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "deploy": "npm run build && gh-pages -d dist",
     "test": "vitest",
@@ -99,6 +99,7 @@
   "homepage": "https://github.com/side-chaine/beLive#readme",
   "type": "module",
   "devDependencies": {
+    "typescript": "^5.9.3",
     "vite": "^5.0.0",
     "vite-tsconfig-paths": "^5.1.4"
   }

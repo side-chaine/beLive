@@ -8,14 +8,14 @@ const icons = {
   '512': icon192Base64, // Для 512x512 пока используем ту же 192x192 base64, это нормально для теста
 };
 
-// Убедимся, что директория public/icons существует
-const dir = 'public/icons';
-if (!fs.existsSync(dir)){
-    fs.mkdirSync(dir, { recursive: true });
-}
+    // Убедимся, что директория public/icons существует
+    const dir = 'public/icons';
+    if (!fs.existsSync(dir)){
+        fs.mkdirSync(dir, { recursive: true });
+    }
 
 Object.entries(icons).forEach(([size, base64Data]) => {
-  const path = `${dir}/icon-${size}x${size}.png`;
+    const path = `${dir}/icon-${size}x${size}.png`;
   // Декодируем base64 строку в буфер и записываем в файл
   fs.writeFile(path, Buffer.from(base64Data, 'base64'), (err) => {
     if (err) {

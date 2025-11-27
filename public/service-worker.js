@@ -1,40 +1,42 @@
-const CACHE_NAME = 'belive-cache-v1';
-const BASE_PATH = self.location.pathname.replace('/service-worker.js', '');
-
-const urlsToCache = [
-  BASE_PATH + '/',
-  BASE_PATH + '/index.html',
-  BASE_PATH + '/manifest.json'
+const CACHE_NAME = 'belive-v1';
+const BASE = '/beLive/';
+const PRECACHE_URLS = [
+  BASE,
+  BASE + 'index.html',
+  BASE + 'manifest.json',
+  BASE + 'css/styles.css',
+  BASE + 'icons/icon-192x192.png',
+  BASE + 'icons/icon-512x512.png'
+  // Добавьте другие критичные файлы
 ];
-
+// Install
 self.addEventListener('install', (event) => {
-  console.log('SW installing...');
+  console.log('[SW] Install');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Caching app shell');
-        return cache.addAll(urlsToCache);
+        console.log('[SW] Pre-caching');
+        return cache.addAll(PRECACHE_URLS);
       })
-      .catch((err) => {
-        console.error('Cache addAll failed:', err);
-      })
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
-
+// Activate
 self.addEventListener('activate', (event) => {
-  console.log('SW activating...');
+  console.log('[SW] Activate');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
-      );
-    })
+    caches.keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames
+            .filter((name) => name !== CACHE_NAME)
+            .map((name) => caches.delete(name))
+        );
+      })
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
-
+// Fetch
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)

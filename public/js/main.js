@@ -1,89 +1,61 @@
-// === PITCH DETECTION ENGINE ===
-class PitchDetectionEngine {
-    constructor() {
-        this.detector = null;
-        this.audioContext = null;
-        this.microphone = null;
-        this.analyser = null;
-        this.dataArray = null;
-        this.isActive = false;
-        this.sampleRate = 44100;
-        this.bufferLength = 1024;
-        this.onPitchCallback = null;
-        console.log('🎵 PitchDetectionEngine: Инициализирован');
-    }
-    
-    async init() {
-        try {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            this.microphone = this.audioContext.createMediaStreamSource(stream);
-            this.analyser = this.audioContext.createAnalyser();
-            this.analyser.fftSize = this.bufferLength * 2;
-            this.microphone.connect(this.analyser);
-            this.dataArray = new Float32Array(this.analyser.fftSize);
-            
-            if (window.Pitchy) {
-                this.detector = window.Pitchy.PitchDetector.forFloat32Array(this.analyser.fftSize);
-                console.log('✅ PitchDetectionEngine: Инициализация завершена');
-                return true;
-            } else {
-                console.error('❌ Pitchy библиотека не загружена');
-                return false;
-            }
-        } catch (error) {
-            console.error('❌ Ошибка инициализации PitchDetectionEngine:', error);
-            return false;
-        }
-    }
-    
-    startDetection() {
-        if (!this.detector) {return;}
-        this.isActive = true;
-        console.log('🎵 Запуск pitch detection...');
-        this.detectPitch();
-    }
-    
-    stopDetection() {
-        this.isActive = false;
-        console.log('⏹️ Остановка pitch detection');
-    }
-    
-    detectPitch() {
-        if (!this.isActive) {return;}
-        
-        this.analyser.getFloatTimeDomainData(this.dataArray);
-        const [frequency, clarity] = this.detector.findPitch(this.dataArray, this.audioContext.sampleRate);
-        
-        if (clarity > 0.8 && frequency > 80 && frequency < 1000) {
-            const midiNote = 12 * Math.log2(frequency / 440) + 69;
-            const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-            const noteNumber = Math.round(midiNote);
-            const octave = Math.floor(noteNumber / 12) - 1;
-            const noteIndex = noteNumber % 12;
-            const noteName = `${noteNames[noteIndex]}${octave}`;
-            
-            const pitchData = {
-                frequency: frequency.toFixed(2),
-                midiNote: midiNote.toFixed(2),
-                noteName: noteName,
-                clarity: clarity.toFixed(3)
-            };
-            
-            if (this.onPitchCallback) {
-                this.onPitchCallback(pitchData);
-            }
-        }
-        
-        requestAnimationFrame(() => this.detectPitch());
-    }
-    
-    onPitch(callback) {
-        this.onPitchCallback = callback;
-    }
-}
+import '../css/main.css'; // Корректный путь
+import '/src/css/ai-chat.css'; // Корректный абсолютный путь
+import '../css/avatar-studio.css'; // Корректный путь
 
-// Создаем глобальный экземпляр
-window.pitchEngine = new PitchDetectionEngine();
+import { aiHub } from './js/ai/registry';
+import { GatewayProvider } from './js/ai/providers/gateway-provider';
+import { ModelDropdownUI } from './js/ui/model-dropdown-ui'; // Новый импорт
+import { AIChatUI } from './js/ui/ai-chat-ui'; // Новый импорт
 
-// ... existing code ... 
+declare global { interface Window { __BELIVE_BOOTED__?: boolean } }
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (window.__BELIVE_BOOTED__) return; // Глобальный гард от повторной инициализации
+  window.__BELIVE_BOOTED__ = true;
+
+  const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:8787'; // Use environment variable or default
+  const gatewayProvider = new GatewayProvider(GATEWAY_URL);
+  aiHub.register(gatewayProvider);
+
+  new AIChatUI(); // Инициализация AIChatUI
+  new ModelDropdownUI(); // Инициализация ModelDropdownUI
+
+  // Обработчик для кнопки AI Operator. Теперь он будет открывать чат.
+  const aiOperatorButton = document.getElementById('toggle-loopblock-mode');
+  if (aiOperatorButton) {
+    // console.log('✅ Found AI Operator button'); // Закомментировано
+    // aiOperatorButton.addEventListener('click', () => { // Удален дублирующий обработчик
+    //   console.log('⚡ AI Operator button clicked!');
+    //   aiChatUI.toggleChat(); // Переключаем видимость чата
+    // });
+  }
+
+  // Подписка на изменение модели для обновления UI кнопки "Operator"
+  aiHub.on('modelChanged', (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const activeModel = customEvent.detail;
+      const operatorButton = document.getElementById('toggle-loopblock-mode');
+      if (operatorButton) {
+          if (activeModel) {
+              operatorButton.innerHTML = `<span class="operator-text">${activeModel.shortName}</span>`;
+              operatorButton.classList.add('ai-active');
+          } else {
+              operatorButton.innerHTML = `<span class="operator-text">Operator</span>`;
+              operatorButton.classList.remove('ai-active');
+          }
+      }
+  });
+
+  // Убедимся, что начальное состояние кнопки правильное при загрузке
+  const initialActiveModel = aiHub.getActiveModel();
+  const operatorButton = document.getElementById('toggle-loopblock-mode');
+  if (operatorButton) {
+      if (initialActiveModel) {
+          operatorButton.innerHTML = `<span class="operator-text">${initialActiveModel.shortName}</span>`;
+          operatorButton.classList.add('ai-active');
+      } else {
+          operatorButton.innerHTML = `<span class="operator-text">Operator</span>`;
+          operatorButton.classList.remove('ai-active');
+      }
+  }
+});
