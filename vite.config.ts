@@ -6,12 +6,10 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    // Убираем ручное копирование из package.json, Vite сам возьмет всё из public
-  },
-  // Убираем plugins: [tsconfigPaths()]
-  server: {
-    mimeTypes: {
-      '.ts': 'application/javascript',
-    },
+    rollupOptions: {
+      input: {
+        main: './index.html'
+      }
+    }
   },
 })
