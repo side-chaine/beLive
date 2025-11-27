@@ -37,16 +37,16 @@ export class AI_ActionExecutor {
     try {
       switch (toolCall.tool) {
         case 'set_metronome':
-          return await this.setMetronome(toolCall.arguments);
+          return await this.setMetronome(toolCall.arguments as { bpm: number });
         
         case 'analyze_vocal':
-          return await this.analyzeVocal(toolCall.arguments);
+          return await this.analyzeVocal();
         
         case 'suggest_exercise':
-          return await this.suggestExercise(toolCall.arguments);
+          return await this.suggestExercise(toolCall.arguments as { type: string });
         
         case 'adjust_volume':
-          return await this.adjustVolume(toolCall.arguments);
+          return await this.adjustVolume(toolCall.arguments as { track: string; level: number });
         
         default:
           return {
@@ -88,7 +88,7 @@ export class AI_ActionExecutor {
   }
 
   // 🎤 Анализ вокала
-  private static async analyzeVocal(args: {}): Promise<ActionResponse> {
+  private static async analyzeVocal(): Promise<ActionResponse> {
     // Здесь должна быть интеграция с вашим аудио движком
     // Например, анализ питча, тембра, ритма
     
