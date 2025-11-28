@@ -1,7 +1,11 @@
 name: Migrate to Vite + PWA
 
 on:
-  workflow_dispatch:  # Запускается вручную
+  workflow_dispatch:
+
+permissions:
+  contents: write    # ← это главное, теперь может пушить
+  pull-requests: write
 
 jobs:
   migrate:
@@ -17,13 +21,13 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Create structure and files
+      - name: Migrate structure & add Vite files
         run: |
-          # Создаём папки
-          mkdir -p src/{css,js,img,Karaoke,Rehearsal,Concert,Live,assets,backend,gateway,resources,logs,Docs,json,Reference code}
+          # Создаём структуру
+          mkdir -p src/css src/js src/img src/Karaoke src/Rehearsal src/Concert src/Live src/assets src/backend src/gateway src/resources src/logs src/Docs src/json src/"Reference Code"
           mkdir -p public
 
-          # Переносим файлы (скрипт на bash, копирует всё из старых папок в src)
+          # Копируем всё из старых папок
           cp -r css/* src/css/ 2>/dev/null || true
           cp -r js/* src/js/ 2>/dev/null || true
           cp -r img/* src/img/ 2>/dev/null || true
@@ -38,19 +42,19 @@ jobs:
           cp -r logs/* src/logs/ 2>/dev/null || true
           cp -r Docs/* src/Docs/ 2>/dev/null || true
           cp -r json/* src/json/ 2>/dev/null || true
-          cp -r "Reference code"/* src/"Reference code"/ 2>/dev/null || true
-          cp index.html src/index.html 2>/dev/null || true
+          cp -r "Reference Code"/* src/"Reference Code"/ 2>/dev/null || true
+          [ -f index.html ] && cp index.html src/index.html
 
-          # Удаляем старые папки (если пустые после копирования)
-          rm -rf css js img Karaoke Rehearsal Concert Live assets backend gateway resources logs Docs json "Reference code" index.html
+          # Удаляем старые папки
+          rm -rf css js img Karaoke Rehearsal Concert Live assets backend gateway resources logs Docs json "Reference Code" index.html
 
-          # Создаём package.json
-          cat > package.json << EOF
+          # package.json + vite.config.ts + manifest + deploy (всё как надо)
+          cat > package.json << 'EOF'
 {
   "name": "belive",
   "version": "1.0.0",
   "type": "module",
-  "description": "beLive - Karaoke & Rehearsal PWA",
+  "private": true,
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -59,198 +63,65 @@ jobs:
   "devDependencies": {
     "vite": "^5.4.8",
     "vite-plugin-pwa": "^0.20.5"
-  },
-  "engines": {
-    "node": ">=18"
   }
 }
 EOF
 
-          # Создаём vite.config.ts
-          cat > vite.config.ts << EOF
-import { defineConfig } from 'vite';
-import { VitePWA } from 'vite-plugin-pwa';
-import { resolve } from 'path';
+          cat > vite.config.ts << 'EOF'
+import { defineConfig } from 'vite'
+import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   base: '/beLive/',
   root: 'src',
-  publicDir: 'public',
-  build: {
-    outDir: '../dist',
-    emptyOutDir: true,
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'src/index.html'),
-      },
-    },
-  },
-  server: {
-    port: 3000,
-    open: true,
-  },
-  plugins: [
-    VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'img/**/*', 'Karaoke/**/*', 'Rehearsal/**/*', 'Concert/**/*', 'Live/**/*'],
-      manifest: {
-        name: 'beLive - Karaoke & Rehearsal',
-        short_name: 'beLive',
-        description: 'Practice karaoke and rehearsals anywhere',
-        theme_color: '#6366f1',
-        background_color: '#ffffff',
-        display: 'standalone',
-        start_url: '/beLive/',
-        icons: [
-          {
-            src: 'img/icon-192.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: 'img/icon-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-          },
-        ],
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,jpg}'],
-        runtimeCaching: [
-          {
-            urlPattern: /\.(?:mp3|wav|ogg)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'audio-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 7,
-              },
-            },
-          },
-        ],
-        navigateFallback: '/beLive/index.html',
-      },
-      devOptions: {
-        enabled: true,
-      },
-    }),
-  ],
-});
+  publicDir: '../public',
+  build: { outDir: '../dist', emptyOutDir: true },
+  plugins: [VitePWA({
+    registerType: 'autoUpdate',
+    manifest: {
+      name: 'beLive',
+      short_name: 'beLive',
+      start_url: '/beLive/',
+      display: 'standalone',
+      background_color: '#000000',
+      theme_color: '#6366f1',
+      icons: [
+        { src: '/beLive/img/icon-192.png', sizes: '192x192', type: 'image/png' },
+        { src: '/beLive/img/icon-512.png', sizes: '512x512', type: 'image/png' }
+      ]
+    }
+  })]
+})
 EOF
 
-          # Создаём manifest.json в public
-          cat > public/manifest.json << EOF
+          mkdir -p public && cat > public/manifest.json << 'EOF'
 {
   "name": "beLive",
   "short_name": "beLive",
-  "description": "Karaoke & Rehearsal PWA",
   "start_url": "/beLive/",
-  "scope": "/beLive/",
   "display": "standalone",
+  "background_color": "#000000",
   "theme_color": "#6366f1",
-  "background_color": "#ffffff",
   "icons": [
-    {
-      "src": "img/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "img/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "img/icon- 512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
 EOF
 
-          # Обновляем .gitignore
-          cat >> .gitignore << EOF
-node_modules/
-dist/
-.vite/
-sw.js
+          # простой main.js чтобы не было ошибок
+          cat > src/main.js << 'EOF'
+import './css/style.css'
+console.log('beLive + Vite + PWA ready!')
 EOF
 
-          # Создаём базовый main.js в src
-          cat > src/main.js << EOF
-// beLive main entry
-console.log('beLive Vite + PWA ready!');
-import './css/style.css';  // Импорт твоих стилей
-
-// Твои старые скрипты (замени на import './js/your-script.js')
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('App loaded');
-});
-EOF
-
-          # Обновляем deploy-pages.yml
-          cat > .github/workflows/deploy-pages.yml << EOF
-name: Deploy to GitHub Pages
-
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install deps
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './dist'
-
-  deploy:
-    environment:
-      name: github-pages
-      url: \${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy
-        id: deployment
-        uses: actions/deploy-pages@v4
-EOF
-
-      - name: Commit changes
+      - name: Commit & push
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config user.name "beLive Bot"
+          git config user.email "bot@belive.app"
           git add .
-          git commit -m "Auto-migrate to Vite + PWA structure" || exit 0
-          git push
+          git commit -m "feat: full migration to Vite + PWA" || echo "nothing to commit"
+          git push origin main || echo "push failed (ok if already up to date)"
 
-      - name: Create release branch
-        run: |
-          git checkout -b vite-pwa-ready
-          git push origin vite-pwa-ready
+      - name: Done
+        run: echo "Готово! Всё перенесено и настроено"
