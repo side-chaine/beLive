@@ -1,0 +1,18 @@
+{
+  "name": "belive-gateway",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "start": "wrangler dev"
+  },
+  "dependencies": {
+    "itty-router": "^2.6.6"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240105.0",
+    "typescript": "^5.3.3",
+    "wrangler": "^3.25.0"
+  }
+}

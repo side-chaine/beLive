@@ -1,0 +1,755 @@
+/**
+ * RTF Parser for Text application
+ * Extracts plain text content from RTF data, with focus on Cyrillic support.
+ */
+
+class RtfParser {
+
+    /**
+     * Parses RTF content and extracts the plain text.
+     * @param {string} rtfContent 
+     * @returns {string}
+     */
+    static parse(rtfContent) {
+        if (!rtfContent || !rtfContent.includes('\\rtf')) {
+            // For non-RTF content or empty content, return as is
+            return rtfContent;
+        }
+
+        console.log(`Parsing RTF content (first 100 chars): "${rtfContent.substring(0, 100)}..."`);
+        
+        try {
+            const parser = new RtfParser(rtfContent);
+            let extractedText = parser._extractText();
+            
+            // Применяем финальную очистку текста
+            return RtfParser._finalizeText(extractedText, rtfContent);
+        } catch (error) {
+            console.error('Error parsing RTF content:', error);
+            return rtfContent; // Возвращаем исходный текст в случае ошибки
+        }
+    }
+
+    /**
+     * Constructor for the internal parser state.
+     * @param {string} rtfContent 
+     * @private
+     */
+    constructor(rtfContent) {
+        this.rtf = rtfContent;
+        this.pos = 0;
+
+        this.textBuffer = '';
+        this.stack = [];
+        
+        this.charMap = this._createWin1251Map();
+
+        this.groupLevel = 0;
+        this.currentGroupIgnored = false;
+        this.afterParagraph = false;
+
+        this.ignorableDestinations = new Set([
+            'fonttbl', 'colortbl', 'stylesheet', 'pict', 'object', 'info', 
+            'comment', 'doccomm', 'header', 'footer', 'themedata', 
+            'colorschememapping', 'latentstyles', 'shpinst', 'shptxt',
+            'pntext', 'listtext', 
+            'operator', 
+            'mmath', 
+            'htmlrtf', 
+            '*' // For \\*-destinations
+            // Add other RTF destinations that should be ignored if necessary
+        ]);
+
+        this.specialChars = {
+            'par': '\\n',
+            'pard': '\\n', // Often treated like \\par
+            'sect': '\\n\\n',
+            'page': '\\n\\n',
+            'line': '\\n',
+            'tab': '\\t',
+            'emdash': '\\u2014',
+            'endash': '\\u2013',
+            'emspace': '\\u2003',
+            'enspace': '\\u2002',
+            'qmspace': '\\u2005',
+            'bullet': '\\u2022',
+            'lquote': '\\u2018',
+            'rquote': '\\u2019',
+            'ldblquote': '\\u201C',
+            'rdblquote': '\\u201D',
+            'fi': 'fi', // Ligature
+            'fl': 'fl'  // Ligature
+            // Other special RTF character sequences can be mapped here
+        };
+    }
+
+    /**
+     * Creates the Windows-1251 to Unicode character map.
+     * @returns {Map<number, string>} 
+     * @private
+     */
+    _createWin1251Map() {
+        const map = new Map();
+        // Windows-1251 specific characters (0x80-0xBF)
+        const win1251Extra = {
+            0x80: 0x0402, 0x81: 0x0403, 0x82: 0x201A, 0x83: 0x0453, 0x84: 0x201E, 0x85: 0x2026, 0x86: 0x2020,
+            0x87: 0x2021, 0x88: 0x20AC, 0x89: 0x2030, 0x8A: 0x0409, 0x8B: 0x2039, 0x8C: 0x040A, 0x8D: 0x040C,
+            0x8E: 0x040B, 0x8F: 0x040F, 0x90: 0x0452, 0x91: 0x2018, 0x92: 0x2019, 0x93: 0x201C, 0x94: 0x201D,
+            0x95: 0x2022, 0x96: 0x2013, 0x97: 0x2014, /*0x98: 0x0000,*/ 0x99: 0x2122, 0x9A: 0x0459, 0x9B: 0x203A,
+            0x9C: 0x045A, 0x9D: 0x045C, 0x9E: 0x045B, 0x9F: 0x045F, 0xA0: 0x00A0, 0xA1: 0x040E, 0xA2: 0x045E,
+            0xA3: 0x0408, 0xA4: 0x00A4, 0xA5: 0x0490, 0xA6: 0x00A6, 0xA7: 0x00A7, 0xA8: 0x0401, 0xA9: 0x00A9,
+            0xAA: 0x0404, 0xAB: 0x00AB, 0xAC: 0x00AC, 0xAD: 0x00AD, 0xAE: 0x00AE, 0xAF: 0x0407, 0xB0: 0x00B0,
+            0xB1: 0x00B1, 0xB2: 0x0406, 0xB3: 0x0456, 0xB4: 0x0491, 0xB5: 0x00B5, 0xB6: 0x00B6, 0xB7: 0x00B7,
+            0xB8: 0x0451, 0xB9: 0x2116, 0xBA: 0x0454, 0xBB: 0x00BB, 0xBC: 0x0458, 0xBD: 0x0405, 0xBE: 0x0455,
+            0xBF: 0x0457
+        };
+        for (const [code, unicode] of Object.entries(win1251Extra)) {
+            map.set(parseInt(code), String.fromCharCode(unicode));
+        }
+        // Standard Cyrillic block (0xC0-0xFF -> U+0410-U+044F)
+        for (let i = 0xC0; i <= 0xFF; i++) {
+            map.set(i, String.fromCharCode(i + 0x0350)); 
+        }
+        return map;
+    }
+
+    /**
+     * Main loop to extract text.
+     * @returns {string}
+     * @private
+     */
+    _extractText() {
+        this.textBuffer = '';
+        this.stack = [];
+        this.pos = 0;
+
+        while (this.pos < this.rtf.length) {
+            const char = this.rtf[this.pos];
+            let isInIgnoredGroup = this.stack.length > 0 && this.stack[this.stack.length - 1].isIgnored;
+
+            if (char === '{') {
+                this.pos++; // Skip '{'
+                let groupIsIgnored = isInIgnoredGroup; // Inherit parent's ignored state by default
+
+                // Check if this new group starts with an ignorable control word or symbol
+                let tempPos = this.pos;
+                let controlCandidate = '';
+                let isStarDest = false;
+
+                if (tempPos < this.rtf.length && this.rtf[tempPos] === '\\\\') {
+                    tempPos++; // Skip '\\'
+                    if (tempPos < this.rtf.length && this.rtf[tempPos] === '*') {
+                        isStarDest = true;
+                        tempPos++; // Skip '*'
+                    } else {
+                    while (tempPos < this.rtf.length && /^[a-zA-Z]$/.test(this.rtf[tempPos])) {
+                            controlCandidate += this.rtf[tempPos];
+                        tempPos++;
+                        }
+                    }
+
+                    // Determine if the group should be ignored
+                    const lowerControlCandidate = controlCandidate.toLowerCase();
+                    if (isStarDest || (controlCandidate && this.ignorableDestinations.has(lowerControlCandidate))) {
+                        groupIsIgnored = true;
+                        this.pos = tempPos; // Update main pos to be after the control word/symbol
+
+                        // Skip optional numeric parameter and/or space
+                        // Skip numeric parameter if any (optional)
+                            while (this.pos < this.rtf.length && /^[0-9-]$/.test(this.rtf[this.pos])) {
+                                this.pos++;
+                            }
+                        // Skip optional space after control word/parameter
+                        if (this.pos < this.rtf.length && this.rtf[this.pos] === ' ') {
+                            this.pos++;
+                        }
+                        
+                        // Now, with this.pos correctly positioned after the ignorable destination's declaration,
+                        // skip the entire content of this group.
+                        this._skipCurrentGroupContent();
+                        // _skipCurrentGroupContent advances this.pos to AFTER the closing '}' of this group.
+                        // We then 'continue' to the next iteration of the main while loop.
+                        continue; 
+                    }
+                    // If not an ignorable destination starter, this.pos remains at the char after '{'
+                    // or it would have been updated by the non-ignorable control word parsing above
+                    // but since we reset tempPos, we need to ensure this.pos is where it should be
+                    // if the control word wasn't ignorable.
+                    // However, if it was a \\something that wasn't ignorable, it will be handled as a normal control sequence later.
+                    // For now, we just push the stack based on inherited state if no ignorable dest was found here.
+                }
+                this.stack.push({ isIgnored: groupIsIgnored });
+
+            } else if (char === '}') {
+                this.pos++;
+                if (this.stack.length > 0) {
+                    this.stack.pop();
+                }
+            } else if (char === '\\\\') {
+                this._handleControlSequence(isInIgnoredGroup);
+            } else { // Обычный текстовый символ
+                if (!isInIgnoredGroup) {
+                    this.textBuffer += char;
+                }
+                this.pos++;
+            }
+            
+            if (this.pos > this.rtf.length * 2) { 
+                 console.error("RTF Parser potentially stuck in loop. Aborting.");
+                 break; 
+            }
+        }
+        // console.log("RTF Parser: Raw extracted text (first 500):", this.textBuffer.substring(0,500));
+        return this.textBuffer;
+    }
+
+    /**
+     * Handles RTF control sequences starting with '\'.
+     * @private
+     */
+    _handleControlSequence(isInIgnoredGroup) {
+        // this.pos is AT the '\' character.
+        this.pos++; // Consume the '\'
+        // console.log("RTF Parser: Handling control sequence at", this.pos);
+        
+        // Check for escaped characters (like \\, \{, \})
+        if (this.pos < this.rtf.length) {
+            const nextChar = this.rtf[this.pos];
+            if (nextChar === '\\' || nextChar === '{' || nextChar === '}') {
+                if (!isInIgnoredGroup) {
+                    this.textBuffer += nextChar;
+                }
+                this.pos++;
+                return;
+            }
+            
+            // Check for Unicode character sequence like \'XX
+            if (nextChar === '\'') {
+                this.pos++; // Consume the '\''
+                if (this.pos + 1 < this.rtf.length) {
+                    const hexByte = this.rtf.substring(this.pos, this.pos + 2);
+                    const byteValue = parseInt(hexByte, 16);
+                    
+                    if (!isInIgnoredGroup) {
+                        // Используем таблицу кодировки для преобразования
+                        // Проверяем на кириллицу в CP1251
+                        if (byteValue >= 192 && byteValue <= 255) { // Диапазон кириллицы в CP1251
+                            const char = this.charMap[byteValue] || String.fromCharCode(byteValue);
+                            this.textBuffer += char;
+                            console.log(`Converted CP1251 byte ${hexByte} (${byteValue}) to character: ${char}`);
+                        } else {
+                            const char = String.fromCharCode(byteValue);
+                            this.textBuffer += char;
+                        }
+                    }
+                    this.pos += 2;
+                    return;
+                }
+            }
+            
+            // Проверяем на управляющий символ \u и обрабатываем коды Unicode
+            if (nextChar === 'u') {
+                this.pos++; // Consume the 'u'
+                // Найдем число, следующее за \u, это будет код Unicode
+                let unicodeStr = '';
+                let isNegative = false;
+                
+                // Проверка на отрицательное значение
+                if (this.pos < this.rtf.length && this.rtf[this.pos] === '-') {
+                    isNegative = true;
+                    this.pos++; // Пропустить минус
+                }
+                
+                // Считываем числовое значение
+                while (this.pos < this.rtf.length && /\d/.test(this.rtf[this.pos])) {
+                    unicodeStr += this.rtf[this.pos];
+                    this.pos++;
+                }
+                
+                if (unicodeStr) {
+                    // Преобразуем строку в число
+                    let unicodeValue = parseInt(unicodeStr, 10);
+                    if (isNegative) {
+                        unicodeValue = 65536 + unicodeValue; // Корректировка отрицательных значений (для кириллицы часто используется)
+                    }
+                    
+                    // Пропустить пробел после Unicode-кода, если он есть
+                    if (this.pos < this.rtf.length && /\s/.test(this.rtf[this.pos])) {
+                        this.pos++;
+                    }
+                    
+                    if (!isInIgnoredGroup) {
+                        // Проверяем, находится ли код в диапазоне для кириллицы (U+0400 - U+04FF)
+                        if ((unicodeValue >= 0x0400 && unicodeValue <= 0x04FF) || // Основной кириллический блок
+                            (unicodeValue >= 0x0500 && unicodeValue <= 0x052F)) { // Дополнительный кириллический блок
+                            const char = String.fromCharCode(unicodeValue);
+                            this.textBuffer += char;
+                            console.log(`Converted Unicode ${unicodeValue} (${unicodeValue.toString(16)}) to Cyrillic: ${char}`);
+                        } else {
+                            try {
+                                // Для других диапазонов тоже пытаемся преобразовать
+                                const char = String.fromCharCode(unicodeValue);
+                                this.textBuffer += char;
+                                
+                                // Если в тексте есть кириллица, логируем все unicode-преобразования
+                                if (/[\u0400-\u04FF]/.test(this.textBuffer)) {
+                                    console.log(`Converted Unicode ${unicodeValue} (${unicodeValue.toString(16)}) to character: ${char}`);
+                                }
+                            } catch (e) {
+                                console.error(`Error converting Unicode value ${unicodeValue}: ${e.message}`);
+                            }
+                        }
+                    }
+                    return;
+                }
+            }
+        }
+        
+        // If not a special sequence, handle as a control word
+        this._handleControlWord(isInIgnoredGroup);
+    }
+
+    /**
+     * Handles control words (e.g., \par, \font, etc.).
+     * @private
+     */
+    _handleControlWord(isInIgnoredGroup) {
+        // this.pos is AT the first letter of the control word. '\' was consumed by caller (_handleControlSequence).
+        let controlWord = '';
+        let parameter = null;
+
+        // Read control word (all alphabetical characters)
+        while (this.pos < this.rtf.length && this.rtf[this.pos].match(/[a-zA-Z]/)) {
+            controlWord += this.rtf[this.pos];
+            this.pos++;
+        }
+
+        // Check for an optional numeric parameter
+        let paramMatch = this.rtf.substring(this.pos).match(/^(-?\\d+)/);
+        if (paramMatch) {
+            parameter = parseInt(paramMatch[1], 10);
+            this.pos += paramMatch[1].length;
+        }
+
+        // Consume optional space after control word and parameter
+        if (this.pos < this.rtf.length && this.rtf[this.pos] === ' ') {
+            this.pos++;
+        }
+
+        const wordLower = controlWord.toLowerCase();
+
+        // If the group is already being skipped, don't process specific words,
+        // just ensure they are consumed.
+        if (isInIgnoredGroup) {
+            // console.debug(`Ignoring control word '${controlWord}' as it is in a skipped group.`);
+            return; // The word, parameter, and space are already consumed.
+        }
+
+        // Process known control words
+        switch (wordLower) {
+            case 'par':
+            case 'line':
+                // Ensure a single newline. Avoid multiple newlines if \\par is repeated.
+                if (!this.textBuffer.endsWith('\\n')) {
+                    this.textBuffer += '\\n';
+                }
+                break;
+            case 'tab':
+                this.textBuffer += '\\t';
+                break;
+            // Add other text-producing control words here if necessary
+            // E.g., some RTF versions might have non-breaking space symbols etc.
+
+            // --- Words that are purely formatting/metadata and produce no direct text output ---
+            // These should be consumed but not add to textBuffer.
+            // Most of these are already handled by being ignored if they start a group
+            // via ignorableDestinations in _extractText's '{' handling.
+            // Listing them here ensures they are also ignored if encountered outside such groups,
+            // or if they don't start a group themselves but are just commands.
+            case 'rtf': // General RTF versions like rtf1
+            case 'ansi':
+            case 'ansicpg': // e.g., ansicpg1251
+            case 'mac':
+            case 'pc':
+            case 'pca':
+            case 'deff': // Default font
+            case 'deflang': // Default language
+            case 'fonttbl':
+            case 'colortbl':
+            case 'stylesheet':
+            case 'info':
+            case 'title':
+            case 'subject':
+            case 'author':
+            case 'operator':
+            case 'keywords':
+            case 'comment':
+            case 'doccomm':
+            case 'vern':
+            case 'creatim':
+            case 'revtim':
+            case 'printim':
+            case 'buptim':
+            case 'bliptag':
+            case 'blipuid':
+            case 'pict':
+            case 'object':
+            case 'objclass':
+            case 'objdata':
+            case 'themedata': // Microsoft Office specific
+            case 'colorschememapping': // Microsoft Office specific
+            case 'filetbl':
+            case 'revtbl':
+            case 'rsidtbl':
+            case 'generator': // e.g., TextEdit, Microsoft Word
+            case 'pso': // Page settings and other print-related info
+            case 'formfield':
+            case 'datafield':
+            case 'pgdsctbl': // page description table
+            // Font properties (often have parameters, like \f0, \fs24)
+            case 'f': // Font select (e.g., \f0)
+            case 'fs': // Font size (e.g., \fs24)
+            case 'fcharset': // Font character set (e.g., \fcharset0)
+            case 'fbidi': // Bidirectional font
+            case 'fdecor': // Decorative font
+            case 'fe': // Font family
+            case 'fmodern': // Modern font
+            case 'fnil': // Nil font
+            case 'froman': // Roman font
+            case 'fscript': // Script font
+            case 'fswiss': // Swiss font
+            case 'ftech': // Technical font
+            // Character formatting
+            case 'b': // Bold
+            case 'i': // Italic
+            case 'ul': // Underline
+            case 'ulnone': // No underline
+            case 'strike': // Strikethrough
+            case 'scaps': // Small caps
+            case 'caps': // All caps
+            case 'v': // Hidden text
+            case 'cf': // Foreground color (e.g., \cf1)
+            case 'cb': // Background color (e.g., \cb1) (deprecated, use \chshdng)
+            case 'chshdng': // Character shading
+            case 'expnd': // Expand/compress text
+            case 'kerning': // Kerning
+            case 'outl': // Outline
+            case 'shad': // Shadow
+            // Paragraph formatting (many of these take parameters)
+            case 'pard': // Reset paragraph properties
+            case 'pardeftab': // Default tab width
+            case 'partightenfactor':
+            case 'ql': // Align left
+            case 'qr': // Align right
+            case 'qj': // Justify
+            case 'qc': // Align center
+            case 'fi': // First line indent
+            case 'li': // Left indent
+            case 'ri': // Right indent
+            case 'sb': // Space before
+            case 'sa': // Space after
+            case 'sl': // Line spacing
+            case 'slmult': // Multiple line spacing
+            case 'tx': // Tab stop position
+            // Section / Document formatting
+            case 'paperw': // Paper width
+            case 'paperh': // Paper height
+            case 'margl': // Left margin
+            case 'margr': // Right margin
+            case 'margt': // Top margin
+            case 'margb': // Bottom margin
+            case 'cols': // Number of columns
+            case 'sectd': // Reset section properties
+            // Specific application metadata often prefixed
+            case 'cocoartf': // Apple Cocoa RTF specific
+            case 'cocoatextscaling': // Apple Cocoa RTF specific
+            case 'cocoaplatform': // Apple Cocoa RTF specific
+            // Field instructions (often complex, like {\field ... })
+            // but individual control words might appear
+            case 'fldinst': // Field instructions
+            case 'fldrslt': // Field result
+            // Other miscellaneous or less common ones that produce no text
+            case 'నో': // Found in some specific RTF, seems to be ignorable
+            case '瀨': // another one from specific RTFs
+            case 'plain': // Reset character formatting
+            case 'stylesheet':
+            // Ensure all words from ignorableDestinations (if they can appear as simple control words)
+            // are also listed here if they don't produce text and aren't handled by group skipping.
+            // For example, 'fonttbl' is in ignorableDestinations for {\fonttbl ...},
+            // if \fonttbl appears alone, it's also non-printing.
+                // These words are consumed, and no text is generated.
+                // console.debug(`Ignored control word: ${controlWord}`);
+                break; 
+            default:
+                // For truly unknown control words that are not in the extensive list above,
+                // and are not handled as ignorable groups at '{'
+                // We log them but they are NOT added to textBuffer by default.
+                // The control word (e.g., "rtf1") itself is consumed by the logic above this switch.
+                // This prevents random parts of unknown commands from becoming text.
+                if (wordLower && wordLower.length > 0) { // Avoid logging empty strings if something went wrong
+                     // console.debug(`RTF Parser: Unknown or unhandled control word: '${wordLower}' (param: ${parameter})`);
+                }
+                break;
+        }
+    }
+    
+    /**
+     * Cleans the extracted text (normalize whitespace, etc.).
+     * @param {string} text 
+     * @returns {string}
+     * @private
+     */
+    static _finalizeText(text, originalText) {
+        text = text.replace(/\\n/g, '\n'); // Convert literal "\\n" to actual newline characters FIRST
+        const NEWLINE_PLACEHOLDER = '___RTF_PAR_NEWLINE___'; // Placeholder for \n from \par
+        if (!text) return '';
+        
+        // Сохраняем оригинальные переносы строк, чтобы их случайно не удалить
+        text = text.replace(/\\n/g, NEWLINE_PLACEHOLDER);
+
+        // 1. Remove any remaining RTF escape sequences that might have been missed 
+        text = text.replace(/\\\\[a-zA-Z0-9]+(-?[0-9]+)?\\s?/g, '');
+        text = text.replace(/\\*\\s?/g, ''); 
+        text = text.replace(/\\?\\s?/g, '');
+        
+        // 2. Remove specific RTF artifacts that appear commonly in output
+        text = text.replace(/Helvetica-Bold\\d*;?/g, '');
+        text = text.replace(/Helvetica\\d*;?/g, '');
+        text = text.replace(/Times-Roman\\d*;?/g, '');
+        text = text.replace(/Arial\\d*;?/g, '');
+        
+        // 3. Handle the specific case where '0' is used as a line separator
+        // text = text.replace(/([А-Яа-яA-Za-z,.!?:;)»]+)0\\s*([А-Яа-яA-Za-z«(])/g, '$1' + NEWLINE_PLACEHOLDER + '$2'); // Between sentences/phrases
+        // text = text.replace(/([А-Яа-яA-Za-z])0([А-Яа-яA-Za-z])/g, '$1 $2'); // Between words
+        // text = text.replace(/(\\S)0(\\s)/g, '$1' + NEWLINE_PLACEHOLDER + '$2'); // At end of line
+        // text = text.replace(/(\\s)0(\\S)/g, '$1' + NEWLINE_PLACEHOLDER + '$2'); // At start of line
+        // text = text.replace(/\\b0\\b/g, NEWLINE_PLACEHOLDER); // Standalone '0'
+        
+        // Special patterns for specific cases with -0 as line separators
+        // text = text.replace(/\\s-0\\s/g, NEWLINE_PLACEHOLDER);
+        // text = text.replace(/([а-яА-Я])-0\\s/g, '$1' + NEWLINE_PLACEHOLDER);
+        // text = text.replace(/\\s-0([а-яА-Я])/g, NEWLINE_PLACEHOLDER + '$1');
+        
+        // Special patterns for specific cases with Cyrillic text and ].0
+        // text = text.replace(/]\\s*0\\s/g, ']' + NEWLINE_PLACEHOLDER);
+        // text = text.replace(/\\[\\s*Припев\\s*]\\s*0+/gi, '[Припев]' + NEWLINE_PLACEHOLDER);
+        
+        // 4. More aggressive cleaning of digit combinations
+        // text = text.replace(/0([A-ZА-Я])/g, NEWLINE_PLACEHOLDER + '$1'); // 0 followed by capital letter
+        // text = text.replace(/(\\d)([A-ZА-Я])/g, '$1 $2'); // Any digit followed by capital letter
+        
+        // 5. Remove specific numbers or digit combinations that are artifacts
+        // text = text.replace(/\\b0B\\b/g, '');
+        // text = text.replace(/\\b0H\\b/g, '');
+        // text = text.replace(/\\b\\d+[A-Z]\\b/g, ''); // patterns like "0B", "0H", "1B", etc.
+        
+        // 6. Remove bracket content that might contain RTF formatting
+        // text = text.replace(/\\[0[^\\]]*\\]/g, ''); // Remove [0projigrish] and similar
+        
+        // 7. Normalize line endings (RTF uses \par, we convert to \n)
+        // This step should be redundant if we are using NEWLINE_PLACEHOLDER
+        // text = text.replace(/\\r\\n|\\r/g, NEWLINE_PLACEHOLDER);
+        
+        // 8. Consolidate spaces and tabs
+        text = text.replace(/[ \\t]+/g, ' ');
+        
+        // Восстанавливаем оригинальные переносы строк
+        text = text.replace(new RegExp(NEWLINE_PLACEHOLDER, 'g'), '\n');
+
+        // 9. Trim whitespace from each line and filter out genuinely empty lines
+        const lines = text.split('\n');
+        const cleanedLines = lines.map(line => {
+            let l = line.trim();
+            // Remove specific artifacts that might be left
+            // l = l.replace(/^0+/, ''); // Remove leading zeros
+            // l = l.replace(/0+$/, ''); // Remove trailing zeros
+            // l = l.replace(/^\\*\\s*/, ''); // Remove leading '*'
+            // l = l.replace(/^;+\\s*/, ''); // Remove leading semicolons
+            // l = l.replace(/;+$/, ''); // Remove trailing semicolons
+            return l.trim();
+        }).filter(line => {
+            // Keep only non-empty lines with real content
+            return line.length > 0; // Simplified filter for now
+            // return line.length > 0 && 
+            //       !/^[0-9.]+$/.test(line) &&  // Remove lines with only numbers
+            //       !/^[0-9]+[A-Za-z]$/.test(line) && // Remove "0B" type artifacts
+            //       line !== '00' && 
+            //       !/^[;:.,]+$/.test(line); // Remove lines with only punctuation
+        });
+
+        // NEW SECTION: Improve line breaks by reconstructing verse structure
+        // Check for common song patterns and restructure when needed
+        // const restructuredLines = [];
+        // let i = 0;
+        // while (i < cleanedLines.length) {
+        //     const line = cleanedLines[i];
+        //     
+        //     // Detect long lines that might be multiple verses merged together
+        //     if (line.length > 40 && !line.startsWith('[') && !line.includes('проигрыш') && !line.includes('припев')) {
+        //         // Look for natural verse breaks based on capitalization and punctuation
+        //         const parts = RtfParser._splitIntoVerses(line);
+        //         if (parts.length > 1) {
+        // restructuredLines.push(...parts);
+        //         } else {
+        // restructuredLines.push(line);
+        //         }
+        //     } else {
+        // restructuredLines.push(line);
+        //     }
+        // i++;
+        // }
+        
+        // text = restructuredLines.join('\n');
+        text = cleanedLines.join('\n'); // Use cleanedLines directly for now
+        
+        // 10. Normalize multiple consecutive newlines
+        text = text.replace(/\\n{2,}/g, '\\n');
+        
+        // 11. Final cleanup of common RTF artifacts that might have been missed
+        // text = text.replace(/\\[\\d+\\s*проигрыш[^\\]]*\\]/gi, '[Проигрыш]'); // Normalize instrumental markers
+        // text = text.replace(/\\{\\d+\\}/g, ''); // Remove {0} type markers
+        text = text.replace(/[;}{]/g, ''); // Remove stray semicolons and braces (keep this one, it's general)
+        
+        // 12. More aggressive cleanup of specific patterns in real-world examples
+        // text = text.replace(/Helvetica-Bold\\s*первый/gi, 'Первый'); // Fix common pattern
+        // text = text.replace(/\\b\\d+H\\b/g, ''); // Remove codes like "00H"
+        text = text.replace(/\\s{2,}/g, ' '); // Ensure no double spaces anywhere (keep this one)
+        
+        // 13. Additional handling for common song content
+        // text = text.replace(/\\[припев\\]/gi, '\\n[Припев]\\n'); // Add space around chorus marker
+        // text = text.replace(/\\[проигрыш\\]/gi, '\\n[Проигрыш]\\n'); // Add space around instrumental marker
+        
+        return text.trim();
+    }
+    
+    /**
+     * Split a long line into multiple verses based on natural patterns in songs.
+     * @param {string} line - The line to split
+     * @returns {string[]} Array of split verses
+     * @private
+     */
+    static _splitIntoVerses(line) {
+        if (!line || line.length < 40) return [line]; // Don't split short lines
+        
+        // 1. Try splitting by capital letters at phrase boundaries
+        const capitalSplitPattern = /([.!?…]\s+)([А-ЯA-Z])/g;
+        if (capitalSplitPattern.test(line)) {
+            return line.replace(capitalSplitPattern, '$1\n$2').split('\n');
+        }
+        
+        // 2. Look for common verse structure patterns
+        const commonPatterns = [
+            // Pattern for "В первый день весны На краешке земли Нечаянно мы встретились с тобой"
+            { 
+                regex: /(В первый день \w+) (На краешке \w+) (Нечаянно \w+)/i,
+                replace: '$1\n$2\n$3'
+            },
+            // Pattern for lines that likely have 3-line structure based on similar verb forms
+            {
+                regex: /([А-Яа-я][\w\s]{5,15}) ([А-Яа-я][\w\s]{5,15}) ([А-Яа-я][\w\s]{5,15}[.!?])/,
+                replace: '$1\n$2\n$3'
+            },
+            // Pattern for lines with "и" as conjunction between phrases
+            {
+                regex: /([^,]{15,30}), и ([^,]{15,30})/,
+                replace: '$1,\nи $2'
+            },
+            // Pattern for specific phrase "день ... земли ... тобой" in Meladze song
+            {
+                regex: /(день [^,\n]{3,20}) ([^,\n]{3,20} земли) ([^,.!?\n]+тобой[,.!?]?)/i,
+                replace: '$1\n$2\n$3'
+            }
+        ];
+        
+        for (const pattern of commonPatterns) {
+            if (pattern.regex.test(line)) {
+                const splitLine = line.replace(pattern.regex, pattern.replace);
+                if (splitLine !== line) {
+                    return splitLine.split('\n');
+                }
+            }
+        }
+        
+        // 3. More generic heuristic: split after a certain number of syllables (approximation)
+        if (line.length > 60) {
+            const splitPoints = [];
+            // Count roughly 30-35 characters per line for Cyrillic text
+            const targetLineLength = 30;
+            
+            // Find possible split points (after punctuation, spaces)
+            for (let i = targetLineLength; i < line.length - 10; i++) {
+                if (line[i] === ' ' && 
+                    (i >= targetLineLength && i < targetLineLength + 15) || 
+                    (i >= targetLineLength*2 && i < targetLineLength*2 + 15)) {
+                    
+                    // Preferable to split after punctuation
+                    if (i > 0 && /[,.;:]/.test(line[i-1])) {
+                        splitPoints.push(i+1);
+                    }
+                    // Otherwise split at space
+                    else {
+                        splitPoints.push(i+1);
+                    }
+                }
+            }
+            
+            // Use the split points to create verse lines
+            if (splitPoints.length > 0) {
+                const parts = [];
+                let lastPos = 0;
+                
+                for (const pos of splitPoints) {
+                    parts.push(line.substring(lastPos, pos).trim());
+                    lastPos = pos;
+                }
+                
+                // Add the last part
+                if (lastPos < line.length) {
+                    parts.push(line.substring(lastPos).trim());
+                }
+                
+                return parts.filter(p => p.length > 0);
+            }
+        }
+        
+        // If all else fails, return the original line
+        return [line];
+    }
+    
+    /**
+     * Fallback plain text cleaning if RTF parsing fails.
+     * @param {string} text 
+     * @returns {string}
+     * @private
+     */
+     static _cleanPlainTextFallback(text) {
+        // Basic cleaning: remove BOM, normalize line breaks, remove control chars
+        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+        text = text.replace(/\r\n|\r/g, '\n');
+        text = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+        text = text.replace(/[ \t]+/g, ' ');
+        text = text.replace(/\n{3,}/g, '\n\n');
+        return text.trim();
+     }
+
+    _skipCurrentGroupContent() {
+        // Вызывается, когда мы находимся сразу после открывающей '{' и управляющего слова,
+        // которое определяет эту группу как игнорируемую (например, {\fonttbl ...)
+        // Пропускает все до соответствующей '}'
+        let openBraceCount = 1;
+        while (this.pos < this.rtf.length && openBraceCount > 0) {
+            const char = this.rtf[this.pos++];
+            if (char === '{') {
+                openBraceCount++;
+            } else if (char === '}') {
+                openBraceCount--;
+            } else if (char === '\\\\' && this.pos < this.rtf.length) {
+                // Пропускаем экранированный символ, чтобы он не был ошибочно принят за '{' или '}'
+                this.pos++;
+            }
+        }
+    }
+}
+
+// Make available globally if needed
+window.RtfParser = RtfParser; 

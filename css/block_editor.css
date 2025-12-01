@@ -1,0 +1,136 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+    background-color: #f0f2f5; /* Мягкий фон для всей страницы */
+    color: #1c1e21; /* Основной цвет текста */
+    line-height: 1.6;
+}
+
+.editor-container {
+    max-width: 900px; /* Ограничиваем ширину для лучшей читаемости */
+    margin: 2rem auto; /* Центрируем контейнер и добавляем отступы сверху/снизу */
+    padding: 2rem;
+    background-color: #ffffff; /* Белый фон для области редактора */
+    border-radius: 8px; /* Слегка скругленные углы */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Мягкая тень для объема */
+}
+
+.editor-header h1 {
+    font-size: 1.8rem;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.editor-main {
+    margin-bottom: 2rem;
+}
+
+.block-list-area {
+    /* Стили для контейнера блоков, если нужны специфичные */
+    /* Например, ограничение по высоте и прокрутка, если блоков много */
+    max-height: 60vh; /* Например, 60% высоты видимой области окна */
+    overflow-y: auto; /* Добавить вертикальную прокрутку, если содержимое превышает max-height */
+    padding-right: 10px; /* Небольшой отступ справа, чтобы скроллбар не прилипал к тексту */
+}
+
+.text-block {
+    background-color: #f9f9f9; /* Легкий фон для самих блоков */
+    border: 1px solid #e0e0e0; /* Очень тонкая, едва заметная рамка */
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    border-radius: 6px;
+    font-size: 1rem; /* Базовый размер шрифта для текста в блоках */
+    color: #333333; /* ЯВНО УКАЗЫВАЕМ ТЕМНЫЙ ЦВЕТ ТЕКСТА */
+    outline: none; /* Убираем стандартный outline при фокусе */
+    transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+    position: relative; /* Необходимо для абсолютного позиционирования кнопки удаления */
+}
+
+.text-block:focus {
+    border-color: #007bff; /* Подсветка рамки при фокусе */
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); /* Мягкое свечение при фокусе */
+}
+
+/* Placeholder для contenteditable */
+.text-block[data-placeholder]:empty:before{
+    content: attr(data-placeholder);
+    color: #888;
+    pointer-events: none; /* Чтобы клик проходил на сам элемент */
+    display: block; /* Важно для отображения */
+}
+
+.editor-footer {
+    font-size: 0.9rem;
+    color: #555;
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+}
+
+/* Убираем стандартные отступы у браузера для body, если style.css их не сбросил */
+body {
+    margin: 0;
+}
+
+/* Стили для кнопки удаления блока */
+.delete-block-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    line-height: 26px; /* Центрирование иконки */
+    text-align: center;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    display: none; /* По умолчанию скрыта, управляется JS */
+    z-index: 10; /* Чтобы была поверх текста */
+}
+
+.delete-block-btn:hover, .delete-block-btn:focus {
+    opacity: 1;
+    background-color: rgba(240, 240, 240, 0.9);
+    outline: none;
+}
+
+/* Показываем кнопку при наведении на родительский блок или при его фокусе (управляется JS) */
+.text-block:hover .delete-block-btn,
+.text-block:focus-within .delete-block-btn {
+    /* display: inline-block; // Управляется JS, но можно было бы и так */
+}
+
+/* Стили для кнопки "Добавить блок" */
+#add-block-btn {
+    display: block; /* Занимает всю доступную ширину */
+    margin: 1.5rem auto 0; /* Центрирование и отступ сверху */
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    /* Стили .btn уже должны быть определены в styles.css, 
+       но если нет, можно добавить базовые стили здесь: 
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff;
+    border-radius: 0.3rem;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    text-decoration: none; 
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    */
+}
+
+#add-block-btn:hover {
+    /* Пример стиля для ховера, если не переопределяется из styles.css 
+    background-color: #0056b3;
+    border-color: #0056b3; */
+} 

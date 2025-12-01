@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="150" viewBox="0 0 300 150">
+  <!-- Радуга -->
+  <path d="M50,150 A200,200 0 0,1 250,150" stroke="#FF0000" stroke-width="20" fill="none"/>
+  <path d="M70,150 A180,180 0 0,1 230,150" stroke="#FF9900" stroke-width="20" fill="none"/>
+  <path d="M90,150 A160,160 0 0,1 210,150" stroke="#FFFF00" stroke-width="20" fill="none"/>
+  <path d="M110,150 A140,140 0 0,1 190,150" stroke="#00FF00" stroke-width="20" fill="none"/>
+  <path d="M130,150 A120,120 0 0,1 170,150" stroke="#0099FF" stroke-width="20" fill="none"/>
+  
+  <!-- Облака -->
+  <ellipse cx="50" cy="150" rx="30" ry="20" fill="white" stroke="none"/>
+  <ellipse cx="250" cy="150" rx="30" ry="20" fill="white" stroke="none"/>
+</svg> 

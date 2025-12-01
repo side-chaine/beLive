@@ -1,0 +1,1000 @@
+/* 🎵 CATALOG V2 OVERLAY STYLES */
+.catalog-v2-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, 
+        rgba(0, 0, 0, 0.85) 0%,
+        rgba(26, 26, 26, 0.95) 50%,
+        rgba(0, 0, 0, 0.90) 100%
+    );
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: catalogFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes catalogFadeIn {
+    from { 
+        opacity: 0;
+        backdrop-filter: blur(0px);
+    }
+    to { 
+        opacity: 1;
+        backdrop-filter: blur(10px);
+    }
+}
+
+.catalog-v2-overlay.hidden {
+    display: none;
+}
+
+/* СТИЛЬНЫЙ КОНТЕЙНЕР БЕЗ ЗАГОЛОВКА */
+.catalog-v2-container {
+    background: linear-gradient(135deg, 
+        rgba(26, 26, 26, 0.95) 0%,
+        rgba(35, 35, 35, 0.98) 50%,
+        rgba(26, 26, 26, 0.95) 100%
+    );
+    border: 1px solid rgba(0, 230, 118, 0.2);
+    border-radius: 20px;
+    padding: 25px;
+    max-width: 95vw;
+    max-height: 90vh;
+    width: 1200px;
+    height: 700px;
+    color: #f0f0f0;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(0, 230, 118, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    position: relative;
+}
+
+/* УБИРАЕМ ЗАГОЛОВОК ПОЛНОСТЬЮ */
+.catalog-v2-header {
+    display: none;
+}
+
+/* СТИЛЬНЫЙ КРЕСТИК В УГЛУ */
+.catalog-v2-container::before {
+    content: '✕';
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    width: 35px;
+    height: 35px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #ccc;
+    cursor: pointer;
+    z-index: 10000;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(5px);
+}
+
+.catalog-v2-container:hover::before {
+    background: linear-gradient(135deg, rgba(244, 67, 54, 0.8), rgba(244, 67, 54, 0.6));
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(244, 67, 54, 0.4);
+}
+
+.catalog-v2-close-btn {
+    display: none; /* Убираем старую кнопку */
+}
+
+.catalog-v2-content {
+    color: #f0f0f0;
+    height: 100%;
+    overflow: hidden;
+    padding-top: 0; /* Убираем отступ сверху */
+}
+
+/* МАГИЧЕСКАЯ 3-КОЛОНОЧНАЯ СЕТКА */
+.catalog-v2-grid {
+    display: grid;
+    grid-template-columns: 1fr 2px 1fr 2px 1fr;
+    gap: 0;
+    height: 100%;
+    position: relative;
+}
+
+/* ВОЛШЕБНЫЕ РАЗДЕЛИТЕЛИ */
+.catalog-v2-grid::before,
+.catalog-v2-grid::after {
+    content: '';
+    background: linear-gradient(to bottom,
+        transparent 0%,
+        rgba(0, 230, 118, 0.3) 20%,
+        rgba(0, 230, 118, 0.6) 50%,
+        rgba(0, 230, 118, 0.3) 80%,
+        transparent 100%
+    );
+    border-radius: 1px;
+    box-shadow: 
+        0 0 10px rgba(0, 230, 118, 0.3),
+        0 0 20px rgba(0, 230, 118, 0.1);
+}
+
+.catalog-v2-grid::before {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.catalog-v2-grid::after {
+    grid-column: 4;
+    grid-row: 1;
+}
+
+.catalog-column {
+    background: linear-gradient(135deg, 
+        rgba(42, 42, 42, 0.6) 0%,
+        rgba(35, 35, 35, 0.8) 50%,
+        rgba(42, 42, 42, 0.6) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 20px;
+    overflow-y: auto;
+    backdrop-filter: blur(5px);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.catalog-column:nth-child(1) { grid-column: 1; }
+.catalog-column:nth-child(2) { grid-column: 3; }
+.catalog-column:nth-child(3) { grid-column: 5; }
+
+.catalog-column:hover {
+    background: linear-gradient(135deg, 
+        rgba(42, 42, 42, 0.8) 0%,
+        rgba(35, 35, 35, 0.9) 50%,
+        rgba(42, 42, 42, 0.8) 100%
+    );
+    border-color: rgba(0, 230, 118, 0.2);
+    box-shadow: 0 0 20px rgba(0, 230, 118, 0.1);
+}
+
+/* SPARKLE ЭФФЕКТ ДЛЯ КОЛОНОК */
+.catalog-column::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 15% 25%, rgba(0, 230, 118, 0.05) 1px, transparent 1px),
+        radial-gradient(circle at 85% 75%, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        radial-gradient(circle at 50% 50%, rgba(0, 230, 118, 0.02) 1px, transparent 1px);
+    background-size: 60px 60px, 80px 80px, 100px 100px;
+    border-radius: 15px;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+}
+
+.catalog-column:hover::before {
+    opacity: 1;
+}
+
+.catalog-column h3 {
+    color: #00e676;
+    margin: 0 0 20px 0;
+    font-size: 1.2em;
+    border-bottom: 2px solid rgba(0, 230, 118, 0.3);
+    padding-bottom: 12px;
+    text-shadow: 0 0 10px rgba(0, 230, 118, 0.5);
+    position: relative;
+}
+
+/* АНИМИРОВАННАЯ ПОДЧЕРКИВАЮЩАЯ ЛИНИЯ */
+.catalog-column h3::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #00e676, #4caf50);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.catalog-column:hover h3::after {
+    width: 100%;
+}
+
+/* ПРОКРУТКА В СТИЛЕ */
+.catalog-column::-webkit-scrollbar {
+    width: 6px;
+}
+
+.catalog-column::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.catalog-column::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #00e676, #4caf50);
+    border-radius: 3px;
+    box-shadow: 0 0 5px rgba(0, 230, 118, 0.3);
+}
+
+.catalog-column::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #4caf50, #00e676);
+}
+
+/* ТАБЫ В ЦЕНТРАЛЬНОЙ КОЛОНКЕ */
+.tab-navigation {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 5px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    backdrop-filter: blur(5px);
+}
+
+.tab-btn {
+    flex: 1;
+    background: transparent;
+    color: #ccc;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    font-weight: 500;
+}
+
+.tab-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 230, 118, 0.2), transparent);
+    transition: left 0.6s;
+}
+
+.tab-btn:hover::before {
+    left: 100%;
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, #00e676, #4caf50);
+    color: #000;
+    font-weight: 600;
+    box-shadow: 
+        0 0 15px rgba(0, 230, 118, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.tab-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.1);
+    color: #f0f0f0;
+    transform: translateY(-1px);
+}
+
+.tab-panel {
+    display: none;
+    animation: tabSlideIn 0.3s ease-out;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+@keyframes tabSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ПЕРЕКЛЮЧАТЕЛЬ ПОИСК/ЗАГРУЗКА */
+.search-upload-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 5px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    backdrop-filter: blur(5px);
+}
+
+.toggle-btn {
+    flex: 1;
+    background: transparent;
+    color: #ccc;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    font-weight: 500;
+}
+
+.toggle-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 107, 53, 0.2), transparent);
+    transition: left 0.6s;
+}
+
+.toggle-btn:hover::before {
+    left: 100%;
+}
+
+.toggle-btn.active {
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 
+        0 0 15px rgba(255, 107, 53, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.toggle-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.1);
+    color: #f0f0f0;
+    transform: translateY(-1px);
+}
+
+/* ===== PLAYLISTS (центральная колонка) ===== */
+.create-playlist-section {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+.create-playlist-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06));
+    color: #f0f0f0;
+    cursor: pointer;
+    transition: all .25s ease;
+    backdrop-filter: blur(4px);
+}
+.create-playlist-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+}
+.btn-icon { font-size: 1.1em; }
+
+.playlist-constructor { display: none; flex-direction: column; gap: 10px; }
+.constructor-header { display: flex; gap: 10px; align-items: center; }
+.playlist-name-input {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.25);
+    color: #f0f0f0;
+}
+.constructor-controls { display: flex; gap: 8px; }
+.constructor-btn { padding: 8px 12px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; background: linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05)); color:#f0f0f0; cursor: pointer; }
+.constructor-btn.confirm-btn { background: linear-gradient(135deg, rgba(0,230,118,0.22), rgba(0,230,118,0.10)); border-color: rgba(0,230,118,0.45); color:#eafff4; }
+.constructor-btn.confirm-btn:hover { background: linear-gradient(135deg, #00e676, #4caf50); color:#000; box-shadow: 0 6px 18px rgba(0,230,118,0.35); }
+.constructor-btn.cancel-btn { background: linear-gradient(135deg, rgba(244,67,54,0.25), rgba(244,67,54,0.12)); border-color: rgba(244,67,54,0.45); }
+.constructor-tracks { min-height: 100px; padding: 10px; border: 1px dashed rgba(255,255,255,0.2); border-radius: 10px; }
+.constructor-track-item { display:flex; justify-content: space-between; align-items:center; padding:8px 10px; margin-bottom:6px; background: rgba(255,255,255,0.06); border-radius: 8px; }
+.constructor-track-item .remove-track-btn { background: transparent; border: 1px solid rgba(255,255,255,0.25); color:#f0f0f0; border-radius: 6px; padding:4px 8px; cursor:pointer; }
+.constructor-summary { text-align:right; color:#00e676; }
+
+.saved-playlists { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.playlist-item { display:flex; justify-content: space-between; align-items: center; padding:10px 12px; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-radius: 10px; }
+.playlist-actions { display:flex; gap: 8px; }
+.playlist-action-btn { background: linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05)); color:#f0f0f0; border:1px solid rgba(255,255,255,0.2); border-radius:8px; padding:6px 10px; cursor:pointer; }
+/* Улучшенный стиль кнопок плейлиста */
+.playlist-action-btn.play-btn { background: linear-gradient(135deg, rgba(0,230,118,0.18), rgba(0,230,118,0.08)); border-color: rgba(0,230,118,0.35); }
+.playlist-action-btn.play-btn:hover { background: linear-gradient(135deg, #00e676, #4caf50); color: #000; box-shadow: 0 6px 16px rgba(0,230,118,0.35); }
+.playlist-action-btn.edit-btn { background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06)); }
+
+/* DnD визуальные состояния */
+.constructor-track-item { cursor: grab; }
+.constructor-track-item.dragging { opacity: .6; transform: scale(0.98); cursor: grabbing; }
+.constructor-tracks.drag-target { outline: 2px dashed rgba(0,230,118,0.35); outline-offset: 2px; }
+
+/* ПОЛЕ ПОИСКА */
+.search-input {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    color: #f0f0f0;
+    border: 1px solid rgba(0, 230, 118, 0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #00e676;
+    box-shadow: 
+        0 0 0 3px rgba(0, 230, 118, 0.2),
+        0 0 15px rgba(0, 230, 118, 0.3);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.05));
+}
+
+.search-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* СТИЛИ ДЛЯ ТРЕКОВ В "МОЯ МУЗЫКА" */
+.artist-group {
+    margin-bottom: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+    backdrop-filter: blur(3px);
+    transition: all 0.3s ease;
+}
+
+.artist-group:hover {
+    border-color: rgba(0, 230, 118, 0.3);
+    box-shadow: 0 0 15px rgba(0, 230, 118, 0.1);
+}
+
+.artist-header {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.2));
+    padding: 12px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.artist-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 230, 118, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.artist-header:hover::before {
+    left: 100%;
+}
+
+.artist-header:hover {
+    background: linear-gradient(135deg, rgba(0, 230, 118, 0.1), rgba(0, 230, 118, 0.05));
+}
+
+.artist-name {
+    flex: 1;
+    font-weight: 600;
+    color: #00e676;
+    text-shadow: 0 0 5px rgba(0, 230, 118, 0.3);
+}
+
+.track-count {
+    color: #888;
+    font-size: 0.9em;
+    padding: 2px 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+}
+
+.expand-icon {
+    color: #00e676;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 1.1em;
+}
+
+.artist-group.expanded .expand-icon {
+    transform: rotate(180deg);
+}
+
+.artist-tracks {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.artist-group.expanded .artist-tracks {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.track-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.track-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+    transition: left 0.4s;
+}
+
+.track-item:hover::before {
+    left: 100%;
+}
+
+.track-item:last-child {
+    border-bottom: none;
+}
+
+.track-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+    transform: translateX(3px);
+}
+
+.track-title {
+    flex: 1;
+    color: #f0f0f0;
+    font-size: 0.9em;
+    transition: color 0.3s ease;
+}
+
+.track-item:hover .track-title {
+    color: #00e676;
+}
+
+.track-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.track-action-btn {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    color: #f0f0f0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(3px);
+    position: relative;
+    overflow: hidden;
+}
+
+.track-action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.3s;
+}
+
+.track-action-btn:hover::before {
+    left: 100%;
+}
+
+.track-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.track-action-btn.play-btn:hover {
+    background: linear-gradient(135deg, #00e676, #4caf50);
+    color: #000;
+    border-color: #00e676;
+    box-shadow: 0 4px 12px rgba(0, 230, 118, 0.4);
+}
+
+.track-action-btn.add-btn:hover {
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    color: #fff;
+    border-color: #ff6b35;
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+}
+
+/* Пульсация для плюсиков в режиме построения плейлиста */
+.add-btn.add-btn-pulse { animation: addPulse 1.4s ease-in-out infinite; }
+@keyframes addPulse {
+    0% { box-shadow: 0 0 0 0 rgba(255,107,53,0.45); transform: translateY(0); }
+    70% { box-shadow: 0 0 0 10px rgba(255,107,53,0); transform: translateY(-1px); }
+    100% { box-shadow: 0 0 0 0 rgba(255,107,53,0); transform: translateY(0); }
+}
+
+/* UPLOAD MODE СТИЛИ */
+.upload-mode-container {
+    padding: 15px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, rgba(0, 230, 118, 0.05) 0%, rgba(0, 0, 0, 0.1) 100%);
+    border-radius: 8px;
+}
+
+.upload-header {
+    margin-bottom: 15px;
+    text-align: center;
+    position: relative;
+}
+
+.upload-header::before {
+    content: '✨';
+    position: absolute;
+    left: 50%;
+    top: -10px;
+    transform: translateX(-50%);
+    font-size: 1.2em;
+    opacity: 0.7;
+}
+
+.upload-header h4 {
+    color: #00e676;
+    margin: 0;
+    font-size: 1.1em;
+    text-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
+}
+
+/* КОМПАКТНАЯ ВЕРТИКАЛЬНАЯ СЕТКА */
+.upload-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    margin-bottom: 15px;
+}
+
+.upload-cell {
+    background: linear-gradient(135deg, #2a2a2a 0%, #1f1f1f 100%);
+    border: 2px dashed #555;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* SPARKLE ЭФФЕКТ */
+.upload-cell::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+        radial-gradient(circle at 80% 70%, rgba(0, 230, 118, 0.1) 1px, transparent 1px),
+        radial-gradient(circle at 60% 20%, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px, 60px 60px, 80px 80px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.upload-cell:hover::after {
+    opacity: 1;
+}
+
+.upload-cell:hover {
+    border-color: #00e676;
+    background: linear-gradient(135deg, #2d4a2d 0%, #1a3a1a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 230, 118, 0.2);
+}
+
+.upload-cell.drag-over {
+    border-color: #00e676;
+    background: linear-gradient(135deg, #2d4a2d 0%, #1a3a1a 100%);
+    animation: pulse 1s infinite;
+}
+
+.upload-cell.file-selected {
+    border-color: #4caf50;
+    background: linear-gradient(135deg, #2d4a2d 0%, #1a4a1a 100%);
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+}
+
+/* МАГИЧЕСКАЯ АНИМАЦИЯ */
+@keyframes pulse {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.4);
+    }
+    50% { 
+        transform: scale(1.02);
+        box-shadow: 0 0 0 10px rgba(0, 230, 118, 0);
+    }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+@keyframes sparkle {
+    0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+    50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+}
+
+.upload-cell.processing {
+    background: linear-gradient(
+        90deg, 
+        #2a2a2a 25%, 
+        #00e676 50%, 
+        #2a2a2a 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+    border-color: #00e676;
+}
+
+.upload-cell.processing::before {
+    content: '🔄';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5em;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* ИКОНКИ И ТЕКСТ */
+.upload-icon {
+    font-size: 1.8em;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.drop-text {
+    font-size: 0.85em;
+    color: #ccc;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.file-label {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #00e676;
+    margin-top: 4px;
+    display: block;
+}
+
+.file-input {
+    display: none;
+}
+
+/* ВЫБРАННЫЙ ФАЙЛ */
+.upload-cell .file-name {
+    font-size: 0.8em;
+    color: #4caf50;
+    margin-top: 5px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+/* КНОПКИ УПРАВЛЕНИЯ */
+.upload-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: auto;
+    padding-top: 15px;
+    border-top: 1px solid #333;
+}
+
+.upload-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.upload-btn:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.upload-btn:hover:before {
+    left: 100%;
+}
+
+.save-btn {
+    background: linear-gradient(135deg, #4caf50, #45a049);
+    color: white;
+}
+
+.save-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #5cbf60, #4caf50);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.save-btn:disabled {
+    background: #666;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.cancel-btn {
+    background: linear-gradient(135deg, #f44336, #d32f2f);
+    color: white;
+}
+
+.cancel-btn:hover {
+    background: linear-gradient(135deg, #f66356, #f44336);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+} 
+
+/* ПУСТОЕ СОСТОЯНИЕ */
+.empty-state {
+    color: #888;
+    text-align: center;
+    font-style: italic;
+    margin: 30px 20px;
+    padding: 20px;
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+    transition: all 0.3s ease;
+}
+
+.empty-state:hover {
+    border-color: rgba(0, 230, 118, 0.3);
+    color: #ccc;
+}
+
+/* РЕЖИМЫ КОНТЕНТА */
+.search-mode-content,
+.upload-mode-content {
+    display: none;
+    animation: modeSlideIn 0.3s ease-out;
+}
+
+.search-mode-content.active,
+.upload-mode-content.active {
+    display: block;
+}
+
+@keyframes modeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+} 
+
+/* Compact upload grid */
+.upload-grid.compact {
+	grid-template-columns: repeat(6, 1fr);
+	gap: 8px;
+}
+.upload-grid.compact .upload-cell {
+	min-height: 96px;
+	padding: 8px;
+}
+.upload-grid.compact .file-label {
+	font-size: 0.75em;
+}
+.upload-grid.compact .drop-text {
+	font-size: 0.75em;
+}
+.smart-search-column > h3 { display: none; }
+
+.upload-cell.disabled { opacity: 0.5; pointer-events: none; } 
+
+.upload-controls {
+	padding: 8px 0;
+}
+.upload-btn {
+	padding: 8px 12px;
+	font-size: 0.9em;
+}
+.upload-cell .upload-icon { font-size: 20px; margin-bottom: 6px; }
+.upload-cell .file-name { font-size: 0.75em; } 
+
+/* Ultra-compact tweaks for upload column to avoid vertical scroll */
+.smart-search-column { padding: 12px; }
+.search-upload-toggle { margin-bottom: 12px; padding: 4px; }
+.toggle-btn { padding: 8px 10px; font-size: 0.9em; }
+.search-input { margin-bottom: 12px; padding: 10px 12px; font-size: 13px; }
+.upload-grid.compact .upload-cell { min-height: 84px; padding: 6px; }
+.upload-grid.compact { gap: 6px; }
+.upload-grid.compact .file-label, .upload-grid.compact .drop-text { font-size: 0.7em; }
+.upload-cell .upload-icon { font-size: 18px; margin-bottom: 4px; }
+.upload-controls { padding: 6px 0; }
+.upload-btn { padding: 6px 10px; font-size: 0.85em; } 
+
+/* Super-compact fix: жесткая высота ячеек и скрытие лишнего в состоянии file-selected */
+.upload-mode-container { padding: 10px; }
+.search-upload-toggle { margin-bottom: 8px; }
+.search-input { margin-bottom: 10px; padding: 8px 10px; font-size: 12px; }
+.upload-grid.compact { gap: 5px; }
+.upload-grid.compact .upload-cell { height: 76px; min-height: 76px; padding: 5px; overflow: hidden; }
+.upload-grid.compact .file-label, .upload-grid.compact .drop-text { font-size: 0.68em; }
+.upload-cell .upload-icon { font-size: 16px; margin-bottom: 3px; }
+.upload-controls { padding: 4px 0; }
+.upload-btn { padding: 5px 9px; font-size: 0.8em; }
+/* При выбранном файле – не растягиваем ячейку за счёт контента */
+.upload-cell.file-selected .upload-icon, 
+.upload-cell.file-selected .drop-text { display: none; }
+.upload-cell .file-name { font-size: 0.7em; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } 
+
+/* Без подсказок: делаем заголовок-лейбл более крупным и заметным */
+.upload-grid.compact .file-label {
+ 	font-size: 0.9em;
+ 	letter-spacing: 0.2px;
+ }
+ .upload-cell .upload-icon { margin-bottom: 6px; } 

@@ -1,0 +1,39 @@
+/* Styles for existing block types */
+.waveform-active .lyric-line.marker-verse {
+    border-left-color: #4CAF50 !important;
+    color: #4CAF50 !important;
+}
+
+.waveform-active .lyric-line.marker-chorus {
+    border-left-color: #F44336 !important;
+    color: #F44336 !important;
+}
+
+.waveform-active .lyric-line.marker-bridge {
+    border-left-color: #6f42c1 !important;
+    color: #6f42c1 !important;
+}
+
+/* Styles for Pre-Chorus */
+.waveform-active .lyric-line.marker-prechorus {
+    border-left: 5px solid #FF9800; /* Оранжевый */
+    color: #FF9800;
+}
+
+/* Styles for Intro */
+.waveform-active .lyric-line.marker-intro {
+    border-left: 5px solid #03A9F4; /* Светло-синий */
+    color: #03A9F4;
+}
+
+/* Styles for Outro */
+.waveform-active .lyric-line.marker-outro {
+    border-left: 5px solid #9E9E9E; /* Серый */
+    color: #9E9E9E;
+}
+
+/* Новый стиль для "blank" */
+.waveform-active .lyric-line.marker-blank {
+    border-left: 5px solid rgba(108, 117, 125, 0.4); /* Полупрозрачный серый */
+    color: rgba(255, 255, 255, 0.3); /* Очень светло-серый текст */
+}
