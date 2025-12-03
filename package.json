@@ -99,6 +99,8 @@
   "type": "module",
   "devDependencies": {
     "vite": "^5.0.0",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-plugin-pwa": "^0.20.5",
+    "vite-tsconfig-paths": "^5.1.4",
+    "workbox-window": "^7.4.0"
   }
 }

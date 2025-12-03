@@ -1,21 +1,24 @@
 {
-  "name": "beLive App",
+  "name": "beLive - Karaoke & Rehearsal",
   "short_name": "beLive",
+  "description": "Practice karaoke and rehearsals anywhere, anytime - works offline!",
   "start_url": "/beLive/",
   "scope": "/beLive/",
   "display": "standalone",
-  "background_color": "#1a1a1a",
-  "theme_color": "#ffb444",
-  "display_override": ["standalone"],
+  "orientation": "portrait-primary",
+  "theme_color": "#6366f1",
+  "background_color": "#0f0f23",
+  "lang": "ru",
+  "categories": ["entertainment", "music", "productivity"],
   "icons": [
     {
-      "src": "/beLive/icons/icon-192x192.png",
+      "src": "img/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/beLive/icons/icon-512x512.png",
+      "src": "img/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
