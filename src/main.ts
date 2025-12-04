@@ -1,5 +1,5 @@
 import '../css/main.css'; // Корректный путь
-import '/src/css/ai-chat.css'; // Корректный абсолютный путь
+import '../css/ai-chat.css'; // Корректный абсолютный путь
 import '../css/avatar-studio.css'; // Корректный путь
 
 import { aiHub } from './js/ai/registry';
