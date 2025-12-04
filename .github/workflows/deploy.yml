@@ -2,7 +2,7 @@ name: Deploy PWA to GitHub Pages
 
 on:
   push:
-    branches: [ cleanup-before-pwa ]
+    branches: [ main ]  # ← ИЗМЕНИЛИ НА MAIN
 
 permissions:
   contents: read
