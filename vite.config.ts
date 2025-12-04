@@ -28,7 +28,7 @@ export default defineConfig({
         short_name: 'beLive',
         description: 'Karaoke Rehearsal | Concert Live',
         theme_color: '#6366f1',
-        background_color: '#0f0f23',
+        background_color: '#6366f1',
         display: 'standalone',
         scope: '/beLive/',
         start_url: '/beLive/',
