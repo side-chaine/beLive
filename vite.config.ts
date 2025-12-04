@@ -6,7 +6,7 @@ import { resolve } from 'path'
 export default defineConfig({
   root: './',
   base: '/beLive/',
-  
+
   build: {
     outDir: 'dist',
     minify: 'esbuild',
@@ -16,17 +16,17 @@ export default defineConfig({
       }
     }
   },
-  
+
   plugins: [
     tsconfigPaths(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['**/*'],
-      
+
       manifest: {
-        name: 'beLive - Karaoke & Rehearsal',
+        name: 'beLive',
         short_name: 'beLive',
-        description: 'Practice karaoke and rehearsals anywhere, anytime',
+        description: 'Karaoke Rehearsal | Concert Live',
         theme_color: '#6366f1',
         background_color: '#0f0f23',
         display: 'standalone',
@@ -47,7 +47,7 @@ export default defineConfig({
           }
         ]
       },
-      
+
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg,woff,woff2}'],
         runtimeCaching: [
@@ -80,7 +80,7 @@ export default defineConfig({
       }
     })
   ],
-  
+
   server: {
     host: '0.0.0.0',
     port: 3000
