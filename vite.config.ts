@@ -32,6 +32,7 @@ export default defineConfig({
         theme_color: '#6366f1',
         background_color: '#6366f1',
         display: 'standalone',
+        orientation: 'landscape',
         scope: '/beLive/',
         start_url: '/beLive/',
         icons: [
