@@ -1,0 +1,34 @@
+/* CSS-стили для режима "Репетиция" */
+
+#lyrics-container.style-rehearsal #lyrics-display {
+    font-family: 'Courier New', Courier, monospace;
+    background-color: rgba(20, 20, 30, 0.8);
+    color: #E0E0E0;
+}
+
+/* Режим репетиции — гарантированный фон и сброс картинок караоке */
+body.mode-rehearsal {
+	background-color: #0f0f15 !important;
+	background-attachment: scroll !important;
+	background-position: center center !important;
+	background-repeat: no-repeat !important;
+}
+
+/* Активный фон для репетиции */
+body.rehearsal-active {
+	background-size: cover !important;
+	background-position: center center !important;
+	background-repeat: no-repeat !important;
+	transition: background-image 0.8s ease-in-out;
+}
+
+/* слой для плавной смены фона */
+.rehearsal-bg-fade {
+	position: fixed;
+	inset: 0;
+	background-size: cover;
+	background-position: center center;
+	z-index: -1; /* под всем UI */
+	opacity: 0;
+	transition: opacity 0.8s ease-in-out;
+} 

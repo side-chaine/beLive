@@ -6,29 +6,38 @@ import { resolve } from 'path'
 export default defineConfig({
   root: './',
   base: '/beLive/',
-
+  
+  // ← ДОБАВЛЯЕМ ПУБЛИЧНУЮ ДИРЕКТОРИЮ!
+  publicDir: 'public',
+  
   build: {
     outDir: 'dist',
     minify: 'esbuild',
+    
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html')
       }
-    }
+    },
+    
+    // ← КОПИРУЕМ ДОПОЛНИТЕЛЬНЫЕ АССЕТЫ!
+    assetsInlineLimit: 0,
+    
+    copyPublicDir: true
   },
-
+  
   plugins: [
     tsconfigPaths(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['**/*'],
-
+      injectRegister: 'auto',
+      
       manifest: {
-        name: 'beLive',
+        name: 'beLive - Karaoke & Rehearsal',
         short_name: 'beLive',
-        description: 'Karaoke Rehearsal | Concert Live',
+        description: 'Practice karaoke and rehearsals anywhere, anytime',
         theme_color: '#6366f1',
-        background_color: '#6366f1',
+        background_color: '#0f0f23',
         display: 'standalone',
         scope: '/beLive/',
         start_url: '/beLive/',
@@ -47,9 +56,15 @@ export default defineConfig({
           }
         ]
       },
-
+      
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg,woff,woff2}'],
+        globPatterns: [
+          '**/*.{js,css,html,ico,png,jpg,jpeg,svg,woff,woff2}',
+          'Concert/**/*.jpg',
+          'Karaoke/**/*.jpg',
+          'Rehearsal/**/*.jpg'
+        ],
+        
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/.*/i,
@@ -64,23 +79,32 @@ export default defineConfig({
           },
           {
             urlPattern: /^https:\/\/esm\.sh\/.*/i,
-            handler: 'CacheFirst',
+            handler: 'NetworkFirst',
             options: {
               cacheName: 'esm-cache',
+              networkTimeoutSeconds: 10
+            }
+          },
+          {
+            urlPattern: /\.(jpg|jpeg|png|svg)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images-cache',
               expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 30
               }
             }
           }
         ],
+        
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true
       }
     })
   ],
-
+  
   server: {
     host: '0.0.0.0',
     port: 3000

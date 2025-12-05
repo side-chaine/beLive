@@ -1,0 +1,575 @@
+/* 
+ * Styles for the reorganized transport controls.
+ * This file contains styles for the control groups to make the UI cleaner.
+ */
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Space between elements within a group */
+    padding: 0 15px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1); /* Subtle divider */
+}
+
+/* Center the groups on the bar */
+#transport-controls .transport-controls-row {
+    justify-content: center; 
+}
+
+/* Remove divider from the last group */
+.control-group:last-child {
+    border-right: none;
+}
+
+/* Adjustments for the mic control block */
+.mic-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Shorten the mic volume slider */
+.mic-volume-slider {
+    width: 80px; /* Reduced width as requested */
+}
+
+/* --- Unified Button Style --- */
+/* This new style unifies the transport panel buttons with the main mode buttons. */
+.unified-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(5px);
+    color: white;
+    border-radius: 20px;
+    padding: 8px 18px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 90px; /* Adjusted for a more compact look */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.unified-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.unified-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+}
+
+.unified-btn i {
+    margin-right: 6px; /* Add space between icon and text */
+}
+
+/* --- Active State Colors --- */
+/* Unique colors for each active button */
+
+#play-pause.active {
+    background-color: #2ecc71; /* Green for Play */
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+}
+
+#toggle-loopblock-mode.active {
+    background-color: #f39c12; /* Orange for Loop */
+    box-shadow: 0 0 10px rgba(243, 156, 18, 0.5);
+}
+
+#style-selector-btn.active {
+    background-color: #3498db; /* Blue for Styles */
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+}
+
+#piano-keyboard-btn.active {
+    background-color: #9b59b6; /* Purple for Pitch */
+    box-shadow: 0 0 10px rgba(155, 89, 182, 0.5);
+}
+
+#mask-mode-btn.active {
+    background-color: transparent; /* No background color on activation */
+    box-shadow: 0 0 12px rgba(0, 191, 255, 0.6); /* Slightly more prominent glow */
+}
+
+#sync-btn.active {
+    background-color: #1abc9c; /* Teal for Sync */
+    box-shadow: 0 0 10px rgba(26, 188, 156, 0.5);
+}
+
+#mic-toggle-btn.active {
+    background-color: #34495e; /* Dark Blue for Mic */
+    box-shadow: 0 0 10px rgba(52, 73, 94, 0.5);
+}
+
+/* --- Style Overrides for specific buttons --- */
+/* Force unified style on buttons that might have conflicting rules */
+#play-pause, #reload-app, #toggle-loopblock-mode, #style-selector-btn, #piano-keyboard-btn, #mask-mode-btn {
+    background: transparent !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    backdrop-filter: blur(5px) !important;
+    color: white !important;
+    border-radius: 20px !important;
+    padding: 8px 18px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    min-width: 90px !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+    transition: all 0.3s ease !important;
+    width: auto !important; /* Override fixed width */
+    height: auto !important; /* Override fixed height */
+    text-decoration: none !important; /* Remove underline from icons */
+}
+
+#play-pause:hover, #reload-app:hover, #toggle-loopblock-mode:hover, #style-selector-btn:hover, #piano-keyboard-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* --- Gradient Sliders --- */
+/* This applies the animated gradient to all volume sliders for a unified look. */
+
+.volume-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    background: transparent;
+    outline: none;
+}
+
+.volume-slider::-webkit-slider-runnable-track {
+    height: 8px;
+    background: linear-gradient(270deg, #8965e0, #5e72e4, #00f2fe, #4facfe);
+    background-size: 600% 600%;
+    animation: stylish-gradient 18s ease infinite;
+    border-radius: 4px;
+    border: none;
+}
+
+.volume-slider::-moz-range-track {
+    height: 8px;
+    background: linear-gradient(270deg, #8965e0, #5e72e4, #00f2fe, #4facfe);
+    background-size: 600% 600%;
+    animation: stylish-gradient 18s ease infinite;
+    border-radius: 4px;
+    border: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    margin-top: -5px; /* Centers the thumb on the track */
+    width: 18px;
+    height: 18px;
+    background: #ffffff;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #1e1e1e;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    transition: transform 0.2s ease;
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #ffffff;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #1e1e1e;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+.volume-slider::-moz-range-thumb:hover {
+    transform: scale(1.1);
+}
+
+#instrumental-volume,
+#vocals-volume,
+#mic-volume {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    background: transparent;
+    outline: none;
+}
+
+#instrumental-volume::-webkit-slider-runnable-track,
+#vocals-volume::-webkit-slider-runnable-track,
+#mic-volume::-webkit-slider-runnable-track {
+    height: 8px;
+    background: linear-gradient(270deg, #8965e0, #5e72e4, #00f2fe, #4facfe) !important;
+    background-size: 600% 600% !important;
+    animation: stylish-gradient 18s ease infinite !important;
+    border-radius: 4px;
+    border: none;
+}
+
+#instrumental-volume::-moz-range-track,
+#vocals-volume::-moz-range-track,
+#mic-volume::-moz-range-track {
+    height: 8px;
+    background: linear-gradient(270deg, #8965e0, #5e72e4, #00f2fe, #4facfe) !important;
+    background-size: 600% 600% !important;
+    animation: stylish-gradient 18s ease infinite !important;
+    border-radius: 4px;
+    border: none;
+}
+
+#instrumental-volume::-webkit-slider-thumb,
+#vocals-volume::-webkit-slider-thumb,
+#mic-volume::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    margin-top: -5px; /* Centers the thumb on the track */
+    width: 18px;
+    height: 18px;
+    background: #ffffff;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #1e1e1e;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    transition: transform 0.2s ease;
+}
+
+#instrumental-volume::-moz-range-thumb,
+#vocals-volume::-moz-range-thumb,
+#mic-volume::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #ffffff;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #1e1e1e;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+#instrumental-volume::-webkit-slider-thumb:hover,
+#vocals-volume::-webkit-slider-thumb:hover,
+#mic-volume::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+}
+
+#instrumental-volume::-moz-range-thumb:hover,
+#vocals-volume::-moz-range-thumb:hover,
+#mic-volume::-moz-range-thumb:hover {
+    transform: scale(1.1);
+}
+
+/* --- Progress Bar Redesign --- */
+
+#progress-bar-container {
+    position: relative;
+    width: 100%;
+    height: 10px; /* Make it thicker */
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 0 15px;
+    transition: height 0.2s ease-in-out;
+}
+
+#progress-bar-container:hover {
+    height: 15px; /* Enlarge on hover */
+}
+
+#progress-bar-loaded {
+    position: absolute;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.25);
+    border-radius: 5px;
+    z-index: 1;
+}
+
+#progress-bar {
+    position: absolute;
+    height: 100%;
+    background: linear-gradient(270deg, #8965e0, #5e72e4, #00f2fe, #4facfe);
+    background-size: 600% 600%;
+    animation: stylish-gradient 18s ease infinite;
+    border-radius: 5px;
+    z-index: 2;
+}
+
+#progress-bar::after {
+    content: '';
+    position: absolute;
+    right: -8px; /* Position the handle */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    background-color: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+#progress-bar-container:hover #progress-bar::after {
+    opacity: 1; /* Show handle on hover */
+}
+
+/* --- Transformer Controls --- */
+#transport-controls {
+    /* Fully transparent background */
+    background-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-top: none;
+
+    /* Add overflow-hidden to clip the controls when they are slid down */
+    overflow: hidden; 
+}
+
+#main-control-groups {
+    opacity: 0;
+    max-height: 0;
+    padding-bottom: 0;
+    transform: translateY(-100%); /* Start offscreen (up) */
+    transition: all 0.4s ease-in-out;
+    pointer-events: none; /* Prevent interaction when hidden */
+}
+
+#transport-controls.is-open #main-control-groups {
+    opacity: 1;
+    max-height: 100px; /* Allow it to expand */
+    padding-bottom: 10px; /* Restore padding */
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+#progress-and-toggle-row {
+    display: flex;
+    align-items: center;
+    padding: 5px 0;
+}
+
+/* --- Toggle Button for Transport (New Styles) --- */
+#transport-toggle {
+    /* No longer fixed */
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    padding: 0 15px; /* Add some spacing */
+}
+
+#transport-toggle:hover {
+    color: #fff;
+    transform: scale(1.1);
+}
+
+#transport-controls.is-open #transport-toggle {
+    color: #4facfe; /* Highlight with a cool blue */
+}
+
+/* Style for the moved Catalog button */
+.header-action-btn {
+    margin-left: auto; /* Push it to the right */
+    margin-right: 20px;
+    
+    /* Applying the same animated gradient */
+    background: linear-gradient(270deg, #8965e0, #5e72e4, #00f2fe, #4facfe);
+    background-size: 600% 600%;
+    animation: stylish-gradient 18s ease infinite;
+
+    border: none; /* Remove border to let the gradient shine */
+    color: white; /* Ensure text is visible */
+    transition: transform 0.2s ease-out; /* Add feedback on hover */
+}
+
+.header-action-btn:hover {
+    transform: scale(1.05); /* Slightly enlarge on hover */
+    color: white;
+}
+
+/* New class specifically for the animated gradient effect */
+.animated-gradient-btn {
+    background: linear-gradient(270deg, #8965e0, #5e72e4, #00f2fe, #4facfe);
+    background-size: 600% 600%;
+    animation: stylish-gradient 18s ease infinite;
+    border: none;
+    color: white;
+    transition: transform 0.2s ease-out;
+    padding: 8px 18px; /* ✅ Возвращаем паддинг */
+    border-radius: 20px; /* ✅ Возвращаем скругление */
+    font-size: 14px; /* ✅ Синхронизируем размер шрифта */
+    font-weight: 500; /* ✅ Синхронизируем жирность */
+    cursor: pointer; /* ✅ Добавляем курсор */
+}
+
+.animated-gradient-btn:hover {
+    transform: scale(1.05);
+    color: white;
+}
+
+/* Animation for the stylish progress bar */
+@keyframes stylish-gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* --- TACTICAL FLEXBOX FIX (V2 - Hybrid Model) --- */
+/* A robust flexbox solution for header alignment */
+
+.header-content {
+    position: relative !important; /* Set context for absolute positioning */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    height: 60px !important; 
+}
+
+.mode-buttons {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+}
+
+.home-btn {
+    display: flex !important;
+    align-items: center !important;
+} 
+
+.header-right-group {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Устанавливаем компактный отступ */
+} 
+
+.scale-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.scale-btn {
+    background-color: #444;
+    color: white;
+    border: 1px solid #666;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.scale-value-btn {
+    width: auto;
+    min-width: 50px;
+    padding: 0 10px;
+    border-radius: 8px;
+    background-color: #333;
+    font-weight: normal;
+}
+
+.scale-btn:hover {
+    background-color: #555;
+} 
+
+/* VocalMix Control (новый элемент) */
+.vocal-mix-control {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Отступ между переключателем и надписью */
+    background-color: #222; /* Затемненный цвет фона */
+    border-radius: 6px;
+    padding: 3px 8px;
+    margin-left: 10px; /* Отступ от "Mic Control" */
+}
+
+.vocal-mix-label {
+    font-size: 0.9rem;
+    color: #ddd; /* Цвет текста, как у других надписей */
+    white-space: nowrap; /* Чтобы надпись не переносилась */
+}
+
+/* The switch - контейнер для переключателя */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 34px; /* Ширина переключателя */
+    height: 20px; /* Высота переключателя */
+}
+
+/* Скрываем стандартный чекбокс */
+.switch input {
+    opacity: 0 !important;
+    width: 100% !important; /* Занимаем всю ширину контейнера */
+    height: 100% !important; /* Занимаем всю высоту контейнера */
+    position: absolute !important; /* Абсолютное позиционирование для полного перекрытия */
+    left: 0 !important;
+    top: 0 !important;
+    z-index: 1 !important;
+    box-sizing: border-box !important;
+}
+
+/* Ползунок */
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #444; /* Темно-серый фон неактивного переключателя */
+    -webkit-transition: .4s;
+    transition: .4s;
+    border-radius: 20px; /* Добавляем скругление для всего ползунка */
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px; /* Размер ползунка */
+    width: 16px; /* Размер ползунка */
+    left: 2px;
+    bottom: 2px;
+    background-color: #aaa; /* Матовый серый цвет ползунка */
+    -webkit-transition: .4s;
+    transition: .4s;
+    border-radius: 50%; /* Добавляем скругление для белого кружка */
+}
+
+input:checked + .slider {
+    background-color: #3c4e61; /* Темно-сине-серый фон активного переключателя */
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #3c4e61; /* Эффект при фокусе, соответствующий активному цвету */
+}
+
+input:checked + .slider:before {
+    -webkit-transform: translateX(14px); /* Смещение ползунка при активации */
+    -ms-transform: translateX(14px);
+    transform: translateX(14px);
+}
+
+/* Закругленные ползунки */
+.slider.round {
+    border-radius: 20px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+} 

@@ -4,3 +4,6 @@ Logs/
 *.log
 node_modules/
 .DS_Store
+
+# Keep public/ folder
+!public/

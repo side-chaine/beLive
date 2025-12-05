@@ -1,0 +1,451 @@
+﻿{
+  "id": 1762686547585,
+  "title": "Linkin Park - From the Inside",
+  "savedAt": "2025-11-09T11:13:14.870Z",
+  "markers": [
+    {
+      "id": "1762686595292dk6ow",
+      "lineIndex": 0,
+      "time": 24.849635,
+      "text": "I don't know who to trust",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "176268659833531d7k",
+      "lineIndex": 1,
+      "time": 27.891872,
+      "text": "No surprise",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1762686599814xne8k",
+      "lineIndex": 2,
+      "time": 29.372144,
+      "text": "(Everyone feels so far away from me)",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1762686602628o2j4x",
+      "lineIndex": 3,
+      "time": 32.186985,
+      "text": "Heavy thoughts sift through dust",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "17626866057513mawo",
+      "lineIndex": 4,
+      "time": 35.309277,
+      "text": "And the lies",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1762686608323sb5l9",
+      "lineIndex": 5,
+      "time": 37.876453,
+      "text": "Trying not to break",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1762686609727otlhg",
+      "lineIndex": 6,
+      "time": 39.285433,
+      "text": "But I'm so tired of this deceit",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "17626866119275usui",
+      "lineIndex": 7,
+      "time": 41.485515,
+      "text": "Every time I try to make myself",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1762686613555phvi9",
+      "lineIndex": 8,
+      "time": 43.112552,
+      "text": "Get back up on my feet",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "17626866153790sugw",
+      "lineIndex": 9,
+      "time": 44.929454,
+      "text": "All I ever think about is this (ah)",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1762686617589xcfwh",
+      "lineIndex": 10,
+      "time": 47.147019,
+      "text": "All the tiring time between",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1762686619891ikc49",
+      "lineIndex": 11,
+      "time": 48.76297728074697,
+      "text": "And how trying to put my trust in you (I)",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1762686640469eob5j",
+      "lineIndex": 12,
+      "time": 51.262098,
+      "text": "Just takes so much out of me",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1762686642607c0x1j",
+      "lineIndex": 13,
+      "time": 53.25578397180525,
+      "text": "Take everything from the inside",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "176268665239550m47",
+      "lineIndex": 14,
+      "time": 58.4312,
+      "text": "And throw it all away",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1762686654723qxs9e",
+      "lineIndex": 15,
+      "time": 62.19308062119431,
+      "text": "'Cause I swear for the last time",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "17626866685075d719",
+      "lineIndex": 16,
+      "time": 65.69078,
+      "text": "I won't trust myself with you",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1762686672804yk0br",
+      "lineIndex": 17,
+      "time": 69.991865,
+      "text": "Tension is building inside steadily",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "17626866773906x3tr",
+      "lineIndex": 18,
+      "time": 74.577483,
+      "text": "(Everyone feels so far away from me)",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "17626866803350wcij",
+      "lineIndex": 19,
+      "time": 77.521347,
+      "text": "Heavy thoughts forcing their way out of me",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1762686685869aaewn",
+      "lineIndex": 20,
+      "time": 83.057092,
+      "text": "Trying not to break",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1762686687616oph57",
+      "lineIndex": 21,
+      "time": 84.800803,
+      "text": "But I'm so tired of this deceit",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1762686689595gsc4p",
+      "lineIndex": 22,
+      "time": 86.780304,
+      "text": "Every time I try to make myself",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1762686691642mr9sg",
+      "lineIndex": 23,
+      "time": 88.829322,
+      "text": "Get back up on my feet",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1762686693175pjma8",
+      "lineIndex": 24,
+      "time": 90.361982,
+      "text": "All I ever think about is this (ah)",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1762686695399byp0y",
+      "lineIndex": 25,
+      "time": 92.585047,
+      "text": "All the tiring time between",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "17626866970639k2ew",
+      "lineIndex": 26,
+      "time": 94.251115,
+      "text": "And how trying to put my trust in you (I)",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1762686699363ua5ra",
+      "lineIndex": 27,
+      "time": 96.5501,
+      "text": "Just takes so much out of me",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1762686701310ecvtc",
+      "lineIndex": 28,
+      "time": 98.49811,
+      "text": "Take everything from the inside",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1762686710042zhcgs",
+      "lineIndex": 29,
+      "time": 103.968876,
+      "text": "And throw it all away",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "17626867135121p44i",
+      "lineIndex": 30,
+      "time": 107.443306,
+      "text": "'Cause I swear for the last time",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1762686717291inhpq",
+      "lineIndex": 31,
+      "time": 111.219306,
+      "text": "I won't trust myself with you",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1762686724963fqbsz",
+      "lineIndex": 32,
+      "time": 118.893501,
+      "text": "I won't waste myself on you! You! You!",
+      "blockType": "bridge",
+      "color": "#6f42c1"
+    },
+    {
+      "id": "1762686732839g35pi",
+      "lineIndex": 33,
+      "time": 126.770726,
+      "text": "Waste myself on you! You! You!",
+      "blockType": "bridge",
+      "color": "#6f42c1"
+    },
+    {
+      "id": "17626867407939rl5x",
+      "lineIndex": 34,
+      "time": 134.723705,
+      "text": "I'll take everything from the inside",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1762686747642mlvie",
+      "lineIndex": 35,
+      "time": 141.572106,
+      "text": "And throw it all away",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1762686751446j5zhn",
+      "lineIndex": 36,
+      "time": 145.37586,
+      "text": "'Cause I swear for the last time",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1762686755104wufiq",
+      "lineIndex": 37,
+      "time": 149.033003,
+      "text": "I won't trust myself with you",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "17626867589636plwg",
+      "lineIndex": 38,
+      "time": 152.89332,
+      "text": "Everything from the inside",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1762686762652lsimo",
+      "lineIndex": 39,
+      "time": 156.579488,
+      "text": "And just throw it all away",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "17626867664536t61o",
+      "lineIndex": 40,
+      "time": 160.381755,
+      "text": "'Cause I swear for the last time",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "17626867702043142l",
+      "lineIndex": 41,
+      "time": 164.131778,
+      "text": "I won't trust myself with you! You! You!",
+      "blockType": "chorus",
+      "color": "#F44336"
+    }
+  ],
+  "lyrics": "I don't know who to trust\nNo surprise\n(Everyone feels so far away from me)\nHeavy thoughts sift through dust\nAnd the lies\n\nTrying not to break\nBut I'm so tired of this deceit\nEvery time I try to make myself\nGet back up on my feet\nAll I ever think about is this (ah)\nAll the tiring time between\nAnd how trying to put my trust in you (I)\nJust takes so much out of me\n\nTake everything from the inside\nAnd throw it all away\n'Cause I swear for the last time\nI won't trust myself with you\n\nTension is building inside steadily\n(Everyone feels so far away from me)\nHeavy thoughts forcing their way out of me\n\nTrying not to break\nBut I'm so tired of this deceit\nEvery time I try to make myself\nGet back up on my feet\nAll I ever think about is this (ah)\nAll the tiring time between\nAnd how trying to put my trust in you (I)\nJust takes so much out of me\n\nTake everything from the inside\nAnd throw it all away\n'Cause I swear for the last time\nI won't trust myself with you\n\nI won't waste myself on you! You! You!\nWaste myself on you! You! You!\n\nI'll take everything from the inside\nAnd throw it all away\n'Cause I swear for the last time\nI won't trust myself with you\n\nEverything from the inside\nAnd just throw it all away\n'Cause I swear for the last time\nI won't trust myself with you! You! You!",
+  "textBlocks": [
+    {
+      "id": "block-1762686568640-0-biog28qh0uv",
+      "name": "Block 1",
+      "lineIndices": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "type": "verse"
+    },
+    {
+      "id": 1,
+      "name": "Block 2",
+      "lineIndices": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "type": "verse"
+    },
+    {
+      "id": 2,
+      "name": "Block 3",
+      "lineIndices": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "type": "chorus"
+    },
+    {
+      "id": 3,
+      "name": "Block 4",
+      "lineIndices": [
+        17,
+        18,
+        19
+      ],
+      "type": "verse"
+    },
+    {
+      "id": 4,
+      "name": "Block 5",
+      "lineIndices": [
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ],
+      "type": "verse"
+    },
+    {
+      "id": 5,
+      "name": "Block 6",
+      "lineIndices": [
+        28,
+        29,
+        30,
+        31
+      ],
+      "type": "chorus"
+    },
+    {
+      "id": 6,
+      "name": "Block 7",
+      "lineIndices": [
+        32,
+        33
+      ],
+      "type": "bridge"
+    },
+    {
+      "id": 7,
+      "name": "Block 8",
+      "lineIndices": [
+        34,
+        35,
+        36,
+        37
+      ],
+      "type": "chorus"
+    },
+    {
+      "id": 8,
+      "name": "Block 9",
+      "lineIndices": [
+        38,
+        39,
+        40,
+        41
+      ],
+      "type": "chorus"
+    }
+  ]
+}
