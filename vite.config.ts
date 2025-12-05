@@ -6,38 +6,31 @@ import { resolve } from 'path'
 export default defineConfig({
   root: './',
   base: '/beLive/',
-  
-  // ← ДОБАВЛЯЕМ ПУБЛИЧНУЮ ДИРЕКТОРИЮ!
   publicDir: 'public',
-  
+
   build: {
     outDir: 'dist',
     minify: 'esbuild',
-    
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html')
       }
     },
-    
-    // ← КОПИРУЕМ ДОПОЛНИТЕЛЬНЫЕ АССЕТЫ!
-    assetsInlineLimit: 0,
-    
     copyPublicDir: true
   },
-  
+
   plugins: [
     tsconfigPaths(),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      
+
       manifest: {
-        name: 'beLive - Karaoke & Rehearsal',
+        name: 'beLive',
         short_name: 'beLive',
-        description: 'Practice karaoke and rehearsals anywhere, anytime',
+        description: 'Karaoke Rehearsal | Concert Live',
         theme_color: '#6366f1',
-        background_color: '#0f0f23',
+        background_color: '#6366f1',
         display: 'standalone',
         scope: '/beLive/',
         start_url: '/beLive/',
@@ -56,16 +49,23 @@ export default defineConfig({
           }
         ]
       },
-      
+
       workbox: {
-        globPatterns: [
-          '**/*.{js,css,html,ico,png,jpg,jpeg,svg,woff,woff2}',
-          'Concert/**/*.jpg',
-          'Karaoke/**/*.jpg',
-          'Rehearsal/**/*.jpg'
-        ],
-        
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        globIgnores: ['**/*.jpg', '**/*.jpeg'],
         runtimeCaching: [
+          {
+            urlPattern: /\.(jpg|jpeg)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30
+              }
+            }
+          },
           {
             urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/.*/i,
             handler: 'CacheFirst',
@@ -84,27 +84,15 @@ export default defineConfig({
               cacheName: 'esm-cache',
               networkTimeoutSeconds: 10
             }
-          },
-          {
-            urlPattern: /\.(jpg|jpeg|png|svg)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'images-cache',
-              expiration: {
-                maxEntries: 200,
-                maxAgeSeconds: 60 * 60 * 24 * 30
-              }
-            }
           }
         ],
-        
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true
       }
     })
   ],
-  
+
   server: {
     host: '0.0.0.0',
     port: 3000
