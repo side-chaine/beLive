@@ -24,8 +24,8 @@ export default defineConfig({
       includeAssets: ['**/*'],
 
       manifest: {
-        name: 'beLive - Karaoke Rehearsal | Concert Live',
-        short_name: 'beLive - Karaoke Rehearsal | Concert Live',
+        name: 'beLive',
+        short_name: 'beLive',
         description: 'Karaoke Rehearsal | Concert Live',
         theme_color: '#6366f1',
         background_color: '#6366f1',
