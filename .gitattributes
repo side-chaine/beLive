@@ -1,0 +1,30 @@
+*.md linguist-documentation
+LICENSE linguist-documentation
+code_of_conduct.md linguist-documentation
+contributing.md linguist-documentation
+SECURITY.md linguist-documentation
+ROADMAP.md linguist-documentation
+
+public/** linguist-vendored
+Concert/** linguist-vendored
+Karaoke/** linguist-vendored
+Rehearsal/** linguist-vendored
+Json/** linguist-vendored
+img/** linguist-vendored
+assets/** linguist-vendored
+resources/** linguist-vendored
+
+js/audio-engine.js linguist-vendored
+js/track-catalog.js linguist-vendored
+js/marker-manager.js linguist-vendored
+js/lyrics-display.js linguist-vendored
+js/monitor-mix.js linguist-vendored
+js/worklets/recorder-processor.js linguist-vendored
+
+css/** linguist-vendored
+public/css/** linguist-vendored
+
+dist/** linguist-generated
+dev-dist/** linguist-generated
+recon/** linguist-generated
+Logs/** linguist-generated
