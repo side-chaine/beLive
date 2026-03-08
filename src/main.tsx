@@ -1,0 +1,380 @@
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App';
+import { ThemeProvider } from './theme/components/ThemeProvider';
+import { initBlocksBridge } from './bridges/blocks.bridge';
+import { installLiveGuard } from './bridges/live-guard';
+import { initLoopBridge } from './bridges/loop.bridge';
+import { registerLiveModeStub } from './services/live-mode.stub';
+import { registerWaveformEditorStub } from './services/waveform-editor.stub';
+import * as markerService from './services/marker.service';
+import { initAudioReactiveBridge } from './bridges/audio-reactive.bridge';
+import { patchLyricsDisplaySlimMethods } from './services/lyrics.service';
+import { initBlockEditorBridge } from './blocks/bridge/blockEditor.bridge';
+import { useUIStore } from './stores/ui.store';
+import { getColorForBlockType, buildBlocksFromMarkers, computeSections, getBlockTypeForLine } from './utils/markerUtils';
+
+// import '../css/main.css'; // loaded via <link> in index.html
+// import '../css/ai-chat.css'; // loaded via <link> in index.html
+// import '../css/avatar-studio.css'; // loaded via <link> in index.html
+
+import { aiHub } from './js/ai/registry';
+import { GatewayProvider } from './js/ai/providers/gateway-provider';
+import { ModelDropdownUI } from './js/ui/model-dropdown-ui'; // Новый импорт
+import { AIChatUI } from './js/ui/ai-chat-ui'; // Новый импорт
+
+declare global { interface Window { __BELIVE_BOOTED__?: boolean } }
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (window.__BELIVE_BOOTED__) return; // Глобальный гард от повторной инициализации
+  window.__BELIVE_BOOTED__ = true;
+
+  // --- App host stub (replaces legacy app.js) ---
+  if (!(window as any).app) {
+    (window as any).app = {
+      currentMode: null,
+      previousMode: null,
+      initComplete: true,
+      lyricsEnabled: true,
+      lyricsDisplay: (window as any).lyricsDisplay || null,
+      audioEngine: (window as any).audioEngine || null,
+      concertBackgroundManager: null,
+      karaokeBackgroundManager: null,
+      rehearsalBackgroundManager: null,
+      showNotification: (...args: any[]) => {
+        const fn = (window as any).showAppNotification;
+        if (fn) fn(...args);
+      },
+      _showWelcomeIfNoTracks: () => {},
+    };
+  }
+
+  registerLiveModeStub();
+  registerWaveformEditorStub();
+  initBlocksBridge();
+  installLiveGuard();
+  initLoopBridge();
+  initAudioReactiveBridge();
+  initBlockEditorBridge();
+
+  // F49: marker service for legacy LD access
+  (window as any).markerService = markerService;
+
+  // F60: patch slim methods onto existing window.lyricsDisplay (no object swap)
+  patchLyricsDisplaySlimMethods();
+
+  // --- MM helper patches (Phase 3: helper extraction) ---
+  const mm = (window as any).markerManager;
+  if (mm) {
+    mm._getColorForBlockType = (blockType: string) => getColorForBlockType(blockType);
+    mm._buildBlocksFromMarkers = (markers: any[]) => buildBlocksFromMarkers(markers);
+    mm._computeSections = (markers: any[], trackDuration?: number) => computeSections(markers, trackDuration);
+    mm._getBlockTypeForLine = (lineIndex: number) => {
+      const ld = (window as any).lyricsDisplay;
+      return getBlockTypeForLine(lineIndex, ld?.textBlocks || []);
+    };
+    mm.resetMarkers = () => {
+      mm.markers = [];
+      mm._notifySubscribers?.('markersReset', []);
+      return;
+    };
+    mm.updateMarkerColors = () => {
+      if (!mm.markers || mm.markers.length === 0) return;
+      let updated = false;
+      const ld = mm.lyricsDisplay || (window as any).lyricsDisplay;
+      const hasBlocks = !!(ld && Array.isArray(ld.textBlocks) && ld.textBlocks.length > 0);
+      mm.markers.forEach((marker: any) => {
+        const newBlockType = mm._getBlockTypeForLine(marker.lineIndex);
+        if (!hasBlocks || newBlockType === 'unknown') return;
+        const newColor = mm._getColorForBlockType(newBlockType);
+        if (marker.blockType !== newBlockType || marker.color !== newColor) { marker.blockType = newBlockType; marker.color = newColor; updated = true; }
+      });
+      if (updated) mm._notifySubscribers?.('markersReset', mm.markers);
+    };
+    mm.setMarkers = (markers: any[]) => {
+      if (!Array.isArray(markers)) { console.error('Invalid markers array'); return; }
+      const ld = mm.lyricsDisplay || (window as any).lyricsDisplay;
+      const validMarkers: any[] = [], usedLineIndexes = new Set<number>(), totalLyricLines = ld ? ld.lyrics.length : 0;
+      markers.forEach((marker: any) => {
+        if (marker && typeof marker.lineIndex === 'number' && marker.lineIndex >= 0 && marker.lineIndex < totalLyricLines && !usedLineIndexes.has(marker.lineIndex)) {
+          usedLineIndexes.add(marker.lineIndex); const updatedMarker = { ...marker };
+          if (!updatedMarker.blockType) updatedMarker.blockType = mm._getBlockTypeForLine(marker.lineIndex);
+          if (!updatedMarker.color) { const typeForColor = updatedMarker.blockType && updatedMarker.blockType !== 'unknown' ? updatedMarker.blockType : mm._getBlockTypeForLine(marker.lineIndex); updatedMarker.color = mm._getColorForBlockType(typeForColor); }
+          validMarkers.push(updatedMarker);
+        }
+      });
+      mm.markers = validMarkers;
+      mm.markers.sort((a: any, b: any) => a.time - b.time);
+      try {
+        const hasExistingBlocks = !!(ld && Array.isArray(ld.textBlocks) && ld.textBlocks.length > 0);
+        const hasTypedMarkers = mm.markers.some((m: any) => m.blockType && m.blockType !== 'unknown');
+        if (!hasExistingBlocks && ld && hasTypedMarkers) { const synthesized = mm._buildBlocksFromMarkers(mm.markers); if (synthesized.length > 0) { ld.textBlocks = synthesized; ld.currentActiveBlock = null; if (typeof ld?.updateDefinedBlocksDisplay === 'function') ld.updateDefinedBlocksDisplay(); } }
+      } catch (e) {
+        console.warn('MarkerManager: Error synthesizing blocks from markers:', e);
+      }
+      mm._notifySubscribers?.('markersReset', mm.markers);
+    };
+    mm.addMarker = (lineIndex: number, time?: number | null) => {
+      const ld = mm.lyricsDisplay || (window as any).lyricsDisplay;
+      const ae = mm.audioEngine || (window as any).audioEngine;
+      if (lineIndex < 0 || lineIndex >= ld.lyrics.length) {
+        console.error('Invalid line index:', lineIndex);
+        return null;
+      }
+      let t = time;
+      if (t === undefined || t === null) t = ae.getCurrentTime();
+      const blockType = mm._getBlockTypeForLine(lineIndex);
+      const markerColor = blockType && blockType !== 'unknown' ? mm._getColorForBlockType(blockType) : undefined;
+      const marker = {
+        id: Date.now() + Math.random().toString(36).substr(2, 5),
+        lineIndex,
+        time: t,
+        text: ld.lyrics[lineIndex],
+        blockType,
+        color: markerColor,
+      };
+      const existingIndex = mm.markers.findIndex((m: any) => m.lineIndex === lineIndex);
+      if (existingIndex >= 0) {
+        mm.markers[existingIndex] = marker;
+        mm._notifySubscribers?.('markerUpdated', marker);
+      } else {
+        mm.markers.push(marker);
+        mm.markers.sort((a: any, b: any) => a.time - b.time);
+        mm._notifySubscribers?.('markerAdded', marker);
+      }
+      return marker;
+    };
+    mm.updateMarker = (markerId: string, updates: any) => {
+      const index = mm.markers.findIndex((marker: any) => marker.id === markerId);
+      if (index === -1) {
+        console.error('Marker not found:', markerId);
+        return null;
+      }
+      mm.markers[index] = { ...mm.markers[index], ...updates };
+      if (updates.time !== undefined) {
+        mm.markers.sort((a: any, b: any) => a.time - b.time);
+      }
+      mm._notifySubscribers?.('markerUpdated', mm.markers[index]);
+      mm.updateMarkerColors();
+      return mm.markers[index];
+    };
+    mm.deleteMarker = (markerId: string) => {
+      const index = mm.markers.findIndex((marker: any) => marker.id === markerId);
+      if (index === -1) {
+        console.error('Marker not found:', markerId);
+        return false;
+      }
+      const deletedMarker = mm.markers[index];
+      mm.markers.splice(index, 1);
+      mm._notifySubscribers?.('markerDeleted', deletedMarker);
+      return true;
+    };
+    mm.getMarkers = (): any[] => {
+      return [...mm.markers];
+    };
+    mm.getMarkerForLine = (lineIndex: number): any | null => {
+      return mm.markers.find((marker: any) => marker.lineIndex === lineIndex) || null;
+    };
+    mm.subscribe = (event: string, callback: (data: any) => void): (() => void) => {
+      if (!mm.subscribers[event]) {
+        console.error('Invalid event type:', event);
+        return () => {};
+      }
+      mm.subscribers[event].push(callback);
+      return () => {
+        mm.subscribers[event] = mm.subscribers[event].filter((cb: any) => cb !== callback);
+      };
+    };
+    mm._notifySubscribers = (event: string, data: any): void => {
+      if (!mm.subscribers[event]) { return; }
+      mm.subscribers[event].forEach((callback: any) => {
+        try {
+          callback(data);
+        } catch (error) {
+          console.error('Error in event subscriber:', error);
+        }
+      });
+    };
+    mm.saveMarkersToTrack = (): boolean => {
+      if (!(window as any).trackCatalog || (window as any).trackCatalog.currentTrackIndex < 0) {
+        console.error('No current track to save markers to');
+        return false;
+      }
+      const currentTrack = (window as any).trackCatalog.tracks[(window as any).trackCatalog.currentTrackIndex];
+      const event = new CustomEvent('save-track-markers', {
+        detail: {
+          trackId: currentTrack.id,
+          markers: mm.markers
+        }
+      });
+      document.dispatchEvent(event);
+      return true;
+    };
+    mm.importMarkers = (json: string): boolean => {
+      try {
+        let jsonContent = json;
+        if (json.charCodeAt(0) === 0xFEFF) {
+          jsonContent = json.substring(1);
+        }
+        const data = JSON.parse(jsonContent);
+        if (Array.isArray(data)) {
+          mm.setMarkers(data);
+        } else if (data && data.markers && Array.isArray(data.markers)) {
+          mm.setMarkers(data.markers);
+          if (data.lyrics && (window as any).lyricsDisplay) {
+            const _title = data.title || 'Imported Track';
+            const ae = mm.audioEngine || (window as any).audioEngine;
+            if (ae && ae.duration > 0) {
+              (window as any).lyricsDisplay.loadLyrics(data.lyrics, ae.duration);
+            }
+          }
+        } else {
+          throw new Error('Invalid markers format');
+        }
+        return true;
+      } catch (error) {
+        console.error('Error importing markers:', error);
+        return false;
+      }
+    };
+    mm._activateNextLine = (lineIndex: number): void => {
+      const ld = mm.lyricsDisplay || (window as any).lyricsDisplay;
+      if (lineIndex < 0 || lineIndex >= ld.lyrics.length) { return; }
+      ld.setActiveLine(lineIndex);
+    };
+    mm._addMarkerForActiveLine = (): void => {
+      const ae = mm.audioEngine || (window as any).audioEngine;
+      if (!ae) {
+        console.error('Audio engine not available');
+        return;
+      }
+
+      const currentTime = ae.getCurrentTime();
+      const activeLine = document.querySelector<HTMLElement>('.lyric-line.active');
+
+      if (!activeLine) {
+        console.warn('No active lyric line found when pressing "1"');
+        return;
+      }
+
+      const indexStr = activeLine.dataset.index;
+      if (!indexStr) {
+        console.error('No index data attribute in active line');
+        return;
+      }
+      const lineIndex = parseInt(indexStr, 10);
+      if (isNaN(lineIndex)) {
+        console.error('Invalid line index in active line');
+        return;
+      }
+
+      const existingMarker = mm.getMarkerForLine(lineIndex);
+      if (existingMarker) {
+        let nextLine = lineIndex + 1;
+        while (nextLine < mm.lyricsDisplay.lyrics.length) {
+          if (!mm.getMarkerForLine(nextLine)) {
+            mm.addMarker(nextLine, currentTime);
+            mm._activateNextLine(nextLine);
+            return;
+          }
+          nextLine++;
+        }
+      } else {
+        mm.addMarker(lineIndex, currentTime);
+        mm._activateNextLine(lineIndex + 1);
+      }
+    };
+  }
+
+  // F44: notification utility
+  import('./utils/notification').then(n => {
+    (window as any).showAppNotification = n.showAppNotification;
+    (window as any).showNotification = n.showAppNotification;
+  });
+
+  // F38: parsing service → window global (used by lyrics-display.js wrappers)
+  import('./services/parsing.service').then(ps => {
+    (window as any).parsingService = ps;
+  });
+
+  // F39: IDB service for legacy access
+  import('./services/idb.service').then(idb => {
+    (window as any).idbService = idb;
+  });
+
+  // F42: RTF service — uses TS rtfToText (ported SimpleRtf)
+  (window as any).rtfService = {
+    parseRtf: async (rtfText: string) => {
+      if (typeof rtfText !== 'string') return '';
+      if (!rtfText.trim().startsWith('{\\rtf')) return rtfText;
+      const { rtfToText } = await import('./services/parsing.service');
+      return rtfToText(rtfText);
+    },
+  };
+
+  // Override legacy catalog opener → React catalog
+  (window as any).openCatalog = () => {
+    useUIStore.getState().setCatalogOpen(true);
+  };
+
+  const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:8787'; // Use environment variable or default
+  const gatewayProvider = new GatewayProvider(GATEWAY_URL);
+  aiHub.register(gatewayProvider);
+
+  new AIChatUI(); // Инициализация AIChatUI
+  new ModelDropdownUI(); // Инициализация ModelDropdownUI
+
+  // Обработчик для кнопки AI Operator. Теперь он будет открывать чат.
+  const aiOperatorButton = document.getElementById('toggle-loopblock-mode');
+  if (aiOperatorButton) {
+    // console.log('✅ Found AI Operator button'); // Закомментировано
+    // aiOperatorButton.addEventListener('click', () => { // Удален дублирующий обработчик
+    //   console.log('⚡ AI Operator button clicked!');
+    //   aiChatUI.toggleChat(); // Переключаем видимость чата
+    // });
+  }
+
+  // Подписка на изменение модели для обновления UI кнопки "Operator"
+  aiHub.on('modelChanged', (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const activeModel = customEvent.detail;
+      const operatorButton = document.getElementById('toggle-loopblock-mode');
+      if (operatorButton) {
+          if (activeModel) {
+              operatorButton.innerHTML = `<span class="operator-text">${activeModel.shortName}</span>`;
+              operatorButton.classList.add('ai-active');
+          } else {
+              operatorButton.innerHTML = `<span class="operator-text">Operator</span>`;
+              operatorButton.classList.remove('ai-active');
+          }
+      }
+  });
+
+  // Убедимся, что начальное состояние кнопки правильное при загрузке
+  const initialActiveModel = aiHub.getActiveModel();
+  const operatorButton = document.getElementById('toggle-loopblock-mode');
+  if (operatorButton) {
+      if (initialActiveModel) {
+          operatorButton.innerHTML = `<span class="operator-text">${initialActiveModel.shortName}</span>`;
+          operatorButton.classList.add('ai-active');
+      } else {
+          operatorButton.innerHTML = `<span class="operator-text">Operator</span>`;
+          operatorButton.classList.remove('ai-active');
+      }
+  }
+});
+
+// Mount React Shell
+const reactRoot = document.getElementById('react-root');
+if (reactRoot) {
+  createRoot(reactRoot).render(
+    React.createElement(
+      React.Fragment,
+      null,
+      React.createElement(ThemeProvider),
+      React.createElement(App)
+    )
+  );
+} else {
+  console.warn('[beLive] #react-root not found, React Shell not mounted');
+}

@@ -1,0 +1,43 @@
+.root {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--bl-border-subtle, rgba(255, 255, 255, 0.2));
+  border-radius: var(--bl-radius-sm, 4px);
+  background: var(--bl-surface-overlay, rgba(255, 255, 255, 0.06));
+  color: var(--bl-text-secondary, rgba(255, 255, 255, 0.7));
+  font-size: 12px;
+  font-family: var(--bl-font-family, 'Inter', sans-serif);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--bl-transition-fast, 150ms ease);
+  user-select: none;
+}
+
+.btn:hover {
+  background: var(--bl-surface-raised, rgba(255, 255, 255, 0.12));
+  border-color: var(--bl-border-strong, rgba(255, 255, 255, 0.4));
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+.value {
+  min-width: 48px;
+  text-align: center;
+}
+
+.value[data-modified="true"] {
+  color: var(--bl-accent, #9b59b6);
+  border-color: var(--bl-accent, #9b59b6);
+}

@@ -1,0 +1,28 @@
+.container {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  max-width: 80vw;
+  text-align: center;
+  pointer-events: none;
+}
+
+.line {
+  font-family: var(--bl-font-family, 'Inter', sans-serif);
+  font-size: clamp(1.5rem, 4vw, 3rem);
+  font-weight: 600;
+  color: var(--bl-text-primary, #ffffff);
+  text-shadow: 0 2px 12px rgba(0,0,0,0.7);
+  padding: 12px 24px;
+  background: var(--bl-surface-overlay, rgba(0,0,0,0.5));
+  border-radius: var(--bl-radius-lg, 12px);
+  backdrop-filter: blur(8px);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.empty {
+  opacity: 0;
+}

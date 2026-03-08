@@ -1,0 +1,146 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+}
+
+/* ── Rows ── */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  min-width: 32px;
+  font-family: var(--bl-font-family, 'Inter', sans-serif);
+}
+
+/* ── Font select ── */
+.fontSelect {
+  flex: 1;
+  max-width: 180px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  padding: 0 8px;
+  cursor: pointer;
+}
+
+.fontSelect:focus {
+  outline: none;
+  border-color: rgba(0, 188, 212, 0.5);
+}
+
+/* ── Scale ── */
+.scaleGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.scaleBtn {
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.scaleBtn:hover {
+  background: rgba(0, 188, 212, 0.15);
+  border-color: rgba(0, 188, 212, 0.4);
+}
+
+.scaleVal {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: monospace;
+  min-width: 36px;
+  text-align: center;
+}
+
+/* ── Set A/B ── */
+.setBtn {
+  width: 32px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.setBtn:hover {
+  color: #fff;
+}
+
+.setActive {
+  background: rgba(0, 188, 212, 0.2);
+  color: #0dcaf0;
+  border-color: rgba(0, 188, 212, 0.4);
+}
+
+/* ── Transitions grid ── */
+.transGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  align-content: flex-start;
+}
+
+.transGrid::-webkit-scrollbar {
+  width: 3px;
+}
+
+.transGrid::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.transBtn {
+  height: 26px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.transBtn:hover {
+  background: rgba(0, 188, 212, 0.08);
+  color: #fff;
+}
+
+.transSel {
+  border-color: #0dcaf0;
+  background: rgba(0, 188, 212, 0.12);
+  color: #fff;
+  box-shadow: 0 0 6px rgba(13, 202, 240, 0.2);
+}

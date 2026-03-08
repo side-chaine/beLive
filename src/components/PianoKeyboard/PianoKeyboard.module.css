@@ -1,0 +1,120 @@
+/* ── React PianoKeyboard ────────────────────────── */
+.keyboard {
+  position: relative;
+  height: 150px;
+  width: 100%;
+  user-select: none;
+  overflow: hidden;
+  background: var(--bl-surface-1, rgba(0, 0, 0, 0.2));
+}
+
+/* ── White keys ─────────────────────────────────── */
+.whiteKey {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, #f5f5f5 0%, #fff 12%, #e8e8e8 100%);
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+  transition: background 0.1s, box-shadow 0.1s;
+  z-index: 1;
+}
+
+/* ── Black keys ─────────────────────────────────── */
+.blackKey {
+  position: absolute;
+  top: 0;
+  height: 60%;
+  background: linear-gradient(180deg, #444 0%, #111 100%);
+  border-radius: 0 0 3px 3px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  transition: background 0.1s, box-shadow 0.1s;
+  z-index: 2;
+}
+
+/* ── Note labels (C2, C3, C4, C5, C6) ───────────── */
+.label {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ── Release fade animation ─────────────────── */
+@keyframes fadeVocalRelease {
+  from { background: var(--bl-c-pitch-vocal, #3B82F6); box-shadow: inset 0 0 16px rgba(59, 130, 246, 0.35); }
+  to { background: rgba(150, 150, 160, 0.3); box-shadow: none; }
+}
+@keyframes fadeVocalReleaseBlack {
+  from { background: var(--bl-c-pitch-vocal, #3B82F6); box-shadow: 0 2px 10px rgba(59, 130, 246, 0.6); }
+  to { background: linear-gradient(180deg, #444 0%, #111 100%); box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+}
+@keyframes fadeMicRelease {
+  from { background: var(--bl-c-pitch-mic, #F97316); box-shadow: inset 0 0 16px rgba(249, 115, 22, 0.35); }
+  to { background: rgba(150, 150, 160, 0.3); box-shadow: none; }
+}
+@keyframes fadeMicReleaseBlack {
+  from { background: var(--bl-c-pitch-mic, #F97316); box-shadow: 0 2px 10px rgba(249, 115, 22, 0.6); }
+  to { background: linear-gradient(180deg, #444 0%, #111 100%); box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+}
+
+/* ── Vocal track highlight (BLUE) — sustain ─── */
+.whiteKey[data-vocal='sustain'],
+.whiteKey[data-vocal='true'] {
+  background: var(--bl-c-pitch-vocal, #3B82F6);
+  box-shadow: inset 0 0 16px rgba(59, 130, 246, 0.35);
+}
+.blackKey[data-vocal='sustain'],
+.blackKey[data-vocal='true'] {
+  background: var(--bl-c-pitch-vocal, #3B82F6);
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.6);
+}
+/* ── Vocal track — release (fade out 400ms) ─── */
+.whiteKey[data-vocal='release'] {
+  animation: fadeVocalRelease 0.4s ease-out forwards;
+}
+.blackKey[data-vocal='release'] {
+  animation: fadeVocalReleaseBlack 0.4s ease-out forwards;
+}
+
+/* ── Mic highlight (ORANGE) — sustain ───────── */
+.whiteKey[data-mic='sustain'],
+.whiteKey[data-mic='true'] {
+  background: var(--bl-c-pitch-mic, #F97316);
+  box-shadow: inset 0 0 16px rgba(249, 115, 22, 0.35);
+}
+.blackKey[data-mic='sustain'],
+.blackKey[data-mic='true'] {
+  background: var(--bl-c-pitch-mic, #F97316);
+  box-shadow: 0 2px 10px rgba(249, 115, 22, 0.6);
+}
+/* ── Mic — release (fade out 400ms) ─────────── */
+.whiteKey[data-mic='release'] {
+  animation: fadeMicRelease 0.4s ease-out forwards;
+}
+.blackKey[data-mic='release'] {
+  animation: fadeMicReleaseBlack 0.4s ease-out forwards;
+}
+
+/* ── Match: vocal + mic same note (GREEN) ───────── */
+.whiteKey[data-match='true'] {
+  background: var(--bl-c-pitch-match, #22C55E);
+  box-shadow: inset 0 0 20px rgba(34, 197, 94, 0.4),
+              0 0 12px rgba(34, 197, 94, 0.5);
+}
+.blackKey[data-match='true'] {
+  background: var(--bl-c-pitch-match, #22C55E);
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.6);
+}
+
+/* ── Label color on highlighted white keys ──────── */
+.whiteKey[data-vocal='true'] .label,
+.whiteKey[data-mic='true'] .label,
+.whiteKey[data-match='true'] .label {
+  color: rgba(255, 255, 255, 0.9);
+}

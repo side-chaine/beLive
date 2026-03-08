@@ -1,0 +1,102 @@
+.root {
+  position: fixed;
+  top: calc(var(--react-header-height, 48px) + var(--wagon-train-height, 0px));
+  left: 0;
+  right: 0;
+  bottom: var(--bl-deck-height, 76px);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background: transparent;
+  overflow: hidden;
+}
+
+.activeBlock {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--bl-radius-lg, 12px);
+  padding: 24px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 80%;
+  max-width: 900px;
+  flex: 1;
+  margin-top: 0;
+  overflow: hidden;
+  text-align: center;
+}
+
+.line {
+  color: var(--bl-text-muted, rgba(255, 255, 255, 0.6));
+  line-height: 1.4;
+  padding: var(--bl-spacing-xs, 4px) 0;
+  transition: color 0.25s ease, text-shadow 0.25s ease, transform 0.25s ease, opacity 0.25s ease;
+  white-space: nowrap;
+}
+
+.line[data-active="true"] {
+  color: var(--bl-text-primary, #ffffff);
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.6), 0 0 40px rgba(255, 255, 255, 0.2);
+}
+
+.nextPreview {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: var(--bl-spacing-xl, 24px);
+  opacity: 0.7;
+  flex-shrink: 0;
+  padding-bottom: 8px;
+}
+
+.previewLine {
+  color: #FF8C00;
+  font-weight: 500;
+  font-size: 1.2rem;
+}
+
+.previewLine::before {
+  content: "→ ";
+}
+
+.scrollContainer {
+  flex: 1;
+  width: 80%;
+  max-width: 800px;
+  overflow-y: auto;
+  padding: 40px 0 80px;
+  text-align: center;
+}
+
+.loopBoundary {
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #FF8C00 0%, #ff7b00 50%, #ff6b00 100%);
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(255, 140, 0, 0.4);
+  opacity: 0.9;
+  cursor: ns-resize;
+  transition: height 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  z-index: 20;
+  flex-shrink: 0;
+}
+
+.loopBoundary:hover {
+  height: 6px;
+  box-shadow: 0 4px 15px rgba(255, 140, 0, 0.6);
+}
+
+.lineOutOfLoop {
+  opacity: 0.25;
+  transform: scale(0.97);
+  filter: grayscale(0.5);
+}

@@ -1,0 +1,212 @@
+.root {
+  position: fixed;
+  top: var(--react-header-height, 48px);
+  left: 0;
+  z-index: 10;
+  display: flex;
+  align-items: stretch;
+  gap: var(--bl-spacing-sm, 8px);
+  flex-wrap: nowrap;
+  padding: 2px 12px;
+  width: 100%;
+  max-width: calc(100vw - 24px);
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: var(--bl-surface-sunken, rgba(20, 20, 20, 0.35));
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: 12px;
+}
+
+.root::-webkit-scrollbar {
+  display: none;
+}
+
+.wagon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--bl-spacing-xs, 4px);
+  padding-top: var(--bl-spacing-xs, 4px);
+  padding-bottom: var(--bl-spacing-xs, 4px);
+  padding-left: var(--bl-spacing-sm, 8px);
+  padding-right: calc(var(--bl-spacing-sm, 8px) + 18px);
+  min-height: 34px;
+  flex: 1 1 0;
+  width: auto;
+  min-width: 54px;
+  max-width: none;
+  overflow: hidden;
+  background: var(--bl-surface-overlay, rgba(0,0,0,0.18));
+  border: 1px solid var(--bl-border-subtle, rgba(255,255,255,0.12));
+  box-shadow: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: var(--bl-transition-fast, 150ms ease);
+  color: var(--bl-text-secondary, rgba(255, 255, 255, 0.7));
+  font-family: var(--bl-font-family, 'Inter', sans-serif);
+}
+
+.wagon::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.22;
+  transform: translateY(18%);
+  transition: var(--bl-transition-fast, 150ms ease);
+  pointer-events: none;
+}
+
+.wagon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    var(--bl-border-subtle, rgba(255,255,255,0.14)) 0%,
+    transparent 55%
+  );
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.wagon:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 0 0 1px var(--bl-border-strong, rgba(255,255,255,0.22)),
+    0 0 10px var(--bl-accent, rgba(155,89,182,0.35));
+}
+
+.wagon[data-active="true"] {
+  border-color: rgba(100, 200, 255, 0.9);
+  box-shadow: 0 0 0 2px rgba(100, 200, 255, 0.55);
+  background: rgba(100, 200, 255, 0.15);
+}
+
+.wagon[data-block-type="verse"]::before {
+  background:
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-verse, #27AE60) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-verse, #27AE60) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-verse, #27AE60) 100%);
+}
+
+.wagon[data-block-type="chorus"]::before {
+  background:
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-chorus, #E74C3C) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-chorus, #E74C3C) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-chorus, #E74C3C) 100%);
+}
+
+.wagon[data-block-type="bridge"]::before {
+  background:
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-bridge, #8E44AD) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-bridge, #8E44AD) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-bridge, #8E44AD) 100%);
+}
+
+.wagon[data-block-type="prechorus"]::before {
+  background:
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-prechorus, #F1C40F) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-prechorus, #F1C40F) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-prechorus, #F1C40F) 100%);
+}
+
+.wagon[data-block-type="intro"]::before {
+  background:
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-intro, #3B5998) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-intro, #3B5998) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-intro, #3B5998) 100%);
+}
+
+.wagon[data-block-type="outro"]::before {
+  background:
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-outro, #1ABC9C) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-outro, #1ABC9C) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-outro, #1ABC9C) 100%);
+}
+
+.wagon:hover::before,
+.wagon:focus-within::before {
+  opacity: 0.42;
+  transform: translateY(0%);
+}
+
+.index {
+  position: relative;
+  z-index: 1;
+  font-size: var(--bl-font-size-sm, 12px);
+  font-weight: 700;
+  color: var(--bl-text-secondary, rgba(255,255,255,0.78));
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.title {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--bl-font-size-sm, 12px);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--bl-text-primary, #ffffff);
+  text-shadow: 0 1px 0 var(--bl-surface-base, rgba(0,0,0,0.65));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loopToggle {
+  position: absolute;
+  z-index: 1;
+  right: var(--bl-spacing-xs, 4px);
+  top: 50%;
+  transform: translateY(-50%) scale(0.92);
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: var(--bl-radius-sm, 4px);
+  line-height: 1;
+  font-size: var(--bl-font-size-xs, 12px);
+  display: grid;
+  place-items: center;
+  background: var(--bl-surface-overlay, rgba(0,0,0,0.35));
+  border: 1px solid var(--bl-border-subtle, rgba(255,255,255,0.14));
+  box-shadow: 0 0 0 1px var(--bl-border-subtle, rgba(255,255,255,0.12));
+  color: var(--bl-text-primary, #ffffff);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: var(--bl-transition-fast, 150ms ease);
+}
+
+.loopToggle:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.wagon[data-in-loop="true"] {
+  border-color: rgba(255, 140, 0, 0.9);
+  box-shadow: 0 0 0 2px rgba(255, 140, 0, 0.55);
+}
+
+.loopToggle[data-active="true"] {
+  background: rgba(255, 140, 0, 0.5);
+  border-color: rgba(255, 140, 0, 0.8);
+  color: #ffffff;
+}
+
+.wagon:hover .loopToggle,
+.wagon:focus-within .loopToggle {
+  opacity: 0.85;
+  pointer-events: auto;
+  transform: translateY(-50%) scale(1);
+}
+
+.loopToggle:focus-visible {
+  opacity: 0.85;
+  pointer-events: auto;
+  transform: translateY(-50%) scale(1);
+}
