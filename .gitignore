@@ -1,9 +1,22 @@
 Docs/
 Log/
 Logs/
-*.log
 node_modules/
+dist/
+dev-dist/
+recon/
+
+*.log
+*.bak
+*.backu
+*.tmp
+
 .DS_Store
+Thumbs.db
+
+.vscode/
+.kiro/
+.qoder/
 
 # Keep public/ folder
 !public/

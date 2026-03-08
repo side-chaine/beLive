@@ -209,7 +209,6 @@
             } else {
                 this.vocalToMainGain.connect(this.mainDest);
             }
-            try { console.log('MonitorMix: vocalToMain connected (VOCAL TRACK)', { level: this.vocalHallLevel, compensateOn: this.compensateOn }); } catch(_) {}
         }
 
         _bindBlockAutoMix(){
@@ -233,11 +232,30 @@
                     if (blk && Array.isArray(blk.lineIndices) && blk.lineIndices.includes(lineIndex)) {
                         const t = (blk.type||'').toLowerCase();
                         if (t === 'chorus' || t === 'bridge' || t === 'verse') return t;
-                        return 'unknown';
+                        if (t === 'prechorus' || t === 'pre-chorus') return 'verse';
+                        if (t === 'intro' || t === 'outro') return 'verse';
+                        return 'verse';
+                    }
+                }
+                // Gap line between blocks — find nearest block and use its type
+                if (typeof lineIndex === 'number' && rawBlocks.length > 0) {
+                    let closest = null, minDist = Infinity;
+                    for (const blk of rawBlocks) {
+                        if (!blk || !Array.isArray(blk.lineIndices) || !blk.lineIndices.length) continue;
+                        const last = blk.lineIndices[blk.lineIndices.length - 1];
+                        const first = blk.lineIndices[0];
+                        const dist = lineIndex > last ? lineIndex - last : first - lineIndex;
+                        if (dist < minDist && dist > 0) { minDist = dist; closest = blk; }
+                    }
+                    if (closest) {
+                        const t = (closest.type||'').toLowerCase();
+                        if (t === 'chorus') return 'chorus';
+                        if (t === 'bridge') return 'bridge';
+                        return 'verse';
                     }
                 }
             } catch(_) {}
-            return 'unknown';
+            return 'verse';
         }
 
         _updateAutoVocalGainForLine(lineIndex){
@@ -277,7 +295,7 @@
         }
 
         getState(){
-            return { enabled: this.enabled, delayMs: this.delayMs, includeMusic: this.includeMusic, musicLevel: this.musicLevel, outputDeviceId: this.outputDeviceId, mainDeviceId: this.mainDeviceId, routeMainEnabled: this.routeMainEnabled, compensateOn: this.compensateOn, vocalToMain: this.vocalToMain, vocalHallLevel: this.vocalHallLevel };
+            return { enabled: this.enabled, delayMs: this.delayMs, includeMusic: this.includeMusic, musicLevel: this.musicLevel, outputDeviceId: this.outputDeviceId, mainDeviceId: this.mainDeviceId, routeMainEnabled: this.routeMainEnabled, compensateOn: this.compensateOn, vocalToMain: this.vocalToMain, vocalHallLevel: this.vocalHallLevel, autoVerseOn: this.autoVerseOn, autoVerseLevel: this.autoVerseLevel, autoChorusOn: this.autoChorusOn, autoChorusLevel: this.autoChorusLevel, autoBridgeOn: this.autoBridgeOn, autoBridgeLevel: this.autoBridgeLevel };
         }
 
         _persist(){
