@@ -11,6 +11,7 @@ interface LoopState {
   loopStartLine: number | null;
   loopEndLine: number | null;
   toggleBlock: (block: TextBlock) => void;
+  rebindToBlock: (block: TextBlock) => void;
   setBoundaryLines: (startLine: number, endLine: number) => void;
   clearLoop: () => void;
 }
@@ -91,6 +92,24 @@ export const useLoopStore = create<LoopState>((set, get) => ({
       loopEndTime: maxEnd,
       loopStartLine: Math.min(...allLineIndices),
       loopEndLine: Math.max(...allLineIndices),
+    });
+  },
+
+  rebindToBlock: (block) => {
+    const markers = useMarkersStore.getState().markers as any[];
+    const first = Math.min(...block.lineIndices);
+    const last = Math.max(...block.lineIndices);
+    const sm = markers.find((m: any) => m.lineIndex === first);
+    if (!sm) return;
+    const em = markers.find((m: any) => m.lineIndex > last);
+
+    set({
+      isLooping: true,
+      loopBlockIds: [block.id],
+      loopStartTime: sm.time,
+      loopEndTime: em ? em.time : sm.time + 30,
+      loopStartLine: first,
+      loopEndLine: last,
     });
   },
 

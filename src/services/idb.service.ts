@@ -20,6 +20,8 @@ export interface TrackRecord {
   lyrics?: string | null;
   blocksData?: any[] | null;
   syncMarkers?: any[] | null;
+  lineMap?: import('../sync/word-sync/line-map.types').LineMapEntry[] | null;
+  alignmentData?: import('../sync/word-sync/types').AlignmentResult | null;
   dateAdded: string;
   lastModified: string;
 }

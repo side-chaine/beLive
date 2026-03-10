@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useTrackStore, TrackState } from '../stores/track.store';
-import { loadTrack } from '../services/track.actions';
 
 export function useKeyboardShortcuts() {
   const tracksMeta = useTrackStore((s: TrackState) => s.tracksMeta);
@@ -14,10 +13,9 @@ export function useKeyboardShortcuts() {
       if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
         const delta = e.code === 'ArrowLeft' ? -1 : 1;
         if (e.shiftKey) {
-          // Shift+Arrow → track prev/next
+          // Shift+Arrow → track prev/next (accumulated)
           e.preventDefault();
-          const idx = currentTrackIndex + delta;
-          if (idx >= 0 && idx < tracksMeta.length) loadTrack(idx);
+          (window as any).queueTrackJump?.(delta);
         } else if (e.metaKey || e.ctrlKey) {
           // Cmd/Ctrl+Arrow → block navigation (→ TC-002)
         } else if (!e.altKey) {

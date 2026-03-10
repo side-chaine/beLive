@@ -310,6 +310,71 @@ export default {
       });
     }
 
+    // --- Alignment Endpoint (mock-success, unauthenticated) ---
+    if (request.method === 'POST' && url.pathname === '/v1/align') {
+      let rawBody: any;
+      try {
+        rawBody = await request.json();
+      } catch (e) {
+        return jsonResponse(
+          { error: 'Invalid JSON body' },
+          400,
+          origin,
+          allowedOrigins
+        );
+      }
+
+      const alignableLines = Array.isArray(rawBody?.alignableLines)
+        ? rawBody.alignableLines
+        : [];
+
+      if (!alignableLines.length) {
+        return jsonResponse(
+          { error: 'alignableLines is required' },
+          400,
+          origin,
+          allowedOrigins
+        );
+      }
+
+      const lines = alignableLines.map((line: any, index: number) => {
+        const start = index * 2;
+        const end = start + 2;
+
+        return {
+          rawLineIndex: line.rawLineIndex,
+          contentLineIndex: line.contentLineIndex,
+          text: line.text,
+          start,
+          end,
+          confidence: 0.5,
+          words: [],
+        };
+      });
+
+      const result = {
+        source: 'ai-aligner',
+        version: 1,
+        trackId: rawBody?.trackId,
+        language: rawBody?.language,
+        lyricsHash: rawBody?.lyricsHash,
+        audioHash: rawBody?.audioHash,
+        audioSource: rawBody?.audioSource,
+        provider: 'mock',
+        providerVersion: 'stub-v1',
+        mode: rawBody?.mode,
+        lines,
+        separators: [],
+      };
+
+      return jsonResponse(
+        result,
+        200,
+        origin,
+        allowedOrigins
+      );
+    }
+
     // --- Admin Endpoint: Update Operator Prompt ---
     if (request.method === 'POST' && url.pathname === '/admin/operator-prompt') {
       if (!isAuthenticated(request, env)) {

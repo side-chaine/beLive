@@ -53,9 +53,14 @@ export function WagonTrain() {
   const handleWagonClick = (block: TextBlock) => {
     const firstLine = Math.min(...block.lineIndices);
     const marker = markers.find(m => m.lineIndex === firstLine);
-    if (marker) {
-      (window as any).audioEngine?.setCurrentTime?.(marker.time);
+    if (!marker) return;
+
+    const loopStore = useLoopStore.getState();
+    if (loopStore.isLooping) {
+      loopStore.rebindToBlock(block);
     }
+
+    (window as any).audioEngine?.setCurrentTime?.(marker.time);
   };
 
   return (

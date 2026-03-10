@@ -5,8 +5,11 @@ import { useLyricsStore } from '../../stores/lyrics.store';
 import { useMarkersStore } from '../../stores/markers.store';
 import { WaveformCanvas } from './WaveformCanvas';
 import { requestCloseSync } from '../bridge/sync.bridge';
-import { getTrack } from '../../services/idb.service';
+import { getTrack, updateTrackField } from '../../services/idb.service';
 import { useTrackStore } from '../../stores/track.store';
+import { useWordSyncStore } from '../../stores/wordSync.store';
+import { lyricsAlignService } from '../word-sync/services/lyrics-align.service';
+import { buildAlignmentJobRequest } from '../word-sync/services/alignment-request.builder';
 
 function formatTime(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -37,6 +40,14 @@ export default function SyncEditorPanel() {
   const currentTime = useAudioStore((s) => s.currentTime);
   const instrumentalVolume = useAudioStore((s) => s.instrumentalVolume);
   const vocalsVolume = useAudioStore((s) => s.vocalsVolume);
+  const wordSyncStatus = useWordSyncStore((s) => s.status);
+  const providerName = lyricsAlignService.getProvider().name;
+  const wordSyncLineMap = useWordSyncStore((s) => s.lineMap);
+  const wordSyncLyricsHash = useWordSyncStore((s) => s.lyricsHash);
+  const wordSyncAudioSource = useWordSyncStore((s) => s.audioSource);
+  const wordSyncDegraded = useWordSyncStore((s) => s.degraded);
+  const wordSyncError = useWordSyncStore((s) => s.error);
+  const markers = useMarkersStore((s) => s.markers);
 
   // Publish --bl-deck-height
   useEffect(() => {
@@ -232,6 +243,105 @@ export default function SyncEditorPanel() {
     [sourceMode]
   );
 
+  const handleAlignLyrics = useCallback(async () => {
+    if (!wordSyncLineMap.length || !wordSyncLyricsHash || !wordSyncAudioSource) {
+      useWordSyncStore.getState().setStatus('error');
+      useWordSyncStore.getState().setError('Word-sync layer is not ready');
+      return;
+    }
+
+    if (wordSyncDegraded) {
+      useWordSyncStore.getState().setStatus('error');
+      useWordSyncStore.getState().setError('Trusted lyrics source is degraded');
+      return;
+    }
+
+    useWordSyncStore.getState().setError(null);
+    useWordSyncStore.getState().setStatus('loading');
+
+    try {
+      const anchors = markers
+        .filter((m) => typeof m.lineIndex === 'number' && typeof m.time === 'number')
+        .map((m) => ({
+          rawLineIndex: m.lineIndex,
+          time: m.time,
+          kind: 'line' as const,
+          hard: true,
+        }));
+
+      const request = buildAlignmentJobRequest({
+        mode: 'anchored',
+        lineMap: wordSyncLineMap,
+        lyricsHash: wordSyncLyricsHash,
+        audioSource: wordSyncAudioSource,
+        anchors,
+      });
+
+      const response = await lyricsAlignService.align(request);
+
+      if (!response.ok) {
+        useWordSyncStore.getState().setStatus('error');
+        useWordSyncStore.getState().setError(response.error);
+        return;
+      }
+
+      useWordSyncStore.getState().setAlignmentData(response.result);
+      useWordSyncStore.getState().setStatus('ready');
+      useWordSyncStore.getState().setError(null);
+
+      const trackState = useTrackStore.getState();
+      const storeMeta =
+        trackState.currentTrackIndex >= 0 &&
+        trackState.currentTrackIndex < trackState.tracksMeta.length
+          ? trackState.tracksMeta[trackState.currentTrackIndex]
+          : null;
+
+      const legacyCatalog = (window as any).trackCatalog;
+      const legacyTrack =
+        legacyCatalog?.currentTrackIndex >= 0 &&
+        legacyCatalog?.currentTrackIndex < (legacyCatalog?.tracks?.length ?? 0)
+          ? legacyCatalog.tracks[legacyCatalog.currentTrackIndex]
+          : null;
+
+      const currentTrackIdRaw = storeMeta?.id ?? legacyTrack?.id ?? null;
+      const currentTrackId =
+        currentTrackIdRaw != null ? Number(currentTrackIdRaw) : NaN;
+
+      if (Number.isFinite(currentTrackId)) {
+        try {
+          await updateTrackField(currentTrackId, {
+            alignmentData: response.result,
+            lineMap: useWordSyncStore.getState().lineMap,
+          });
+
+          console.log('Word-sync persistence saved', {
+            trackId: currentTrackId,
+            hasAlignmentData: !!response.result,
+            lineMapSize: useWordSyncStore.getState().lineMap.length,
+          });
+        } catch (persistError) {
+          console.warn('Word-sync persistence failed:', persistError);
+        }
+      } else {
+        console.warn(
+          'Word-sync persistence skipped: invalid current track id',
+          currentTrackIdRaw
+        );
+      }
+    } catch (error) {
+      useWordSyncStore.getState().setStatus('error');
+      useWordSyncStore.getState().setError(
+        error instanceof Error ? error.message : 'Alignment failed'
+      );
+    }
+  }, [
+    wordSyncLineMap,
+    wordSyncLyricsHash,
+    wordSyncAudioSource,
+    wordSyncDegraded,
+    markers,
+  ]);
+
   const btn: React.CSSProperties = {
     background: 'rgba(255, 255, 255, 0.04)',
     border: '1px solid rgba(255, 255, 255, 0.08)',
@@ -415,6 +525,52 @@ export default function SyncEditorPanel() {
         }}>
           {formatTime(currentTime)}
         </span>
+
+        {/* Word-sync status */}
+        <span style={{
+          fontFamily: 'monospace',
+          fontSize: '10px',
+          color: 'rgba(255, 255, 255, 0.25)',
+          marginLeft: '8px',
+        }}>
+          {providerName}:{wordSyncStatus}
+        </span>
+
+        <button
+          onClick={handleAlignLyrics}
+          disabled={
+            wordSyncStatus === 'loading' ||
+            !wordSyncLineMap.length ||
+            !wordSyncLyricsHash ||
+            !wordSyncAudioSource ||
+            wordSyncDegraded
+          }
+          style={{
+            background: 'transparent',
+            color: 'rgba(255, 255, 255, 0.65)',
+            border: '1px solid rgba(255, 255, 255, 0.18)',
+            borderRadius: '6px',
+            padding: '4px 8px',
+            fontSize: '11px',
+            cursor: 'pointer',
+            marginLeft: '8px',
+            opacity: wordSyncStatus === 'loading' ? 0.6 : 1,
+          }}
+          title={wordSyncDegraded ? 'Trusted lyrics source is degraded' : 'Run lyrics alignment'}
+        >
+          {wordSyncStatus === 'loading' ? 'Aligning…' : 'Align'}
+        </button>
+
+        {wordSyncError ? (
+          <span style={{
+            fontFamily: 'monospace',
+            fontSize: '10px',
+            color: 'rgba(255, 120, 120, 0.8)',
+            marginLeft: '8px',
+          }}>
+            {wordSyncError}
+          </span>
+        ) : null}
 
         {/* Cancel — only when dirty */}
         {isDirty && (

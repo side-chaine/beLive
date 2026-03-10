@@ -2,12 +2,31 @@
 // F40: Track loading — all 14 steps from TC.loadTrack (L410-533)
 // Legacy engines (LD, MM, AE, WE) called via window.* — NOT abstracted.
 
+import {
+  clearWordSyncLayer,
+  prepareWordSyncLayer,
+} from '../sync/word-sync/services/ai-lyrics-sync.service';
+
 export interface LoadTrackOptions {
   autoplay?: boolean;
   openSyncEditor?: boolean;
 }
 
+let _autoplayTimer: ReturnType<typeof setTimeout> | null = null;
+let _prevIUrl: string | null = null;
+let _prevVUrl: string | null = null;
+
+let _pendingJump: { direction: number; timer: ReturnType<typeof setTimeout> | null } = {
+  direction: 0,
+  timer: null,
+};
+
 export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Promise<void> {
+  // Cancel previous autoplay timer
+  if (_autoplayTimer !== null) {
+    clearTimeout(_autoplayTimer);
+    _autoplayTimer = null;
+  }
   const tc = (window as any).trackCatalog;
   if (!tc?.tracks || index < 0 || index >= tc.tracks.length) return;
 
@@ -25,6 +44,7 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
   const ld = (window as any).lyricsDisplay;
   try { ld?.clearAllTextBlocks?.(); } catch (_) {}
   try { ld?.fullReset?.(); } catch (_) {}
+  try { clearWordSyncLayer(); } catch (_) {}
 
   // Step 5: loading overlay show
   const ov = document.getElementById('loading-overlay');
@@ -56,12 +76,18 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
     }
 
     // Step 9: Blob URLs from ArrayBuffer
+    // Revoke previous blob URLs
+    if (_prevIUrl) { URL.revokeObjectURL(_prevIUrl); _prevIUrl = null; }
+    if (_prevVUrl) { URL.revokeObjectURL(_prevVUrl); _prevVUrl = null; }
+
     const iUrl = URL.createObjectURL(
       new Blob([track.instrumentalData], { type: track.instrumentalType }));
+    _prevIUrl = iUrl;
     let vUrl: string | null = null;
     if (track.vocalsData) {
       vUrl = URL.createObjectURL(
         new Blob([track.vocalsData], { type: track.vocalsType }));
+      _prevVUrl = vUrl;
     }
 
     // Step 10: audio engine load (triggers 'track-loaded' event)
@@ -77,6 +103,16 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
       mm?.resetMarkers();
     }
 
+    try {
+      prepareWordSyncLayer({
+        displayLyrics: typeof lyrics === 'string' ? lyrics : '',
+        hashSourceLyrics: typeof raw === 'string' ? raw : '',
+        audioSource: track.vocalsData ? 'vocal-stem' : 'instrumental',
+        cachedLineMap: track.lineMap,
+        cachedAlignmentData: track.alignmentData,
+      });
+    } catch (_) {}
+
     // Step 12: delayed block sanitization
     setTimeout(() => {
       try {
@@ -86,7 +122,10 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
 
     // Step 13: autoplay
     if (opts.autoplay) {
-      setTimeout(async () => { try { await ae.play(); } catch (_) {} }, 200);
+      _autoplayTimer = setTimeout(async () => {
+        _autoplayTimer = null;
+        try { await ae.play(); } catch (_) {}
+      }, 200);
     }
 
     // Step 14: sync editor (default: OPEN unless explicitly false)
@@ -103,6 +142,31 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
     if (ov) ov.classList.add('hidden');
   }
 }
+
+export function queueTrackJump(delta: number): void {
+  _pendingJump.direction += delta;
+  if (_pendingJump.timer !== null) {
+    clearTimeout(_pendingJump.timer);
+  }
+  _pendingJump.timer = setTimeout(() => {
+    const jump = _pendingJump.direction;
+    _pendingJump.direction = 0;
+    _pendingJump.timer = null;
+    if (jump === 0) return;
+
+    const tc = (window as any).trackCatalog;
+    if (!tc?.tracks?.length) return;
+
+    let target = tc.currentTrackIndex + jump;
+    target = Math.max(0, Math.min(target, tc.tracks.length - 1));
+
+    if (target !== tc.currentTrackIndex) {
+      loadTrack(target, { autoplay: true, openSyncEditor: false });
+    }
+  }, 250);
+}
+
+(window as any).queueTrackJump = queueTrackJump;
 
 // F40: Register for legacy callers (TC.loadTrack wrapper, CV2 L555)
 (window as any).trackOrchestrator = loadTrack;

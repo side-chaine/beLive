@@ -21,6 +21,7 @@ export class AudioEngineV2 {
   private _isPlaying = false;
   private _duration = 0;
   private _loadAbort: AbortController | null = null;
+  private _loadGeneration = 0;
 
   // === Events ===
   private _onTrackLoadedCallbacks: Function[] = [];
@@ -40,6 +41,15 @@ export class AudioEngineV2 {
   // === Track URLs (for WaveformEditor compat) ===
   private _trackUrls: { instrumental?: string; vocals?: string } = {};
 
+  // === Transport hardening state (Phase 0 scaffolding) ===
+  private _transportGen = 0;
+  private _lastSeekTime = 0;
+  private _softResyncTimer: ReturnType<typeof setTimeout> | null = null;
+  private _lastHardResyncTime = 0;
+  private readonly _SYNC_BLACKOUT_FLOOR = 80;
+  private readonly _SYNC_BLACKOUT_MAX = 300;
+  private readonly _HARD_RESYNC_COOLDOWN_MS = 800;
+
   constructor() {
     this.vocalMix = new VocalMix();
     this.microphone = new MicrophoneManager();
@@ -54,58 +64,83 @@ export class AudioEngineV2 {
     instrumentalUrl: string,
     vocalsUrl: string | null = null
   ): Promise<{ duration: number; hasVocals: boolean }> {
-    // Abort previous load if in progress
+    const gen = ++this._loadGeneration;
+
     if (this._loadAbort) {
       this._loadAbort.abort();
     }
     this._loadAbort = new AbortController();
     const signal = this._loadAbort.signal;
+    ++this._transportGen;
+    this._clearSoftResync();
 
-    // Stop current playback
-    this.stop();
+    this._isPlaying = false;
+    this._stopPositionUpdates();
+    this._stopLoopCheck();
+    this._loopActive = false;
+    this._loopStart = 0;
+    this._loopEnd = 0;
+    this.stems.forEach(stem => {
+      try { stem.disconnect(); } catch (_) {}
+      stem.dispose();
+    });
+    this.stems.clear();
 
-    // Store URLs for WaveformEditor compat
     this._trackUrls = {
       instrumental: instrumentalUrl,
       vocals: vocalsUrl ?? undefined,
     };
 
     try {
-      // Load instrumental (required)
       const instStem = new StemPlayer('instrumental');
       await instStem.load(instrumentalUrl, signal);
+
+      if (gen !== this._loadGeneration) {
+        console.debug(`🛑 [gen=${gen}] Stale after instrumental load, disposing`);
+        instStem.disconnect();
+        instStem.dispose();
+        throw new DOMException('Load superseded', 'AbortError');
+      }
+
       this.stems.set('instrumental', instStem);
       this._duration = instStem.duration;
-      console.log(`✅ INSTRUMENTAL loaded: ${this._duration.toFixed(2)}s`);
+      console.log(`✅ [gen=${gen}] INSTRUMENTAL loaded: ${this._duration.toFixed(2)}s`);
 
-      // Load vocals (optional, non-blocking)
       let hasVocals = false;
       if (vocalsUrl) {
         try {
           const vocStem = new StemPlayer('vocals');
           await vocStem.load(vocalsUrl, signal);
+
+          if (gen !== this._loadGeneration) {
+            console.debug(`🛑 [gen=${gen}] Stale after vocals load, disposing`);
+            vocStem.disconnect();
+            vocStem.dispose();
+            throw new DOMException('Load superseded', 'AbortError');
+          }
+
           this.stems.set('vocals', vocStem);
           hasVocals = true;
-          console.log(`✅ VOCALS loaded: ${vocStem.duration.toFixed(2)}s`);
+          console.log(`✅ [gen=${gen}] VOCALS loaded: ${vocStem.duration.toFixed(2)}s`);
         } catch (err: any) {
           if (err.name === 'AbortError') throw err;
           console.warn('⚠️ Vocals load failed, instrumental-only mode:', err.message);
         }
       }
 
-      // Connect stems to routing
+      if (gen !== this._loadGeneration) {
+        console.debug(`🛑 [gen=${gen}] Stale before routing`);
+        throw new DOMException('Load superseded', 'AbortError');
+      }
+
       this._connectRouting();
-
-      // Apply current playback rate
       this.stems.forEach(s => s.setPlaybackRate(this._playbackRate));
-
-      // Notify
       this._notifyTrackLoaded(hasVocals);
 
       return { duration: this._duration, hasVocals };
     } catch (err: any) {
       if (err.name === 'AbortError') {
-        console.log('🛑 Load aborted (new track requested)');
+        console.debug(`🛑 [gen=${gen}] Load aborted/superseded`);
       }
       throw err;
     }
@@ -174,14 +209,13 @@ export class AudioEngineV2 {
   }
 
   clearLoop(): boolean {
-    this._stopLoopCheck();
     const wasActive = this._loopActive;
+    this._stopLoopCheck();
     this._loopActive = false;
-    if (wasActive && this.getCurrentTime() <= this._loopEnd + 0.05) {
-      this.setCurrentTime(Math.min(this._loopEnd + 0.03, this._duration - 0.02));
-    }
+    this._loopStart = 0;
+    this._loopEnd = 0;
     document.dispatchEvent(new CustomEvent('loop-cleared', {
-      detail: { time: this.getCurrentTime() },
+      detail: { time: this.getCurrentTime(), wasActive },
     }));
     return true;
   }
@@ -231,10 +265,36 @@ export class AudioEngineV2 {
   }
 
   // ============================================================
+  // TRANSPORT HARDENING HELPERS
+  // ============================================================
+
+  private _clearSoftResync(): void {
+    if (this._softResyncTimer !== null) {
+      clearTimeout(this._softResyncTimer);
+      this._softResyncTimer = null;
+    }
+    const voc = this.stems.get('vocals');
+    if (voc?.audio) {
+      voc.audio.playbackRate = this._playbackRate;
+    }
+  }
+
+  private _getSyncBlackoutMs(): number {
+    if (!this._loopActive) return this._SYNC_BLACKOUT_MAX;
+    const loopDuration = (this._loopEnd - this._loopStart) / this._playbackRate;
+    const loopMs = loopDuration * 1000;
+    return Math.max(
+      this._SYNC_BLACKOUT_FLOOR,
+      Math.min(this._SYNC_BLACKOUT_MAX, loopMs * 0.1)
+    );
+  }
+
+  // ============================================================
   // PLAYBACK RATE
   // ============================================================
 
   setPlaybackRate(rate: number): void {
+    this._clearSoftResync();
     this._playbackRate = Math.max(0.25, Math.min(4, rate));
     this.stems.forEach(s => s.setPlaybackRate(this._playbackRate));
     document.dispatchEvent(new CustomEvent('playback-rate-changed', {
@@ -265,24 +325,43 @@ export class AudioEngineV2 {
   // ============================================================
 
   async play(): Promise<void> {
+    if (this._isPlaying) return;
     if (!this.stems.has('instrumental')) return;
+
+    const gen = ++this._transportGen;
+    this._clearSoftResync();
+
     await ensureResumed();
+    if (gen !== this._transportGen || this._isPlaying) return;
+
     const inst = this.stems.get('instrumental')!;
     const voc = this.stems.get('vocals');
-    // Sync vocals position BEFORE play
+
     if (voc?.loaded) {
-      voc.setCurrentTime(inst.getCurrentTime());
+      const instTime = inst.getCurrentTime();
+      const drift = Math.abs(voc.getCurrentTime() - instTime);
+      if (drift > 0.01) {
+        voc.setCurrentTime(instTime);
+        await this._waitForSeeked(voc);
+        if (gen !== this._transportGen || this._isPlaying) return;
+      }
     }
-    // Start both simultaneously
+
     const promises: Promise<void>[] = [inst.play()];
     if (voc?.loaded) promises.push(voc.play().catch(() => {}));
     await Promise.all(promises);
+
+    if (gen !== this._transportGen || this._isPlaying) return;
+
     this._isPlaying = true;
+    this._lastSeekTime = performance.now();
     this._startPositionUpdates();
     this._notifyPlaybackState();
   }
 
   pause(): void {
+    ++this._transportGen;
+    this._clearSoftResync();
     this.stems.forEach(s => s.pause());
     this._isPlaying = false;
     this._stopPositionUpdates();
@@ -294,41 +373,110 @@ export class AudioEngineV2 {
   }
 
   setCurrentTime(time: number): void {
-    this.stems.forEach(s => s.setCurrentTime(time));
-    // Re-sync vocals after short delay
-    setTimeout(() => {
-      const inst = this.stems.get('instrumental');
-      const voc = this.stems.get('vocals');
-      if (inst && voc?.loaded) {
-        const t = inst.getCurrentTime();
-        if (Math.abs(voc.getCurrentTime() - t) > 0.05) {
-          voc.setCurrentTime(t);
-        }
-      }
-    }, 80);
+    const gen = ++this._transportGen;
+    this._lastSeekTime = performance.now();
+    this._clearSoftResync();
+
+    const clamped = Math.max(0, Math.min(time, this._duration || Infinity));
+    if (!this._isPlaying) {
+      this.stems.forEach(s => s.setCurrentTime(clamped));
+      return;
+    }
+
+    this._stopPositionUpdates();
+    this.stems.forEach(s => s.pause());
+    this.stems.forEach(s => s.setCurrentTime(clamped));
+    void this._atomicResumeFromSeek(gen);
   }
 
   seekTo(time: number): void { this.setCurrentTime(time); }
 
   getDuration(): number { return this._duration; }
 
+  private async _atomicResumeFromSeek(gen: number): Promise<void> {
+    const waits: Promise<void>[] = [];
+    this.stems.forEach(stem => {
+      if (stem.loaded && stem.audio) {
+        waits.push(this._waitForSeeked(stem));
+      }
+    });
+
+    if (waits.length > 0) {
+      await Promise.all(waits);
+    }
+
+    if (gen !== this._transportGen || !this._isPlaying) return;
+
+    const plays: Promise<void>[] = [];
+    this.stems.forEach(stem => {
+      if (stem.loaded) plays.push(stem.play().catch(() => {}));
+    });
+    await Promise.all(plays);
+
+    if (gen !== this._transportGen || !this._isPlaying) return;
+
+    this._startPositionUpdates();
+  }
+
+  private _waitForSeeked(stem: StemPlayer): Promise<void> {
+    return new Promise<void>((resolve) => {
+      if (!stem.audio) {
+        resolve();
+        return;
+      }
+
+      setTimeout(() => {
+        if (!stem.audio) {
+          resolve();
+          return;
+        }
+
+        if (!stem.audio.seeking) {
+          resolve();
+          return;
+        }
+
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          clearTimeout(timeout);
+          stem.audio?.removeEventListener('seeked', onSeeked);
+          resolve();
+        };
+
+        const onSeeked = () => finish();
+        stem.audio.addEventListener('seeked', onSeeked, { once: true });
+        const timeout = setTimeout(finish, 80);
+      }, 0);
+    });
+  }
+
   private _startPositionUpdates(): void {
     this._stopPositionUpdates();
     this._positionInterval = setInterval(() => {
       const t = this.getCurrentTime();
-      // Sync nudger: keep vocals aligned to instrumental
       const voc = this.stems.get('vocals');
+
       if (voc?.loaded && this._isPlaying) {
+        const elapsedSinceSeek = performance.now() - this._lastSeekTime;
+        const blackoutMs = this._getSyncBlackoutMs();
         const drift = voc.getCurrentTime() - t;
-        if (Math.abs(drift) > 0.05) {
-          voc.setCurrentTime(t);
+
+        if (elapsedSinceSeek >= blackoutMs && Math.abs(drift) > 0.04) {
+          const now = performance.now();
+          if (now - this._lastHardResyncTime >= this._HARD_RESYNC_COOLDOWN_MS) {
+            this._lastHardResyncTime = now;
+            this.setCurrentTime(t);
+            return;
+          }
         }
       }
+
       this._onPositionUpdateCallbacks.forEach(cb => {
         try { cb(t); } catch (_) {}
       });
 
-      // Track end detection for playlist auto-next
       if (this._isPlaying && this._duration > 0 && t >= this._duration - 0.15) {
         this._isPlaying = false;
         this._stopPositionUpdates();
@@ -396,6 +544,8 @@ export class AudioEngineV2 {
   // ============================================================
 
   stop(): void {
+    ++this._transportGen;
+    this._clearSoftResync();
     this._isPlaying = false;
     this._stopPositionUpdates();
     this._stopLoopCheck();

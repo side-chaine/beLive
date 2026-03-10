@@ -2,6 +2,8 @@ import React, { useRef, useEffect, useMemo } from 'react';
 import { useLyricsStore } from '../../stores/lyrics.store';
 import { useMarkersStore } from '../../stores/markers.store';
 import { useBlocksStore } from '../../stores/blocks.store';
+import { useAudioStore } from '../../stores/audio.store';
+import { useWordSyncStore } from '../../stores/wordSync.store';
 
 const BLOCK_COLORS: Record<string, string> = {
   verse: '#4CAF50',
@@ -33,6 +35,13 @@ export function SyncLyrics() {
   const markers = useMarkersStore((s) => s.markers);
   const blocks = useBlocksStore((s) => s.blocks);
   const activeRef = useRef<HTMLDivElement>(null);
+  const currentTime = useAudioStore((s) => s.currentTime);
+  const isPlaying = useAudioStore((s) => s.isPlaying);
+  const getWordsForLine = useWordSyncStore((s) => s.getWordsForLine);
+  const hasUsableWordSyncForLine = useWordSyncStore((s) => s.hasUsableWordSyncForLine);
+  const getActiveWordForLine = useWordSyncStore((s) => s.getActiveWordForLine);
+  const wordSyncStatus = useWordSyncStore((s) => s.status);
+  const alignmentData = useWordSyncStore((s) => s.alignmentData);
 
   const markedLines = useMemo(() => {
     const set = new Set<number>();
@@ -73,12 +82,44 @@ export function SyncLyrics() {
         scrollBehavior: 'smooth',
       }}
     >
+      <div
+        style={{
+          position: 'fixed',
+          top: 'calc(var(--react-header-height, 56px) + 8px)',
+          right: '12px',
+          zIndex: 60,
+          pointerEvents: 'none',
+          fontFamily: 'monospace',
+          fontSize: '10px',
+          lineHeight: 1.4,
+          color: 'rgba(255,255,255,0.85)',
+          background: 'rgba(0,0,0,0.55)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: '8px',
+          padding: '6px 8px',
+          whiteSpace: 'pre-wrap',
+        }}
+      >
+        {[
+          `play=${isPlaying ? '1' : '0'}`,
+          `time=${currentTime.toFixed(2)}`,
+          `activeLine=${activeLineIndex}`,
+          `markers=${markers.length}`,
+          `ws=${wordSyncStatus}`,
+          `align=${alignmentData ? alignmentData.lines.length : 0}`,
+        ].join('  ')}
+      </div>
       {lines.map((line, idx) => {
         const isActive = idx === activeLineIndex;
         const isMarked = markedLines.has(idx);
         const blockType = getBlockTypeForLine(idx, blocks);
         const color = BLOCK_COLORS[blockType] || BLOCK_COLORS.default;
         const isPast = idx < activeLineIndex;
+        const hasWordSync = hasUsableWordSyncForLine(idx);
+        const words = hasWordSync ? getWordsForLine(idx) : [];
+        const activeWord = isActive && hasWordSync
+          ? getActiveWordForLine(idx, currentTime)
+          : null;
 
         return (
           <div
@@ -109,7 +150,42 @@ export function SyncLyrics() {
                 : 'none',
             }}
           >
-            {line}
+            {isActive ? (
+              <span
+                style={{
+                  display: 'block',
+                  fontSize: '10px',
+                  lineHeight: 1.2,
+                  color: 'rgba(255,255,255,0.45)',
+                  marginBottom: '4px',
+                }}
+              >
+                {`idx=${idx} hasWS=${hasWordSync ? 1 : 0} words=${words.length} activeWord=${activeWord?.text ?? 'null'}`}
+              </span>
+            ) : null}
+            {isActive && hasWordSync && words.length > 0 ? (
+              words.map((word, wordIdx) => {
+                const isActiveWord = activeWord?.id === word.id;
+                return (
+                  <span
+                    key={word.id || `${idx}-${wordIdx}`}
+                    data-word-index={word.wordIndex}
+                    style={{
+                      color: isActiveWord ? '#ffffff' : undefined,
+                      textShadow: isActiveWord
+                        ? `0 0 14px ${isMarked ? color : '#ffffff'}`
+                        : undefined,
+                      transition: 'color 0.12s linear, text-shadow 0.12s linear',
+                      marginRight: '0.25em',
+                    }}
+                  >
+                    {word.text}
+                  </span>
+                );
+              })
+            ) : (
+              line
+            )}
           </div>
         );
       })}

@@ -99,6 +99,7 @@ export class StemPlayer {
 
   dispose(): void {
     try { this.sourceNode?.disconnect(); } catch (_) {}
+    try { this.gainNode.disconnect(); } catch (_) {}
     if (this.audio) {
       this.audio.pause();
       this.audio.removeAttribute('src');
