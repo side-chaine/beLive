@@ -1,5 +1,7 @@
 # LAYER A — Short architect report
 
+> **⚠️ This document is a domain-specific reference. For the complete current architecture, see [Architecture Map 2.1](./architecture-map-2.1.md).**
+
 ## Freeze verdict
 
 Текущий аудиодвижок beLive уже находится в состоянии **рабочего v2 transport core** с зафиксированными boundary и понятной ownership-моделью. Это не “черновая миграция”, а уже полноценный runtime, который можно документировать и развивать дальше точечно.

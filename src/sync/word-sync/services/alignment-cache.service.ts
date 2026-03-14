@@ -14,7 +14,8 @@ export type AlignmentCacheStatus =
   | 'missing'
   | 'stale-lyrics'
   | 'stale-audio'
-  | 'stale-source';
+  | 'stale-source'
+  | 'stale-provider';
 
 export type AlignmentCacheVerdict =
   | {
@@ -61,6 +62,11 @@ export function getAlignmentCacheVerdict(
     alignmentData.audioHash !== audioHash
   ) {
     return { ok: false, status: 'stale-audio' };
+  }
+
+  // F46: Reject mock provider alignments - they should not be persisted/hydrated
+  if (alignmentData.provider === 'mock') {
+    return { ok: false, status: 'stale-provider' };
   }
 
   return {

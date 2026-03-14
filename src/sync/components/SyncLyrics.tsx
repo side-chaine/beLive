@@ -4,6 +4,7 @@ import { useMarkersStore } from '../../stores/markers.store';
 import { useBlocksStore } from '../../stores/blocks.store';
 import { useAudioStore } from '../../stores/audio.store';
 import { useWordSyncStore } from '../../stores/wordSync.store';
+import { useTriggerStore } from '../../triggers/trigger.store';
 
 const BLOCK_COLORS: Record<string, string> = {
   verse: '#4CAF50',
@@ -42,6 +43,7 @@ export function SyncLyrics() {
   const getActiveWordForLine = useWordSyncStore((s) => s.getActiveWordForLine);
   const wordSyncStatus = useWordSyncStore((s) => s.status);
   const alignmentData = useWordSyncStore((s) => s.alignmentData);
+  const showDebug = useTriggerStore((s) => s.showDebug);
 
   const markedLines = useMemo(() => {
     const set = new Set<number>();
@@ -82,33 +84,35 @@ export function SyncLyrics() {
         scrollBehavior: 'smooth',
       }}
     >
-      <div
-        style={{
-          position: 'fixed',
-          top: 'calc(var(--react-header-height, 56px) + 8px)',
-          right: '12px',
-          zIndex: 60,
-          pointerEvents: 'none',
-          fontFamily: 'monospace',
-          fontSize: '10px',
-          lineHeight: 1.4,
-          color: 'rgba(255,255,255,0.85)',
-          background: 'rgba(0,0,0,0.55)',
-          border: '1px solid rgba(255,255,255,0.12)',
-          borderRadius: '8px',
-          padding: '6px 8px',
-          whiteSpace: 'pre-wrap',
-        }}
-      >
-        {[
-          `play=${isPlaying ? '1' : '0'}`,
-          `time=${currentTime.toFixed(2)}`,
-          `activeLine=${activeLineIndex}`,
-          `markers=${markers.length}`,
-          `ws=${wordSyncStatus}`,
-          `align=${alignmentData ? alignmentData.lines.length : 0}`,
-        ].join('  ')}
-      </div>
+      {showDebug && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 'calc(var(--react-header-height, 56px) + 8px)',
+            right: '12px',
+            zIndex: 60,
+            pointerEvents: 'none',
+            fontFamily: 'monospace',
+            fontSize: '10px',
+            lineHeight: 1.4,
+            color: 'rgba(255,255,255,0.85)',
+            background: 'rgba(0,0,0,0.55)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: '8px',
+            padding: '6px 8px',
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          {[
+            `play=${isPlaying ? '1' : '0'}`,
+            `time=${currentTime.toFixed(2)}`,
+            `activeLine=${activeLineIndex}`,
+            `markers=${markers.length}`,
+            `ws=${wordSyncStatus}`,
+            `align=${alignmentData ? alignmentData.lines.length : 0}`,
+          ].join('  ')}
+        </div>
+      )}
       {lines.map((line, idx) => {
         const isActive = idx === activeLineIndex;
         const isMarked = markedLines.has(idx);
@@ -150,7 +154,7 @@ export function SyncLyrics() {
                 : 'none',
             }}
           >
-            {isActive ? (
+            {isActive && showDebug ? (
               <span
                 style={{
                   display: 'block',

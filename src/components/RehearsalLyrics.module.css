@@ -41,12 +41,69 @@
   white-space: nowrap;
 }
 
+/* Base active line - strongest emphasis (legacy default / 'strong') */
 .line[data-active="true"] {
   color: var(--bl-text-primary, #ffffff);
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.6), 0 0 40px rgba(255, 255, 255, 0.2);
 }
 
-.nextPreview {
+/* === LINE ACTIVE LEVEL: OFF === */
+/* Minimal line wrapper emphasis - let words lead */
+[data-line-active-level="off"] .line[data-active="true"] {
+  color: var(--bl-text-secondary, rgba(255, 255, 255, 0.85));
+  text-shadow: none;
+}
+
+/* === LINE ACTIVE LEVEL: SOFT === */
+/* Reduced glow compared to strong */
+[data-line-active-level="soft"] .line[data-active="true"] {
+  color: var(--bl-text-primary, #ffffff);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3), 0 0 16px rgba(255, 255, 255, 0.1);
+}
+
+/* === REACTIVE WORDS MODE: FULL NEUTRALIZATION === */
+/* When word-sync FX is active, line wrapper becomes a neutral container.
+   Visual authority shifts to the word layer (WordHighlightLine + word-effects.css).
+   This is the primary neutralization path for all word-sync modes.
+   
+   Uses line-scoped CSS vars for baseline color instead of inheriting white
+   from parent, ensuring word layer owns all visual emphasis.
+*/
+.line[data-active="true"][data-reactive-words="true"] {
+  color: var(--bl-line-word-color, var(--bl-dim-color));
+  text-shadow: none;
+  filter: none;
+  opacity: 1;
+}
+
+/* === PROGRESS MODE: LEGACY SUPPRESSION (kept for compatibility) === */
+/* When Progress word FX is active, line wrapper should not compete.
+   
+   NOTE: For reactive words path (word-sync available), the primary neutralization
+   is handled by [data-reactive-words="true"] selector above.
+   
+   This legacy override now targets ONLY non-reactive fallback scenarios
+   (tracks without word-sync data) to avoid specificity conflicts.
+*/
+.line[data-active="true"][data-word-fx-mode="progress"]:not([data-reactive-words="true"]) {
+  color: var(--bl-line-word-color, var(--bl-dim-color));
+  text-shadow: none;
+  filter: none;
+}
+
+/* Also suppress via parent attribute for stronger override (non-reactive only) */
+[data-line-active-level="off"] .line[data-active="true"][data-word-fx-mode="progress"]:not([data-reactive-words="true"]),
+[data-line-active-level="soft"] .line[data-active="true"][data-word-fx-mode="progress"]:not([data-reactive-words="true"]) {
+  color: var(--bl-line-word-color, var(--bl-dim-color));
+  text-shadow: none;
+  filter: none;
+}
+
+/* === BLOCK CUE: STRUCTURAL FIRST-LINE-OF-NEXT-BLOCK CUE === */
+/* Block Cue is a separate semantic object from the public Line `Next Line` control.
+   It remains always-on as a structural guide, not a line-flow control. */
+
+.blockCue {
   position: absolute;
   bottom: 8px;
   left: 50%;
@@ -57,14 +114,92 @@
   padding-bottom: 8px;
 }
 
-.previewLine {
-  color: #FF8C00;
+.blockCueLine {
+  color: rgba(0, 210, 160, 0.80);
   font-weight: 500;
   font-size: 1.2rem;
 }
 
-.previewLine::before {
+.blockCueLine::before {
   content: "→ ";
+}
+
+/* === LINE NEXT LEVEL: BLOCK CUE STYLING === */
+/* Base Block Cue appearance */
+.blockCue {
+  opacity: 0.7;
+}
+
+/* off: very faint cue-green — present but minimal */
+[data-line-next-level="off"] .blockCue {
+  opacity: 0.35;
+}
+
+[data-line-next-level="off"] .blockCueLine {
+  color: rgba(0, 210, 160, 0.38);
+  font-weight: 400;
+}
+
+/* hint: soft readable cue-green */
+[data-line-next-level="hint"] .blockCue {
+  opacity: 0.55;
+}
+
+[data-line-next-level="hint"] .blockCueLine {
+  color: rgba(0, 210, 160, 0.65);
+  font-weight: 400;
+}
+
+/* guide: stronger green-cyan cue — clear and present */
+[data-line-next-level="guide"] .blockCue {
+  opacity: 0.85;
+}
+
+[data-line-next-level="guide"] .blockCueLine {
+  color: rgba(0, 210, 160, 0.90);
+  font-weight: 500;
+  text-shadow: 0 0 12px rgba(0, 210, 160, 0.30);
+}
+
+/* === BLOCK-TYPE AWARE BLOCK CUE COLORS === */
+/* color comes from next block type; level still controls opacity + weight.
+   Selectors target data-block-type on .blockCue wrapper.
+   Fallback colors match src/blocks/types.ts BLOCK_TYPE_CONFIG canonical values. */
+
+/* verse — green */
+.blockCue[data-block-type="verse"] .blockCueLine {
+  color: var(--bl-block-verse, #4CAF50);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--bl-block-verse, #4CAF50) 35%, transparent);
+}
+
+/* prechorus — orange */
+.blockCue[data-block-type="prechorus"] .blockCueLine {
+  color: var(--bl-block-prechorus, #FF9800);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--bl-block-prechorus, #FF9800) 35%, transparent);
+}
+
+/* chorus — red */
+.blockCue[data-block-type="chorus"] .blockCueLine {
+  color: var(--bl-block-chorus, #F44336);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--bl-block-chorus, #F44336) 35%, transparent);
+}
+
+/* bridge — purple */
+.blockCue[data-block-type="bridge"] .blockCueLine {
+  color: var(--bl-block-bridge, #6f42c1);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--bl-block-bridge, #6f42c1) 35%, transparent);
+}
+
+/* intro — blue */
+.blockCue[data-block-type="intro"] .blockCueLine {
+  color: var(--bl-block-intro, #03A9F4);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--bl-block-intro, #03A9F4) 35%, transparent);
+}
+
+/* outro — grey */
+.blockCue[data-block-type="outro"] .blockCueLine {
+  color: var(--bl-block-outro, #9E9E9E);
+  text-shadow: none;
 }
 
 .scrollContainer {
@@ -99,4 +234,155 @@
   opacity: 0.25;
   transform: scale(0.97);
   filter: grayscale(0.5);
+}
+
+/* === LINE OTHERS LEVEL + SOURCE: NON-ACTIVE LINE STYLING === */
+/* Base non-active line appearance - will be overridden by specific combinations */
+.line:not([data-active="true"]) {
+  opacity: 0.6;
+}
+
+/* === LINE OTHERS SOURCE + LEVEL COMBINATIONS === */
+/* TrackMap: subdued block-related color treatment for non-active lines */
+/* Neutral: muted neutral tone for non-active lines */
+
+/* === LINE OTHERS SOURCE + LEVEL COMBINATIONS === */
+/* Both source (TrackMap/Neutral) and level (Dim/Balanced/Open) must work together.
+   Selectors combine both attributes for proper specificity. */
+
+/* --- NEUTRAL SOURCE --- */
+/* Neutral + Dim: muted dimmed white */
+[data-line-others-source="neutral"][data-line-others-level="dim"] .line:not([data-active="true"]) {
+  opacity: 0.35;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* Neutral + Medium: balanced muted white */
+[data-line-others-source="neutral"][data-line-others-level="medium"] .line:not([data-active="true"]) {
+  opacity: 0.6;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Neutral + Low: more visible muted white */
+[data-line-others-source="neutral"][data-line-others-level="low"] .line:not([data-active="true"]) {
+  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* --- TRACKMAP SOURCE --- */
+/* TrackMap + Dim: subdued block colors at low opacity */
+[data-line-others-source="trackmap"][data-line-others-level="dim"] .line:not([data-active="true"]):not([data-block-type]) {
+  opacity: 0.35;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="dim"] .line:not([data-active="true"])[data-block-type="verse"] {
+  opacity: 0.35;
+  color: color-mix(in srgb, var(--bl-block-verse, #4CAF50) 45%, rgba(255, 255, 255, 0.25));
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="dim"] .line:not([data-active="true"])[data-block-type="prechorus"] {
+  opacity: 0.35;
+  color: color-mix(in srgb, var(--bl-block-prechorus, #FF9800) 45%, rgba(255, 255, 255, 0.25));
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="dim"] .line:not([data-active="true"])[data-block-type="chorus"] {
+  opacity: 0.35;
+  color: color-mix(in srgb, var(--bl-block-chorus, #F44336) 45%, rgba(255, 255, 255, 0.25));
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="dim"] .line:not([data-active="true"])[data-block-type="bridge"] {
+  opacity: 0.35;
+  color: color-mix(in srgb, var(--bl-block-bridge, #6f42c1) 45%, rgba(255, 255, 255, 0.25));
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="dim"] .line:not([data-active="true"])[data-block-type="intro"] {
+  opacity: 0.35;
+  color: color-mix(in srgb, var(--bl-block-intro, #03A9F4) 45%, rgba(255, 255, 255, 0.25));
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="dim"] .line:not([data-active="true"])[data-block-type="outro"] {
+  opacity: 0.35;
+  color: color-mix(in srgb, var(--bl-block-outro, #9E9E9E) 45%, rgba(255, 255, 255, 0.25));
+}
+
+/* TrackMap + Medium: subdued block colors at medium opacity (default) */
+[data-line-others-source="trackmap"][data-line-others-level="medium"] .line:not([data-active="true"]):not([data-block-type]) {
+  opacity: 0.6;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="medium"] .line:not([data-active="true"])[data-block-type="verse"] {
+  opacity: 0.6;
+  color: color-mix(in srgb, var(--bl-block-verse, #4CAF50) 55%, rgba(255, 255, 255, 0.35));
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="medium"] .line:not([data-active="true"])[data-block-type="prechorus"] {
+  opacity: 0.6;
+  color: color-mix(in srgb, var(--bl-block-prechorus, #FF9800) 55%, rgba(255, 255, 255, 0.35));
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="medium"] .line:not([data-active="true"])[data-block-type="chorus"] {
+  opacity: 0.6;
+  color: color-mix(in srgb, var(--bl-block-chorus, #F44336) 55%, rgba(255, 255, 255, 0.35));
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="medium"] .line:not([data-active="true"])[data-block-type="bridge"] {
+  opacity: 0.6;
+  color: color-mix(in srgb, var(--bl-block-bridge, #6f42c1) 55%, rgba(255, 255, 255, 0.35));
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="medium"] .line:not([data-active="true"])[data-block-type="intro"] {
+  opacity: 0.6;
+  color: color-mix(in srgb, var(--bl-block-intro, #03A9F4) 55%, rgba(255, 255, 255, 0.35));
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="medium"] .line:not([data-active="true"])[data-block-type="outro"] {
+  opacity: 0.6;
+  color: color-mix(in srgb, var(--bl-block-outro, #9E9E9E) 55%, rgba(255, 255, 255, 0.35));
+}
+
+/* TrackMap + Low: subdued block colors at higher opacity */
+[data-line-others-source="trackmap"][data-line-others-level="low"] .line:not([data-active="true"]):not([data-block-type]) {
+  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="low"] .line:not([data-active="true"])[data-block-type="verse"] {
+  opacity: 0.8;
+  color: color-mix(in srgb, var(--bl-block-verse, #4CAF50) 65%, rgba(255, 255, 255, 0.45));
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="low"] .line:not([data-active="true"])[data-block-type="prechorus"] {
+  opacity: 0.8;
+  color: color-mix(in srgb, var(--bl-block-prechorus, #FF9800) 65%, rgba(255, 255, 255, 0.45));
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="low"] .line:not([data-active="true"])[data-block-type="chorus"] {
+  opacity: 0.8;
+  color: color-mix(in srgb, var(--bl-block-chorus, #F44336) 65%, rgba(255, 255, 255, 0.45));
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="low"] .line:not([data-active="true"])[data-block-type="bridge"] {
+  opacity: 0.8;
+  color: color-mix(in srgb, var(--bl-block-bridge, #6f42c1) 65%, rgba(255, 255, 255, 0.45));
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="low"] .line:not([data-active="true"])[data-block-type="intro"] {
+  opacity: 0.8;
+  color: color-mix(in srgb, var(--bl-block-intro, #03A9F4) 65%, rgba(255, 255, 255, 0.45));
+}
+
+[data-line-others-source="trackmap"][data-line-others-level="low"] .line:not([data-active="true"])[data-block-type="outro"] {
+  opacity: 0.8;
+  color: color-mix(in srgb, var(--bl-block-outro, #9E9E9E) 65%, rgba(255, 255, 255, 0.45));
+}
+
+/* === PLAIN LINE TEXT (Focus Off mode) === */
+/* When Word Focus is Off, lines render as plain text without word-level FX.
+   This creates a true line-first reading mode where the active line
+   becomes the main visual carrier instead of individual words. */
+.plainLineText {
+  display: inline;
+  color: inherit;
 }

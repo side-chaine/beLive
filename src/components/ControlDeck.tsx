@@ -38,21 +38,29 @@ export function ControlDeck() {
 
   return (
     <div ref={rootRef} className={styles.root} data-reactive="true">
-      <div className={styles.handle} onClick={toggle}>
-        {expanded ? '▲' : '▼'} Controls
-      </div>
-
       <div className={styles.tabs}>
-        {visibleTabs.map(t => (
-          <button
-            key={t.id}
-            className={styles.tab}
-            data-active={String(t.id === activeTabId)}
-            onClick={() => setTab(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
+        <div className={styles.tabsInner}>
+          {visibleTabs.map(t => (
+            <button
+              key={t.id}
+              className={styles.tab}
+              data-active={activeTabId === t.id ? 'true' : 'false'}
+              onClick={() => setTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          className={styles.tabsToggle}
+          onClick={toggle}
+          aria-label={expanded ? 'Collapse dock' : 'Expand dock'}
+          title={expanded ? 'Collapse dock' : 'Expand dock'}
+        >
+          {expanded ? '▾' : '▴'}
+        </button>
       </div>
 
       {expanded && (

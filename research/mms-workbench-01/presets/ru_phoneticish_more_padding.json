@@ -1,0 +1,14 @@
+{
+  "id": "ru_phoneticish_more_padding",
+  "language": "ru",
+  "mode": "line-windowed",
+  "text_mode": "phoneticish",
+  "padding_ms": {
+    "pre": 450,
+    "post": 450
+  },
+  "short_window_policy": "keep",
+  "tail_grace_ms": 120,
+  "nonlexical_mode": "keep",
+  "confidence_norm_profile": "current"
+}

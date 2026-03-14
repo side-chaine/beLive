@@ -18,12 +18,16 @@ import { PianoOverlay } from './components/PianoOverlay';
 import { MonitorMixPanel } from './components/MonitorMixPanel';
 
 import { initTextStyleBridge, destroyTextStyleBridge } from './bridges/textStyle.bridge';
+import { initPerformanceBridge } from './performance/performance.bridge';
 import { useSyncStore } from './sync/store/sync.store';
 import BlockEditorModal from './blocks/components/BlockEditorModal';
 import SyncEditorPanel from './sync/components/SyncEditorPanel';
 import { SyncLyrics } from './sync/components/SyncLyrics';
 import { initSyncBridge } from './sync/bridge/sync.bridge';
 import { initTimeSync } from './bridges/time-sync';
+import { initTriggerBridge } from './triggers/trigger.bridge';
+import { TriggerDebugOverlay } from './triggers/TriggerDebugOverlay';
+import { PlaybackPerfOverlay } from './components/PlaybackPerfOverlay';
 import { useAudioStore } from './stores/audio.store';
 import { useLyricsStore } from './stores/lyrics.store';
 import { useMarkersStore } from './stores/markers.store';
@@ -48,7 +52,9 @@ export default function App() {
     const cleanupTrack = initTrackBridge();
     const cleanupSync = initSyncBridge();
     const cleanupTimeSync = initTimeSync();
+    const cleanupTrigger = initTriggerBridge();
     const cleanupTextStyle = initTextStyleBridge();
+    const cleanupPerformance = initPerformanceBridge();
 
     return () => {
       cleanupAudio();
@@ -58,7 +64,9 @@ export default function App() {
       cleanupTrack();
       cleanupSync();
       cleanupTimeSync();
+      cleanupTrigger();
       destroyTextStyleBridge();
+      cleanupPerformance();
     };
   }, []);
 
@@ -88,6 +96,8 @@ export default function App() {
           <PianoOverlay />
         </>
       )}
+      <TriggerDebugOverlay />
+      <PlaybackPerfOverlay />
     </div>
   );
 }

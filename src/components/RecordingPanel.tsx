@@ -29,6 +29,7 @@ export function RecordingPanel() {
         <>
           <span className={styles.dot} />
           <span className={styles.timer}>{mm}:{ss}</span>
+          <span className={styles.safeIndicator}>Capture optimized</span>
         </>
       )}
 

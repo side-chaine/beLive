@@ -1,0 +1,578 @@
+/* ============================================================
+   Word-Level Trigger Effects — Lighting Control System
+   
+   All visual parameters are controllable via CSS custom properties.
+   Set them on :root or any parent to control appearance.
+   
+   CSS vars injected by trigger.bridge.ts at 60Hz:
+     --bl-word-progress   (0..1)  progress through current word
+     --bl-word-active      (0|1)  whether any word is active
+     --bl-line-active      (0|1)  whether any line is active
+   ============================================================ */
+
+/* === LIGHTING DEFAULTS (override on :root or parent) === */
+:root {
+  /* Active word — base values (will be overridden by focus level) */
+  --bl-active-opacity: 1;
+  --bl-active-color: #ffffff;
+  --bl-active-scale: 1.04;
+  --bl-active-glow:
+    0 0 8px rgba(255, 255, 255, 0.5),
+    0 0 20px rgba(255, 255, 255, 0.25);
+
+  /* Dim words (inactive in active line) */
+  --bl-dim-opacity: 0.5;
+  --bl-dim-color: rgba(255, 255, 255, 0.5);
+  --bl-dim-glow: none;
+
+  /* Line wrapper (controls inherited line glow override) */
+  --bl-line-glow: none;
+
+  /* Transition speed */
+  --bl-word-transition-speed: 0.12s;
+
+  /* Neon color (rehearsal-safe cyan/teal) */
+  --bl-neon-color: #0dcaf0;
+}
+
+/* === Word line wrapper — kills inherited mode glow ===
+   Line-level controls may inject local CSS vars on the line wrapper;
+   word layer must consume them with fallback to global defaults.
+*/
+.bl-word-line {
+  color: var(--bl-line-word-color, var(--bl-dim-color));
+  text-shadow: var(--bl-line-glow);
+  transition: none;
+}
+
+/* === Base word ===
+   Consumes line-scoped variables with fallback to global defaults.
+   This allows line-domain controls (Others level) to affect word appearance
+   while preserving active word FX behavior.
+*/
+.bl-word {
+  display: inline;
+  opacity: var(--bl-line-word-opacity, var(--bl-dim-opacity));
+  color: var(--bl-line-word-color, var(--bl-dim-color));
+  text-shadow: var(--bl-line-word-glow, var(--bl-dim-glow));
+  transform: scale(1);
+  transition:
+    opacity var(--bl-word-transition-speed) ease,
+    color var(--bl-word-transition-speed) ease,
+    text-shadow var(--bl-word-transition-speed) ease,
+    transform var(--bl-word-transition-speed) ease;
+}
+
+/* === Performance: will-change restricted to expensive motion paths only ===
+   Generic active word does NOT get will-change (saves compositor memory).
+   Only Bounce on max/ultra tiers gets will-change due to active animation.
+*/
+
+/* === Active word — DEFAULT FX (soft focus baseline) === */
+.bl-word--active {
+  opacity: var(--bl-active-opacity);
+  color: var(--bl-active-color);
+  text-shadow: var(--bl-active-glow);
+  transform: scale(var(--bl-active-scale));
+}
+
+/* === FOCUS LEVEL: OFF (minimal visual disruption) === */
+[data-word-focus="off"] .bl-word--active {
+  --bl-active-scale: 1.01;
+  --bl-active-glow: none;
+  opacity: 0.95;
+}
+
+/* === FOCUS LEVEL: SOFT (rehearsal-safe baseline) === */
+[data-word-focus="soft"] .bl-word--active {
+  --bl-active-scale: 1.04;
+  --bl-active-glow:
+    0 0 6px rgba(255, 255, 255, 0.4),
+    0 0 14px rgba(255, 255, 255, 0.2);
+}
+
+/* === FOCUS LEVEL: STRONG (enhanced but controlled) === */
+[data-word-focus="strong"] .bl-word--active {
+  --bl-active-scale: 1.06;
+  --bl-active-glow:
+    0 0 10px rgba(255, 255, 255, 0.6),
+    0 0 24px rgba(255, 255, 255, 0.35);
+}
+
+/* ============================================================
+   SETTLED WORDS (Full mode trail)
+   Words before the active word on the active line, AND all words on past lines.
+   Settled = sung history, resolved memory, quiet retained light.
+   Must be calmer than active, static, uniform across FX families.
+   ============================================================ */
+
+/* Generic settled baseline - calmer, static, no family-specific richness */
+[data-word-state="settled"] {
+  opacity: 0.7;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: none;
+  transform: none;
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  -webkit-text-fill-color: unset;
+}
+
+/* Settled words on active line: stronger visibility (still calmer than active) */
+[data-line-role="active"] [data-word-state="settled"] {
+  opacity: 0.75;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.15);
+}
+
+/* Settled words on past lines: weaker visibility, more faded */
+[data-line-role="past"] [data-word-state="settled"] {
+  opacity: 0.6;
+  color: rgba(255, 255, 255, 0.75);
+  text-shadow: none;
+}
+
+/* ============================================================
+   PERFORMANCE TIER: Settled Trail Adjustments
+   Lower tiers get calmer, cheaper settled states
+   ============================================================ */
+
+/* --- Lite: Minimal settled trail (cleanest, fastest) --- */
+:root[data-visual-tier="lite"] [data-word-state="settled"],
+html[data-visual-tier="lite"] [data-word-state="settled"] {
+  opacity: 0.5;
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow: none;
+}
+
+:root[data-visual-tier="lite"] [data-line-role="active"] [data-word-state="settled"],
+html[data-visual-tier="lite"] [data-line-role="active"] [data-word-state="settled"] {
+  opacity: 0.55;
+  color: rgba(255, 255, 255, 0.75);
+  text-shadow: none;
+}
+
+:root[data-visual-tier="lite"] [data-line-role="past"] [data-word-state="settled"],
+html[data-visual-tier="lite"] [data-line-role="past"] [data-word-state="settled"] {
+  opacity: 0.4;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* --- Balanced: Restrained settled trail (clear contrast with active) --- */
+:root[data-visual-tier="balanced"] [data-word-state="settled"],
+html[data-visual-tier="balanced"] [data-word-state="settled"] {
+  opacity: 0.6;
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: none;
+}
+
+:root[data-visual-tier="balanced"] [data-line-role="active"] [data-word-state="settled"],
+html[data-visual-tier="balanced"] [data-line-role="active"] [data-word-state="settled"] {
+  opacity: 0.65;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: none;
+}
+
+:root[data-visual-tier="balanced"] [data-line-role="past"] [data-word-state="settled"],
+html[data-visual-tier="balanced"] [data-line-role="past"] [data-word-state="settled"] {
+  opacity: 0.5;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* --- Max / Ultra: Keep current richer settled behavior --- */
+/* No overrides - inherits base settled rules with subtle text-shadow on active line */
+
+/* === FX: Progress Fill (L→R) ===
+   Progress mode must render dim-to-active fill to avoid boundary flash on word change.
+   At 0% progress, word appears dim (not white), then fills left-to-right with active color.
+
+   Progress mode uses its own visual baseline and must not inherit
+   base active/inactive transition behavior, otherwise word boundary blink appears.
+*/
+[data-word-fx="progress"] .bl-word {
+  opacity: var(--bl-line-word-opacity, var(--bl-dim-opacity));
+  color: var(--bl-line-word-color, var(--bl-dim-color));
+  text-shadow: none;
+  transform: none;
+  transition: none;
+}
+
+/* Settled words in Progress family: use generic settled palette only
+   No background-clip, no gradient fill for settled words */
+[data-word-fx="progress"] [data-word-state="settled"] {
+  /* Inherits from generic [data-word-state="settled"] */
+}
+
+[data-word-fx="progress"] .bl-word--active {
+  opacity: 1;
+  transform: none;
+  text-shadow: none;
+  transition: none;
+  /* Gradient: active color up to progress, then dim color for unfilled part */
+  background: linear-gradient(90deg,
+    var(--bl-active-color) 0%,
+    var(--bl-active-color) calc(var(--bl-word-progress, 0) * 100%),
+    var(--bl-dim-color) calc(var(--bl-word-progress, 0) * 100%),
+    var(--bl-dim-color) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Progress + focus combinations */
+[data-word-fx="progress"][data-word-focus="off"] .bl-word--active {
+  opacity: 0.9;
+}
+
+[data-word-fx="progress"][data-word-focus="strong"] .bl-word--active {
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+/* === FX: Neon (rehearsal-safe: reduced layers, softer blur) === */
+[data-word-fx="neon"] .bl-word--active {
+  color: #fff;
+  text-shadow:
+    0 0 4px rgba(255, 255, 255, 0.8),
+    0 0 12px var(--bl-neon-color),
+    0 0 24px var(--bl-neon-color);
+  transform: scale(1.02);
+}
+
+/* Settled words in Neon family: use generic settled palette only
+   No neon glow stacks for settled words */
+[data-word-fx="neon"] [data-word-state="settled"] {
+  /* Inherits from generic [data-word-state="settled"] */
+}
+
+/* Neon focus combinations */
+[data-word-fx="neon"][data-word-focus="off"] .bl-word--active {
+  text-shadow: 0 0 6px var(--bl-neon-color);
+}
+
+[data-word-fx="neon"][data-word-focus="strong"] .bl-word--active {
+  text-shadow:
+    0 0 4px rgba(255, 255, 255, 0.9),
+    0 0 10px var(--bl-neon-color),
+    0 0 20px var(--bl-neon-color),
+    0 0 32px var(--bl-neon-color);
+}
+
+/* ============================================================
+   PERFORMANCE TIER: Neon Adjustments
+   Richness scales with tier while preserving Neon identity
+   ============================================================ */
+
+/* --- Lite: Minimal Neon (color emphasis only) --- */
+:root[data-visual-tier="lite"] [data-word-fx="neon"] .bl-word--active,
+html[data-visual-tier="lite"] [data-word-fx="neon"] .bl-word--active {
+  /* Single soft glow layer - still readable as Neon family */
+  text-shadow: 0 0 6px var(--bl-neon-color);
+  transform: scale(1.01);
+}
+
+:root[data-visual-tier="lite"] [data-word-fx="neon"][data-word-focus="off"] .bl-word--active,
+html[data-visual-tier="lite"] [data-word-fx="neon"][data-word-focus="off"] .bl-word--active {
+  /* Even softer for off focus */
+  text-shadow: 0 0 4px var(--bl-neon-color);
+  transform: none;
+}
+
+:root[data-visual-tier="lite"] [data-word-fx="neon"][data-word-focus="strong"] .bl-word--active,
+html[data-visual-tier="lite"] [data-word-fx="neon"][data-word-focus="strong"] .bl-word--active {
+  /* Single stronger glow for strong focus, but still cheap */
+  text-shadow: 0 0 8px var(--bl-neon-color);
+  transform: scale(1.02);
+}
+
+/* --- Balanced: Simplified Neon (fewer layers) --- */
+:root[data-visual-tier="balanced"] [data-word-fx="neon"] .bl-word--active,
+html[data-visual-tier="balanced"] [data-word-fx="neon"] .bl-word--active {
+  /* Two-layer glow instead of three - moderate cost */
+  text-shadow:
+    0 0 4px rgba(255, 255, 255, 0.8),
+    0 0 16px var(--bl-neon-color);
+  transform: scale(1.02);
+}
+
+:root[data-visual-tier="balanced"] [data-word-fx="neon"][data-word-focus="off"] .bl-word--active,
+html[data-visual-tier="balanced"] [data-word-fx="neon"][data-word-focus="off"] .bl-word--active {
+  text-shadow: 0 0 6px var(--bl-neon-color);
+  transform: none;
+}
+
+:root[data-visual-tier="balanced"] [data-word-fx="neon"][data-word-focus="strong"] .bl-word--active,
+html[data-visual-tier="balanced"] [data-word-fx="neon"][data-word-focus="strong"] .bl-word--active {
+  /* Three layers for strong, but lighter than max/ultra */
+  text-shadow:
+    0 0 4px rgba(255, 255, 255, 0.9),
+    0 0 12px var(--bl-neon-color),
+    0 0 24px var(--bl-neon-color);
+  transform: scale(1.03);
+}
+
+/* --- Max & Ultra: Keep current rich behavior --- */
+/* No overrides needed - inherits base neon rules */
+/* Block-aware color routing continues to work unchanged */
+
+/* ── Neon block-type color routing ─────────────────────────────
+   Routes --bl-neon-color from the current block’s CSS var.
+   Selectors combine data-word-fx + data-block-type on the same .bl-word-line element.
+   Fallbacks match src/blocks/types.ts BLOCK_TYPE_CONFIG canonical values.
+   Existing neon rules consume --bl-neon-color without modification.
+*/
+[data-word-fx="neon"][data-block-type="verse"] {
+  --bl-neon-color: var(--bl-block-verse, #4CAF50);
+}
+
+[data-word-fx="neon"][data-block-type="prechorus"] {
+  --bl-neon-color: var(--bl-block-prechorus, #FF9800);
+}
+
+[data-word-fx="neon"][data-block-type="chorus"] {
+  --bl-neon-color: var(--bl-block-chorus, #F44336);
+}
+
+[data-word-fx="neon"][data-block-type="bridge"] {
+  --bl-neon-color: var(--bl-block-bridge, #6f42c1);
+}
+
+[data-word-fx="neon"][data-block-type="intro"] {
+  --bl-neon-color: var(--bl-block-intro, #03A9F4);
+}
+
+[data-word-fx="neon"][data-block-type="outro"] {
+  --bl-neon-color: var(--bl-block-outro, #9E9E9E);
+}
+
+/* === FX: Underline Sweep (strongest rehearsal-safe mode) === */
+[data-word-fx="underline"] .bl-word {
+  text-shadow: var(--bl-dim-glow);
+  transform: none;
+}
+
+[data-word-fx="underline"] .bl-word--active {
+  opacity: var(--bl-active-opacity);
+  color: var(--bl-active-color);
+  text-shadow: none;
+  transform: none;
+  background-image: linear-gradient(var(--bl-active-color), var(--bl-active-color));
+  background-size: calc(var(--bl-word-progress, 0) * 100%) 3px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+}
+
+/* Settled words in Underline family: use generic settled palette only
+   No underline decoration for settled words */
+[data-word-fx="underline"] [data-word-state="settled"] {
+  /* Inherits from generic [data-word-state="settled"] */
+  background-image: none;
+}
+
+/* Underline + focus combinations */
+[data-word-fx="underline"][data-word-focus="off"] .bl-word--active {
+  background-size: calc(var(--bl-word-progress, 0) * 100%) 2px;
+}
+
+[data-word-fx="underline"][data-word-focus="strong"] .bl-word--active {
+  background-size: calc(var(--bl-word-progress, 0) * 100%) 4px;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+/* === FX: Bounce ===
+   will-change applied only on max/ultra tiers where animation is active
+*/
+[data-word-fx="bounce"] .bl-word--active {
+  opacity: var(--bl-active-opacity);
+  color: var(--bl-active-color);
+  text-shadow: var(--bl-active-glow);
+  animation: bl-word-bounce 0.35s ease-out;
+}
+
+/* will-change only for tiers where bounce animation runs */
+:root[data-visual-tier="max"] [data-word-fx="bounce"] .bl-word--active,
+html[data-visual-tier="max"] [data-word-fx="bounce"] .bl-word--active,
+:root[data-visual-tier="ultra"] [data-word-fx="bounce"] .bl-word--active,
+html[data-visual-tier="ultra"] [data-word-fx="bounce"] .bl-word--active {
+  will-change: transform, opacity;
+}
+
+/* Settled words in Bounce family: use generic settled palette only
+   No scale transform, no glow stacks for settled words */
+[data-word-fx="bounce"] [data-word-state="settled"] {
+  /* Inherits from generic [data-word-state="settled"] */
+  animation: none;
+}
+
+@keyframes bl-word-bounce {
+  0%   { transform: scale(0.85); opacity: 0.6; }
+  50%  { transform: scale(1.12); }
+  100% { transform: scale(var(--bl-active-scale, 1.04)); }
+}
+
+/* Bounce + focus combinations */
+[data-word-fx="bounce"][data-word-focus="off"] .bl-word--active {
+  animation: bl-word-bounce 0.25s ease-out;
+}
+
+[data-word-fx="bounce"][data-word-focus="strong"] .bl-word--active {
+  animation: bl-word-bounce 0.45s ease-out;
+}
+
+/* ============================================================
+   PERFORMANCE TIER: Lite
+   Disable bounce animation, keep active word readable
+   ============================================================ */
+
+:root[data-visual-tier="lite"] [data-word-fx="bounce"] .bl-word--active,
+html[data-visual-tier="lite"] [data-word-fx="bounce"] .bl-word--active {
+  animation: none;
+  /* Keep active word visible and highlighted, just no motion */
+  opacity: var(--bl-active-opacity);
+  color: var(--bl-active-color);
+  text-shadow: var(--bl-active-glow);
+  transform: scale(var(--bl-active-scale));
+}
+
+/* Focus level overrides for lite tier */
+:root[data-visual-tier="lite"] [data-word-fx="bounce"][data-word-focus="off"] .bl-word--active,
+html[data-visual-tier="lite"] [data-word-fx="bounce"][data-word-focus="off"] .bl-word--active {
+  --bl-active-scale: 1.01;
+  --bl-active-glow: none;
+  opacity: 0.95;
+}
+
+:root[data-visual-tier="lite"] [data-word-fx="bounce"][data-word-focus="soft"] .bl-word--active,
+html[data-visual-tier="lite"] [data-word-fx="bounce"][data-word-focus="soft"] .bl-word--active {
+  --bl-active-scale: 1.04;
+  --bl-active-glow:
+    0 0 6px rgba(255, 255, 255, 0.4),
+    0 0 14px rgba(255, 255, 255, 0.2);
+}
+
+:root[data-visual-tier="lite"] [data-word-fx="bounce"][data-word-focus="strong"] .bl-word--active,
+html[data-visual-tier="lite"] [data-word-fx="bounce"][data-word-focus="strong"] .bl-word--active {
+  --bl-active-scale: 1.06;
+  --bl-active-glow:
+    0 0 10px rgba(255, 255, 255, 0.6),
+    0 0 24px rgba(255, 255, 255, 0.35);
+}
+
+/* ============================================================
+   ACCESSIBILITY: Reduced Motion
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Disable bounce animation */
+  [data-word-fx="bounce"] .bl-word--active {
+    animation: none;
+  }
+
+  /* Minimize transitions */
+  .bl-word {
+    transition: opacity 0.05s ease, color 0.05s ease;
+  }
+
+  /* Disable transform transitions */
+  .bl-word--active {
+    will-change: auto;
+    transform: none !important;
+  }
+
+  /* Minimal highlight only */
+  [data-word-focus="soft"] .bl-word--active,
+  [data-word-focus="strong"] .bl-word--active {
+    --bl-active-glow: none;
+    opacity: 1;
+  }
+
+  /* Progress FX: no heavy background-clip animation */
+  [data-word-fx="progress"] .bl-word--active {
+    background: none;
+    color: var(--bl-active-color);
+    opacity: 1;
+  }
+
+  /* Neon FX: minimal glow */
+  [data-word-fx="neon"] .bl-word--active {
+    text-shadow: 0 0 4px var(--bl-neon-color);
+  }
+}
+
+/* ============================================================
+   RECORDING-SAFE MODE
+   Heavy visual effects clamped for capture stability
+   ============================================================ */
+
+/* --- Recording: Disable Bounce animation --- */
+html[data-recording-active="true"] [data-word-fx="bounce"] .bl-word--active {
+  animation: none;
+  /* Keep static active emphasis */
+  opacity: var(--bl-active-opacity);
+  color: var(--bl-active-color);
+  text-shadow: var(--bl-active-glow);
+  transform: scale(var(--bl-active-scale));
+}
+
+/* Remove will-change during recording */
+html[data-recording-active="true"] [data-word-fx="bounce"] .bl-word--active {
+  will-change: auto;
+}
+
+/* --- Recording: Hard-clamp Neon to color-only emphasis ---
+   During recording, Neon becomes ultra-cheap:
+   - No multi-layer glow stack
+   - No transform scaling
+   - Just color emphasis via --bl-neon-color
+   Active word remains readable but much calmer for capture.
+*/
+html[data-recording-active="true"] [data-word-fx="neon"] .bl-word--active {
+  /* Color-only emphasis, minimal glow for readability */
+  color: var(--bl-neon-color);
+  text-shadow: 0 0 2px var(--bl-neon-color);
+  transform: none;
+}
+
+/* Recording + focus combinations for Neon - all clamped to cheap */
+html[data-recording-active="true"] [data-word-fx="neon"][data-word-focus="off"] .bl-word--active {
+  color: var(--bl-neon-color);
+  text-shadow: none;
+  transform: none;
+}
+
+html[data-recording-active="true"] [data-word-fx="neon"][data-word-focus="strong"] .bl-word--active {
+  color: var(--bl-neon-color);
+  text-shadow: 0 0 2px var(--bl-neon-color);
+  transform: none;
+}
+
+/* --- Recording: Calmer settled trail --- */
+html[data-recording-active="true"] [data-word-state="settled"] {
+  opacity: 0.5;
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow: none;
+}
+
+html[data-recording-active="true"] [data-line-role="active"] [data-word-state="settled"] {
+  opacity: 0.55;
+  color: rgba(255, 255, 255, 0.75);
+  text-shadow: none;
+}
+
+html[data-recording-active="true"] [data-line-role="past"] [data-word-state="settled"] {
+  opacity: 0.4;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* --- Recording: Disable preview handoff richness --- */
+html[data-recording-active="true"] [data-word-fx="underline"] .bl-word--active {
+  /* Keep underline but no extra glow */
+  text-shadow: none;
+}
+
+/* --- Recording: Progress stays functional, no extra richness --- */
+html[data-recording-active="true"] [data-word-fx="progress"] .bl-word--active {
+  /* Keep progress fill, disable any extra effects */
+  text-shadow: none;
+}

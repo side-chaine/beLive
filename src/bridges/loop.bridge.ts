@@ -91,5 +91,5 @@ export function initLoopBridge() {
   };
 
   document.addEventListener('before-track-change', clearAllLoops);
-  document.addEventListener('mode-changed', clearAllLoops);
+  window.addEventListener('mode-changed', clearAllLoops);
 }

@@ -23,7 +23,7 @@ export type PrepareWordSyncResult =
       degraded: false;
     }
   | {
-      status: 'missing' | 'stale-lyrics' | 'stale-audio' | 'stale-source';
+      status: 'missing' | 'stale-lyrics' | 'stale-audio' | 'stale-source' | 'stale-provider';
       lyricsHash: string;
       lineMap: LineMapEntry[];
       alignmentData: null;

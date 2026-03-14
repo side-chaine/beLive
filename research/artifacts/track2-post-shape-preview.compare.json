@@ -1,0 +1,568 @@
+{
+  "summary": {
+    "words_micro_le_003": {
+      "before": 23,
+      "after": 0,
+      "improvement": 23
+    },
+    "words_short_le_005": {
+      "before": 23,
+      "after": 0,
+      "improvement": 23
+    },
+    "mean_internal_coverage": {
+      "before": 0.712,
+      "after": 0.722,
+      "improvement": 0.01
+    },
+    "median_internal_coverage": {
+      "before": 0.75,
+      "after": 0.774
+    },
+    "lines_with_coverage_lt_070": {
+      "before": 14,
+      "after": 14,
+      "improvement": 0
+    }
+  },
+  "top_20_changed_words": [
+    {
+      "index": 0,
+      "text": "И",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 2,
+      "lineText": "И ты летать не стал"
+    },
+    {
+      "index": 0,
+      "text": "И",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 5,
+      "lineText": "И по земле ходить"
+    },
+    {
+      "index": 0,
+      "text": "И",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 10,
+      "lineText": "И лететь по белому свету"
+    },
+    {
+      "index": 0,
+      "text": "А",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 14,
+      "lineText": "А у птиц свободе учиться"
+    },
+    {
+      "index": 1,
+      "text": "у",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 14,
+      "lineText": "А у птиц свободе учиться"
+    },
+    {
+      "index": 0,
+      "text": "И",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 18,
+      "lineText": "И почти не стал мечтать"
+    },
+    {
+      "index": 0,
+      "text": "И",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 22,
+      "lineText": "И поднял ты глаза"
+    },
+    {
+      "index": 0,
+      "text": "В",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 23,
+      "lineText": "В высоту, где голоса плывут"
+    },
+    {
+      "index": 0,
+      "text": "И",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 25,
+      "lineText": "И тебя с собой зовут"
+    },
+    {
+      "index": 2,
+      "text": "с",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 25,
+      "lineText": "И тебя с собой зовут"
+    },
+    {
+      "index": 0,
+      "text": "И",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 30,
+      "lineText": "И не думать, как приземлиться"
+    },
+    {
+      "index": 0,
+      "text": "А",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 31,
+      "lineText": "А у птиц свободе учиться"
+    },
+    {
+      "index": 1,
+      "text": "у",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 31,
+      "lineText": "А у птиц свободе учиться"
+    },
+    {
+      "index": 0,
+      "text": "И",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 34,
+      "lineText": "И лететь по белому свету"
+    },
+    {
+      "index": 0,
+      "text": "И",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 37,
+      "lineText": "И не думать, как приземлиться"
+    },
+    {
+      "index": 0,
+      "text": "А",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 38,
+      "lineText": "А у птиц свободе учиться"
+    },
+    {
+      "index": 1,
+      "text": "у",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 38,
+      "lineText": "А у птиц свободе учиться"
+    },
+    {
+      "index": 0,
+      "text": "И",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 41,
+      "lineText": "И лететь по белому свету"
+    },
+    {
+      "index": 0,
+      "text": "И",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 44,
+      "lineText": "И не думать, как приземлиться"
+    },
+    {
+      "index": 0,
+      "text": "А",
+      "original_duration": 0.02,
+      "new_duration": 0.08,
+      "expansion": 0.06,
+      "remaining_deficit": 0.0,
+      "lineIndex": 45,
+      "lineText": "А у птиц свободе учиться"
+    }
+  ],
+  "top_10_improved_lines": [
+    {
+      "rawLineIndex": 38,
+      "lineText": "А у птиц свободе учиться",
+      "internalCoverageBefore": 0.794,
+      "internalCoverageAfter": 0.838,
+      "improvement": 0.044
+    },
+    {
+      "rawLineIndex": 31,
+      "lineText": "А у птиц свободе учиться",
+      "internalCoverageBefore": 0.757,
+      "internalCoverageAfter": 0.8,
+      "improvement": 0.043
+    },
+    {
+      "rawLineIndex": 14,
+      "lineText": "А у птиц свободе учиться",
+      "internalCoverageBefore": 0.733,
+      "internalCoverageAfter": 0.775,
+      "improvement": 0.042
+    },
+    {
+      "rawLineIndex": 45,
+      "lineText": "А у птиц свободе учиться",
+      "internalCoverageBefore": 0.732,
+      "internalCoverageAfter": 0.774,
+      "improvement": 0.042
+    },
+    {
+      "rawLineIndex": 25,
+      "lineText": "И тебя с собой зовут",
+      "internalCoverageBefore": 0.732,
+      "internalCoverageAfter": 0.771,
+      "improvement": 0.039
+    },
+    {
+      "rawLineIndex": 30,
+      "lineText": "И не думать, как приземлиться",
+      "internalCoverageBefore": 0.739,
+      "internalCoverageAfter": 0.761,
+      "improvement": 0.022
+    },
+    {
+      "rawLineIndex": 34,
+      "lineText": "И лететь по белому свету",
+      "internalCoverageBefore": 0.724,
+      "internalCoverageAfter": 0.746,
+      "improvement": 0.022
+    },
+    {
+      "rawLineIndex": 37,
+      "lineText": "И не думать, как приземлиться",
+      "internalCoverageBefore": 0.756,
+      "internalCoverageAfter": 0.777,
+      "improvement": 0.022
+    },
+    {
+      "rawLineIndex": 41,
+      "lineText": "И лететь по белому свету",
+      "internalCoverageBefore": 0.748,
+      "internalCoverageAfter": 0.77,
+      "improvement": 0.022
+    },
+    {
+      "rawLineIndex": 10,
+      "lineText": "И лететь по белому свету",
+      "internalCoverageBefore": 0.75,
+      "internalCoverageAfter": 0.772,
+      "improvement": 0.021
+    }
+  ],
+  "line_previews": {
+    "И ты летать не стал": {
+      "before": {
+        "internalCoverage": 0.422,
+        "words": [
+          {
+            "text": "И",
+            "start": 14.911,
+            "end": 14.991,
+            "duration": 0.08
+          },
+          {
+            "text": "ты",
+            "start": 15.212,
+            "end": 15.332,
+            "duration": 0.12
+          },
+          {
+            "text": "летать",
+            "start": 15.653,
+            "end": 16.575,
+            "duration": 0.922
+          },
+          {
+            "text": "не",
+            "start": 18.358,
+            "end": 18.518,
+            "duration": 0.16
+          },
+          {
+            "text": "стал",
+            "start": 18.659,
+            "end": 19.28,
+            "duration": 0.621
+          }
+        ]
+      },
+      "after": {
+        "internalCoverage": 0.436,
+        "words": [
+          {
+            "text": "И",
+            "start": 14.911,
+            "end": 14.991,
+            "duration": 0.08
+          },
+          {
+            "text": "ты",
+            "start": 15.212,
+            "end": 15.332,
+            "duration": 0.12
+          },
+          {
+            "text": "летать",
+            "start": 15.653,
+            "end": 16.575,
+            "duration": 0.922
+          },
+          {
+            "text": "не",
+            "start": 18.358,
+            "end": 18.518,
+            "duration": 0.16
+          },
+          {
+            "text": "стал",
+            "start": 18.659,
+            "end": 19.28,
+            "duration": 0.621
+          }
+        ]
+      }
+    },
+    "И поднял ты глаза": {
+      "before": {
+        "internalCoverage": 0.375,
+        "words": [
+          {
+            "text": "И",
+            "start": 104.46,
+            "end": 104.53999999999999,
+            "duration": 0.08
+          },
+          {
+            "text": "поднял",
+            "start": 104.76,
+            "end": 105.442,
+            "duration": 0.682
+          },
+          {
+            "text": "ты",
+            "start": 105.582,
+            "end": 105.702,
+            "duration": 0.12
+          },
+          {
+            "text": "глаза",
+            "start": 107.886,
+            "end": 108.628,
+            "duration": 0.742
+          }
+        ]
+      },
+      "after": {
+        "internalCoverage": 0.39,
+        "words": [
+          {
+            "text": "И",
+            "start": 104.46,
+            "end": 104.53999999999999,
+            "duration": 0.08
+          },
+          {
+            "text": "поднял",
+            "start": 104.76,
+            "end": 105.442,
+            "duration": 0.682
+          },
+          {
+            "text": "ты",
+            "start": 105.582,
+            "end": 105.702,
+            "duration": 0.12
+          },
+          {
+            "text": "глаза",
+            "start": 107.886,
+            "end": 108.628,
+            "duration": 0.742
+          }
+        ]
+      }
+    },
+    "И по земле ходить": {
+      "before": {
+        "internalCoverage": 0.804,
+        "words": [
+          {
+            "text": "И",
+            "start": 27.7,
+            "end": 27.779999999999998,
+            "duration": 0.08
+          },
+          {
+            "text": "по",
+            "start": 27.98,
+            "end": 28.081,
+            "duration": 0.101
+          },
+          {
+            "text": "земле",
+            "start": 28.341,
+            "end": 28.902,
+            "duration": 0.561
+          },
+          {
+            "text": "ходить",
+            "start": 29.303,
+            "end": 32.388,
+            "duration": 3.085
+          }
+        ]
+      },
+      "after": {
+        "internalCoverage": 0.816,
+        "words": [
+          {
+            "text": "И",
+            "start": 27.7,
+            "end": 27.779999999999998,
+            "duration": 0.08
+          },
+          {
+            "text": "по",
+            "start": 27.98,
+            "end": 28.081,
+            "duration": 0.101
+          },
+          {
+            "text": "земле",
+            "start": 28.341,
+            "end": 28.902,
+            "duration": 0.561
+          },
+          {
+            "text": "ходить",
+            "start": 29.303,
+            "end": 32.388,
+            "duration": 3.085
+          }
+        ]
+      }
+    },
+    "А у птиц свободе учиться": {
+      "before": {
+        "internalCoverage": 0.733,
+        "words": [
+          {
+            "text": "А",
+            "start": 70.446,
+            "end": 70.526,
+            "duration": 0.08
+          },
+          {
+            "text": "у",
+            "start": 70.847,
+            "end": 70.92699999999999,
+            "duration": 0.08
+          },
+          {
+            "text": "птиц",
+            "start": 71.007,
+            "end": 71.428,
+            "duration": 0.421
+          },
+          {
+            "text": "свободе",
+            "start": 71.468,
+            "end": 72.27,
+            "duration": 0.802
+          },
+          {
+            "text": "учиться",
+            "start": 72.47,
+            "end": 73.292,
+            "duration": 0.822
+          }
+        ]
+      },
+      "after": {
+        "internalCoverage": 0.775,
+        "words": [
+          {
+            "text": "А",
+            "start": 70.446,
+            "end": 70.526,
+            "duration": 0.08
+          },
+          {
+            "text": "у",
+            "start": 70.847,
+            "end": 70.92699999999999,
+            "duration": 0.08
+          },
+          {
+            "text": "птиц",
+            "start": 71.007,
+            "end": 71.428,
+            "duration": 0.421
+          },
+          {
+            "text": "свободе",
+            "start": 71.468,
+            "end": 72.27,
+            "duration": 0.802
+          },
+          {
+            "text": "учиться",
+            "start": 72.47,
+            "end": 73.292,
+            "duration": 0.822
+          }
+        ]
+      }
+    }
+  }
+}

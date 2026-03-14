@@ -25,3 +25,14 @@ Thumbs.db
 # local benchmark / spike data
 benchmarks/
 research/spikes/
+research/.venv-mms/
+*.flac
+belive_repo.zip
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Research handoff binaries
+research/handoff/**/*.tar.gz
+research/handoff/**/*.mp3

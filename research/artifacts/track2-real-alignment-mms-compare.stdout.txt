@@ -1,0 +1,130 @@
+Loading artifacts...
+LP artifact: /Users/sidechaine/Documents/BeLive/research/artifacts/packA-real-alignment-mms-real.json
+RU artifact: /Users/sidechaine/Documents/BeLive/research/artifacts/track2-real-alignment-mms-real.json
+LP lines: 45
+RU lines: 45
+
+========================================================================
+ANALYSIS: LP / EN (reference)
+========================================================================
+
+  Total lines: 45
+  Total words: 262
+  Words/line: mean=5.82  min=4  max=9
+  Line duration (s) (45 values):
+    min=1.5070  p10=1.6340  p25=1.9050  med=2.0730  p75=3.9530  p90=4.7120  max=5.7070
+    mean=2.8124  stdev=1.3032
+  Line confidence (45 values):
+    min=1.0000  p10=1.0000  p25=1.0000  med=1.0000  p75=1.0000  p90=1.0000  max=1.0000
+    mean=1.0000  stdev=0.0000
+  Word duration (s) (262 values):
+    min=0.0200  p10=0.0210  p25=0.1010  med=0.2430  p75=0.4420  p90=0.9270  max=2.4880
+    mean=0.3901  stdev=0.4583
+  Word confidence (262 values):
+    min=1.0000  p10=1.0000  p25=1.0000  med=1.0000  p75=1.0000  p90=1.0000  max=1.0000
+    mean=1.0000  stdev=0.0000
+
+  POSITIONAL CONFIDENCE:
+    First word: mean=1.0000  med=1.0000
+    Mid words:  mean=1.0000  med=1.0000
+    Last word:  mean=1.0000  med=1.0000
+  Word gaps (s) (217 values):
+    min=0.0000  p10=0.0200  p25=0.0600  med=0.0800  p75=0.1410  p90=0.2810  max=0.5210
+    mean=0.1123  stdev=0.1099
+  Word coverage ratio (45 values):
+    min=0.6193  p10=0.6710  p25=0.7631  med=0.8096  p75=0.8631  p90=0.8932  max=0.9160
+    mean=0.7983  stdev=0.0817
+  Proportionality deviation (45 values):
+    min=0.0292  p10=0.0409  p25=0.0456  med=0.0635  p75=0.0823  p90=0.1065  max=0.1571
+    mean=0.0689  stdev=0.0292
+
+  PROPORTIONALITY CHECK:
+    Mean deviation from text-length proportional spread: 0.0689
+    ~ Moderate: some acoustic signal, but may still be weak
+
+========================================================================
+ANALYSIS: RU / Omega
+========================================================================
+
+  Total lines: 45
+  Total words: 187
+  Words/line: mean=4.16  min=1  max=6
+  Line duration (s) (45 values):
+    min=2.5190  p10=2.7380  p25=2.8270  med=3.7500  p75=4.3080  p90=5.0900  max=6.9740
+    mean=3.7550  stdev=1.0403
+  Line confidence (45 values):
+    min=1.0000  p10=1.0000  p25=1.0000  med=1.0000  p75=1.0000  p90=1.0000  max=1.0000
+    mean=1.0000  stdev=0.0000
+  Word duration (s) (187 values):
+    min=0.0200  p10=0.0200  p25=0.2200  med=0.5820  p75=0.9220  p90=1.2220  max=6.1130
+    mean=0.6725  stdev=0.6770
+  Word confidence (187 values):
+    min=1.0000  p10=1.0000  p25=1.0000  med=1.0000  p75=1.0000  p90=1.0000  max=1.0000
+    mean=1.0000  stdev=0.0000
+
+  POSITIONAL CONFIDENCE:
+    First word: mean=1.0000  med=1.0000
+    Mid words:  mean=1.0000  med=1.0000
+    Last word:  mean=1.0000  med=1.0000
+  Word gaps (s) (142 values):
+    min=0.0000  p10=0.0600  p25=0.1010  med=0.2000  p75=0.2810  p90=0.4220  max=2.2640
+    mean=0.3043  stdev=0.4440
+  Word coverage ratio (45 values):
+    min=0.3752  p10=0.4635  p25=0.6968  med=0.7716  p75=0.8701  p90=0.9174  max=1.0000
+    mean=0.7502  stdev=0.1651
+  Proportionality deviation (43 values):
+    min=0.0192  p10=0.0397  p25=0.0499  med=0.0696  p75=0.1189  p90=0.1485  max=0.1788
+    mean=0.0836  stdev=0.0433
+
+  PROPORTIONALITY CHECK:
+    Mean deviation from text-length proportional spread: 0.0836
+    ~ Moderate: some acoustic signal, but may still be weak
+
+========================================================================
+SIDE-BY-SIDE COMPARISON
+========================================================================
+Metric                            LP mean    RU mean          Δ       Δ%
+------------------------------------------------------------------------
+Word confidence                    1.0000     1.0000     0.0000     0.0%
+Line confidence                    1.0000     1.0000     0.0000     0.0%
+First-word confidence              1.0000     1.0000     0.0000     0.0%
+Mid-word confidence                1.0000     1.0000     0.0000     0.0%
+Last-word confidence               1.0000     1.0000     0.0000     0.0%
+Word duration (s)                  0.3901     0.6725     0.2825    72.4% ***
+Word gaps (s)                      0.1123     0.3043     0.1920   171.0% ***
+Line coverage ratio                0.7983     0.7502    -0.0481    -6.0%
+Proportionality deviation          0.0689     0.0836     0.0148    21.5%
+Words per line                     5.8222     4.1556    -1.6667   -28.6%
+
+========================================================================
+BAD-LINE EXAMPLES (RU dead internal groove)
+========================================================================
+No severe dead-internal-groove examples matched the current heuristic.
+
+========================================================================
+ROMANIZATION / DEBUG INSPECTION
+========================================================================
+RU provider: mms_fa
+RU language: ru
+RU mode: anchored
+RU romanization debug: "cyrtranslit-RESEARCH-ONLY"
+
+========================================================================
+VERDICT
+========================================================================
+Key differentials:
+  Proportionality deviation: LP=0.0689  RU=0.0836
+  Mid-word confidence:       LP=1.0000  RU=1.0000
+  Word gaps:                LP=0.1123  RU=0.3043
+  Line coverage:            LP=0.7983  RU=0.7502
+
+Root causes (ranked):
+  1. [B] TOKENIZER GRANULARITY
+     romanized word tokens may still be too coarse for acoustic alignment
+
+Decision: A) keep MMS + improve preprocessing
+Reason:   evidence points to internal text representation as the primary weak link
+Next:     compare romanization/G2P variants before changing engine
+
+Comparison artifact: /Users/sidechaine/Documents/BeLive/research/artifacts/track2-preprocessing-compare.json
+Size: 2,783 bytes

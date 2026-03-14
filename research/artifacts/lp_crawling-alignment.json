@@ -1,0 +1,2734 @@
+{
+  "source": "ai-aligner",
+  "version": 1,
+  "provider": "mms-workbench",
+  "providerVersion": "seed-v1",
+  "mode": "line-windowed",
+  "language": "en",
+  "audioSource": "vocal-stem",
+  "lines": [
+    {
+      "rawLineIndex": 0,
+      "contentLineIndex": 0,
+      "text": "Crawling in my skin",
+      "start": 23.29878472222222,
+      "end": 27.995971,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "Crawling",
+          "start": 23.6,
+          "end": 24.885,
+          "confidence": 1,
+          "rawLineIndex": 0,
+          "contentLineIndex": 0,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "in",
+          "start": 24.945,
+          "end": 25.487,
+          "confidence": 1,
+          "rawLineIndex": 0,
+          "contentLineIndex": 0,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "my",
+          "start": 25.627,
+          "end": 25.908,
+          "confidence": 1,
+          "rawLineIndex": 0,
+          "contentLineIndex": 0,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "skin",
+          "start": 25.989,
+          "end": 26.651,
+          "confidence": 1,
+          "rawLineIndex": 0,
+          "contentLineIndex": 0,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 1,
+      "contentLineIndex": 1,
+      "text": "These wounds, they will not heal",
+      "start": 27.495971,
+      "end": 32.93133,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "These",
+          "start": 27.917,
+          "end": 28.238,
+          "confidence": 1,
+          "rawLineIndex": 1,
+          "contentLineIndex": 1,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "wounds,",
+          "start": 28.238,
+          "end": 29.06,
+          "confidence": 1,
+          "rawLineIndex": 1,
+          "contentLineIndex": 1,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "they",
+          "start": 29.08,
+          "end": 29.301,
+          "confidence": 1,
+          "rawLineIndex": 1,
+          "contentLineIndex": 1,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "will",
+          "start": 29.421,
+          "end": 30.123,
+          "confidence": 1,
+          "rawLineIndex": 1,
+          "contentLineIndex": 1,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "not",
+          "start": 30.184,
+          "end": 30.565,
+          "confidence": 1,
+          "rawLineIndex": 1,
+          "contentLineIndex": 1,
+          "wordIndex": 4
+        },
+        {
+          "id": 5,
+          "text": "heal",
+          "start": 30.565,
+          "end": 31.227,
+          "confidence": 1,
+          "rawLineIndex": 1,
+          "contentLineIndex": 1,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 2,
+      "contentLineIndex": 2,
+      "text": "Fear is how I fall",
+      "start": 32.43133,
+      "end": 37.220956,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "Fear",
+          "start": 32.772,
+          "end": 33.654,
+          "confidence": 1,
+          "rawLineIndex": 2,
+          "contentLineIndex": 2,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "is",
+          "start": 33.734,
+          "end": 33.914,
+          "confidence": 1,
+          "rawLineIndex": 2,
+          "contentLineIndex": 2,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "how",
+          "start": 33.934,
+          "end": 34.756,
+          "confidence": 1,
+          "rawLineIndex": 2,
+          "contentLineIndex": 2,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "I",
+          "start": 34.856,
+          "end": 34.876,
+          "confidence": 1,
+          "rawLineIndex": 2,
+          "contentLineIndex": 2,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "fall",
+          "start": 35.097,
+          "end": 37.181,
+          "confidence": 1,
+          "rawLineIndex": 2,
+          "contentLineIndex": 2,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 3,
+      "contentLineIndex": 3,
+      "text": "Confusing what is real",
+      "start": 36.720956,
+      "end": 43.404885944444445,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "Confusing",
+          "start": 37.082,
+          "end": 38.527,
+          "confidence": 1,
+          "rawLineIndex": 3,
+          "contentLineIndex": 3,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "what",
+          "start": 38.527,
+          "end": 39.411,
+          "confidence": 1,
+          "rawLineIndex": 3,
+          "contentLineIndex": 3,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "is",
+          "start": 39.491,
+          "end": 39.712,
+          "confidence": 1,
+          "rawLineIndex": 3,
+          "contentLineIndex": 3,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "real",
+          "start": 39.772,
+          "end": 40.193,
+          "confidence": 1,
+          "rawLineIndex": 3,
+          "contentLineIndex": 3,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 4,
+      "contentLineIndex": 4,
+      "text": "",
+      "start": null,
+      "end": null,
+      "confidence": null,
+      "words": []
+    },
+    {
+      "rawLineIndex": 5,
+      "contentLineIndex": 4,
+      "text": "There's something inside me",
+      "start": 51.028738,
+      "end": 53.190741,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "There's",
+          "start": 51.372,
+          "end": 51.574,
+          "confidence": 1,
+          "rawLineIndex": 5,
+          "contentLineIndex": 4,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "something",
+          "start": 51.635,
+          "end": 52.18,
+          "confidence": 1,
+          "rawLineIndex": 5,
+          "contentLineIndex": 4,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "inside",
+          "start": 52.281,
+          "end": 52.787,
+          "confidence": 1,
+          "rawLineIndex": 5,
+          "contentLineIndex": 4,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "me",
+          "start": 52.807,
+          "end": 52.928,
+          "confidence": 1,
+          "rawLineIndex": 5,
+          "contentLineIndex": 4,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 6,
+      "contentLineIndex": 5,
+      "text": "that pulls beneath the surface",
+      "start": 52.690741,
+      "end": 56.253894,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "that",
+          "start": 53.073,
+          "end": 53.254,
+          "confidence": 1,
+          "rawLineIndex": 6,
+          "contentLineIndex": 5,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "pulls",
+          "start": 53.335,
+          "end": 53.637,
+          "confidence": 1,
+          "rawLineIndex": 6,
+          "contentLineIndex": 5,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "beneath",
+          "start": 53.677,
+          "end": 54.241,
+          "confidence": 1,
+          "rawLineIndex": 6,
+          "contentLineIndex": 5,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "the",
+          "start": 54.261,
+          "end": 54.321,
+          "confidence": 1,
+          "rawLineIndex": 6,
+          "contentLineIndex": 5,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "surface",
+          "start": 54.482,
+          "end": 55.67,
+          "confidence": 1,
+          "rawLineIndex": 6,
+          "contentLineIndex": 5,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 7,
+      "contentLineIndex": 6,
+      "text": "Consuming, confusing",
+      "start": 55.753894,
+      "end": 60.480491,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "Consuming,",
+          "start": 56.195,
+          "end": 58.037,
+          "confidence": 1,
+          "rawLineIndex": 7,
+          "contentLineIndex": 6,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "confusing",
+          "start": 58.498,
+          "end": 60.32,
+          "confidence": 1,
+          "rawLineIndex": 7,
+          "contentLineIndex": 6,
+          "wordIndex": 1
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 8,
+      "contentLineIndex": 7,
+      "text": "This lack of self-control,",
+      "start": 59.980491,
+      "end": 62.278575,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "This",
+          "start": 60.525,
+          "end": 60.706,
+          "confidence": 1,
+          "rawLineIndex": 8,
+          "contentLineIndex": 7,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "lack",
+          "start": 60.807,
+          "end": 61.089,
+          "confidence": 1,
+          "rawLineIndex": 8,
+          "contentLineIndex": 7,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "of",
+          "start": 61.13,
+          "end": 61.21,
+          "confidence": 1,
+          "rawLineIndex": 8,
+          "contentLineIndex": 7,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "self-control,",
+          "start": 61.311,
+          "end": 62.198,
+          "confidence": 1,
+          "rawLineIndex": 8,
+          "contentLineIndex": 7,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 9,
+      "contentLineIndex": 8,
+      "text": "I fear, is never-ending",
+      "start": 61.778575,
+      "end": 65.239759,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "I",
+          "start": 62.302,
+          "end": 62.322,
+          "confidence": 1,
+          "rawLineIndex": 9,
+          "contentLineIndex": 8,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "fear,",
+          "start": 62.382,
+          "end": 62.845,
+          "confidence": 1,
+          "rawLineIndex": 9,
+          "contentLineIndex": 8,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "is",
+          "start": 62.905,
+          "end": 63.006,
+          "confidence": 1,
+          "rawLineIndex": 9,
+          "contentLineIndex": 8,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "never-ending",
+          "start": 63.087,
+          "end": 64.475,
+          "confidence": 1,
+          "rawLineIndex": 9,
+          "contentLineIndex": 8,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 10,
+      "contentLineIndex": 9,
+      "text": "Controlling, I can't seem",
+      "start": 64.739759,
+      "end": 70.16357,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "Controlling,",
+          "start": 64.9,
+          "end": 67.09,
+          "confidence": 1,
+          "rawLineIndex": 10,
+          "contentLineIndex": 9,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "I",
+          "start": 67.713,
+          "end": 67.733,
+          "confidence": 1,
+          "rawLineIndex": 10,
+          "contentLineIndex": 9,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "can't",
+          "start": 67.894,
+          "end": 68.637,
+          "confidence": 1,
+          "rawLineIndex": 10,
+          "contentLineIndex": 9,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "seem",
+          "start": 68.757,
+          "end": 70.003,
+          "confidence": 1,
+          "rawLineIndex": 10,
+          "contentLineIndex": 9,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 11,
+      "contentLineIndex": 10,
+      "text": "",
+      "start": null,
+      "end": null,
+      "confidence": null,
+      "words": []
+    },
+    {
+      "rawLineIndex": 12,
+      "contentLineIndex": 10,
+      "text": "To find myself again",
+      "start": 69.853781,
+      "end": 72.449254,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "To",
+          "start": 70.156,
+          "end": 70.256,
+          "confidence": 1,
+          "rawLineIndex": 12,
+          "contentLineIndex": 10,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "find",
+          "start": 70.437,
+          "end": 70.759,
+          "confidence": 1,
+          "rawLineIndex": 12,
+          "contentLineIndex": 10,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "myself",
+          "start": 70.799,
+          "end": 71.343,
+          "confidence": 1,
+          "rawLineIndex": 12,
+          "contentLineIndex": 10,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "again",
+          "start": 71.403,
+          "end": 71.987,
+          "confidence": 1,
+          "rawLineIndex": 12,
+          "contentLineIndex": 10,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 13,
+      "contentLineIndex": 11,
+      "text": "my walls are closing in",
+      "start": 71.949254,
+      "end": 74.249483,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "my",
+          "start": 72.494,
+          "end": 72.595,
+          "confidence": 1,
+          "rawLineIndex": 13,
+          "contentLineIndex": 11,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "walls",
+          "start": 72.756,
+          "end": 73.079,
+          "confidence": 1,
+          "rawLineIndex": 13,
+          "contentLineIndex": 11,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "are",
+          "start": 73.14,
+          "end": 73.261,
+          "confidence": 1,
+          "rawLineIndex": 13,
+          "contentLineIndex": 11,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "closing",
+          "start": 73.261,
+          "end": 73.846,
+          "confidence": 1,
+          "rawLineIndex": 13,
+          "contentLineIndex": 11,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "in",
+          "start": 73.886,
+          "end": 74.169,
+          "confidence": 1,
+          "rawLineIndex": 13,
+          "contentLineIndex": 11,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 14,
+      "contentLineIndex": 12,
+      "text": "(Without a sense of confidence)",
+      "start": 73.749483,
+      "end": 75.960953,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "(Without",
+          "start": 74.091,
+          "end": 74.493,
+          "confidence": 1,
+          "rawLineIndex": 14,
+          "contentLineIndex": 12,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "a",
+          "start": 74.513,
+          "end": 74.534,
+          "confidence": 1,
+          "rawLineIndex": 14,
+          "contentLineIndex": 12,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "sense",
+          "start": 74.654,
+          "end": 74.976,
+          "confidence": 1,
+          "rawLineIndex": 14,
+          "contentLineIndex": 12,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "of",
+          "start": 74.996,
+          "end": 75.056,
+          "confidence": 1,
+          "rawLineIndex": 14,
+          "contentLineIndex": 12,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "confidence)",
+          "start": 75.096,
+          "end": 75.82,
+          "confidence": 1,
+          "rawLineIndex": 14,
+          "contentLineIndex": 12,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 15,
+      "contentLineIndex": 13,
+      "text": "(I'm convinced that there's)",
+      "start": 75.460953,
+      "end": 77.396586,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "(I'm",
+          "start": 75.622,
+          "end": 75.723,
+          "confidence": 1,
+          "rawLineIndex": 15,
+          "contentLineIndex": 13,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "convinced",
+          "start": 75.763,
+          "end": 76.57,
+          "confidence": 1,
+          "rawLineIndex": 15,
+          "contentLineIndex": 13,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "that",
+          "start": 76.57,
+          "end": 76.852,
+          "confidence": 1,
+          "rawLineIndex": 15,
+          "contentLineIndex": 13,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "there's)",
+          "start": 76.893,
+          "end": 77.296,
+          "confidence": 1,
+          "rawLineIndex": 15,
+          "contentLineIndex": 13,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 16,
+      "contentLineIndex": 14,
+      "text": "(just too much pressure to take)",
+      "start": 76.896586,
+      "end": 79.345529,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "(just",
+          "start": 77.097,
+          "end": 77.318,
+          "confidence": 1,
+          "rawLineIndex": 16,
+          "contentLineIndex": 14,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "too",
+          "start": 77.358,
+          "end": 77.519,
+          "confidence": 1,
+          "rawLineIndex": 16,
+          "contentLineIndex": 14,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "much",
+          "start": 77.619,
+          "end": 77.84,
+          "confidence": 1,
+          "rawLineIndex": 16,
+          "contentLineIndex": 14,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "pressure",
+          "start": 77.9,
+          "end": 78.302,
+          "confidence": 1,
+          "rawLineIndex": 16,
+          "contentLineIndex": 14,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "to",
+          "start": 78.322,
+          "end": 78.382,
+          "confidence": 1,
+          "rawLineIndex": 16,
+          "contentLineIndex": 14,
+          "wordIndex": 4
+        },
+        {
+          "id": 5,
+          "text": "take)",
+          "start": 78.462,
+          "end": 78.804,
+          "confidence": 1,
+          "rawLineIndex": 16,
+          "contentLineIndex": 14,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 17,
+      "contentLineIndex": 15,
+      "text": "I've felt this way before, so insecure",
+      "start": 78.845529,
+      "end": 87.595951,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "I've",
+          "start": 79.486,
+          "end": 79.566,
+          "confidence": 1,
+          "rawLineIndex": 17,
+          "contentLineIndex": 15,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "felt",
+          "start": 79.606,
+          "end": 79.887,
+          "confidence": 1,
+          "rawLineIndex": 17,
+          "contentLineIndex": 15,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "this",
+          "start": 79.947,
+          "end": 80.147,
+          "confidence": 1,
+          "rawLineIndex": 17,
+          "contentLineIndex": 15,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "way",
+          "start": 80.247,
+          "end": 80.407,
+          "confidence": 1,
+          "rawLineIndex": 17,
+          "contentLineIndex": 15,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "before,",
+          "start": 80.447,
+          "end": 80.948,
+          "confidence": 1,
+          "rawLineIndex": 17,
+          "contentLineIndex": 15,
+          "wordIndex": 4
+        },
+        {
+          "id": 5,
+          "text": "so",
+          "start": 81.609,
+          "end": 81.729,
+          "confidence": 1,
+          "rawLineIndex": 17,
+          "contentLineIndex": 15,
+          "wordIndex": 5
+        },
+        {
+          "id": 6,
+          "text": "insecure",
+          "start": 82.049,
+          "end": 83.471,
+          "confidence": 1,
+          "rawLineIndex": 17,
+          "contentLineIndex": 15,
+          "wordIndex": 6
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 18,
+      "contentLineIndex": 16,
+      "text": "",
+      "start": null,
+      "end": null,
+      "confidence": null,
+      "words": []
+    },
+    {
+      "rawLineIndex": 19,
+      "contentLineIndex": 16,
+      "text": "Crawling in my skin",
+      "start": 87.292284,
+      "end": 91.959506,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "Crawling",
+          "start": 87.533,
+          "end": 88.835,
+          "confidence": 1,
+          "rawLineIndex": 19,
+          "contentLineIndex": 16,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "in",
+          "start": 88.915,
+          "end": 89.135,
+          "confidence": 1,
+          "rawLineIndex": 19,
+          "contentLineIndex": 16,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "my",
+          "start": 89.616,
+          "end": 89.856,
+          "confidence": 1,
+          "rawLineIndex": 19,
+          "contentLineIndex": 16,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "skin",
+          "start": 89.936,
+          "end": 90.277,
+          "confidence": 1,
+          "rawLineIndex": 19,
+          "contentLineIndex": 16,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 20,
+      "contentLineIndex": 17,
+      "text": "These wounds, they will not heal",
+      "start": 91.459506,
+      "end": 96.794672,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "These",
+          "start": 91.921,
+          "end": 92.202,
+          "confidence": 1,
+          "rawLineIndex": 20,
+          "contentLineIndex": 17,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "wounds,",
+          "start": 92.242,
+          "end": 93.024,
+          "confidence": 1,
+          "rawLineIndex": 20,
+          "contentLineIndex": 17,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "they",
+          "start": 93.064,
+          "end": 93.265,
+          "confidence": 1,
+          "rawLineIndex": 20,
+          "contentLineIndex": 17,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "will",
+          "start": 93.365,
+          "end": 93.947,
+          "confidence": 1,
+          "rawLineIndex": 20,
+          "contentLineIndex": 17,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "not",
+          "start": 93.947,
+          "end": 94.187,
+          "confidence": 1,
+          "rawLineIndex": 20,
+          "contentLineIndex": 17,
+          "wordIndex": 4
+        },
+        {
+          "id": 5,
+          "text": "heal",
+          "start": 94.207,
+          "end": 94.528,
+          "confidence": 1,
+          "rawLineIndex": 20,
+          "contentLineIndex": 17,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 21,
+      "contentLineIndex": 18,
+      "text": "Fear is how I fall",
+      "start": 96.294672,
+      "end": 101.173193,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "Fear",
+          "start": 96.716,
+          "end": 97.58,
+          "confidence": 1,
+          "rawLineIndex": 21,
+          "contentLineIndex": 18,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "is",
+          "start": 97.66,
+          "end": 97.881,
+          "confidence": 1,
+          "rawLineIndex": 21,
+          "contentLineIndex": 18,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "how",
+          "start": 97.901,
+          "end": 98.684,
+          "confidence": 1,
+          "rawLineIndex": 21,
+          "contentLineIndex": 18,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "I",
+          "start": 98.945,
+          "end": 98.965,
+          "confidence": 1,
+          "rawLineIndex": 21,
+          "contentLineIndex": 18,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "fall",
+          "start": 99.045,
+          "end": 100.109,
+          "confidence": 1,
+          "rawLineIndex": 21,
+          "contentLineIndex": 18,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 22,
+      "contentLineIndex": 19,
+      "text": "Confusing what is real",
+      "start": 100.673193,
+      "end": 105.995486,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "Confusing",
+          "start": 101.015,
+          "end": 102.441,
+          "confidence": 1,
+          "rawLineIndex": 22,
+          "contentLineIndex": 19,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "what",
+          "start": 102.461,
+          "end": 103.344,
+          "confidence": 1,
+          "rawLineIndex": 22,
+          "contentLineIndex": 19,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "is",
+          "start": 103.425,
+          "end": 103.585,
+          "confidence": 1,
+          "rawLineIndex": 22,
+          "contentLineIndex": 19,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "real",
+          "start": 103.686,
+          "end": 103.907,
+          "confidence": 1,
+          "rawLineIndex": 22,
+          "contentLineIndex": 19,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 23,
+      "contentLineIndex": 20,
+      "text": "",
+      "start": null,
+      "end": null,
+      "confidence": null,
+      "words": []
+    },
+    {
+      "rawLineIndex": 24,
+      "contentLineIndex": 20,
+      "text": "Discomfort endlessly",
+      "start": 105.688081,
+      "end": 108.023205,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "Discomfort",
+          "start": 106.131,
+          "end": 107.057,
+          "confidence": 1,
+          "rawLineIndex": 24,
+          "contentLineIndex": 20,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "endlessly",
+          "start": 107.097,
+          "end": 107.983,
+          "confidence": 1,
+          "rawLineIndex": 24,
+          "contentLineIndex": 20,
+          "wordIndex": 1
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 25,
+      "contentLineIndex": 21,
+      "text": "has pulled itself upon me",
+      "start": 107.523205,
+      "end": 111.053494,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "has",
+          "start": 107.884,
+          "end": 108.065,
+          "confidence": 1,
+          "rawLineIndex": 25,
+          "contentLineIndex": 21,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "pulled",
+          "start": 108.165,
+          "end": 108.466,
+          "confidence": 1,
+          "rawLineIndex": 25,
+          "contentLineIndex": 21,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "itself",
+          "start": 108.506,
+          "end": 108.987,
+          "confidence": 1,
+          "rawLineIndex": 25,
+          "contentLineIndex": 21,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "upon",
+          "start": 109.088,
+          "end": 109.549,
+          "confidence": 1,
+          "rawLineIndex": 25,
+          "contentLineIndex": 21,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "me",
+          "start": 109.649,
+          "end": 109.77,
+          "confidence": 1,
+          "rawLineIndex": 25,
+          "contentLineIndex": 21,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 26,
+      "contentLineIndex": 22,
+      "text": "Distracting (distracting), reacting",
+      "start": 110.553494,
+      "end": 115.352828,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "Distracting",
+          "start": 111.035,
+          "end": 112.843,
+          "confidence": 1,
+          "rawLineIndex": 26,
+          "contentLineIndex": 22,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "(distracting),",
+          "start": 112.843,
+          "end": 113.264,
+          "confidence": 1,
+          "rawLineIndex": 26,
+          "contentLineIndex": 22,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "reacting",
+          "start": 113.385,
+          "end": 115.172,
+          "confidence": 1,
+          "rawLineIndex": 26,
+          "contentLineIndex": 22,
+          "wordIndex": 2
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 27,
+      "contentLineIndex": 23,
+      "text": "Against my will, I stand beside",
+      "start": 114.852828,
+      "end": 117.561303,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "Against",
+          "start": 115.354,
+          "end": 115.876,
+          "confidence": 1,
+          "rawLineIndex": 27,
+          "contentLineIndex": 23,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "my",
+          "start": 115.916,
+          "end": 116.097,
+          "confidence": 1,
+          "rawLineIndex": 27,
+          "contentLineIndex": 23,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "will,",
+          "start": 116.177,
+          "end": 116.458,
+          "confidence": 1,
+          "rawLineIndex": 27,
+          "contentLineIndex": 23,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "I",
+          "start": 116.498,
+          "end": 116.518,
+          "confidence": 1,
+          "rawLineIndex": 27,
+          "contentLineIndex": 23,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "stand",
+          "start": 116.618,
+          "end": 116.979,
+          "confidence": 1,
+          "rawLineIndex": 27,
+          "contentLineIndex": 23,
+          "wordIndex": 4
+        },
+        {
+          "id": 5,
+          "text": "beside",
+          "start": 117.02,
+          "end": 117.541,
+          "confidence": 1,
+          "rawLineIndex": 27,
+          "contentLineIndex": 23,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 28,
+      "contentLineIndex": 24,
+      "text": "my own reflection (my own reflection)",
+      "start": 117.061303,
+      "end": 120.138718,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "my",
+          "start": 117.604,
+          "end": 117.866,
+          "confidence": 1,
+          "rawLineIndex": 28,
+          "contentLineIndex": 24,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "own",
+          "start": 117.966,
+          "end": 118.127,
+          "confidence": 1,
+          "rawLineIndex": 28,
+          "contentLineIndex": 24,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "reflection",
+          "start": 118.188,
+          "end": 118.932,
+          "confidence": 1,
+          "rawLineIndex": 28,
+          "contentLineIndex": 24,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "(my",
+          "start": 118.932,
+          "end": 118.972,
+          "confidence": 1,
+          "rawLineIndex": 28,
+          "contentLineIndex": 24,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "own",
+          "start": 119.032,
+          "end": 119.213,
+          "confidence": 1,
+          "rawLineIndex": 28,
+          "contentLineIndex": 24,
+          "wordIndex": 4
+        },
+        {
+          "id": 5,
+          "text": "reflection)",
+          "start": 119.213,
+          "end": 120.058,
+          "confidence": 1,
+          "rawLineIndex": 28,
+          "contentLineIndex": 24,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 29,
+      "contentLineIndex": 25,
+      "text": "It's haunting (it's haunting) how I can't seem",
+      "start": 119.638718,
+      "end": 124.90678744444445,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "It's",
+          "start": 120.24,
+          "end": 120.42,
+          "confidence": 1,
+          "rawLineIndex": 29,
+          "contentLineIndex": 25,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "haunting",
+          "start": 120.46,
+          "end": 121.802,
+          "confidence": 1,
+          "rawLineIndex": 29,
+          "contentLineIndex": 25,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "(it's",
+          "start": 122.062,
+          "end": 122.183,
+          "confidence": 1,
+          "rawLineIndex": 29,
+          "contentLineIndex": 25,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "haunting)",
+          "start": 122.183,
+          "end": 122.483,
+          "confidence": 1,
+          "rawLineIndex": 29,
+          "contentLineIndex": 25,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "how",
+          "start": 122.483,
+          "end": 122.603,
+          "confidence": 1,
+          "rawLineIndex": 29,
+          "contentLineIndex": 25,
+          "wordIndex": 4
+        },
+        {
+          "id": 5,
+          "text": "I",
+          "start": 122.603,
+          "end": 122.623,
+          "confidence": 1,
+          "rawLineIndex": 29,
+          "contentLineIndex": 25,
+          "wordIndex": 5
+        },
+        {
+          "id": 6,
+          "text": "can't",
+          "start": 122.703,
+          "end": 123.404,
+          "confidence": 1,
+          "rawLineIndex": 29,
+          "contentLineIndex": 25,
+          "wordIndex": 6
+        },
+        {
+          "id": 7,
+          "text": "seem",
+          "start": 123.525,
+          "end": 124.366,
+          "confidence": 1,
+          "rawLineIndex": 29,
+          "contentLineIndex": 25,
+          "wordIndex": 7
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 30,
+      "contentLineIndex": 26,
+      "text": "",
+      "start": null,
+      "end": null,
+      "confidence": null,
+      "words": []
+    },
+    {
+      "rawLineIndex": 31,
+      "contentLineIndex": 26,
+      "text": "To find myself again",
+      "start": 124.73334994444446,
+      "end": 127.129094,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "To",
+          "start": 124.995,
+          "end": 125.096,
+          "confidence": 1,
+          "rawLineIndex": 31,
+          "contentLineIndex": 26,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "find",
+          "start": 125.257,
+          "end": 125.559,
+          "confidence": 1,
+          "rawLineIndex": 31,
+          "contentLineIndex": 26,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "myself",
+          "start": 125.599,
+          "end": 126.102,
+          "confidence": 1,
+          "rawLineIndex": 31,
+          "contentLineIndex": 26,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "again",
+          "start": 126.183,
+          "end": 126.787,
+          "confidence": 1,
+          "rawLineIndex": 31,
+          "contentLineIndex": 26,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 32,
+      "contentLineIndex": 27,
+      "text": "my walls are closing in",
+      "start": 126.629094,
+      "end": 129.042185,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "my",
+          "start": 127.313,
+          "end": 127.494,
+          "confidence": 1,
+          "rawLineIndex": 32,
+          "contentLineIndex": 27,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "walls",
+          "start": 127.574,
+          "end": 127.856,
+          "confidence": 1,
+          "rawLineIndex": 32,
+          "contentLineIndex": 27,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "are",
+          "start": 127.916,
+          "end": 128.017,
+          "confidence": 1,
+          "rawLineIndex": 32,
+          "contentLineIndex": 27,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "closing",
+          "start": 128.077,
+          "end": 128.6,
+          "confidence": 1,
+          "rawLineIndex": 32,
+          "contentLineIndex": 27,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "in",
+          "start": 128.66,
+          "end": 128.962,
+          "confidence": 1,
+          "rawLineIndex": 32,
+          "contentLineIndex": 27,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 33,
+      "contentLineIndex": 28,
+      "text": "(Without a sense of confidence)",
+      "start": 128.542185,
+      "end": 130.658527,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "(Without",
+          "start": 128.885,
+          "end": 129.308,
+          "confidence": 1,
+          "rawLineIndex": 33,
+          "contentLineIndex": 28,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "a",
+          "start": 129.328,
+          "end": 129.348,
+          "confidence": 1,
+          "rawLineIndex": 33,
+          "contentLineIndex": 28,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "sense",
+          "start": 129.469,
+          "end": 129.792,
+          "confidence": 1,
+          "rawLineIndex": 33,
+          "contentLineIndex": 28,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "of",
+          "start": 129.812,
+          "end": 129.872,
+          "confidence": 1,
+          "rawLineIndex": 33,
+          "contentLineIndex": 28,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "confidence)",
+          "start": 129.893,
+          "end": 130.598,
+          "confidence": 1,
+          "rawLineIndex": 33,
+          "contentLineIndex": 28,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 34,
+      "contentLineIndex": 29,
+      "text": "(I'm convinced that there's)",
+      "start": 130.158527,
+      "end": 132.185239,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "(I'm",
+          "start": 130.419,
+          "end": 130.52,
+          "confidence": 1,
+          "rawLineIndex": 34,
+          "contentLineIndex": 29,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "convinced",
+          "start": 130.58,
+          "end": 131.383,
+          "confidence": 1,
+          "rawLineIndex": 34,
+          "contentLineIndex": 29,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "that",
+          "start": 131.463,
+          "end": 131.643,
+          "confidence": 1,
+          "rawLineIndex": 34,
+          "contentLineIndex": 29,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "there's)",
+          "start": 131.704,
+          "end": 132.085,
+          "confidence": 1,
+          "rawLineIndex": 34,
+          "contentLineIndex": 29,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 35,
+      "contentLineIndex": 30,
+      "text": "(just too much pressure to take)",
+      "start": 131.685239,
+      "end": 134.088288,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "(just",
+          "start": 131.907,
+          "end": 132.109,
+          "confidence": 1,
+          "rawLineIndex": 35,
+          "contentLineIndex": 30,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "too",
+          "start": 132.17,
+          "end": 132.352,
+          "confidence": 1,
+          "rawLineIndex": 35,
+          "contentLineIndex": 30,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "much",
+          "start": 132.432,
+          "end": 132.655,
+          "confidence": 1,
+          "rawLineIndex": 35,
+          "contentLineIndex": 30,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "pressure",
+          "start": 132.715,
+          "end": 133.119,
+          "confidence": 1,
+          "rawLineIndex": 35,
+          "contentLineIndex": 30,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "to",
+          "start": 133.139,
+          "end": 133.2,
+          "confidence": 1,
+          "rawLineIndex": 35,
+          "contentLineIndex": 30,
+          "wordIndex": 4
+        },
+        {
+          "id": 5,
+          "text": "take)",
+          "start": 133.281,
+          "end": 133.624,
+          "confidence": 1,
+          "rawLineIndex": 35,
+          "contentLineIndex": 30,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 36,
+      "contentLineIndex": 31,
+      "text": "I've felt this way before, so insecure",
+      "start": 133.588288,
+      "end": 144.712405,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "I've",
+          "start": 134.27,
+          "end": 134.35,
+          "confidence": 1,
+          "rawLineIndex": 36,
+          "contentLineIndex": 31,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "felt",
+          "start": 134.39,
+          "end": 134.671,
+          "confidence": 1,
+          "rawLineIndex": 36,
+          "contentLineIndex": 31,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "this",
+          "start": 134.711,
+          "end": 134.911,
+          "confidence": 1,
+          "rawLineIndex": 36,
+          "contentLineIndex": 31,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "way",
+          "start": 135.011,
+          "end": 135.172,
+          "confidence": 1,
+          "rawLineIndex": 36,
+          "contentLineIndex": 31,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "before,",
+          "start": 135.252,
+          "end": 135.813,
+          "confidence": 1,
+          "rawLineIndex": 36,
+          "contentLineIndex": 31,
+          "wordIndex": 4
+        },
+        {
+          "id": 5,
+          "text": "so",
+          "start": 136.434,
+          "end": 136.555,
+          "confidence": 1,
+          "rawLineIndex": 36,
+          "contentLineIndex": 31,
+          "wordIndex": 5
+        },
+        {
+          "id": 6,
+          "text": "insecure",
+          "start": 136.855,
+          "end": 138.278,
+          "confidence": 1,
+          "rawLineIndex": 36,
+          "contentLineIndex": 31,
+          "wordIndex": 6
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 37,
+      "contentLineIndex": 32,
+      "text": "",
+      "start": null,
+      "end": null,
+      "confidence": null,
+      "words": []
+    },
+    {
+      "rawLineIndex": 38,
+      "contentLineIndex": 32,
+      "text": "Crawling in my skin",
+      "start": 144.378706,
+      "end": 149.174926,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "Crawling",
+          "start": 144.599,
+          "end": 145.944,
+          "confidence": 1,
+          "rawLineIndex": 38,
+          "contentLineIndex": 32,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "in",
+          "start": 146.004,
+          "end": 146.626,
+          "confidence": 1,
+          "rawLineIndex": 38,
+          "contentLineIndex": 32,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "my",
+          "start": 146.707,
+          "end": 146.967,
+          "confidence": 1,
+          "rawLineIndex": 38,
+          "contentLineIndex": 32,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "skin",
+          "start": 147.028,
+          "end": 148.974,
+          "confidence": 1,
+          "rawLineIndex": 38,
+          "contentLineIndex": 32,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 39,
+      "contentLineIndex": 33,
+      "text": "These wounds, they will not heal",
+      "start": 148.674926,
+      "end": 153.982402,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "These",
+          "start": 149.015,
+          "end": 149.296,
+          "confidence": 1,
+          "rawLineIndex": 39,
+          "contentLineIndex": 33,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "wounds,",
+          "start": 149.336,
+          "end": 150.117,
+          "confidence": 1,
+          "rawLineIndex": 39,
+          "contentLineIndex": 33,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "they",
+          "start": 150.157,
+          "end": 150.357,
+          "confidence": 1,
+          "rawLineIndex": 39,
+          "contentLineIndex": 33,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "will",
+          "start": 150.457,
+          "end": 151.259,
+          "confidence": 1,
+          "rawLineIndex": 39,
+          "contentLineIndex": 33,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "not",
+          "start": 151.299,
+          "end": 151.619,
+          "confidence": 1,
+          "rawLineIndex": 39,
+          "contentLineIndex": 33,
+          "wordIndex": 4
+        },
+        {
+          "id": 5,
+          "text": "heal",
+          "start": 151.639,
+          "end": 152.22,
+          "confidence": 1,
+          "rawLineIndex": 39,
+          "contentLineIndex": 33,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 40,
+      "contentLineIndex": 34,
+      "text": "Fear is how I fall",
+      "start": 153.482402,
+      "end": 158.16836,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "Fear",
+          "start": 153.803,
+          "end": 154.664,
+          "confidence": 1,
+          "rawLineIndex": 40,
+          "contentLineIndex": 34,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "is",
+          "start": 154.764,
+          "end": 154.984,
+          "confidence": 1,
+          "rawLineIndex": 40,
+          "contentLineIndex": 34,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "how",
+          "start": 154.984,
+          "end": 155.785,
+          "confidence": 1,
+          "rawLineIndex": 40,
+          "contentLineIndex": 34,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "I",
+          "start": 156.046,
+          "end": 156.066,
+          "confidence": 1,
+          "rawLineIndex": 40,
+          "contentLineIndex": 34,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "fall",
+          "start": 156.126,
+          "end": 156.446,
+          "confidence": 1,
+          "rawLineIndex": 40,
+          "contentLineIndex": 34,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 41,
+      "contentLineIndex": 35,
+      "text": "Confusing what is real",
+      "start": 157.66836,
+      "end": 162.99614183333333,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "Confusing",
+          "start": 158.109,
+          "end": 159.531,
+          "confidence": 1,
+          "rawLineIndex": 41,
+          "contentLineIndex": 35,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "what",
+          "start": 159.551,
+          "end": 160.412,
+          "confidence": 1,
+          "rawLineIndex": 41,
+          "contentLineIndex": 35,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "is",
+          "start": 160.493,
+          "end": 160.693,
+          "confidence": 1,
+          "rawLineIndex": 41,
+          "contentLineIndex": 35,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "real",
+          "start": 160.753,
+          "end": 161.194,
+          "confidence": 1,
+          "rawLineIndex": 41,
+          "contentLineIndex": 35,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 42,
+      "contentLineIndex": 36,
+      "text": "",
+      "start": null,
+      "end": null,
+      "confidence": null,
+      "words": []
+    },
+    {
+      "rawLineIndex": 43,
+      "contentLineIndex": 36,
+      "text": "Crawling in my skin",
+      "start": 162.56871127777777,
+      "end": 167.365758,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "Crawling",
+          "start": 162.89,
+          "end": 164.194,
+          "confidence": 1,
+          "rawLineIndex": 43,
+          "contentLineIndex": 36,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "in",
+          "start": 164.275,
+          "end": 164.897,
+          "confidence": 1,
+          "rawLineIndex": 43,
+          "contentLineIndex": 36,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "my",
+          "start": 164.977,
+          "end": 165.238,
+          "confidence": 1,
+          "rawLineIndex": 43,
+          "contentLineIndex": 36,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "skin",
+          "start": 165.298,
+          "end": 167.205,
+          "confidence": 1,
+          "rawLineIndex": 43,
+          "contentLineIndex": 36,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 44,
+      "contentLineIndex": 37,
+      "text": "These wounds, they will not heal",
+      "start": 166.865758,
+      "end": 172.23985783333333,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "These",
+          "start": 167.287,
+          "end": 167.568,
+          "confidence": 1,
+          "rawLineIndex": 44,
+          "contentLineIndex": 37,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "wounds,",
+          "start": 167.608,
+          "end": 168.39,
+          "confidence": 1,
+          "rawLineIndex": 44,
+          "contentLineIndex": 37,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "they",
+          "start": 168.41,
+          "end": 168.63,
+          "confidence": 1,
+          "rawLineIndex": 44,
+          "contentLineIndex": 37,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "will",
+          "start": 168.731,
+          "end": 169.473,
+          "confidence": 1,
+          "rawLineIndex": 44,
+          "contentLineIndex": 37,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "not",
+          "start": 169.533,
+          "end": 169.894,
+          "confidence": 1,
+          "rawLineIndex": 44,
+          "contentLineIndex": 37,
+          "wordIndex": 4
+        },
+        {
+          "id": 5,
+          "text": "heal",
+          "start": 169.914,
+          "end": 171.077,
+          "confidence": 1,
+          "rawLineIndex": 44,
+          "contentLineIndex": 37,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 45,
+      "contentLineIndex": 38,
+      "text": "Fear is how I fall",
+      "start": 171.73985783333333,
+      "end": 176.61241183333334,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "Fear",
+          "start": 172.081,
+          "end": 172.963,
+          "confidence": 1,
+          "rawLineIndex": 45,
+          "contentLineIndex": 38,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "is",
+          "start": 173.043,
+          "end": 173.244,
+          "confidence": 1,
+          "rawLineIndex": 45,
+          "contentLineIndex": 38,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "how",
+          "start": 173.264,
+          "end": 174.066,
+          "confidence": 1,
+          "rawLineIndex": 45,
+          "contentLineIndex": 38,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "I",
+          "start": 174.306,
+          "end": 174.327,
+          "confidence": 1,
+          "rawLineIndex": 45,
+          "contentLineIndex": 38,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "fall",
+          "start": 174.407,
+          "end": 175.931,
+          "confidence": 1,
+          "rawLineIndex": 45,
+          "contentLineIndex": 38,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 46,
+      "contentLineIndex": 39,
+      "text": "Confusing, confusing what is real",
+      "start": 176.11241183333334,
+      "end": 181.771506,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "Confusing,",
+          "start": 176.353,
+          "end": 178.179,
+          "confidence": 1,
+          "rawLineIndex": 46,
+          "contentLineIndex": 39,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "confusing",
+          "start": 178.661,
+          "end": 180.086,
+          "confidence": 1,
+          "rawLineIndex": 46,
+          "contentLineIndex": 39,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "what",
+          "start": 180.126,
+          "end": 181.029,
+          "confidence": 1,
+          "rawLineIndex": 46,
+          "contentLineIndex": 39,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "is",
+          "start": 181.089,
+          "end": 181.23,
+          "confidence": 1,
+          "rawLineIndex": 46,
+          "contentLineIndex": 39,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "real",
+          "start": 181.31,
+          "end": 181.691,
+          "confidence": 1,
+          "rawLineIndex": 46,
+          "contentLineIndex": 39,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 47,
+      "contentLineIndex": 40,
+      "text": "",
+      "start": null,
+      "end": null,
+      "confidence": null,
+      "words": []
+    },
+    {
+      "rawLineIndex": 48,
+      "contentLineIndex": 40,
+      "text": "(There's something inside me)",
+      "start": 181.486291,
+      "end": 183.657351,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "(There's",
+          "start": 181.547,
+          "end": 181.828,
+          "confidence": 1,
+          "rawLineIndex": 48,
+          "contentLineIndex": 40,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "something",
+          "start": 181.848,
+          "end": 182.431,
+          "confidence": 1,
+          "rawLineIndex": 48,
+          "contentLineIndex": 40,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "inside",
+          "start": 182.471,
+          "end": 183.356,
+          "confidence": 1,
+          "rawLineIndex": 48,
+          "contentLineIndex": 40,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "me)",
+          "start": 183.356,
+          "end": 183.497,
+          "confidence": 1,
+          "rawLineIndex": 48,
+          "contentLineIndex": 40,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 49,
+      "contentLineIndex": 41,
+      "text": "(that pulls beneath the surface)",
+      "start": 183.157351,
+      "end": 186.398082,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "(that",
+          "start": 183.278,
+          "end": 183.459,
+          "confidence": 1,
+          "rawLineIndex": 49,
+          "contentLineIndex": 41,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "pulls",
+          "start": 183.56,
+          "end": 183.822,
+          "confidence": 1,
+          "rawLineIndex": 49,
+          "contentLineIndex": 41,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "beneath",
+          "start": 183.882,
+          "end": 184.466,
+          "confidence": 1,
+          "rawLineIndex": 49,
+          "contentLineIndex": 41,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "the",
+          "start": 184.466,
+          "end": 184.526,
+          "confidence": 1,
+          "rawLineIndex": 49,
+          "contentLineIndex": 41,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "surface)",
+          "start": 184.687,
+          "end": 185.472,
+          "confidence": 1,
+          "rawLineIndex": 49,
+          "contentLineIndex": 41,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 50,
+      "contentLineIndex": 42,
+      "text": "(Consuming) confusing what is real",
+      "start": 185.898082,
+      "end": 190.762704,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "(Consuming)",
+          "start": 186.401,
+          "end": 187.808,
+          "confidence": 1,
+          "rawLineIndex": 50,
+          "contentLineIndex": 42,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "confusing",
+          "start": 187.828,
+          "end": 189.255,
+          "confidence": 1,
+          "rawLineIndex": 50,
+          "contentLineIndex": 42,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "what",
+          "start": 189.275,
+          "end": 190.14,
+          "confidence": 1,
+          "rawLineIndex": 50,
+          "contentLineIndex": 42,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "is",
+          "start": 190.22,
+          "end": 190.381,
+          "confidence": 1,
+          "rawLineIndex": 50,
+          "contentLineIndex": 42,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "real",
+          "start": 190.441,
+          "end": 190.662,
+          "confidence": 1,
+          "rawLineIndex": 50,
+          "contentLineIndex": 42,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 51,
+      "contentLineIndex": 43,
+      "text": "(This lack of self-control)",
+      "start": 190.262704,
+      "end": 192.41205,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "(This",
+          "start": 190.705,
+          "end": 190.946,
+          "confidence": 1,
+          "rawLineIndex": 51,
+          "contentLineIndex": 43,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "lack",
+          "start": 190.986,
+          "end": 191.307,
+          "confidence": 1,
+          "rawLineIndex": 51,
+          "contentLineIndex": 43,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "of",
+          "start": 191.367,
+          "end": 191.448,
+          "confidence": 1,
+          "rawLineIndex": 51,
+          "contentLineIndex": 43,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "self-control)",
+          "start": 191.508,
+          "end": 192.291,
+          "confidence": 1,
+          "rawLineIndex": 51,
+          "contentLineIndex": 43,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 52,
+      "contentLineIndex": 44,
+      "text": "(I fear, is never-ending)",
+      "start": 191.91205,
+      "end": 195.58062,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "(I",
+          "start": 191.972,
+          "end": 191.992,
+          "confidence": 1,
+          "rawLineIndex": 52,
+          "contentLineIndex": 44,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "fear,",
+          "start": 191.992,
+          "end": 192.433,
+          "confidence": 1,
+          "rawLineIndex": 52,
+          "contentLineIndex": 44,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "is",
+          "start": 192.493,
+          "end": 192.694,
+          "confidence": 1,
+          "rawLineIndex": 52,
+          "contentLineIndex": 44,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "never-ending)",
+          "start": 192.734,
+          "end": 194.157,
+          "confidence": 1,
+          "rawLineIndex": 52,
+          "contentLineIndex": 44,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 53,
+      "contentLineIndex": 45,
+      "text": "(Controlling) confusing what is real",
+      "start": 195.08062,
+      "end": 209,
+      "confidence": 1,
+      "words": [
+        {
+          "id": 0,
+          "text": "(Controlling)",
+          "start": 195.521,
+          "end": 196.943,
+          "confidence": 1,
+          "rawLineIndex": 53,
+          "contentLineIndex": 45,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "confusing",
+          "start": 196.943,
+          "end": 198.425,
+          "confidence": 1,
+          "rawLineIndex": 53,
+          "contentLineIndex": 45,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "what",
+          "start": 198.425,
+          "end": 199.286,
+          "confidence": 1,
+          "rawLineIndex": 53,
+          "contentLineIndex": 45,
+          "wordIndex": 2
+        },
+        {
+          "id": 3,
+          "text": "is",
+          "start": 199.347,
+          "end": 199.507,
+          "confidence": 1,
+          "rawLineIndex": 53,
+          "contentLineIndex": 45,
+          "wordIndex": 3
+        },
+        {
+          "id": 4,
+          "text": "real",
+          "start": 199.607,
+          "end": 200.188,
+          "confidence": 1,
+          "rawLineIndex": 53,
+          "contentLineIndex": 45,
+          "wordIndex": 4
+        }
+      ]
+    }
+  ],
+  "lyricsHash": "fnv1a:dc9fe8e3"
+}

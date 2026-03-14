@@ -1,0 +1,56 @@
+PRE-FLIGHT
+  cwd: /Users/sidechaine/Documents/BeLive
+  exists /Users/sidechaine/Documents/BeLive/benchmarks/pack01/lp_breaking_the_habit/vocals.mp3: True
+  exists /Users/sidechaine/Documents/BeLive/benchmarks/pack01/lp_breaking_the_habit/lyrics.txt: True
+  exists /Users/sidechaine/Documents/BeLive/benchmarks/pack01/lp_breaking_the_habit/export.json: True
+  python: 3.11.11
+  torch: 2.2.2
+  torchaudio: 2.2.2
+
+TASK 1 — EXPORT TRUTH
+  top-level keys: ['id', 'title', 'lyrics', 'lyricsOriginalContent', 'blocksData', 'syncMarkers', 'instrumentalType', 'vocalsType', 'dateAdded', 'lastModified']
+  marker path: syncMarkers
+  marker count: 53
+  first marker keys: ['id', 'lineIndex', 'time', 'text', 'blockType', 'color']
+  first 5 markers:
+{'i': 0, 'lineIndex': 0, 'time': 19.907, 'text': 'Memories consume like opening the wound', 'blockType': 'verse'}
+{'i': 1, 'lineIndex': 1, 'time': 24.959, 'text': "I'm picking me apart again", 'blockType': 'verse'}
+{'i': 2, 'lineIndex': 2, 'time': 29.194, 'text': "You all assume I'm safe here in my room", 'blockType': 'verse'}
+{'i': 3, 'lineIndex': 3, 'time': 34.675, 'text': 'Unless I try to start again', 'blockType': 'verse'}
+{'i': 4, 'lineIndex': 4, 'time': 38.517, 'text': '', 'blockType': 'unknown'}
+
+TASK 2 — DERIVED WINDOWS
+  first 8 windows:
+{'rawLineIndex': 0, 'contentLineIndex': 0, 'start': 19.907, 'end': 24.959, 'duration': 5.052, 'text': 'Memories consume like opening the wound'}
+{'rawLineIndex': 1, 'contentLineIndex': 1, 'start': 24.959, 'end': 29.194, 'duration': 4.235, 'text': "I'm picking me apart again"}
+{'rawLineIndex': 2, 'contentLineIndex': 2, 'start': 29.194, 'end': 34.675, 'duration': 5.481, 'text': "You all assume I'm safe here in my room"}
+{'rawLineIndex': 3, 'contentLineIndex': 3, 'start': 34.675, 'end': 38.517, 'duration': 3.842, 'text': 'Unless I try to start again'}
+{'rawLineIndex': 4, 'contentLineIndex': None, 'start': 38.517, 'end': 38.705, 'duration': 0.188, 'text': ''}
+{'rawLineIndex': 5, 'contentLineIndex': 4, 'start': 38.705, 'end': 40.761, 'duration': 2.056, 'text': "I don't want to be the one "}
+{'rawLineIndex': 6, 'contentLineIndex': 5, 'start': 40.761, 'end': 43.026, 'duration': 2.265, 'text': 'the battles always choose'}
+{'rawLineIndex': 7, 'contentLineIndex': 6, 'start': 43.026, 'end': 45.465, 'duration': 2.439, 'text': "'Cause inside, I realize "}
+Traceback (most recent call last):
+  File "/Users/sidechaine/Documents/BeLive/research/scripts/real_align_01c.py", line 353, in <module>
+    main()
+  File "/Users/sidechaine/Documents/BeLive/research/scripts/real_align_01c.py", line 268, in main
+    aligned = align_windows(raw_lines, waveform, sr, duration, windows)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sidechaine/Documents/BeLive/research/scripts/real_align_01c.py", line 140, in align_windows
+    model = bundle.get_model().eval()
+            ^^^^^^^^^^^^^^^^^^
+  File "/Users/sidechaine/Documents/BeLive/research/.venv-mms/lib/python3.11/site-packages/torchaudio/pipelines/_wav2vec2/impl.py", line 1610, in get_model
+    state_dict = utils._get_state_dict(self._path, dl_kwargs, self._remove_aux_axis)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sidechaine/Documents/BeLive/research/.venv-mms/lib/python3.11/site-packages/torchaudio/pipelines/_wav2vec2/utils.py", line 83, in _get_state_dict
+    state_dict = load_state_dict_from_url(url, **dl_kwargs)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sidechaine/Documents/BeLive/research/.venv-mms/lib/python3.11/site-packages/torch/hub.py", line 770, in load_state_dict_from_url
+    return torch.load(cached_file, map_location=map_location, weights_only=weights_only)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sidechaine/Documents/BeLive/research/.venv-mms/lib/python3.11/site-packages/torch/serialization.py", line 1005, in load
+    with _open_zipfile_reader(opened_file) as opened_zipfile:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sidechaine/Documents/BeLive/research/.venv-mms/lib/python3.11/site-packages/torch/serialization.py", line 457, in __init__
+    super().__init__(torch._C.PyTorchFileReader(name_or_buffer))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: PytorchStreamReader failed reading zip archive: failed finding central directory

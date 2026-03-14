@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "language",
+    "mode",
+    "text_mode",
+    "padding_ms",
+    "short_window_policy",
+    "tail_grace_ms",
+    "nonlexical_mode",
+    "confidence_norm_profile"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "language": { "type": "string", "enum": ["en", "ru"] },
+    "mode": { "type": "string", "enum": ["line-windowed", "full-song-control"] },
+    "text_mode": {
+      "type": "string",
+      "enum": ["baseline", "clean-text", "phoneticish"]
+    },
+    "padding_ms": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pre", "post"],
+      "properties": {
+        "pre": { "type": "integer", "minimum": 0 },
+        "post": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "short_window_policy": {
+      "type": "string",
+      "enum": ["keep", "extend", "skip"]
+    },
+    "tail_grace_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "nonlexical_mode": {
+      "type": "string",
+      "enum": ["keep", "line-only", "skip"]
+    },
+    "confidence_norm_profile": {
+      "type": "string",
+      "enum": ["current", "raw-only", "calibration-v1"]
+    }
+  }
+}

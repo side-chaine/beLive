@@ -83,11 +83,39 @@ function applyModeVolumePreset(mode: string): void {
   if (mode === 'karaoke') { apply(100, 0); return; }
   if (mode === 'rehearsal') {
     let inst = 100, voc = 100;
+    const GROUPED_KEY = 'bl-rehearsal-volumes';
+    const LEGACY_INST_KEY = 'rehearsal:instrumentalVolume';
+    const LEGACY_VOC_KEY = 'rehearsal:vocalsVolume';
+
     try {
-      const sInst = localStorage.getItem('rehearsal:instrumentalVolume');
-      const sVoc = localStorage.getItem('rehearsal:vocalsVolume');
-      if (sInst !== null) inst = Math.max(0, Math.min(100, parseInt(sInst, 10) || 0));
-      if (sVoc !== null) voc = Math.max(0, Math.min(100, parseInt(sVoc, 10) || 0));
+      // 1. Try canonical grouped key first
+      const groupedRaw = localStorage.getItem(GROUPED_KEY);
+      if (groupedRaw) {
+        const parsed = JSON.parse(groupedRaw);
+        inst = Math.max(0, Math.min(100, Math.round((parsed.instrumentalVolume ?? 1) * 100)));
+        voc = Math.max(0, Math.min(100, Math.round((parsed.vocalsVolume ?? 1) * 100)));
+      } else {
+        // 2. Fallback to legacy split keys (one-time migration)
+        const sInst = localStorage.getItem(LEGACY_INST_KEY);
+        const sVoc = localStorage.getItem(LEGACY_VOC_KEY);
+        let hasLegacy = false;
+        if (sInst !== null) {
+          inst = Math.max(0, Math.min(100, parseInt(sInst, 10) || 0));
+          hasLegacy = true;
+        }
+        if (sVoc !== null) {
+          voc = Math.max(0, Math.min(100, parseInt(sVoc, 10) || 0));
+          hasLegacy = true;
+        }
+        // 3. Migrate legacy to grouped (one-time)
+        if (hasLegacy) {
+          const payload = {
+            instrumentalVolume: inst / 100,
+            vocalsVolume: voc / 100,
+          };
+          localStorage.setItem(GROUPED_KEY, JSON.stringify(payload));
+        }
+      }
     } catch (_) { /* noop */ }
     apply(inst, voc);
     return;

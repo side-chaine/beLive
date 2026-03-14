@@ -1,0 +1,14 @@
+{
+  "id": "ru_windowed_baseline",
+  "language": "ru",
+  "mode": "line-windowed",
+  "text_mode": "baseline",
+  "padding_ms": {
+    "pre": 250,
+    "post": 250
+  },
+  "short_window_policy": "keep",
+  "tail_grace_ms": 120,
+  "nonlexical_mode": "keep",
+  "confidence_norm_profile": "current"
+}

@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { usePerformanceStore } from '../performance/performance.store';
+import { getRecordingCaptureProfile } from '../performance/performance.recording';
 
 interface RecordingState {
   isRecording: boolean;
@@ -23,8 +25,12 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
     try {
       set({ error: null });
 
+      // Recording capture profile follows current effective performance tier
+      const tier = usePerformanceStore.getState().getEffectiveTier();
+      const profile = getRecordingCaptureProfile(tier);
+
       displayStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { frameRate: 25 },
+        video: { frameRate: profile.frameRate },
         audio: false,
       });
 
@@ -65,8 +71,8 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
 
       mediaRecorder = new MediaRecorder(combined, {
         mimeType,
-        videoBitsPerSecond: 3500000,
-        audioBitsPerSecond: 256000,
+        videoBitsPerSecond: profile.videoBitsPerSecond,
+        audioBitsPerSecond: profile.audioBitsPerSecond,
       });
 
       chunks = [];

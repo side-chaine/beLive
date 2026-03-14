@@ -1,7 +1,18 @@
 // src/bridges/lyrics.bridge.ts
 import { useLyricsStore } from '../stores/lyrics.store';
 import { useMarkersStore } from '../stores/markers.store';
+import {
+  getPlaybackVisualScheduler,
+  type PlaybackVisualFrameDetector,
+  type PlaybackVisualFrameWriter,
+} from '../playback';
 
+/**
+ * Lyrics Bridge
+ *
+ * Participates in the shared PlaybackVisualScheduler for playback-time line sync.
+ * Scheduler lifecycle (start/stop) is currently owned by trigger bridge.
+ */
 export function initLyricsBridge(): () => void {
   const syncFromLegacy = () => {
     const ld = (window as any).lyricsDisplay;
@@ -54,26 +65,27 @@ export function initLyricsBridge(): () => void {
   document.addEventListener('active-line-changed', onActiveLine);
   document.addEventListener('lyrics-rendered', onLyricsRendered);
   document.addEventListener('track-loaded', onTrackLoaded);
-  document.addEventListener('mode-changed', onModeChanged);
+  window.addEventListener('mode-changed', onModeChanged);
   document.addEventListener('before-track-change', onBeforeTrackChange);
 
   // Initial sync (in case React mounts after legacy has already loaded a track)
   syncFromLegacy();
   const retryTimer = setTimeout(syncFromLegacy, 1000);
 
-  // --- rAF playback sync (bypasses legacy DOM rebuild delay) ---
-  let syncRafId: number | null = null;
+  // --- Playback visual scheduler integration (line sync) ---
+  const scheduler = getPlaybackVisualScheduler();
+  let frameActiveLineIndex = -1;
+  let lastPublishedLineIndex = -1;
   let rafSyncActive = false;
 
-  function startSync() {
-    if (syncRafId !== null) return;
-    rafSyncActive = true;
-    function tick() {
-      const ae = (window as any).audioEngine;
-      const t = ae?.getCurrentTime?.() ?? 0;
+  // Detector: compute active line from markers
+  const detector: PlaybackVisualFrameDetector = {
+    id: 'lyrics-line-detector',
+    detect(ctx) {
+      const t = ctx.currentTime ?? 0;
       const markers = useMarkersStore.getState().markers as any[];
       if (markers.length === 0) {
-        syncRafId = requestAnimationFrame(tick);
+        frameActiveLineIndex = -1;
         return;
       }
       let bestLine = -1;
@@ -84,51 +96,58 @@ export function initLyricsBridge(): () => void {
           bestLine = m.lineIndex;
         }
       }
-      if (bestLine >= 0) {
-        const current = useLyricsStore.getState().activeLineIndex;
-        if (current !== bestLine) {
-          useLyricsStore.setState({ activeLineIndex: bestLine });
-          // Reverse-sync to legacy LD for MM/RBG listeners
-          const ld = (window as any).lyricsDisplay;
-          if (ld) {
-            ld.currentLine = bestLine;
-            try {
-              document.dispatchEvent(new CustomEvent('active-line-changed', {
-                detail: { lineIndex: bestLine, newLineIndex: bestLine }
-              }));
-            } catch (_) {}
-          }
-        }
+      frameActiveLineIndex = bestLine;
+    },
+  };
+
+  // Writer: publish line changes to store and legacy
+  const writer: PlaybackVisualFrameWriter = {
+    id: 'lyrics-line-writer',
+    write() {
+      if (frameActiveLineIndex < 0) return;
+      if (frameActiveLineIndex === lastPublishedLineIndex) return;
+
+      lastPublishedLineIndex = frameActiveLineIndex;
+      useLyricsStore.setState({ activeLineIndex: frameActiveLineIndex });
+
+      // Reverse-sync to legacy LD for MM/RBG listeners
+      const ld = (window as any).lyricsDisplay;
+      if (ld) {
+        ld.currentLine = frameActiveLineIndex;
+        try {
+          document.dispatchEvent(new CustomEvent('active-line-changed', {
+            detail: { lineIndex: frameActiveLineIndex, newLineIndex: frameActiveLineIndex }
+          }));
+        } catch (_) {}
       }
-      syncRafId = requestAnimationFrame(tick);
-    }
-    syncRafId = requestAnimationFrame(tick);
-  }
+    },
+  };
 
-  function stopSync() {
-    rafSyncActive = false;
-    if (syncRafId !== null) {
-      cancelAnimationFrame(syncRafId);
-      syncRafId = null;
-    }
-  }
+  // Register with scheduler (trigger bridge owns scheduler lifecycle)
+  scheduler.registerDetector(detector);
+  scheduler.registerWriter(writer);
 
-  window.addEventListener('playback-state-changed', (e: Event) => {
+  // Playback state listener for internal gating only (not rAF loop)
+  function onPlaybackState(e: Event) {
     const d = (e as CustomEvent).detail;
-    if (d?.isPlaying) {
-      startSync();
-    } else {
-      stopSync();
+    rafSyncActive = d?.isPlaying ?? false;
+    if (!rafSyncActive) {
+      frameActiveLineIndex = -1;
+      lastPublishedLineIndex = -1;
     }
-  });
+  }
+
+  window.addEventListener('playback-state-changed', onPlaybackState);
 
   return () => {
     document.removeEventListener('active-line-changed', onActiveLine);
     document.removeEventListener('lyrics-rendered', onLyricsRendered);
     document.removeEventListener('track-loaded', onTrackLoaded);
-    document.removeEventListener('mode-changed', onModeChanged);
+    window.removeEventListener('mode-changed', onModeChanged);
     document.removeEventListener('before-track-change', onBeforeTrackChange);
     clearTimeout(retryTimer);
-    stopSync();
+    scheduler.unregister('lyrics-line-detector');
+    scheduler.unregister('lyrics-line-writer');
+    window.removeEventListener('playback-state-changed', onPlaybackState);
   };
 }

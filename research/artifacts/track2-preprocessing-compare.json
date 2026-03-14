@@ -1,0 +1,240 @@
+{
+  "generated": "2026-03-10T20:12:50.246065+00:00",
+  "mission": "REAL-ALIGN-02E: RU preprocessing compare",
+  "variants": {
+    "baseline_custom": {
+      "name": "baseline_custom",
+      "artifactPath": "research/artifacts/track2-real-alignment-mms-real.baseline_custom.json",
+      "metrics": {
+        "line_count": 43,
+        "word_count": 198,
+        "usable_word_rate": 1.0,
+        "avg_line_conf": 1.0,
+        "median_line_conf": 1.0,
+        "avg_word_conf": 1.0,
+        "median_word_conf": 1.0,
+        "first_word_conf_avg": 1.0,
+        "mid_word_conf_avg": 1.0,
+        "last_word_conf_avg": 1.0,
+        "first_to_mid_drop": 0.0,
+        "last_word_low_conf_rate": 0.0,
+        "zero_span_word_rate": 0.1162,
+        "avg_word_dur": 0.5616,
+        "avg_gap": 0.3152,
+        "proportionality": 0.1072
+      },
+      "badLineExamples": [],
+      "tokenizerSmoke": [
+        {
+          "input": "лететь",
+          "alignWords": [
+            "letet"
+          ],
+          "ok": true,
+          "tokenCount": 1
+        },
+        {
+          "input": "на",
+          "alignWords": [
+            "na"
+          ],
+          "ok": true,
+          "tokenCount": 1
+        },
+        {
+          "input": "сердце",
+          "alignWords": [
+            "serdtse"
+          ],
+          "ok": true,
+          "tokenCount": 1
+        },
+        {
+          "input": "ещё",
+          "alignWords": [
+            "eshchyo"
+          ],
+          "ok": true,
+          "tokenCount": 1
+        },
+        {
+          "input": "любовь",
+          "alignWords": [
+            "lyubov"
+          ],
+          "ok": true,
+          "tokenCount": 1
+        },
+        {
+          "input": "На-на-на",
+          "alignWords": [
+            "na",
+            "na",
+            "na"
+          ],
+          "ok": true,
+          "tokenCount": 3
+        }
+      ]
+    },
+    "phonetic_ru_v2": {
+      "name": "phonetic_ru_v2",
+      "artifactPath": "research/artifacts/track2-real-alignment-mms-real.phonetic_ru_v2.json",
+      "metrics": {
+        "line_count": 43,
+        "word_count": 198,
+        "usable_word_rate": 1.0,
+        "avg_line_conf": 1.0,
+        "median_line_conf": 1.0,
+        "avg_word_conf": 1.0,
+        "median_word_conf": 1.0,
+        "first_word_conf_avg": 1.0,
+        "mid_word_conf_avg": 1.0,
+        "last_word_conf_avg": 1.0,
+        "first_to_mid_drop": 0.0,
+        "last_word_low_conf_rate": 0.0,
+        "zero_span_word_rate": 0.1162,
+        "avg_word_dur": 0.5869,
+        "avg_gap": 0.2892,
+        "proportionality": 0.1046
+      },
+      "badLineExamples": [],
+      "tokenizerSmoke": [
+        {
+          "input": "лететь",
+          "alignWords": [
+            "letet"
+          ],
+          "ok": true,
+          "tokenCount": 1
+        },
+        {
+          "input": "на",
+          "alignWords": [
+            "na"
+          ],
+          "ok": true,
+          "tokenCount": 1
+        },
+        {
+          "input": "сердце",
+          "alignWords": [
+            "serdtse"
+          ],
+          "ok": true,
+          "tokenCount": 1
+        },
+        {
+          "input": "ещё",
+          "alignWords": [
+            "eschio"
+          ],
+          "ok": true,
+          "tokenCount": 1
+        },
+        {
+          "input": "любовь",
+          "alignWords": [
+            "liubov"
+          ],
+          "ok": true,
+          "tokenCount": 1
+        },
+        {
+          "input": "На-на-на",
+          "alignWords": [
+            "na",
+            "na",
+            "na"
+          ],
+          "ok": true,
+          "tokenCount": 3
+        }
+      ]
+    },
+    "granular_ru_v3": {
+      "name": "granular_ru_v3",
+      "artifactPath": "research/artifacts/track2-real-alignment-mms-real.granular_ru_v3.json",
+      "metrics": {
+        "line_count": 43,
+        "word_count": 198,
+        "usable_word_rate": 1.0,
+        "avg_line_conf": 1.0,
+        "median_line_conf": 1.0,
+        "avg_word_conf": 1.0,
+        "median_word_conf": 1.0,
+        "first_word_conf_avg": 1.0,
+        "mid_word_conf_avg": 1.0,
+        "last_word_conf_avg": 1.0,
+        "first_to_mid_drop": 0.0,
+        "last_word_low_conf_rate": 0.0,
+        "zero_span_word_rate": 0.1162,
+        "avg_word_dur": 0.5483,
+        "avg_gap": 0.3259,
+        "proportionality": 0.1091
+      },
+      "badLineExamples": [],
+      "tokenizerSmoke": [
+        {
+          "input": "лететь",
+          "alignWords": [
+            "letet"
+          ],
+          "ok": true,
+          "tokenCount": 1
+        },
+        {
+          "input": "на",
+          "alignWords": [
+            "na"
+          ],
+          "ok": true,
+          "tokenCount": 1
+        },
+        {
+          "input": "сердце",
+          "alignWords": [
+            "serdce"
+          ],
+          "ok": true,
+          "tokenCount": 1
+        },
+        {
+          "input": "ещё",
+          "alignWords": [
+            "ewo"
+          ],
+          "ok": true,
+          "tokenCount": 1
+        },
+        {
+          "input": "любовь",
+          "alignWords": [
+            "lubov"
+          ],
+          "ok": true,
+          "tokenCount": 1
+        },
+        {
+          "input": "На-на-на",
+          "alignWords": [
+            "na",
+            "na",
+            "na"
+          ],
+          "ok": true,
+          "tokenCount": 3
+        }
+      ]
+    }
+  },
+  "bestVariant": "baseline_custom",
+  "deltaVsBaseline": {
+    "mid_word_conf_avg": 0.0,
+    "usable_word_rate": 0.0,
+    "first_word_conf_avg": 0.0
+  },
+  "hardVerdict": "not enough",
+  "nextDecision": "compare second engine",
+  "selectedArtifact": "research/artifacts/track2-real-alignment-mms-real.json"
+}

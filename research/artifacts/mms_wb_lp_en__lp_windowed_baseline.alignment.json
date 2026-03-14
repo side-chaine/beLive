@@ -1,0 +1,2278 @@
+{
+  "source": "ai-aligner",
+  "version": 1,
+  "provider": "mms-workbench",
+  "providerVersion": "seed-v1",
+  "mode": "line-windowed",
+  "language": "en",
+  "audioSource": "vocal-stem",
+  "lines": [
+    {
+      "rawLineIndex": 0,
+      "text": "Memories consume like opening the wound",
+      "start": 19.657298,
+      "end": 25.208917,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "Memories",
+          "start": 20.098,
+          "end": 21.201,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "consume",
+          "start": 21.281,
+          "end": 22.343,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "like",
+          "start": 22.824,
+          "end": 23.064,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "opening",
+          "start": 23.165,
+          "end": 23.926,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "the",
+          "start": 23.986,
+          "end": 24.087,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "wound",
+          "start": 24.167,
+          "end": 24.828,
+          "confidence": 1.0,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 1,
+      "text": "I'm picking me apart again",
+      "start": 24.708917,
+      "end": 29.443833,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I'm",
+          "start": 25.331,
+          "end": 25.391,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "picking",
+          "start": 25.471,
+          "end": 25.993,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "me",
+          "start": 25.993,
+          "end": 26.073,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "apart",
+          "start": 26.495,
+          "end": 27.076,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "again",
+          "start": 27.076,
+          "end": 28.36,
+          "confidence": 1.0,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 2,
+      "text": "You all assume I'm safe here in my room",
+      "start": 28.943833,
+      "end": 34.92500756254514,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "You",
+          "start": 29.707,
+          "end": 29.867,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "all",
+          "start": 30.369,
+          "end": 30.73,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "assume",
+          "start": 30.971,
+          "end": 31.954,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "I'm",
+          "start": 32.416,
+          "end": 32.496,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "safe",
+          "start": 32.657,
+          "end": 32.998,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "here",
+          "start": 32.998,
+          "end": 33.219,
+          "confidence": 1.0,
+          "wordIndex": 5
+        },
+        {
+          "text": "in",
+          "start": 33.259,
+          "end": 33.52,
+          "confidence": 1.0,
+          "wordIndex": 6
+        },
+        {
+          "text": "my",
+          "start": 33.58,
+          "end": 33.721,
+          "confidence": 1.0,
+          "wordIndex": 7
+        },
+        {
+          "text": "room",
+          "start": 33.801,
+          "end": 34.283,
+          "confidence": 1.0,
+          "wordIndex": 8
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 3,
+      "text": "Unless I try to start again",
+      "start": 34.42500756254514,
+      "end": 38.76697655555555,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "Unless",
+          "start": 34.827,
+          "end": 35.35,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "I",
+          "start": 35.47,
+          "end": 35.49,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "try",
+          "start": 35.51,
+          "end": 35.913,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "to",
+          "start": 35.993,
+          "end": 36.073,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "start",
+          "start": 36.174,
+          "end": 36.596,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "again",
+          "start": 36.636,
+          "end": 38.164,
+          "confidence": 1.0,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 4,
+      "text": "",
+      "start": null,
+      "end": null,
+      "confidence": null,
+      "words": []
+    },
+    {
+      "rawLineIndex": 5,
+      "text": "I don't want to be the one ",
+      "start": 38.454993,
+      "end": 41.011115,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I",
+          "start": 38.878,
+          "end": 38.898,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "don't",
+          "start": 38.958,
+          "end": 39.119,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "want",
+          "start": 39.139,
+          "end": 39.481,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "to",
+          "start": 39.542,
+          "end": 39.663,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "be",
+          "start": 39.864,
+          "end": 39.965,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "the",
+          "start": 40.146,
+          "end": 40.246,
+          "confidence": 1.0,
+          "wordIndex": 5
+        },
+        {
+          "text": "one",
+          "start": 40.427,
+          "end": 40.689,
+          "confidence": 1.0,
+          "wordIndex": 6
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 6,
+      "text": "the battles always choose",
+      "start": 40.511115,
+      "end": 43.275791,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "the",
+          "start": 40.935,
+          "end": 41.016,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "battles",
+          "start": 41.076,
+          "end": 41.54,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "always",
+          "start": 41.641,
+          "end": 42.126,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "choose",
+          "start": 42.126,
+          "end": 42.832,
+          "confidence": 1.0,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 7,
+      "text": "'Cause inside, I realize ",
+      "start": 42.775791,
+      "end": 45.714589,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "'Cause",
+          "start": 43.158,
+          "end": 43.4,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "inside,",
+          "start": 43.581,
+          "end": 44.426,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "I",
+          "start": 44.587,
+          "end": 44.608,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "realize",
+          "start": 44.728,
+          "end": 45.594,
+          "confidence": 1.0,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 8,
+      "text": "that I'm the one confused",
+      "start": 45.214589,
+      "end": 48.112049,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "that",
+          "start": 45.718,
+          "end": 45.879,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "I'm",
+          "start": 46.08,
+          "end": 46.16,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "the",
+          "start": 46.201,
+          "end": 46.281,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "one",
+          "start": 46.442,
+          "end": 46.704,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "confused",
+          "start": 46.764,
+          "end": 48.072,
+          "confidence": 1.0,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 9,
+      "text": "",
+      "start": null,
+      "end": null,
+      "confidence": null,
+      "words": []
+    },
+    {
+      "rawLineIndex": 10,
+      "text": "I don't know what's worth fighting for",
+      "start": 47.722344,
+      "end": 50.596584,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I",
+          "start": 48.144,
+          "end": 48.165,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "don't",
+          "start": 48.245,
+          "end": 48.546,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "know",
+          "start": 48.546,
+          "end": 48.687,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "what's",
+          "start": 48.727,
+          "end": 49.009,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "worth",
+          "start": 49.049,
+          "end": 49.491,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "fighting",
+          "start": 49.491,
+          "end": 49.853,
+          "confidence": 1.0,
+          "wordIndex": 5
+        },
+        {
+          "text": "for",
+          "start": 49.913,
+          "end": 50.215,
+          "confidence": 1.0,
+          "wordIndex": 6
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 11,
+      "text": "or why I have to scream",
+      "start": 50.096584,
+      "end": 52.928099,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "or",
+          "start": 50.579,
+          "end": 50.88,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "why",
+          "start": 51.02,
+          "end": 51.141,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "I",
+          "start": 51.161,
+          "end": 51.181,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "have",
+          "start": 51.221,
+          "end": 51.402,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "to",
+          "start": 51.402,
+          "end": 51.583,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "scream",
+          "start": 51.643,
+          "end": 52.225,
+          "confidence": 1.0,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 12,
+      "text": "I don't know why I instigate ",
+      "start": 52.428099,
+      "end": 55.28121,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I",
+          "start": 52.93,
+          "end": 52.951,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "don't",
+          "start": 53.031,
+          "end": 53.332,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "know",
+          "start": 53.332,
+          "end": 53.553,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "why",
+          "start": 53.714,
+          "end": 53.835,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "I",
+          "start": 54.176,
+          "end": 54.196,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "instigate",
+          "start": 54.317,
+          "end": 54.96,
+          "confidence": 1.0,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 13,
+      "text": "and say what I don't mean",
+      "start": 54.78121,
+      "end": 57.5984057037037,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "and",
+          "start": 54.821,
+          "end": 55.325,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "say",
+          "start": 55.486,
+          "end": 55.707,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "what",
+          "start": 55.787,
+          "end": 55.948,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "I",
+          "start": 56.009,
+          "end": 56.029,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "don't",
+          "start": 56.21,
+          "end": 56.451,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "mean",
+          "start": 56.532,
+          "end": 56.914,
+          "confidence": 1.0,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 14,
+      "text": "I don't know how I got this way,",
+      "start": 57.0984057037037,
+      "end": 60.1476,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I",
+          "start": 57.74,
+          "end": 57.76,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "don't",
+          "start": 57.841,
+          "end": 58.142,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "know",
+          "start": 58.162,
+          "end": 58.362,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "how",
+          "start": 58.382,
+          "end": 58.643,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "I",
+          "start": 58.944,
+          "end": 58.964,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "got",
+          "start": 59.064,
+          "end": 59.325,
+          "confidence": 1.0,
+          "wordIndex": 5
+        },
+        {
+          "text": "this",
+          "start": 59.385,
+          "end": 59.606,
+          "confidence": 1.0,
+          "wordIndex": 6
+        },
+        {
+          "text": "way,",
+          "start": 59.686,
+          "end": 59.907,
+          "confidence": 1.0,
+          "wordIndex": 7
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 15,
+      "text": "I know it's not alright",
+      "start": 59.6476,
+      "end": 62.065081,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I",
+          "start": 60.171,
+          "end": 60.192,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "know",
+          "start": 60.272,
+          "end": 60.514,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "it's",
+          "start": 60.554,
+          "end": 60.675,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "not",
+          "start": 60.756,
+          "end": 61.018,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "alright",
+          "start": 61.078,
+          "end": 61.964,
+          "confidence": 1.0,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 16,
+      "text": "So I'm breaking the habit",
+      "start": 61.565081,
+      "end": 67.253889,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "So",
+          "start": 62.046,
+          "end": 62.166,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "I'm",
+          "start": 62.527,
+          "end": 62.587,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "breaking",
+          "start": 62.667,
+          "end": 64.45,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "the",
+          "start": 64.51,
+          "end": 64.59,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "habit",
+          "start": 65.111,
+          "end": 66.753,
+          "confidence": 1.0,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 17,
+      "text": "I'm breaking the habit tonight",
+      "start": 66.753889,
+      "end": 73.698278,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I'm",
+          "start": 67.356,
+          "end": 67.456,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "breaking",
+          "start": 67.476,
+          "end": 69.303,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "the",
+          "start": 69.604,
+          "end": 69.704,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "habit",
+          "start": 69.905,
+          "end": 71.611,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "tonight",
+          "start": 71.952,
+          "end": 72.655,
+          "confidence": 1.0,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 18,
+      "text": "",
+      "start": null,
+      "end": null,
+      "confidence": null,
+      "words": []
+    },
+    {
+      "rawLineIndex": 19,
+      "text": "Clutching my cure, I tightly lock the door",
+      "start": 76.818498,
+      "end": 82.693221,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "Clutching",
+          "start": 77.641,
+          "end": 78.783,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "my",
+          "start": 78.844,
+          "end": 78.984,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "cure,",
+          "start": 79.425,
+          "end": 80.448,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "I",
+          "start": 80.508,
+          "end": 80.548,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "tightly",
+          "start": 80.648,
+          "end": 81.069,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "lock",
+          "start": 81.149,
+          "end": 81.55,
+          "confidence": 1.0,
+          "wordIndex": 5
+        },
+        {
+          "text": "the",
+          "start": 81.59,
+          "end": 81.671,
+          "confidence": 1.0,
+          "wordIndex": 6
+        },
+        {
+          "text": "door",
+          "start": 81.731,
+          "end": 82.272,
+          "confidence": 1.0,
+          "wordIndex": 7
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 20,
+      "text": "I try to catch my breath again",
+      "start": 82.193221,
+      "end": 87.263135,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I",
+          "start": 82.875,
+          "end": 82.895,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "try",
+          "start": 82.995,
+          "end": 83.315,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "to",
+          "start": 83.376,
+          "end": 83.436,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "catch",
+          "start": 83.476,
+          "end": 83.897,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "my",
+          "start": 83.957,
+          "end": 84.137,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "breath",
+          "start": 84.217,
+          "end": 84.578,
+          "confidence": 1.0,
+          "wordIndex": 5
+        },
+        {
+          "text": "again",
+          "start": 84.618,
+          "end": 85.72,
+          "confidence": 1.0,
+          "wordIndex": 6
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 21,
+      "text": "I hurt much more than anytime before",
+      "start": 86.763135,
+      "end": 92.318591,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I",
+          "start": 87.726,
+          "end": 87.746,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "hurt",
+          "start": 87.866,
+          "end": 88.327,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "much",
+          "start": 88.408,
+          "end": 88.949,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "more",
+          "start": 89.049,
+          "end": 89.611,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "than",
+          "start": 89.932,
+          "end": 90.132,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "anytime",
+          "start": 90.333,
+          "end": 91.155,
+          "confidence": 1.0,
+          "wordIndex": 5
+        },
+        {
+          "text": "before",
+          "start": 91.175,
+          "end": 91.938,
+          "confidence": 1.0,
+          "wordIndex": 6
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 22,
+      "text": "I had no options left again",
+      "start": 91.818591,
+      "end": 96.285489,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I",
+          "start": 92.56,
+          "end": 92.58,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "had",
+          "start": 92.64,
+          "end": 92.9,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "no",
+          "start": 92.96,
+          "end": 93.04,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "options",
+          "start": 93.321,
+          "end": 93.842,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "left",
+          "start": 93.882,
+          "end": 94.182,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "again",
+          "start": 94.222,
+          "end": 95.885,
+          "confidence": 1.0,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 23,
+      "text": "",
+      "start": null,
+      "end": null,
+      "confidence": null,
+      "words": []
+    },
+    {
+      "rawLineIndex": 24,
+      "text": "I don't want to be the one ",
+      "start": 95.89993,
+      "end": 98.606093,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I",
+          "start": 96.461,
+          "end": 96.481,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "don't",
+          "start": 96.561,
+          "end": 96.662,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "want",
+          "start": 96.722,
+          "end": 97.183,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "to",
+          "start": 97.203,
+          "end": 97.283,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "be",
+          "start": 97.464,
+          "end": 97.584,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "the",
+          "start": 97.744,
+          "end": 97.844,
+          "confidence": 1.0,
+          "wordIndex": 5
+        },
+        {
+          "text": "one",
+          "start": 98.025,
+          "end": 98.285,
+          "confidence": 1.0,
+          "wordIndex": 6
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 25,
+      "text": "the battles always choose",
+      "start": 98.106093,
+      "end": 100.933971,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "the",
+          "start": 98.547,
+          "end": 98.628,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "battles",
+          "start": 98.688,
+          "end": 99.149,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "always",
+          "start": 99.249,
+          "end": 99.731,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "choose",
+          "start": 99.731,
+          "end": 100.633,
+          "confidence": 1.0,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 26,
+      "text": "'Cause inside, I realize ",
+      "start": 100.433971,
+      "end": 103.354075,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "'Cause",
+          "start": 100.736,
+          "end": 100.978,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "inside,",
+          "start": 101.139,
+          "end": 102.005,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "I",
+          "start": 102.166,
+          "end": 102.186,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "realize",
+          "start": 102.307,
+          "end": 103.173,
+          "confidence": 1.0,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 27,
+      "text": "that I'm the one confused",
+      "start": 102.854075,
+      "end": 105.60518066666667,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "that",
+          "start": 103.336,
+          "end": 103.477,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "I'm",
+          "start": 103.657,
+          "end": 103.758,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "the",
+          "start": 103.798,
+          "end": 103.858,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "one",
+          "start": 104.039,
+          "end": 104.3,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "confused",
+          "start": 104.36,
+          "end": 105.284,
+          "confidence": 1.0,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 28,
+      "text": "",
+      "start": null,
+      "end": null,
+      "confidence": null,
+      "words": []
+    },
+    {
+      "rawLineIndex": 29,
+      "text": "I don't know what's worth fighting for ",
+      "start": 105.27541214814815,
+      "end": 108.196228,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I",
+          "start": 105.739,
+          "end": 105.759,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "don't",
+          "start": 105.819,
+          "end": 106.021,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "know",
+          "start": 106.061,
+          "end": 106.262,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "what's",
+          "start": 106.323,
+          "end": 106.565,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "worth",
+          "start": 106.645,
+          "end": 106.988,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "fighting",
+          "start": 107.048,
+          "end": 107.471,
+          "confidence": 1.0,
+          "wordIndex": 5
+        },
+        {
+          "text": "for",
+          "start": 107.511,
+          "end": 107.894,
+          "confidence": 1.0,
+          "wordIndex": 6
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 30,
+      "text": "or why I have to scream",
+      "start": 107.696228,
+      "end": 110.28826996296296,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "or",
+          "start": 108.158,
+          "end": 108.219,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "why",
+          "start": 108.259,
+          "end": 108.54,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "I",
+          "start": 108.681,
+          "end": 108.701,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "have",
+          "start": 108.741,
+          "end": 109.063,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "to",
+          "start": 109.083,
+          "end": 109.163,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "scream",
+          "start": 109.223,
+          "end": 109.826,
+          "confidence": 1.0,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 31,
+      "text": "I don't know why I instigate ",
+      "start": 109.78826996296296,
+      "end": 112.740934,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I",
+          "start": 110.531,
+          "end": 110.552,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "don't",
+          "start": 110.632,
+          "end": 110.933,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "know",
+          "start": 110.933,
+          "end": 111.094,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "why",
+          "start": 111.134,
+          "end": 111.435,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "I",
+          "start": 111.757,
+          "end": 111.777,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "instigate",
+          "start": 111.917,
+          "end": 112.701,
+          "confidence": 1.0,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 32,
+      "text": "and say what I don't mean",
+      "start": 112.240934,
+      "end": 115.23708,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "and",
+          "start": 112.382,
+          "end": 112.663,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "say",
+          "start": 113.065,
+          "end": 113.307,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "what",
+          "start": 113.387,
+          "end": 113.568,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "I",
+          "start": 113.709,
+          "end": 113.729,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "don't",
+          "start": 113.809,
+          "end": 114.071,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "mean",
+          "start": 114.131,
+          "end": 114.614,
+          "confidence": 1.0,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 33,
+      "text": "I don't know how I got this way, ",
+      "start": 114.73708,
+      "end": 117.59971,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I",
+          "start": 115.322,
+          "end": 115.342,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "don't",
+          "start": 115.443,
+          "end": 115.725,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "know",
+          "start": 115.725,
+          "end": 115.947,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "how",
+          "start": 115.947,
+          "end": 116.229,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "I",
+          "start": 116.551,
+          "end": 116.572,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "got",
+          "start": 116.672,
+          "end": 116.894,
+          "confidence": 1.0,
+          "wordIndex": 5
+        },
+        {
+          "text": "this",
+          "start": 116.955,
+          "end": 117.217,
+          "confidence": 1.0,
+          "wordIndex": 6
+        },
+        {
+          "text": "way,",
+          "start": 117.297,
+          "end": 117.499,
+          "confidence": 1.0,
+          "wordIndex": 7
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 34,
+      "text": "I'll never be alright",
+      "start": 117.09971,
+      "end": 119.631456,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I'll",
+          "start": 117.14,
+          "end": 117.481,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "never",
+          "start": 117.863,
+          "end": 118.245,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "be",
+          "start": 118.325,
+          "end": 118.446,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "alright",
+          "start": 118.687,
+          "end": 119.33,
+          "confidence": 1.0,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 35,
+      "text": "So I'm breaking the habit",
+      "start": 119.131456,
+      "end": 124.761715,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "So",
+          "start": 119.632,
+          "end": 119.773,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "I'm",
+          "start": 120.113,
+          "end": 120.193,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "breaking",
+          "start": 120.253,
+          "end": 121.876,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "the",
+          "start": 122.037,
+          "end": 122.177,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "habit",
+          "start": 123.6,
+          "end": 124.341,
+          "confidence": 1.0,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 36,
+      "text": "I'm breaking the habit tonight",
+      "start": 124.261715,
+      "end": 130.77827633333334,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I'm",
+          "start": 124.823,
+          "end": 124.963,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "breaking",
+          "start": 125.044,
+          "end": 126.648,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "the",
+          "start": 126.848,
+          "end": 127.67,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "habit",
+          "start": 128.312,
+          "end": 129.154,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "tonight",
+          "start": 129.515,
+          "end": 130.417,
+          "confidence": 1.0,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 37,
+      "text": "",
+      "start": null,
+      "end": null,
+      "confidence": null,
+      "words": []
+    },
+    {
+      "rawLineIndex": 38,
+      "text": "I'll paint it on the walls",
+      "start": 130.532454,
+      "end": 135.478544,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I'll",
+          "start": 130.813,
+          "end": 130.953,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "paint",
+          "start": 131.013,
+          "end": 131.373,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "it",
+          "start": 131.414,
+          "end": 131.514,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "on",
+          "start": 131.574,
+          "end": 131.774,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "the",
+          "start": 131.794,
+          "end": 131.934,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "walls",
+          "start": 132.215,
+          "end": 134.658,
+          "confidence": 1.0,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 39,
+      "text": "'Cause I'm the one at fault",
+      "start": 134.978544,
+      "end": 140.275062,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "'Cause",
+          "start": 135.56,
+          "end": 135.962,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "I'm",
+          "start": 136.082,
+          "end": 136.162,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "the",
+          "start": 136.162,
+          "end": 136.242,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "one",
+          "start": 136.403,
+          "end": 136.664,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "at",
+          "start": 136.764,
+          "end": 136.965,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "fault",
+          "start": 137.025,
+          "end": 140.135,
+          "confidence": 1.0,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 40,
+      "text": "I'll never fight again",
+      "start": 139.775062,
+      "end": 145.040958,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I'll",
+          "start": 140.436,
+          "end": 140.576,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "never",
+          "start": 140.636,
+          "end": 141.016,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "fight",
+          "start": 141.097,
+          "end": 141.437,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "again",
+          "start": 141.637,
+          "end": 142.098,
+          "confidence": 1.0,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 41,
+      "text": "And this is how it ends",
+      "start": 144.540958,
+      "end": 148.730753,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "And",
+          "start": 145.243,
+          "end": 145.403,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "this",
+          "start": 145.443,
+          "end": 145.724,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "is",
+          "start": 145.784,
+          "end": 145.884,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "how",
+          "start": 145.924,
+          "end": 146.205,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "it",
+          "start": 146.325,
+          "end": 146.646,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "ends",
+          "start": 146.726,
+          "end": 148.51,
+          "confidence": 1.0,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 42,
+      "text": "",
+      "start": null,
+      "end": null,
+      "confidence": null,
+      "words": []
+    },
+    {
+      "rawLineIndex": 43,
+      "text": "I don't know what's worth fighting for ",
+      "start": 148.494155,
+      "end": 151.337814,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I",
+          "start": 148.918,
+          "end": 148.938,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "don't",
+          "start": 148.998,
+          "end": 149.321,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "know",
+          "start": 149.321,
+          "end": 149.442,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "what's",
+          "start": 149.503,
+          "end": 149.745,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "worth",
+          "start": 149.825,
+          "end": 150.208,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "fighting",
+          "start": 150.249,
+          "end": 150.612,
+          "confidence": 1.0,
+          "wordIndex": 5
+        },
+        {
+          "text": "for",
+          "start": 150.692,
+          "end": 151.015,
+          "confidence": 1.0,
+          "wordIndex": 6
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 44,
+      "text": "or why I have to scream",
+      "start": 150.837814,
+      "end": 153.684295,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "or",
+          "start": 151.359,
+          "end": 151.419,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "why",
+          "start": 151.439,
+          "end": 151.72,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "I",
+          "start": 151.72,
+          "end": 151.74,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "have",
+          "start": 151.86,
+          "end": 152.161,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "to",
+          "start": 152.161,
+          "end": 152.261,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "scream",
+          "start": 152.381,
+          "end": 153.043,
+          "confidence": 1.0,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 45,
+      "text": "But now I have some clarity ",
+      "start": 153.184295,
+      "end": 155.989166,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "But",
+          "start": 153.568,
+          "end": 153.729,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "now",
+          "start": 153.83,
+          "end": 154.153,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "I",
+          "start": 154.234,
+          "end": 154.254,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "have",
+          "start": 154.314,
+          "end": 154.516,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "some",
+          "start": 154.577,
+          "end": 154.94,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "clarity",
+          "start": 155.0,
+          "end": 155.606,
+          "confidence": 1.0,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 46,
+      "text": "to show you what I mean",
+      "start": 155.489166,
+      "end": 158.287942,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "to",
+          "start": 156.073,
+          "end": 156.133,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "show",
+          "start": 156.214,
+          "end": 156.496,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "you",
+          "start": 156.597,
+          "end": 156.717,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "what",
+          "start": 156.717,
+          "end": 156.999,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "I",
+          "start": 157.181,
+          "end": 157.201,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "mean",
+          "start": 157.301,
+          "end": 157.845,
+          "confidence": 1.0,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 47,
+      "text": "",
+      "start": null,
+      "end": null,
+      "confidence": null,
+      "words": []
+    },
+    {
+      "rawLineIndex": 48,
+      "text": "I don't know how I got this way, ",
+      "start": 157.967896,
+      "end": 160.859552,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I",
+          "start": 158.51,
+          "end": 158.53,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "don't",
+          "start": 158.61,
+          "end": 158.932,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "know",
+          "start": 158.932,
+          "end": 159.153,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "how",
+          "start": 159.153,
+          "end": 159.414,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "I",
+          "start": 159.735,
+          "end": 159.755,
+          "confidence": 1.0,
+          "wordIndex": 4
+        },
+        {
+          "text": "got",
+          "start": 159.835,
+          "end": 160.076,
+          "confidence": 1.0,
+          "wordIndex": 5
+        },
+        {
+          "text": "this",
+          "start": 160.157,
+          "end": 160.378,
+          "confidence": 1.0,
+          "wordIndex": 6
+        },
+        {
+          "text": "way,",
+          "start": 160.458,
+          "end": 160.679,
+          "confidence": 1.0,
+          "wordIndex": 7
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 49,
+      "text": "I'll never be alright",
+      "start": 160.359552,
+      "end": 162.908713,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I'll",
+          "start": 160.54,
+          "end": 160.982,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "never",
+          "start": 161.042,
+          "end": 161.423,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "be",
+          "start": 161.504,
+          "end": 161.604,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "alright",
+          "start": 161.865,
+          "end": 162.527,
+          "confidence": 1.0,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 50,
+      "text": "So I'm breaking the habit",
+      "start": 162.408713,
+      "end": 167.911067,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "So",
+          "start": 162.83,
+          "end": 162.951,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "I'm",
+          "start": 163.332,
+          "end": 163.393,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "breaking",
+          "start": 163.473,
+          "end": 165.1,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "the",
+          "start": 165.22,
+          "end": 165.381,
+          "confidence": 1.0,
+          "wordIndex": 3
+        },
+        {
+          "text": "habit",
+          "start": 165.863,
+          "end": 167.489,
+          "confidence": 1.0,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 51,
+      "text": "I'm breaking the habit",
+      "start": 167.411067,
+      "end": 172.730405,
+      "confidence": 1.0,
+      "words": [
+        {
+          "text": "I'm",
+          "start": 168.114,
+          "end": 168.194,
+          "confidence": 1.0,
+          "wordIndex": 0
+        },
+        {
+          "text": "breaking",
+          "start": 168.254,
+          "end": 169.88,
+          "confidence": 1.0,
+          "wordIndex": 1
+        },
+        {
+          "text": "the",
+          "start": 170.041,
+          "end": 170.181,
+          "confidence": 1.0,
+          "wordIndex": 2
+        },
+        {
+          "text": "habit",
+          "start": 170.683,
+          "end": 172.329,
+          "confidence": 1.0,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 52,
+      "text": "I'm breaking the habit tonight",
+      "start": null,
+      "end": null,
+      "confidence": null,
+      "words": []
+    }
+  ]
+}

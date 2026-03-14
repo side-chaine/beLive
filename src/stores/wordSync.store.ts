@@ -35,6 +35,7 @@ interface WordSyncState {
   getWordsForLine: (rawLineIndex: number) => WordTiming[];
   hasUsableWordSyncForLine: (rawLineIndex: number) => boolean;
   getActiveWordForLine: (rawLineIndex: number, currentTime: number) => WordTiming | null;
+  getFillWordForLine: (rawLineIndex: number, currentTime: number) => WordTiming | null;
 }
 
 export const useWordSyncStore = create<WordSyncState>((set, get) => ({
@@ -82,6 +83,7 @@ export const useWordSyncStore = create<WordSyncState>((set, get) => ({
     return shouldEnableWordHighlight(line.confidence);
   },
 
+  // Cue-style early selector — uses lookahead for responsive highlighting
   getActiveWordForLine: (rawLineIndex, currentTime) => {
     const line = get().getLineTiming(rawLineIndex);
     if (!line) return null;
@@ -95,6 +97,22 @@ export const useWordSyncStore = create<WordSyncState>((set, get) => ({
         adjustedTime >= word.start - ACTIVE_WORD_EPSILON &&
         adjustedTime < word.end + ACTIVE_WORD_EPSILON
       ) {
+        return word;
+      }
+    }
+
+    return null;
+  },
+
+  // Raw selector for progress/fill effects — no lookahead, exact timing
+  getFillWordForLine: (rawLineIndex, currentTime) => {
+    const line = get().getLineTiming(rawLineIndex);
+    if (!line) return null;
+    if (!shouldEnableWordHighlight(line.confidence)) return null;
+    if (!line.words.length) return null;
+
+    for (const word of line.words) {
+      if (currentTime >= word.start && currentTime < word.end) {
         return word;
       }
     }

@@ -41,6 +41,34 @@ export interface TransitionItem {
 
 export type TransitionSet = 'A' | 'B';
 
+/* ── Word-level FX Types ── */
+
+export type WordFocusLevel = 'off' | 'soft' | 'strong';
+
+export type WordFxMode = 'progress' | 'neon' | 'underline' | 'bounce';
+
+export type WordCompletedMode = 'off' | 'full';
+
+/* ── Word Trail Depth Types (R1 Recovery) ── */
+export type WordTrailDepth = 'off' | 'line' | 'scene';
+
+/* ── Line-level FX Types ── */
+
+export type LineActiveLevel = 'off' | 'soft' | 'strong';
+export type LineNextLevel = 'off' | 'hint' | 'guide';
+export type LineOthersLevel = 'dim' | 'medium' | 'low';
+
+/* ── Line Others Source Types (V1: TrackMap / Neutral) ── */
+
+export type LineOthersSource = 'trackmap' | 'neutral';
+
+export const LINE_OTHERS_SOURCES: LineOthersSource[] = ['trackmap', 'neutral'];
+
+export const LINE_OTHERS_SOURCE_LABELS: Record<LineOthersSource, string> = {
+  trackmap: 'TrackMap',
+  neutral: 'Neutral',
+};
+
 /* ── Font catalog (from legacy) ── */
 
 export const FONT_CATEGORIES: FontCategory[] = [
@@ -109,6 +137,25 @@ export const TRANSITIONS: Record<string, TransitionItem> = {
   starDust: { name: 'Звёздная пыль', source: 'gemini' },
   inkBleed: { name: 'Чернильное пятно', source: 'gemini' },
 };
+
+/* ── Default font scales per mode ── */
+
+/* ── Word FX Defaults ── */
+
+export const DEFAULT_WORD_FOCUS_LEVEL: WordFocusLevel = 'soft';
+export const DEFAULT_WORD_FX_MODE: WordFxMode = 'underline';
+export const DEFAULT_WORD_COMPLETED_MODE: WordCompletedMode = 'off';
+export const DEFAULT_WORD_TRAIL_DEPTH: WordTrailDepth = 'off';
+
+/* ── Line FX Defaults ── */
+
+export const DEFAULT_LINE_ACTIVE_LEVEL: LineActiveLevel = 'soft';
+export const DEFAULT_LINE_NEXT_LEVEL: LineNextLevel = 'guide';
+export const DEFAULT_LINE_OTHERS_LEVEL: LineOthersLevel = 'medium';
+
+/* ── Line Others Source Defaults ── */
+
+export const DEFAULT_LINE_OTHERS_SOURCE: LineOthersSource = 'trackmap';
 
 /* ── Default font scales per mode ── */
 

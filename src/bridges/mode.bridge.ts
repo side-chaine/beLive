@@ -93,7 +93,7 @@ export function initModeBridge(): () => void {
 
   const onModeChanged = () => syncMode();
 
-  document.addEventListener('mode-changed', onModeChanged);
+  window.addEventListener('mode-changed', onModeChanged);
   syncMode(); // initial sync
 
   const observer = new MutationObserver(() => syncMode());
@@ -101,7 +101,7 @@ export function initModeBridge(): () => void {
 
   return () => {
     observer.disconnect();
-    document.removeEventListener('mode-changed', onModeChanged);
+    window.removeEventListener('mode-changed', onModeChanged);
   };
 }
 

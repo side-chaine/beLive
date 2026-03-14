@@ -30,9 +30,49 @@
 
 .tabs {
   display: flex;
-  gap: 2px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   padding: 4px 12px;
   background: var(--bl-surface-sunken, rgba(0, 0, 0, 0.2));
+}
+
+.tabsInner {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.tabsInner::-webkit-scrollbar {
+  display: none;
+}
+
+.tabsToggle {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.tabsToggle:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .tab {
@@ -58,8 +98,8 @@
 }
 
 .panel {
-  min-height: 140px;
-  max-height: 240px;
+  min-height: 168px;
+  max-height: 268px;
   overflow-y: auto;
   padding: 8px 16px;
 }

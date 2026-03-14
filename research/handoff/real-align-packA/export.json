@@ -1,0 +1,538 @@
+{
+  "id": 1773000472832,
+  "title": "Linkin Park - Breaking the Habit",
+  "lyrics": "Memories consume like opening the wound\nI'm picking me apart again\nYou all assume I'm safe here in my room\nUnless I try to start again\n\nI don't want to be the one \nthe battles always choose\n'Cause inside, I realize \nthat I'm the one confused\n\nI don't know what's worth fighting for\nor why I have to scream\nI don't know why I instigate \nand say what I don't mean\nI don't know how I got this way,\nI know it's not alright\nSo I'm breaking the habit\nI'm breaking the habit tonight\n\nClutching my cure, I tightly lock the door\nI try to catch my breath again\nI hurt much more than anytime before\nI had no options left again\n\nI don't want to be the one \nthe battles always choose\n'Cause inside, I realize \nthat I'm the one confused\n\nI don't know what's worth fighting for \nor why I have to scream\nI don't know why I instigate \nand say what I don't mean\nI don't know how I got this way, \nI'll never be alright\nSo I'm breaking the habit\nI'm breaking the habit tonight\n\nI'll paint it on the walls\n'Cause I'm the one at fault\nI'll never fight again\nAnd this is how it ends\n\nI don't know what's worth fighting for \nor why I have to scream\nBut now I have some clarity \nto show you what I mean\n\nI don't know how I got this way, \nI'll never be alright\nSo I'm breaking the habit\nI'm breaking the habit\nI'm breaking the habit tonight",
+  "lyricsOriginalContent": "Memories consume like opening the wound\nI'm picking me apart again\nYou all assume I'm safe here in my room\nUnless I try to start again\n\nI don't want to be the one \nthe battles always choose\n'Cause inside, I realize \nthat I'm the one confused\n\nI don't know what's worth fighting for\nor why I have to scream\nI don't know why I instigate \nand say what I don't mean\nI don't know how I got this way,\nI know it's not alright\nSo I'm breaking the habit\nI'm breaking the habit tonight\n\nClutching my cure, I tightly lock the door\nI try to catch my breath again\nI hurt much more than anytime before\nI had no options left again\n\nI don't want to be the one \nthe battles always choose\n'Cause inside, I realize \nthat I'm the one confused\n\nI don't know what's worth fighting for \nor why I have to scream\nI don't know why I instigate \nand say what I don't mean\nI don't know how I got this way, \nI'll never be alright\nSo I'm breaking the habit\nI'm breaking the habit tonight\n\nI'll paint it on the walls\n'Cause I'm the one at fault\nI'll never fight again\nAnd this is how it ends\n\nI don't know what's worth fighting for \nor why I have to scream\nBut now I have some clarity \nto show you what I mean\n\nI don't know how I got this way, \nI'll never be alright\nSo I'm breaking the habit\nI'm breaking the habit\nI'm breaking the habit tonight",
+  "blocksData": [
+    {
+      "id": "block-1764172891556-0-q8lztkeo0t",
+      "name": "Block 1",
+      "lineIndices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "type": "verse"
+    },
+    {
+      "id": "block-1764172891556-1-68a03lwrqla",
+      "name": "Block 2",
+      "lineIndices": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "type": "prechorus"
+    },
+    {
+      "id": "block-1764172891556-2-r9588hq05zk",
+      "name": "Block 3",
+      "lineIndices": [
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "type": "chorus"
+    },
+    {
+      "id": "block-1764172891556-3-vpiizsxa14q",
+      "name": "Block 4",
+      "lineIndices": [
+        19,
+        20,
+        21,
+        22
+      ],
+      "type": "verse"
+    },
+    {
+      "id": "block-1764172891556-4-2lhswimszgj",
+      "name": "Block 5",
+      "lineIndices": [
+        24,
+        25,
+        26,
+        27
+      ],
+      "type": "prechorus"
+    },
+    {
+      "id": "block-1764172891556-5-mygk4f2img",
+      "name": "Block 6",
+      "lineIndices": [
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36
+      ],
+      "type": "chorus"
+    },
+    {
+      "id": "block-1764172891556-6-7aduu5ouosq",
+      "name": "Block 7",
+      "lineIndices": [
+        38,
+        39,
+        40,
+        41
+      ],
+      "type": "bridge"
+    },
+    {
+      "id": "block-1764172891556-7-3b9dmr4a3ne",
+      "name": "Block 8",
+      "lineIndices": [
+        43,
+        44,
+        45,
+        46
+      ],
+      "type": "chorus"
+    },
+    {
+      "id": "block-1764172891556-8-i5xksugxyeh",
+      "name": "Block 9",
+      "lineIndices": [
+        48,
+        49,
+        50,
+        51,
+        52
+      ],
+      "type": "chorus"
+    }
+  ],
+  "syncMarkers": [
+    {
+      "id": "1764172924282e0fa3",
+      "lineIndex": 0,
+      "time": 19.907298,
+      "text": "Memories consume like opening the wound",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "176417292932140ejj",
+      "lineIndex": 1,
+      "time": 24.958917,
+      "text": "I'm picking me apart again",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "176417293355669q3p",
+      "lineIndex": 2,
+      "time": 29.193833,
+      "text": "You all assume I'm safe here in my room",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1764172936554f5w5w",
+      "lineIndex": 3,
+      "time": 34.67500756254514,
+      "text": "Unless I try to start again",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "17641729460950wndt",
+      "lineIndex": 4,
+      "time": 38.51697655555555,
+      "text": "",
+      "blockType": "unknown"
+    },
+    {
+      "id": "1764172946429fkwcc",
+      "lineIndex": 5,
+      "time": 38.704993,
+      "text": "I don't want to be the one",
+      "blockType": "prechorus",
+      "color": "#FF9800"
+    },
+    {
+      "id": "1764172960307pr365",
+      "lineIndex": 6,
+      "time": 40.761115,
+      "text": "the battles always choose",
+      "blockType": "prechorus",
+      "color": "#FF9800"
+    },
+    {
+      "id": "1764172962571x5yny",
+      "lineIndex": 7,
+      "time": 43.025791,
+      "text": "'Cause inside, I realize",
+      "blockType": "prechorus",
+      "color": "#FF9800"
+    },
+    {
+      "id": "1764172965011uwpte",
+      "lineIndex": 8,
+      "time": 45.464589,
+      "text": "that I'm the one confused",
+      "blockType": "prechorus",
+      "color": "#FF9800"
+    },
+    {
+      "id": "1764172967411pa7jg",
+      "lineIndex": 9,
+      "time": 47.862049,
+      "text": "",
+      "blockType": "unknown"
+    },
+    {
+      "id": "1764172967520hfcky",
+      "lineIndex": 10,
+      "time": 47.972344,
+      "text": "I don't know what's worth fighting for",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "17641729698954a6k8",
+      "lineIndex": 11,
+      "time": 50.346584,
+      "text": "or why I have to scream",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1764172972224c0s67",
+      "lineIndex": 12,
+      "time": 52.678099,
+      "text": "I don't know why I instigate",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1764172974577nyjpb",
+      "lineIndex": 13,
+      "time": 55.03121,
+      "text": "and say what I don't mean",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "17641729770894eshw",
+      "lineIndex": 14,
+      "time": 57.3484057037037,
+      "text": "I don't know how I got this way,",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "17641729848007ypkz",
+      "lineIndex": 15,
+      "time": 59.8976,
+      "text": "I know it's not alright",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1764172986717ls6nf",
+      "lineIndex": 16,
+      "time": 61.815081,
+      "text": "So I'm breaking the habit",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1764172991904u7rgw",
+      "lineIndex": 17,
+      "time": 67.003889,
+      "text": "I'm breaking the habit tonight",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "17641729983498mr6j",
+      "lineIndex": 18,
+      "time": 73.448278,
+      "text": "",
+      "blockType": "unknown"
+    },
+    {
+      "id": "1764173001968eciww",
+      "lineIndex": 19,
+      "time": 77.068498,
+      "text": "Clutching my cure, I tightly lock the door",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1764173007344o71ix",
+      "lineIndex": 20,
+      "time": 82.443221,
+      "text": "I try to catch my breath again",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1764173011913mrkkk",
+      "lineIndex": 21,
+      "time": 87.013135,
+      "text": "I hurt much more than anytime before",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "1764173016970pz26g",
+      "lineIndex": 22,
+      "time": 92.068591,
+      "text": "I had no options left again",
+      "blockType": "verse",
+      "color": "#4CAF50"
+    },
+    {
+      "id": "17641730209385s38q",
+      "lineIndex": 23,
+      "time": 96.035489,
+      "text": "",
+      "blockType": "unknown"
+    },
+    {
+      "id": "17641730210526ldos",
+      "lineIndex": 24,
+      "time": 96.14993,
+      "text": "I don't want to be the one",
+      "blockType": "prechorus",
+      "color": "#FF9800"
+    },
+    {
+      "id": "17641730232579v2mv",
+      "lineIndex": 25,
+      "time": 98.356093,
+      "text": "the battles always choose",
+      "blockType": "prechorus",
+      "color": "#FF9800"
+    },
+    {
+      "id": "1764173025585sh5yy",
+      "lineIndex": 26,
+      "time": 100.683971,
+      "text": "'Cause inside, I realize",
+      "blockType": "prechorus",
+      "color": "#FF9800"
+    },
+    {
+      "id": "1764173028008hyhzz",
+      "lineIndex": 27,
+      "time": 103.104075,
+      "text": "that I'm the one confused",
+      "blockType": "prechorus",
+      "color": "#FF9800"
+    },
+    {
+      "id": "1764173030496leuym",
+      "lineIndex": 28,
+      "time": 105.35518066666667,
+      "text": "",
+      "blockType": "unknown"
+    },
+    {
+      "id": "1764173030666brcjl",
+      "lineIndex": 29,
+      "time": 105.52541214814815,
+      "text": "I don't know what's worth fighting for",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "17641730328497knv0",
+      "lineIndex": 30,
+      "time": 107.946228,
+      "text": "or why I have to scream",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "17641730351471bqyv",
+      "lineIndex": 31,
+      "time": 110.03826996296296,
+      "text": "I don't know why I instigate",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "17641730637676ubw6",
+      "lineIndex": 32,
+      "time": 112.490934,
+      "text": "and say what I don't mean",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1764173066264yhqik",
+      "lineIndex": 33,
+      "time": 114.98708,
+      "text": "I don't know how I got this way,",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1764173068630ti6ke",
+      "lineIndex": 34,
+      "time": 117.34971,
+      "text": "I'll never be alright",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1764173070657rr7o6",
+      "lineIndex": 35,
+      "time": 119.381456,
+      "text": "So I'm breaking the habit",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "17641730757876etlc",
+      "lineIndex": 36,
+      "time": 124.511715,
+      "text": "I'm breaking the habit tonight",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1764173081934ngkrn",
+      "lineIndex": 37,
+      "time": 130.52827633333334,
+      "text": "",
+      "blockType": "unknown"
+    },
+    {
+      "id": "1764173082062q9elw",
+      "lineIndex": 38,
+      "time": 130.782454,
+      "text": "I'll paint it on the walls",
+      "blockType": "bridge",
+      "color": "#6f42c1"
+    },
+    {
+      "id": "17641731056485478o",
+      "lineIndex": 39,
+      "time": 135.228544,
+      "text": "'Cause I'm the one at fault",
+      "blockType": "bridge",
+      "color": "#6f42c1"
+    },
+    {
+      "id": "1764173110445nlsz0",
+      "lineIndex": 40,
+      "time": 140.025062,
+      "text": "I'll never fight again",
+      "blockType": "bridge",
+      "color": "#6f42c1"
+    },
+    {
+      "id": "1764173115213tv8s0",
+      "lineIndex": 41,
+      "time": 144.790958,
+      "text": "And this is how it ends",
+      "blockType": "bridge",
+      "color": "#6f42c1"
+    },
+    {
+      "id": "1764173118900teb8k",
+      "lineIndex": 42,
+      "time": 148.480753,
+      "text": "",
+      "blockType": "unknown"
+    },
+    {
+      "id": "1764173119164d8vrs",
+      "lineIndex": 43,
+      "time": 148.744155,
+      "text": "I don't know what's worth fighting for",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1764173121507erfia",
+      "lineIndex": 44,
+      "time": 151.087814,
+      "text": "or why I have to scream",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1764173123854hhuea",
+      "lineIndex": 45,
+      "time": 153.434295,
+      "text": "But now I have some clarity",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "176417312616025fk7",
+      "lineIndex": 46,
+      "time": 155.739166,
+      "text": "to show you what I mean",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1764173128458ywck8",
+      "lineIndex": 47,
+      "time": 158.037942,
+      "text": "",
+      "blockType": "unknown"
+    },
+    {
+      "id": "1764173128640t3by5",
+      "lineIndex": 48,
+      "time": 158.217896,
+      "text": "I don't know how I got this way,",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1764173131033hmt55",
+      "lineIndex": 49,
+      "time": 160.609552,
+      "text": "I'll never be alright",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1764173133079nb7jj",
+      "lineIndex": 50,
+      "time": 162.658713,
+      "text": "So I'm breaking the habit",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "17641731380817ttd8",
+      "lineIndex": 51,
+      "time": 167.661067,
+      "text": "I'm breaking the habit",
+      "blockType": "chorus",
+      "color": "#F44336"
+    },
+    {
+      "id": "1764173142900u0ylz",
+      "lineIndex": 52,
+      "time": 172.480405,
+      "text": "I'm breaking the habit tonight",
+      "blockType": "chorus",
+      "color": "#F44336"
+    }
+  ],
+  "instrumentalType": "audio/flac",
+  "vocalsType": "audio/mpeg",
+  "dateAdded": "2026-03-08T20:07:52.832Z",
+  "lastModified": "2026-03-08T20:07:52.832Z"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "ru_letet",
+  "title": "Амега - Лететь",
+  "language": "ru",
+  "audio_file": "benchmarks/pack01/ru_letet/vocals.mp3",
+  "lyrics_file": "benchmarks/pack01/ru_letet/lyrics.txt",
+  "marker_source_file": "benchmarks/pack01/ru_letet/export.json",
+  "marker_field_candidates": ["markers", "syncMarkers"],
+  "audio_source": "vocal-stem",
+  "trusted_lyrics_source": "txt",
+  "expected_line_count": 53,
+  "notes": "RU main tuning benchmark. Original Cyrillic remains canonical display truth. Any transliteration/romanization is engine-input only."
+}

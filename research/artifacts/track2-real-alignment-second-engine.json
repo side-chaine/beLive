@@ -1,0 +1,2271 @@
+{
+  "source": "ai-aligner",
+  "version": 1,
+  "audioSource": "vocal-stem",
+  "language": "ru",
+  "lyricsHash": "fnv1a:d2e9a68f",
+  "provider": "stable_whisper",
+  "providerVersion": "stable-ts-2.19.1",
+  "mode": "anchored",
+  "lines": [
+    {
+      "rawLineIndex": 0,
+      "contentLineIndex": 0,
+      "text": "Однажды он сказал",
+      "start": 1.985,
+      "end": 5.745,
+      "confidence": 0.9305,
+      "words": [
+        {
+          "id": 0,
+          "text": "Однажды",
+          "start": 1.985,
+          "end": 3.105,
+          "confidence": 0.9492,
+          "rawLineIndex": 0,
+          "contentLineIndex": 0,
+          "wordIndex": 0
+        },
+        {
+          "id": 1,
+          "text": "он",
+          "start": 3.105,
+          "end": 3.865,
+          "confidence": 0.908,
+          "rawLineIndex": 0,
+          "contentLineIndex": 0,
+          "wordIndex": 1
+        },
+        {
+          "id": 2,
+          "text": "сказал",
+          "start": 3.865,
+          "end": 5.745,
+          "confidence": 0.9342,
+          "rawLineIndex": 0,
+          "contentLineIndex": 0,
+          "wordIndex": 2
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 1,
+      "contentLineIndex": 1,
+      "text": "Твой полет всего лишь сон",
+      "start": 10.302,
+      "end": 14.102,
+      "confidence": 0.6307,
+      "words": [
+        {
+          "id": 3,
+          "text": "Твой",
+          "start": 10.302,
+          "end": 10.622,
+          "confidence": 0.8475,
+          "rawLineIndex": 1,
+          "contentLineIndex": 1,
+          "wordIndex": 0
+        },
+        {
+          "id": 4,
+          "text": "полет",
+          "start": 10.622,
+          "end": 11.482,
+          "confidence": 0.6328,
+          "rawLineIndex": 1,
+          "contentLineIndex": 1,
+          "wordIndex": 1
+        },
+        {
+          "id": 5,
+          "text": "всего",
+          "start": 11.482,
+          "end": 12.802,
+          "confidence": 0.0262,
+          "rawLineIndex": 1,
+          "contentLineIndex": 1,
+          "wordIndex": 2
+        },
+        {
+          "id": 6,
+          "text": "лишь",
+          "start": 12.802,
+          "end": 13.442,
+          "confidence": 0.6911,
+          "rawLineIndex": 1,
+          "contentLineIndex": 1,
+          "wordIndex": 3
+        },
+        {
+          "id": 7,
+          "text": "сон",
+          "start": 13.442,
+          "end": 14.102,
+          "confidence": 0.9557,
+          "rawLineIndex": 1,
+          "contentLineIndex": 1,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 2,
+      "contentLineIndex": 2,
+      "text": "И ты летать не стал",
+      "start": 14.811,
+      "end": 19.051,
+      "confidence": 0.8649,
+      "words": [
+        {
+          "id": 8,
+          "text": "И",
+          "start": 14.811,
+          "end": 15.111,
+          "confidence": 0.47,
+          "rawLineIndex": 2,
+          "contentLineIndex": 2,
+          "wordIndex": 0
+        },
+        {
+          "id": 9,
+          "text": "ты",
+          "start": 15.111,
+          "end": 15.391,
+          "confidence": 0.9827,
+          "rawLineIndex": 2,
+          "contentLineIndex": 2,
+          "wordIndex": 1
+        },
+        {
+          "id": 10,
+          "text": "летать",
+          "start": 15.391,
+          "end": 16.651,
+          "confidence": 0.981,
+          "rawLineIndex": 2,
+          "contentLineIndex": 2,
+          "wordIndex": 2
+        },
+        {
+          "id": 11,
+          "text": "не",
+          "start": 18.311,
+          "end": 18.531,
+          "confidence": 0.9136,
+          "rawLineIndex": 2,
+          "contentLineIndex": 2,
+          "wordIndex": 3
+        },
+        {
+          "id": 12,
+          "text": "стал",
+          "start": 18.531,
+          "end": 19.051,
+          "confidence": 0.9774,
+          "rawLineIndex": 2,
+          "contentLineIndex": 2,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 3,
+      "contentLineIndex": 3,
+      "text": "Стал таким, как он",
+      "start": 23.027,
+      "end": 25.607,
+      "confidence": 0.75,
+      "words": [
+        {
+          "id": 13,
+          "text": "Стал",
+          "start": 23.027,
+          "end": 23.487,
+          "confidence": 0.8239,
+          "rawLineIndex": 3,
+          "contentLineIndex": 3,
+          "wordIndex": 0
+        },
+        {
+          "id": 14,
+          "text": "таким",
+          "start": 23.487,
+          "end": 24.087,
+          "confidence": 0.9982,
+          "rawLineIndex": 3,
+          "contentLineIndex": 3,
+          "wordIndex": 1
+        },
+        {
+          "id": 15,
+          "text": "как",
+          "start": 24.087,
+          "end": 25.027,
+          "confidence": 0.2378,
+          "rawLineIndex": 3,
+          "contentLineIndex": 3,
+          "wordIndex": 2
+        },
+        {
+          "id": 16,
+          "text": "он",
+          "start": 25.027,
+          "end": 25.607,
+          "confidence": 0.94,
+          "rawLineIndex": 3,
+          "contentLineIndex": 3,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 5,
+      "contentLineIndex": 4,
+      "text": "И по земле ходить",
+      "start": 27.619,
+      "end": 32.419,
+      "confidence": 0.7397,
+      "words": [
+        {
+          "id": 17,
+          "text": "И",
+          "start": 27.619,
+          "end": 27.859,
+          "confidence": 0.7325,
+          "rawLineIndex": 5,
+          "contentLineIndex": 4,
+          "wordIndex": 0
+        },
+        {
+          "id": 18,
+          "text": "по",
+          "start": 27.859,
+          "end": 28.199,
+          "confidence": 0.7798,
+          "rawLineIndex": 5,
+          "contentLineIndex": 4,
+          "wordIndex": 1
+        },
+        {
+          "id": 19,
+          "text": "земле",
+          "start": 28.199,
+          "end": 29.219,
+          "confidence": 0.9483,
+          "rawLineIndex": 5,
+          "contentLineIndex": 4,
+          "wordIndex": 2
+        },
+        {
+          "id": 20,
+          "text": "ходить",
+          "start": 29.319,
+          "end": 32.419,
+          "confidence": 0.4982,
+          "rawLineIndex": 5,
+          "contentLineIndex": 4,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 6,
+      "contentLineIndex": 5,
+      "text": "Научился, как ребенок ты",
+      "start": 35.774,
+      "end": 39.214,
+      "confidence": 0.8662,
+      "words": [
+        {
+          "id": 21,
+          "text": "Научился",
+          "start": 35.774,
+          "end": 37.214,
+          "confidence": 0.9449,
+          "rawLineIndex": 6,
+          "contentLineIndex": 5,
+          "wordIndex": 0
+        },
+        {
+          "id": 22,
+          "text": "как",
+          "start": 37.214,
+          "end": 37.754,
+          "confidence": 0.7785,
+          "rawLineIndex": 6,
+          "contentLineIndex": 5,
+          "wordIndex": 1
+        },
+        {
+          "id": 23,
+          "text": "ребенок",
+          "start": 37.754,
+          "end": 39.114,
+          "confidence": 0.7941,
+          "rawLineIndex": 6,
+          "contentLineIndex": 5,
+          "wordIndex": 2
+        },
+        {
+          "id": 24,
+          "text": "ты",
+          "start": 39.114,
+          "end": 39.214,
+          "confidence": 0.9472,
+          "rawLineIndex": 6,
+          "contentLineIndex": 5,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 7,
+      "contentLineIndex": 6,
+      "text": "Но всё не мог забыть",
+      "start": 40.264,
+      "end": 42.704,
+      "confidence": 0.9066,
+      "words": [
+        {
+          "id": 25,
+          "text": "Но",
+          "start": 40.264,
+          "end": 40.664,
+          "confidence": 0.811,
+          "rawLineIndex": 7,
+          "contentLineIndex": 6,
+          "wordIndex": 0
+        },
+        {
+          "id": 26,
+          "text": "всё",
+          "start": 40.664,
+          "end": 40.984,
+          "confidence": 0.8336,
+          "rawLineIndex": 7,
+          "contentLineIndex": 6,
+          "wordIndex": 1
+        },
+        {
+          "id": 27,
+          "text": "не",
+          "start": 40.984,
+          "end": 41.364,
+          "confidence": 0.9751,
+          "rawLineIndex": 7,
+          "contentLineIndex": 6,
+          "wordIndex": 2
+        },
+        {
+          "id": 28,
+          "text": "мог",
+          "start": 41.364,
+          "end": 42.324,
+          "confidence": 0.9978,
+          "rawLineIndex": 7,
+          "contentLineIndex": 6,
+          "wordIndex": 3
+        },
+        {
+          "id": 29,
+          "text": "забыть",
+          "start": 42.604,
+          "end": 42.704,
+          "confidence": 0.9154,
+          "rawLineIndex": 7,
+          "contentLineIndex": 6,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 8,
+      "contentLineIndex": 7,
+      "text": "Той прозрачной высоты",
+      "start": 48.76,
+      "end": 51.28,
+      "confidence": 0.8633,
+      "words": [
+        {
+          "id": 30,
+          "text": "Той",
+          "start": 48.76,
+          "end": 49.08,
+          "confidence": 0.6507,
+          "rawLineIndex": 8,
+          "contentLineIndex": 7,
+          "wordIndex": 0
+        },
+        {
+          "id": 31,
+          "text": "прозрачной",
+          "start": 49.08,
+          "end": 50.18,
+          "confidence": 0.9509,
+          "rawLineIndex": 8,
+          "contentLineIndex": 7,
+          "wordIndex": 1
+        },
+        {
+          "id": 32,
+          "text": "высоты",
+          "start": 50.18,
+          "end": 51.28,
+          "confidence": 0.9883,
+          "rawLineIndex": 8,
+          "contentLineIndex": 7,
+          "wordIndex": 2
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 10,
+      "contentLineIndex": 8,
+      "text": "И лететь по белому свету",
+      "start": 54.373,
+      "end": 57.373,
+      "confidence": 0.8596,
+      "words": [
+        {
+          "id": 33,
+          "text": "И",
+          "start": 54.373,
+          "end": 54.773,
+          "confidence": 0.6315,
+          "rawLineIndex": 10,
+          "contentLineIndex": 8,
+          "wordIndex": 0
+        },
+        {
+          "id": 34,
+          "text": "лететь",
+          "start": 54.773,
+          "end": 55.473,
+          "confidence": 0.97,
+          "rawLineIndex": 10,
+          "contentLineIndex": 8,
+          "wordIndex": 1
+        },
+        {
+          "id": 35,
+          "text": "по",
+          "start": 55.473,
+          "end": 55.693,
+          "confidence": 0.9827,
+          "rawLineIndex": 10,
+          "contentLineIndex": 8,
+          "wordIndex": 2
+        },
+        {
+          "id": 36,
+          "text": "белому",
+          "start": 55.693,
+          "end": 56.533,
+          "confidence": 0.8348,
+          "rawLineIndex": 10,
+          "contentLineIndex": 8,
+          "wordIndex": 3
+        },
+        {
+          "id": 37,
+          "text": "свету",
+          "start": 56.533,
+          "end": 57.373,
+          "confidence": 0.8788,
+          "rawLineIndex": 10,
+          "contentLineIndex": 8,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 11,
+      "contentLineIndex": 9,
+      "text": "Став одним движением ветра",
+      "start": 57.56,
+      "end": 60.6,
+      "confidence": 0.7347,
+      "words": [
+        {
+          "id": 38,
+          "text": "Став",
+          "start": 57.56,
+          "end": 57.96,
+          "confidence": 0.4048,
+          "rawLineIndex": 11,
+          "contentLineIndex": 9,
+          "wordIndex": 0
+        },
+        {
+          "id": 39,
+          "text": "одним",
+          "start": 57.96,
+          "end": 58.54,
+          "confidence": 0.6465,
+          "rawLineIndex": 11,
+          "contentLineIndex": 9,
+          "wordIndex": 1
+        },
+        {
+          "id": 40,
+          "text": "движением",
+          "start": 58.54,
+          "end": 59.76,
+          "confidence": 0.9104,
+          "rawLineIndex": 11,
+          "contentLineIndex": 9,
+          "wordIndex": 2
+        },
+        {
+          "id": 41,
+          "text": "ветра",
+          "start": 59.76,
+          "end": 60.6,
+          "confidence": 0.9772,
+          "rawLineIndex": 11,
+          "contentLineIndex": 9,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 12,
+      "contentLineIndex": 10,
+      "text": "Лететь куда-то вдаль",
+      "start": 61.106,
+      "end": 65.546,
+      "confidence": 0.7975,
+      "words": [
+        {
+          "id": 42,
+          "text": "Лететь",
+          "start": 61.106,
+          "end": 62.666,
+          "confidence": 0.501,
+          "rawLineIndex": 12,
+          "contentLineIndex": 10,
+          "wordIndex": 0
+        },
+        {
+          "id": 43,
+          "text": "куда-то",
+          "start": 62.666,
+          "end": 64.586,
+          "confidence": 0.9491,
+          "rawLineIndex": 12,
+          "contentLineIndex": 10,
+          "wordIndex": 1
+        },
+        {
+          "id": 44,
+          "text": "вдаль",
+          "start": 64.586,
+          "end": 65.546,
+          "confidence": 0.9424,
+          "rawLineIndex": 12,
+          "contentLineIndex": 10,
+          "wordIndex": 2
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 13,
+      "contentLineIndex": 11,
+      "text": "И не думать, как приземлиться",
+      "start": 67.161,
+      "end": 69.981,
+      "confidence": 0.6119,
+      "words": [
+        {
+          "id": 45,
+          "text": "И",
+          "start": 67.161,
+          "end": 67.581,
+          "confidence": 0.191,
+          "rawLineIndex": 13,
+          "contentLineIndex": 11,
+          "wordIndex": 0
+        },
+        {
+          "id": 46,
+          "text": "не",
+          "start": 67.581,
+          "end": 67.781,
+          "confidence": 0.9611,
+          "rawLineIndex": 13,
+          "contentLineIndex": 11,
+          "wordIndex": 1
+        },
+        {
+          "id": 47,
+          "text": "думать",
+          "start": 67.781,
+          "end": 68.541,
+          "confidence": 0.9948,
+          "rawLineIndex": 13,
+          "contentLineIndex": 11,
+          "wordIndex": 2
+        },
+        {
+          "id": 48,
+          "text": "как",
+          "start": 68.541,
+          "end": 68.781,
+          "confidence": 0.1343,
+          "rawLineIndex": 13,
+          "contentLineIndex": 11,
+          "wordIndex": 3
+        },
+        {
+          "id": 49,
+          "text": "приземлиться",
+          "start": 68.781,
+          "end": 69.981,
+          "confidence": 0.7783,
+          "rawLineIndex": 13,
+          "contentLineIndex": 11,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 14,
+      "contentLineIndex": 12,
+      "text": "А у птиц свободе учиться",
+      "start": 70.305,
+      "end": 73.225,
+      "confidence": 0.4772,
+      "words": [
+        {
+          "id": 50,
+          "text": "А",
+          "start": 70.305,
+          "end": 70.745,
+          "confidence": 0.0474,
+          "rawLineIndex": 14,
+          "contentLineIndex": 12,
+          "wordIndex": 0
+        },
+        {
+          "id": 51,
+          "text": "у",
+          "start": 70.745,
+          "end": 70.985,
+          "confidence": 0.0314,
+          "rawLineIndex": 14,
+          "contentLineIndex": 12,
+          "wordIndex": 1
+        },
+        {
+          "id": 52,
+          "text": "птиц",
+          "start": 70.985,
+          "end": 71.505,
+          "confidence": 0.8495,
+          "rawLineIndex": 14,
+          "contentLineIndex": 12,
+          "wordIndex": 2
+        },
+        {
+          "id": 53,
+          "text": "свободе",
+          "start": 71.505,
+          "end": 72.345,
+          "confidence": 0.5011,
+          "rawLineIndex": 14,
+          "contentLineIndex": 12,
+          "wordIndex": 3
+        },
+        {
+          "id": 54,
+          "text": "учиться",
+          "start": 72.345,
+          "end": 73.225,
+          "confidence": 0.9565,
+          "rawLineIndex": 14,
+          "contentLineIndex": 12,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 15,
+      "contentLineIndex": 13,
+      "text": "Оставив, все то, что жаль",
+      "start": 73.933,
+      "end": 78.173,
+      "confidence": 0.5299,
+      "words": [
+        {
+          "id": 55,
+          "text": "Оставив",
+          "start": 73.933,
+          "end": 75.913,
+          "confidence": 0.3105,
+          "rawLineIndex": 15,
+          "contentLineIndex": 13,
+          "wordIndex": 0
+        },
+        {
+          "id": 56,
+          "text": "все",
+          "start": 75.913,
+          "end": 76.513,
+          "confidence": 0.2755,
+          "rawLineIndex": 15,
+          "contentLineIndex": 13,
+          "wordIndex": 1
+        },
+        {
+          "id": 57,
+          "text": "то",
+          "start": 76.513,
+          "end": 77.013,
+          "confidence": 0.9709,
+          "rawLineIndex": 15,
+          "contentLineIndex": 13,
+          "wordIndex": 2
+        },
+        {
+          "id": 58,
+          "text": "что",
+          "start": 77.013,
+          "end": 77.353,
+          "confidence": 0.1464,
+          "rawLineIndex": 15,
+          "contentLineIndex": 13,
+          "wordIndex": 3
+        },
+        {
+          "id": 59,
+          "text": "жаль",
+          "start": 77.353,
+          "end": 78.173,
+          "confidence": 0.9461,
+          "rawLineIndex": 15,
+          "contentLineIndex": 13,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 17,
+      "contentLineIndex": 14,
+      "text": "Однажды ты привык",
+      "start": 78.884,
+      "end": 83.384,
+      "confidence": 0.9258,
+      "words": [
+        {
+          "id": 60,
+          "text": "Однажды",
+          "start": 78.884,
+          "end": 79.944,
+          "confidence": 0.8215,
+          "rawLineIndex": 17,
+          "contentLineIndex": 14,
+          "wordIndex": 0
+        },
+        {
+          "id": 61,
+          "text": "ты",
+          "start": 80.004,
+          "end": 80.404,
+          "confidence": 0.9633,
+          "rawLineIndex": 17,
+          "contentLineIndex": 14,
+          "wordIndex": 1
+        },
+        {
+          "id": 62,
+          "text": "привык",
+          "start": 80.724,
+          "end": 83.384,
+          "confidence": 0.9927,
+          "rawLineIndex": 17,
+          "contentLineIndex": 14,
+          "wordIndex": 2
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 18,
+      "contentLineIndex": 15,
+      "text": "И почти не стал мечтать",
+      "start": 87.161,
+      "end": 90.921,
+      "confidence": 0.9582,
+      "words": [
+        {
+          "id": 63,
+          "text": "И",
+          "start": 87.161,
+          "end": 87.461,
+          "confidence": 0.8363,
+          "rawLineIndex": 18,
+          "contentLineIndex": 15,
+          "wordIndex": 0
+        },
+        {
+          "id": 64,
+          "text": "почти",
+          "start": 87.461,
+          "end": 88.061,
+          "confidence": 0.983,
+          "rawLineIndex": 18,
+          "contentLineIndex": 15,
+          "wordIndex": 1
+        },
+        {
+          "id": 65,
+          "text": "не",
+          "start": 88.061,
+          "end": 89.341,
+          "confidence": 0.9798,
+          "rawLineIndex": 18,
+          "contentLineIndex": 15,
+          "wordIndex": 2
+        },
+        {
+          "id": 66,
+          "text": "стал",
+          "start": 89.341,
+          "end": 89.861,
+          "confidence": 0.9969,
+          "rawLineIndex": 18,
+          "contentLineIndex": 15,
+          "wordIndex": 3
+        },
+        {
+          "id": 67,
+          "text": "мечтать",
+          "start": 89.861,
+          "end": 90.921,
+          "confidence": 0.995,
+          "rawLineIndex": 18,
+          "contentLineIndex": 15,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 19,
+      "contentLineIndex": 16,
+      "text": "Но только чей-то крик",
+      "start": 91.432,
+      "end": 96.092,
+      "confidence": 0.4986,
+      "words": [
+        {
+          "id": 68,
+          "text": "Но",
+          "start": 91.432,
+          "end": 91.812,
+          "confidence": 0.239,
+          "rawLineIndex": 19,
+          "contentLineIndex": 16,
+          "wordIndex": 0
+        },
+        {
+          "id": 69,
+          "text": "только",
+          "start": 91.812,
+          "end": 92.492,
+          "confidence": 0.974,
+          "rawLineIndex": 19,
+          "contentLineIndex": 16,
+          "wordIndex": 1
+        },
+        {
+          "id": 70,
+          "text": "чей-то",
+          "start": 92.492,
+          "end": 95.272,
+          "confidence": 0.6373,
+          "rawLineIndex": 19,
+          "contentLineIndex": 16,
+          "wordIndex": 2
+        },
+        {
+          "id": 71,
+          "text": "крик",
+          "start": 95.272,
+          "end": 96.092,
+          "confidence": 0.1443,
+          "rawLineIndex": 19,
+          "contentLineIndex": 16,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 20,
+      "contentLineIndex": 17,
+      "text": "Вдруг позвал летать",
+      "start": 99.909,
+      "end": 102.529,
+      "confidence": 0.9184,
+      "words": [
+        {
+          "id": 72,
+          "text": "Вдруг",
+          "start": 99.909,
+          "end": 100.229,
+          "confidence": 0.8764,
+          "rawLineIndex": 20,
+          "contentLineIndex": 17,
+          "wordIndex": 0
+        },
+        {
+          "id": 73,
+          "text": "позвал",
+          "start": 100.229,
+          "end": 101.349,
+          "confidence": 0.9025,
+          "rawLineIndex": 20,
+          "contentLineIndex": 17,
+          "wordIndex": 1
+        },
+        {
+          "id": 74,
+          "text": "летать",
+          "start": 101.349,
+          "end": 102.529,
+          "confidence": 0.9762,
+          "rawLineIndex": 20,
+          "contentLineIndex": 17,
+          "wordIndex": 2
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 22,
+      "contentLineIndex": 18,
+      "text": "И поднял ты глаза",
+      "start": 104.359,
+      "end": 108.319,
+      "confidence": 0.6305,
+      "words": [
+        {
+          "id": 75,
+          "text": "И",
+          "start": 104.359,
+          "end": 104.619,
+          "confidence": 0.6306,
+          "rawLineIndex": 22,
+          "contentLineIndex": 18,
+          "wordIndex": 0
+        },
+        {
+          "id": 76,
+          "text": "поднял",
+          "start": 104.619,
+          "end": 105.539,
+          "confidence": 0.9587,
+          "rawLineIndex": 22,
+          "contentLineIndex": 18,
+          "wordIndex": 1
+        },
+        {
+          "id": 77,
+          "text": "ты",
+          "start": 105.539,
+          "end": 106.139,
+          "confidence": 0.1694,
+          "rawLineIndex": 22,
+          "contentLineIndex": 18,
+          "wordIndex": 2
+        },
+        {
+          "id": 78,
+          "text": "глаза",
+          "start": 106.139,
+          "end": 108.319,
+          "confidence": 0.7634,
+          "rawLineIndex": 22,
+          "contentLineIndex": 18,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 23,
+      "contentLineIndex": 19,
+      "text": "В высоту, где голоса плывут",
+      "start": 112.575,
+      "end": 116.415,
+      "confidence": 0.7481,
+      "words": [
+        {
+          "id": 79,
+          "text": "В",
+          "start": 112.575,
+          "end": 112.815,
+          "confidence": 0.6378,
+          "rawLineIndex": 23,
+          "contentLineIndex": 19,
+          "wordIndex": 0
+        },
+        {
+          "id": 80,
+          "text": "высоту",
+          "start": 112.815,
+          "end": 113.595,
+          "confidence": 0.9839,
+          "rawLineIndex": 23,
+          "contentLineIndex": 19,
+          "wordIndex": 1
+        },
+        {
+          "id": 81,
+          "text": "где",
+          "start": 113.595,
+          "end": 114.075,
+          "confidence": 0.3335,
+          "rawLineIndex": 23,
+          "contentLineIndex": 19,
+          "wordIndex": 2
+        },
+        {
+          "id": 82,
+          "text": "голоса",
+          "start": 114.075,
+          "end": 115.435,
+          "confidence": 0.8114,
+          "rawLineIndex": 23,
+          "contentLineIndex": 19,
+          "wordIndex": 3
+        },
+        {
+          "id": 83,
+          "text": "плывут",
+          "start": 115.435,
+          "end": 116.415,
+          "confidence": 0.9741,
+          "rawLineIndex": 23,
+          "contentLineIndex": 19,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 24,
+      "contentLineIndex": 20,
+      "text": "Там люди в небесах",
+      "start": 117.144,
+      "end": 122.364,
+      "confidence": 0.9045,
+      "words": [
+        {
+          "id": 84,
+          "text": "Там",
+          "start": 117.144,
+          "end": 117.424,
+          "confidence": 0.9206,
+          "rawLineIndex": 24,
+          "contentLineIndex": 20,
+          "wordIndex": 0
+        },
+        {
+          "id": 85,
+          "text": "люди",
+          "start": 117.824,
+          "end": 117.924,
+          "confidence": 0.9812,
+          "rawLineIndex": 24,
+          "contentLineIndex": 20,
+          "wordIndex": 1
+        },
+        {
+          "id": 86,
+          "text": "в",
+          "start": 117.924,
+          "end": 118.284,
+          "confidence": 0.8607,
+          "rawLineIndex": 24,
+          "contentLineIndex": 20,
+          "wordIndex": 2
+        },
+        {
+          "id": 87,
+          "text": "небесах",
+          "start": 119.484,
+          "end": 122.364,
+          "confidence": 0.8557,
+          "rawLineIndex": 24,
+          "contentLineIndex": 20,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 25,
+      "contentLineIndex": 21,
+      "text": "И тебя с собой зовут",
+      "start": 125.56,
+      "end": 127.92,
+      "confidence": 0.4966,
+      "words": [
+        {
+          "id": 88,
+          "text": "И",
+          "start": 125.56,
+          "end": 125.82,
+          "confidence": 0.6959,
+          "rawLineIndex": 25,
+          "contentLineIndex": 21,
+          "wordIndex": 0
+        },
+        {
+          "id": 89,
+          "text": "тебя",
+          "start": 125.82,
+          "end": 126.24,
+          "confidence": 0.7634,
+          "rawLineIndex": 25,
+          "contentLineIndex": 21,
+          "wordIndex": 1
+        },
+        {
+          "id": 90,
+          "text": "с",
+          "start": 126.24,
+          "end": 126.84,
+          "confidence": 0.3813,
+          "rawLineIndex": 25,
+          "contentLineIndex": 21,
+          "wordIndex": 2
+        },
+        {
+          "id": 91,
+          "text": "собой",
+          "start": 126.84,
+          "end": 127.4,
+          "confidence": 0.5942,
+          "rawLineIndex": 25,
+          "contentLineIndex": 21,
+          "wordIndex": 3
+        },
+        {
+          "id": 92,
+          "text": "зовут",
+          "start": 127.4,
+          "end": 127.92,
+          "confidence": 0.0484,
+          "rawLineIndex": 25,
+          "contentLineIndex": 21,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 27,
+      "contentLineIndex": 22,
+      "text": "Полететь по белому свету",
+      "start": 131.215,
+      "end": 134.175,
+      "confidence": 0.8243,
+      "words": [
+        {
+          "id": 93,
+          "text": "Полететь",
+          "start": 131.215,
+          "end": 132.275,
+          "confidence": 0.7714,
+          "rawLineIndex": 27,
+          "contentLineIndex": 22,
+          "wordIndex": 0
+        },
+        {
+          "id": 94,
+          "text": "по",
+          "start": 132.275,
+          "end": 132.515,
+          "confidence": 0.9611,
+          "rawLineIndex": 27,
+          "contentLineIndex": 22,
+          "wordIndex": 1
+        },
+        {
+          "id": 95,
+          "text": "белому",
+          "start": 132.515,
+          "end": 133.335,
+          "confidence": 0.8969,
+          "rawLineIndex": 27,
+          "contentLineIndex": 22,
+          "wordIndex": 2
+        },
+        {
+          "id": 96,
+          "text": "свету",
+          "start": 133.335,
+          "end": 134.175,
+          "confidence": 0.6677,
+          "rawLineIndex": 27,
+          "contentLineIndex": 22,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 28,
+      "contentLineIndex": 23,
+      "text": "Стать одним движением ветра",
+      "start": 134.763,
+      "end": 137.383,
+      "confidence": 0.4421,
+      "words": [
+        {
+          "id": 97,
+          "text": "Стать",
+          "start": 134.763,
+          "end": 135.043,
+          "confidence": 0.0056,
+          "rawLineIndex": 28,
+          "contentLineIndex": 23,
+          "wordIndex": 0
+        },
+        {
+          "id": 98,
+          "text": "одним",
+          "start": 135.043,
+          "end": 135.343,
+          "confidence": 0.2682,
+          "rawLineIndex": 28,
+          "contentLineIndex": 23,
+          "wordIndex": 1
+        },
+        {
+          "id": 99,
+          "text": "движением",
+          "start": 135.343,
+          "end": 136.583,
+          "confidence": 0.9352,
+          "rawLineIndex": 28,
+          "contentLineIndex": 23,
+          "wordIndex": 2
+        },
+        {
+          "id": 100,
+          "text": "ветра",
+          "start": 136.583,
+          "end": 137.383,
+          "confidence": 0.5593,
+          "rawLineIndex": 28,
+          "contentLineIndex": 23,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 29,
+      "contentLineIndex": 24,
+      "text": "Лететь куда-то вдаль",
+      "start": 137.906,
+      "end": 142.146,
+      "confidence": 0.7925,
+      "words": [
+        {
+          "id": 101,
+          "text": "Лететь",
+          "start": 137.906,
+          "end": 139.846,
+          "confidence": 0.6226,
+          "rawLineIndex": 29,
+          "contentLineIndex": 24,
+          "wordIndex": 0
+        },
+        {
+          "id": 102,
+          "text": "куда-то",
+          "start": 139.846,
+          "end": 141.386,
+          "confidence": 0.8216,
+          "rawLineIndex": 29,
+          "contentLineIndex": 24,
+          "wordIndex": 1
+        },
+        {
+          "id": 103,
+          "text": "вдаль",
+          "start": 141.386,
+          "end": 142.146,
+          "confidence": 0.9333,
+          "rawLineIndex": 29,
+          "contentLineIndex": 24,
+          "wordIndex": 2
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 30,
+      "contentLineIndex": 25,
+      "text": "И не думать, как приземлиться",
+      "start": 143.981,
+      "end": 146.701,
+      "confidence": 0.7331,
+      "words": [
+        {
+          "id": 104,
+          "text": "И",
+          "start": 143.981,
+          "end": 144.301,
+          "confidence": 0.6427,
+          "rawLineIndex": 30,
+          "contentLineIndex": 25,
+          "wordIndex": 0
+        },
+        {
+          "id": 105,
+          "text": "не",
+          "start": 144.301,
+          "end": 144.581,
+          "confidence": 0.9783,
+          "rawLineIndex": 30,
+          "contentLineIndex": 25,
+          "wordIndex": 1
+        },
+        {
+          "id": 106,
+          "text": "думать",
+          "start": 144.581,
+          "end": 145.301,
+          "confidence": 0.9927,
+          "rawLineIndex": 30,
+          "contentLineIndex": 25,
+          "wordIndex": 2
+        },
+        {
+          "id": 107,
+          "text": "как",
+          "start": 145.301,
+          "end": 145.581,
+          "confidence": 0.1607,
+          "rawLineIndex": 30,
+          "contentLineIndex": 25,
+          "wordIndex": 3
+        },
+        {
+          "id": 108,
+          "text": "приземлиться",
+          "start": 145.581,
+          "end": 146.701,
+          "confidence": 0.8912,
+          "rawLineIndex": 30,
+          "contentLineIndex": 25,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 31,
+      "contentLineIndex": 26,
+      "text": "А у птиц свободе учиться",
+      "start": 146.785,
+      "end": 150.045,
+      "confidence": 0.474,
+      "words": [
+        {
+          "id": 109,
+          "text": "А",
+          "start": 146.785,
+          "end": 147.485,
+          "confidence": 0.0436,
+          "rawLineIndex": 31,
+          "contentLineIndex": 26,
+          "wordIndex": 0
+        },
+        {
+          "id": 110,
+          "text": "у",
+          "start": 147.485,
+          "end": 147.805,
+          "confidence": 0.0056,
+          "rawLineIndex": 31,
+          "contentLineIndex": 26,
+          "wordIndex": 1
+        },
+        {
+          "id": 111,
+          "text": "птиц",
+          "start": 147.905,
+          "end": 148.305,
+          "confidence": 0.7166,
+          "rawLineIndex": 31,
+          "contentLineIndex": 26,
+          "wordIndex": 2
+        },
+        {
+          "id": 112,
+          "text": "свободе",
+          "start": 148.325,
+          "end": 149.145,
+          "confidence": 0.6508,
+          "rawLineIndex": 31,
+          "contentLineIndex": 26,
+          "wordIndex": 3
+        },
+        {
+          "id": 113,
+          "text": "учиться",
+          "start": 149.145,
+          "end": 150.045,
+          "confidence": 0.9532,
+          "rawLineIndex": 31,
+          "contentLineIndex": 26,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 32,
+      "contentLineIndex": 27,
+      "text": "Оставить все то, что жаль",
+      "start": 150.693,
+      "end": 154.993,
+      "confidence": 0.5833,
+      "words": [
+        {
+          "id": 114,
+          "text": "Оставить",
+          "start": 150.693,
+          "end": 152.593,
+          "confidence": 0.6042,
+          "rawLineIndex": 32,
+          "contentLineIndex": 27,
+          "wordIndex": 0
+        },
+        {
+          "id": 115,
+          "text": "все",
+          "start": 152.593,
+          "end": 153.353,
+          "confidence": 0.1356,
+          "rawLineIndex": 32,
+          "contentLineIndex": 27,
+          "wordIndex": 1
+        },
+        {
+          "id": 116,
+          "text": "то",
+          "start": 153.353,
+          "end": 153.773,
+          "confidence": 0.9715,
+          "rawLineIndex": 32,
+          "contentLineIndex": 27,
+          "wordIndex": 2
+        },
+        {
+          "id": 117,
+          "text": "что",
+          "start": 153.773,
+          "end": 154.113,
+          "confidence": 0.255,
+          "rawLineIndex": 32,
+          "contentLineIndex": 27,
+          "wordIndex": 3
+        },
+        {
+          "id": 118,
+          "text": "жаль",
+          "start": 154.113,
+          "end": 154.993,
+          "confidence": 0.9502,
+          "rawLineIndex": 32,
+          "contentLineIndex": 27,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 34,
+      "contentLineIndex": 28,
+      "text": "И лететь по белому свету",
+      "start": 156.807,
+      "end": 159.747,
+      "confidence": 0.856,
+      "words": [
+        {
+          "id": 119,
+          "text": "И",
+          "start": 156.807,
+          "end": 157.207,
+          "confidence": 0.4079,
+          "rawLineIndex": 34,
+          "contentLineIndex": 28,
+          "wordIndex": 0
+        },
+        {
+          "id": 120,
+          "text": "лететь",
+          "start": 157.207,
+          "end": 157.887,
+          "confidence": 0.9579,
+          "rawLineIndex": 34,
+          "contentLineIndex": 28,
+          "wordIndex": 1
+        },
+        {
+          "id": 121,
+          "text": "по",
+          "start": 157.927,
+          "end": 158.107,
+          "confidence": 0.9805,
+          "rawLineIndex": 34,
+          "contentLineIndex": 28,
+          "wordIndex": 2
+        },
+        {
+          "id": 122,
+          "text": "белому",
+          "start": 158.107,
+          "end": 158.987,
+          "confidence": 0.954,
+          "rawLineIndex": 34,
+          "contentLineIndex": 28,
+          "wordIndex": 3
+        },
+        {
+          "id": 123,
+          "text": "свету",
+          "start": 158.987,
+          "end": 159.747,
+          "confidence": 0.9797,
+          "rawLineIndex": 34,
+          "contentLineIndex": 28,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 35,
+      "contentLineIndex": 29,
+      "text": "Став одним движением ветра",
+      "start": 159.974,
+      "end": 163.034,
+      "confidence": 0.5556,
+      "words": [
+        {
+          "id": 124,
+          "text": "Став",
+          "start": 159.974,
+          "end": 160.374,
+          "confidence": 0.0589,
+          "rawLineIndex": 35,
+          "contentLineIndex": 29,
+          "wordIndex": 0
+        },
+        {
+          "id": 125,
+          "text": "одним",
+          "start": 160.374,
+          "end": 160.934,
+          "confidence": 0.2456,
+          "rawLineIndex": 35,
+          "contentLineIndex": 29,
+          "wordIndex": 1
+        },
+        {
+          "id": 126,
+          "text": "движением",
+          "start": 160.934,
+          "end": 162.194,
+          "confidence": 0.9626,
+          "rawLineIndex": 35,
+          "contentLineIndex": 29,
+          "wordIndex": 2
+        },
+        {
+          "id": 127,
+          "text": "ветра",
+          "start": 162.194,
+          "end": 163.034,
+          "confidence": 0.9553,
+          "rawLineIndex": 35,
+          "contentLineIndex": 29,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 36,
+      "contentLineIndex": 30,
+      "text": "Лететь куда-то вдаль",
+      "start": 163.542,
+      "end": 167.722,
+      "confidence": 0.5549,
+      "words": [
+        {
+          "id": 128,
+          "text": "Лететь",
+          "start": 163.542,
+          "end": 165.322,
+          "confidence": 0.514,
+          "rawLineIndex": 36,
+          "contentLineIndex": 30,
+          "wordIndex": 0
+        },
+        {
+          "id": 129,
+          "text": "куда-то",
+          "start": 165.322,
+          "end": 166.962,
+          "confidence": 0.7973,
+          "rawLineIndex": 36,
+          "contentLineIndex": 30,
+          "wordIndex": 1
+        },
+        {
+          "id": 130,
+          "text": "вдаль",
+          "start": 166.962,
+          "end": 167.722,
+          "confidence": 0.3535,
+          "rawLineIndex": 36,
+          "contentLineIndex": 30,
+          "wordIndex": 2
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 37,
+      "contentLineIndex": 31,
+      "text": "И не думать, как приземлиться",
+      "start": 169.555,
+      "end": 172.375,
+      "confidence": 0.6828,
+      "words": [
+        {
+          "id": 131,
+          "text": "И",
+          "start": 169.555,
+          "end": 169.875,
+          "confidence": 0.5106,
+          "rawLineIndex": 37,
+          "contentLineIndex": 31,
+          "wordIndex": 0
+        },
+        {
+          "id": 132,
+          "text": "не",
+          "start": 169.875,
+          "end": 170.215,
+          "confidence": 0.7666,
+          "rawLineIndex": 37,
+          "contentLineIndex": 31,
+          "wordIndex": 1
+        },
+        {
+          "id": 133,
+          "text": "думать",
+          "start": 170.215,
+          "end": 170.935,
+          "confidence": 0.9741,
+          "rawLineIndex": 37,
+          "contentLineIndex": 31,
+          "wordIndex": 2
+        },
+        {
+          "id": 134,
+          "text": "как",
+          "start": 170.935,
+          "end": 171.175,
+          "confidence": 0.1835,
+          "rawLineIndex": 37,
+          "contentLineIndex": 31,
+          "wordIndex": 3
+        },
+        {
+          "id": 135,
+          "text": "приземлиться",
+          "start": 171.175,
+          "end": 172.375,
+          "confidence": 0.9791,
+          "rawLineIndex": 37,
+          "contentLineIndex": 31,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 38,
+      "contentLineIndex": 32,
+      "text": "А у птиц свободе учиться",
+      "start": 172.745,
+      "end": 175.625,
+      "confidence": 0.6751,
+      "words": [
+        {
+          "id": 136,
+          "text": "А",
+          "start": 172.745,
+          "end": 173.165,
+          "confidence": 0.6708,
+          "rawLineIndex": 38,
+          "contentLineIndex": 32,
+          "wordIndex": 0
+        },
+        {
+          "id": 137,
+          "text": "у",
+          "start": 173.165,
+          "end": 173.385,
+          "confidence": 0.4511,
+          "rawLineIndex": 38,
+          "contentLineIndex": 32,
+          "wordIndex": 1
+        },
+        {
+          "id": 138,
+          "text": "птиц",
+          "start": 173.385,
+          "end": 173.905,
+          "confidence": 0.7372,
+          "rawLineIndex": 38,
+          "contentLineIndex": 32,
+          "wordIndex": 2
+        },
+        {
+          "id": 139,
+          "text": "свободе",
+          "start": 173.905,
+          "end": 174.725,
+          "confidence": 0.5944,
+          "rawLineIndex": 38,
+          "contentLineIndex": 32,
+          "wordIndex": 3
+        },
+        {
+          "id": 140,
+          "text": "учиться",
+          "start": 174.725,
+          "end": 175.625,
+          "confidence": 0.9219,
+          "rawLineIndex": 38,
+          "contentLineIndex": 32,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 39,
+      "contentLineIndex": 33,
+      "text": "Оставив, оставив все то, что жаль",
+      "start": 176.328,
+      "end": 181.328,
+      "confidence": 0.3638,
+      "words": [
+        {
+          "id": 141,
+          "text": "Оставив",
+          "start": 176.328,
+          "end": 177.528,
+          "confidence": 0.5296,
+          "rawLineIndex": 39,
+          "contentLineIndex": 33,
+          "wordIndex": 0
+        },
+        {
+          "id": 142,
+          "text": "оставив",
+          "start": 177.728,
+          "end": 179.228,
+          "confidence": 0.0095,
+          "rawLineIndex": 39,
+          "contentLineIndex": 33,
+          "wordIndex": 1
+        },
+        {
+          "id": 143,
+          "text": "все",
+          "start": 179.288,
+          "end": 179.668,
+          "confidence": 0.1486,
+          "rawLineIndex": 39,
+          "contentLineIndex": 33,
+          "wordIndex": 2
+        },
+        {
+          "id": 144,
+          "text": "то",
+          "start": 179.668,
+          "end": 180.148,
+          "confidence": 0.946,
+          "rawLineIndex": 39,
+          "contentLineIndex": 33,
+          "wordIndex": 3
+        },
+        {
+          "id": 145,
+          "text": "что",
+          "start": 180.148,
+          "end": 180.448,
+          "confidence": 0.2,
+          "rawLineIndex": 39,
+          "contentLineIndex": 33,
+          "wordIndex": 4
+        },
+        {
+          "id": 146,
+          "text": "жаль",
+          "start": 180.448,
+          "end": 181.328,
+          "confidence": 0.349,
+          "rawLineIndex": 39,
+          "contentLineIndex": 33,
+          "wordIndex": 5
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 41,
+      "contentLineIndex": 34,
+      "text": "И лететь по белому свету",
+      "start": 207.994,
+      "end": 210.914,
+      "confidence": 0.8596,
+      "words": [
+        {
+          "id": 147,
+          "text": "И",
+          "start": 207.994,
+          "end": 208.394,
+          "confidence": 0.4753,
+          "rawLineIndex": 41,
+          "contentLineIndex": 34,
+          "wordIndex": 0
+        },
+        {
+          "id": 148,
+          "text": "лететь",
+          "start": 208.394,
+          "end": 209.034,
+          "confidence": 0.9708,
+          "rawLineIndex": 41,
+          "contentLineIndex": 34,
+          "wordIndex": 1
+        },
+        {
+          "id": 149,
+          "text": "по",
+          "start": 209.034,
+          "end": 209.254,
+          "confidence": 0.9812,
+          "rawLineIndex": 41,
+          "contentLineIndex": 34,
+          "wordIndex": 2
+        },
+        {
+          "id": 150,
+          "text": "белому",
+          "start": 209.254,
+          "end": 210.174,
+          "confidence": 0.9712,
+          "rawLineIndex": 41,
+          "contentLineIndex": 34,
+          "wordIndex": 3
+        },
+        {
+          "id": 151,
+          "text": "свету",
+          "start": 210.174,
+          "end": 210.914,
+          "confidence": 0.8993,
+          "rawLineIndex": 41,
+          "contentLineIndex": 34,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 42,
+      "contentLineIndex": 35,
+      "text": "Став одним движением ветра",
+      "start": 210.943,
+      "end": 214.143,
+      "confidence": 0.9119,
+      "words": [
+        {
+          "id": 152,
+          "text": "Став",
+          "start": 210.943,
+          "end": 211.523,
+          "confidence": 0.8871,
+          "rawLineIndex": 42,
+          "contentLineIndex": 35,
+          "wordIndex": 0
+        },
+        {
+          "id": 153,
+          "text": "одним",
+          "start": 211.623,
+          "end": 212.123,
+          "confidence": 0.8937,
+          "rawLineIndex": 42,
+          "contentLineIndex": 35,
+          "wordIndex": 1
+        },
+        {
+          "id": 154,
+          "text": "движением",
+          "start": 212.123,
+          "end": 213.203,
+          "confidence": 0.9282,
+          "rawLineIndex": 42,
+          "contentLineIndex": 35,
+          "wordIndex": 2
+        },
+        {
+          "id": 155,
+          "text": "ветра",
+          "start": 213.203,
+          "end": 214.143,
+          "confidence": 0.9386,
+          "rawLineIndex": 42,
+          "contentLineIndex": 35,
+          "wordIndex": 3
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 44,
+      "contentLineIndex": 36,
+      "text": "И не думать, как приземлиться",
+      "start": 220.7,
+      "end": 223.6,
+      "confidence": 0.6677,
+      "words": [
+        {
+          "id": 156,
+          "text": "И",
+          "start": 220.7,
+          "end": 221.1,
+          "confidence": 0.3005,
+          "rawLineIndex": 44,
+          "contentLineIndex": 36,
+          "wordIndex": 0
+        },
+        {
+          "id": 157,
+          "text": "не",
+          "start": 221.1,
+          "end": 221.4,
+          "confidence": 0.9673,
+          "rawLineIndex": 44,
+          "contentLineIndex": 36,
+          "wordIndex": 1
+        },
+        {
+          "id": 158,
+          "text": "думать",
+          "start": 221.4,
+          "end": 222.14,
+          "confidence": 0.9877,
+          "rawLineIndex": 44,
+          "contentLineIndex": 36,
+          "wordIndex": 2
+        },
+        {
+          "id": 159,
+          "text": "как",
+          "start": 222.14,
+          "end": 222.38,
+          "confidence": 0.114,
+          "rawLineIndex": 44,
+          "contentLineIndex": 36,
+          "wordIndex": 3
+        },
+        {
+          "id": 160,
+          "text": "приземлиться",
+          "start": 222.38,
+          "end": 223.6,
+          "confidence": 0.9692,
+          "rawLineIndex": 44,
+          "contentLineIndex": 36,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 45,
+      "contentLineIndex": 37,
+      "text": "А у птиц свободе учиться",
+      "start": 224.008,
+      "end": 226.828,
+      "confidence": 0.6564,
+      "words": [
+        {
+          "id": 161,
+          "text": "А",
+          "start": 224.008,
+          "end": 224.348,
+          "confidence": 0.8482,
+          "rawLineIndex": 45,
+          "contentLineIndex": 37,
+          "wordIndex": 0
+        },
+        {
+          "id": 162,
+          "text": "у",
+          "start": 224.348,
+          "end": 224.588,
+          "confidence": 0.4457,
+          "rawLineIndex": 45,
+          "contentLineIndex": 37,
+          "wordIndex": 1
+        },
+        {
+          "id": 163,
+          "text": "птиц",
+          "start": 224.588,
+          "end": 225.148,
+          "confidence": 0.9874,
+          "rawLineIndex": 45,
+          "contentLineIndex": 37,
+          "wordIndex": 2
+        },
+        {
+          "id": 164,
+          "text": "свободе",
+          "start": 225.148,
+          "end": 226.028,
+          "confidence": 0.1968,
+          "rawLineIndex": 45,
+          "contentLineIndex": 37,
+          "wordIndex": 3
+        },
+        {
+          "id": 165,
+          "text": "учиться",
+          "start": 226.028,
+          "end": 226.828,
+          "confidence": 0.8039,
+          "rawLineIndex": 45,
+          "contentLineIndex": 37,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 48,
+      "contentLineIndex": 38,
+      "text": "На-на-на-на-на-на-на-на",
+      "start": 236.904,
+      "end": 239.844,
+      "confidence": 0.8228,
+      "words": [
+        {
+          "id": 166,
+          "text": "На-на-на-на-на-на-на-на",
+          "start": 236.904,
+          "end": 239.844,
+          "confidence": 0.8228,
+          "rawLineIndex": 48,
+          "contentLineIndex": 38,
+          "wordIndex": 0
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 49,
+      "contentLineIndex": 39,
+      "text": "Лететь куда-то вдаль",
+      "start": 240.262,
+      "end": 244.742,
+      "confidence": 0.8852,
+      "words": [
+        {
+          "id": 167,
+          "text": "Лететь",
+          "start": 240.262,
+          "end": 242.322,
+          "confidence": 0.9222,
+          "rawLineIndex": 49,
+          "contentLineIndex": 39,
+          "wordIndex": 0
+        },
+        {
+          "id": 168,
+          "text": "куда-то",
+          "start": 242.782,
+          "end": 243.782,
+          "confidence": 0.9513,
+          "rawLineIndex": 49,
+          "contentLineIndex": 39,
+          "wordIndex": 1
+        },
+        {
+          "id": 169,
+          "text": "вдаль",
+          "start": 243.782,
+          "end": 244.742,
+          "confidence": 0.7821,
+          "rawLineIndex": 49,
+          "contentLineIndex": 39,
+          "wordIndex": 2
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 50,
+      "contentLineIndex": 40,
+      "text": "На-на-на-на-на-на-на-на",
+      "start": 249.592,
+      "end": 252.432,
+      "confidence": 0.8292,
+      "words": [
+        {
+          "id": 170,
+          "text": "На-на-на-на-на-на-на-на",
+          "start": 249.592,
+          "end": 252.432,
+          "confidence": 0.8292,
+          "rawLineIndex": 50,
+          "contentLineIndex": 40,
+          "wordIndex": 0
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 51,
+      "contentLineIndex": 41,
+      "text": "Оставив, все то, что жаль",
+      "start": 253.067,
+      "end": 257.487,
+      "confidence": 0.5126,
+      "words": [
+        {
+          "id": 171,
+          "text": "Оставив",
+          "start": 253.067,
+          "end": 254.967,
+          "confidence": 0.2156,
+          "rawLineIndex": 51,
+          "contentLineIndex": 41,
+          "wordIndex": 0
+        },
+        {
+          "id": 172,
+          "text": "все",
+          "start": 254.967,
+          "end": 255.747,
+          "confidence": 0.2381,
+          "rawLineIndex": 51,
+          "contentLineIndex": 41,
+          "wordIndex": 1
+        },
+        {
+          "id": 173,
+          "text": "то",
+          "start": 255.747,
+          "end": 256.207,
+          "confidence": 0.9715,
+          "rawLineIndex": 51,
+          "contentLineIndex": 41,
+          "wordIndex": 2
+        },
+        {
+          "id": 174,
+          "text": "что",
+          "start": 256.207,
+          "end": 256.527,
+          "confidence": 0.173,
+          "rawLineIndex": 51,
+          "contentLineIndex": 41,
+          "wordIndex": 3
+        },
+        {
+          "id": 175,
+          "text": "жаль",
+          "start": 256.527,
+          "end": 257.487,
+          "confidence": 0.965,
+          "rawLineIndex": 51,
+          "contentLineIndex": 41,
+          "wordIndex": 4
+        }
+      ]
+    },
+    {
+      "rawLineIndex": 52,
+      "contentLineIndex": 42,
+      "text": "Однажды он сказал",
+      "start": 258.057,
+      "end": 262.117,
+      "confidence": 0.8668,
+      "words": [
+        {
+          "id": 176,
+          "text": "Однажды",
+          "start": 258.057,
+          "end": 259.037,
+          "confidence": 0.833,
+          "rawLineIndex": 52,
+          "contentLineIndex": 42,
+          "wordIndex": 0
+        },
+        {
+          "id": 177,
+          "text": "он",
+          "start": 259.037,
+          "end": 259.937,
+          "confidence": 0.8591,
+          "rawLineIndex": 52,
+          "contentLineIndex": 42,
+          "wordIndex": 1
+        },
+        {
+          "id": 178,
+          "text": "сказал",
+          "start": 259.937,
+          "end": 262.117,
+          "confidence": 0.9084,
+          "rawLineIndex": 52,
+          "contentLineIndex": 42,
+          "wordIndex": 2
+        }
+      ]
+    }
+  ],
+  "_debug": {
+    "generated": "2026-03-10T22:03:14.582161+00:00",
+    "engine": {
+      "name": "stable-ts/Whisper small",
+      "advantage": "Native Cyrillic, no romanization"
+    },
+    "comparison": {
+      "mms": {
+        "lines": 43,
+        "words": 198,
+        "usable_words": 198,
+        "usable_pct": 100.0,
+        "avg_line_conf": 1.0,
+        "avg_word_conf": 1.0,
+        "first_conf": 1.0,
+        "mid_conf": 1.0,
+        "last_conf": 1.0,
+        "prop_dev": 0.1072
+      },
+      "second": {
+        "lines": 43,
+        "words": 179,
+        "usable_words": 136,
+        "usable_pct": 76.0,
+        "avg_line_conf": 0.7254,
+        "avg_word_conf": 0.7083,
+        "first_conf": 0.5928,
+        "mid_conf": 0.7069,
+        "last_conf": 0.8328,
+        "prop_dev": 0.0728
+      }
+    },
+    "stats": {
+      "windows": 43,
+      "aligned": 43,
+      "failed": 0
+    },
+    "failedLines": []
+  }
+}

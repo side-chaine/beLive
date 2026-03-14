@@ -63,3 +63,13 @@
   color: var(--bl-status-error, #e74c3c);
   font-size: 12px;
 }
+
+.safeIndicator {
+  font-size: 11px;
+  color: var(--bl-text-secondary, rgba(255, 255, 255, 0.6));
+  font-family: var(--bl-font-family, 'Inter', sans-serif);
+  padding: 2px 8px;
+  background: var(--bl-surface-subtle, rgba(255, 255, 255, 0.05));
+  border-radius: var(--bl-radius-sm, 4px);
+  white-space: nowrap;
+}

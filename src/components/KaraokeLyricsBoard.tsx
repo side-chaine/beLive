@@ -9,6 +9,7 @@ import { useModeStore } from '../stores/mode.store'
 import { useTextStyleStore } from '../stores/textStyle.store'
 import styles from './KaraokeLyricsBoard.module.css'
 import { runConcertTransition } from '../transitions/concertTransitions'
+import { WordHighlightLine } from '../triggers/WordHighlightLine'
 
 export function KaraokeLyricsBoard() {
   const lines = useLyricsStore((s) => s.lines)
@@ -100,7 +101,10 @@ export function KaraokeLyricsBoard() {
                   }
             }
           >
-            {line || (i === 0 ? '♪ ♪ ♪' : '')}
+            {i === 0
+              ? <WordHighlightLine lineIndex={activeLineIndex} text={line || '♪ ♪ ♪'} />
+              : (line || '')
+            }
           </div>
         ))}
       </div>

@@ -1,0 +1,122 @@
+============================================================
+DIAG-RU-01: RU vs LP Structural Diagnosis
+============================================================
+
+Loading artifacts...
+  LP: 45 lines
+  RU: 45 lines
+
+============================================================
+LP (Linkin Park - Breaking the Habit) Analysis
+============================================================
+
+=== LP Confidence Analysis ===
+  Lines: 45
+  Words: 262
+  Unique confidence values: [1.0]
+  All confidences == 1.0: True
+  ⚠️  CONFIDENCE SATURATION: all words have confidence 1.0
+
+=== LP Timing Analysis ===
+  Word gaps (between consecutive words):
+    Count: 217
+    Mean: 0.112s
+    Median: 0.080s
+    Max: 0.521s
+    Min: 0.000s
+    Gaps > 1.0s: 0 (0.0%)
+  Line durations:
+    Mean: 2.812s
+    Median: 2.073s
+    Range: 1.507s - 5.707s
+
+=== LP Romanization Analysis ===
+  Language: en
+  Romanization mode: None
+
+=== LP Word Timing Realism ===
+  Words/second per line:
+    Mean: 2.45
+    Median: 2.53
+    Range: 0.88 - 3.98
+  Lines with < 1.5 w/s (slow/padded): 8 (17.8%)
+  Lines with > 5.0 w/s (fast/crammed): 0 (0.0%)
+
+============================================================
+RU (Амега - Лететь) Analysis
+============================================================
+
+=== RU Confidence Analysis ===
+  Lines: 45
+  Words: 187
+  Unique confidence values: [1.0]
+  All confidences == 1.0: True
+  ⚠️  CONFIDENCE SATURATION: all words have confidence 1.0
+
+=== RU Timing Analysis ===
+  Word gaps (between consecutive words):
+    Count: 142
+    Mean: 0.304s
+    Median: 0.200s
+    Max: 2.264s
+    Min: 0.000s
+    Gaps > 1.0s: 10 (7.0%)
+  Line durations:
+    Mean: 3.755s
+    Median: 3.750s
+    Range: 2.519s - 6.974s
+
+=== RU Romanization Analysis ===
+  Language: ru
+  Romanization mode: RESEARCH-ONLY
+  ⚠️  RESEARCH-ONLY romanization: may indicate non-standard processing path
+
+=== RU Word Timing Realism ===
+  Words/second per line:
+    Mean: 1.20
+    Median: 1.20
+    Range: 0.16 - 1.85
+  Lines with < 1.5 w/s (slow/padded): 32 (71.1%)
+  Lines with > 5.0 w/s (fast/crammed): 0 (0.0%)
+
+============================================================
+COMPARATIVE ANALYSIS: LP vs RU
+============================================================
+
+--- Confidence Pattern ---
+BOTH artifacts show confidence saturation (all 1.0)
+→ This is an MMS forced-alignment behavior, not a quality indicator
+
+--- Timing Gap Comparison ---
+LP large gaps (>1s): 0.0%
+RU large gaps (>1s): 7.0%
+→ RU has significantly more large gaps, suggesting acoustic misalignment
+
+--- Word Timing Realism ---
+LP slow lines (<1.5 w/s): 17.8%
+RU slow lines (<1.5 w/s): 71.1%
+→ RU has more slow/padded lines, suggesting timing stretching
+
+============================================================
+FINAL DIAGNOSIS
+============================================================
+
+Identified issues:
+  1. RESEARCH-ONLY romanization mode detected
+  2. Confidence saturation (all 1.0) - MMS forced-alignment artifact
+  3. High slow-line ratio (71.1%) - timing stretching detected
+
+------------------------------------------------------------
+VERDICT:
+
+The RU artifact shows signs of RESEARCH-ONLY romanization processing.
+This suggests the text was transliterated (Cyrillic → Latin) before MMS
+processing, which can cause:
+  - Phonetic mismatches (Russian sounds ≠ Latin letters)
+  - Timing drift due to character-to-phoneme mapping errors
+  - Confidence saturation masking actual uncertainty
+
+Primary hypothesis: Romanization preprocessing is the root cause.
+
+RECOMMENDED NEXT MOVE: Investigate romanization quality or switch to native Cyrillic MMS
+------------------------------------------------------------
