@@ -3,6 +3,7 @@
 // Source: legacy styles.css + block colors from UI audit
 
 import type { PrimitiveTokens } from '../types'
+import { BLOCK_COLORS } from '../../structure/block-colors'
 
 export const primitiveTokens: PrimitiveTokens = {
   // ─── Neutrals (dark theme base) ──────────────────────────
@@ -28,13 +29,13 @@ export const primitiveTokens: PrimitiveTokens = {
   red50:    '#e74c3c',
   green50:  '#2ecc71',
 
-  // ─── Block Type Colors (from legacy UI) ──────────────────
-  // Source: modal-block-editor.js + Nikita screenshots
-  blockVerse:     '#4CAF50',
-  blockPrechorus: '#FFEB3B',
-  blockChorus:    '#F44336',
-  blockBridge:    '#9C27B0',
-  blockIntro:     '#2196F3',
-  blockOutro:     '#00BCD4',
-  blockUnknown:   '#9E9E9E',
+  // ─── Block Type Colors (from canonical structural source) ──
+  // Source: src/structure/block-colors.ts
+  blockVerse:     BLOCK_COLORS.verse,
+  blockPrechorus: BLOCK_COLORS.prechorus,
+  blockChorus:    BLOCK_COLORS.chorus,
+  blockBridge:    BLOCK_COLORS.bridge,
+  blockIntro:     BLOCK_COLORS.intro,
+  blockOutro:     BLOCK_COLORS.outro,
+  blockUnknown:   BLOCK_COLORS.unknown,
 } as const

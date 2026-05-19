@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { UploadPanel } from '../../components/UploadPanel';
+import { CoverArt } from '../../components/CoverArt';
 import { useTrackStore } from '../../stores/track.store';
 import { loadTrack, deleteTrack } from '../../services/track.actions';
 import { handleZipFileSelect } from '../../services/upload.actions';
@@ -52,6 +53,8 @@ export function CatalogLayout({ color, onClose }: Props) {
   } = store;
 
   const [showManual, setShowManual] = useState(false);
+  const [pendingLyricsTrackId, setPendingLyricsTrackId] = useState<number | null>(null);
+  const [pendingLyricsTitle, setPendingLyricsTitle] = useState<string>(''); // TC-GENIUS-001: Track title for Genius link
   const [zipOver, setZipOver] = useState(false);
   const [zipBusy, setZipBusy] = useState(false);
   const [zipHover, setZipHover] = useState(false);
@@ -76,6 +79,20 @@ export function CatalogLayout({ color, onClose }: Props) {
   }, [onClose]);
 
   useEffect(() => { syncMyMusicFromLegacy(); syncPlaylistsFromLegacy(); }, []);
+
+  // W9-UX: Listen for track-saved event to auto-open lyrics paste modal
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const d = (e as CustomEvent).detail;
+      if (!d.hasLyrics) {
+        setPendingLyricsTrackId(d.trackId);
+        setPendingLyricsTitle(d.title || ''); // TC-GENIUS-001: Save title for Genius link
+        setShowManual(true); // Open UploadPanel
+      }
+    };
+    document.addEventListener('track-saved', handler);
+    return () => document.removeEventListener('track-saved', handler);
+  }, []);
 
   const play = useCallback((index: number) => {
     loadTrack(index, { autoplay: true, openSyncEditor: false });
@@ -151,7 +168,8 @@ export function CatalogLayout({ color, onClose }: Props) {
                         display: 'flex', alignItems: 'center', marginLeft: 18, padding: '5px 10px',
                         borderRadius: 4, background: a ? T.greenD : 'transparent', cursor: 'pointer', marginTop: 2,
                       }}>
-                      <span style={{ flex: 1, fontSize: 12, color: a ? T.green : T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <CoverArt url={t.coverArtUrl} title={t.title} size={28} borderRadius={5} />
+                      <span style={{ flex: 1, fontSize: 12, color: a ? T.green : T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginLeft: 8 }}>
                         {a && '▶ '}{t.title}
                       </span>
                       {isBuilding && <IB c={T.purple} onClick={e => { e.stopPropagation(); addToBuildingPlaylist({ trackId: t.id, title: t.fullTitle, addedAt: new Date().toISOString() }); }}>+</IB>}
@@ -257,7 +275,7 @@ export function CatalogLayout({ color, onClose }: Props) {
             background: showManual ? T.surfaceH : 'transparent',
           }}>{showManual ? '▲ Ручная загрузка' : '▶ Ручная загрузка'}</div>
           {showManual && <div style={{ marginBottom: 8 }}>
-            <UploadPanel onClose={() => setShowManual(false)} onSaved={() => { setShowManual(false); onClose(); setTimeout(() => document.dispatchEvent(new Event('tracks-changed')), 2000); }} />
+            <UploadPanel onClose={() => { setShowManual(false); setPendingLyricsTrackId(null); setPendingLyricsTitle(''); }} onSaved={() => { setShowManual(false); setPendingLyricsTrackId(null); setPendingLyricsTitle(''); setTimeout(() => { document.dispatchEvent(new Event('tracks-changed')); onClose(); }, 500); }} autoOpenLyrics={pendingLyricsTrackId !== null} pendingTrackId={pendingLyricsTrackId} pendingTrackTitle={pendingLyricsTrackId ? pendingLyricsTitle : null} />
             <div style={{
               border: `1px dashed ${T.border2}`,
               borderRadius: T.r,
@@ -296,7 +314,8 @@ export function CatalogLayout({ color, onClose }: Props) {
                   marginBottom: 2, background: a ? T.orangeD : T.surface,
                   border: `1px solid ${a ? T.orange + '22' : T.border}`, cursor: 'pointer',
                 }}>
-                  <span onClick={() => play(t.index)} style={{ flex: 1, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: a ? T.orange : T.text }}>
+                  <CoverArt url={t.coverArtUrl} title={t.title} size={32} borderRadius={6} />
+                  <span onClick={() => play(t.index)} style={{ flex: 1, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: a ? T.orange : T.text, marginLeft: 8 }}>
                     {a && '▶ '}{label}
                   </span>
                   <div style={{ display: 'flex', gap: 1, flexShrink: 0 }}>
@@ -324,7 +343,7 @@ function NB({ children, onClick }: { children: React.ReactNode; onClick: () => v
 
 function Sec({ s, play, tracks, idx, rec }: { s: ShowcaseSection; play: (i: number) => void; tracks: any[]; idx: number; rec: number[] }) {
   const items = s.id === 'recent'
-    ? rec.map(id => { const t = tracks.find((x: any) => Number(x.id) === id); if (!t) return null; const p = parseTrackName(t.title || ''); return { id: String(id), title: p.title, artist: p.artist, _index: t.index } as any; }).filter(Boolean)
+    ? rec.map(id => { const t = tracks.find((x: any) => Number(x.id) === id); if (!t) return null; const p = parseTrackName(t.title || ''); return { id: String(id), title: p.title, artist: p.artist, coverArtUrl: t.coverArtUrl, _index: t.index } as any; }).filter(Boolean)
     : s.items;
   if (s.id === 'recent' && items.length === 0) return null;
 
@@ -351,7 +370,8 @@ function Sec({ s, play, tracks, idx, rec }: { s: ShowcaseSection; play: (i: numb
                 cursor: item._index !== undefined ? 'pointer' : 'default',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <CoverArt url={item.coverArtUrl} title={item.title} size={32} borderRadius={6} />
+                  <div style={{ flex: 1, minWidth: 0, marginLeft: 8 }}>
                     <div style={{ fontSize: ex ? 15 : 13, fontWeight: ex ? 600 : 500, color: item._index === idx ? T.purple : T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {item._index === idx && '▶ '}{item.artist && item.artist !== 'Разное' ? `${item.artist} — ` : ''}{item.title}
                     </div>

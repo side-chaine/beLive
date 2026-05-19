@@ -33,12 +33,14 @@ function syncBlocksFromLegacy(): void {
   }
 
   const raw = ld.textBlocks
-  const blocks = raw.map((b: LegacyTextBlock, i: number) => ({
-    id: b.id || `legacy-block-${i}`,
-    name: b.name || `Block ${i + 1}`,
-    type: b.type || b.blockType || 'unknown',
-    lineIndices: b.lineIndices || [],
-  }))
+  const blocks = raw
+    .filter((b: LegacyTextBlock) => Array.isArray(b.lineIndices) && b.lineIndices.length > 0)
+    .map((b: LegacyTextBlock, i: number) => ({
+      id: b.id || `legacy-block-${i}`,
+      name: b.name || `Block ${i + 1}`,
+      type: b.type || b.blockType || 'unknown',
+      lineIndices: b.lineIndices!,
+    }))
 
   useBlocksStore.getState().setBlocks(blocks)
 }

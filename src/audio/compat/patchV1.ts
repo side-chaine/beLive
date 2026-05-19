@@ -21,11 +21,14 @@ export function patchV1WithV2(v1: any): AudioEngineV2 {
   v1.setCurrentTime = (t: number) => v2.setCurrentTime(t);
   v1.seekTo = (t: number) => v2.seekTo(t);
   v1.getDuration = () => v2.getDuration();
-  v1.loadTrack = (i: string, v?: string) => v2.loadTrack(i, v ?? null);
+  v1.loadTrack = (i: string, v?: string | null, additionalStems?: any, options?: any) => v2.loadTrack(i, v ?? null, additionalStems, options);
   v1.reset = () => v2.stop();
   v1.cleanup = () => v2.dispose();
 
   // 4. Volume
+  v1.setStemVolume = (id: string, vol: number) => v2.setStemVolume(id, vol); // W4b: N-stem generic
+  v1.setStemMute = (id: string, mute: boolean) => v2.setStemMute(id, mute); // W8.1: M/S buttons
+  v1.setStemSolo = (id: string, solo: boolean) => v2.setStemSolo(id, solo); // W8.1: M/S buttons
   v1.setInstrumentalVolume = (vol: number) => v2.setInstrumentalVolume(vol);
   v1.setVocalsVolume = (vol: number) => v2.setVocalsVolume(vol);
   v1.setMicrophoneVolume = (vol: number) => v2.setMicrophoneVolume(vol);
@@ -38,8 +41,13 @@ export function patchV1WithV2(v1: any): AudioEngineV2 {
   v1.setPlaybackRate = (r: number) => v2.setPlaybackRate(r);
   v1.getPlaybackRate = () => v2.getPlaybackRate();
 
-  // 7. Capture
-  v1.captureStream = () => v2.captureStream();
+  // 7. Capture (NEW: Program Capture Bus — Wave R2)
+  v1.captureStream = () => v2.captureStream(); // @deprecated wrapper
+  v1.getProgramCaptureStream = () => v2.getProgramCaptureStream();
+  v1.attachProgramSource = (node: AudioNode, opts: { kind: string }) => 
+    v2.attachProgramSource(node, opts);
+  v1.detachProgramSource = (node: AudioNode) => v2.detachProgramSource(node);
+  v1.setCaptureMicEnabled = (enabled: boolean) => v2.setCaptureMicEnabled(enabled);
 
   // 8. Microphone
   v1.enableMicrophone = () => v2.enableMicrophone();
@@ -67,6 +75,21 @@ export function patchV1WithV2(v1: any): AudioEngineV2 {
   v1.getAudioData = () => null;
   v1.getAudioBuffer = () =>
     v2.stems.get('instrumental')?.audioBuffer ?? null;
+  v1.getVocalAudioBuffer = () =>
+    v2.stems.get('vocals')?.audioBuffer ?? null;
+  v1.awaitStemReady = (stemId: string, timeoutMs?: number) =>
+    v2.awaitStemReady(stemId, timeoutMs);
+  v1.getStemAudioBuffer = (stemId: string) =>
+    v2.getStemAudioBuffer(stemId);
+  v1.ensureInstrumentalBuffer = () => v2.ensureInstrumentalBuffer();
+  v1.ensureVocalsBuffer = () => v2.ensureVocalsBuffer();
+
+  // Expose stems Map for direct access (needed by stems.has() checks)
+  Object.defineProperty(v1, 'stems', {
+    get: () => v2.stems,
+    configurable: true,
+  });
+
   v1.getCacheStats = () => ({ hits: 0, misses: 0, size: 0 });
   v1.clearCache = () => {};
 
@@ -89,6 +112,10 @@ export function patchV1WithV2(v1: any): AudioEngineV2 {
       get: () => v2.stems.get('vocals')?.gainNode ?? null,
       configurable: true,
     },
+    vocalsSourceNode: {
+      get: () => v2.getVocalSourceNode(),
+      configurable: true,
+    },
     instrumentalAudio: {
       get: () => v2.stems.get('instrumental')?.audio ?? null,
       configurable: true,
@@ -100,6 +127,9 @@ export function patchV1WithV2(v1: any): AudioEngineV2 {
     microphoneStream: { get: () => v2.microphone.stream, configurable: true },
     microphoneEnabled: { get: () => v2.microphone.enabled, configurable: true },
     microphoneVolume: { get: () => v2.microphone.volume, configurable: true },
+    microphoneGain: { get: () => v2.microphoneGain, configurable: true },
+    microphone: { get: () => v2.microphone, configurable: true }, // Full mic manager object
+    streamDestination: { get: () => v2.streamDestination, configurable: true },
     vocalMixEnabled: { get: () => v2.vocalMix.enabled, configurable: true },
     hybridEngine: {
       get: () => {
@@ -115,6 +145,13 @@ export function patchV1WithV2(v1: any): AudioEngineV2 {
       },
       configurable: true,
     },
+    // W5: Expose metering on v1 patch
+    getStemMeterLevel: { value: (stemId: string) => v2.getStemMeterLevel(stemId), configurable: true },
+    // TC-VM-002: Expose per-stem AnalyserNode for Visual Mixer canvas waveforms
+    getStemAnalyser: { value: (stemId: string) => v2.getStemAnalyser(stemId), configurable: true },
+    // TC-8.6B: Expose on-demand stem loading + stemsEnabled sync
+    setStemsEnabled: { value: (enabled: boolean) => v2.setStemsEnabled(enabled), configurable: true },
+    loadAdditionalStems: { value: (stems: any) => v2.loadAdditionalStems(stems), configurable: true },
   });
 
   // 13. Nullify v1-only nodes (force audio-reactive fallback)

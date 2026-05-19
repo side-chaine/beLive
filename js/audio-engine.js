@@ -24,6 +24,12 @@ class AudioEngine {
             if (e.target?.isContentEditable) return;
             if (e.code === 'Space') {
                 e.preventDefault();
+                // Interrupt practice first if active, then toggle transport
+                const bridge = window.__belivePracticeInterruption;
+                if (bridge && typeof bridge.interrupt === 'function') {
+                    bridge.interrupt('Space');
+                }
+                // Then perform normal play/pause toggle
                 if (this.isPlaying) { if (this.pause) this.pause(); }
                 else { if (this.play) this.play(); }
             }

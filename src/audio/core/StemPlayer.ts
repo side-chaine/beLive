@@ -12,7 +12,7 @@ export class StemPlayer {
   audio: HTMLAudioElement | null = null;
   sourceNode: MediaElementAudioSourceNode | null = null;
   gainNode: GainNode;
-  audioBuffer: AudioBuffer | null = null;
+  audioBuffer: AudioBuffer | null = null;  // null when skipDecode=true (OI-7)
   private _cleanBlobUrl: string | null = null;
   private _loaded = false;
 
@@ -22,14 +22,45 @@ export class StemPlayer {
   }
 
   get loaded(): boolean { return this._loaded; }
-  get duration(): number { return this.audioBuffer?.duration ?? 0; }
+
+  /** ★10 Public accessor for internal blob URL — used by _hotPlugStem for _trackUrls sync.
+   *  Replaces (stem as any)._cleanBlobUrl — typed access is safer. */
+  public get cleanBlobUrl(): string | null {
+    return this._cleanBlobUrl;
+  }
+
+  /**
+   * TC-DS-08-FIX: Lazy decode audioBuffer from cleanBlobUrl.
+   * Called by TakesCanvas when skipDecode=true left audioBuffer=null.
+   * Result is cached — subsequent calls return immediately.
+   */
+  async ensureAudioBuffer(): Promise<AudioBuffer | null> {
+    if (this.audioBuffer) return this.audioBuffer;
+    if (!this._cleanBlobUrl) return null;
+
+    try {
+      const response = await fetch(this._cleanBlobUrl);
+      const arrayBuffer = await response.arrayBuffer();
+      const ctx = getAudioContext();
+      this.audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
+      return this.audioBuffer;
+    } catch (e) {
+      console.warn('[StemPlayer] ensureAudioBuffer failed:', e);
+      return null;
+    }
+  }
+
+  get duration(): number {
+    const ad = this.audio?.duration;
+    return (ad && isFinite(ad) ? ad : 0) || this.audioBuffer?.duration || 0;
+  }
   get volume(): number { return this.gainNode.gain.value; }
 
-  async load(url: string, abortSignal?: AbortSignal): Promise<void> {
+  async load(url: string, abortSignal?: AbortSignal, skipDecode: boolean = false): Promise<void> {
     this.dispose();
-    const result: LoadResult = await loadAudio(url, abortSignal);
+    const result: LoadResult = await loadAudio(url, abortSignal, skipDecode);
     this._cleanBlobUrl = result.cleanBlobUrl;
-    this.audioBuffer = result.audioBuffer;
+    this.audioBuffer = result.audioBuffer;  // null for music stems (OI-7)
 
     this.audio = new Audio();
     this.audio.crossOrigin = 'anonymous';
@@ -55,11 +86,65 @@ export class StemPlayer {
     this._loaded = true;
   }
 
+  /**
+   * Load from ArrayBuffer directly — no fetch round-trip.
+   * Used for progressive loading where orchestrator passes raw data.
+   * Creates Blob URL internally, cleans up in dispose().
+   */
+  async loadFromArrayBuffer(
+    data: ArrayBuffer,
+    type: string,
+    abortSignal?: AbortSignal,
+    skipDecode: boolean = false
+  ): Promise<void> {
+    this.dispose();
+    if (abortSignal?.aborted) throw new DOMException('Load aborted', 'AbortError');
+
+    // Decode for vocal/instrumental (waveform + VOC need AudioBuffer)
+    if (!skipDecode) {
+      const ctx = getAudioContext();
+      this.audioBuffer = await ctx.decodeAudioData(data.slice(0));
+    }
+
+    // Create Blob URL internally — this stem owns the lifecycle
+    const blobUrl = URL.createObjectURL(new Blob([data], { type }));
+    this._cleanBlobUrl = blobUrl;
+
+    this.audio = new Audio();
+    this.audio.crossOrigin = 'anonymous';
+    this.audio.preload = 'auto';
+    this.audio.playsInline = true;
+    this._applyPreservePitch(this.audio);
+    this.audio.src = blobUrl;
+
+    await new Promise<void>((resolve, reject) => {
+      const onReady = () => { cleanup(); resolve(); };
+      const onError = () => { cleanup(); reject(new Error(`${this.name}: loadFromArrayBuffer failed`)); };
+      const cleanup = () => {
+        this.audio!.removeEventListener('loadedmetadata', onReady);
+        this.audio!.removeEventListener('error', onError);
+      };
+      this.audio!.addEventListener('loadedmetadata', onReady);
+      this.audio!.addEventListener('error', onError);
+    });
+
+    if (abortSignal?.aborted) {
+      this.dispose();
+      throw new DOMException('Load aborted', 'AbortError');
+    }
+
+    const ctx = getAudioContext();
+    this.sourceNode = ctx.createMediaElementSource(this.audio);
+    this.sourceNode.connect(this.gainNode);
+    this._loaded = true;
+  }
+
   connect(destination: AudioNode): void {
     this.gainNode.connect(destination);
   }
 
   disconnect(): void {
+    // ❌ FORBIDDEN: this.sourceNode.disconnect() — ONLY in dispose()! (OI-1)
     try { this.gainNode.disconnect(); } catch (_) {}
   }
 

@@ -1,0 +1,312 @@
+/* ═══ Track Info Board — Chalkboard Theme ═══ */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999997;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 80px 24px 24px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.board {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── WagonTrain glow via data-attribute ── */
+:global([data-track-info="active"]) [data-wagon-train-wrapper] {
+  box-shadow: 0 0 40px rgba(99, 102, 241, 0.35),
+              0 0 80px rgba(99, 102, 241, 0.15);
+  border-radius: 12px;
+  padding: 8px 12px;
+  transition: box-shadow 0.4s ease, padding 0.4s ease;
+}
+
+:global([data-track-info="active"]) :global(.instrumentOverlay) {
+  display: none !important;
+}
+
+/* ── Meta cards grid ── */
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.metaCard {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.2s ease;
+}
+
+.metaCard:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.metaCard.wide {
+  grid-column: span 2;
+}
+
+/* ── First reveal animation (staggered cards) ── */
+.firstReveal .metaCard {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: cardAppear 0.3s ease forwards;
+}
+
+.firstReveal .metaCard:nth-child(1) { animation-delay: 0.05s; }
+.firstReveal .metaCard:nth-child(2) { animation-delay: 0.1s; }
+.firstReveal .metaCard:nth-child(3) { animation-delay: 0.15s; }
+.firstReveal .metaCard:nth-child(4) { animation-delay: 0.2s; }
+.firstReveal .metaCard:nth-child(5) { animation-delay: 0.25s; }
+.firstReveal .metaCard:nth-child(6) { animation-delay: 0.3s; }
+.firstReveal .metaCard:nth-child(7) { animation-delay: 0.35s; }
+.firstReveal .metaCard:nth-child(8) { animation-delay: 0.4s; }
+.firstReveal .metaCard:nth-child(9) { animation-delay: 0.45s; }
+
+@keyframes cardAppear {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Card text ── */
+.cardLabel {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.4);
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+.cardValue {
+  font-size: 16px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.cardValueLarge {
+  font-size: 32px;
+  font-weight: 200;
+  text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+}
+
+/* ── Structure diagram (ABABCB) ── */
+.structureRow {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.structureBlock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.structureBlock:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+}
+
+.structureBlock.active {
+  transform: scale(1.15);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.structureArrow {
+  color: rgba(255, 255, 255, 0.15);
+  font-size: 10px;
+  margin: 0 1px;
+}
+
+.blockDuration {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
+  margin-top: 2px;
+  text-align: center;
+}
+
+/* ── Similar tracks ── */
+.similarTrack {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.similarTrack:last-child {
+  border-bottom: none;
+}
+
+.similarTrackName {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+}
+
+.similarTrackArtist {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+}
+
+/* ── Tags ── */
+.tagsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.tag.genre {
+  border-color: rgba(99, 102, 241, 0.3);
+  color: rgba(99, 102, 241, 0.8);
+}
+
+/* ── Skeleton shimmer ── */
+.skeleton {
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+  height: 20px;
+  width: 80%;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Header bar ── */
+.headerBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.boardTitle {
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.closeButton {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.closeButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.refreshButton {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: color 0.15s ease;
+}
+
+.refreshButton:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ── Footer ── */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footerHint {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.25);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+/* ── Empty state ── */
+.emptyState {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 13px;
+  font-style: italic;
+  text-align: center;
+  padding: 12px;
+}
+
+/* ── AI Expert stub (Phase 1B) ── */
+.aiExpertStub {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 13px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}

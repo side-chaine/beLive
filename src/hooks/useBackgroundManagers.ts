@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useModeStore } from '../stores/mode.store';
+import { useTrackStore } from '../stores/track.store';  // TC-COVER-04
 import { BACKGROUND_CONFIG } from '../backgrounds/backgroundConfig';
 import { ConcertBackgroundManager } from '../backgrounds/ConcertBackground';
 import { KaraokeBackgroundManager } from '../backgrounds/KaraokeBackground';
@@ -52,6 +53,7 @@ export function useBackgroundManagers(): void {
   const managersRef = useRef<BgManagers | null>(null);
   const prevModeRef = useRef<string | null>(null);
   const mode = useModeStore((s) => s.mode);
+  const coverTheme = useTrackStore((s) => s.currentCoverTheme);  // TC-COVER-04
 
   useEffect(() => {
     const managers = createManagers();
@@ -85,4 +87,10 @@ export function useBackgroundManagers(): void {
     prevModeRef.current = mode;
     startForMode(managersRef.current, mode);
   }, [mode]);
+
+  // TC-COVER-04: Update dimming when coverTheme changes
+  useEffect(() => {
+    if (!managersRef.current?.rehearsal) return;
+    managersRef.current.rehearsal.setCoverArtState(!!coverTheme, coverTheme?.isDark);
+  }, [coverTheme]);
 }

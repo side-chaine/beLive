@@ -123,6 +123,29 @@ function patchWaveformEditor(): void {
       return orig.apply(this, args);
     };
   }
+
+  // W11: wrap we.show() — пропускаем Sync Editor если auto-sync применён для этого трека
+  if (!(we as any).__autoLyricsPatchedShow) {
+    const _origShow = we.show?.bind(we);
+    we.show = function () {
+      import('../../services/auto-lyrics.service')
+        .then(({ shouldSkipEditorsForTrack }) => {
+          const trackId = we.currentTrackId;
+          if (trackId && shouldSkipEditorsForTrack(trackId)) {
+            if (import.meta.env.DEV) {
+              console.log('[AutoLyrics] Sync Editor skipped — auto-sync applied for track', trackId);
+            }
+            return;
+          }
+          _origShow?.();
+        })
+        .catch(() => {
+          // Импорт упал — открываем как обычно
+          _origShow?.();
+        });
+    };
+    (we as any).__autoLyricsPatchedShow = true;
+  }
 }
 
 // ── Init ─────────────────────────────────────────────────────

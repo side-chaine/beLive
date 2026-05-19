@@ -1,0 +1,131 @@
+.card {
+  position: relative;
+  width: 80px;
+  height: 100%;
+  min-height: 120px;
+  border-radius: 12px;
+  background: rgba(20, 20, 30, 0.9);
+  border-left: 3px solid var(--stem-color, #fff);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 6px;
+  cursor: pointer;
+  user-select: none;
+  overflow: hidden;
+  touch-action: none;
+  
+  /* Pulsation — PURE CSS, NO JS animation */
+  transform: scale(calc(1 + var(--stem-energy, 0) * 0.12));
+  opacity: calc(0.65 + var(--stem-energy, 0) * 0.35);
+  transition: transform 0.15s ease-out, opacity 0.15s ease-out, box-shadow 0.2s ease-out;
+  
+  /* Hit flash — PURE CSS, driven by --stem-hit CSS var */
+  box-shadow: 0 0 calc(var(--stem-hit, 0) * 24px) var(--stem-color);
+}
+
+/* ─── States ─── */
+
+/* TC-14-01E: Lead vocal card is wider — it's the hero */
+.card[data-stem-id="vocals"] {
+  width: 96px;
+}
+
+.card[data-state="muted"] {
+  filter: grayscale(0.6);
+  opacity: 0.35;
+  transform: none;
+  transition: none;
+}
+
+.card[data-state="solo"] {
+  border-left-width: 4px;
+  box-shadow: 0 0 8px var(--stem-color), 0 0 calc(var(--stem-hit, 0) * 24px) var(--stem-color);
+}
+
+/* ─── Volume indicator (background fill) ─── */
+.volumeIndicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--stem-volume, 1) * 100%);
+  background: linear-gradient(to top, var(--stem-color) 0%, transparent 100%);
+  opacity: 0.15;
+  pointer-events: none;
+  transition: height 0.1s ease-out;
+}
+
+/* ─── Skin slot ─── */
+.skinSlot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.shapePlaceholder {
+  opacity: 0.8;
+  transition: opacity 0.15s ease-out;
+}
+
+/* ─── Waveform slot (canvas rendered by useStemWaveform) ─── */
+.waveformSlot {
+  width: 100%;
+  flex: 1;
+  min-height: 48px;
+  margin: 4px 0;
+  border-radius: 4px;
+  background: transparent;
+  overflow: hidden;
+}
+
+.waveformCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ─── Label ─── */
+.label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* ─── Button row ─── */
+.buttonRow {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.btn {
+  width: 22px;
+  height: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 9px;
+  cursor: pointer;
+  transition: all 0.1s;
+  touch-action: manipulation;
+}
+
+.btn:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.btnActive {
+  background: var(--stem-color);
+  color: #000;
+  border-color: var(--stem-color);
+}

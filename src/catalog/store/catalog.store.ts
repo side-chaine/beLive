@@ -232,6 +232,8 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
 
     // Switch to Rehearsal + Deck(Mix)
     switchMode('rehearsal');
+    // RESIDUE: no known listeners found in repo-wide scan as of 2025-07.
+    // Kept as protective compatibility signal. Do not remove without explicit architectural decision.
     document.dispatchEvent(new CustomEvent('sync-editor-closed'));
     document.dispatchEvent(new CustomEvent('deck-set-tab', { detail: { tab: 'mix', expanded: true } }));
 
@@ -352,6 +354,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
         title: parsed.title,
         index: track.index,
         fullTitle,
+        coverArtUrl: track.coverArtUrl,
       });
     }
 

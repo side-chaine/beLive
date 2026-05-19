@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useTrackStore, TrackState } from '../stores/track.store';
+import { interruptPracticeSession } from '../exercises/exercise.interruption';
 
 export function useKeyboardShortcuts() {
   const tracksMeta = useTrackStore((s: TrackState) => s.tracksMeta);
@@ -15,19 +16,25 @@ export function useKeyboardShortcuts() {
         if (e.shiftKey) {
           // Shift+Arrow → track prev/next (accumulated)
           e.preventDefault();
-          (window as any).queueTrackJump?.(delta);
+          // Interrupt practice first if active, then jump
+          interruptPracticeSession(() => {
+            (window as any).queueTrackJump?.(delta);
+          });
         } else if (e.metaKey || e.ctrlKey) {
           // Cmd/Ctrl+Arrow → block navigation (→ TC-002)
         } else if (!e.altKey) {
           // Plain Arrow → seek ±2s
           e.preventDefault();
-          const ae = (window as any).audioEngine;
-          if (ae?.getCurrentTime) {
-            const d = ae.getDuration?.() ?? 0;
-            if (d > 0) ae.setCurrentTime(
-              Math.max(0, Math.min(d, ae.getCurrentTime() + delta * 2))
-            );
-          }
+          // Interrupt practice first if active, then seek
+          interruptPracticeSession(() => {
+            const ae = (window as any).audioEngine;
+            if (ae?.getCurrentTime) {
+              const d = ae.getDuration?.() ?? 0;
+              if (d > 0) ae.setCurrentTime(
+                Math.max(0, Math.min(d, ae.getCurrentTime() + delta * 2))
+              );
+            }
+          });
         }
         return;
       }

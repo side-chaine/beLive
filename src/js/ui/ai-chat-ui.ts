@@ -194,13 +194,17 @@ export class AIChatUI {
   private updateOperatorButtonUI(modelName: string | null): void {
     const operatorButton = document.getElementById('toggle-loopblock-mode');
     if (operatorButton) {
+        operatorButton.innerHTML = '';
+        const span = document.createElement('span');
+        span.className = 'operator-text';
         if (modelName) {
-            operatorButton.innerHTML = `<span class="operator-text">${modelName}</span>`;
+            span.textContent = modelName;
             operatorButton.classList.add('ai-active');
         } else {
-            operatorButton.innerHTML = `<span class="operator-text">Operator</span>`;
+            span.textContent = 'Operator';
             operatorButton.classList.remove('ai-active');
         }
+        operatorButton.appendChild(span);
     }
   }
 
@@ -312,7 +316,10 @@ export class AIChatUI {
   private addSystemMessage(text: string) {
     const msgDiv = document.createElement('div');
     msgDiv.className = 'message system';
-    msgDiv.innerHTML = `<div class="message-content">${text}</div>`;
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    contentDiv.textContent = text;
+    msgDiv.appendChild(contentDiv);
     this.messagesContainer.appendChild(msgDiv);
     this.scrollToBottom();
   }

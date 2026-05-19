@@ -5,6 +5,7 @@ export type BlockType =
   | 'chorus'
   | 'prechorus'
   | 'bridge'
+  | 'interlude'
   | 'intro'
   | 'outro';
 
@@ -33,11 +34,12 @@ export const BLOCK_TYPE_CONFIG: {
   cssVar: string;
 }[] = [
   { type: 'verse',     label: 'Verse',      labelRu: 'Куплет',      color: '#4CAF50', cssVar: '--bl-block-verse' },
-  { type: 'prechorus', label: 'Pre-Chorus',  labelRu: 'Предприпев',  color: '#FF9800', cssVar: '--bl-block-prechorus' },
+  { type: 'prechorus', label: 'Pre-Chorus',  labelRu: 'Предприпев',  color: '#FFEB3B', cssVar: '--bl-block-prechorus' },
   { type: 'chorus',    label: 'Chorus',      labelRu: 'Припев',      color: '#F44336', cssVar: '--bl-block-chorus' },
-  { type: 'bridge',    label: 'Bridge',      labelRu: 'Бридж',       color: '#6f42c1', cssVar: '--bl-block-bridge' },
-  { type: 'intro',     label: 'Intro',       labelRu: 'Интро',       color: '#03A9F4', cssVar: '--bl-block-intro' },
-  { type: 'outro',     label: 'Outro',       labelRu: 'Аутро',       color: '#9E9E9E', cssVar: '--bl-block-outro' },
+  { type: 'bridge',    label: 'Bridge',      labelRu: 'Бридж',       color: '#9C27B0', cssVar: '--bl-block-bridge' },
+  { type: 'interlude', label: 'Interlude',   labelRu: 'Интерлюдия',  color: '#E91E63', cssVar: '--bl-block-interlude' },
+  { type: 'intro',     label: 'Intro',       labelRu: 'Интро',       color: '#2196F3', cssVar: '--bl-block-intro' },
+  { type: 'outro',     label: 'Outro',       labelRu: 'Аутро',       color: '#00BCD4', cssVar: '--bl-block-outro' },
 ];
 
 /** Get config for a block type (falls back to verse) */

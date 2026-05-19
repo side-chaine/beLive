@@ -12,7 +12,7 @@
   max-width: calc(100vw - 24px);
   overflow-x: auto;
   scrollbar-width: none;
-  background: var(--bl-surface-sunken, rgba(20, 20, 20, 0.35));
+  background: var(--bl-cover-bg-tint, var(--bl-surface-sunken, rgba(20, 20, 20, 0.35)));
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   border-radius: 12px;
@@ -39,8 +39,8 @@
   max-width: none;
   overflow: hidden;
   background: var(--bl-surface-overlay, rgba(0,0,0,0.18));
-  border: 1px solid var(--bl-border-subtle, rgba(255,255,255,0.12));
-  box-shadow: none;
+  border: 1px solid var(--bl-cover-border, var(--bl-border-subtle, rgba(255,255,255,0.12)));
+  box-shadow: 0 0 6px var(--bl-cover-glow, transparent);
   border-radius: 10px;
   cursor: pointer;
   transition: var(--bl-transition-fast, 150ms ease);
@@ -76,55 +76,57 @@
   border-color: rgba(255, 255, 255, 0.55);
   box-shadow:
     inset 0 0 0 1px var(--bl-border-strong, rgba(255,255,255,0.22)),
-    0 0 10px var(--bl-accent, rgba(155,89,182,0.35));
+    0 0 10px var(--bl-accent, rgba(155,89,182,0.35)),
+    0 0 12px var(--bl-cover-glow, transparent);
 }
 
 .wagon[data-active="true"] {
   border-color: rgba(100, 200, 255, 0.9);
-  box-shadow: 0 0 0 2px rgba(100, 200, 255, 0.55);
+  box-shadow: 0 0 0 2px rgba(100, 200, 255, 0.55),
+              0 0 14px var(--bl-cover-glow-strong, transparent);
   background: rgba(100, 200, 255, 0.15);
 }
 
 .wagon[data-block-type="verse"]::before {
   background:
-    radial-gradient(70% 130% at 0% 50%, var(--bl-block-verse, #27AE60) 0%, transparent 68%),
-    radial-gradient(70% 130% at 100% 50%, var(--bl-block-verse, #27AE60) 0%, transparent 68%),
-    linear-gradient(180deg, transparent 55%, var(--bl-block-verse, #27AE60) 100%);
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-verse, #4CAF50) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-verse, #4CAF50) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-verse, #4CAF50) 100%);
 }
 
 .wagon[data-block-type="chorus"]::before {
   background:
-    radial-gradient(70% 130% at 0% 50%, var(--bl-block-chorus, #E74C3C) 0%, transparent 68%),
-    radial-gradient(70% 130% at 100% 50%, var(--bl-block-chorus, #E74C3C) 0%, transparent 68%),
-    linear-gradient(180deg, transparent 55%, var(--bl-block-chorus, #E74C3C) 100%);
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-chorus, #F44336) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-chorus, #F44336) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-chorus, #F44336) 100%);
 }
 
 .wagon[data-block-type="bridge"]::before {
   background:
-    radial-gradient(70% 130% at 0% 50%, var(--bl-block-bridge, #8E44AD) 0%, transparent 68%),
-    radial-gradient(70% 130% at 100% 50%, var(--bl-block-bridge, #8E44AD) 0%, transparent 68%),
-    linear-gradient(180deg, transparent 55%, var(--bl-block-bridge, #8E44AD) 100%);
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-bridge, #9C27B0) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-bridge, #9C27B0) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-bridge, #9C27B0) 100%);
 }
 
 .wagon[data-block-type="prechorus"]::before {
   background:
-    radial-gradient(70% 130% at 0% 50%, var(--bl-block-prechorus, #F1C40F) 0%, transparent 68%),
-    radial-gradient(70% 130% at 100% 50%, var(--bl-block-prechorus, #F1C40F) 0%, transparent 68%),
-    linear-gradient(180deg, transparent 55%, var(--bl-block-prechorus, #F1C40F) 100%);
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-prechorus, #FFEB3B) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-prechorus, #FFEB3B) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-prechorus, #FFEB3B) 100%);
 }
 
 .wagon[data-block-type="intro"]::before {
   background:
-    radial-gradient(70% 130% at 0% 50%, var(--bl-block-intro, #3B5998) 0%, transparent 68%),
-    radial-gradient(70% 130% at 100% 50%, var(--bl-block-intro, #3B5998) 0%, transparent 68%),
-    linear-gradient(180deg, transparent 55%, var(--bl-block-intro, #3B5998) 100%);
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-intro, #2196F3) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-intro, #2196F3) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-intro, #2196F3) 100%);
 }
 
 .wagon[data-block-type="outro"]::before {
   background:
-    radial-gradient(70% 130% at 0% 50%, var(--bl-block-outro, #1ABC9C) 0%, transparent 68%),
-    radial-gradient(70% 130% at 100% 50%, var(--bl-block-outro, #1ABC9C) 0%, transparent 68%),
-    linear-gradient(180deg, transparent 55%, var(--bl-block-outro, #1ABC9C) 100%);
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-outro, #00BCD4) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-outro, #00BCD4) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-outro, #00BCD4) 100%);
 }
 
 .wagon:hover::before,
@@ -161,41 +163,69 @@
 .loopToggle {
   position: absolute;
   z-index: 1;
-  right: var(--bl-spacing-xs, 4px);
+  right: 4px;
   top: 50%;
   transform: translateY(-50%) scale(0.92);
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   padding: 0;
-  border-radius: var(--bl-radius-sm, 4px);
+  border-radius: 50%;
+  font-size: 13px;
   line-height: 1;
-  font-size: var(--bl-font-size-xs, 12px);
   display: grid;
   place-items: center;
-  background: var(--bl-surface-overlay, rgba(0,0,0,0.35));
-  border: 1px solid var(--bl-border-subtle, rgba(255,255,255,0.14));
-  box-shadow: 0 0 0 1px var(--bl-border-subtle, rgba(255,255,255,0.12));
-  color: var(--bl-text-primary, #ffffff);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
-  transition: var(--bl-transition-fast, 150ms ease);
+  transition: all 150ms ease;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
 .loopToggle:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.18);
   color: #ffffff;
-}
-
-.wagon[data-in-loop="true"] {
-  border-color: rgba(255, 140, 0, 0.9);
-  box-shadow: 0 0 0 2px rgba(255, 140, 0, 0.55);
+  transform: translateY(-50%) scale(1.08);
 }
 
 .loopToggle[data-active="true"] {
-  background: rgba(255, 140, 0, 0.5);
+  background: rgba(255, 140, 0, 0.55);
   border-color: rgba(255, 140, 0, 0.8);
   color: #ffffff;
+}
+
+.loopToggle[data-active="true"]:hover {
+  background: rgba(255, 140, 0, 0.75);
+}
+
+.loopToggle[data-loop-state="idle"] {
+  font-weight: 400;
+  letter-spacing: -0.5px;
+}
+
+.loopToggle[data-loop-state="idle"]:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.loopToggle[data-loop-state="adjacent"] {
+  background: rgba(255, 140, 0, 0.2);
+  border-color: rgba(255, 140, 0, 0.45);
+  color: rgba(255, 200, 120, 0.9);
+  animation: loopPulse 2s ease-in-out infinite;
+}
+
+@keyframes loopPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 140, 0, 0.2);
+    transform: translateY(-50%) scale(0.92);
+  }
+  50% {
+    box-shadow: 0 0 6px 1px rgba(255, 140, 0, 0.2);
+    transform: translateY(-50%) scale(1.0);
+  }
 }
 
 .wagon:hover .loopToggle,
@@ -205,8 +235,148 @@
   transform: translateY(-50%) scale(1);
 }
 
+.wagon .loopToggle[data-loop-state="adjacent"] {
+  opacity: 0.7;
+  pointer-events: auto;
+}
+
+.wagon:hover .loopToggle[data-loop-state="adjacent"] {
+  opacity: 0.9;
+}
+
 .loopToggle:focus-visible {
   opacity: 0.85;
   pointer-events: auto;
   transform: translateY(-50%) scale(1);
+}
+
+.wagon[data-in-loop="true"] {
+  border-color: rgba(255, 140, 0, 0.9);
+  box-shadow: 0 0 0 2px rgba(255, 140, 0, 0.55),
+              0 0 14px var(--bl-cover-glow-strong, transparent);
+}
+
+/* === Sub-block segments === */
+.subSegments {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  display: flex;
+  gap: 2px;
+  padding: 0 4px;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.subSegmentWrapper {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+
+.subSegment {
+  width: 100%;
+  height: 4px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 0 0 2px 2px;
+  transition: background 0.2s ease;
+  cursor: pointer;
+}
+
+/* Увеличить клик-зону сегмента вверх на 8px */
+.subSegment::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -2px;
+  right: -2px;
+  bottom: 0;
+}
+
+/* Активный подблок — яркая полоска */
+.subSegment[data-sub-active="true"] {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Hover на неактивный сегмент в активном блоке */
+.wagon[data-active="true"] .subSegment:not([data-sub-active="true"]):hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Divider-зазор между сегментами — вертикальная полоска */
+.subSegmentWrapper + .subSegmentWrapper .subSegment::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: -6px;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Sub-segment loop highlight */
+.subSegment[data-in-loop="true"] {
+  background: rgba(255, 140, 0, 0.6);
+  box-shadow: 0 0 6px rgba(255, 140, 0, 0.5);
+}
+
+.subSegment[data-in-loop="true"]:hover {
+  background: rgba(255, 140, 0, 0.8);
+  box-shadow: 0 0 10px rgba(255, 140, 0, 0.7);
+}
+
+.subSegment[data-in-loop="true"][data-sub-active="true"] {
+  background: rgba(255, 140, 0, 0.7);
+  box-shadow: 0 0 8px rgba(255, 140, 0, 0.6);
+}
+
+/* Sub-loop toggle button */
+.subLoopToggle {
+  position: absolute;
+  bottom: calc(100% + 1px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 10px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease, background 150ms ease, transform 150ms ease;
+  z-index: 3;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.subLoopToggle[data-active="true"] {
+  background: rgba(255, 140, 0, 0.55);
+  border-color: rgba(255, 140, 0, 0.8);
+  color: #ffffff;
+  opacity: 0.9;
+  pointer-events: auto;
+}
+
+.subSegmentWrapper:hover .subLoopToggle {
+  opacity: 0.7;
+  pointer-events: auto;
+}
+
+.subLoopToggle:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateX(-50%) scale(1.15);
+}
+
+.subLoopToggle[data-active="true"]:hover {
+  background: rgba(255, 140, 0, 0.75);
+  transform: translateX(-50%) scale(1.15);
 }

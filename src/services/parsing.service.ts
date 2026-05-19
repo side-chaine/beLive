@@ -402,7 +402,7 @@ export interface ParsedBlock {
 export function sanitizeBlocks(blocks: unknown[], lyricsLength: number): ParsedBlock[] {
   const seen = new Set<string>();
   const result: ParsedBlock[] = [];
-  const allowed = new Set(['verse','chorus','bridge','prechorus','intro','outro']);
+  const allowed = new Set(['verse','chorus','bridge','prechorus','interlude','intro','outro']);
   (blocks || []).forEach((blk: any, idx: number) => {
     if (!blk || !Array.isArray(blk.lineIndices) || !blk.lineIndices.length) return;
     const sorted = [...blk.lineIndices].sort((a: number, b: number) => a - b)

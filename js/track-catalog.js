@@ -45,7 +45,7 @@ class TrackCatalog {
         // 🎯 СТАБИЛЬНАЯ БАЗА: используем постоянное имя и актуальную версию
         const dbName = (window.__DB_NAME || 'TextAppDB');
         this.dbName = dbName;
-        const DB_VERSION = 6;
+        const DB_VERSION = 8;
         
         const request = indexedDB.open(dbName, DB_VERSION);
         

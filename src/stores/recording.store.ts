@@ -14,7 +14,6 @@ let mediaRecorder: MediaRecorder | null = null;
 let chunks: Blob[] = [];
 let timerInterval: ReturnType<typeof setInterval> | null = null;
 let displayStream: MediaStream | null = null;
-let micListener: (() => void) | null = null;
 
 export const useRecordingStore = create<RecordingState>((set, get) => ({
   isRecording: false,
@@ -38,23 +37,20 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
       if (ae?.audioContext?.state === 'suspended') {
         await ae.audioContext.resume();
       }
-      const audioStream: MediaStream | null = ae?.captureStream?.() ?? null;
+      
+      // NEW: Use Program Capture Bus (Wave R2 migration)
+      const audioStream: MediaStream | null = ae?.getProgramCaptureStream?.() ?? null;
 
-      if (ae?.microphoneGain && ae?.streamDestination) {
+      // NEW: Engine-owned mic management (replaces manual connect)
+      // Auto-enable mic hardware if not already enabled
+      if (ae?.microphone && !ae.microphone.enabled) {
         try {
-          ae.microphoneGain.connect(ae.streamDestination);
+          await ae.enableMicrophone();
         } catch (e) {
-          // already connected, ignore
+          console.warn('[Recording] Failed to auto-enable mic:', e);
         }
       }
-
-      micListener = () => {
-        if (!get().isRecording || !ae?.streamDestination || !ae?.microphoneGain) return;
-        try {
-          ae.microphoneGain.connect(ae.streamDestination);
-        } catch (e) { /* already connected */ }
-      };
-      document.addEventListener('microphone-state-changed', micListener);
+      
 
       const tracks: MediaStreamTrack[] = [
         ...displayStream.getVideoTracks(),
@@ -116,10 +112,7 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
   },
 
   stopRecording: () => {
-    if (micListener) {
-      document.removeEventListener('microphone-state-changed', micListener);
-      micListener = null;
-    }
+
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
       mediaRecorder.stop();
     }

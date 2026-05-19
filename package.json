@@ -3,7 +3,39 @@
   "version": "1.0.0",
   "description": "beLive — musical PWA for rehearsal, karaoke and live performance.",
   "dependencies": {
+    "@testsprite/testsprite-mcp": "^0.0.37",
+    "jszip": "^3.10.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "zod": "^4.3.6",
+    "zustand": "^5.0.11"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && cp -r js dist/js",
+    "preview": "vite preview",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/side-chaine/beLive.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/side-chaine/beLive/issues"
+  },
+  "homepage": "https://side-chaine.github.io/beLive/",
+  "type": "module",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/jszip": "^3.4.0",
+    "@types/react": "^19.2.13",
+    "@types/react-dom": "^19.2.3",
+    "@vitest/ui": "^4.1.0",
     "acorn": "^8.15.0",
     "acorn-jsx": "^5.3.2",
     "ajv": "^6.12.6",
@@ -44,10 +76,10 @@
     "is-glob": "^4.0.3",
     "isexe": "^2.0.0",
     "js-yaml": "^4.1.0",
+    "jsdom": "^28.1.0",
     "json-buffer": "^3.0.1",
     "json-schema-traverse": "^0.4.1",
     "json-stable-stringify-without-jsonify": "^1.0.1",
-    "jszip": "^3.10.1",
     "keyv": "^4.5.4",
     "levn": "^0.4.1",
     "locate-path": "^6.0.0",
@@ -63,46 +95,21 @@
     "path-key": "^3.1.1",
     "prelude-ls": "^1.2.1",
     "punycode": "^2.3.1",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
     "resolve-from": "^4.0.0",
     "shebang-command": "^2.0.0",
     "shebang-regex": "^3.0.0",
     "strip-json-comments": "^3.1.1",
     "supports-color": "^7.2.0",
     "type-check": "^0.4.0",
-    "uri-js": "^4.4.1",
-    "which": "^2.0.2",
-    "word-wrap": "^1.2.5",
-    "yocto-queue": "^0.1.0",
-    "zod": "^4.3.6",
-    "zustand": "^5.0.11"
-  },
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build && cp -r js dist/js",
-    "preview": "vite preview",
-    "test": "vitest",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/side-chaine/beLive.git"
-  },
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/side-chaine/beLive/issues"
-  },
-  "homepage": "https://side-chaine.github.io/beLive/",
-  "type": "module",
-  "devDependencies": {
-    "@types/react": "^19.2.13",
-    "@types/react-dom": "^19.2.3",
     "typescript": "^5.9.3",
+    "uri-js": "^4.4.1",
     "vite": "^5.0.0",
     "vite-plugin-pwa": "^0.20.5",
     "vite-tsconfig-paths": "^5.1.4",
-    "workbox-window": "^7.4.0"
+    "vitest": "^4.1.0",
+    "which": "^2.0.2",
+    "word-wrap": "^1.2.5",
+    "workbox-window": "^7.4.0",
+    "yocto-queue": "^0.1.0"
   }
 }

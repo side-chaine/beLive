@@ -1,173 +1,1271 @@
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  z-index: 10000;
+/* ===== ROOT ===== */
+.root {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: fadeIn 0.2s ease-out;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* ===== GRID — 3 COLUMNS ===== */
+.consoleGrid {
+  display: grid;
+  /* Route | Line Up | Auto Mix (fills remainder) */
+  grid-template-columns:
+    minmax(200px, 1fr)     /* route */
+    minmax(180px, 0.8fr)   /* line up */
+    1fr;                   /* automix — fills remainder */
+  gap: 6px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.panel {
-  width: min(96vw, 480px);
-  max-height: 82vh;
-  overflow-y: auto;
-  background: var(--bl-surface, #111);
-  border: 1px solid rgba(255, 50, 50, 0.5);
-  border-radius: 12px;
-  box-shadow:
-    0 4px 40px rgba(255, 30, 30, 0.2),
-    0 0 1px rgba(255, 50, 50, 0.6);
-  padding: 16px 20px 24px;
-  color: var(--bl-text, #eaeaea);
-  animation: scaleIn 0.25s ease-out;
-}
-
-@keyframes scaleIn {
-  from { transform: scale(0.92); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-.panel::-webkit-scrollbar {
-  width: 4px;
-}
-
-.panel::-webkit-scrollbar-thumb {
-  background: rgba(255, 50, 50, 0.3);
-  border-radius: 2px;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 14px;
-}
-
-.header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.closeBtn {
-  background: none;
-  border: none;
-  color: var(--bl-text, #eaeaea);
-  font-size: 24px;
-  cursor: pointer;
-  padding: 4px 8px;
-  opacity: 0.6;
-  transition: opacity 0.15s;
-}
-
-.closeBtn:hover {
-  opacity: 1;
-}
-
+/* ===== SECTION (shared with Styles pattern) ===== */
 .section {
-  margin-bottom: 14px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--bl-border-default, rgba(255, 255, 255, 0.08));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.02)),
+    var(--bl-surface-overlay, rgba(10, 10, 15, 0.88));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 4px 12px rgba(0, 0, 0, 0.14);
+  overflow: hidden;
+  transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+
+/* Active state — emphasized */
+.section[data-active="true"] {
+  border-color: color-mix(in srgb, var(--bl-accent, #0dcaf0) 32%, rgba(255, 255, 255, 0.08));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 4px 12px rgba(0, 0, 0, 0.14);
+}
+
+.section[data-active="true"] .sectionTitle {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* Inactive state — calm but still interactive */
+.section[data-active="false"] {
+  opacity: 0.82;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.section[data-active="false"] .sectionTitle {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.section[data-active="false"] .toggleLabel,
+.section[data-active="false"] .label,
+.section[data-active="false"] .controlLabel {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.section[data-active="false"] .slider,
+.section[data-active="false"] .controlSlider {
+  filter: saturate(0.65) opacity(0.85);
+}
+
+.section[data-active="false"] .dotToggle {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.section[data-active="false"] .dotToggleActive {
+  background: color-mix(in srgb, var(--bl-accent, #0dcaf0) 55%, transparent);
+  border-color: color-mix(in srgb, var(--bl-accent, #0dcaf0) 55%, white 45%);
 }
 
 .sectionTitle {
-  font-size: 11px;
+  font-size: 9px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: rgba(255, 80, 80, 0.7);
-  margin-bottom: 8px;
+  letter-spacing: 0.4px;
+  color: rgba(255, 255, 255, 0.48);
+  margin-bottom: 0;
+}
+
+/* ===== SECTION INTERNAL LAYOUT ===== */
+.sectionTop {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sectionBottom {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* Route column — timing block stack */
+.routeTimingStack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 1px;
+}
+
+/* Mix column — compact semantic stack (deprecated, kept for compat) */
+.mixStack {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* Line Up column — dedicated ritual block */
+.lineUpIdleStack,
+.lineUpTestingStack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lineUpIdleStack {
+  padding-top: 4px;
+}
+
+.deviceInfoRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.deviceLabel {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 500;
+}
+
+.calibrationAge {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.statusRow {
+  padding: 0;
+}
+
+.statusText {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  display: block;
+}
+
+.testBtn {
+  width: 100%;
+  min-height: 32px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  background: rgba(0, 210, 255, 0.06);
+  color: rgba(0, 210, 255, 0.75);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.testBtn:hover {
+  background: rgba(0, 210, 255, 0.1);
+  color: rgba(0, 210, 255, 0.95);
+  border-color: rgba(0, 210, 255, 0.5);
+}
+
+.testBtnDisabled {
+  width: 100%;
+  min-height: 32px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: not-allowed;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+/* ===== STATUS CHIP (compact two-state model) ===== */
+.statusChipRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  margin: 2px 0;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.statusChip {
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sourceChips {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.sourceChip {
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.sourceChip:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.sourceChipDisabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.sourceChipDisabled:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.sourceChipActive {
+  background: color-mix(in srgb, var(--bl-accent, #0dcaf0) 18%, transparent);
+  border-color: color-mix(in srgb, var(--bl-accent, #0dcaf0) 45%, transparent);
+  color: #fff;
+  font-weight: 700;
+}
+
+.delayChip {
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(13, 202, 240, 0.85);
+  background: rgba(13, 202, 240, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(13, 202, 240, 0.2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== LOCK/EDIT BUTTON (two-state model entry) ===== */
+.lockEditBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 28px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(139, 92, 246, 0.03));
+  color: rgba(139, 92, 246, 0.85);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.lockEditBtn:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05));
+  border-color: rgba(139, 92, 246, 0.5);
+  transform: translateY(-1px);
+}
+
+.lockEditBtn:disabled {
+  opacity: 0.3;
+  filter: saturate(0.3);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.lockIcon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.lockEditLabel {
+  font-weight: 700;
+}
+
+/* ===== EDITING STATE INLINE HELPER ===== */
+.editingHelper {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.55);
+  text-align: center;
+  padding: 0;
+  font-style: italic;
+  margin-bottom: 0;
+}
+
+/* ===== EDITING INLINE ACTIONS ROW ===== */
+.editingActionsRow {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.cancelInlineBtn {
+  flex: 1;
+  min-height: 28px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 9px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cancelInlineBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.confirmInlineBtn {
+  flex: 1;
+  min-height: 28px;
+  border-radius: 6px;
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  background: rgba(76, 175, 80, 0.08);
+  color: #4CAF50;
+  font-size: 9px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.confirmInlineBtn:hover {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: rgba(76, 175, 80, 0.6);
+}
+
+.tapBtnActive {
+  width: 100%;
+  min-height: 56px;
+  padding: 14px 24px;
+  border-radius: 10px;
+  border: 2px solid rgba(139, 92, 246, 0.7);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.1));
+  color: rgba(139, 92, 246, 0.95);
+  font-size: 20px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  box-shadow:
+    0 0 32px rgba(139, 92, 246, 0.25),
+    inset 0 0 20px rgba(139, 92, 246, 0.1);
+  margin-top: 6px;
+  margin-bottom: 6px;
+  position: relative;
+}
+
+.tapCountBadge {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(139, 92, 246, 0.6);
+  background: rgba(139, 92, 246, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.tapConfidenceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  margin-bottom: 4px;
+  background: rgba(139, 92, 246, 0.04);
+  border-radius: 6px;
+  border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.tapConfidenceLabel {
+  font-size: 8px;
+  color: rgba(139, 92, 246, 0.5);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tapConfidenceValue {
+  font-size: 10px;
+  color: rgba(139, 92, 246, 0.7);
+  letter-spacing: 1px;
+}
+
+.tapFeedback {
+  font-size: 9px;
+  color: rgba(139, 92, 246, 0.55);
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+/* ===== INSTRUCTION HERO CARD (testing state) ===== */
+.instructionHero {
+  padding: 10px 12px;
+  margin: 4px 0;
+  background: linear-gradient(135deg, rgba(13, 202, 240, 0.08), rgba(13, 202, 240, 0.03));
+  border: 1px solid rgba(13, 202, 240, 0.2);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.instructionTitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(13, 202, 240, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+.instructionText {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+}
+
+.instructionText strong {
+  color: rgba(76, 175, 80, 0.9);
   font-weight: 600;
 }
 
-.row {
+/* ===== MODE STATUS BADGE (testing state) ===== */
+.modeStatusBadge {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 7px;
-  min-height: 30px;
+  gap: 8px;
+  padding: 6px 12px;
+  margin: 4px 0;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(13, 202, 240, 0.04));
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 8px;
 }
 
-.label {
-  font-size: 13px;
-  min-width: 130px;
+.modeBadgeLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(139, 92, 246, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.modeBadgeValue {
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(13, 202, 240, 0.9);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+}
+
+/* ===== SUBTLE TAP ROW (demoted from hero) ===== */
+.tapSubtleRow {
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 6px;
+  padding: 3px 8px;
+  margin-bottom: 2px;
+}
+
+.tapSubtleLabel {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tapSubtleValue {
+  font-size: 9px;
+  color: rgba(139, 92, 246, 0.6);
+  font-weight: 600;
+  min-width: 16px;
+  text-align: center;
+}
+
+.tapSubtleConfidence {
+  font-size: 8px;
+  color: rgba(139, 92, 246, 0.45);
+  font-style: italic;
+}
+
+/* ===== DELAY MS BADGE (synced/stale/estimated states) ===== */
+.delayMsBadge {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(13, 202, 240, 0.85);
+  background: rgba(13, 202, 240, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(13, 202, 240, 0.2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== CALIBRATION DRUM (testing state) ===== */
+.calibrationDrumWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 1px 0;
+}
+
+/* Always-visible container for drum + lock control */
+.calibrationContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+/* Lock/unlock button - legacy, kept for compat */
+.unlockBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 28px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(139, 92, 246, 0.03));
+  color: rgba(139, 92, 246, 0.85);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.unlockBtn:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05));
+  border-color: rgba(139, 92, 246, 0.5);
+  transform: translateY(-1px);
+}
+
+.lockIcon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.unlockLabel {
+  font-weight: 700;
+}
+
+/* Compact instruction when unlocked */
+.compactInstruction {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.55);
+  text-align: center;
+  padding: 2px 0;
+  font-style: italic;
+}
+
+.delayValueDisplay {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+  font-size: 24px;
+  font-weight: 900;
+  color: rgba(13, 202, 240, 0.95);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+}
+
+.msValue {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.msUnit {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(13, 202, 240, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stepButtonsRow {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.stepBtn {
+  min-width: 48px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid rgba(13, 202, 240, 0.3);
+  background: linear-gradient(135deg, rgba(13, 202, 240, 0.1), rgba(13, 202, 240, 0.05));
+  color: rgba(13, 202, 240, 0.85);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.stepBtn:hover {
+  background: linear-gradient(135deg, rgba(13, 202, 240, 0.18), rgba(13, 202, 240, 0.08));
+  color: rgba(13, 202, 240, 0.95);
+  border-color: rgba(13, 202, 240, 0.5);
+  transform: translateY(-1px);
+}
+
+.stepBtn:active {
+  transform: translateY(0);
+}
+
+.stepBtn:disabled {
+  opacity: 0.3;
+  filter: saturate(0.3);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.calibrationDrum {
+  position: relative;
+  width: 100%;
+  height: 48px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  border: 1px solid rgba(13, 202, 240, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.calibrationDrumDisabled {
+  opacity: 0.4;
+  filter: saturate(0.3);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.calibrationDrum:active {
+  cursor: grabbing;
+}
+
+.centerMarker {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(180deg, transparent, rgba(13, 202, 240, 0.8), transparent);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.centerMarker::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  background: rgba(13, 202, 240, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(13, 202, 240, 0.6);
+}
+
+.tickStrip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.05s linear;
+  will-change: transform;
+}
+
+.tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.tickMinor {
+  height: 40%;
+  top: 30%;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.tickMajor {
+  height: 60%;
+  top: 20%;
+  background: rgba(13, 202, 240, 0.5);
+  width: 2px;
+}
+
+.tickLandmark {
+  height: 80%;
+  top: 10%;
+  background: rgba(13, 202, 240, 0.8);
+  width: 2px;
+}
+
+.tickLabel {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: rgba(13, 202, 240, 0.7);
+  font-weight: 600;
   white-space: nowrap;
 }
 
-.select {
-  flex: 1;
-  min-width: 0;
-  background: var(--bl-surface-alt, #1a1a1a);
-  color: var(--bl-text, #eaeaea);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.checkBtn {
+  width: 100%;
+  min-height: 32px;
   border-radius: 6px;
-  padding: 6px 8px;
-  font-size: 13px;
+  border: 1px solid rgba(13, 202, 240, 0.25);
+  background: rgba(13, 202, 240, 0.04);
+  color: rgba(13, 202, 240, 0.65);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-transform: none;
+  letter-spacing: 0.4px;
+}
+
+.checkBtn:hover {
+  background: rgba(13, 202, 240, 0.08);
+  color: rgba(13, 202, 240, 0.85);
+  border-color: rgba(13, 202, 240, 0.4);
+}
+
+.testButtonsRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.confirmBtn {
+  width: 100%;
+  min-height: 30px;
+  border-radius: 6px;
+  border: 1px solid rgba(76, 175, 80, 0.4);
+  background: rgba(76, 175, 80, 0.08);
+  color: #4CAF50;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.confirmBtn:hover {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: rgba(76, 175, 80, 0.6);
+}
+
+.cancelBtn {
+  width: 100%;
+  min-height: 28px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 9px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cancelBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Music with me compact inside Route */
+.musicWithMeCompact {
+  margin-top: 3px;
+  padding: 4px 6px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* Timing column — compact semantic stack */
+.timingStack {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* ===== CONTROLS ===== */
+.controlRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 18px;
+}
+
+.controlLabel {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.45);
+  min-width: 50px;
+  flex-shrink: 0;
+}
+
+.controlSelect {
+  flex: 1;
+  padding: 1px 4px;
+  font-size: 9px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  color: var(--bl-text-primary, #fff);
+  outline: none;
+  cursor: pointer;
+}
+
+.controlSelect:focus {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.controlSlider {
+  flex: 1;
+  max-width: 120px;
+  accent-color: var(--bl-accent, #0dcaf0);
+}
+
+.controlVal {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.4);
+  min-width: 26px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== COMPACT ROW (for summary info) ===== */
+.compactRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 14px;
+  margin-top: 0;
+}
+
+.compactLabel {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.4);
+  min-width: 45px;
+  flex-shrink: 0;
+}
+
+.compactValue {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== SUBTITLE (for subsections) ===== */
+.subTitle {
+  font-size: 8px;
+  letter-spacing: 0.3px;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 4px;
+  margin-bottom: 1px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Route section — timing block subtitle */
+.routeTimingStack .subTitle {
+  margin-top: 6px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* ===== SPLIT BUTTON — HERO CTA ===== */
+.splitBtn {
+  width: 100%;
+  min-height: 36px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 210, 255, 0.35);
+  background: rgba(0, 210, 255, 0.07);
+  color: rgba(0, 210, 255, 0.7);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 2px;
+  margin-bottom: 4px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  box-shadow:
+    0 0 12px rgba(0, 210, 255, 0.08),
+    inset 0 0 12px rgba(0, 210, 255, 0.04);
+}
+
+.splitBtn:hover {
+  border-color: rgba(0, 210, 255, 0.55);
+  background: rgba(0, 210, 255, 0.12);
+  color: rgba(0, 210, 255, 0.95);
+  box-shadow: 0 0 18px rgba(0, 210, 255, 0.15);
+}
+
+.splitActive {
+  border-color: rgba(76, 175, 80, 0.6);
+  background: rgba(76, 175, 80, 0.15);
+  color: #4CAF50;
+  box-shadow:
+    0 0 16px rgba(76, 175, 80, 0.25),
+    inset 0 0 8px rgba(76, 175, 80, 0.08);
+}
+
+.splitActive:hover {
+  background: rgba(76, 175, 80, 0.2);
+  box-shadow:
+    0 0 20px rgba(76, 175, 80, 0.3),
+    inset 0 0 10px rgba(76, 175, 80, 0.1);
+}
+
+/* ===== TIMING ROW ===== */
+.timingRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 0;
+}
+
+.chipBtn {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 9px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.chipBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.timingVal {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.45);
+  min-width: 30px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== ROW HELPER (for Row component) ===== */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 18px;
+}
+
+.label {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.5);
+  min-width: 70px;
+  flex-shrink: 0;
 }
 
 .slider {
   flex: 1;
-  min-width: 60px;
-  accent-color: rgba(255, 60, 60, 0.8);
+  max-width: 90px;
+  accent-color: var(--bl-accent, #0dcaf0);
+}
+
+/* AutoMix column — controlled slider widths for dual-lane clarity */
+[data-col="automix"] .mainLane .slider,
+[data-col="automix"] .bvLane .slider {
+  max-width: 90px;
+  min-width: 80px;
+  flex: none;
+}
+
+/* Inactive AutoMix slider — darkened and calm */
+.sliderInactive {
+  opacity: 0.3;
+  filter: saturate(0);
 }
 
 .val {
-  font-size: 12px;
-  min-width: 38px;
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.35);
+  min-width: 24px;
   text-align: right;
-  opacity: 0.6;
   font-variant-numeric: tabular-nums;
 }
 
 .chk {
-  accent-color: rgba(255, 60, 60, 0.8);
-}
-
-.actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.btn {
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 50, 50, 0.35);
-  background: rgba(255, 50, 50, 0.08);
-  color: var(--bl-text, #eaeaea);
-  font-size: 14px;
+  accent-color: var(--bl-accent, #0dcaf0);
   cursor: pointer;
-  transition: background 0.15s;
 }
 
-.btn:hover {
-  background: rgba(255, 50, 50, 0.22);
+/* ===== TOGGLE ROW (blue dot activator) ===== */
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 18px;
 }
 
-.btnPrimary {
-  composes: btn;
-  background: rgba(255, 50, 50, 0.25);
-  border-color: rgba(255, 50, 50, 0.6);
+.dotToggle {
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.btnSmall {
-  composes: btn;
-  flex: none;
-  padding: 4px 10px;
-  font-size: 12px;
+.dotToggle:hover {
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
+.dotToggleActive {
+  background: var(--bl-accent, #0dcaf0);
+  border-color: color-mix(in srgb, var(--bl-accent, #0dcaf0) 70%, white 30%);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--bl-accent, #0dcaf0) 35%, transparent);
+}
+
+.toggleLabel {
+  min-width: 80px;
+  max-width: 100px;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+/* ===== ROUTE SUMMARY ===== */
+.routeSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 2px;
+  padding-top: 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+  font-size: 8px;
+  align-items: center;
+}
+
+.summaryKey {
+  color: rgba(255, 255, 255, 0.38);
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+.summaryVal {
+  color: rgba(255, 255, 255, 0.55);
+  text-align: right;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== HINT ===== */
 .hint {
-  font-size: 12px;
-  opacity: 0.4;
-  margin-top: 12px;
-  line-height: 1.4;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.26);
+  text-align: center;
+  padding: 0;
+  line-height: 1.3;
+}
+
+/* ===== AUTO MIX VERTICAL STACK ===== */
+.automixStack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ===== SECTION HEADER (title + spacer + master BV row) ===== */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 6px;
+}
+
+.masterBvSpacer {
+  flex: 1;
+}
+
+.masterBvRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+.masterBvDot {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(0, 210, 255, 0.5);
+  background: transparent;
+  transition: all 0.15s ease;
+}
+
+.masterBvDotActive {
+  background: var(--bl-accent, #0dcaf0);
+  border-color: var(--bl-accent, #0dcaf0);
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
+}
+
+.masterBvLabel {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.3px;
+}
+
+.masterBvSlider {
+  height: 6px;
+  min-width: 100px;
+  flex: 1;
+  accent-color: var(--bl-accent, #0dcaf0);
+  transition: opacity 0.15s ease, filter 0.15s ease;
+}
+
+.masterBvSliderInactive {
+  opacity: 0.35;
+  filter: saturate(0.3);
+}
+
+.masterBvSliderActive {
+  opacity: 1;
+  filter: saturate(1);
+}
+
+/* ===== DUAL AUTO MIX ROW (dual-lane: main + BV) ===== */
+.dualAutoMixRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 18px;
+}
+
+.dualLeft {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 52%;
+  min-width: 0;
+}
+
+.dualRight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 48%;
+  min-width: 0;
+}
+
+.dualDivider {
+  width: 1px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  margin: 0 3px;
+}
+
+.bvLabel {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.35);
+  min-width: 65px;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+/* ===== BACK VOCAL SLIDER (dark by default, bright when active) ===== */
+.bvSlider {
+  opacity: 0.35;
+  filter: saturate(0.3);
+  transition: opacity 0.15s, filter 0.15s;
+}
+
+.bvSliderActive {
+  opacity: 0.7;
+  filter: saturate(0.8);
+}
+
+.bvSlider:hover,
+.bvSlider:focus {
+  opacity: 1;
+  filter: saturate(1);
+}
+
+/* ===== SCROLLBAR ===== */
+.root::-webkit-scrollbar {
+  width: 4px;
+}
+
+.root::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
 }

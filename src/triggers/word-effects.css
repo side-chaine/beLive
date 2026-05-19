@@ -327,7 +327,7 @@ html[data-visual-tier="balanced"] [data-word-fx="neon"][data-word-focus="strong"
 }
 
 [data-word-fx="neon"][data-block-type="prechorus"] {
-  --bl-neon-color: var(--bl-block-prechorus, #FF9800);
+  --bl-neon-color: var(--bl-block-prechorus, #FFEB3B);
 }
 
 [data-word-fx="neon"][data-block-type="chorus"] {
@@ -335,15 +335,15 @@ html[data-visual-tier="balanced"] [data-word-fx="neon"][data-word-focus="strong"
 }
 
 [data-word-fx="neon"][data-block-type="bridge"] {
-  --bl-neon-color: var(--bl-block-bridge, #6f42c1);
+  --bl-neon-color: var(--bl-block-bridge, #9C27B0);
 }
 
 [data-word-fx="neon"][data-block-type="intro"] {
-  --bl-neon-color: var(--bl-block-intro, #03A9F4);
+  --bl-neon-color: var(--bl-block-intro, #2196F3);
 }
 
 [data-word-fx="neon"][data-block-type="outro"] {
-  --bl-neon-color: var(--bl-block-outro, #9E9E9E);
+  --bl-neon-color: var(--bl-block-outro, #00BCD4);
 }
 
 /* === FX: Underline Sweep (strongest rehearsal-safe mode) === */

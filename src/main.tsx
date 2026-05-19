@@ -84,6 +84,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const ld = mm.lyricsDisplay || (window as any).lyricsDisplay;
       const hasBlocks = !!(ld && Array.isArray(ld.textBlocks) && ld.textBlocks.length > 0);
       mm.markers.forEach((marker: any) => {
+        // M2 markers keep their color (#1a1a1a) — never overwrite
+        if (marker.markerType === 'M2') return;
         const newBlockType = mm._getBlockTypeForLine(marker.lineIndex);
         if (!hasBlocks || newBlockType === 'unknown') return;
         const newColor = mm._getColorForBlockType(newBlockType);
@@ -99,7 +101,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (marker && typeof marker.lineIndex === 'number' && marker.lineIndex >= 0 && marker.lineIndex < totalLyricLines && !usedLineIndexes.has(marker.lineIndex)) {
           usedLineIndexes.add(marker.lineIndex); const updatedMarker = { ...marker };
           if (!updatedMarker.blockType) updatedMarker.blockType = mm._getBlockTypeForLine(marker.lineIndex);
-          if (!updatedMarker.color) { const typeForColor = updatedMarker.blockType && updatedMarker.blockType !== 'unknown' ? updatedMarker.blockType : mm._getBlockTypeForLine(marker.lineIndex); updatedMarker.color = mm._getColorForBlockType(typeForColor); }
+          // M2 markers keep their color (#1a1a1a) — never overwrite with block color
+          if (marker.markerType === 'M2') {
+            if (!updatedMarker.blockType) updatedMarker.blockType = 'closing';
+            if (!updatedMarker.color) updatedMarker.color = '#1a1a1a';
+          } else if (!updatedMarker.color) { const typeForColor = updatedMarker.blockType && updatedMarker.blockType !== 'unknown' ? updatedMarker.blockType : mm._getBlockTypeForLine(marker.lineIndex); updatedMarker.color = mm._getColorForBlockType(typeForColor); }
           validMarkers.push(updatedMarker);
         }
       });
@@ -133,7 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         blockType,
         color: markerColor,
       };
-      const existingIndex = mm.markers.findIndex((m: any) => m.lineIndex === lineIndex);
+      const existingIndex = mm.markers.findIndex((m: any) => m.lineIndex === lineIndex && m.markerType !== 'M2');
       if (existingIndex >= 0) {
         mm.markers[existingIndex] = marker;
         mm._notifySubscribers?.('markerUpdated', marker);
@@ -286,6 +292,105 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   }
 
+  // M2: Optional closing marker — cuts off playback/run-through at a specific point
+  // Does NOT replace M1. M2 is a separate marker that sets block endTime.
+  // Without M2, the next M1 naturally closes the block (Priority 2 in getBlockTimeRange).
+  // With M2, the block ends at M2 time — cutting off any run-through/interlude.
+  mm._addM2Marker = (): void => {
+    const ae = mm.audioEngine || (window as any).audioEngine;
+    if (!ae) {
+      console.error('[M2] Audio engine not available');
+      return;
+    }
+
+    const currentTime = ae.getCurrentTime();
+
+    // Use the active line from DOM — this is the block user is currently working on
+    const activeLine = document.querySelector<HTMLElement>('.lyric-line.active');
+    const ld = mm.lyricsDisplay || (window as any).lyricsDisplay;
+    const blocks = ld?.textBlocks || [];
+
+    let afterBlockId = '';
+    if (activeLine) {
+      const indexStr = activeLine.dataset.index;
+      if (indexStr) {
+        const activeLineIndex = parseInt(indexStr, 10);
+        if (!isNaN(activeLineIndex)) {
+          // Find which block this active line belongs to
+          const block = blocks.find((b: any) => b.lineIndices?.includes(activeLineIndex));
+          if (block) {
+            // Check if this block has at least one M1 marker
+            const hasM1 = mm.markers.some(
+              (m: any) => m.markerType !== 'M2' && block.lineIndices?.includes(m.lineIndex)
+            );
+            if (hasM1) {
+              afterBlockId = block.id;
+              console.log('[M2] Active line', activeLineIndex, '→ block', block.id, '(has M1 markers)');
+            } else {
+              // Active line's block has no M1 yet — find previous block that has markers
+              const blockIdx = blocks.indexOf(block);
+              for (let i = blockIdx - 1; i >= 0; i--) {
+                const prevBlock = blocks[i];
+                const hasPrevM1 = mm.markers.some(
+                  (m: any) => m.markerType !== 'M2' && prevBlock.lineIndices?.includes(m.lineIndex)
+                );
+                if (hasPrevM1) {
+                  afterBlockId = prevBlock.id;
+                  console.log('[M2] Active line block has no M1 → using previous block', prevBlock.id);
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (!afterBlockId) {
+      // Fallback: find block with the most recent M1 before currentTime
+      const lastM1 = [...mm.markers]
+        .filter((m: any) => m.markerType !== 'M2' && m.time <= currentTime)
+        .sort((a: any, b: any) => b.time - a.time)[0];
+      if (lastM1) {
+        const block = blocks.find((b: any) => b.lineIndices?.includes(lastM1.lineIndex));
+        if (block) afterBlockId = block.id;
+      }
+    }
+
+    if (!afterBlockId) {
+      afterBlockId = 'block-0';
+    }
+
+    // Check if M2 already exists for this block — update it
+    const existingM2 = mm.markers.find(
+      (m: any) => m.markerType === 'M2' && m.afterBlockId === afterBlockId
+    );
+    if (existingM2) {
+      mm.updateMarker(existingM2.id, {
+        time: currentTime,
+        isSuggested: false,
+      });
+      console.log('[M2] Updated M2 for block', afterBlockId, 'time:', currentTime.toFixed(2) + 's');
+    } else {
+      // Create new M2 marker — NOT attached to any line, purely a time boundary
+      const m2Marker = {
+        id: `m2-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        lineIndex: -1,
+        time: currentTime,
+        text: '⟩',
+        markerType: 'M2' as const,
+        afterBlockId,
+        blockType: 'closing',
+        color: '#1a1a1a',
+        isSuggested: false,
+      };
+      mm.markers.push(m2Marker);
+      mm.markers.sort((a: any, b: any) => a.time - b.time);
+      mm._notifySubscribers?.('markerAdded', m2Marker);
+      console.log('[M2] Placed M2 closing marker after block', afterBlockId, 'time:', currentTime.toFixed(2) + 's');
+    }
+  };
+
   // F44: notification utility
   import('./utils/notification').then(n => {
     (window as any).showAppNotification = n.showAppNotification;
@@ -340,13 +445,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       const activeModel = customEvent.detail;
       const operatorButton = document.getElementById('toggle-loopblock-mode');
       if (operatorButton) {
+          operatorButton.innerHTML = '';
+          const span = document.createElement('span');
+          span.className = 'operator-text';
           if (activeModel) {
-              operatorButton.innerHTML = `<span class="operator-text">${activeModel.shortName}</span>`;
+              span.textContent = activeModel.shortName;
               operatorButton.classList.add('ai-active');
           } else {
-              operatorButton.innerHTML = `<span class="operator-text">Operator</span>`;
+              span.textContent = 'Operator';
               operatorButton.classList.remove('ai-active');
           }
+          operatorButton.appendChild(span);
       }
   });
 
@@ -354,13 +463,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const initialActiveModel = aiHub.getActiveModel();
   const operatorButton = document.getElementById('toggle-loopblock-mode');
   if (operatorButton) {
+      operatorButton.innerHTML = '';
+      const span = document.createElement('span');
+      span.className = 'operator-text';
       if (initialActiveModel) {
-          operatorButton.innerHTML = `<span class="operator-text">${initialActiveModel.shortName}</span>`;
+          span.textContent = initialActiveModel.shortName;
           operatorButton.classList.add('ai-active');
       } else {
-          operatorButton.innerHTML = `<span class="operator-text">Operator</span>`;
+          span.textContent = 'Operator';
           operatorButton.classList.remove('ai-active');
       }
+      operatorButton.appendChild(span);
   }
 });
 

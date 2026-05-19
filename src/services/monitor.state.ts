@@ -16,6 +16,12 @@ export function monitorGetState(this: any) {
     autoChorusLevel: this.autoChorusLevel,
     autoBridgeOn: this.autoBridgeOn,
     autoBridgeLevel: this.autoBridgeLevel,
+    autoIntroOn: this.autoIntroOn,
+    autoIntroLevel: this.autoIntroLevel,
+    autoPreChorusOn: this.autoPreChorusOn,
+    autoPreChorusLevel: this.autoPreChorusLevel,
+    autoOutroOn: this.autoOutroOn,
+    autoOutroLevel: this.autoOutroLevel,
   };
 }
 
@@ -37,6 +43,12 @@ export function monitorPersist(this: any) {
       ['monitor:autoChorusLevel', String(this.autoChorusLevel)],
       ['monitor:autoBridgeOn', String(this.autoBridgeOn)],
       ['monitor:autoBridgeLevel', String(this.autoBridgeLevel)],
+      ['monitor:autoIntroOn', String(this.autoIntroOn)],
+      ['monitor:autoIntroLevel', String(this.autoIntroLevel)],
+      ['monitor:autoPreChorusOn', String(this.autoPreChorusOn)],
+      ['monitor:autoPreChorusLevel', String(this.autoPreChorusLevel)],
+      ['monitor:autoOutroOn', String(this.autoOutroOn)],
+      ['monitor:autoOutroLevel', String(this.autoOutroLevel)],
     ]) {
       localStorage.setItem(k, v);
     }
@@ -82,6 +94,42 @@ export function monitorSetAutoBridge(this: any, on: boolean) {
 
 export function monitorSetAutoBridgeLevel(this: any, level: number) {
   this.autoBridgeLevel = Math.max(0, Math.min(1, Number(level) || 0));
+  this._persist();
+  this._updateAutoVocalGainForLine();
+}
+
+export function monitorSetAutoIntro(this: any, on: boolean) {
+  this.autoIntroOn = !!on;
+  this._persist();
+  this._updateAutoVocalGainForLine();
+}
+
+export function monitorSetAutoIntroLevel(this: any, level: number) {
+  this.autoIntroLevel = Math.max(0, Math.min(1, Number(level) || 0));
+  this._persist();
+  this._updateAutoVocalGainForLine();
+}
+
+export function monitorSetAutoPreChorus(this: any, on: boolean) {
+  this.autoPreChorusOn = !!on;
+  this._persist();
+  this._updateAutoVocalGainForLine();
+}
+
+export function monitorSetAutoPreChorusLevel(this: any, level: number) {
+  this.autoPreChorusLevel = Math.max(0, Math.min(1, Number(level) || 0));
+  this._persist();
+  this._updateAutoVocalGainForLine();
+}
+
+export function monitorSetAutoOutro(this: any, on: boolean) {
+  this.autoOutroOn = !!on;
+  this._persist();
+  this._updateAutoVocalGainForLine();
+}
+
+export function monitorSetAutoOutroLevel(this: any, level: number) {
+  this.autoOutroLevel = Math.max(0, Math.min(1, Number(level) || 0));
   this._persist();
   this._updateAutoVocalGainForLine();
 }

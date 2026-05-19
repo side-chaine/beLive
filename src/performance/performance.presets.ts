@@ -64,6 +64,17 @@ export const PERFORMANCE_PRESETS: Record<PerformanceTier, VisualBudget> = {
       allowAvatar: false,
       maxSceneComplexity: 'none',
     },
+    visualMixer: {
+      enabled: true,       // TC-13-19: Enable for testing
+      maxCards: 8,
+      cardUpdateFps: 20,
+      allowPulsation: true,  // TC-13-19: Enable for testing
+      allowCardGlow: true,
+      allowHitFlash: true,
+      allowWaveform: true,
+      maxPulseIntensity: 'off',
+      allowScenarios: false,
+    },
   },
 
   /**
@@ -102,6 +113,17 @@ export const PERFORMANCE_PRESETS: Record<PerformanceTier, VisualBudget> = {
       allow3D: false,
       allowAvatar: false,
       maxSceneComplexity: 'none',
+    },
+    visualMixer: {
+      enabled: true,
+      maxCards: 6,
+      cardUpdateFps: 20,
+      allowPulsation: true,
+      allowCardGlow: false,
+      allowHitFlash: true,
+      allowWaveform: true,
+      maxPulseIntensity: 'soft',
+      allowScenarios: true,
     },
   },
 
@@ -142,6 +164,17 @@ export const PERFORMANCE_PRESETS: Record<PerformanceTier, VisualBudget> = {
       allowAvatar: true,
       maxSceneComplexity: 'basic',
     },
+    visualMixer: {
+      enabled: true,
+      maxCards: 8,
+      cardUpdateFps: 30,
+      allowPulsation: true,
+      allowCardGlow: true,
+      allowHitFlash: true,
+      allowWaveform: true,
+      maxPulseIntensity: 'medium',
+      allowScenarios: true,
+    },
   },
 
   /**
@@ -180,6 +213,17 @@ export const PERFORMANCE_PRESETS: Record<PerformanceTier, VisualBudget> = {
       allow3D: true,
       allowAvatar: true,
       maxSceneComplexity: 'full',
+    },
+    visualMixer: {
+      enabled: true,
+      maxCards: 16,
+      cardUpdateFps: 30,
+      allowPulsation: true,
+      allowCardGlow: true,
+      allowHitFlash: true,
+      allowWaveform: true,
+      maxPulseIntensity: 'strong',
+      allowScenarios: true,
     },
   },
 };

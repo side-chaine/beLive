@@ -34,14 +34,15 @@ export function detectPerformanceTier(): PerformanceTier {
     const cores = navigator.hardwareConcurrency ?? 2;
 
     // Device memory in GB (Chrome-only, but widely supported on desktop)
-    const memory = (navigator as any).deviceMemory ?? 2;
+    // NOTE: deviceMemory NOT supported on macOS Chrome — fallback to 8GB (reasonable desktop default)
+    const memory = (navigator as any).deviceMemory ?? 8;
 
     // Mobile detection
     const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
     // Tier selection logic
-    if (cores <= 2 || memory <= 2) {
-      // Low-end device: minimal visuals
+    if (cores <= 2 && memory <= 4) {
+      // Low-end device: minimal visuals (requires BOTH low cores AND low memory)
       return 'lite';
     }
 

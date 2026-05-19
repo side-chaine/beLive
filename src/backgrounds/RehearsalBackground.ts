@@ -10,6 +10,8 @@ export class RehearsalBackgroundManager {
   private _currentBlockId: string | null = null;
   private _cache: Map<string, HTMLImageElement>;
   private _decoded: Map<string, boolean>;
+  private _coverArtActive: boolean = false;  // TC-COVER-04
+  private _coverIsDark: boolean = false;     // TC-COVER-04
 
   constructor(imagePaths: string[], interval: number = 0) {
     this.imagePaths = imagePaths;
@@ -86,7 +88,13 @@ export class RehearsalBackgroundManager {
     }
     const apply = (): void => {
       if (!this.isActive) return;
-      this.body.style.setProperty('background-image', `url('${imagePath}')`);
+      if (this._coverArtActive) {
+        const dimAlpha = this._coverIsDark ? 0.45 : 0.70;
+        this.body.style.setProperty('background-image',
+          `linear-gradient(rgba(0,0,0,${dimAlpha}), rgba(0,0,0,${dimAlpha})), url('${imagePath}')`);
+      } else {
+        this.body.style.setProperty('background-image', `url('${imagePath}')`);
+      }
     };
     if (img.complete && img.naturalWidth > 0) {
       apply();
@@ -107,6 +115,19 @@ export class RehearsalBackgroundManager {
       };
       setTimeout(tryApply, 300);
     }
+  }
+
+  // TC-COVER-04: Update dimming when cover art state changes
+  setCoverArtState(active: boolean, isDark?: boolean): void {
+    const wasActive = this._coverArtActive;
+    if (this._coverArtActive === active && this._coverIsDark === !!isDark) return;
+    this._coverArtActive = active;
+    this._coverIsDark = !!isDark;
+    // New random background when cover art first appears on a track
+    if (active && !wasActive) {
+      this.lastImageIndex = -1;
+    }
+    this._setBackground();
   }
 
   bindToBlockChanges(

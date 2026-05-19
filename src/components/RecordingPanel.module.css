@@ -2,7 +2,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 0;
+  height: 100%;
+  min-height: 0;
 }
 
 .recBtn {

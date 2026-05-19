@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useModeStore } from '../stores/mode.store';
 import { useTextStyleStore } from '../stores/textStyle.store';
 import { useTrackStore } from '../stores/track.store';
+import { usePlateStore } from '../stores/plate.store';
 import { useThemeStore } from '../theme/store/theme-store';
 import { getThemeById } from '../theme/themes/index';
+import { TRANSITION_PRESETS } from '../data/transition-presets';
 import {
   FONT_CATEGORIES,
   TRANSITIONS,
@@ -50,10 +52,7 @@ const LINE_OTHERS_LABELS: Record<LineOthersLevel, string> = {
   low: 'Open',
 };
 
-// Bank badge for each lane (v1 — static / semantic)
-const LINE_ACTIVE_BANK = 'A';
-const LINE_NEXT_BANK = 'C';
-const LINE_OTHERS_BANK = 'D';
+// Bank badge for each lane (v1 — static / semantic) — REMOVED TC-022: decorative noise
 
 const WORD_FX_LABELS: Record<WordFxMode, string> = {
   progress: 'Progress',
@@ -262,6 +261,18 @@ export function StylesDeck() {
   const increase = useTextStyleStore(st => st.increaseFontScale);
   const decrease = useTextStyleStore(st => st.decreaseFontScale);
   const reset = useTextStyleStore(st => st.resetFontScale);
+
+  // W12: Plate settings
+  const plateWidth = usePlateStore(s => s.width);
+  const platePosition = usePlateStore(s => s.position);
+  const glowIntensity = usePlateStore(s => s.glowIntensity);
+  const vignetteIntensity = usePlateStore(s => s.vignetteIntensity);
+  const transitionPreset = usePlateStore(s => s.transitionPreset);
+  const setWidth = usePlateStore(s => s.setWidth);
+  const setPosition = usePlateStore(s => s.setPosition);
+  const setGlowIntensity = usePlateStore(s => s.setGlowIntensity);
+  const setVignetteIntensity = usePlateStore(s => s.setVignetteIntensity);
+  const setTransitionPreset = usePlateStore(s => s.setTransitionPreset);
 
   const [selectedPreset, setSelectedPreset] = useState<string>(meta.presets[0]);
   const [lineFxModalOpen, setLineFxModalOpen] = useState(false);
@@ -485,7 +496,6 @@ export function StylesDeck() {
                 ))}
               </div>
               <span className={s.lanePresetName}>{LINE_ACTIVE_LABELS[lineActiveLevel]}</span>
-              <span className={s.bankBadge} data-line-bank="A">{LINE_ACTIVE_BANK}</span>
             </div>
 
             {/* Next Line lane */}
@@ -503,7 +513,6 @@ export function StylesDeck() {
                 ))}
               </div>
               <span className={s.lanePresetName}>{LINE_NEXT_LABELS[lineNextLevel]}</span>
-              <span className={s.bankBadge} data-line-bank="C">{LINE_NEXT_BANK}</span>
             </div>
 
             {/* Others: TrackMap toggle + Presence rail */}
@@ -600,6 +609,77 @@ export function StylesDeck() {
                     : selectedPreset
                   }
                 </span>
+              </div>
+            </div>
+          </section>
+
+          {/* ─── ПЛАШКА ─── */}
+          <section className={`${s.section} ${s.plateSection}`}>
+            <div className={s.sectionHead}>
+              <div className={s.sectionTitle}>Плашка</div>
+            </div>
+
+            {/* Width */}
+            <div className={s.controlRow}>
+              <span className={s.controlLabel}>Ширина</span>
+              <div className={s.scaleGroup}>
+                <button type="button" className={s.scaleBtn} onClick={() => setWidth(plateWidth - 5)}>−</button>
+                <span className={s.scaleVal}>{plateWidth}%</span>
+                <button type="button" className={s.scaleBtn} onClick={() => setWidth(plateWidth + 5)}>+</button>
+              </div>
+            </div>
+
+            {/* Position */}
+            <div className={s.controlRow}>
+              <span className={s.controlLabel}>Позиция</span>
+              <div className={s.chipRow}>
+                {(['left', 'center', 'right'] as const).map(pos => (
+                  <button
+                    type="button"
+                    key={pos}
+                    className={`${s.chipBtn} ${platePosition === pos ? s.chipBtnActive : ''}`}
+                    onClick={() => setPosition(pos)}
+                  >
+                    {pos === 'left' ? '←' : pos === 'right' ? '→' : '↔'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Glow */}
+            <div className={s.controlRow}>
+              <span className={s.controlLabel}>Свечение</span>
+              <div className={s.scaleGroup}>
+                <button type="button" className={s.scaleBtn} onClick={() => setGlowIntensity(glowIntensity - 10)}>−</button>
+                <span className={s.scaleVal}>{glowIntensity}%</span>
+                <button type="button" className={s.scaleBtn} onClick={() => setGlowIntensity(glowIntensity + 10)}>+</button>
+              </div>
+            </div>
+
+            {/* Vignette */}
+            <div className={s.controlRow}>
+              <span className={s.controlLabel}>Края</span>
+              <div className={s.scaleGroup}>
+                <button type="button" className={s.scaleBtn} onClick={() => setVignetteIntensity(vignetteIntensity - 10)}>−</button>
+                <span className={s.scaleVal}>{vignetteIntensity}%</span>
+                <button type="button" className={s.scaleBtn} onClick={() => setVignetteIntensity(vignetteIntensity + 10)}>+</button>
+              </div>
+            </div>
+
+            {/* Transition Preset */}
+            <div className={s.controlRow}>
+              <span className={s.controlLabel}>Переход</span>
+              <div className={s.presetStrip}>
+                {Object.values(TRANSITION_PRESETS).map(preset => (
+                  <button
+                    type="button"
+                    key={preset.id}
+                    className={`${s.presetBtn} ${transitionPreset === preset.id ? s.presetBtnActive : ''}`}
+                    onClick={() => setTransitionPreset(preset.id)}
+                  >
+                    {preset.name}
+                  </button>
+                ))}
               </div>
             </div>
           </section>

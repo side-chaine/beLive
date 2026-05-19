@@ -1,5 +1,22 @@
 import { useMonitorStore } from '../stores/monitor.store';
-import { monitorGetState, monitorPersist, monitorSetMusicLevel, monitorSetAutoVerse, monitorSetAutoVerseLevel, monitorSetAutoChorus, monitorSetAutoChorusLevel, monitorSetAutoBridge, monitorSetAutoBridgeLevel, monitorSetDelayMs } from '../services/monitor.state';
+import {
+  monitorGetState,
+  monitorPersist,
+  monitorSetMusicLevel,
+  monitorSetAutoVerse,
+  monitorSetAutoVerseLevel,
+  monitorSetAutoChorus,
+  monitorSetAutoChorusLevel,
+  monitorSetAutoBridge,
+  monitorSetAutoBridgeLevel,
+  monitorSetAutoIntro,
+  monitorSetAutoIntroLevel,
+  monitorSetAutoPreChorus,
+  monitorSetAutoPreChorusLevel,
+  monitorSetAutoOutro,
+  monitorSetAutoOutroLevel,
+  monitorSetDelayMs
+} from '../services/monitor.state';
 
 /* -------- types -------- */
 interface LegacyMonitorState {
@@ -19,6 +36,12 @@ interface LegacyMonitorState {
   autoChorusLevel?: number;
   autoBridgeOn?: boolean;
   autoBridgeLevel?: number;
+  autoIntroOn?: boolean;
+  autoIntroLevel?: number;
+  autoPreChorusOn?: boolean;
+  autoPreChorusLevel?: number;
+  autoOutroOn?: boolean;
+  autoOutroLevel?: number;
 }
 
 /* -------- helpers -------- */
@@ -38,11 +61,17 @@ const mapLegacyState = (s: LegacyMonitorState) => ({
   vocalToMain:      !!s.vocalToMain,
   vocalHallLevel:   s.vocalHallLevel ?? 0.2,
   autoVerseOn:      !!s.autoVerseOn,
-  autoVerseLevel:   s.autoVerseLevel ?? 0.1,
+  autoVerseLevel:   s.autoVerseLevel ?? 0.3,
   autoChorusOn:     !!s.autoChorusOn,
   autoChorusLevel:  s.autoChorusLevel ?? 0.3,
   autoBridgeOn:     !!s.autoBridgeOn,
-  autoBridgeLevel:  s.autoBridgeLevel ?? 0.25,
+  autoBridgeLevel:  s.autoBridgeLevel ?? 0.3,
+  autoIntroOn:      !!s.autoIntroOn,
+  autoIntroLevel:   s.autoIntroLevel ?? 0.3,
+  autoPreChorusOn:  !!s.autoPreChorusOn,
+  autoPreChorusLevel: s.autoPreChorusLevel ?? 0.3,
+  autoOutroOn:      !!s.autoOutroOn,
+  autoOutroLevel:   s.autoOutroLevel ?? 0.3,
 });
 
 /* -------- hydrate -------- */
@@ -53,7 +82,11 @@ function tryHydrate() {
   const mix = getMix();
   if (!mix?.getState) return;
 
-  // F60: patch-in-place exact micro-port for getState + _persist + setMusicLevel
+  // F60: Read ORIGINAL engine state BEFORE patch-in-place
+  // This ensures we capture full 6-block truth from engine's native getState()
+  const originalState = mix.getState();
+
+  // Patch-in-place exact micro-port for getState + _persist + all AutoMix setters
   mix.getState = monitorGetState;
   mix._persist = monitorPersist;
   mix.setMusicLevel = monitorSetMusicLevel;
@@ -63,10 +96,16 @@ function tryHydrate() {
   mix.setAutoChorusLevel = monitorSetAutoChorusLevel;
   mix.setAutoBridge = monitorSetAutoBridge;
   mix.setAutoBridgeLevel = monitorSetAutoBridgeLevel;
+  mix.setAutoIntro = monitorSetAutoIntro;
+  mix.setAutoIntroLevel = monitorSetAutoIntroLevel;
+  mix.setAutoPreChorus = monitorSetAutoPreChorus;
+  mix.setAutoPreChorusLevel = monitorSetAutoPreChorusLevel;
+  mix.setAutoOutro = monitorSetAutoOutro;
+  mix.setAutoOutroLevel = monitorSetAutoOutroLevel;
   mix.setDelayMs = monitorSetDelayMs;
 
-  const state = mix.getState();
-  useMonitorStore.getState().syncFromLegacy(mapLegacyState(state));
+  // Use ORIGINAL state for hydration, not patched state
+  useMonitorStore.getState().syncFromLegacy(mapLegacyState(originalState));
   hydrated = true;
 }
 
@@ -125,6 +164,3 @@ export function destroyMonitorBridge() {
     navigator.mediaDevices.removeEventListener('devicechange', onDeviceChange);
   }
 }
-
-// Auto-init
-initMonitorBridge();

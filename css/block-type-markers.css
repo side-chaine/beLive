@@ -10,26 +10,26 @@
 }
 
 .waveform-active .lyric-line.marker-bridge {
-    border-left-color: #6f42c1 !important;
-    color: #6f42c1 !important;
+    border-left-color: #9C27B0 !important;
+    color: #9C27B0 !important;
 }
 
 /* Styles for Pre-Chorus */
 .waveform-active .lyric-line.marker-prechorus {
-    border-left: 5px solid #FF9800; /* Оранжевый */
-    color: #FF9800;
+    border-left: 5px solid #FFEB3B; /* Жёлтый */
+    color: #FFEB3B;
 }
 
 /* Styles for Intro */
 .waveform-active .lyric-line.marker-intro {
-    border-left: 5px solid #03A9F4; /* Светло-синий */
-    color: #03A9F4;
+    border-left: 5px solid #2196F3; /* Синий */
+    color: #2196F3;
 }
 
 /* Styles for Outro */
 .waveform-active .lyric-line.marker-outro {
-    border-left: 5px solid #9E9E9E; /* Серый */
-    color: #9E9E9E;
+    border-left: 5px solid #00BCD4; /* Бирюзовый */
+    color: #00BCD4;
 }
 
 /* Новый стиль для "blank" */

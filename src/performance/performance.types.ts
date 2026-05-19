@@ -111,6 +111,39 @@ export interface PerformanceSceneBudget {
 }
 
 /**
+ * Visual Mixer budget
+ * Controls instrument card pulsation, waveforms, and scenarios
+ */
+export interface PerformanceVisualMixerBudget {
+  /** Enable Visual Mixer */
+  enabled: boolean;
+
+  /** Maximum number of instrument cards to render */
+  maxCards: number;
+
+  /** Card update frequency (frames per second) */
+  cardUpdateFps: number;
+
+  /** Allow pulsation animation */
+  allowPulsation: boolean;
+
+  /** Allow card glow effects */
+  allowCardGlow: boolean;
+
+  /** Allow hit flash effects */
+  allowHitFlash: boolean;
+
+  /** Allow waveform canvas rendering */
+  allowWaveform: boolean;
+
+  /** Maximum pulsation intensity level */
+  maxPulseIntensity: 'off' | 'soft' | 'medium' | 'strong';
+
+  /** Allow quick scenarios */
+  allowScenarios: boolean;
+}
+
+/**
  * Complete visual budget for a performance tier
  * Aggregates all domain budgets into a single policy object
  */
@@ -132,4 +165,7 @@ export interface VisualBudget {
 
   /** Scene/avatar visual budget */
   scene: PerformanceSceneBudget;
+
+  /** Visual Mixer budget */
+  visualMixer: PerformanceVisualMixerBudget;
 }

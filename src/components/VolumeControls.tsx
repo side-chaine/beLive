@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { useAudioStore } from '../stores/audio.store';
+import { useStemStore } from '../stem/stem.store';
 import { useModeStore } from '../stores/mode.store';
 import { BpmControl } from './BpmControl';
 
@@ -65,21 +66,21 @@ export function VolumeControls() {
   const vocalMix = useAudioStore((s) => s.vocalMixEnabled);
   const mic = useAudioStore((s) => s.micEnabled);
   const micVolume = useAudioStore((s) => s.micVolume);
-  const instVol = useAudioStore((s) => s.instrumentalVolume);
-  const vocVol = useAudioStore((s) => s.vocalsVolume);
+  const instVol = useStemStore((s) => s.stemVolumes['instrumental'] ?? 1);
+  const vocVol = useStemStore((s) => s.stemVolumes['vocals'] ?? 1);
   const mode = useModeStore((s) => s.mode);
   const color = MODE_COLORS[mode] || '#fff';
 
   const setInstVol = useCallback((v: number) => {
     const ae = (window as any).audioEngine;
     if (ae) ae.setInstrumentalVolume(v);
-    useAudioStore.setState({ instrumentalVolume: v });
+    useStemStore.getState().setStemVolume('instrumental', v);
   }, []);
 
   const setVocVol = useCallback((v: number) => {
     const ae = (window as any).audioEngine;
     if (ae) ae.setVocalsVolume(v);
-    useAudioStore.setState({ vocalsVolume: v });
+    useStemStore.getState().setStemVolume('vocals', v);
   }, []);
 
   const toggleVocalMix = useCallback(() => {

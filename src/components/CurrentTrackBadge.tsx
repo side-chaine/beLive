@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useTrackStore } from '../stores/track.store';
 import { useModeStore } from '../stores/mode.store';
+import { CoverArt } from './CoverArt';
 
 const MODE_COLORS: Record<string, string> = {
   concert: '#3498db',
@@ -16,7 +17,7 @@ export function CurrentTrackBadge() {
 
   const text = useMemo(() => {
     if (!current) return '';
-    const { artist, title } = current;
+    const { artist, title, coverArtUrl } = current;
     if (!artist) return title || '';
     if (!title) return artist;
     if (title.startsWith(artist)) {
@@ -28,20 +29,34 @@ export function CurrentTrackBadge() {
 
   if (!text) return null;
 
-  const style: React.CSSProperties = {
-    maxWidth: 400,
+  const { coverArtUrl } = current || {};
+
+  const containerStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    padding: '4px 10px',
+    borderRadius: 8,
+    background: `${color}15`,
+    border: `1px solid ${color}30`,
+    maxWidth: 420,
+    cursor: 'default',
+  };
+
+  const textStyle: React.CSSProperties = {
+    flex: 1,
+    minWidth: 0,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
     fontSize: 13,
     color: '#ddd',
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: `${color}33`,
-    backgroundColor: 'rgba(0,0,0,0.25)',
-    padding: '4px 10px',
-    borderRadius: 8,
   };
 
-  return <div title={text} style={style}>{text}</div>;
+  return (
+    <div title={text} style={containerStyle}>
+      <CoverArt url={coverArtUrl} title={current?.title || current?.artist || ''} size={40} borderRadius={6} />
+      <span style={textStyle}>{text}</span>
+    </div>
+  );
 }

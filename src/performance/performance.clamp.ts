@@ -36,5 +36,25 @@ export function applyRecordingSafeClamp(budget: VisualBudget): VisualBudget {
       // allowBlockAwareColor preserved as-is
       // allowPreviewGlow preserved as-is
     },
+    visualMixer: budget.visualMixer ? {
+      ...budget.visualMixer,
+      allowPulsation: false,
+      allowCardGlow: false,
+      allowHitFlash: false,
+      allowWaveform: false,
+      maxPulseIntensity: 'off',
+      allowScenarios: false,
+      cardUpdateFps: Math.min(budget.visualMixer.cardUpdateFps, 10),
+    } : {
+      enabled: false,
+      maxCards: 0,
+      cardUpdateFps: 0,
+      allowPulsation: false,
+      allowCardGlow: false,
+      allowHitFlash: false,
+      allowWaveform: false,
+      maxPulseIntensity: 'off',
+      allowScenarios: false,
+    },
   };
 }

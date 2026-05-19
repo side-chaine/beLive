@@ -5,22 +5,10 @@
  */
 
 import type { Marker, Section } from '../stores/markers.store';
-
-/** Color map for block types */
-const BLOCK_TYPE_COLORS: Record<string, string> = {
-  verse:     '#4CAF50',
-  chorus:    '#F44336',
-  bridge:    '#6f42c1',
-  prechorus: '#FF9800',
-  intro:     '#03A9F4',
-  outro:     '#9E9E9E',
-  blank:     'rgba(255,255,255,0.1)',
-};
-
-const DEFAULT_COLOR = 'rgba(255,255,255,0.1)';
+import { getCanonicalBlockColor } from '../structure/block-colors';
 
 export function getColorForBlockType(blockType?: string): string {
-  return blockType ? (BLOCK_TYPE_COLORS[blockType] || DEFAULT_COLOR) : DEFAULT_COLOR;
+  return getCanonicalBlockColor(blockType);
 }
 
 export function getActiveLineAtTime(markers: Marker[], time: number): number {
@@ -43,7 +31,7 @@ export function computeSections(markers: Marker[], trackDuration: number = 0): S
   const sorted = [...markers].sort((a, b) => a.time - b.time);
   const idxByType: Record<string, number> = {};
   const prefixMap: Record<string, string> = {
-    verse:'V', chorus:'C', bridge:'B', prechorus:'PC', intro:'I', outro:'O', blank:'BL'
+    verse:'V', chorus:'C', bridge:'B', prechorus:'PC', interlude:'INT', intro:'I', outro:'O', blank:'BL'
   };
   // allowed types = keys of prefixMap
   let i = 0;
@@ -96,7 +84,7 @@ export function getBlockTypeForLine(
   textBlocks: Array<{ lineIndices?: number[]; type?: string }>
 ): string {
   if (!textBlocks || textBlocks.length === 0) return 'unknown';
-  const allowed = new Set(['verse','chorus','bridge','prechorus','intro','outro','blank']);
+  const allowed = new Set(['verse','chorus','bridge','prechorus','interlude','intro','outro','blank']);
   for (const block of textBlocks) {
     if (block.lineIndices && block.lineIndices.includes(lineIndex)) {
       if (block.type && allowed.has(block.type)) return block.type;

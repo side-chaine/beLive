@@ -1,6 +1,8 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
+import JSZip from 'jszip';
 import { useSyncStore } from '../store/sync.store';
 import { useAudioStore } from '../../stores/audio.store';
+import { useStemStore } from '../../stem/stem.store';
 import { useLyricsStore } from '../../stores/lyrics.store';
 import { useMarkersStore } from '../../stores/markers.store';
 import { WaveformCanvas } from './WaveformCanvas';
@@ -10,11 +12,31 @@ import { useTrackStore } from '../../stores/track.store';
 import { useWordSyncStore } from '../../stores/wordSync.store';
 import { lyricsAlignService } from '../word-sync/services/lyrics-align.service';
 import { buildAlignmentJobRequest } from '../word-sync/services/alignment-request.builder';
+import { fetchLrcVersions, parseLrcVersion } from '../../services/auto-lyrics.service';
+import type { LrcVersion } from '../../services/auto-lyrics.service';
 
 function formatTime(sec: number): string {
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60);
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function mimeToExt(mimeType?: string | null): string {
+  if (!mimeType) return 'mp3';
+  const map: Record<string, string> = {
+    'audio/mpeg': 'mp3',
+    'audio/mp3': 'mp3',
+    'audio/mp4': 'm4a',
+    'audio/x-m4a': 'm4a',
+    'audio/aac': 'aac',
+    'audio/ogg': 'ogg',
+    'audio/wav': 'wav',
+    'audio/x-wav': 'wav',
+    'audio/wave': 'wav',
+    'audio/flac': 'flac',
+    'audio/x-flac': 'flac',
+  };
+  return map[mimeType.toLowerCase()] || 'mp3';
 }
 
 const SOURCE_CYCLE = ['mix', 'instrumental', 'vocal'] as const;
@@ -38,8 +60,8 @@ export default function SyncEditorPanel() {
   const sourceMode = useSyncStore((s) => s.sourceMode);
   const setSourceMode = useSyncStore((s) => s.setSourceMode);
   const currentTime = useAudioStore((s) => s.currentTime);
-  const instrumentalVolume = useAudioStore((s) => s.instrumentalVolume);
-  const vocalsVolume = useAudioStore((s) => s.vocalsVolume);
+  const instrumentalVolume = useStemStore((s) => s.stemVolumes['instrumental'] ?? 1);
+  const vocalsVolume = useStemStore((s) => s.stemVolumes['vocals'] ?? 1);
   const wordSyncStatus = useWordSyncStore((s) => s.status);
   const providerName = lyricsAlignService.getProvider().name;
   const wordSyncLineMap = useWordSyncStore((s) => s.lineMap);
@@ -48,6 +70,29 @@ export default function SyncEditorPanel() {
   const wordSyncDegraded = useWordSyncStore((s) => s.degraded);
   const wordSyncError = useWordSyncStore((s) => s.error);
   const markers = useMarkersStore((s) => s.markers);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const exportInFlightRef = useRef(false);
+
+  // TC-LRCPICKER-02: LRC Version Picker state
+  const [lrcVersions, setLrcVersions] = useState<LrcVersion[]>([]);
+  const [lrcPickerOpen, setLrcPickerOpen] = useState(false);
+  const [lrcLoading, setLrcLoading] = useState(false);
+  const lrcPickerRef = useRef<HTMLDivElement>(null);
+  const [lrcPickerPos, setLrcPickerPos] = useState<{top: number; right: number}>({top: 0, right: 0});
+  const [lrcSelectedVersionId, setLrcSelectedVersionId] = useState<number | null>(null);
+
+  // TC-LRCPICKER-11: Navigation state
+  const storeLineCount = useLyricsStore(s => s.lines.length);
+  const lrcSelectedIndex = lrcVersions.findIndex(v => v.id === lrcSelectedVersionId);
+  const lrcHasPrev = lrcSelectedIndex > 0;
+  const lrcHasNext = lrcSelectedIndex >= 0 && lrcSelectedIndex < lrcVersions.length - 1;
+  const lrcCurrentLineCount = lrcSelectedIndex >= 0 && lrcVersions[lrcSelectedIndex]
+    ? lrcVersions[lrcSelectedIndex].lineCount
+    : storeLineCount;
+
+  // TC-LRCPICKER-05: Dropdown height for smart positioning
+  const DROPDOWN_HEIGHT = 340;  // maxHeight 300px + padding/border ~40px
 
   // Publish --bl-deck-height
   useEffect(() => {
@@ -68,10 +113,8 @@ export default function SyncEditorPanel() {
     if (!ae) return;
     const iVol = ae.instrumentalGain?.gain?.value ?? 1;
     const vVol = ae.vocalsGain?.gain?.value ?? 1;
-    useAudioStore.setState({
-      instrumentalVolume: iVol,
-      vocalsVolume: vVol,
-    });
+    useStemStore.getState().setStemVolume('instrumental', iVol);
+    useStemStore.getState().setStemVolume('vocals', vVol);
   }, []);
 
   const cycleSource = useCallback(() => {
@@ -143,6 +186,163 @@ export default function SyncEditorPanel() {
     closeSync();
   }, [closeSync, markClean]);
 
+  const handleExportZip = useCallback(async () => {
+    if (isExporting || exportInFlightRef.current) return;
+    exportInFlightRef.current = true;
+    setIsExporting(true);
+    setExportProgress(0);
+    try {
+      const mm = (window as any).markerManager;
+      const ld = (window as any).lyricsDisplay;
+      if (!mm || !ld) {
+        console.error('[Sync] markerManager or lyricsDisplay not available');
+        return;
+      }
+
+      // First save markers to track
+      mm.saveMarkersToTrack?.();
+      setExportProgress(3);
+
+      const meta = useTrackStore.getState().currentTrack;
+      if (!meta) {
+        console.warn('[Sync] no current track');
+        return;
+      }
+
+      const fullTrack = await getTrack(Number(meta.id));
+      if (!fullTrack) {
+        console.warn('[Sync] track not found in IDB');
+        return;
+      }
+      setExportProgress(5);
+
+      const zip = new JSZip();
+
+      // Build safe track name for files
+      const trackName = meta.title || 'track';
+      const safeName = trackName.replace(/[<>:"/\\|?*]/g, '_');
+
+      // Audio files (STORE = no compression, audio already compressed)
+      if (fullTrack.instrumentalData) {
+        const ext = mimeToExt(fullTrack.instrumentalType);
+        zip.file(`${safeName}.${ext}`, fullTrack.instrumentalData, { compression: 'STORE' });
+      }
+      if (fullTrack.vocalsData) {
+        const ext = mimeToExt(fullTrack.vocalsType);
+        zip.file(`${safeName}_vocals.${ext}`, fullTrack.vocalsData, { compression: 'STORE' });
+      }
+      // W9-UX-004: Include additional stems in ZIP export
+      if (fullTrack.stemsData) {
+        for (const [stemId, entry] of Object.entries(fullTrack.stemsData)) {
+          if (entry?.data) {
+            const ext = mimeToExt(entry.type);
+            zip.file(`stems/${stemId}.${ext}`, entry.data, { compression: 'STORE' });
+          }
+        }
+      }
+      setExportProgress(8);
+
+      // Lyrics
+      const lyrics = fullTrack.lyrics || fullTrack.lyricsOriginalContent || '';
+      if (lyrics) {
+        zip.file('lyrics.txt', lyrics);
+      }
+
+      // TC-COVER-05: Add cover art file to ZIP for offline import
+      if (fullTrack.coverArtBlob) {
+        const ext = fullTrack.coverArtBlob.type?.includes('png') ? 'png' : 'jpg';
+        zip.file(`cover.${ext}`, fullTrack.coverArtBlob, { compression: 'STORE' });
+      } else if (fullTrack.coverArtUrl?.startsWith('http')) {
+        // No blob — try to fetch for portable ZIP
+        try {
+          const resp = await fetch(fullTrack.coverArtUrl);
+          if (resp.ok) {
+            const blob = await resp.blob();
+            const ext = blob.type?.includes('png') ? 'png' : 'jpg';
+            zip.file(`cover.${ext}`, blob, { compression: 'STORE' });
+            // Also save blob to IDB for future exports
+            if (meta) {
+              updateTrackField(Number(meta.id), { coverArtBlob: blob }).catch(e => {
+                console.warn('[Export] Failed to save cover blob to IDB:', e);
+              });
+            }
+          }
+        } catch (e) {
+          console.warn('[Export] Failed to fetch cover art for ZIP:', e);
+          // Keep external URL as fallback
+        }
+      }
+
+      // Markers + blocks (export.json)
+      const markers = mm.getMarkers?.() || [];
+      const textBlocks = ld.textBlocks || [];
+      const wordSyncState = useWordSyncStore.getState();
+      const exportData = {
+        id: meta.id,
+        title: meta.title || 'Untitled',
+        savedAt: new Date().toISOString(),
+        markers,
+        lyrics,
+        textBlocks,
+        lyricsHash: wordSyncState.lyricsHash || undefined,
+        // TC-COVER-07: Preserve original http URL as fallback (cover.jpg is separate file in ZIP)
+        coverArtUrl: fullTrack.coverArtUrl || undefined,
+        coverTheme: fullTrack.coverTheme || undefined,
+        // TC-LRC-04: Preserve original lyrics with structural tags for LRC Picker reimport
+        lyricsOriginalContent: fullTrack.lyricsOriginalContent || undefined,
+      };
+      zip.file('export.json', JSON.stringify(exportData, null, 2));
+
+      // Word-sync artifact (if available)
+      if (fullTrack.alignmentData) {
+        zip.file('alignment.json', JSON.stringify(fullTrack.alignmentData, null, 2));
+      }
+      setExportProgress(10);
+
+      // Generate and download using stream for more frequent progress updates
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        const chunks: Uint8Array[] = [];
+        let lastProgress = 10;
+
+        zip.generateInternalStream({ type: 'uint8array', streamFiles: true })
+          .on('data', (data: Uint8Array, metadata: { percent: number }) => {
+            chunks.push(data);
+            const p = 10 + Math.round(metadata.percent * 0.88);
+            // Throttle updates to avoid excessive DOM churn
+            if (p > lastProgress + 2) {
+              lastProgress = p;
+              setExportProgress(p);
+            }
+          })
+          .on('end', () => {
+            setExportProgress(98);
+            resolve(new Blob(chunks as BlobPart[], { type: 'application/zip' }));
+          })
+          .on('error', (err: Error) => reject(err))
+          .resume();
+      });
+
+      setExportProgress(100);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${safeName}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      console.log('[Sync] ZIP exported:', `${safeName}.zip`);
+      markClean();
+    } catch (e) {
+      console.error('[Sync] ZIP export error:', e);
+    } finally {
+      exportInFlightRef.current = false;
+      setIsExporting(false);
+      setExportProgress(0);
+    }
+  }, [isExporting, markClean]);
+
   const handleCancel = useCallback(() => {
     // Revert to state when editor was opened (first snapshot)
     const stack = useSyncStore.getState().undoStack;
@@ -201,6 +401,13 @@ export default function SyncEditorPanel() {
     console.log('[Sync] marker placed: line', targetLine, 'at', currentTime.toFixed(2) + 's');
   }, []);
 
+  const placeM2Marker = useCallback(() => {
+    const mm = (window as any).markerManager;
+    if (mm?._addM2Marker) {
+      mm._addM2Marker();
+    }
+  }, []);
+
   // Keydown listener for "1"
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -213,12 +420,16 @@ export default function SyncEditorPanel() {
         e.preventDefault();
         e.stopPropagation();
         placeMarker();
+      } else if (e.key === '2') {
+        e.preventDefault();
+        e.stopPropagation();
+        placeM2Marker();
       }
     };
 
     document.addEventListener('keydown', handleKey, true); // capture phase!
     return () => document.removeEventListener('keydown', handleKey, true);
-  }, [placeMarker]);
+  }, [placeMarker, placeM2Marker]);
 
   const handleVolumeChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -226,17 +437,17 @@ export default function SyncEditorPanel() {
       const ae = (window as any).audioEngine;
       if (sourceMode === 'instrumental') {
         ae?.setInstrumentalVolume?.(v);
-        useAudioStore.setState({ instrumentalVolume: v });
+        useStemStore.getState().setStemVolume('instrumental', v);
       } else if (sourceMode === 'vocal') {
         ae?.setVocalsVolume?.(v);
-        useAudioStore.setState({ vocalsVolume: v });
+        useStemStore.getState().setStemVolume('vocals', v);
       }
       // Persist to localStorage (sync with Rehearsal mode policy)
       try {
-        const st = useAudioStore.getState();
+        const st = useStemStore.getState();
         localStorage.setItem('bl-rehearsal-volumes', JSON.stringify({
-          vocalsVolume: st.vocalsVolume,
-          instrumentalVolume: st.instrumentalVolume,
+          vocalsVolume: st.stemVolumes['vocals'] ?? 1,
+          instrumentalVolume: st.stemVolumes['instrumental'] ?? 1,
         }));
       } catch (e2) {}
     },
@@ -342,6 +553,221 @@ export default function SyncEditorPanel() {
     markers,
   ]);
 
+  // TC-LRCPICKER-02: LRC Version Picker handlers
+  const handleLrcPicker = useCallback(async () => {
+    if (lrcPickerOpen) {
+      setLrcPickerOpen(false);
+      return;
+    }
+
+    // Calculate position BEFORE opening dropdown
+    const calculatePosition = () => {
+      if (!lrcPickerRef.current) return { top: 0, right: 0 };
+      const rect = lrcPickerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+
+      // If not enough room below, open ABOVE button
+      if (spaceBelow < DROPDOWN_HEIGHT) {
+        return {
+          top: rect.top - DROPDOWN_HEIGHT - 4,  // 4px gap above
+          right: window.innerWidth - rect.right,
+        };
+      }
+
+      // Open below button
+      return {
+        top: rect.bottom + 4,
+        right: window.innerWidth - rect.right,
+      };
+    };
+
+    // Skip fetch if already loaded — just recalculate position and show
+    if (lrcVersions.length > 0) {
+      setLrcPickerPos(calculatePosition());
+      setLrcPickerOpen(true);
+      return;
+    }
+
+    setLrcLoading(true);
+    try {
+      // ─── Get track info ───
+      const tc = (window as any).trackCatalog;
+      const ae = (window as any).audioEngine;
+
+      // Duration: from audioEngine (most reliable)
+      const duration = ae?.audio?.duration
+        || ae?.getDuration?.()
+        || 0;
+
+      // Artist + Title: from trackCatalog
+      let artistName = '';
+      let trackName = '';
+
+      if (tc) {
+        const idx = tc.currentTrackIndex;
+        const track = tc.tracks?.[idx];
+        if (track) {
+          artistName = track.artist || '';
+          trackName = track.title || '';
+        }
+      }
+
+      // Fallback: parse from title if artist is empty
+      // Title often contains "Artist - Title" format
+      if (!artistName && trackName.includes(' - ')) {
+        const parts = trackName.split(' - ');
+        artistName = parts[0].trim();
+        trackName = parts.slice(1).join(' - ').trim();
+      }
+
+      // Another fallback: from track store
+      if (!artistName || !trackName) {
+        const ts = useTrackStore.getState();
+        const current = ts.currentTrack;
+        if (current) {
+          if (!artistName) artistName = current.artist || '';
+          if (!trackName) {
+            trackName = current.title || '';
+            // Same "Artist - Title" split
+            if (!artistName && trackName.includes(' - ')) {
+              const parts = trackName.split(' - ');
+              artistName = parts[0].trim();
+              trackName = parts.slice(1).join(' - ').trim();
+            }
+          }
+        }
+      }
+
+      if (!artistName || !trackName) {
+        console.warn('[LRC-Picker] No track info available');
+        setLrcLoading(false);
+        return;
+      }
+
+      console.log(
+        `[LRC-Picker] Searching: artist="${artistName}" ` +
+        `title="${trackName}" duration=${Math.round(duration)}s`
+      );
+
+      const versions = await fetchLrcVersions(
+        artistName,
+        trackName,
+        Math.round(duration)
+      );
+      setLrcVersions(versions);
+
+      // Auto-select first version if none selected yet
+      if (lrcSelectedVersionId === null && versions.length > 0) {
+        setLrcSelectedVersionId(versions[0].id);
+      }
+
+      // Calculate position BEFORE opening — sync with render
+      setLrcPickerPos(calculatePosition());
+      setLrcPickerOpen(true);
+
+      console.log(`[LRC-Picker] ${versions.length} versions loaded`);
+    } catch (e) {
+      console.warn('[LRC-Picker] Failed:', e);
+    } finally {
+      setLrcLoading(false);
+    }
+  }, [lrcPickerOpen, lrcVersions.length]);
+
+  const handleLrcVersionSelect = useCallback(async (version: LrcVersion) => {
+    try {
+      setLrcPickerOpen(false);
+      
+      const tc = (window as any).trackCatalog;
+      const tIdx = tc?.currentTrackIndex;
+      const legacyTrack = tc?.tracks?.[tIdx];
+      const ld = (window as any).lyricsDisplay;
+      const mm = (window as any).markerManager;
+      
+      if (!ld || !mm || !legacyTrack) {
+        console.warn('[LRC-Picker] Missing runtime dependencies');
+        return;
+      }
+
+      const geniusText = legacyTrack.lyricsOriginalContent || undefined;
+      console.log(`[LRC-Picker] geniusText: ${geniusText ? `${geniusText.length} chars` : 'NONE'}`);
+
+      const result = parseLrcVersion(version, geniusText);
+
+      console.log(
+        `[LRC-Picker] Applying version #${version.id}: ` +
+        `${result.markers.length} markers, ${result.lyricsLines.length} lines, ${result.blocks.length} blocks`
+      );
+
+      // ─── STEP 1: Load blocks + lyrics DIRECTLY ───
+      // loadImportedBlocks sets ld.lyrics synchronously, bypasses _processLyrics
+      // TC-LRC-03: Preserve existing blocks when LRC version returns empty
+      // blocks=[] from parser = "no blocks in this LRC format" (NOT "user deleted blocks")
+      // Existing blocks are still valid — tied to the track, not the LRC version
+      const blocksToApply = result.blocks.length > 0 
+        ? result.blocks 
+        : (ld.textBlocks || []);
+      
+      if (result.blocks.length === 0 && (ld.textBlocks || []).length > 0) {
+        console.log(`[LRC-Picker] Preserving ${ld.textBlocks.length} existing blocks (LRC returned none)`);
+      }
+      
+      ld.loadImportedBlocks(
+        blocksToApply,
+        result.lyricsLines.join('\n'),
+        true
+      );
+      
+      // ─── STEP 2: Sync store FROM ld.lyrics (exact match, closes GUARD race) ───
+      // Must happen BEFORE mm.setMarkers() so markers.bridge reads correct length
+      if (Array.isArray(ld.lyrics) && ld.lyrics.length > 0) {
+        useLyricsStore.setState({ lines: [...ld.lyrics] });
+      }
+      
+      // ─── STEP 3: Set markers (store length matches ld.lyrics.length) ───
+      mm.setMarkers(result.markers);
+      mm.updateMarkerColors();
+
+      // ─── STEP 4: Track selected version ───
+      setLrcSelectedVersionId(version.id);
+
+      // ─── STEP 5: Persist to IDB ───
+      if (legacyTrack.id) {
+        await updateTrackField(Number(legacyTrack.id), {
+          lyrics: result.lyricsLines.join('\n'),
+          lyricsOriginalContent: geniusText || undefined,
+          syncMarkers: result.markers,
+          blocksData: result.blocks.length > 0 ? result.blocks : undefined,
+          dataVersion: 2,
+        });
+      }
+
+      console.log(`[LRC-Picker] Version #${version.id} applied ✅`);
+    } catch (e) {
+      console.warn('[LRC-Picker] Apply failed:', e);
+    }
+  }, []);
+
+  // TC-LRCPICKER-11: Navigation handlers
+  const handleLrcPrev = useCallback(() => {
+    if (lrcHasPrev) handleLrcVersionSelect(lrcVersions[lrcSelectedIndex - 1]);
+  }, [lrcHasPrev, lrcSelectedIndex, lrcVersions, handleLrcVersionSelect]);
+
+  const handleLrcNext = useCallback(() => {
+    if (lrcHasNext) handleLrcVersionSelect(lrcVersions[lrcSelectedIndex + 1]);
+  }, [lrcHasNext, lrcSelectedIndex, lrcVersions, handleLrcVersionSelect]);
+
+  // TC-LRCPICKER-02: Close dropdown on outside click
+  useEffect(() => {
+    if (!lrcPickerOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (lrcPickerRef.current && !lrcPickerRef.current.contains(e.target as Node)) {
+        setLrcPickerOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [lrcPickerOpen]);
+
   const btn: React.CSSProperties = {
     background: 'rgba(255, 255, 255, 0.04)',
     border: '1px solid rgba(255, 255, 255, 0.08)',
@@ -443,6 +869,21 @@ export default function SyncEditorPanel() {
           Markers
         </button>
 
+        <button
+          style={{
+            ...btn,
+            height: '28px',
+            padding: '4px 8px',
+            fontSize: '11px',
+          }}
+          onClick={() => {
+            (window as any).waveformEditor?._openNewBlockEditor?.();
+          }}
+          title="Open Block Editor"
+        >
+          Blocks
+        </button>
+
         <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.06)', margin: '0 3px' }} />
 
         {/* Zoom — center area */}
@@ -536,6 +977,183 @@ export default function SyncEditorPanel() {
           {providerName}:{wordSyncStatus}
         </span>
 
+        {/* TC-LRCPICKER-11: Lines navigation group */}
+        <div ref={lrcPickerRef} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 0, marginLeft: '8px' }}>
+          {/* ‹ Prev */}
+          <button
+            onClick={handleLrcPrev}
+            disabled={!lrcHasPrev || lrcLoading}
+            style={{
+              background: 'transparent',
+              color: lrcHasPrev ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.2)',
+              borderTop: '1px solid rgba(255, 255, 255, 0.18)',
+              borderRight: 'none',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.18)',
+              borderLeft: '1px solid rgba(255, 255, 255, 0.18)',
+              borderRadius: '6px 0 0 6px',
+              padding: '4px 8px',
+              fontSize: '13px',
+              lineHeight: 1,
+              cursor: lrcHasPrev ? 'pointer' : 'default',
+              opacity: lrcLoading ? 0.4 : 1,
+              transition: 'color 0.15s',
+            }}
+            title="Previous version"
+          >‹</button>
+
+          {/* Lines count + dropdown trigger */}
+          <button
+            onClick={handleLrcPicker}
+            disabled={lrcLoading}
+            style={{
+              background: lrcPickerOpen ? 'rgba(255, 140, 0, 0.12)' : 'transparent',
+              color: lrcPickerOpen ? 'rgba(255, 140, 0, 0.95)' : 'rgba(255, 255, 255, 0.8)',
+              borderTop: `1px solid ${lrcPickerOpen ? 'rgba(255, 140, 0, 0.45)' : 'rgba(255, 255, 255, 0.18)'}`,
+              borderRight: 'none',
+              borderBottom: `1px solid ${lrcPickerOpen ? 'rgba(255, 140, 0, 0.45)' : 'rgba(255, 255, 255, 0.18)'}`,
+              borderLeft: 'none',
+              borderRadius: 0,
+              padding: '4px 10px',
+              fontSize: '11px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              opacity: lrcLoading ? 0.6 : 1,
+              minWidth: '80px',
+              textAlign: 'center',
+              transition: 'background 0.15s, color 0.15s',
+            }}
+            title="Browse versions from lrclib.net"
+          >
+            {lrcLoading ? '⏳ Lines' : lrcVersions.length === 0 ? 'Lines' : `${lrcCurrentLineCount} Lines`}
+          </button>
+
+          {/* › Next */}
+          <button
+            onClick={handleLrcNext}
+            disabled={!lrcHasNext || lrcLoading}
+            style={{
+              background: 'transparent',
+              color: lrcHasNext ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.2)',
+              borderTop: '1px solid rgba(255, 255, 255, 0.18)',
+              borderRight: '1px solid rgba(255, 255, 255, 0.18)',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.18)',
+              borderLeft: 'none',
+              borderRadius: '0 6px 6px 0',
+              padding: '4px 8px',
+              fontSize: '13px',
+              lineHeight: 1,
+              cursor: lrcHasNext ? 'pointer' : 'default',
+              opacity: lrcLoading ? 0.4 : 1,
+              transition: 'color 0.15s',
+            }}
+            title="Next version"
+          >›</button>
+
+          {/* Dropdown */}
+          {lrcPickerOpen && lrcVersions.length > 0 && (
+            <div style={{
+              position: 'fixed',
+              top: `${lrcPickerPos.top}px`,
+              right: `${lrcPickerPos.right}px`,
+              background: 'rgba(20, 20, 35, 0.97)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '8px',
+              minWidth: '280px',
+              maxWidth: '340px',
+              maxHeight: '300px',
+              overflowY: 'auto',
+              zIndex: 9999,
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
+            }}>
+              <div style={{
+                padding: '8px 12px',
+                fontSize: '10px',
+                color: 'rgba(255, 255, 255, 0.35)',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+              }}>
+                {lrcVersions.length} version{lrcVersions.length !== 1 ? 's' : ''} from lrclib.net
+              </div>
+              {lrcVersions.map((v, idx) => (
+                <button
+                  key={v.id}
+                  onClick={() => handleLrcVersionSelect(v)}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    background: v.id === lrcSelectedVersionId
+                      ? 'rgba(255, 140, 0, 0.15)'
+                      : 'transparent',
+                    border: 'none',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                    padding: '10px 12px',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    fontSize: '11px',
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background =
+                      'rgba(255, 255, 255, 0.06)';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background =
+                      v.id === lrcSelectedVersionId ? 'rgba(255, 140, 0, 0.15)' : 'transparent';
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: 600, minWidth: '40px' }}>
+                      {Math.floor(v.duration / 60)}:{String(Math.floor(v.duration % 60)).padStart(2, '0')}
+                    </span>
+                    <span style={{ color: 'rgba(255, 255, 255, 0.45)', fontSize: '10px' }}>
+                      {v.lineCount} lines
+                    </span>
+                    {v.id === lrcSelectedVersionId && (
+                      <span style={{
+                        fontSize: '9px',
+                        background: 'rgba(255, 140, 0, 0.3)',
+                        color: '#ff8c00',
+                        padding: '1px 6px',
+                        borderRadius: '8px',
+                        fontWeight: 600,
+                      }}>
+                        ACTIVE
+                      </span>
+                    )}
+                  </div>
+                  <div style={{
+                    color: 'rgba(255, 255, 255, 0.3)',
+                    fontSize: '10px',
+                    marginTop: '2px'
+                  }}>
+                    Δ {v.durationDelta.toFixed(1)}s from track
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* No versions found */}
+          {lrcPickerOpen && lrcVersions.length === 0 && !lrcLoading && (
+            <div style={{
+              position: 'fixed',
+              top: `${lrcPickerPos.top}px`,
+              right: `${lrcPickerPos.right}px`,
+              background: 'rgba(20, 20, 35, 0.97)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '8px',
+              padding: '16px 20px',
+              minWidth: '200px',
+              zIndex: 9999,
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
+              color: 'rgba(255, 255, 255, 0.4)',
+              fontSize: '11px',
+              textAlign: 'center',
+            }}>
+              No synced versions found
+            </div>
+          )}
+        </div>
+
         <button
           onClick={handleAlignLyrics}
           disabled={
@@ -579,6 +1197,34 @@ export default function SyncEditorPanel() {
             color: 'rgba(255, 255, 255, 0.5)',
           }}>Cancel</button>
         )}
+
+        {/* ZIP export — compact archive button with progress fill */}
+        <button onClick={handleExportZip} disabled={isExporting} style={{
+          ...btn, height: '28px', fontWeight: 500,
+          position: 'relative',
+          overflow: 'hidden',
+          background: 'rgba(59, 130, 246, 0.1)',
+          borderColor: 'rgba(59, 130, 246, 0.3)',
+          color: 'rgba(147, 197, 253, 0.9)',
+          opacity: isExporting ? 1 : 1,
+          cursor: isExporting ? 'wait' : 'pointer',
+        }} title="Export track as ZIP archive">
+          {isExporting && exportProgress > 0 && (
+            <div style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: `${exportProgress}%`,
+              background: 'rgba(74, 158, 255, 0.25)',
+              transition: 'width 1s ease-out',
+              pointerEvents: 'none',
+            }} />
+          )}
+          <span style={{ position: 'relative', zIndex: 1 }}>
+            {isExporting ? 'Packing...' : 'ZIP'}
+          </span>
+        </button>
 
         {/* Save — glows green when dirty */}
         <button onClick={handleSave} style={{

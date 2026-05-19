@@ -8,8 +8,8 @@ import { getAudioContext } from './audioContext';
 
 export interface LoadResult {
   cleanBlobUrl: string;
-  audioBuffer: AudioBuffer;
-  arrayBuffer: ArrayBuffer;
+  audioBuffer: AudioBuffer | null;  // null if skipDecode (OI-7)
+  // arrayBuffer УДАЛЁН — DEAD CODE (OI-8), ~245MB saved
   duration: number;
 }
 
@@ -18,7 +18,8 @@ const FETCH_TIMEOUT = 30000;
 
 export async function loadAudio(
   url: string,
-  abortSignal?: AbortSignal
+  abortSignal?: AbortSignal,
+  skipDecode: boolean = false
 ): Promise<LoadResult> {
   let lastError: Error | null = null;
 
@@ -30,7 +31,7 @@ export async function loadAudio(
       throw new DOMException('Load aborted', 'AbortError');
     }
     try {
-      return await _loadOnce(url, abortSignal);
+      return await _loadOnce(url, abortSignal, skipDecode);
     } catch (err: any) {
       lastError = err;
       if (err.name === 'AbortError') throw err;
@@ -44,7 +45,8 @@ export async function loadAudio(
 
 async function _loadOnce(
   url: string,
-  abortSignal?: AbortSignal
+  abortSignal?: AbortSignal,
+  skipDecode: boolean = false
 ): Promise<LoadResult> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
@@ -59,16 +61,27 @@ async function _loadOnce(
       throw new Error(`Fetch failed: ${response.status}`);
     }
     const arrayBuffer = await response.arrayBuffer();
-    const ctx = getAudioContext();
-    const audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
+
+    let audioBuffer: AudioBuffer | null = null;
+    let duration = 0;
+
+    if (skipDecode) {
+      // Duration = 0. StemPlayer.duration получит реальное значение
+      // из audio.duration после loadedmetadata (TC-7.2-A)
+    } else {
+      const ctx = getAudioContext();
+      audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
+      duration = audioBuffer.duration;
+    }
+
     const blob = new Blob([arrayBuffer], { type: _guessType(url) });
     const cleanBlobUrl = URL.createObjectURL(blob);
 
+    // arrayBuffer goes out of scope here — GC can collect (~35MB freed per stem)
     return {
       cleanBlobUrl,
       audioBuffer,
-      arrayBuffer,
-      duration: audioBuffer.duration,
+      duration,
     };
   } finally {
     clearTimeout(timeoutId);

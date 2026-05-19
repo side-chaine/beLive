@@ -126,6 +126,8 @@ export function requestCloseSync(): void {
   useSyncStore.getState().closeSync();
 
   // 2. Dispatch legacy event so app.js restores vocals/mode
+  // RESIDUE: no known listeners found in repo-wide scan as of 2025-07.
+  // Kept as protective compatibility signal. Do not remove without explicit architectural decision.
   try {
     document.dispatchEvent(new CustomEvent('sync-editor-closed'));
   } catch (e) {

@@ -1,16 +1,10 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { useSyncStore } from '../store/sync.store';
 import { useWaveformData } from '../hooks/useWaveformData';
-import { drawGrid } from '../canvas/draw-grid';
-import { drawWaveform } from '../canvas/draw-waveform';
-import { drawMarkers, drawMarkerHighlight, drawSelection, drawLoopRegion } from '../canvas/draw-markers';
 import { useMarkersStore } from '../../stores/markers.store';
-
-// Waveform colors per source mode
-const COLORS = {
-  instrumental: '#00bcd4',  // cyan
-  vocal: '#e91e63',         // magenta/pink
-};
+import { useWaveformRender } from '../hooks/useWaveformRender';
+import { useWaveformViewport } from '../hooks/useWaveformViewport';
+import { findNearestMarker, detectLoopHandle } from '../canvas/hit-testing';
 
 export function WaveformCanvas() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -24,7 +18,9 @@ export function WaveformCanvas() {
     markerId: string | null;
     markerColor: string;
     currentTime: number;
-  }>({ active: false, markerId: null, markerColor: '', currentTime: 0 });
+    isGroupDrag: boolean;
+    groupInitialTimes: Map<string, number>;
+  }>({ active: false, markerId: null, markerColor: '', currentTime: 0, isGroupDrag: false, groupInitialTimes: new Map() });
   const hoverMarkerRef = useRef<string | null>(null);
   const lastClickedMarkerRef = useRef<string | null>(null);
   const selectedMarkerRef = useRef<string | null>(null);
@@ -66,94 +62,24 @@ export function WaveformCanvas() {
   } = useWaveformData();
 
   // ─── Draw ─────────────────────────────────
-  const draw = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    const w = sizeRef.current.w;
-    const h = sizeRef.current.h;
-    const scroll = scrollLeftRef.current;
-
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, w, h);
-
-    if (!duration) return;
-
-    // Grid
-    drawGrid(ctx, w, h, zoom, scroll, duration);
-
-    // Instrumental
-    if (
-      instrumentalData &&
-      (sourceMode === 'instrumental' || sourceMode === 'mix')
-    ) {
-      drawWaveform(
-        ctx, instrumentalData, sampleRate,
-        w, h, zoom, scroll,
-        {
-          color: COLORS.instrumental,
-          opacity: sourceMode === 'mix' ? 0.5 : 0.8,
-        }
-      );
-    }
-
-    // Vocal
-    if (
-      vocalData &&
-      (sourceMode === 'vocal' || sourceMode === 'mix')
-    ) {
-      drawWaveform(
-        ctx, vocalData, sampleRate,
-        w, h, zoom, scroll,
-        {
-          color: COLORS.vocal,
-          opacity: sourceMode === 'mix' ? 0.65 : 0.8,
-        }
-      );
-    }
-
-    // Markers
-    if (markersVisible && markers.length > 0) {
-      drawMarkers(ctx, markers, zoom, scroll, w, h);
-    }
-
-    // Highlight dragged marker
-    if (dragRef.current.active) {
-      drawMarkerHighlight(ctx, dragRef.current.currentTime, dragRef.current.markerColor, zoom, scroll, h);
-    }
-    // Highlight selected marker (when not dragging)
-    if (!dragRef.current.active && selectedMarkerRef.current) {
-      const sel = markers.find((m: any) => m.id === selectedMarkerRef.current);
-      if (sel) {
-        drawMarkerHighlight(ctx, sel.time, sel.color || '#4CAF50', zoom, scroll, h);
-      }
-    }
-
-    // Highlight all multi-selected markers
-    if (selectedMarkerIds.current.size > 0) {
-      for (const m of markers) {
-        if (selectedMarkerIds.current.has(m.id)) {
-          drawMarkerHighlight(ctx, m.time, m.color || '#4CAF50', zoom, scroll, h);
-        }
-      }
-    }
-
-    // Selection region
-    if (selectionRef.current.active || selectionRef.current.startTime !== selectionRef.current.endTime) {
-      if (selectionRef.current.startTime !== selectionRef.current.endTime) {
-        drawSelection(ctx, selectionRef.current.startTime, selectionRef.current.endTime, zoom, scroll, h);
-      }
-    }
-
-    // Loop region
-    if (loopRef.current.active) {
-      drawLoopRegion(ctx, loopRef.current.startTime, loopRef.current.endTime, zoom, scroll, h);
-    }
-  }, [zoom, sourceMode, instrumentalData, vocalData,
-      sampleRate, duration, markersVisible, markers]);
+  const draw = useWaveformRender({
+    canvasRef,
+    sizeRef,
+    scrollLeftRef,
+    zoom,
+    sourceMode,
+    instrumentalData,
+    vocalData,
+    sampleRate,
+    duration,
+    markersVisible,
+    markers,
+    dragRef,
+    selectedMarkerRef,
+    selectedMarkerIds,
+    selectionRef,
+    loopRef,
+  });
 
   // ─── Canvas resize (Retina-aware) ────────
   useEffect(() => {
@@ -181,97 +107,44 @@ export function WaveformCanvas() {
     draw();
   }, [draw]);
 
-  // ─── Auto-fit zoom on first open ───────
-  useEffect(() => {
-    if (fittedRef.current || duration <= 0) return;
-
-    const tryFit = (): boolean => {
-      const w = sizeRef.current.w;
-      if (w <= 0) return false;
-      const fitZoom = (w * 0.95) / duration;
-      useSyncStore.getState().setZoom(
-        Math.max(10, Math.min(500, fitZoom))
-      );
-      scrollLeftRef.current = 0;
-      fittedRef.current = true;
-      draw();
-      return true;
-    };
-
-    // Try immediately; if canvas not sized yet, poll until ready
-    if (tryFit()) return;
-    const id = setInterval(() => {
-      if (tryFit()) clearInterval(id);
-    }, 50);
-    return () => clearInterval(id);
-  }, [duration, draw]);
-
-  // ─── Playhead rAF (center-lock follow) ──────────
-  useEffect(() => {
-    const el = playheadRef.current;
-    if (!el) return;
-
-    let rafId: number;
-
-    const tick = () => {
-      const ae = (window as any).audioEngine;
-      const t: number = ae?.getCurrentTime?.() ?? 0;
-      const w = sizeRef.current.w;
-
-      // Follow mode: playhead locked at 30% from left, wave scrolls
-      if (followPlayhead && w > 0) {
-        const targetScroll = t * zoom - w * 0.3;
-        const maxScroll = Math.max(0, duration * zoom - w);
-        scrollLeftRef.current = Math.max(0, Math.min(targetScroll, maxScroll));
-        draw();
-      }
-
-      // Position playhead
-      const x = t * zoom - scrollLeftRef.current;
-      el.style.left = `${x}px`;
-      el.style.display = x >= -2 && x <= w + 2 ? 'block' : 'none';
-
-      rafId = requestAnimationFrame(tick);
-    };
-
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, [zoom, followPlayhead, draw]);
+  // ─── Viewport management (auto-fit, playhead tracking) ────────
+  useWaveformViewport({
+    containerRef: containerRef as React.RefObject<HTMLDivElement | null>,
+    canvasRef,
+    playheadRef: playheadRef as React.RefObject<HTMLDivElement | null>,
+    sizeRef,
+    scrollLeftRef,
+    fittedRef,
+    zoom,
+    duration,
+    followPlayhead,
+    draw,
+  });
 
   // ─── Find nearest marker helper ─────────
-  const findNearestMarker = useCallback(
+  const findNearestMarkerLocal = useCallback(
     (clientX: number): { id: string; time: number; color: string } | null => {
       const rect = containerRef.current?.getBoundingClientRect();
-      if (!rect || !markers.length) return null;
-      const clickX = clientX - rect.left;
-      const threshold = 10; // pixels
-
-      let best: { id: string; time: number; color: string; dist: number } | null = null;
-      for (const m of markers) {
-        const markerX = m.time * zoom - scrollLeftRef.current;
-        const dist = Math.abs(clickX - markerX);
-        if (dist < threshold && (!best || dist < best.dist)) {
-          best = { id: m.id, time: m.time, color: m.color || '#4CAF50', dist };
-        }
-      }
-      return best;
+      if (!rect) return null;
+      return findNearestMarker(clientX, rect, markers, zoom, scrollLeftRef.current);
     },
     [markers, zoom]
   );
 
-  const detectLoopHandle = useCallback(
+  const detectLoopHandleLocal = useCallback(
     (clientX: number): 'start' | 'end' | 'body' | null => {
-      if (!loopRef.current.active) return null;
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return null;
-      const clickX = clientX - rect.left;
-      const startX = loopRef.current.startTime * zoom - scrollLeftRef.current;
-      const endX = loopRef.current.endTime * zoom - scrollLeftRef.current;
-
-      if (Math.abs(clickX - startX) < LOOP_HANDLE_PX) return 'start';
-      if (Math.abs(clickX - endX) < LOOP_HANDLE_PX) return 'end';
-      if (clickX > startX + LOOP_HANDLE_PX && clickX < endX - LOOP_HANDLE_PX) return 'body';
-      return null;
+      return detectLoopHandle(
+        clientX,
+        rect,
+        loopRef.current.active,
+        loopRef.current.startTime,
+        loopRef.current.endTime,
+        zoom,
+        scrollLeftRef.current,
+        LOOP_HANDLE_PX
+      );
     },
     [zoom]
   );
@@ -286,7 +159,7 @@ export function WaveformCanvas() {
 
       // Check loop handle (second priority after shift)
       if (!e.shiftKey) {
-        const handle = detectLoopHandle(e.clientX);
+        const handle = detectLoopHandleLocal(e.clientX);
         if (handle) {
           loopDragRef.current = handle;
           if (handle === 'body') {
@@ -299,23 +172,53 @@ export function WaveformCanvas() {
         }
       }
 
-      // Check marker first (highest priority)
-      const nearest = findNearestMarker(e.clientX);
+      // Check marker first (highest priority) — single or group drag
+      const nearest = findNearestMarkerLocal(e.clientX);
       if (nearest && !e.shiftKey) {
-        selectedMarkerRef.current = nearest.id;
-        lastClickedMarkerRef.current = nearest.id;
-        selectionRef.current = { active: false, startTime: 0, endTime: 0 };
-        selectedMarkerIds.current.clear();
-        useSyncStore.getState().pushUndo();
-        dragRef.current = {
-          active: true,
-          markerId: nearest.id,
-          markerColor: nearest.color,
-          currentTime: nearest.time,
-        };
-        draw();
-        e.preventDefault();
-        return;
+        const isAlreadySelected = selectedMarkerIds.current.has(nearest.id);
+
+        if (isAlreadySelected && selectedMarkerIds.current.size > 1) {
+          // GROUP DRAG: clicked on a selected marker while multiple are selected
+          const initialTimes = new Map<string, number>();
+          for (const m of markers) {
+            if (selectedMarkerIds.current.has(m.id)) {
+              initialTimes.set(m.id, m.time);
+            }
+          }
+          selectedMarkerRef.current = nearest.id;
+          lastClickedMarkerRef.current = nearest.id;
+          selectionRef.current = { active: false, startTime: 0, endTime: 0 };
+          useSyncStore.getState().pushUndo();
+          dragRef.current = {
+            active: true,
+            markerId: nearest.id,
+            markerColor: nearest.color,
+            currentTime: nearest.time,
+            isGroupDrag: true,
+            groupInitialTimes: initialTimes,
+          };
+          draw();
+          e.preventDefault();
+          return;
+        } else {
+          // SINGLE DRAG: clicked on unselected marker or only one selected
+          selectedMarkerRef.current = nearest.id;
+          lastClickedMarkerRef.current = nearest.id;
+          selectionRef.current = { active: false, startTime: 0, endTime: 0 };
+          selectedMarkerIds.current.clear();
+          useSyncStore.getState().pushUndo();
+          dragRef.current = {
+            active: true,
+            markerId: nearest.id,
+            markerColor: nearest.color,
+            currentTime: nearest.time,
+            isGroupDrag: false,
+            groupInitialTimes: new Map(),
+          };
+          draw();
+          e.preventDefault();
+          return;
+        }
       }
 
       // Record mousedown for click/drag detection
@@ -329,7 +232,7 @@ export function WaveformCanvas() {
       // Clear previous selection on new mousedown
       selectedMarkerRef.current = null;
     },
-    [zoom, findNearestMarker, detectLoopHandle, draw]
+    [zoom, findNearestMarkerLocal, detectLoopHandleLocal, draw]
   );
 
   const handleMouseMove = useCallback(
@@ -368,11 +271,26 @@ export function WaveformCanvas() {
         return;
       }
 
-      // Marker drag
+      // Marker drag — single or group
       if (dragRef.current.active) {
         const x = currentX - rect.left;
         const newTime = Math.max(0, Math.min((x + scrollLeftRef.current) / zoom, duration));
-        dragRef.current.currentTime = newTime;
+
+        if (dragRef.current.isGroupDrag) {
+          // GROUP DRAG: calculate delta from the dragged marker's initial position
+          const delta = newTime - (dragRef.current.groupInitialTimes.get(dragRef.current.markerId!) ?? newTime);
+          // Apply delta to ALL selected markers (visual only — persist on mouseUp)
+          for (const m of markers) {
+            if (dragRef.current.groupInitialTimes.has(m.id)) {
+              m.time = (dragRef.current.groupInitialTimes.get(m.id) ?? m.time) + delta;
+            }
+          }
+          dragRef.current.currentTime = newTime;
+        } else {
+          // SINGLE DRAG: only update the one marker (visual only)
+          dragRef.current.currentTime = newTime;
+        }
+
         container.style.cursor = 'grabbing';
         draw();
         return;
@@ -417,18 +335,18 @@ export function WaveformCanvas() {
       }
 
       // Hover detection (no button pressed)
-      const loopHandle = detectLoopHandle(currentX);
+      const loopHandle = detectLoopHandleLocal(currentX);
       if (loopHandle === 'start' || loopHandle === 'end') {
         container.style.cursor = 'ew-resize';
       } else if (loopHandle === 'body') {
         container.style.cursor = 'grab';
       } else {
-        const nearest = findNearestMarker(e.clientX);
+        const nearest = findNearestMarkerLocal(e.clientX);
         container.style.cursor = nearest ? 'grab' : 'crosshair';
         hoverMarkerRef.current = nearest?.id || null;
       }
     },
-    [zoom, duration, markers, findNearestMarker, detectLoopHandle, draw]
+    [zoom, duration, markers, findNearestMarkerLocal, detectLoopHandleLocal, draw]
   );
 
   const handleMouseUp = useCallback(
@@ -445,14 +363,31 @@ export function WaveformCanvas() {
         return;
       }
 
-      // End marker drag
+      // End marker drag — single or group persist
       if (dragRef.current.active) {
-        const { markerId, currentTime } = dragRef.current;
-        dragRef.current = { active: false, markerId: null, markerColor: '', currentTime: 0 };
+        const { markerId, currentTime, isGroupDrag, groupInitialTimes } = dragRef.current;
+        dragRef.current = { active: false, markerId: null, markerColor: '', currentTime: 0, isGroupDrag: false, groupInitialTimes: new Map() };
 
         if (markerId) {
-          useMarkersStore.getState().updateMarker(markerId, { time: currentTime });
-          console.log('[Sync] marker', markerId, 'moved to', currentTime.toFixed(2) + 's');
+          if (isGroupDrag && groupInitialTimes.size > 1) {
+            // GROUP PERSIST: save all selected markers with their new times
+            const markersStore = useMarkersStore.getState();
+            let count = 0;
+            for (const m of markers) {
+              if (groupInitialTimes.has(m.id)) {
+                const initialTime = groupInitialTimes.get(m.id)!;
+                if (m.time !== initialTime) {
+                  markersStore.updateMarker(m.id, { time: m.time });
+                  count++;
+                }
+              }
+            }
+            console.log(`[Sync] group drag: ${count} markers moved`);
+          } else {
+            // SINGLE PERSIST: save one marker
+            useMarkersStore.getState().updateMarker(markerId, { time: currentTime });
+            console.log('[Sync] marker', markerId, 'moved to', currentTime.toFixed(2) + 's');
+          }
         }
 
         const container = containerRef.current;

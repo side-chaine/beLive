@@ -5,15 +5,14 @@ import { midiToNote } from '../audio/pitch/types';
 import type { WorkletMessage } from '../audio/pitch/types';
 import { NoteQuantizer } from '../audio/pitch/note-quantizer';
 import { PianoKeyboard } from './PianoKeyboard/PianoKeyboard';
-import { TransportBar } from './TransportBar';
 
 const S = {
   root: {
     position: 'fixed' as const,
     left: 0,
     right: 0,
-    bottom: 0,
-    zIndex: 90,
+    bottom: 'var(--bl-deck-height, 300px)',
+    zIndex: 999996,
     display: 'flex',
     flexDirection: 'column' as const,
     background: 'var(--bl-surface-1, rgba(15, 15, 20, 0.95))',
@@ -225,25 +224,10 @@ export function PianoOverlay() {
   const setMicActive = usePianoStore(s => s.setMicActive);
   const togglePiano = usePianoStore(s => s.togglePiano);
 
-  const rootRef = useRef<HTMLDivElement>(null);
   const vocalEngineRef = useRef<PitchEngine | null>(null);
   const [vocalEngine, setVocalEngine] = useState<PitchEngine | null>(null);
   const micEngineRef = useRef<PitchEngine | null>(null);
   const [micEngine, setMicEngine] = useState<PitchEngine | null>(null);
-
-  /* ── ResizeObserver ── */
-  useEffect(() => {
-    if (!open) return;
-    const el = rootRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(([entry]) => {
-      document.documentElement.style.setProperty(
-        '--bl-deck-height', `${entry.contentRect.height}px`
-      );
-    });
-    ro.observe(el);
-    return () => { ro.disconnect(); };
-  }, [open]);
 
   /* ── Vocal engine ── */
   useEffect(() => {
@@ -302,7 +286,7 @@ export function PianoOverlay() {
   const isMatch = !!(vocal.note && micNote && vocal.note === micNote);
 
   return (
-    <div ref={rootRef} style={S.root}>
+    <div style={S.root}>
       <div style={S.controls}>
         <button style={S.btn} onClick={togglePiano} title="Back to Controls">
           ← Back
@@ -350,8 +334,6 @@ export function PianoOverlay() {
       </div>
 
       <PianoKeyboard vocalNote={vocal.note} micNote={micNote} />
-
-      <TransportBar />
     </div>
   );
 }

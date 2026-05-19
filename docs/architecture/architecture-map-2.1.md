@@ -25,9 +25,9 @@
 
 # §1. System Statement (5-minute read)
 
-**beLive** is a hybrid PWA for vocalists. It shows synchronized lyrics in real-time during rehearsal, karaoke, concert, and live performance modes.
+**beLive 2.1** is a hybrid PWA for vocalists. It shows synchronized lyrics in real-time during rehearsal, karaoke, concert, and live performance modes.
 
-**Tech stack:** React 19 + TypeScript 5.9 + Vite 5 + Zustand 5 + Web Audio API + PWA (Workbox)
+**Tech stack:** React 19 + TypeScript 5.9 + Vite 4 + Zustand 5 + Web Audio API + PWA (Workbox)
 
 **Current phase:** Contract hardening + productization. NOT migration rescue.
 
@@ -41,6 +41,9 @@
 - ✅ Visual word consumers already live in runtime (WordHighlightLine, word-effects.css, RehearsalLyrics, KaraokeLyricsBoard, LiveSubtitle) — NOT future-only
 - ✅ Performance domain already live as first-class policy layer
 - ✅ Prepared catalog pipeline exists as operational external tooling
+- ✅ Takes practice surface evolving as canvas-first first-pass practice scene (top control grammar, centered hero trio, unified Solo button)
+- ✅ Standard visible take-sync core substantially stabilized (trim clipping seam removed, TC-TSYNC-406)
+- ✅ Default learner-facing practice surface remains intentionally minimal (stable-2 recipes only)
 - ⚠️ Main risks are contract inconsistencies, not missing architecture
 
 ### What this system is NOT
@@ -108,7 +111,7 @@ Bank_beLive/{Artist}/{Track}/
                ▼
 ┌─── Step 4: mock-align-server.mjs (Dev) ─┐
 │  Port 8787, 3-level hash matching        │
-│  L1: exact, L2: alias, L3: variant(9)   │
+│  L1: exact, L2: alias, L3: variant(9) — TODO Wave 5: precompute cache   │
 │  Auto-save aliases on match              │
 └──────────────┬──────────────────────────┘
                ▼
@@ -169,6 +172,9 @@ CONTOUR C: App Runtime (Where A + B Meet)
 | Word rendering | ✅ `WordHighlightLine` | Mode surfaces | `WordHighlightLine.tsx` | ✅ Reusable |
 | Alignment provider | ✅ `gateway-align.provider` | SyncEditorPanel | `gateway-align.provider.ts` | ✅ Thin |
 | Cache verdict | ✅ `alignment-cache.service` | hydration flow | `alignment-cache.service.ts` | ✅ Working |
+| Cover art blob | `idb.service` coverArtBlob | track.bridge (Object URL), upload.service (ZIP) | `idb.service.ts` | ✅ Offline-ready |
+| LRC version selection | `SyncEditorPanel` handleLrcVersionSelect | auto-lyrics.service, lyricsDisplay | `SyncEditorPanel.tsx` | ✅ Guarded |
+| lyricsOriginalContent | IDB + ZIP export.json | LRC Picker (geniusText source) | multiple | ✅ Roundtrip |
 
 ---
 
@@ -190,15 +196,12 @@ src/
 │   ├── compat/
 │   │   └── patchV1.ts          ← Identity preservation: V1 object → V2 methods
 │   ├── featureFlag.ts          ← tryActivateV2()
-│   ├── hooks/                  ← useAudioEngine
-│   ├── pitch/                  ← Pitch detection subsystem (YIN)
-│   └── store/
-│       └── audioStore.ts       ← ⚠️ Likely stale/dead duplicate. Runtime uses src/stores/audio.store.ts. Scan needed.
 │
 ├── bridges/                    ← PERMANENT synchronization fabric (13 files)
 │   ├── audio.bridge.ts         ← State mirror + optimistic seek
 │   ├── audio-reactive.bridge.ts← Frequency analysis → CSS vars
 │   ├── blocks.bridge.ts        ← Legacy LD blocks → store mirror
+│   ├── cover-theme.bridge.ts   ← Theme hydration from IDB
 │   ├── live-guard.ts           ← Live mode protection
 │   ├── loop.bridge.ts          ← Store → engine loop propagation
 │   ├── lyrics.bridge.ts        ← Line sync + scheduler + reverse-sync
@@ -218,7 +221,8 @@ src/
 │   ├── marker.service.ts       ← Marker domain helpers
 │   ├── parsing.service.ts      ← RTF/text parsing
 │   ├── upload.service.ts       ← Track import/upload
-│   └── upload.actions.ts       ← Upload UI actions
+│   ├── upload.actions.ts       ← Upload UI actions
+│   └── cover-art.service.ts    ← Cover art fetch + blob persist + theme extraction
 │
 ├── stores/                     ← 17 Zustand stores
 │   ├── audio.store.ts          ← Playback state mirror
@@ -429,6 +433,7 @@ src/audio/compat/patchV1.ts:9-125
 - `_lastSeekTime` prevents stale time reports
 - `_softResyncTimer` cleared on every transport change
 - Hard resync cooldown prevents runaway drift correction
+- First-load block jump stutter resolved — transport seek/resume cycle stabilized
 
 ### ✅ StemPlayer = one audio asset
 
@@ -441,31 +446,18 @@ Preserves pitch via HTMLAudio flags. Disposes cleanly on reload.
 - **Instrumental = master clock** (`getCurrentTime()` reads instrumental)
 - **Vocals = follower** (resynced before play if drift > 0.01, hard resync during playback if drift > 0.04)
 
-### ⚠️ First-load stutter (unresolved)
-
-Operator-reported: first block jump after first track load may stutter/repeat briefly.
-
-Suspect fault lines:
-- `setCurrentTime()` paused vs playing path split
-- `_atomicResumeFromSeek()` waits for `seeked` events
-- `_waitForSeeked()` has 80ms timeout fallback
-- Vocals pre-resync can trigger additional seek cycle
-- Hard drift resync uses full seek/resume path
-
-**Status:** Hypothesis cluster. Instrumentation needed before surgery.
-
-### ⚠️ Recording compat gap
+### ✅ Recording compat (resolved)
 
 `recording.store.ts` expects:
 - `ae.captureStream()` ✅ available
-- `ae.microphoneGain` ❌ not exposed in patchV1
-- `ae.streamDestination` ❌ not exposed (private `_streamDest`)
+- `ae.microphoneGain` ✅ exposed via TC-003 (public getter in V2 + patchV1 compat)
+- `ae.streamDestination` ✅ exposed via TC-003 (public getter in V2 + patchV1 compat)
 
 Internal equivalents exist:
 - `microphoneGain` → `v2.microphone.gainNode` (public property)
 - `streamDestination` → `v2._streamDest` (private, created by captureStream)
 
-**Decision needed:** Tactical expose via patchV1 getters, or structural recording API.
+**Status:** ❄️ Tactical expose done. Structural recording API deferred to later wave.
 
 ### ⚠️ MonitorMix compat gap
 
@@ -474,6 +466,93 @@ Internal equivalents exist:
 - `microphoneSource` — potentially seam
 
 **Status:** Supported boundary, not fully seam-free.
+
+---
+
+## §6A. Cover Art Offline Pipeline
+
+### Data model
+
+| Field | Storage | Type | Purpose |
+|-------|---------|------|---------|
+| `coverArtUrl` | IDB + Store | string | HTTP URL (fallback + API reference) |
+| `coverArtBlob` | IDB | Blob | Offline binary (TC-COVER-02) |
+| `coverTheme` | IDB + Store | CoverArtTheme | Dominant colors for UI theming |
+
+### Hydration chain
+
+```
+IDB coverArtBlob → URL.createObjectURL() → store → <img src="blob:...">
+     (fallback) → IDB coverArtUrl (HTTP) → store → <img src="https://...">
+     (no data)  → null → CoverArt placeholder (gradient + initial)
+```
+
+### Object URL lifecycle
+
+Managed by `track.bridge.ts` via `_coverArtObjectUrls` Set. Revoked on: syncAll, catalog-cleared, bridge cleanup.
+
+### ZIP roundtrip
+
+- **Export:** cover.jpg file + HTTP URL in export.json (not internal reference)
+- **Import:** cover.jpg → arraybuffer → Blob(correct MIME) → IDB
+- **MIME type:** Explicit via `new Blob([ab], { type: isPng ? 'image/png' : 'image/jpeg' })`
+
+### See also
+
+Full ZIP pipeline documentation: `zip-pipeline.md`
+
+---
+
+## §6B. LRC Version Picker
+
+### Purpose
+
+The LRC Picker allows users to select different synced lyrics versions from lrclib, applying new markers, lyrics, and block structures to the current track.
+
+### Key functions
+
+| Function | File | Purpose |
+|----------|------|---------|
+| `fetchLrcVersions()` | auto-lyrics.service.ts | Fetch available LRC versions from lrclib |
+| `parseLrcVersion()` | auto-lyrics.service.ts | Parse LRC → markers + lyricsLines + blocks |
+| `handleLrcVersionSelect()` | SyncEditorPanel.tsx | Apply selected version to runtime + persist |
+| `blockFirstLineSync()` | auto-lyrics.service.ts | Create blocks from [Verse]/[Chorus] tags |
+
+### handleLrcVersionSelect flow
+
+```
+1. Get geniusText from legacyTrack.lyricsOriginalContent
+2. parseLrcVersion(version, geniusText) → markers, lyricsLines, blocks
+3. Determine blocksToApply:
+   - IF result.blocks.length > 0 → use new blocks
+   - ELSE → preserve existing ld.textBlocks (TC-LRC-03)
+4. ld.loadImportedBlocks(blocksToApply, lyrics, true)
+5. useLyricsStore.setState({ lines: [...ld.lyrics] })
+6. mm.setMarkers(markers) + updateMarkerColors()
+7. Persist to IDB: lyrics + lyricsOriginalContent + syncMarkers + blocksData
+```
+
+### Block preservation rule (TC-LRC-03)
+
+`blocks=[]` from parser = "no blocks in this LRC format" (NOT "user deleted blocks").
+Existing blocks are preserved because they are tied to the track, not the LRC version.
+
+### lyricsOriginalContent chain
+
+```
+Genius API → lyricsOriginalContent (with [Verse]/[Chorus] tags)
+  → IDB persist (TC-LRC-02)
+  → ZIP export.json (TC-LRC-04)
+  → ZIP import → IDB restore (TC-LRC-05)
+  → LRC Picker reads → blockFirstLineSync() → blocks created
+```
+
+Without lyricsOriginalContent: parseLrcVersion returns blocks=[] → existing blocks destroyed → white markers.
+
+### See also
+
+- Full block-first sync algorithm: `block-first-lyrics-sync.md`
+- Full ZIP pipeline: `zip-pipeline.md`
 
 ---
 
@@ -498,6 +577,7 @@ Internal equivalents exist:
 14. Create fresh blob URLs from track bytes
 15. await ae.loadTrack(iUrl, vUrl)
 16. Set markers / reset markers + update colors
+16a. Vocal Onset Correction (VOC) — L3 (multi-anchor, dataVersion=4) or L2 (linear, dataVersion=3). L3 currently falls back to L2 if insufficient anchors found. Group Drag available for manual correction.
 17. prepareWordSyncLayer(...)  ← word-sync hydration
 18. Delayed sanitize blocks
 19. Optional autoplay (200ms delay)
@@ -681,6 +761,27 @@ The following mode surfaces already use WordHighlightLine as their word renderer
 | `performance.clamp.ts` | ✅ Budget clamping |
 | `performance.recording.ts` | ✅ Recording-safe profiles |
 
+### ✅ Takes practice surface (canvas-first first-pass)
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| `TakesPanel.tsx` | ✅ Top control grammar integrated | Practice / Compare / Solo / I/V/M + block info |
+| `TakesControlStrip.tsx` | ✅ Hero trio centered (2-1-3) | All cards 340px, bottom: 48px |
+| `TakesCanvas.tsx` | ✅ Canvas-first layout | Full-bleed waveform field |
+| ❄️ Global Solo unified button | Orange accent active state, no On/Off wording |
+| ❄️ Standard visible take-sync stabilized | Trim clipping seam removed (TC-TSYNC-406) |
+
+### ✅ Exercises learner surface policy
+
+| Policy | Status | Notes |
+|--------|--------|-------|
+| Default learner surface | ✅ Minimal (stable-2 only) | Echo Drill + 3-Take Challenge |
+| Smoke/experimental | ⚠️ Hidden from default popover | No Training Wheels, A Cappella Boss |
+| Special alternation lane | ⚠️ Separate entry point required | Call & Response (dedicated config UI) |
+| ❄️ Freedom-first interruption model | Accepted doctrine | Blanket lock rejected, exit/cancel/Esc documented |
+| ❄️ Committed evidence survives | Blobs saved, progress recorded | Interruption handler registered |
+| Next deepening lanes | 🧭 Sequenced roadmap | 1. Composable I/V/T layer, 2. X-axis timing feedback |
+
 ### ❄️ Three orthogonal domains rule
 
 ```
@@ -733,7 +834,7 @@ When recording active:
 
 | Event | Emit Target | Listen Target | Affected | Status |
 |-------|------------|---------------|----------|--------|
-| `mode-changed` | **`window`** | **`document`** | loop.bridge, lyrics.bridge, mode.bridge | ⚠️ **CONFIRMED BUG** |
+| `mode-changed` | **`window`** | **`window`** | loop.bridge, lyrics.bridge, mode.bridge | ✅ Fixed (TC-001) |
 
 **Impact:** `loop.bridge` handler (`clearAllLoops`) may not fire on mode switch → loop ghosting in engine. `lyrics.bridge` mode sync may not trigger. `mode.bridge` partially masked by `MutationObserver` fallback.
 
@@ -741,7 +842,7 @@ When recording active:
 
 | Event | Emitters | Listeners Found | Status |
 |-------|----------|----------------|--------|
-| `sync-editor-closed` | `sync.bridge.ts` | None found in repo | ⚠️ Probable residue |
+| `sync-editor-closed` | `sync.bridge.ts`, `catalog.store.ts` | None found in repo | ⚠️ Marked as RESIDUE (TC-004) |
 
 ---
 
@@ -818,9 +919,9 @@ Both open same DB (`TextAppDB` v6) independently.
 | `fix_artifacts.js` | ✅ Working | Enrichment, frozen artifact contract |
 | `mock-align-server.mjs` | ✅ Working | 3-level hash matching, auto-alias |
 | Artifact → app runtime | ✅ Working | Via mock server → provider → store → persist |
-| Artifact → zip import | ⚠️ **GAP** | Upload path does not ingest alignment artifacts |
-| Mock route vs provider | ⚠️ **SEAM** | Delivery-contract seam: standalone mock pipeline docs describe `/align` and `/api/align`, while frontend provider uses `/v1/align`. May be solved by adapter/proxy/config outside scanned code. |
-| Registry L1 exact hash | ⚠️ **Dormant** | `lyricsHash: ""` in artifacts, L2/L3 active |
+| Artifact → zip import | ✅ Done (TC-006, TC-008, TC-014) | Upload path ingests alignment.json + builds lineMap |
+| Mock route vs provider | ✅ Done (TC-007) | Mock server now accepts /v1/align alongside /align and /api/align |
+| Registry L1 exact hash | ⚠️ **Dormant** | `lyricsHash: ""` in artifacts, L2/L3 active — TODO Wave 5: precompute variant cache |
 
 ### Artifact contract (frozen)
 
@@ -831,7 +932,8 @@ Both open same DB (`TextAppDB` v6) independently.
   "audioSource": "vocal-stem",
   "language": "en",
   "mode": "anchored",
-  "lyricsHash": "",
+  "lyricsHash": "",  // auto-populated by mock server on first match or ZIP export
+  "dataVersion": 3,  // 1=raw, 2=clean-lyrics, 3=voc-corrected
   "provider": "mms_fa",
   "trackId": "track-slug",
   "lines": [
@@ -867,28 +969,30 @@ Both open same DB (`TextAppDB` v6) independently.
 
 | Issue | Impact | Status |
 |-------|--------|--------|
-| `mode-changed` target mismatch | Loop ghosting, lyrics desync on mode switch | ⚠️ TC-001 ready |
+| `mode-changed` target mismatch | Loop ghosting... | ✅ Fixed (TC-001) |
+| INDEX MISMATCH (markers out of bounds) | App crash on tracks with raw LRC | ✅ Fixed (TC-AL-01..04 + TC-VOC-01..04) |
 
 ### Class B — Confirmed residual ambiguity
 
 | Issue | Impact | Status |
 |-------|--------|--------|
-| Rehearsal volume dual persistence | Modern grouped + legacy split-key reads | ⚠️ TC-002 ready |
+| Rehearsal volume dual persistence | Canonical grouped path + one-time migration | ✅ Fixed (TC-002) |
+| VERSION MISMATCH (non-linear drift) | ~20% markers may drift individually | ⚠️ L3 code exists but needs tuning (TC-ANCHOR-01/02). Group Drag available for manual fix (TC-DRAG-01) |
+| VOC performance (12.7s on old hardware) | Delays track load on slow devices | 📝 W13 (Async VOC) |
 | `sync-editor-closed` likely dead | Emitters exist, no listeners found | ⚠️ Decision pending |
-| `audioStore.ts` possible duplicate | `src/audio/store/` vs `src/stores/` | ⚠️ Scan pending |
+| `audioStore.ts` duplicate | Removed: src/audio/hooks/ + src/audio/store/ | ✅ Cleaned (TC-005) |
 
 ### Class C — Confirmed compat seams
 
 | Issue | Impact | Status |
 |-------|--------|--------|
-| Recording: `microphoneGain` + `streamDestination` not exposed | Mic-to-recording integration likely broken | ⚠️ Decision needed |
+| Recording: `microphoneGain` + `streamDestination` | Exposed via public getters | ✅ Fixed (TC-003) |
 | MonitorMix: `vocalsSourceNode` possibly missing | Vocal-to-main routing may be degraded | ⚠️ Scan needed |
 
 ### Class D — Requires measurement
 
 | Issue | Impact | Status |
 |-------|--------|--------|
-| First-load stutter | Transport UX on first block jump | ⚠️ Instrumentation needed |
 | Double blob layering | Possible load inefficiency | ⚠️ Measure if needed |
 | Distributed publication paths | Debugging complexity, subtle races | ⚠️ Map before consolidating |
 
@@ -896,9 +1000,29 @@ Both open same DB (`TextAppDB` v6) independently.
 
 | Issue | Impact | Status |
 |-------|--------|--------|
-| Mock `/align` vs provider `/v1/align` | Dev/prod route mismatch | ⚠️ Reconcile |
+| Mock `/align` vs provider `/v1/align` | All three routes supported | ✅ Fixed (TC-007) |
 | Registry `lyricsHash: null` | L1 exact matching dormant | ⚠️ Backfill or accept L2/L3 |
-| Zip import doesn't ingest alignment | Prepared catalog not fully self-contained | 🧭 Wave 3 task |
+| Zip import alignment artifacts | Full roundtrip: export ZIP → import ZIP → word-sync ready | ✅ Done (TC-006/008/014/015) |
+| Cover Art URL-only in old ZIPs | Reimport loses offline capability | Graceful fallback to API fetch | Medium |
+| lyricsOriginalContent missing in old ZIPs | LRC Picker cannot create blocks after reimport | Block preservation guard (TC-LRC-03) | Medium |
+
+### Class F — Resolved in current session
+
+| Issue | Resolution | TC |
+|-------|-----------|-----|
+| mode-changed target mismatch | Listeners aligned to window | TC-001 |
+| Rehearsal volume dual persistence | Migration to grouped key | TC-002 |
+| Recording compat gap | Public getters exposed | TC-003 |
+| sync-editor-closed unknown status | Marked as residue | TC-004 |
+| audioStore.ts dead duplicate | Removed with dead hook | TC-005 |
+| ZIP import no alignment support | Full alignment ingestion | TC-006/008/014 |
+| Mock/provider route mismatch | All routes supported | TC-007 |
+| ZIP lyricsHash not roundtripped | Hash persisted in export.json | TC-015 |
+| ZIP export missing | Full ZIP export with progress | TC-009-019 |
+| No unit tests | 97 tests via Vitest | TC-020 |
+| Dock restructure | Mix/AI removed, always-on controls, toggle buttons | TC-DOCK series |
+| Pitch integration | z-index fix, ResizeObserver guard, --bl-deck-height ownership | TC-PITCH series |
+| Double active state | activeTabId reset on toggle | TC-DOCK-20 |
 
 ---
 
@@ -923,35 +1047,57 @@ Both open same DB (`TextAppDB` v6) independently.
 
 # §17. Recommended Work Sequence
 
-### Wave 1 — Contract fixes (ready now)
+### Wave 1 — Contract fixes (done)
 
-| TC | What | Risk |
-|----|------|------|
-| TC-001 | Align `mode-changed` listeners to `window` (3 files) | Low |
-| TC-002 | Migrate rehearsal volume split keys → grouped canonical | Low |
+| TC | What | Status |
+|----|------|--------|
+| TC-001 | Align `mode-changed` listeners to `window` | ✅ Done |
+| TC-002 | Migrate rehearsal volume split keys → grouped canonical | ✅ Done |
 
-### Wave 2 — Architectural decisions
+### Wave 2 — Architectural decisions (resolved)
 
-| Item | Decision Type |
-|------|--------------|
-| Recording compat | Tactical expose vs structural API |
-| `sync-editor-closed` | Deprecate or protect? |
-| `audioStore.ts` duplicate | Scan and resolve |
+| Item | Status |
+|------|--------|
+| Recording compat | ✅ Tactical expose done (TC-003) |
+| `sync-editor-closed` | ✅ Marked as residue (TC-004) |
+| `audioStore.ts` duplicate | ✅ Removed (TC-005) |
 
-### Wave 3 — Pipeline completion
+### Wave 3 — Pipeline completion (done)
 
-| Item | Goal |
-|------|------|
-| Zip import: ingest alignment artifacts | Fully self-contained prepared catalog |
-| Mock/provider route reconciliation | Consistent delivery contract |
-| Registry hash backfill strategy | L1 exact matching activation |
+| Item | Status |
+|------|--------|
+| ZIP import alignment artifacts | ✅ Done (TC-006/008/014) |
+| Mock/provider route reconciliation | ✅ Done (TC-007) |
+| lyricsHash roundtrip | ✅ Done (TC-015) |
+| ZIP export with full track package | ✅ Done (TC-009/011/013) |
+| ZIP export UX (feedback, progress, guard) | ✅ Done (TC-010/012/016-019) |
+
+### Wave 3.5 — Testing infrastructure (done)
+
+| Item | Status |
+|------|--------|
+| Vitest setup + 97 unit tests | ✅ Done (TC-020) |
+
+### Wave 6 — Dock restructure (done)
+
+| Item | Status |
+|------|--------|
+| Mix tab → always-on sliders | ✅ Done (TC-DOCK-05/06) |
+| AI tab removed (deferred v3) | ✅ Done (TC-DOCK-11) |
+| BPM on dock bar | ✅ Done (TC-DOCK-08/09) |
+| VMix + Mic on dock bar | ✅ Done (TC-DOCK-10) |
+| Sync/Monitor/Pitch as toggle buttons | ✅ Done (TC-DOCK-13) |
+| Tools tab removed | ✅ Done (TC-DOCK-19) |
+| Blocks → Sync Editor panel | ✅ Done (TC-DOCK-18) |
+| Double active state fix | ✅ Done (TC-DOCK-20) |
+| Pitch z-index + pianoOpenRef guard | ✅ Done (TC-PITCH series) |
 
 ### Wave 4 — Instrumentation
 
 | Item | Goal |
 |------|------|
-| First-load stutter transport trace | Measured diagnosis |
 | MonitorMix compat audit | Boundary contract closure |
+| Performance profiling under stress | Measure edge cases |
 
 ### Wave 5 — Documentation hardening
 
@@ -1121,7 +1267,7 @@ This section explains not just what seams exist, but what they can break.
 | Rehearsal volume legacy read path | stale settings source | inconsistent restore behavior across mode/sync flows | Medium |
 | Recording compat gap | mic may not be included in capture path | feature appears present but behaves partially | High |
 | MonitorMix compat gap | vocal-to-main routing may degrade | rehearsal/monitor product behavior may be incomplete | Medium |
-| First-load stutter | first jump UX degraded | transport confidence drops despite strong architecture | Medium |
+| First-load stutter | ✅ Resolved — transport seek/resume stabilized | High |
 | Mock/provider route seam | artifacts may not resolve in some dev/proxy setups | false diagnosis of sync pipeline failure | Medium |
 | Zip import artifact gap | prepared catalog not fully self-contained | extra runtime dependency on server delivery path | Medium |
 | `sync-editor-closed` residue | none if truly dead | accidental reliance by hidden consumer if removed blindly | Low |
@@ -1144,7 +1290,7 @@ This section defines how architectural changes should be evaluated.
 
 **2. Boundary compat fix** — MonitorMix expected field, recording surface mismatch, shell method completion. Handle carefully: touches compatibility surfaces.
 
-**3. Instrumentation-first issue** — first-load stutter, drift anomalies, publication race suspicion. Do not refactor before measuring.
+**3. Instrumentation-first issue** — drift anomalies, publication race suspicion. Do not refactor before measuring.
 
 **4. Product lane completion** — prepared catalog import, artifact bundling, production delivery. Not bug fixes; strategic completeness tasks.
 
@@ -1270,7 +1416,7 @@ The system is mature enough that hidden ambiguity now costs more than missing lo
 
 ### Current observability gap
 
-Weakest diagnostic surface today: transport seek/resume path, first-load stutter analysis, drift correction trace, mode-change blast trace.
+Weakest diagnostic surface today: transport seek/resume path trace, drift correction analysis, mode-change blast trace.
 
 ### Recommended minimal diagnostics expansion
 
@@ -1435,7 +1581,7 @@ Save produces JSON file containing markers and structure. This JSON + audio + ly
 
 ---
 
-**beLive 2.1 is a mature hybrid architecture where React/TS owns the product runtime over preserved boundary shells. The system includes a complete offline batch pipeline for word-sync artifact production, a live reactive visual layer, and a first-class performance policy domain. Optimize contracts and close seams, do not rebuild.**
+**beLive 2.1 is a mature hybrid architecture where React/TS owns the product runtime over preserved boundary shells. The system includes a complete offline batch pipeline for word-sync artifact production, a live reactive visual layer, a first-class performance policy domain, and a fully operational ZIP-based prepared catalog cycle (export → import → word-sync ready). Contract seams from Waves 1-3 have been resolved. 127 unit tests provide regression safety. Dock restructured: always-on volume/BPM/mic controls, Sync/Monitor/Pitch as toggle buttons, Tools tab eliminated. Next priorities: transport instrumentation (Wave 4) and documentation hardening (Wave 5).**
 ```
 
 ---

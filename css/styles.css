@@ -959,8 +959,8 @@ body.waveform-active #lyrics-display {
 }
 
 .waveform-active .lyric-line.marker-bridge {
-    border-left-color: #6f42c1 !important;
-    color: #6f42c1 !important;
+    border-left-color: #9C27B0 !important;
+    color: #9C27B0 !important;
 }
 
 .waveform-active .lyric-line.marker-intro {
@@ -969,8 +969,8 @@ body.waveform-active #lyrics-display {
 }
 
 .waveform-active .lyric-line.marker-outro {
-    color: #FF9800 !important;
-    border-left: 3px solid #FF9800;
+    color: #00BCD4 !important;
+    border-left: 3px solid #00BCD4;
 }
 
 .waveform-active .lyric-line.marker-unknown {
@@ -1003,7 +1003,7 @@ body.waveform-active #lyrics-display {
 }
 
 .waveform-active .lyric-line.played-marker.marker-bridge {
-    color: rgba(111, 66, 193, 0.6) !important;
+    color: rgba(156, 39, 176, 0.6) !important;
 }
 
 /* Стили для кнопок удаления и сброса маркеров */
@@ -1098,7 +1098,7 @@ body.waveform-active #lyrics-display {
 
 /* Button style for loop controls */
 .waveform-btn.loop-btn {
-    background-color: #FF9800;
+    background-color: #2196F3;
     color: white;
 }
 

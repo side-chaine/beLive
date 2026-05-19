@@ -14,11 +14,14 @@
 }
 
 .activeBlock {
-  background: rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 1;
+  background: var(--plate-bg, rgba(0, 0, 0, 0.5));
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--bl-cover-border, rgba(255, 255, 255, 0.08));
   border-radius: var(--bl-radius-lg, 12px);
+  box-shadow: 0 0 var(--plate-glow-size, 0px) var(--bl-cover-glow, transparent);
   padding: 24px 40px;
   display: flex;
   flex-direction: column;
@@ -33,12 +36,80 @@
   text-align: center;
 }
 
+/* ═══ Slot Grid Mode: Ваза ═══
+   .activeBlock = visual plate (background, border, blur)
+   Grid properties moved to .slotContainer (цветы)
+   Flex from base class centers .slotContainer vertically */
+.activeBlock.slotMatrixActive {
+  overflow: hidden;
+  
+  /* Slot spacing vars (scoped for .slotContainer cascade) */
+  --bl-slot-gap: 16px;
+  --bl-inter-block-gap: 24px;
+  
+  /* Preview slot vars */
+  --bl-ps-opacity-idle: 0.3;
+  --bl-ps-opacity-grow: 0.95;
+  --bl-ps-transition-speed: 0.3s;
+  --bl-ps-transition: 
+    opacity var(--bl-ps-transition-speed) ease,
+    font-size var(--bl-ps-transition-speed) ease,
+    color 0.25s ease,
+    text-shadow 0.25s ease;
+  
+  /* Loop boundary vars */
+  --bl-loop-border-width: 2px;
+  --bl-loop-padding: 6px;
+}
+
+/* ═══ Slot Container: Цветы ═══
+   Grid container for slot rows.
+   Direct children = grid items (required by CSS Grid spec).
+   .activeBlock (ваза) centers this container via flex. */
+.slotMatrixActive .slotContainer {
+  display: grid;
+  /* grid-template-rows set via inline style from useSlotMatrix() */
+  grid-template-rows: auto;
+  gap: var(--bl-slot-gap, 16px);
+  align-content: center;
+  justify-items: center;
+  width: 100%;
+  position: relative;
+}
+
+.slotMatrixActive .line {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.slotMatrixActive .line[data-is-preview="true"] {
+  opacity: var(--bl-ps-opacity-idle);
+  margin-top: max(0px, calc(var(--bl-inter-block-gap) - var(--bl-slot-gap)));
+  transition: var(--bl-ps-transition);
+}
+
+.slotMatrixActive .line[data-is-preview="true"][data-grow-cue="true"] {
+  opacity: var(--bl-ps-opacity-grow);
+}
+
+.slotMatrixActive .line[data-loop-start="true"] {
+  border-top: var(--bl-loop-border-width) solid var(--bl-loop-color, #FF8C00);
+  padding-top: var(--bl-loop-padding);
+}
+
+.slotMatrixActive .line[data-loop-end="true"] {
+  border-bottom: var(--bl-loop-border-width) solid var(--bl-loop-color, #FF8C00);
+  padding-bottom: var(--bl-loop-padding);
+}
+
 .line {
   color: var(--bl-text-muted, rgba(255, 255, 255, 0.6));
-  line-height: 1.4;
+  line-height: 1.25;
   padding: var(--bl-spacing-xs, 4px) 0;
   transition: color 0.25s ease, text-shadow 0.25s ease, transform 0.25s ease, opacity 0.25s ease;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 /* Base active line - strongest emphasis (legacy default / 'strong') */
@@ -99,107 +170,133 @@
   filter: none;
 }
 
-/* === BLOCK CUE: STRUCTURAL FIRST-LINE-OF-NEXT-BLOCK CUE === */
-/* Block Cue is a separate semantic object from the public Line `Next Line` control.
-   It remains always-on as a structural guide, not a line-flow control. */
+/* === LINE NEXT LEVEL: IMMEDIATE NEXT LYRIC LINE === */
+/* Next Line = the immediate next line in lyric reading flow (within same block).
+   This is separate from Block Cue (structural first-line-of-next-block cue).
+   The Next Line control in StylesDeck now truthfully controls this line. */
 
+/* off: next line same as others — no special emphasis */
+.line[data-line-next="true"][data-line-next-level="off"] {
+  opacity: var(--bl-others-opacity, 0.4);
+  /* Next line visually same as others */
+}
+
+/* hint: subtle preview — soft visibility boost */
+[data-line-others-level] .line[data-line-next="true"][data-line-next-level="hint"] {
+  opacity: 0.6;
+  color: rgba(255, 255, 255, 0.65);
+  /* Subtle preview */
+}
+
+/* guide: clear guide — brighter with soft glow */
+[data-line-others-level] .line[data-line-next="true"][data-line-next-level="guide"][data-line-next="true"] {
+  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+  /* Clear guide */
+}
+
+/* ═══════ Block Cue — structural preview of next block ═══════ */
+
+/* Default: маленький и тусклый */
 .blockCue {
+  display: none; /* TC-SM-25G: скрыт для Slot Grid A/B */
   position: absolute;
-  bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: var(--bl-spacing-xl, 24px);
-  opacity: 0.7;
+  top: var(--plate-cue-top, calc(100% - 32px));
+  left: var(--plate-cue-x, 50%);
+  transform: translate(-50%, calc(var(--bl-bc-y, 0) * -1px));
+  width: 80%;
+  max-width: 900px;
+  text-align: center;
+  opacity: 0.3;
   flex-shrink: 0;
-  padding-bottom: 8px;
+  z-index: 2;
+  transition: opacity 0.3s ease-out;
 }
 
+/* Grow: ярче */
+.blockCue[data-grow-cue="true"] {
+  opacity: 0.95;
+  transition: opacity 0.5s ease-out;
+}
+
+/* Базовый BC: маленький тусклый структурный ориентир */
 .blockCueLine {
-  color: rgba(0, 210, 160, 0.80);
-  font-weight: 500;
-  font-size: 1.2rem;
-}
-
-.blockCueLine::before {
-  content: "→ ";
-}
-
-/* === LINE NEXT LEVEL: BLOCK CUE STYLING === */
-/* Base Block Cue appearance */
-.blockCue {
-  opacity: 0.7;
-}
-
-/* off: very faint cue-green — present but minimal */
-[data-line-next-level="off"] .blockCue {
-  opacity: 0.35;
-}
-
-[data-line-next-level="off"] .blockCueLine {
-  color: rgba(0, 210, 160, 0.38);
+  font-size: 0.85rem;
   font-weight: 400;
+  color: rgba(0, 210, 160, 0.3);
+  text-shadow: none;
+  letter-spacing: 0;
+  padding: var(--bl-spacing-xs, 4px) 0;
+  text-align: center;
+  transition:
+    font-size 0.5s ease-out,
+    color 0.5s ease-out,
+    text-shadow 0.5s ease-out;
 }
 
-/* hint: soft readable cue-green */
-[data-line-next-level="hint"] .blockCue {
-  opacity: 0.55;
-}
-
-[data-line-next-level="hint"] .blockCueLine {
-  color: rgba(0, 210, 160, 0.65);
+/* Grow BC: размер = оригинал, цвет → белый при travel */
+.blockCue[data-grow-cue="true"] .blockCueLine {
+  font-size: var(--bl-bc-font-size, 1.8rem);
   font-weight: 400;
+  letter-spacing: 0;
+  padding: var(--bl-spacing-xs, 4px) 0;
+  color: color-mix(
+    in srgb,
+    var(--bc-block-color, rgba(0, 210, 160, 0.9))
+    calc(100% * (1 - var(--bl-bc-progress, 0))),
+    #ffffff calc(100% * var(--bl-bc-progress, 0))
+  );
+  text-shadow:
+    0 0 20px color-mix(
+      in srgb,
+      var(--bc-block-color, rgba(0, 210, 160, 0.9)) 35%,
+      transparent
+    ),
+    0 0 calc(20px * var(--bl-bc-progress, 0)) rgba(255, 255, 255, 0.4);
+  transition:
+    font-size 0.5s ease-out,
+    color 0.5s ease-out,
+    text-shadow 0.5s ease-out;
 }
 
-/* guide: stronger green-cyan cue — clear and present */
-[data-line-next-level="guide"] .blockCue {
-  opacity: 0.85;
-}
 
-[data-line-next-level="guide"] .blockCueLine {
-  color: rgba(0, 210, 160, 0.90);
-  font-weight: 500;
-  text-shadow: 0 0 12px rgba(0, 210, 160, 0.30);
-}
 
-/* === BLOCK-TYPE AWARE BLOCK CUE COLORS === */
-/* color comes from next block type; level still controls opacity + weight.
-   Selectors target data-block-type on .blockCue wrapper.
+
+
+
+
+/* Block Cue uses data-block-type for colors only; opacity and weight are fixed.
    Fallback colors match src/blocks/types.ts BLOCK_TYPE_CONFIG canonical values. */
 
 /* verse — green */
 .blockCue[data-block-type="verse"] .blockCueLine {
-  color: var(--bl-block-verse, #4CAF50);
-  text-shadow: 0 0 10px color-mix(in srgb, var(--bl-block-verse, #4CAF50) 35%, transparent);
+  --bc-block-color: var(--bl-block-verse, #4CAF50);
 }
 
-/* prechorus — orange */
+/* prechorus — yellow */
 .blockCue[data-block-type="prechorus"] .blockCueLine {
-  color: var(--bl-block-prechorus, #FF9800);
-  text-shadow: 0 0 10px color-mix(in srgb, var(--bl-block-prechorus, #FF9800) 35%, transparent);
+  --bc-block-color: var(--bl-block-prechorus, #FFEB3B);
 }
 
 /* chorus — red */
 .blockCue[data-block-type="chorus"] .blockCueLine {
-  color: var(--bl-block-chorus, #F44336);
-  text-shadow: 0 0 10px color-mix(in srgb, var(--bl-block-chorus, #F44336) 35%, transparent);
+  --bc-block-color: var(--bl-block-chorus, #F44336);
 }
 
 /* bridge — purple */
 .blockCue[data-block-type="bridge"] .blockCueLine {
-  color: var(--bl-block-bridge, #6f42c1);
-  text-shadow: 0 0 10px color-mix(in srgb, var(--bl-block-bridge, #6f42c1) 35%, transparent);
+  --bc-block-color: var(--bl-block-bridge, #9C27B0);
 }
 
 /* intro — blue */
 .blockCue[data-block-type="intro"] .blockCueLine {
-  color: var(--bl-block-intro, #03A9F4);
-  text-shadow: 0 0 10px color-mix(in srgb, var(--bl-block-intro, #03A9F4) 35%, transparent);
+  --bc-block-color: var(--bl-block-intro, #2196F3);
 }
 
 /* outro — grey */
 .blockCue[data-block-type="outro"] .blockCueLine {
-  color: var(--bl-block-outro, #9E9E9E);
-  text-shadow: none;
+  --bc-block-color: var(--bl-block-outro, #00BCD4);
 }
 
 .scrollContainer {
@@ -207,9 +304,56 @@
   width: 80%;
   max-width: 800px;
   overflow-y: auto;
-  padding: 40px 0 80px;
+  padding: 40px 0 calc(80px + var(--bl-piano-height, 0px));
   text-align: center;
 }
+
+.slotContainer > .loopBoundary {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #FF8C00 0%, #ff7b00 50%, #ff6b00 100%);
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(255, 140, 0, 0.4);
+  cursor: ns-resize;
+  opacity: 0.9;
+  z-index: 20;
+  transition: height 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+}
+
+.slotContainer > .loopBoundary:hover {
+  height: 6px;
+  background: linear-gradient(90deg, rgba(255, 179, 71, 0.8) 0%, rgba(255, 140, 0, 1) 30%, rgba(255, 140, 0, 1) 70%, rgba(255, 179, 71, 0.8) 100%);
+  box-shadow: 0 0 12px rgba(255, 140, 0, 0.4), 0 0 24px rgba(255, 140, 0, 0.15);
+}
+
+.loopBoundaryArrow {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 16px;
+  background: rgba(255, 140, 0, 0.3);
+  border: 1px solid rgba(255, 140, 0, 0.5);
+  border-radius: 3px;
+  color: #FF8C00;
+  font-size: 10px;
+  display: grid;
+  place-items: center;
+  z-index: 19;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.loopBoundaryArrow[data-direction="up"] {
+  top: 4px;
+}
+
+.loopBoundaryArrow[data-direction="down"] {
+  bottom: 4px;
+}
+
 
 .loopBoundary {
   width: 100%;
@@ -283,7 +427,7 @@
 
 [data-line-others-source="trackmap"][data-line-others-level="dim"] .line:not([data-active="true"])[data-block-type="prechorus"] {
   opacity: 0.35;
-  color: color-mix(in srgb, var(--bl-block-prechorus, #FF9800) 45%, rgba(255, 255, 255, 0.25));
+  color: color-mix(in srgb, var(--bl-block-prechorus, #FFEB3B) 45%, rgba(255, 255, 255, 0.25));
 }
 
 [data-line-others-source="trackmap"][data-line-others-level="dim"] .line:not([data-active="true"])[data-block-type="chorus"] {
@@ -293,17 +437,17 @@
 
 [data-line-others-source="trackmap"][data-line-others-level="dim"] .line:not([data-active="true"])[data-block-type="bridge"] {
   opacity: 0.35;
-  color: color-mix(in srgb, var(--bl-block-bridge, #6f42c1) 45%, rgba(255, 255, 255, 0.25));
+  color: color-mix(in srgb, var(--bl-block-bridge, #9C27B0) 45%, rgba(255, 255, 255, 0.25));
 }
 
 [data-line-others-source="trackmap"][data-line-others-level="dim"] .line:not([data-active="true"])[data-block-type="intro"] {
   opacity: 0.35;
-  color: color-mix(in srgb, var(--bl-block-intro, #03A9F4) 45%, rgba(255, 255, 255, 0.25));
+  color: color-mix(in srgb, var(--bl-block-intro, #2196F3) 45%, rgba(255, 255, 255, 0.25));
 }
 
 [data-line-others-source="trackmap"][data-line-others-level="dim"] .line:not([data-active="true"])[data-block-type="outro"] {
   opacity: 0.35;
-  color: color-mix(in srgb, var(--bl-block-outro, #9E9E9E) 45%, rgba(255, 255, 255, 0.25));
+  color: color-mix(in srgb, var(--bl-block-outro, #00BCD4) 45%, rgba(255, 255, 255, 0.25));
 }
 
 /* TrackMap + Medium: subdued block colors at medium opacity (default) */
@@ -319,7 +463,7 @@
 
 [data-line-others-source="trackmap"][data-line-others-level="medium"] .line:not([data-active="true"])[data-block-type="prechorus"] {
   opacity: 0.6;
-  color: color-mix(in srgb, var(--bl-block-prechorus, #FF9800) 55%, rgba(255, 255, 255, 0.35));
+  color: color-mix(in srgb, var(--bl-block-prechorus, #FFEB3B) 55%, rgba(255, 255, 255, 0.35));
 }
 
 [data-line-others-source="trackmap"][data-line-others-level="medium"] .line:not([data-active="true"])[data-block-type="chorus"] {
@@ -329,17 +473,17 @@
 
 [data-line-others-source="trackmap"][data-line-others-level="medium"] .line:not([data-active="true"])[data-block-type="bridge"] {
   opacity: 0.6;
-  color: color-mix(in srgb, var(--bl-block-bridge, #6f42c1) 55%, rgba(255, 255, 255, 0.35));
+  color: color-mix(in srgb, var(--bl-block-bridge, #9C27B0) 55%, rgba(255, 255, 255, 0.35));
 }
 
 [data-line-others-source="trackmap"][data-line-others-level="medium"] .line:not([data-active="true"])[data-block-type="intro"] {
   opacity: 0.6;
-  color: color-mix(in srgb, var(--bl-block-intro, #03A9F4) 55%, rgba(255, 255, 255, 0.35));
+  color: color-mix(in srgb, var(--bl-block-intro, #2196F3) 55%, rgba(255, 255, 255, 0.35));
 }
 
 [data-line-others-source="trackmap"][data-line-others-level="medium"] .line:not([data-active="true"])[data-block-type="outro"] {
   opacity: 0.6;
-  color: color-mix(in srgb, var(--bl-block-outro, #9E9E9E) 55%, rgba(255, 255, 255, 0.35));
+  color: color-mix(in srgb, var(--bl-block-outro, #00BCD4) 55%, rgba(255, 255, 255, 0.35));
 }
 
 /* TrackMap + Low: subdued block colors at higher opacity */
@@ -355,7 +499,7 @@
 
 [data-line-others-source="trackmap"][data-line-others-level="low"] .line:not([data-active="true"])[data-block-type="prechorus"] {
   opacity: 0.8;
-  color: color-mix(in srgb, var(--bl-block-prechorus, #FF9800) 65%, rgba(255, 255, 255, 0.45));
+  color: color-mix(in srgb, var(--bl-block-prechorus, #FFEB3B) 65%, rgba(255, 255, 255, 0.45));
 }
 
 [data-line-others-source="trackmap"][data-line-others-level="low"] .line:not([data-active="true"])[data-block-type="chorus"] {
@@ -365,17 +509,17 @@
 
 [data-line-others-source="trackmap"][data-line-others-level="low"] .line:not([data-active="true"])[data-block-type="bridge"] {
   opacity: 0.8;
-  color: color-mix(in srgb, var(--bl-block-bridge, #6f42c1) 65%, rgba(255, 255, 255, 0.45));
+  color: color-mix(in srgb, var(--bl-block-bridge, #9C27B0) 65%, rgba(255, 255, 255, 0.45));
 }
 
 [data-line-others-source="trackmap"][data-line-others-level="low"] .line:not([data-active="true"])[data-block-type="intro"] {
   opacity: 0.8;
-  color: color-mix(in srgb, var(--bl-block-intro, #03A9F4) 65%, rgba(255, 255, 255, 0.45));
+  color: color-mix(in srgb, var(--bl-block-intro, #2196F3) 65%, rgba(255, 255, 255, 0.45));
 }
 
 [data-line-others-source="trackmap"][data-line-others-level="low"] .line:not([data-active="true"])[data-block-type="outro"] {
   opacity: 0.8;
-  color: color-mix(in srgb, var(--bl-block-outro, #9E9E9E) 65%, rgba(255, 255, 255, 0.45));
+  color: color-mix(in srgb, var(--bl-block-outro, #00BCD4) 65%, rgba(255, 255, 255, 0.45));
 }
 
 /* === PLAIN LINE TEXT (Focus Off mode) === */
@@ -385,4 +529,147 @@
 .plainLineText {
   display: inline;
   color: inherit;
+}
+
+/* ─── Cover Background Scene ─── */
+.coverBackground {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.coverBgImage {
+  position: absolute;
+  inset: -40px; /* overflow для blur edge */
+  width: calc(100% + 80px);
+  height: calc(100% + 80px);
+  object-fit: cover;
+  filter: blur(40px) saturate(1.5);
+  opacity: 0.15;
+  transition: opacity 0.6s ease;
+}
+
+/* Performance tiers */
+:global([data-visual-tier="lite"]) .coverBgImage {
+  filter: blur(10px) saturate(1.1);
+  opacity: 0.08;
+}
+
+:global([data-visual-tier="balanced"]) .coverBgImage {
+  filter: blur(20px) saturate(1.3);
+  opacity: 0.12;
+}
+
+:global([data-visual-tier="max"]) .coverBgImage,
+:global([data-visual-tier="ultra"]) .coverBgImage {
+  filter: blur(40px) saturate(1.5);
+  opacity: 0.15;
+}
+
+/* ═══ ПС Travel Overlay — Transition-based appear ═══
+   Appear: opacity + transform transition с data-mounted="true" attr.
+   Полная параметризация через CSS variables из пресета (--bl-ps-*).
+   Travel: top transition (duration + easing из variables).
+   Spotlight: text-shadow glow при data-traveling.
+   
+   ⚠️ CSS vars --bl-ps-* ставятся на .root (НЕ на .activeBlock),
+   потому что .previewOverlay — sibling .activeBlock, не потомок.
+   CSS custom properties наследуются ТОЛЬКО вниз по DOM. */
+.previewOverlay {
+  position: fixed;
+  z-index: 10;
+  text-align: center;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  pointer-events: none;
+
+  /* Appear: НАЧАЛЬНОЕ состояние (до data-mounted="true") */
+  opacity: var(--bl-ps-appear-start-opacity, 0);
+  transform: translateY(var(--bl-ps-appear-slide, 12px));
+
+  /* Transition: appear + travel */
+  transition:
+    opacity var(--bl-ps-appear-duration, 0.5s) var(--bl-ps-appear-easing, ease-out),
+    transform var(--bl-ps-appear-duration, 0.5s) var(--bl-ps-appear-easing, ease-out),
+    top var(--bl-ps-travel-duration, 0.8s) var(--bl-ps-travel-easing, cubic-bezier(0.22, 1, 0.36, 1)),
+    text-shadow 0.3s ease;
+}
+
+/* Appear: КОНЕЧНОЕ состояние (после data-mounted="true" — double rAF)
+   ⚠️ Data attribute вместо .mounted class — обходит CSS Modules name mangling */
+.previewOverlay[data-mounted="true"] {
+  opacity: var(--bl-ps-appear-end-opacity, 0.95);
+  transform: translateY(0);
+}
+
+/* Spotlight: glow на ПС при travel
+   ⚠️ Sibling combinator (~) — .previewOverlay — sibling .activeBlock, НЕ потомок!
+   .activeBlock[data-spotlight-active] ~ .previewOverlay = "следующий sibling" */
+.activeBlock[data-spotlight-active="true"][data-traveling="true"] ~ .previewOverlay[data-mounted="true"] {
+  text-shadow:
+    0 0 var(--bl-ps-spotlight-glow-size, 0px)
+      rgba(255, 255, 255, var(--bl-ps-spotlight-glow-opacity, 0)),
+    0 0 calc(var(--bl-ps-spotlight-glow-size, 0px) * 2) currentColor;
+}
+
+/* Spotlight: затемнение других строк при travel
+   ⚠️ Descendant selector (пробел) — .line IS потомок .activeBlock ✅ */
+.activeBlock[data-spotlight-dim-others="true"][data-traveling="true"]
+  .line:not([data-is-preview="true"]):not([data-active="true"]) {
+  opacity: var(--bl-ps-spotlight-others-opacity, 1) !important;
+  transition: opacity 0.3s ease;
+}
+
+/* ═══ Dissolve: dim строк ПЕРЕД switch (предвестник) ═══
+   Старые строки тускнеют когда travel активен.
+   НЕ применяется если spotlight уже dim-others.
+   Активная строка НЕ dissolve — она якорь. */
+.activeBlock[data-dissolving="true"]:not([data-spotlight-dim-others="true"])
+  .line:not([data-is-preview="true"]):not([data-active="true"]) {
+  opacity: var(--bl-ps-dissolve-end-opacity, 0.3);
+  transition: opacity var(--bl-ps-dissolve-duration, 0.3s) ease;
+}
+
+/* ═══ Enter: новые строки fade in после switch ═══
+   Строки стартуют невидимыми, потом fade in.
+   data-enter-mounted="true" добавляется через double rAF.
+   Отдельный attr от ПС .mounted — нет конфликта. */
+.activeBlock[data-entering="true"] .line:not([data-is-preview="true"]) {
+  opacity: var(--bl-ps-enter-start-opacity, 0);
+  transform: translateY(var(--bl-ps-enter-slide-y, 0px));
+}
+
+.activeBlock[data-entering="true"][data-enter-mounted="true"]
+  .line:not([data-is-preview="true"]) {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity var(--bl-ps-enter-duration, 0.3s) var(--bl-ps-appear-easing, ease-out),
+    transform var(--bl-ps-enter-duration, 0.3s) var(--bl-ps-appear-easing, ease-out);
+}
+
+
+
+/* Center dot indicator for loop boundary */
+.slotContainer > .loopBoundary::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 220, 150, 0.95);
+  box-shadow: 0 0 8px rgba(255, 180, 80, 0.6);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+.slotContainer > .loopBoundary:hover::after {
+  transform: translate(-50%, -50%) scale(1);
 }

@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import type { BlockType, EditingBlock, SavedBlock } from '../types';
+import { BLOCK_TYPE_CONFIG } from '../types';
+import { parseTaggedLyrics } from '../parser/tagged-lyrics.parser';
 
 /* ═══════════════════════════════════════════
    Block Editor Store — Sprint 36
@@ -50,6 +52,53 @@ function parseText(text: string): { blocks: EditingBlock[]; lyricsLines: string[
   });
 
   return { blocks, lyricsLines };
+}
+
+/** Parse text with tag detection — tries tagged parser first, falls back to parseText */
+function parseTextWithTagDetection(text: string): {
+  blocks: EditingBlock[];
+  lyricsLines: string[];
+  wasTagDetected: boolean;
+} {
+  if (!text || !text.trim()) {
+    return { blocks: [], lyricsLines: [], wasTagDetected: false };
+  }
+
+  // Try tagged parser first
+  const tagResult = parseTaggedLyrics(text);
+
+  if (tagResult.hasStructure && tagResult.blocks.length >= 2) {
+    // Build clean lyric-only lines from parsed blocks (no tag headers)
+    const cleanLyricsLines: string[] = [];
+    const blocks: EditingBlock[] = [];
+
+    for (const b of tagResult.blocks) {
+      const lineIndices: number[] = [];
+      for (const line of b.contentLines) {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) continue;
+        const idx = cleanLyricsLines.length;
+        cleanLyricsLines.push(trimmedLine);
+        lineIndices.push(idx);
+      }
+
+      // M2 closing marker: no separator line needed — M2 is placed on last line of block via key 2
+      // Old separator line mechanism removed (lines 84-93) — M2 closes blocks explicitly
+
+      blocks.push({
+        id: uid(),
+        text: b.contentLines.filter(l => l.trim()).join('\n'),
+        type: b.type,
+        lineIndices,
+      });
+    }
+
+    return { blocks, lyricsLines: cleanLyricsLines, wasTagDetected: true };
+  }
+
+  // No tags found — fallback to existing parseText
+  const fallback = parseText(text);
+  return { ...fallback, wasTagDetected: false };
 }
 
 function serialize(blocks: EditingBlock[]): string {
@@ -141,7 +190,10 @@ export const useBlockEditorStore = create<BlockEditorState>((set, get) => ({
   /* ── lifecycle ── */
 
   open: (text, trackInfo, onSave, onCancel) => {
-    const { blocks, lyricsLines } = parseText(text);
+    const { blocks, lyricsLines, wasTagDetected } = parseTextWithTagDetection(text);
+    if (wasTagDetected) {
+      console.debug('[BlockEditor] Auto-detected', blocks.length, 'blocks from tags');
+    }
     set({
       isOpen: true,
       blocks,
@@ -274,12 +326,27 @@ export const useBlockEditorStore = create<BlockEditorState>((set, get) => ({
     set({ isSaving: true });
 
     try {
-      const savedBlocks: SavedBlock[] = state.blocks.map((b, i) => ({
-        id: b.id,
-        name: `Block ${i + 1}`,
-        lineIndices: b.lineIndices,
-        type: b.type,
-      }));
+      const typesToNumber = new Set(['verse', 'chorus']);
+      const sameTypeTotals: Record<string, number> = {};
+      state.blocks.forEach(b => {
+        sameTypeTotals[b.type] = (sameTypeTotals[b.type] || 0) + 1;
+      });
+
+      const typeCounters: Record<string, number> = {};
+      const savedBlocks: SavedBlock[] = state.blocks.map((b, i) => {
+        typeCounters[b.type] = (typeCounters[b.type] || 0) + 1;
+        const baseLabel = BLOCK_TYPE_CONFIG.find(c => c.type === b.type)?.label;
+        const shouldNumber = typesToNumber.has(b.type) && sameTypeTotals[b.type] > 1;
+        const name = baseLabel
+          ? (shouldNumber ? `${baseLabel} ${typeCounters[b.type]}` : baseLabel)
+          : `Block ${i + 1}`;
+        return {
+          id: b.id,
+          name,
+          lineIndices: b.lineIndices,
+          type: b.type,
+        };
+      });
 
       const lyricsText = state.lyricsLines.join('\n');
 

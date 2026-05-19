@@ -44,10 +44,16 @@ export class ModelDropdownUI {
             }
             modelItem.dataset.modelId = model.id;
 
-            modelItem.innerHTML = `
-                <span class="model-name">${model.shortName}</span>
-                <span class="model-badge">${model.costTier}</span>
-            `;
+            const modelNameSpan = document.createElement('span');
+            modelNameSpan.className = 'model-name';
+            modelNameSpan.textContent = model.shortName;
+
+            const modelBadgeSpan = document.createElement('span');
+            modelBadgeSpan.className = 'model-badge';
+            modelBadgeSpan.textContent = model.costTier;
+
+            modelItem.appendChild(modelNameSpan);
+            modelItem.appendChild(modelBadgeSpan);
 
             modelItem.addEventListener('click', () => {
                 aiHub.setActiveModel(model.id);

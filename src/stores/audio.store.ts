@@ -9,8 +9,7 @@ interface AudioState {
   vocalMixEnabled: boolean;
   micEnabled: boolean;
   micVolume: number;
-  instrumentalVolume: number;
-  vocalsVolume: number;
+  // W4a: instrumentalVolume/vocalsVolume REMOVED — use stem.store.stemVolumes instead
   setPlaying: (v: boolean) => void;
   setCurrentTime: (v: number) => void;
   setDuration: (v: number) => void;
@@ -18,8 +17,7 @@ interface AudioState {
   setPlaybackRate: (v: number) => void;
   setVocalMixEnabled: (v: boolean) => void;
   setMicEnabled: (v: boolean) => void;
-  setInstrumentalVolume: (v: number) => void;
-  setVocalsVolume: (v: number) => void;
+  // W4a: setInstrumentalVolume/setVocalsVolume REMOVED — use stem.store.setStemVolume instead
 }
 
 export const useAudioStore = create<AudioState>((set) => ({
@@ -31,8 +29,7 @@ export const useAudioStore = create<AudioState>((set) => ({
   vocalMixEnabled: false,
   micEnabled: false,
   micVolume: 1,
-  instrumentalVolume: 1,
-  vocalsVolume: 1,
+  // W4a: Volume state lives in stem.store.stemVolumes
   setPlaying: (v) => set({ isPlaying: v }),
   setCurrentTime: (v) => set({ currentTime: v }),
   setDuration: (v) => set({ duration: v }),
@@ -40,6 +37,4 @@ export const useAudioStore = create<AudioState>((set) => ({
   setPlaybackRate: (v) => set({ playbackRate: v }),
   setVocalMixEnabled: (v) => set({ vocalMixEnabled: v }),
   setMicEnabled: (v) => set({ micEnabled: v }),
-   setInstrumentalVolume: (v) => set({ instrumentalVolume: v }),
-  setVocalsVolume: (v) => set({ vocalsVolume: v }),
 }));

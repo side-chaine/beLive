@@ -1,0 +1,270 @@
+/* MixerPanel — W5: N-Stem Mixer UI */
+/* Vertical channel strips in horizontal scrollable row */
+
+.mixerPanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.channelStripContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.channelStripContainer::-webkit-scrollbar {
+  height: 4px;
+}
+
+.channelStripContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.channelStripContainer::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+/* ─── ChannelStrip ──────────────────────────────────────── */
+
+.channelStrip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 52px;
+  min-width: 52px;
+  gap: 3px;
+  padding: 4px 2px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.15s;
+}
+
+.channelStrip:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.channelStrip.muted {
+  opacity: 0.5;
+}
+
+/* Color accent bar at top */
+.stripAccent {
+  width: 80%;
+  height: 3px;
+  border-radius: 1.5px;
+  flex-shrink: 0;
+}
+
+/* Stem label */
+.stemLabel {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 48px;
+  line-height: 1.2;
+}
+
+/* ─── VU Meter ──────────────────────────────────────────── */
+
+.meterContainer {
+  width: 10px;
+  height: 60px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.meterFill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #4ade80;
+  border-radius: 2px;
+  transition: height 0.08s linear;
+}
+
+/* Meter styles by performance tier */
+.meterContainer[data-style="solid"] .meterFill {
+  background: #4ade80;
+}
+
+.meterContainer[data-style="gradient"] .meterFill {
+  background: linear-gradient(to top, #4ade80 0%, #facc15 70%, #ef4444 95%);
+}
+
+.meterContainer[data-style="gradient-peak"] .meterFill {
+  background: linear-gradient(to top, #4ade80 0%, #facc15 70%, #ef4444 95%);
+}
+
+/* ─── Fader (Vertical Range Slider) ─────────────────────── */
+
+.fader {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 36px;
+  height: 70px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.fader::-webkit-slider-runnable-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  width: 4px;
+  height: 100%;
+}
+
+.fader::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 2px;
+  cursor: pointer;
+  margin-left: -5px;
+}
+
+.fader::-moz-range-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  width: 4px;
+}
+
+.fader::-moz-range-thumb {
+  width: 14px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 2px;
+  border: none;
+  cursor: pointer;
+}
+
+/* ─── Mute / Solo Buttons ───────────────────────────────── */
+
+.muteSoloRow {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.msButton {
+  width: 22px;
+  height: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+  padding: 0;
+  line-height: 1;
+}
+
+.msButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.msButton.active {
+  background: rgba(239, 68, 68, 0.7);
+  border-color: rgba(239, 68, 68, 0.9);
+  color: #fff;
+}
+
+.msButton.activeSolo {
+  background: rgba(250, 204, 21, 0.7);
+  border-color: rgba(250, 204, 21, 0.9);
+  color: #1a1a2e;
+}
+
+/* W10-002: Stems mode toggle toolbar */
+.mixerToolbar {
+  padding: 4px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stemsToggle {
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.6);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.stemsToggle:hover {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.9);
+}
+
+.stemsActive {
+  background: rgba(74, 222, 128, 0.15);
+  border-color: #4ade80;
+  color: #4ade80;
+}
+
+/* TC-VIS-09: Visual mode toggle styles */
+.visualToggle {
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.visualToggle:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.visualActive {
+  background: rgba(155, 89, 182, 0.15);
+  border-color: #9b59b6;
+  color: #9b59b6;
+}

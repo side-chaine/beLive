@@ -1,6 +1,7 @@
 import React, { useCallback, useRef } from 'react';
 import { useAudioStore } from '../stores/audio.store';
 import { useModeStore } from '../stores/mode.store';
+import { interruptPracticeSession } from '../exercises/exercise.interruption';
 
 const MODE_COLORS: Record<string, string> = {
   concert: '#3498db',
@@ -27,13 +28,16 @@ export function TransportBar() {
 
   const handleSeek = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      const ae = (window as any).audioEngine;
-      if (!ae || !trackRef.current || duration === 0) return;
-      const rect = trackRef.current.getBoundingClientRect();
-      const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-      const newTime = ratio * duration;
-      ae.setCurrentTime(newTime);
-      useAudioStore.setState({ currentTime: newTime });
+      // Interrupt practice first if active, then seek
+      interruptPracticeSession(() => {
+        const ae = (window as any).audioEngine;
+        if (!ae || !trackRef.current || duration === 0) return;
+        const rect = trackRef.current.getBoundingClientRect();
+        const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const newTime = ratio * duration;
+        ae.setCurrentTime(newTime);
+        useAudioStore.setState({ currentTime: newTime });
+      });
     },
     [duration]
   );
@@ -45,18 +49,14 @@ export function TransportBar() {
       ref={trackRef}
       onClick={handleSeek}
       style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
         height: 20,
         background: 'rgba(0,0,0,0.95)',
         display: 'flex',
         alignItems: 'center',
         gap: 10,
         padding: '0 14px',
-        zIndex: 999998,
         cursor: 'pointer',
+        flexShrink: 0,
       }}
     >
       {/* Progress track */}

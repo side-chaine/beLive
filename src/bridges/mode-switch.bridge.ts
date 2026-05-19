@@ -1,8 +1,13 @@
 // src/bridges/mode-switch.bridge.ts
 // Mode switch ownership: React → bridge → legacy engines
+// W4b: Generalized for N stems — uses MODE_STEM_POLICIES per role
 
 import { useTextStyleStore } from '../stores/textStyle.store';
 import { useMarkersStore } from '../stores/markers.store';
+import { useStemStore } from '../stem/stem.store';
+import { BUILTIN_STEMS, MODE_STEM_POLICIES } from '../stem/stemTypes';
+import type { StemRole, ModeStemPolicy } from '../stem/stemTypes';
+import * as storage from '../utils/storage';
 
 export type AppMode = 'concert' | 'karaoke' | 'rehearsal' | 'live';
 
@@ -38,6 +43,74 @@ function emitModeChanged(from: string | null, to: string): void {
   window.dispatchEvent(new CustomEvent('mode-changed', { detail: { from, to } }));
 }
 
+/* ── W4b: N-stem volume policy helpers ── */
+
+/** Map stem role → policy volume field */
+function getRolePolicyVolume(role: StemRole, policy: ModeStemPolicy): number {
+  switch (role) {
+    case 'master': return policy.musicGroup;   // instrumental follows music group
+    case 'music': return policy.musicGroup;
+    case 'vocal': return policy.leadVocal;
+    case 'backing': return policy.backingVocal;
+    case 'effect': return policy.musicGroup;    // default: follow music
+  }
+}
+
+/** Legacy DOM slider IDs for backward compat */
+const DOM_SLIDER_MAP: Record<string, string> = {
+  instrumental: 'instrumental-volume',
+  vocals: 'vocals-volume',
+};
+
+/** Update legacy DOM slider if it exists */
+function updateDomSlider(stemId: string, volume01: number): void {
+  const sliderId = DOM_SLIDER_MAP[stemId];
+  if (!sliderId) return;
+  const slider = document.getElementById(sliderId) as HTMLInputElement | null;
+  if (slider) slider.value = String(Math.round(volume01 * 100));
+}
+
+/* ── Rehearsal volume persistence (N-stem) ── */
+
+const VOLUME_STORAGE_KEY = 'bl-rehearsal-volumes';
+
+/** Save ALL stem volumes to localStorage (N-stem format v2) */
+function saveRehearsalVolumesToStorage(): void {
+  const st = useStemStore.getState();
+  const payload = { v: 2, stemVolumes: { ...st.stemVolumes } };
+  try { localStorage.setItem(VOLUME_STORAGE_KEY, JSON.stringify(payload)); } catch (_) {}
+}
+
+/** Load stem volumes from localStorage (supports v1 + v2 format) */
+function loadRehearsalVolumesFromStorage(): Record<string, number> | null {
+  try {
+    const raw = localStorage.getItem(VOLUME_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+
+    // v2 format: { v: 2, stemVolumes: {...} }
+    if (parsed.v === 2 && parsed.stemVolumes) {
+      const result: Record<string, number> = {};
+      for (const [key, val] of Object.entries(parsed.stemVolumes as Record<string, unknown>)) {
+        const n = Number(val);
+        result[key] = Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 1;
+      }
+      return result;
+    }
+
+    // v1 format: { instrumentalVolume: 0.8, vocalsVolume: 0.5 }
+    if (parsed.instrumentalVolume !== undefined || parsed.vocalsVolume !== undefined) {
+      const clamp = (v: unknown) => { const n = Number(v); return Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 1; };
+      return {
+        instrumental: clamp(parsed.instrumentalVolume ?? 1),
+        vocals: clamp(parsed.vocalsVolume ?? 1),
+      };
+    }
+
+    return null;
+  } catch (_) { return null; }
+}
+
 /* ── mode state helpers (ownership from app.js F7) ── */
 
 let currentMode: string | null = null;
@@ -69,58 +142,32 @@ function saveCurrentMode(newMode: string): void {
 }
 
 function applyModeVolumePreset(mode: string): void {
-  const instSlider = document.getElementById('instrumental-volume') as HTMLInputElement | null;
-  const vocSlider = document.getElementById('vocals-volume') as HTMLInputElement | null;
   const ae = (window as any).audioEngine;
+  const st = useStemStore.getState();
+  const policy = MODE_STEM_POLICIES[mode];
+  if (!policy) return;
 
-  const apply = (inst: number, voc: number) => {
-    if (instSlider) instSlider.value = String(inst);
-    if (vocSlider) vocSlider.value = String(voc);
-    try { ae?.setInstrumentalVolume((inst || 0) / 100); } catch (_) { /* noop */ }
-    try { ae?.setVocalsVolume((voc || 0) / 100); } catch (_) { /* noop */ }
-  };
-
-  if (mode === 'karaoke') { apply(100, 0); return; }
   if (mode === 'rehearsal') {
-    let inst = 100, voc = 100;
-    const GROUPED_KEY = 'bl-rehearsal-volumes';
-    const LEGACY_INST_KEY = 'rehearsal:instrumentalVolume';
-    const LEGACY_VOC_KEY = 'rehearsal:vocalsVolume';
-
-    try {
-      // 1. Try canonical grouped key first
-      const groupedRaw = localStorage.getItem(GROUPED_KEY);
-      if (groupedRaw) {
-        const parsed = JSON.parse(groupedRaw);
-        inst = Math.max(0, Math.min(100, Math.round((parsed.instrumentalVolume ?? 1) * 100)));
-        voc = Math.max(0, Math.min(100, Math.round((parsed.vocalsVolume ?? 1) * 100)));
-      } else {
-        // 2. Fallback to legacy split keys (one-time migration)
-        const sInst = localStorage.getItem(LEGACY_INST_KEY);
-        const sVoc = localStorage.getItem(LEGACY_VOC_KEY);
-        let hasLegacy = false;
-        if (sInst !== null) {
-          inst = Math.max(0, Math.min(100, parseInt(sInst, 10) || 0));
-          hasLegacy = true;
-        }
-        if (sVoc !== null) {
-          voc = Math.max(0, Math.min(100, parseInt(sVoc, 10) || 0));
-          hasLegacy = true;
-        }
-        // 3. Migrate legacy to grouped (one-time)
-        if (hasLegacy) {
-          const payload = {
-            instrumentalVolume: inst / 100,
-            vocalsVolume: voc / 100,
-          };
-          localStorage.setItem(GROUPED_KEY, JSON.stringify(payload));
-        }
-      }
-    } catch (_) { /* noop */ }
-    apply(inst, voc);
+    // Restore from localStorage (or use policy defaults as fallback)
+    const saved = loadRehearsalVolumesFromStorage();
+    for (const stemId of st.loadedStems) {
+      const vol = saved?.[stemId] ?? 1; // default unity if no saved value
+      try { ae?.setStemVolume?.(stemId, vol); } catch (_) { /* noop */ }
+      useStemStore.getState().setStemVolume(stemId, vol);
+      updateDomSlider(stemId, vol);
+    }
     return;
   }
-  if (mode === 'concert' || mode === 'live') { apply(100, 0); }
+
+  // Karaoke / Concert / Live: apply MODE_STEM_POLICIES per stem role
+  for (const stemId of st.loadedStems) {
+    const def = BUILTIN_STEMS[stemId];
+    const role: StemRole = def?.role ?? 'music'; // unknown stems default to music
+    const vol = getRolePolicyVolume(role, policy);
+    try { ae?.setStemVolume?.(stemId, vol); } catch (_) { /* noop */ }
+    useStemStore.getState().setStemVolume(stemId, vol);
+    updateDomSlider(stemId, vol);
+  }
 }
 
 function setLyricsContainerStyle(styleClass: string | null): void {
@@ -296,6 +343,12 @@ export function switchMode(mode: AppMode): void {
   const a = getApp();
   if (!a) return;
   if (a.currentMode === mode) return;
+
+  // W4b: Save rehearsal volumes BEFORE applying new mode
+  const prev = getCurrentMode();
+  if (prev === 'rehearsal' && mode !== 'rehearsal') {
+    saveRehearsalVolumesToStorage();
+  }
 
   // Pre-switch: hide waveform if open
   const we = (window as any).waveformEditor;

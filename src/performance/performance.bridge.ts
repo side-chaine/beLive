@@ -11,6 +11,7 @@
 
 import { usePerformanceStore } from './performance.store';
 import { useRecordingStore } from '../stores/recording.store';
+import { useTakesStore } from '../takes/takes.store';
 import { applyRecordingSafeClamp } from './performance.clamp';
 import type { PerformanceTier, VisualBudget } from './performance.types';
 
@@ -158,7 +159,7 @@ export function initPerformanceBridge(): () => void {
 
   const effectiveTier = perfStore.getEffectiveTier();
   const baseBudget = perfStore.getBudget();
-  const isRecording = recordingStore.isRecording;
+  const isRecording = recordingStore.isRecording || useTakesStore.getState().isRecording;
 
   // Apply resolved budget (with recording clamp if active)
   const resolvedBudget = isRecording
@@ -177,7 +178,7 @@ export function initPerformanceBridge(): () => void {
   const unsubscribePerf: Unsubscribe = usePerformanceStore.subscribe((state) => {
     const newTier = state.getEffectiveTier();
     const newBaseBudget = state.getBudget();
-    const currentIsRecording = useRecordingStore.getState().isRecording;
+    const currentIsRecording = useRecordingStore.getState().isRecording || useTakesStore.getState().isRecording;
 
     // Apply resolved budget (with recording clamp if active)
     const newResolvedBudget = currentIsRecording
@@ -190,7 +191,7 @@ export function initPerformanceBridge(): () => void {
 
   // Subscribe to recording store changes
   const unsubscribeRecording: Unsubscribe = useRecordingStore.subscribe((state) => {
-    const isRec = state.isRecording;
+    const isRec = state.isRecording || useTakesStore.getState().isRecording;
     const currentTier = usePerformanceStore.getState().getEffectiveTier();
     const currentBaseBudget = usePerformanceStore.getState().getBudget();
 
@@ -204,10 +205,27 @@ export function initPerformanceBridge(): () => void {
     applyBudgetCSSVars(resolvedBudget);
   });
 
+  // Subscribe to takes store recording changes
+  const unsubscribeTakes: Unsubscribe = useTakesStore.subscribe(
+    (state) => state.isRecording,
+    () => {
+      const isRec = useRecordingStore.getState().isRecording || useTakesStore.getState().isRecording;
+      const perfState = usePerformanceStore.getState();
+      const baseBudget = perfState.getBudget();
+      const resolvedBudget = isRec
+        ? applyRecordingSafeClamp(baseBudget)
+        : baseBudget;
+      applyRecordingToDOM(isRec);
+      applyTierToDOM(perfState.getEffectiveTier());
+      applyBudgetCSSVars(resolvedBudget);
+    },
+  );
+
   // Return cleanup function
   return () => {
     unsubscribePerf();
     unsubscribeRecording();
+    unsubscribeTakes();
     removeTierFromDOM();
     removeRecordingFromDOM();
     removeBudgetCSSVars();

@@ -19,7 +19,7 @@ export class LyricsService {
   styleClasses: Record<string, string>;
   appliedStyleClasses: string[];
   currentlyFocusedBlockId: string | null;
-  textBlocks: any[];
+  textBlocks: any[]; // ParsedBlock[] from parsing.service
   currentBlockCreation: number[];
   isInBlockMode: boolean;
   usingMarkerManager: boolean;
@@ -32,7 +32,7 @@ export class LyricsService {
   activeLineIndex: number;
   _originalLineTexts: any;
   _hasWrappedLetters: boolean;
-  updateDefinedBlocksDisplay: any;
+  updateDefinedBlocksDisplay: ((blocks: any[]) => void) | null;
 
   constructor() {
     this.lyricsContainer = document.getElementById('lyrics-display');
@@ -166,6 +166,14 @@ export class LyricsService {
     this.currentBlockCreation = [];
   }
 
+  _sanitizeBlocks(blocks: unknown[]): any[] {
+    const ps = (window as any).parsingService;
+    if (ps && typeof ps.sanitizeBlocks === 'function') {
+      return ps.sanitizeBlocks(blocks, Array.isArray(this.lyrics) ? this.lyrics.length : 0);
+    }
+    return blocks as any[];
+  }
+
   activateRehearsalDisplay(): void {
     if (this.currentStyle && this.currentStyle.id === 'rehearsal') {
       this._renderLyrics();
@@ -239,7 +247,12 @@ export class LyricsService {
     }
     let lines = this.fullText.split(/\r?\n/);
     if (lines.length < 3 && processedText.length > 100) {
-      console.warn('Недостаточно строк после обработки, применяем интеллектуальное разделение');
+      const hasTags = /\[(verse|chorus|bridge|interlude|intro|outro)/i.test(processedText);
+      if (hasTags) {
+        console.debug('Tagged lyrics detected, fewer lines after tag filtering — applying intelligent split');
+      } else {
+        console.warn('Недостаточно строк после обработки, применяем интеллектуальное разделение');
+      }
       lines = ps ? ps.intelligentLineSplitting(processedText) : [];
     }
     lines = lines
@@ -265,24 +278,17 @@ export class LyricsService {
         resolve();
         return;
       }
-      this.textBlocks = JSON.parse(JSON.stringify(blocksData));
-      if (lyricsContent && typeof lyricsContent === 'string') {
-        this.lyrics = lyricsContent.split('\n').map((line: string) => line.trim());
-      } else {
-        this.lyrics = [];
-      }
       this.textBlocks = blocksData.map((block: any) => ({
         ...block,
         originalLineIndices: block.lineIndices ? [...block.lineIndices] : [],
       }));
+      if (lyricsContent && typeof lyricsContent === 'string') {
+        this.lyrics = lyricsContent.split('\n').map((line: string) => line.trim()).filter((line: string) => line.length > 0);
+      } else {
+        this.lyrics = [];
+      }
       try {
-        const ps = (window as any).parsingService;
-        if (ps) {
-          this.textBlocks = ps.sanitizeBlocks(
-            this.textBlocks,
-            Array.isArray(this.lyrics) ? this.lyrics.length : 0
-          );
-        }
+        this.textBlocks = this._sanitizeBlocks(this.textBlocks);
       } catch (e) {
         console.warn('LyricsDisplay: Error during block sanitization:', e);
       }
@@ -316,4 +322,5 @@ export function patchLyricsDisplaySlimMethods(): void {
   ld.loadImportedBlocks = proto.loadImportedBlocks;
   ld.loadLyrics = proto.loadLyrics;
   ld._processLyrics = proto._processLyrics;
+  ld._sanitizeBlocks = proto._sanitizeBlocks;
 }

@@ -1,0 +1,32 @@
+.strip {
+  display: flex;
+  justify-content: space-evenly;
+  gap: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 4px 0;
+  height: 100%;
+  align-items: stretch;
+}
+
+.strip::-webkit-scrollbar {
+  display: none;
+}
+
+.cardWrapper {
+  flex-shrink: 0;
+  animation: bl-strip-slide-in 0.3s ease-out both;
+}
+
+@keyframes bl-strip-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

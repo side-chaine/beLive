@@ -8,6 +8,9 @@ export interface Marker {
   text: string;
   blockType?: string;
   color?: string;
+  markerType?: 'M1' | 'M2';
+  afterBlockId?: string;
+  isSuggested?: boolean;
 }
 
 export interface Section {
@@ -38,7 +41,7 @@ interface MarkersState {
   getActiveLineAtTime: (time: number) => number;
 
   // CRUD actions — delegate to legacy MM, bridge syncs back
-  addMarker: (lineIndex: number, time: number) => void;
+  addMarker: (marker: Partial<Marker> & { lineIndex: number; time: number }) => void;
   deleteMarker: (id: string) => void;
   updateMarker: (id: string, updates: Partial<Marker>) => void;
 }
@@ -57,9 +60,9 @@ export const useMarkersStore = create<MarkersState>((set, get) => ({
   getActiveLineAtTime: (time: number) => getActiveLineAtTimeUtil(get().markers, time),
 
   // CRUD — call legacy MM, bridge auto-syncs store
-  addMarker: (lineIndex, time) => {
+  addMarker: (marker) => {
     const mm = (window as any).markerManager;
-    if (mm?.addMarker) mm.addMarker(lineIndex, time);
+    if (mm?.addMarker) mm.addMarker(marker);
   },
   deleteMarker: (id) => {
     const mm = (window as any).markerManager;

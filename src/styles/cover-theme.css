@@ -1,0 +1,24 @@
+/* ─── Cover Theme CSS Variables ─── */
+/* Defaults = "invisible" when no cover theme applied */
+/* Overridden by cover-theme-applicator.ts via setProperty on :root */
+
+:root {
+  /* Source tokens (always set for JS consumers) */
+  --bl-cover-primary: #6366f1;
+  --bl-cover-secondary: #3b82f6;
+  --bl-cover-accent: #f59e0b;
+  --bl-cover-is-dark: 1;
+  --bl-cover-has-art: 0;
+  --bl-cover-text: #ffffff;
+
+  /* Computed derivatives (transparent = invisible when no cover) */
+  --bl-cover-glow: transparent;
+  --bl-cover-glow-strong: transparent;
+  --bl-cover-border: transparent;
+  --bl-cover-bg-tint: transparent;
+  --bl-cover-bg-tint-strong: transparent;
+  --bl-cover-header-bg: transparent;
+  --bl-cover-button-bg: transparent;
+  --bl-cover-button-bg-hover: transparent;
+  --bl-cover-fader-color: #f59e0b;
+}

@@ -15,8 +15,13 @@ function classifyLine(text: string): LineKind {
   }
 
   const compact = trimmed.toLowerCase();
+  // Non-lexical detection: lines made entirely of letters + spaces/hyphens
+  // that start with repeated syllable patterns (на-на, ла-ла, da-da, etc.)
+  // PERF: Original /^({\p{L}+[-\s]?){2,}$/u had catastrophic backtracking
+  // on Cyrillic text (2^N paths when non-matching char found in middle of word).
+  // Replaced with O(n) character-class check + syllable prefix check.
   if (
-    /^(\p{L}+[-\s]?){2,}$/u.test(compact) &&
+    /^[\p{L}\s-]+$/u.test(compact) &&
     /^(на|на-на|ла|ла-ла|па|па-па|da|la|na)([-\s].+)?$/iu.test(compact)
   ) {
     return 'non-lexical';

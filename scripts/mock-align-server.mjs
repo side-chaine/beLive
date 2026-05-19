@@ -151,7 +151,9 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.method === 'POST' && req.url === '/v1/align') {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+
+  if (req.method === 'POST' && (url.pathname === '/align' || url.pathname === '/api/align' || url.pathname === '/v1/align')) {
     let raw = '';
     req.on('data', (chunk) => {
       raw += chunk;

@@ -165,6 +165,19 @@
       }
     </style>
 
+    <!-- DOCK STANDARD — Static height tokens
+         Runtime --bl-deck-height устанавливается ResizeObserver в ControlDeck.tsx -->
+    <style id="dock-standard-tokens">
+    :root {
+      --bl-deck-height-expanded: 300px;
+      --bl-deck-height-collapsed: 48px;
+      --bl-deck-tabs: 40px;
+      --bl-deck-panel: 240px;
+      --bl-deck-panel-pad: 8px 16px;
+      --bl-deck-transport: 20px;
+    }
+    </style>
+
     <!-- FOUC Prevention: restore mode before first paint -->
     <script>
       (function() {

@@ -1,0 +1,86 @@
+/* ═══ Visual Mixer Instrument Card FX ═══ */
+/* Tier gating + Recording clamp — follows word-effects.css pattern */
+
+/* ─── Tier: Lite — pulsation allowed for calibration testing (TC-13-19) ─── */
+[data-visual-tier="lite"] .card[data-stem-id] {
+  /* Pulsation allowed for calibration testing */
+  will-change: auto;
+}
+
+/* ─── Tier: Balanced — scale pulsation + hit flash, no ambient glow ─── */
+[data-visual-tier="balanced"] .card[data-stem-id] {
+  /* Allow hit flash (box-shadow from --stem-hit), but disable ambient glow */
+  /* Card base box-shadow is calc(var(--stem-hit) * 16px) — this is hit-only, not glow */
+}
+
+/* ─── Tier: Max — full FX ─── */
+[data-visual-tier="max"] .card[data-stem-id] {
+  will-change: auto;
+}
+
+/* ─── Tier: Ultra — full FX + will-change ─── */
+[data-visual-tier="ultra"] .card[data-stem-id] {
+  will-change: transform;
+}
+
+/* ═══ Per-Role Reactivity ─══ */
+/* Drums: strong hit flash */
+.card[data-role="music"][data-state="active"] {
+  transition: transform 0.08s ease-out, opacity 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+/* Vocals: slow breathing */
+.card[data-role="vocal"][data-state="active"] {
+  transition: transform 0.25s ease-out, opacity 0.25s ease-out, box-shadow 0.25s ease-out;
+}
+
+/* Backing: gentle */
+.card[data-role="backing"][data-state="active"] {
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+/* ═══ Recording-Safe Clamps ═══ */
+html[data-recording-active="true"] .card[data-stem-id] {
+  animation: none;
+  box-shadow: none;
+  transform: none;
+  filter: none;
+  transition: opacity 0.3s;
+  opacity: 0.7;
+}
+
+html[data-recording-active="true"] .card[data-stem-id] .waveformSlot {
+  display: none;
+}
+
+/* ═══ Solo Badge ═══ */
+.card[data-state="solo"]::after {
+  content: 'S';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--stem-color);
+  color: #000;
+  font-size: 8px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+/* ═══ Loading Skeleton ═══ */
+@keyframes bl-card-shimmer {
+  0%   { background-position: -80px 0; }
+  100% { background-position: 80px 0; }
+}
+
+.instrument-card-skeleton {
+  background: linear-gradient(90deg, #1a1a2e 25%, #2a2a3e 50%, #1a1a2e 75%);
+  background-size: 160px 100%;
+  animation: bl-card-shimmer 1.5s infinite;
+  border-radius: 12px;
+}

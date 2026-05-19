@@ -65,9 +65,14 @@ class MarkerManager {
             }
             
             
-            // Key '1' to add marker at current time for the active line
+            // Key '1' to add M1 marker at current time for the active line
             if (event.key === '1' || event.keyCode === 49) {
                 this._addMarkerForActiveLine();
+            }
+            
+            // Key '2' to add M2 closing marker
+            if (event.key === '2' || event.keyCode === 50) {
+                this._addM2Marker?.();
             }
         });
     }

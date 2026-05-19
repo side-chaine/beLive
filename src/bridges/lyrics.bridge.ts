@@ -1,6 +1,7 @@
 // src/bridges/lyrics.bridge.ts
 import { useLyricsStore } from '../stores/lyrics.store';
 import { useMarkersStore } from '../stores/markers.store';
+import { useTrackStore } from '../stores/track.store';
 import {
   getPlaybackVisualScheduler,
   type PlaybackVisualFrameDetector,
@@ -14,6 +15,10 @@ import {
  * Scheduler lifecycle (start/stop) is currently owned by trigger bridge.
  */
 export function initLyricsBridge(): () => void {
+  // TC-10.14: Throttle GUARD logs — log ONCE per track, not every rAF frame
+  let _guardLogged = false;
+  let _guardLastCount = 0;
+
   const syncFromLegacy = () => {
     const ld = (window as any).lyricsDisplay;
     const legacyLines: unknown = ld?.lyrics;
@@ -60,6 +65,9 @@ export function initLyricsBridge(): () => void {
 
   const onBeforeTrackChange = () => {
     clearStoreForTrackChange();
+    // TC-10.14: Reset guard throttle on track change
+    _guardLogged = false;
+    _guardLastCount = 0;
   };
 
   document.addEventListener('active-line-changed', onActiveLine);
@@ -90,12 +98,35 @@ export function initLyricsBridge(): () => void {
       }
       let bestLine = -1;
       let bestTime = -Infinity;
+      let invalidCount = 0;
+      const linesCount = useLyricsStore.getState().lines.length;
+
       for (const m of markers) {
+        // Skip M2 markers — they have lineIndex: -1 and should not affect active line
+        if (m.markerType === 'M2') continue;
+        // Guard: skip markers with out-of-bounds lineIndex
+        if (m.lineIndex < 0 || (linesCount > 0 && m.lineIndex >= linesCount)) {
+          invalidCount++;
+          continue;
+        }
         if (m.time <= t && m.time > bestTime) {
           bestTime = m.time;
           bestLine = m.lineIndex;
         }
       }
+
+      // TC-10.14: Throttled guard — log ONCE per track, not every frame
+      if (invalidCount > 5 && !_guardLogged) {
+        console.error(
+          `[GUARD] CRITICAL: ${invalidCount} markers out of bounds. Data migration needed.`
+        );
+        _guardLogged = true;
+        _guardLastCount = invalidCount;
+      } else if (invalidCount > 0 && invalidCount !== _guardLastCount && !_guardLogged) {
+        console.warn(`[GUARD] Filtered ${invalidCount} invalid marker(s) — skipping in detection`);
+        _guardLastCount = invalidCount;
+      }
+
       frameActiveLineIndex = bestLine;
     },
   };

@@ -3,6 +3,9 @@ interface MarkerLike {
   lineIndex?: number;
   color?: string;
   blockType?: string;
+  markerType?: 'M1' | 'M2';
+  afterBlockId?: string;
+  isSuggested?: boolean;
 }
 
 const FALLBACK_COLOR = '#4caf50';
@@ -24,36 +27,65 @@ export function drawMarkers(
     if (marker.time < startTime - 1 || marker.time > endTime + 1) continue;
 
     const x = Math.round(marker.time * zoom - scrollLeft) + 0.5;
-    const color = marker.color || FALLBACK_COLOR;
 
-    // Marker line
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.globalAlpha = 0.85;
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, canvasHeight);
-    ctx.stroke();
+    if (marker.markerType === 'M2') {
+      // M2 closing marker: black line + red diamond cap
+      ctx.strokeStyle = '#1a1a1a';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.85;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvasHeight);
+      ctx.stroke();
 
-    // Circle pin head
-    ctx.fillStyle = color;
-    ctx.globalAlpha = 0.9;
-    ctx.beginPath();
-    ctx.arc(x, 8, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+      // Red diamond cap
+      ctx.fillStyle = '#ff3333';
+      ctx.globalAlpha = 0.95;
+      ctx.beginPath();
+      ctx.moveTo(x, 2);
+      ctx.lineTo(x + 5, 8);
+      ctx.lineTo(x, 14);
+      ctx.lineTo(x - 5, 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
 
-    // Line number
-    if (marker.lineIndex != null) {
-      ctx.globalAlpha = 0.7;
+      ctx.globalAlpha = 1.0;
+    } else {
+      // M1 line marker: colored line + circle pin head
+      const color = marker.color || FALLBACK_COLOR;
+
+      // Marker line
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.85;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvasHeight);
+      ctx.stroke();
+
+      // Circle pin head
       ctx.fillStyle = color;
-      ctx.font = '9px monospace';
-      ctx.fillText(String(marker.lineIndex + 1), x + 5, 16);
-    }
+      ctx.globalAlpha = 0.9;
+      ctx.beginPath();
+      ctx.arc(x, 8, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
 
-    ctx.globalAlpha = 1.0;
+      // Line number
+      if (marker.lineIndex != null) {
+        ctx.globalAlpha = 0.7;
+        ctx.fillStyle = color;
+        ctx.font = '9px monospace';
+        ctx.fillText(String(marker.lineIndex + 1), x + 5, 16);
+      }
+
+      ctx.globalAlpha = 1.0;
+    }
   }
 }
 

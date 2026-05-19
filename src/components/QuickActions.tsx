@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useModeStore } from '../stores/mode.store';
 import { useUIStore } from '../stores/ui.store';
 import { usePerformanceTier, usePerformanceStore } from '../performance/performance.hooks';
+import { usePlateStore } from '../stores/plate.store';
+import { useStemStore } from '../stem/stem.store';
 import type { PerformanceTier } from '../performance/performance.types';
 
 const MODE_COLORS: Record<string, string> = {
@@ -139,10 +141,154 @@ function GraphicsTierControls({
   );
 }
 
+// ── Stems Toggle ──
+interface StemsToggleProps {
+  menuItemStyle: React.CSSProperties;
+  accentColor: string;
+  onClose: () => void;
+}
+
+const StemsToggle: React.FC<StemsToggleProps> = ({ menuItemStyle, accentColor, onClose }) => {
+  const stemsMode = useStemStore(s => s.stemsMode); // TC-10.8: tumbler state
+
+  const tc = (window as any).trackCatalog;
+  const currentTrack = tc?.tracks?.[tc?.currentTrackIndex];
+  const hasStemsData = !!(currentTrack?.stemsData && Object.keys(currentTrack.stemsData).length > 0);
+
+  const handleToggle = async () => {
+    const st = useStemStore.getState();
+    const newMode = !st.stemsMode;
+    const ae = (window as any).audioEngine;
+    const trackId = currentTrack?.id;
+
+    if (newMode) {
+      // ═══ ТУМБЛЕР ON — загрузить стемы, показать фейдеры ═══
+
+      st.setStemsMode(true);
+
+      // Persist stemsMode
+      if (trackId) {
+        const idb = (window as any).idbService;
+        idb?.updateTrackField?.(trackId, { stemsMode: true });
+      }
+
+      // Проверяем: стемы уже загружены?
+      const loadedStemIds = ae?.stems ? [...ae.stems.keys()] : [];
+      const musicStemsLoaded = loadedStemIds.some(
+        (id: string) => id !== 'instrumental' && id !== 'vocals'
+      );
+
+      if (!musicStemsLoaded) {
+        // Загрузить стемы on-demand
+        useStemStore.getState().setStemsLoading(true);
+        try {
+          const { loadStemsOnDemand } = await import('../services/track.orchestrator');
+          await loadStemsOnDemand();
+        } catch (e) {
+          console.warn('[QuickActions] On-demand load failed:', e);
+        } finally {
+          useStemStore.getState().setStemsLoading(false);
+        }
+      }
+
+      // ВАЖНО: НЕ ставить stemsEnabled=true!
+      // Кнопка Stems в MixerPanel будет НЕ гореть.
+      // Пользователь сам нажмёт кнопку чтобы включить воспроизведение стемов.
+      // Стемы загружены но на volume=0 (muted) — не влияют на звук.
+
+    } else {
+      // ═══ ТУМБЛЕР OFF — скрыть фейдеры, выключить стемы ═══
+
+      st.setStemsMode(false);
+
+      // Если стемы играли — выключить воспроизведение
+      if (st.stemsEnabled) {
+        st.setStemsEnabled(false);
+        ae?.setStemsEnabled?.(false);
+        ae?.setStemVolume?.('instrumental', 1);
+        st.setStemVolume('instrumental', 1);
+
+        // Mute music stems
+        if (ae?.stems) {
+          ae.stems.forEach((_: any, id: string) => {
+            if (id !== 'instrumental' && id !== 'vocals') {
+              ae.setStemVolume?.(id, 0);
+            }
+          });
+        }
+
+        const musicStems = st.loadedStems.filter(
+          (id: string) => id !== 'instrumental' && id !== 'vocals'
+        );
+        for (const id of musicStems) {
+          st.setStemVolume(id, 0);
+        }
+      }
+
+      // Persist stemsMode
+      if (trackId) {
+        const idb = (window as any).idbService;
+        idb?.updateTrackField?.(trackId, { stemsMode: false });
+      }
+    }
+
+    onClose();
+  };
+
+  return (
+    <div style={{ borderTop: '1px solid #333', marginTop: 8, paddingTop: 8 }}>
+      <div
+        style={{
+          ...menuItemStyle,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          cursor: hasStemsData ? 'pointer' : 'not-allowed',
+          opacity: hasStemsData ? 1 : 0.4,
+        }}
+        onClick={hasStemsData ? handleToggle : undefined}
+      >
+        <span style={{ fontWeight: 600, fontSize: 12, color: '#ddd' }}>Stems</span>
+        
+        {!hasStemsData ? (
+          <span style={{ fontSize: 10, color: '#666' }}>N/A</span>
+        ) : (
+          /* Toggle Switch */
+          <div style={{
+            width: 36,
+            height: 20,
+            borderRadius: 10,
+            background: stemsMode ? accentColor : '#444',
+            position: 'relative',
+            transition: 'background 0.2s ease',
+            flexShrink: 0,
+          }}>
+            <div style={{
+              width: 16,
+              height: 16,
+              borderRadius: 8,
+              background: '#fff',
+              position: 'absolute',
+              top: 2,
+              left: stemsMode ? 18 : 2,
+              transition: 'left 0.2s ease',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            }} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export function QuickActions() {
   const mode = useModeStore((s) => s.mode);
   const color = MODE_COLORS[mode] || '#fff';
   const setCatalogOpen = useUIStore((s) => s.setCatalogOpen);
+
+  // W12: Cover Background toggle
+  const coverBg = usePlateStore(s => s.coverBg);
+  const setCoverBg = usePlateStore(s => s.setCoverBg);
 
   const openCatalog = useCallback(() => {
     setCatalogOpen(true);
@@ -275,6 +421,11 @@ export function QuickActions() {
             menuItemStyle={menuItemStyle}
             tierLabelStyle={tierLabelStyle}
             checkmarkStyle={checkmarkStyle}
+            accentColor={color}
+            onClose={closeMenu}
+          />
+          <StemsToggle
+            menuItemStyle={menuItemStyle}
             accentColor={color}
             onClose={closeMenu}
           />

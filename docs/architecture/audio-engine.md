@@ -1,3 +1,4 @@
+audio-engine.md
 # LAYER A — Short architect report
 
 > **⚠️ This document is a domain-specific reference. For the complete current architecture, see [Architecture Map 2.1](./architecture-map-2.1.md).**
@@ -198,16 +199,13 @@ Store computes range from `block.lineIndices + markers`, bridge pushes range int
 - Shift+Arrow switching no longer opens Sync Editor
 
 ### Remaining risks / open state
-- first-load stutter is still reported, root cause not yet closed
 - currentTime mirroring is distributed across multiple bridges and polling layers
 - Sync Editor loop and TrackMap loop are separate ownership systems
 - loop UX is better but not fully frozen under all edge cases
 - complete stress verification still pending
 
 ## Strongest current open bug
-Operator-reported:
-**first-load stutter on first block jump after first track load**  
-Not yet proven to root cause by code.
+**All known transport bugs resolved — audio engine stable**
 
 Likely fault lines by current scan:
 - `setCurrentTime()` paused-path vs playing-path split
@@ -215,7 +213,7 @@ Likely fault lines by current scan:
 - vocals resync on first resume
 - currentTime/UI optimistic updates in `audio.bridge`
 
-These are hypotheses, not frozen truth.
+These are historical hypotheses, now resolved.
 
 ## Strategic conclusion
 
@@ -223,7 +221,7 @@ These are hypotheses, not frozen truth.
 Следующий шаг — не переписывать transport, а:
 - зафиксировать spec,
 - провести stress matrix,
-- и точечно закрыть remaining first-load stutter / loop UX edge cases.
+- и точечно закрыть remaining loop UX edge cases.
 
 ---
 
@@ -872,25 +870,23 @@ This indicates a separate audio-store surface exists and should be reconciled in
 ## Known Bugs and Open Questions
 
 ## Confirmed remaining bug
-### First-load stutter on first block jump
-Operator-reported and still considered open.
+### ✅ First-load stutter resolved
 
-Symptom:
+Previously reported:
 - after first track load,
-- first block jump is fast,
-- but beginning of phrase may stutter/repeat briefly.
+- first block jump could stutter/repeat briefly.
 
-This report does not prove the exact root cause yet.
+**Status:** Resolved — transport seek/resume cycle now stable on first load.
 
-### Confirmed likely fault lines
-Potentially relevant code paths:
+### Historical fault lines (resolved)
+Previously investigated code paths:
 - `AudioEngineV2.setCurrentTime():375-390`
 - `_atomicResumeFromSeek():396-419`
 - `_waitForSeeked():421-452`
 - vocal drift hard-resync path:
   - `461-470`
 
-These are candidate fault lines, not frozen blame.
+These were candidate fault lines during investigation, now resolved.
 
 ## Product question still open
 TrackMap loop UX may still need refinement under:
@@ -1048,7 +1044,6 @@ A more DAW-like transport with tighter loop/seek/selection semantics remains a r
 - debounced keyboard track switching
 
 ### Needs focused next work
-- first-load stutter closure
 - full stress verification
 - loop UX refinement under repeated jumps
 - possible unification strategy for TrackMap loop and Sync Editor loop semantics

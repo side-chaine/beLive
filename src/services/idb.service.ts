@@ -3,10 +3,19 @@
  * F30: Own IndexedDB connection (independent of legacy)
  */
 
+import type { PersistedTextBlock, PersistedSyncMarker } from '../types/persistence.types';
+import type { Playlist } from '../catalog/types';
+import type { StemAutomationData, StemDisplayOrder } from '../stem/stemTypes';
+
 const DB_NAME = (globalThis as any).__DB_NAME || 'TextAppDB';
-const DB_VERSION = 6;
+const DB_VERSION = 8;
 
 // ── Types ──────────────────────────────────────────────
+
+export interface StemDataEntry {
+  data: ArrayBuffer;
+  type: string;  // MIME type: 'audio/mpeg', 'audio/wav', etc.
+}
 
 export interface TrackRecord {
   id: number;
@@ -15,13 +24,35 @@ export interface TrackRecord {
   instrumentalType: string;
   vocalsData?: ArrayBuffer | null;
   vocalsType?: string | null;
+  /** Additional stem audio data (drums, bass, keys, etc.). Optional = backward compat. */
+  stemsData?: Record<string, StemDataEntry> | null;
+  /** Per-stem display order for mixer panel. Optional = backward compat. */
+  stemDisplayOrder?: StemDisplayOrder[] | null;
+  /** Per-stem automation data. Optional = backward compat. */
+  stemAutomation?: StemAutomationData | null;
+  /** Stems mode enabled (true = stems play, instrum muted; false = instrum plays, stems muted). Optional = default false. */
+  stemsMode?: boolean | null;
+  /** Cover art URL from Last.fm API. Optional = backward compat. */
+  coverArtUrl?: string | null;
+  /** Cover art binary for offline use (TC-COVER-02) */
+  coverArtBlob?: Blob | null;
+  /** Extracted dominant colors from cover art. Optional = backward compat. */
+  coverTheme?: import('../types/cover-theme.types').CoverArtTheme | null;
+  /** Track meta (MusicBrainz, Last.fm, Essentia.js). Optional = backward compat. */
+  trackMeta?: import('../types/track-meta.types').TrackMeta | null;
+  /** Transition preset ID for preview slot animations (TC-82-*) */
+  transitionPreset?: string | null;
   lyricsFileName?: string | null;
   lyricsOriginalContent?: string | null;
   lyrics?: string | null;
-  blocksData?: any[] | null;
-  syncMarkers?: any[] | null;
+  blocksData?: PersistedTextBlock[] | null;
+  syncMarkers?: PersistedSyncMarker[] | null;
   lineMap?: import('../sync/word-sync/line-map.types').LineMapEntry[] | null;
   alignmentData?: import('../sync/word-sync/types').AlignmentResult | null;
+
+  /** Data processing version. 1=raw, 2=clean-lyrics, 3=voc-corrected */
+  dataVersion?: number | null;
+
   dateAdded: string;
   lastModified: string;
 }
@@ -131,7 +162,7 @@ export async function updateTrackField(
 
 export async function saveMarkers(
   trackId: number,
-  markers: any[],
+  markers: PersistedSyncMarker[],
 ): Promise<void> {
   await updateTrackField(trackId, {
     syncMarkers: JSON.parse(JSON.stringify(markers)),
@@ -163,7 +194,7 @@ export async function removeFromMyMusic(trackId: number): Promise<void> {
 
 // ── Playlists (app_state) ──────────────────────────────
 
-export async function loadPlaylists(): Promise<any[]> {
+export async function loadPlaylists(): Promise<Playlist[]> {
   const db = await _getDB();
   const row = await _req<any>(_tx(db, 'app_state').get('playlists_v1'));
   if (row?.value && Array.isArray(row.value)) return row.value;
@@ -174,7 +205,7 @@ export async function loadPlaylists(): Promise<any[]> {
   } catch { return []; }
 }
 
-export async function savePlaylists(playlists: any[]): Promise<void> {
+export async function savePlaylists(playlists: Playlist[]): Promise<void> {
   const db = await _getDB();
   await _req(
     _tx(db, 'app_state', 'readwrite').put({

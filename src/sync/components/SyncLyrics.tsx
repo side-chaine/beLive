@@ -5,18 +5,14 @@ import { useBlocksStore } from '../../stores/blocks.store';
 import { useAudioStore } from '../../stores/audio.store';
 import { useWordSyncStore } from '../../stores/wordSync.store';
 import { useTriggerStore } from '../../triggers/trigger.store';
+import { getCanonicalBlockColor } from '../../structure/block-colors';
 
-const BLOCK_COLORS: Record<string, string> = {
-  verse: '#4CAF50',
-  chorus: '#F44336',
-  bridge: '#6f42c1',
-  prechorus: '#FF9800',
-  'pre-chorus': '#FF9800',
-  intro: '#03A9F4',
-  outro: '#9E9E9E',
+// Local special cases (non-canonical block types)
+const LOCAL_BLOCK_COLORS: Record<string, string> = {
   hook: '#e91e63',
-  default: '#888888',
 };
+
+const DEFAULT_COLOR = '#888888';
 
 function getBlockTypeForLine(
   lineIndex: number,
@@ -48,7 +44,7 @@ export function SyncLyrics() {
   const markedLines = useMemo(() => {
     const set = new Set<number>();
     for (const m of markers) {
-      if (m.lineIndex != null) set.add(m.lineIndex);
+      if (m.lineIndex != null && m.lineIndex >= 0) set.add(m.lineIndex);
     }
     return set;
   }, [markers]);
@@ -114,10 +110,11 @@ export function SyncLyrics() {
         </div>
       )}
       {lines.map((line, idx) => {
+        const isEmpty = !line || !line.trim();
         const isActive = idx === activeLineIndex;
         const isMarked = markedLines.has(idx);
         const blockType = getBlockTypeForLine(idx, blocks);
-        const color = BLOCK_COLORS[blockType] || BLOCK_COLORS.default;
+        const color = LOCAL_BLOCK_COLORS[blockType] || getCanonicalBlockColor(blockType) || DEFAULT_COLOR;
         const isPast = idx < activeLineIndex;
         const hasWordSync = hasUsableWordSyncForLine(idx);
         const words = hasWordSync ? getWordsForLine(idx) : [];
@@ -128,11 +125,12 @@ export function SyncLyrics() {
         return (
           <div
             key={idx}
-            ref={isActive ? activeRef : null}
+            ref={isActive && !isEmpty ? activeRef : null}
             className={`lyric-line${isActive ? ' active' : ''}`}
             data-index={idx}
             data-line-index={idx}
             style={{
+              ...(isEmpty ? { display: 'none' } : {}),
               textAlign: 'center',
               fontSize: isActive ? '36px' : '28px',
               fontWeight: isActive ? 700 : 400,

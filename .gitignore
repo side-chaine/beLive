@@ -17,6 +17,17 @@ Thumbs.db
 .kiro/
 .qoder/
 
+# Obsidian personal configs (NOT project docs)
+docs/architecture/beLive/dock1.0/.obsidian/
+docs/architecture/beLive/dock1.0/.smart-env/
+
+# AI context files (root level — project noise)
+ARENA_ANSWERS.md
+ARENA_CONTEXT.md
+visual-mixer-context.md
+TRADE-AUDIT.md
+README — context.md
+
 # Keep public/ folder
 !public/
 # keep docs tracked
@@ -36,3 +47,11 @@ __pycache__/
 # Research handoff binaries
 research/handoff/**/*.tar.gz
 research/handoff/**/*.mp3
+test-results/
+test-monitor.js
+rules_beLive.md
+visual-mixer-context.md
+plans/
+.roo/
+.Cline/
+docs/architecture/.DS_Store

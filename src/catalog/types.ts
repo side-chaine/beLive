@@ -94,7 +94,7 @@ export function parseTrackName(raw: string): ParsedTrackName {
 
 export interface ArtistGroup {
   artist: string;
-  tracks: { id: number; title: string; index: number; fullTitle: string }[];
+  tracks: { id: number; title: string; index: number; fullTitle: string; coverArtUrl?: string | null }[];
   expanded: boolean;
 }
 
