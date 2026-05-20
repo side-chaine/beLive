@@ -31,13 +31,29 @@ Load a track, paste lyrics, place sync markers, and your session is ready. Expor
 
 ## Screenshots
 
-| Rehearsal — synchronized lyrics | Rehearsal — stems mixer |
+| Rehearsal — lyrics + block navigation | Lyrics input |
 |---|---|
-| ![Rehearsal lyrics view](Docs/screenshots/rehearsal_lyrics.png) | ![Stems mixer](Docs/screenshots/rehearsal_stems_mixer.png) |
+| ![Rehearsal lyrics](docs/screenshots/rehearsal_lyrics_wagons.png) | ![Lyrics input](docs/screenshots/lyrics_input_modal.png) |
 
-| Visual stems — live waveforms | Lyrics input |
+| Stems mixer | Visual stems — live waveforms |
 |---|---|
-| ![Visual stems](Docs/screenshots/rehearsal_visual_stems.png) | ![Lyrics input](Docs/screenshots/lyrics_input.png) |
+| ![Stems mixer](docs/screenshots/rehearsal_stems_mixer.png) | ![Visual stems](docs/screenshots/rehearsal_visual_stems.png) |
+
+| Visual stems — solo mode | Split view |
+|---|---|
+| ![Visual stems solo](docs/screenshots/rehearsal_visual_stems_solo.png) | ![Split](docs/screenshots/rehearsal_split.png) |
+
+| Styles | Notes |
+|---|---|
+| ![Styles](docs/screenshots/rehearsal_lstyles.png) | ![Notes](docs/screenshots/rehearsal_lnotes.png) |
+
+| Quest mode | Quest scenario |
+|---|---|
+| ![Quest mode](docs/screenshots/rehearsal_quest_Mode.png) | ![Quest scenario](docs/screenshots/rehearsal_quest_Scenario.png) |
+
+| Sync editor | Catalog |
+|---|---|
+| ![Sync editor](docs/screenshots/sync_mode.png) | ![Catalog](docs/screenshots/catalog.png) |
 
 ---
 
