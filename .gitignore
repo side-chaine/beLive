@@ -55,3 +55,4 @@ plans/
 .roo/
 .Cline/
 docs/architecture/.DS_Store
+.env

@@ -77,7 +77,7 @@ async function fetchMusicBrainz(
 }
 
 // ─── Last.fm API ───
-const LASTFM_API_KEY = '396cc9b00c1e9601287f8f598bc3ea8f';
+const LASTFM_API_KEY = import.meta.env.VITE_LASTFM_API_KEY || '';
 
 async function fetchLastFm(
   artist: string,
