@@ -15,7 +15,7 @@ beLive ZIP is the portable track format. A single ZIP file contains everything n
 
 - **Self-contained:** No network required after import
 - **Backward compatible:** Old ZIPs (without new fields) import gracefully
-- **Lossless roundtrip:** Export → Import → Export produces equivalent data
+- **Functional roundtrip:** Export → Import preserves audio, lyrics, sync markers, blocks, and cover art. Fields NOT preserved: `stemsMode`, `stemDisplayOrder`, `stemAutomation`, `trackMeta`, `transitionPreset`, `dataVersion`.
 - **Offline-first:** Cover art stored as binary, not URL reference
 
 ---
@@ -35,7 +35,7 @@ track-name.zip
 │   └── other.mp3
 │
 ├── lyrics.txt                       # Clean lyrics text (no tags)
-├── cover.jpg                        # Cover art binary (optional, STORE)
+├── cover.jpg / cover.png           # Cover art binary (JPEG or PNG, detected by extension, STORE)
 ├── export.json                      # Track metadata + sync data
 └── alignment.json                   # Word-sync alignment (optional)
 ```

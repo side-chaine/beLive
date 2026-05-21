@@ -722,4 +722,23 @@ Current implementation includes verbose console logs (`[Orchestrator] W5:`, `[Up
 
 ---
 
+
+## Visual Mixer Reactive Pipeline
+
+`stem-reactive.bridge.ts` implements a 60Hz reactive pipeline for the Visual Mixer:
+
+- Registers detector + writer with `PlaybackVisualScheduler`
+- Publishes CSS vars per stem: `--bl-stem-{id}-energy` (0.000–1.000) and `--bl-stem-{id}-hit` (0|1)
+- Applies `REACTIVITY_PROFILES` — per-role hit detection, smoothing, scale multiplier, decay
+- Drums use kick-band detection (frequency bins 2–7, 50–150Hz) instead of RMS
+- `STEM_SENSITIVITY` overrides per stem ID for visual amplification of quiet instruments
+- Lifecycle: starts scheduler independently; zeroes vars during recording; cleans up on track change
+- Display order: `VISUAL_MIXER_DISPLAY_ORDER` differs from `DEFAULT_ROLE_ORDER`
+
+CSS var contract:
+
+- `--bl-stem-{id}-energy` — continuous energy level, updated every frame
+- `--bl-stem-{id}-hit` — binary hit signal (0 or 1), decays after hit
+- Both vars cleared on track change, zeroed during recording
+
 *This document is LIVING — update it as new waves are implemented. Do NOT mark as frozen until the entire N-stem system is production-ready.*

@@ -1054,3 +1054,14 @@ A more DAW-like transport with tighter loop/seek/selection semantics remains a r
 - tighter currentTime/UI ownership rationalization if needed
 
 ```
+## Program Capture Bus
+
+> ⚠️ DEPRECATED: `captureStream()` is deprecated. Use `getProgramCaptureStream()` instead.
+
+New Program Capture Bus API:
+- `getProgramCaptureStream()` — primary recording stream
+- `attachProgramSource()` — attach external source to capture bus
+- `detachProgramSource()` — detach source
+- `setCaptureMicEnabled()` — toggle microphone in capture mix
+
+Reads from VocalMix merger + bus gainNodes. `captureStream()` kept for compat only.
