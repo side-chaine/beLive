@@ -1,3 +1,17 @@
+# ⚠️ DOCUMENTATION MISMATCH — ACTION REQUIRED
+
+> **CRITICAL:** This file currently contains "Styles System" documentation, NOT Slot Matrix architecture.
+> This is a known error discovered during sync audit (2026-05-20).
+>
+> **Current file content:** Line Preset Rail Model, Active/Preview/Others lanes, bank philosophy
+> **Should contain:** Slot Matrix layout computation system (computeSlotMatrix, SlotGroup, SubBlockRange, transition presets)
+>
+> **Status:** Awaiting rewrite. Do NOT use this file as reference for slot-matrix code.
+> **Code reference:** `src/slot-matrix/` directory — `compute-slot-matrix.ts`, `slot-matrix.types.ts`, `use-slot-matrix.ts`
+> **Actual Styles System doc:** `docs/architecture/styles-system.md`
+
+---
+
 # SLOT MATRIX SYSTEM — beLive
 ## Версия 2.2 | Дата: 2026-05-07
 ## Авторы: Центры 73-85 + Соннет
