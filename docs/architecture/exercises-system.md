@@ -1,5 +1,10 @@
 # Exercises System Architecture
 
+## Implementation Status
+- ✅ Implemented: StepAction/ExerciseGoal/ExerciseRepeat schema, 7 recipes (echo, repeat3, callAndResponse, backingOnly, acappellaBoss, tempoLadder, trade), generator architecture, ExercisePhase state machine, RoundCaptureState, CompletionMoment, ScenarioMixOverride
+- 🧭 Vision (Not Yet Implemented): Prompt/Response/Goal/Success grammar (§6), Evidence/Mastery/Momentum progress model, successCriteria/rewards in Quest model
+- ⚠️ Note: §6 Exercise Grammar describes a PLANNED schema that differs from current implementation. Current schema uses ExerciseStep(action), ExerciseGoal(type), ExerciseRepeat(mode). Do NOT code against §6 grammar — use exercise.types.ts as source of truth.
+
 ## 1. Purpose
 
 This document defines the architecture for the **Exercises** system in beLive—a quest-based learning layer that sits on top of the existing Takes infrastructure. It serves as:

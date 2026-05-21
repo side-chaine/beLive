@@ -155,6 +155,7 @@ CONTOUR C: App Runtime (Where A + B Meet)
 | Domain | Runtime Authority | Mirrors/Consumers | Key Files | Status |
 |--------|------------------|-------------------|-----------|--------|
 | Audio transport | ✅ `AudioEngineV2` | `audio.store`, bridges | `AudioEngineV2.ts`, `patchV1.ts` | ❄️ Frozen |
+| Volume authority | ⚠️ W4a migration: `instrumentalVolume` and `vocalsVolume` removed from `audio.store`. All per-stem volumes now in `useStemStore.stemVolumes`. The 2-stem volume model is DEPRECATED in code. See `n-stem-architecture.md` for current volume authority. |
 | Master clock | ✅ Instrumental stem | All time consumers | `AudioEngineV2.ts:371-373` | ❄️ Frozen |
 | Track load | ✅ `track.orchestrator` | `track.actions` entry | `track.orchestrator.ts` | ❄️ Frozen |
 | Track runtime container | ✅ `window.trackCatalog` | `track.store` mirror | `track-catalog.js` | ⚠️ Hybrid |
@@ -197,7 +198,7 @@ src/
 │   │   └── patchV1.ts          ← Identity preservation: V1 object → V2 methods
 │   ├── featureFlag.ts          ← tryActivateV2()
 │
-├── bridges/                    ← PERMANENT synchronization fabric (13 files)
+├── bridges/                    ← PERMANENT synchronization fabric (18+ files)
 │   ├── audio.bridge.ts         ← State mirror + optimistic seek
 │   ├── audio-reactive.bridge.ts← Frequency analysis → CSS vars
 │   ├── blocks.bridge.ts        ← Legacy LD blocks → store mirror
@@ -212,6 +213,10 @@ src/
 │   ├── textStyle.bridge.ts     ← Font/transition → legacy DOM
 │   ├── time-sync.ts            ← 10Hz currentTime polling
 │   └── track.bridge.ts         ← IDB meta → store mirror
+│   ├── plate.bridge.ts         ← Plate (плашка) state bridge
+│   ├── stem-reactive.bridge.ts ← Visual mixer reactive pipeline (CSS vars per stem)
+│   ├── takes.bridge.ts         ← Takes system bridge
+│   ├── exercise.bridge.ts      ← Exercise runtime bridge
 │
 ├── services/
 │   ├── track.orchestrator.ts   ← Central 21-step track load pipeline
@@ -359,7 +364,9 @@ js/                              ← Legacy boundary shells
 
 ```
 PLANE A — React (outside DOMContentLoaded)
-  main.tsx → createRoot → ThemeProvider → App
+  main.tsx → createRoot → React.Fragment (ThemeProvider + App as siblings)
+
+> **INV-2.1-THEME:** ThemeProvider is SIDE-EFFECT ONLY — applies CSS vars to :root via useEffect. NO React Context. Components access theme via `var(--bl-*)` only.
   App.tsx useEffect → tryActivateV2() → all bridge inits
 
 PLANE B — Legacy compat (inside DOMContentLoaded)
@@ -826,6 +833,9 @@ When recording active:
 |-------|------------|---------------|--------|
 | `before-track-change` | `document` | `document` | ✅ Consistent |
 | `track-loaded` | `document` | `document` | ✅ Consistent |
+| `track-stem-ready` | `document` | `AudioEngineV2 → audio.bridge` | Progressive Phase 1 complete |
+| `track-fully-loaded` | `document` | `AudioEngineV2 → audio.bridge` | Progressive Phase 2 complete |
+| `audio-position-changed` | `document` | `audio.bridge listener` | Current time update |
 | `active-line-changed` | `document` | `document` | ✅ Consistent |
 | `sections-updated` | `document` | `document` | ✅ Consistent |
 | `lyrics-rendered` | `document` | `document` | ✅ Consistent |

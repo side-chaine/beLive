@@ -291,7 +291,7 @@ Avatar quick menu = runtime/device budget
 A performance bridge should publish the current tier into the DOM as:
 
 ```html
-<body data-visual-tier="balanced">
+<html data-visual-tier="balanced">
 ```
 
 This allows:

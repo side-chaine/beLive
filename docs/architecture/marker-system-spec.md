@@ -1,6 +1,11 @@
 # M1/M2 Marker System + BPM Detection Spec
 
-## Status: ✅ IMPLEMENTED + VERIFIED — 2026-04-13
+## Status: PARTIAL — M1/M2 data model + rendering IMPLEMENTED. Detection/analysis/BPM — PLANNED (not yet implemented).
+
+## Implementation Status
+- ✅ Implemented: M1/M2 data model, marker rendering (draw-markers.ts), store CRUD (delegate to legacy MM), bridge subscriptions
+- 🧭 Vision (Not Yet Implemented): §2 Transition Zone Detection, §2.3 Vocal RMS Analysis, §4 BPM Detection, TransitionZone interface
+- ❌ Not building: gap threshold matrix, onset detection — deferred indefinitely
 
 ## Overview
 
@@ -423,7 +428,7 @@ Both use same priority system — M2 is automatically picked up if afterBlockId 
 **Document version:** 2.0 (VERIFIED)
 **Author:** Center (Chief Architect) + Sonnet
 **Approved by:** Nikita (PO)
-**Status:** ✅ IMPLEMENTED + VERIFIED — 2026-04-13
+**Status:** PARTIAL — M1/M2 data model + rendering IMPLEMENTED. Detection/analysis/BPM — PLANNED (not yet implemented).
 
 **Changelog:**
 - v2.0: Updated after full verification — M2 is OPTIONAL, uses active line DOM, does NOT upgrade M1
