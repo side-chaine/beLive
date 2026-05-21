@@ -290,6 +290,8 @@ Current fields include:
 - `status`
 - `peaksReady`
 - `trimStartSec`
+- `tempoRate` — optional — Tempo context at recording time (1.0 = normal, 0.75 = slow)
+- `takeKind` — optional — Take classification — training takes are practice, final takes are keepers
 - optional `error`
 
 ### Important semantic note
@@ -413,7 +415,7 @@ User clicks empty slot / record action
 
 **Frozen:**
 
-- recording only at 1.0x
+> ⚠️ UPDATED: Recording supports tempo context via `tempoRate` field in TakeMeta. TempoLadder recipe records at varying rates. The freeze "only at 1.0x" is LIFTED — tempoRate is active in production code.
 - max 3 slots visible
 - raw mic capture only
 - auto-stop at block end
@@ -1286,6 +1288,26 @@ Takes must prefer:
 3. How do we support exercise automation without collapsing Takes into a full DAW?
 
 ---
+
+
+## TakesPanel as Exercise Orchestration Host
+
+> ⚠️ Architectural note: TakesPanel is not only a recording UI — it is the de facto exercise runtime executor.
+
+TakesPanel contains 10+ `useEffect` hooks that orchestrate the full exercise lifecycle:
+
+- **Scope resolution** — resolves exercise block scope on step change
+- **Backing save/apply** — saves and restores stem volumes per exercise step
+- **PlaybackRate save/apply** — saves and restores tempo for tempo-aware steps
+- **V-Mix automation** — applies V-Mix per exercise step requirements
+- **Volume restoration** — restores user volumes after exercise completion
+- **Listen executor** — plays reference audio for listen steps (with previous-take preview polling)
+- **Wait executor** — manages timed wait steps
+- **Response cue/window management** — manages Call & Response countdown and window state
+
+**Why TakesPanel?** Exercise execution requires direct access to Takes UI state (recording slots, waveform display, response windows).
+
+**Future refactor candidate:** Extract orchestration effects to `useExerciseOrchestrator.ts` hook for testability.
 
 ## 21. One-Line Summary
 

@@ -90,7 +90,7 @@ Physical audio outputs (headphones + speakers)
 
 - Dock tab ID: `'monitor'` (internal)
 - Dock tab label: `'Split'` (user-facing)
-- Panel: lazy-loaded, 3-column grid (Route | Mix | Auto Mix)
+- Panel: lazy-loaded, 4-column grid (Route | Line Up | Auto Mix)
 - No modal. No overlay. Dock-owned only.
 
 ---
@@ -321,8 +321,12 @@ if (type.includes('outro'))   → autoOutroLevel
 - 6-block AutoMix: On/Level pairs (12 fields)
 
 **UI-only state (not in bridge/engine):**
+
+> ⚠️ MAJOR UNDOCUMENTED FEATURE: The Line Up column (Column 2) is fully implemented but not yet documented. Includes: CalibrationDrum component (drag-based delay, 5ms snap, 0-500ms), pulse/voc source selection, tap-assist timing, device calibration persistence (7-day staleness), calibration modes (sound/live). Full documentation pending.
 - `open` — panel visibility
 - `hallVolume`, `monitorVolume` — UI sliders
+
+> ⚠️ CORRECTION: hallVolume and monitorVolume are NOT UI-only. Both write directly to audio graph nodes via linearRampToValueAtTime(20ms).
 - 14 Back Vocal fields (Stage 1 — see Section 10)
 
 **Key actions:**
