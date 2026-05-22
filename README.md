@@ -1,6 +1,6 @@
 # beLive
 
-**beLive** — a PWA for vocalists and musicians. Rehearse with synchronized lyrics, mix stems, train with exercises, record takes, and perform — all offline-ready.
+**beLive — browser vocal studio.** Rehearse with synced lyrics, mix stems, record takes and train with AI coach — offline-ready PWA.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Pages live](https://img.shields.io/badge/Pages-live-brightgreen)](https://side-chaine.github.io/beLive)
