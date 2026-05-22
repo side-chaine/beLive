@@ -42,11 +42,14 @@ import { useBackgroundManagers } from './hooks/useBackgroundManagers';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { tryActivateV2 } from './audio/featureFlag';
 import { initMonitorBridge, destroyMonitorBridge } from './bridges/monitor.bridge';
+import { AiSettingsModal } from './components/AiSettingsModal';
+import { useAiSettingsStore } from './stores/ai-settings.store';
 
 export default function App() {
   const mode = useModeStore((s) => s.mode);
   const syncOpen = useSyncStore((s) => s.open);
   const trackInfoOpen = useTrackInfoStore((s) => s.isOpen);
+  const aiSettingsOpen = useAiSettingsStore(s => s.showSettings);
   useBackgroundManagers();
   useKeyboardShortcuts();
 
@@ -119,6 +122,7 @@ export default function App() {
       <TriggerDebugOverlay />
       <PlaybackPerfOverlay />
       {trackInfoOpen && <TrackInfoBoard />}
+      {aiSettingsOpen && <AiSettingsModal onClose={() => useAiSettingsStore.getState().setShowSettings(false)} />}
     </div>
   );
 }

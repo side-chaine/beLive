@@ -23,6 +23,7 @@ interface TrackInfoState {
 
   // Internal
   _revealedTracks: Set<number>;
+  _clickedBlockType: string | null;
 
   // Actions — Overlay
   open: (trackId: number) => void;
@@ -39,6 +40,7 @@ interface TrackInfoState {
   appendAiToken: (token: string) => void;
   setAiStreaming: (v: boolean) => void;
   clearAiMessages: () => void;
+  setClickedBlockType: (type: string) => void;
 
   // Reset
   reset: () => void;
@@ -53,6 +55,7 @@ const initialState = {
   activeExpert: null as AiExpert | null,
   aiMessages: [] as AiMessage[],
   isAiStreaming: false,
+  _clickedBlockType: null as string | null,
   _revealedTracks: new Set<number>(),
 };
 
@@ -86,7 +89,8 @@ export const useTrackInfoStore = create<TrackInfoState>((set, get) => ({
     return { aiMessages: msgs };
   }),
   setAiStreaming: (v) => set({ isAiStreaming: v }),
-  clearAiMessages: () => set({ aiMessages: [], activeExpert: null }),
+  clearAiMessages: () => set({ aiMessages: [] }),
+  setClickedBlockType: (type) => set({ _clickedBlockType: type }),
   reset: () => set(initialState),
 }));
 

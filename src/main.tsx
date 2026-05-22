@@ -20,6 +20,8 @@ import { getColorForBlockType, buildBlocksFromMarkers, computeSections, getBlock
 
 import { aiHub } from './js/ai/registry';
 import { GatewayProvider } from './js/ai/providers/gateway-provider';
+import { OpenRouterDirectProvider } from './js/ai/providers/openrouter-direct.provider';
+import { useAiSettingsStore } from './stores/ai-settings.store';
 import { ModelDropdownUI } from './js/ui/model-dropdown-ui'; // Новый импорт
 import { AIChatUI } from './js/ui/ai-chat-ui'; // Новый импорт
 
@@ -425,6 +427,37 @@ document.addEventListener('DOMContentLoaded', async () => {
   const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:8787'; // Use environment variable or default
   const gatewayProvider = new GatewayProvider(GATEWAY_URL);
   aiHub.register(gatewayProvider);
+
+  // ── OpenRouter Direct Provider (works without localhost gateway) ──
+  const orProvider = new OpenRouterDirectProvider();
+  aiHub.register(orProvider);
+
+  // Auto-select model after persist hydrates from localStorage
+  // (persist loads async — settings may not be available at boot)
+  useAiSettingsStore.persist.onFinishHydration(() => {
+    const settings = useAiSettingsStore.getState();
+    if (!aiHub.getActiveModel() && settings.openRouterApiKey && settings.modelId) {
+      aiHub.setActiveModel(settings.modelId);
+      console.log('[AI] Hydrated: set model:', settings.modelId);
+    } else if (!aiHub.getActiveModel() && settings.openRouterApiKey) {
+      const defaultModel = 'deepseek/deepseek-chat-v3-0324';
+      aiHub.setActiveModel(defaultModel);
+      useAiSettingsStore.getState().setModelId(defaultModel);
+      console.log('[AI] Hydrated: set default model:', defaultModel);
+    }
+  });
+
+  // Fallback: if already hydrated before this code runs
+  const currentSettings = useAiSettingsStore.getState();
+  if (!aiHub.getActiveModel() && currentSettings.openRouterApiKey && currentSettings.modelId) {
+    aiHub.setActiveModel(currentSettings.modelId);
+    console.log('[AI] Fallback: set model:', currentSettings.modelId);
+  } else if (!aiHub.getActiveModel() && currentSettings.openRouterApiKey) {
+    const defaultModel = 'deepseek/deepseek-chat-v3-0324';
+    aiHub.setActiveModel(defaultModel);
+    useAiSettingsStore.getState().setModelId(defaultModel);
+    console.log('[AI] Fallback: set default model:', defaultModel);
+  }
 
   new AIChatUI(); // Инициализация AIChatUI
   new ModelDropdownUI(); // Инициализация ModelDropdownUI

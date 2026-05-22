@@ -4,6 +4,7 @@ import { useUIStore } from '../stores/ui.store';
 import { usePerformanceTier, usePerformanceStore } from '../performance/performance.hooks';
 import { usePlateStore } from '../stores/plate.store';
 import { useStemStore } from '../stem/stem.store';
+import { useAiSettingsStore } from '../stores/ai-settings.store';
 import type { PerformanceTier } from '../performance/performance.types';
 
 const MODE_COLORS: Record<string, string> = {
@@ -382,6 +383,7 @@ export function QuickActions() {
   return (
     <div style={{ display: 'flex', gap: 6, alignItems: 'center', position: 'relative' }}>
       <button onClick={openCatalog} style={btnStyle()}>Catalog</button>
+      <button onClick={() => useAiSettingsStore.getState().setShowSettings(true)} style={btnStyle()} title="AI Settings"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ display: 'block' }}><path d="M7 1L8.8 4.6L12.8 5.2L10 8L10.6 12L7 10.2L3.4 12L4 8L1.2 5.2L5.2 4.6L7 1Z" fill="currentColor" opacity="0.6"/></svg></button>
       <button
         ref={avatarBtnRef}
         onClick={toggleMenu}

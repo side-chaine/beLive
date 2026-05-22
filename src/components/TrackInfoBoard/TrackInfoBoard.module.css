@@ -6,13 +6,31 @@
   right: 0;
   bottom: 0;
   z-index: 999997;
-  background: rgba(0, 0, 0, 0.75);
+  /* Theme token — opaque chalkboard */
+  background: var(--bl-surface-base);
+  background-image:
+    radial-gradient(ellipse at 15% 40%, rgba(30, 40, 80, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 85% 25%, rgba(20, 30, 60, 0.08) 0%, transparent 50%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 80px 24px 24px;
+  padding: 60px 24px 24px;
+  overflow-y: auto;
   animation: fadeIn 0.2s ease;
+}
+
+/* Scroll fade indicator — shows there's more content below */
+.overlay::after {
+  content: '';
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(transparent, var(--bl-surface-base));
+  pointer-events: none;
+  z-index: 1;
 }
 
 @keyframes fadeIn {
@@ -26,19 +44,17 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  /* Neon glow tokens — activate when Web Audio data arrives */
+  --neon-bpm: rgba(99, 102, 241, 0.6);
+  --neon-energy: rgba(249, 115, 22, 0.6);
+  --neon-key: rgba(168, 85, 247, 0.5);
+  --chalk-dust: rgba(255, 255, 255, 0.02);
 }
 
-/* ── WagonTrain glow via data-attribute ── */
-:global([data-track-info="active"]) [data-wagon-train-wrapper] {
-  box-shadow: 0 0 40px rgba(99, 102, 241, 0.35),
-              0 0 80px rgba(99, 102, 241, 0.15);
-  border-radius: 12px;
-  padding: 8px 12px;
-  transition: box-shadow 0.4s ease, padding 0.4s ease;
-}
-
+/* ── WagonTrain: hidden behind overlay, instrument overlay suppressed ── */
 :global([data-track-info="active"]) :global(.instrumentOverlay) {
-  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 /* ── Meta cards grid ── */
@@ -49,10 +65,12 @@
 }
 
 .metaCard {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 4px 4px;
+  border: 1px solid var(--bl-border-default);
+  border-radius: 10px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -60,105 +78,153 @@
 }
 
 .metaCard:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--bl-border-subtle);
 }
 
 .metaCard.wide {
   grid-column: span 2;
 }
 
-/* ── First reveal animation (staggered cards) ── */
+/* ── First reveal animation (staggered cards — 0.08s step) ── */
 .firstReveal .metaCard {
   opacity: 0;
-  transform: translateY(8px);
-  animation: cardAppear 0.3s ease forwards;
+  transform: translateY(6px);
+  filter: blur(2px);
+  animation: cardChalkAppear 0.35s ease forwards;
 }
 
-.firstReveal .metaCard:nth-child(1) { animation-delay: 0.05s; }
-.firstReveal .metaCard:nth-child(2) { animation-delay: 0.1s; }
-.firstReveal .metaCard:nth-child(3) { animation-delay: 0.15s; }
-.firstReveal .metaCard:nth-child(4) { animation-delay: 0.2s; }
-.firstReveal .metaCard:nth-child(5) { animation-delay: 0.25s; }
-.firstReveal .metaCard:nth-child(6) { animation-delay: 0.3s; }
-.firstReveal .metaCard:nth-child(7) { animation-delay: 0.35s; }
-.firstReveal .metaCard:nth-child(8) { animation-delay: 0.4s; }
-.firstReveal .metaCard:nth-child(9) { animation-delay: 0.45s; }
+.firstReveal .metaCard:nth-child(1) { animation-delay: 0.06s; }
+.firstReveal .metaCard:nth-child(2) { animation-delay: 0.14s; }
+.firstReveal .metaCard:nth-child(3) { animation-delay: 0.22s; }
+.firstReveal .metaCard:nth-child(4) { animation-delay: 0.30s; }
+.firstReveal .metaCard:nth-child(5) { animation-delay: 0.38s; }
+.firstReveal .metaCard:nth-child(6) { animation-delay: 0.46s; }
+.firstReveal .metaCard:nth-child(7) { animation-delay: 0.54s; }
+.firstReveal .metaCard:nth-child(8) { animation-delay: 0.62s; }
+.firstReveal .metaCard:nth-child(9) { animation-delay: 0.70s; }
 
-@keyframes cardAppear {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes cardChalkAppear {
+  0% { opacity: 0; transform: translateY(6px); filter: blur(2px); }
+  60% { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
 
 /* ── Card text ── */
 .cardLabel {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.12em;
+  color: var(--bl-text-muted);
   font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.04);
 }
 
 .cardValue {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.85);
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+  color: var(--bl-text-primary);
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.06), 0 0 1px rgba(255, 255, 255, 0.12);
   font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
   line-height: 1.4;
   word-break: break-word;
 }
 
-.cardValueLarge {
-  font-size: 32px;
-  font-weight: 200;
-  text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+.cardValueNa {
+  font-size: 14px;
+  color: var(--bl-text-muted);
+  font-style: italic;
+  opacity: 0.5;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
 }
 
-/* ── Structure diagram (ABABCB) ── */
-.structureRow {
+/* ── Structure diagram ── */
+.structureContainer {
   display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
+  flex-direction: column;
   align-items: center;
+  gap: 6px;
+  padding: 4px 0;
 }
 
-.structureBlock {
-  display: inline-flex;
+.trackMapAnchor {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-width: 36px;
+  width: 100%;
+}
+
+.anchorLabel {
+  font-size: 9px;
+  color: var(--bl-text-muted);
+  font-family: 'SF Mono', monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+/* Timeline bar */
+.timelineBar {
+  display: flex;
   height: 36px;
   border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: 'SF Mono', 'Fira Code', monospace;
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--bl-border-default);
+  width: 100%;
 }
 
-.structureBlock:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+.timelineBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.03);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: background 0.2s ease, border-bottom-width 0.2s ease;
+  gap: 1px;
+  min-width: 0;
 }
 
-.structureBlock.active {
-  transform: scale(1.15);
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+.timelineBlock:last-child {
+  border-right: none;
 }
 
-.structureArrow {
+.timelineBlock:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+.timelineActive {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-bottom-width: 3px;
+}
+
+.timelineLetter {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'SF Mono', monospace;
+  text-shadow: 0 0 6px currentColor;
+  line-height: 1;
+}
+
+.timelineTime {
+  font-size: 9px;
+  font-family: 'SF Mono', monospace;
+  line-height: 1;
+}
+
+/* Formula */
+.structureFormula {
+  font-family: 'SF Mono', monospace;
+  font-size: 12px;
+  color: var(--bl-text-muted);
+  letter-spacing: 0.04em;
+  padding-top: 2px;
+}
+
+.formulaArrow {
   color: rgba(255, 255, 255, 0.15);
-  font-size: 10px;
-  margin: 0 1px;
-}
-
-.blockDuration {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.3);
-  margin-top: 2px;
-  text-align: center;
 }
 
 /* ── Similar tracks ── */
@@ -167,7 +233,7 @@
   align-items: center;
   gap: 8px;
   padding: 5px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--bl-border-subtle);
 }
 
 .similarTrack:last-child {
@@ -175,12 +241,12 @@
 }
 
 .similarTrackName {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--bl-text-secondary);
   font-size: 13px;
 }
 
 .similarTrackArtist {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--bl-text-muted);
   font-size: 12px;
 }
 
@@ -192,26 +258,28 @@
 }
 
 .tag {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
-  padding: 2px 8px;
+  display: inline-block;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 1px 5px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--bl-text-secondary);
   font-family: 'SF Mono', 'Fira Code', monospace;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
 }
 
 .tag.genre {
-  border-color: rgba(99, 102, 241, 0.3);
-  color: rgba(99, 102, 241, 0.8);
+  color: rgba(99, 102, 241, 0.65);
+  border-bottom-color: rgba(99, 102, 241, 0.2);
 }
 
 /* ── Skeleton shimmer ── */
 .skeleton {
   background: linear-gradient(90deg,
-    rgba(255, 255, 255, 0.03) 25%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.03) 75%);
+    rgba(255, 255, 255, 0.02) 25%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.02) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
   border-radius: 4px;
@@ -232,12 +300,13 @@
 }
 
 .boardTitle {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.15em;
+  color: var(--bl-text-muted);
   font-family: 'SF Mono', 'Fira Code', monospace;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.06);
 }
 
 .headerActions {
@@ -247,10 +316,10 @@
 }
 
 .closeButton {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--bl-border-default);
   border-radius: 8px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--bl-text-muted);
   padding: 6px 12px;
   font-size: 12px;
   cursor: pointer;
@@ -259,14 +328,14 @@
 }
 
 .closeButton:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--bl-text-primary);
 }
 
 .refreshButton {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--bl-text-muted);
   font-size: 14px;
   cursor: pointer;
   padding: 4px 8px;
@@ -274,7 +343,7 @@
 }
 
 .refreshButton:hover {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--bl-text-primary);
 }
 
 /* ── Footer ── */
@@ -285,28 +354,341 @@
 }
 
 .footerHint {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.25);
+  font-size: 10px;
+  color: var(--bl-text-muted);
+  opacity: 0.5;
   font-family: 'SF Mono', 'Fira Code', monospace;
 }
 
 /* ── Empty state ── */
 .emptyState {
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--bl-text-muted);
   font-size: 13px;
   font-style: italic;
   text-align: center;
   padding: 12px;
+  opacity: 0.6;
 }
 
-/* ── AI Expert stub (Phase 1B) ── */
-.aiExpertStub {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px dashed rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 16px;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.25);
+/* ═══════════════════════════════════════════════════════
+   AI Expert Panel — chalk-on-blackboard chat
+   ═══════════════════════════════════════════════════════ */
+.aiExpertPanel {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.01);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.008) 1px, transparent 1px);
+  background-size: 4px 4px;
+  border: 1px solid var(--bl-border-default);
+  border-radius: 10px;
+  overflow: hidden;
+  min-height: 220px;
+}
+
+.firstReveal .aiExpertPanel {
+  opacity: 0;
+  animation: aiPanelAppear 0.4s ease forwards;
+  animation-delay: 0.80s;
+}
+
+@keyframes aiPanelAppear {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Expert tabs ── */
+.expertTabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--bl-border-default);
+  flex-shrink: 0;
+}
+
+.expertTab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--bl-text-muted);
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+  flex: 1;
+  justify-content: center;
+}
+
+.expertTab:hover {
+  color: var(--bl-text-primary);
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.expertTabActive {
+  color: var(--expert-color, var(--bl-text-primary));
+  border-bottom-color: var(--expert-color, var(--bl-accent));
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.expertTabIcon {
   font-size: 13px;
+  line-height: 1;
+}
+
+.expertTabLabel {
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+/* ── Chat area ── */
+.chatArea {
+  flex: 1;
+  min-height: 180px;
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  scroll-behavior: smooth;
+}
+
+.chatArea::-webkit-scrollbar {
+  width: 3px;
+}
+
+.chatArea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chatArea::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+}
+
+/* Empty state */
+.chatEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 0;
+  color: var(--bl-text-muted);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.chatEmptyIcon {
+  font-size: 28px;
+  opacity: 0.12;
+}
+
+.chatEmptyText {
+  font-size: 12px;
+  opacity: 0.3;
+  letter-spacing: 0.02em;
+}
+
+/* ── Chat messages ── */
+.chatMessage {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  animation: msgAppear 0.2s ease;
+}
+
+@keyframes msgAppear {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* User messages */
+.chatMsgUser {
+  justify-content: flex-end;
+}
+
+.chatMsgUser .chatMsgContent {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px 12px 2px 12px;
+  padding: 8px 14px;
+  max-width: 80%;
+  font-size: 12px;
+  color: var(--bl-text-secondary);
   font-family: 'SF Mono', 'Fira Code', monospace;
+  line-height: 1.5;
+}
+
+/* AI messages */
+.chatMsgAi {
+  justify-content: flex-start;
+}
+
+.chatMsgAi .chatMsgContent {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 13.5px;
+  line-height: 1.7;
+  max-width: 94%;
+  white-space: pre-wrap;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.03);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Markdown: bold */
+.chatMsgAi .chatMsgContent strong,
+.chatMsgAi .chatMsgContent b {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.1);
+}
+
+/* Markdown: code (formulas) */
+.chatMsgAi .chatMsgContent code {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 11.5px;
+  background: rgba(129, 140, 248, 0.08);
+  border: 1px solid rgba(129, 140, 248, 0.12);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: rgba(165, 180, 252, 0.9);
+}
+
+/* [SEEK: ...] command styling */
+.chatMsgAi .chatMsgContent .seek-command {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  background: rgba(249, 115, 22, 0.1);
+  border: 1px solid rgba(249, 115, 22, 0.2);
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: rgba(251, 146, 60, 0.9);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-block;
+}
+
+.chatMsgAi .chatMsgContent .seek-command:hover {
+  background: rgba(249, 115, 22, 0.2);
+  color: rgba(253, 186, 116, 1);
+  text-shadow: 0 0 8px rgba(249, 115, 22, 0.3);
+}
+
+/* System messages */
+.chatMsgSystem {
+  justify-content: center;
+}
+
+.chatMsgSystem .chatMsgContent {
+  color: var(--bl-text-muted);
+  font-size: 11px;
+  font-style: italic;
+  text-align: center;
+  opacity: 0.5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  padding: 4px 0;
+}
+
+/* Expert badge */
+.chatMsgBadge {
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  text-shadow: 0 0 8px currentColor;
+}
+
+/* ── Chalk cursor ── */
+.chalkCursor {
+  display: inline;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 300;
+  animation: chalkBlink 0.5s ease-in-out infinite;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.12);
+}
+
+@keyframes chalkBlink {
+  0%, 40% { opacity: 1; }
+  50%, 90% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Streaming bar */
+.streamingBar {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--bl-text-muted), transparent);
+  opacity: 0.2;
+  animation: streamPulse 1.6s ease-in-out infinite;
+  border-radius: 1px;
+  margin-top: 2px;
+}
+
+@keyframes streamPulse {
+  0%   { opacity: 0.1; transform: scaleX(0.3); }
+  50%  { opacity: 0.3; transform: scaleX(1); }
+  100% { opacity: 0.1; transform: scaleX(0.3); }
+}
+
+/* ── Input area ── */
+.chatInputArea {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--bl-border-default);
+  background: rgba(255, 255, 255, 0.005);
+  flex-shrink: 0;
+}
+
+.chatInput {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--bl-border-default);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--bl-text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.chatInput:focus {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.chatInput::placeholder {
+  color: var(--bl-text-muted);
+  opacity: 0.35;
+}
+
+.chatInput:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.chatSendBtn {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--bl-border-default);
+  border-radius: 8px;
+  color: var(--bl-text-muted);
+  padding: 8px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  font-family: 'SF Mono', monospace;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.chatSendBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--bl-text-primary);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.chatSendBtn:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
 }

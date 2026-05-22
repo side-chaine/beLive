@@ -70,6 +70,17 @@ async function fetchMusicBrainz(
       }
     }
 
+    // Diagnostic: log lookup results
+    console.log('[TrackMeta] MusicBrainz lookup:', {
+      mbid: rec.id,
+      hasGenre: !!result.genre?.length,
+      genreCount: result.genre?.length || 0,
+      hasRelease: !!result.releaseDate,
+      hasLabel: !!result.label,
+      releaseDate: result.releaseDate || 'none',
+      label: result.label || 'none',
+    });
+
     return result;
   } catch {
     return null;
@@ -91,6 +102,22 @@ async function fetchLastFm(
     const data = await resp.json();
     const track = data.track;
     if (!track) return null;
+
+    // Diagnostic: log raw response structure
+    console.log('[TrackMeta] Last.fm response:', {
+      artist,
+      title,
+      httpStatus: resp.status,
+      hasTrack: !!data.track,
+      hasTags: !!(data.track?.toptags?.tag?.length),
+      tagCount: data.track?.toptags?.tag?.length || 0,
+      hasSimilar: !!(data.track?.similar?.track?.length),
+      similarCount: data.track?.similar?.track?.length || 0,
+      listeners: data.track?.listeners || 'none',
+      playcount: data.track?.playcount || 'none',
+      similarRaw: data.track?.similar?.track?.slice(0, 2) || 'none',
+    });
+    console.log('[TrackMeta] Last.fm similar raw:', JSON.stringify(data.track?.similar)?.slice(0, 300));
 
     const result: TrackMetaPartial = {};
 
@@ -160,6 +187,25 @@ export async function fetchTrackMeta(
   if (lfResult.status === 'fulfilled' && lfResult.value) {
     merged = { ...merged, ...lfResult.value };
   }
+
+  // Diagnostic: log merged result
+  console.log('[TrackMeta] Merged result:', {
+    trackId,
+    artist,
+    title,
+    hasGenre: !!merged.genre?.length,
+    genreCount: merged.genre?.length || 0,
+    hasTags: !!merged.tags?.length,
+    tagCount: merged.tags?.length || 0,
+    hasSimilar: !!merged.similarTracks?.length,
+    similarCount: merged.similarTracks?.length || 0,
+    hasRelease: !!merged.releaseDate,
+    hasLabel: !!merged.label,
+    hasBpm: !!merged.bpm,
+    hasKey: !!merged.key,
+    releaseDate: merged.releaseDate || 'none',
+    label: merged.label || 'none',
+  });
 
   // Save to IDB (fire and forget)
   updateTrackField(trackId, { trackMeta: merged }).catch(err => {

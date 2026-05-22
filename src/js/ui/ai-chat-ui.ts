@@ -1,7 +1,7 @@
 import { aiHub } from '../ai/registry';
 import { streamOpenAI } from '../utils/stream-openai';
 import { VoiceInput } from '../utils/voice-input';
-import { AI_ActionExecutor } from '../ai/action-executor';
+import { parseTextCommand, stripTextCommands, executeToolCall } from '../../components/TrackInfoBoard/ai-tools';
 import { PerformanceMonitor } from '../utils/performance-monitor';
 import { lockScroll, unlockScroll } from '../utils/scroll-lock'; // Импорт scroll-lock
 
@@ -346,14 +346,11 @@ export class AIChatUI {
   }
 
   private async checkForToolCalls(text: string): Promise<void> {
-    const toolCalls = AI_ActionExecutor.parseToolCalls(text);
-
-    if (toolCalls.length > 0) {
-      for (const call of toolCalls) {
-        const result = await AI_ActionExecutor.execute(call);
-        const emoji = result.success ? '✅' : '❌';
-        this.addSystemMessage(`${emoji} ${result.message}`);
-      }
+    const cmd = parseTextCommand(text);
+    if (cmd) {
+      const result = await executeToolCall(cmd.tool, cmd.args);
+      const emoji = result.success ? '✅' : '❌';
+      this.addSystemMessage(`${emoji} ${result.message}`);
     }
   }
 

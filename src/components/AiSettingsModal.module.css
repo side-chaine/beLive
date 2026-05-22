@@ -1,0 +1,465 @@
+/* ═══ AI Settings Modal — Cline/VS Code style ═══ */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  animation: overlayIn 0.12s ease;
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  background: #1e1e2e;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  width: 380px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  animation: modalIn 0.15s ease;
+  pointer-events: auto;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.headerIcon {
+  color: rgba(139, 92, 246, 0.6);
+}
+
+.headerTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ── Content ── */
+.content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sectionTitle {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.3);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.sectionFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+/* ── Provider row ── */
+.selectRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+}
+
+.providerBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 18px;
+  background: rgba(99, 102, 241, 0.15);
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(99, 102, 241, 0.8);
+  font-family: 'SF Mono', monospace;
+}
+
+.providerName {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.providerTag {
+  margin-left: auto;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.2);
+  font-family: 'SF Mono', monospace;
+}
+
+/* ── Key input ── */
+.keyRow {
+  display: flex;
+  gap: 6px;
+}
+
+.keyInput {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.keyInput:focus {
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.keyInput::placeholder {
+  color: rgba(255, 255, 255, 0.15);
+}
+
+.keyToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  flex-shrink: 0;
+}
+
+.keyToggle:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── Links ── */
+.link {
+  font-size: 11px;
+  color: rgba(99, 102, 241, 0.5);
+  text-decoration: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  transition: color 0.12s ease;
+}
+
+.link:hover {
+  color: rgba(99, 102, 241, 0.8);
+}
+
+/* ── Status ── */
+.statusOk {
+  font-size: 11px;
+  color: rgba(34, 197, 94, 0.7);
+  font-family: 'SF Mono', monospace;
+}
+
+.statusFail {
+  font-size: 11px;
+  color: rgba(239, 68, 68, 0.7);
+  font-family: 'SF Mono', monospace;
+}
+
+/* ── Model select ── */
+.modelSelect {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23666' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+
+.modelSelect:focus {
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.modelSelect:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.modelSelect option {
+  background: #1e1e2e;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.modelMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.modelCostBadge {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'SF Mono', monospace;
+}
+
+.modelCostFree {
+  color: rgba(34, 197, 94, 0.7);
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.modelCostPaid {
+  color: rgba(251, 191, 36, 0.6);
+  background: rgba(251, 191, 36, 0.06);
+}
+
+.modelCtxInfo {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.2);
+  font-family: 'SF Mono', monospace;
+}
+
+/* ── Custom model ── */
+.customModelSection {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.customModelSection .textInput {
+  flex: 1;
+}
+
+.customModelApply {
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 6px;
+  color: rgba(129, 140, 248, 0.8);
+  padding: 6px 12px;
+  font-size: 11px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  flex-shrink: 0;
+}
+
+.customModelApply:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.2);
+  color: rgba(165, 180, 252, 1);
+}
+
+.customModelApply:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* ── Text input ── */
+.textInput {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.textInput:focus {
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.textInput::placeholder {
+  color: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Advanced ── */
+.advancedToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.25);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  transition: color 0.12s ease;
+  user-select: none;
+}
+
+.advancedToggle:hover {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.advancedArrow {
+  transition: transform 0.15s ease;
+}
+
+.advancedArrowOpen {
+  transform: rotate(90deg);
+}
+
+.advancedContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: slideDown 0.15s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tempRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tempRange {
+  flex: 1;
+  accent-color: rgba(99, 102, 241, 0.5);
+  height: 4px;
+}
+
+.tempValue {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'SF Mono', monospace;
+  min-width: 24px;
+  text-align: right;
+}
+
+.tempLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.15);
+  font-family: 'SF Mono', monospace;
+}
+
+/* ── Footer ── */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  gap: 8px;
+}
+
+.testBtn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.35);
+  padding: 7px 14px;
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.testBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.testBtn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.saveBtn {
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 6px;
+  color: rgba(129, 140, 248, 0.9);
+  padding: 7px 20px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.saveBtn:hover {
+  background: rgba(99, 102, 241, 0.25);
+  color: rgba(165, 180, 252, 1);
+}

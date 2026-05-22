@@ -3,6 +3,7 @@ import { useTrackInfoStore } from '../../stores/trackInfo.store';
 import { useTrackStore } from '../../stores/track.store';
 import { fetchTrackMeta, loadCachedTrackMeta } from '../../services/track-meta.service';
 import { StructureDiagram } from './StructureDiagram';
+import { AiExpertPanel } from './AiExpertPanel';
 import styles from './TrackInfoBoard.module.css';
 
 /* ── Reusable MetaCard ── */
@@ -12,6 +13,7 @@ function MetaCard({
   icon,
   loading,
   wide,
+  permanent,
   children,
 }: {
   label: string;
@@ -19,6 +21,7 @@ function MetaCard({
   icon?: string;
   loading?: boolean;
   wide?: boolean;
+  permanent?: boolean;
   children?: React.ReactNode;
 }) {
   return (
@@ -28,6 +31,8 @@ function MetaCard({
         <div className={styles.skeleton} />
       ) : children ? (
         children
+      ) : permanent && !value ? (
+        <span className={styles.cardValueNa}>N/A</span>
       ) : (
         <span className={styles.cardValue}>{value || '—'}</span>
       )}
@@ -159,7 +164,7 @@ export function TrackInfoBoard() {
         </div>
 
         {/* Зона 1: Structure — ABABCB */}
-        <MetaCard label="Structure" icon="📐" wide>
+        <MetaCard label="Structure" wide>
           <StructureDiagram />
         </MetaCard>
 
@@ -177,16 +182,19 @@ export function TrackInfoBoard() {
             label="Key"
             value={meta?.key && meta?.camelot ? `${meta.key} / ${meta.camelot}` : null}
             icon="🔑"
+            permanent
           />
           <MetaCard
             label="BPM"
             value={meta?.bpm ? String(Math.round(meta.bpm)) : null}
             icon="🥁"
+            permanent
           />
           <MetaCard
             label="Energy"
             value={meta?.energy ? `${Math.round(meta.energy * 100)}%` : null}
             icon="⚡"
+            permanent
           />
           <MetaCard
             label="Label"
@@ -210,8 +218,8 @@ export function TrackInfoBoard() {
           </MetaCard>
         </div>
 
-        {/* Зона 3: AI Expert — Phase 1B stub */}
-        <div className={styles.aiExpertStub}>🤖 AI Expert — coming soon</div>
+        {/* Зона 3: AI Expert */}
+        <AiExpertPanel />
 
         {/* Footer */}
         <div className={styles.footer}>
