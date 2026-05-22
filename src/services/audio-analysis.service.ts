@@ -8,28 +8,6 @@
  * - Reads audio from IDB ArrayBuffer (not blob URLs) — safe against revocation
  */
 
-// ─── libsonare type shim ──────────────────────────────
-// If @libraz/libsonare doesn't ship TypeScript declarations,
-// this module declaration prevents tsc errors on dynamic import.
-declare module '@libraz/libsonare' {
-  export function init(options?: { wasmPath?: string }): Promise<void>;
-  export function detectBpm(samples: Float32Array, sampleRate: number): number;
-  export function detectKey(
-    samples: Float32Array,
-    sampleRate: number,
-  ): { name: string; confidence: number };
-  export function analyze(
-    samples: Float32Array,
-    sampleRate: number,
-  ): {
-    bpm: number;
-    key: { name: string; confidence: number };
-    time_signature: number;
-    beats: number[];
-    onsets: number[];
-  };
-}
-
 import type { TrackMeta } from '../types/track-meta.types';
 import { getTrack, updateTrackField } from './idb.service';
 
@@ -125,6 +103,7 @@ async function ensureInit(): Promise<void> {
       try {
         await libsonare.init();
         _analyzeFn = libsonare.analyze;
+        
         console.log('[AudioAnalysis] WASM initialized (auto-detect)');
         return;
       } catch (_) {
@@ -136,17 +115,20 @@ async function ensureInit(): Promise<void> {
         const wasmModule = await import('@libraz/libsonare/wasm?url');
         await libsonare.init({ wasmPath: wasmModule.default });
         _analyzeFn = libsonare.analyze;
+        
         console.log('[AudioAnalysis] WASM initialized (explicit wasm path)');
         return;
       } catch (e2) {
         _initPromise = null;
         _analyzeFn = null;
+        
         console.error('[AudioAnalysis] WASM init failed (both strategies):', e2);
         throw e2;
       }
     } catch (e) {
       _initPromise = null;
       _analyzeFn = null;
+      
       throw e;
     }
   })();
@@ -155,6 +137,8 @@ async function ensureInit(): Promise<void> {
 }
 
 // ─── Audio Decode (ArrayBuffer → Float32Array) ─────────
+
+const ANALYSIS_SR = 22050;
 
 async function decodeAudioFromArrayBuffer(
   arrayBuffer: ArrayBuffer,
@@ -166,7 +150,8 @@ async function decodeAudioFromArrayBuffer(
     throw new Error('OfflineAudioContext not available');
   }
 
-  const ctx = new OfflineAudioContext(1, 1, 44100);
+  // Decode directly at target sample rate — free downsample via Web Audio API
+  const ctx = new OfflineAudioContext(1, 1, ANALYSIS_SR);
   const audioBuffer = await ctx.decodeAudioData(bufferCopy);
   const sampleRate = audioBuffer.sampleRate;
 
@@ -182,6 +167,7 @@ async function decodeAudioFromArrayBuffer(
     mono[i] = (left[i] + right[i]) / 2;
   }
 
+  console.log(`[AudioAnalysis] Decoded at ${sampleRate}Hz, ${mono.length} samples`);
   return { samples: mono, sampleRate };
 }
 
@@ -201,7 +187,7 @@ export async function analyzeTrack(
     const { samples, sampleRate } = await decodeAudioFromArrayBuffer(audioData);
 
     const t0 = performance.now();
-    const result = _analyzeFn(samples, sampleRate);
+    const result = _analyzeFn(analysisSamples, analysisSr);
     const elapsed = performance.now() - t0;
     console.log(`[AudioAnalysis] analyze() took ${elapsed.toFixed(0)}ms`);
 
@@ -237,7 +223,7 @@ export async function analyzeTrack(
       danceability: null,
       mood,
       analysedAt: new Date().toISOString(),
-      analysisEngine: '@libraz/libsonare@1.0.2',
+      analysisEngine: '@libraz/libsonare@1.1.0',
     };
   } catch (e) {
     console.error('[AudioAnalysis] analyzeTrack failed:', e);

@@ -274,6 +274,7 @@ export function TrackInfoBoard() {
               className={styles.analyzeButton}
               onClick={async () => {
                 if (!trackId) return;
+                if (isAnalyzing) return;   // GUARD: prevent double-run
                 setAnalyzing(true);
                 try {
                   const { analyzeAndPersist } = await import('../../services/audio-analysis.service');
