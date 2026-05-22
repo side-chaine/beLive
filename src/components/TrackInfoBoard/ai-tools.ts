@@ -288,7 +288,7 @@ async function executeSearchWikipedia(args: Record<string, unknown>): Promise<To
   }
 }
 
-/** AudioDB — for BPM, Key, Genre (specialized music data) */
+/** GetSongBPM — BPM + Key + Camelot lookup (replaces AudioDB) */
 async function executeSearchAudioDB(args: Record<string, unknown>): Promise<ToolCallResult> {
   const query = args.query as string;
   if (!query) {
@@ -297,42 +297,89 @@ async function executeSearchAudioDB(args: Record<string, unknown>): Promise<Tool
 
   try {
     // Parse "Artist Song" from query
-    const parts = query.trim().split(/\s+/);
     let artist = '';
     let song = '';
 
-    // Try to split: first word(s) = artist, last word(s) = song
-    // Heuristic: if there's a known separator
     if (query.includes(' - ')) {
       [artist, song] = query.split(' - ').map(s => s.trim());
     } else if (query.includes(' by ')) {
       [song, artist] = query.split(' by ').map(s => s.trim());
     } else {
-      // Best guess: first 1-2 words = artist, rest = song
+      const parts = query.trim().split(/\s+/);
       artist = parts.slice(0, Math.min(2, Math.ceil(parts.length / 2))).join(' ');
       song = parts.slice(Math.min(2, Math.ceil(parts.length / 2))).join(' ');
     }
 
-    // TheAudioDB free API (key: 2 — free tier)
+    console.log('[GetSongBPM] Searching:', { artist, song });
+
+    // GetSongBPM API (free, no API key needed for basic lookup)
+    const url = `https://api.getsongbpm.com/search/?api_key=2&type=both&lookup=song:${encodeURIComponent(song)}+artist:${encodeURIComponent(artist)}`;
+
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+
+    if (!res.ok) {
+      // Fallback: try TheAudioDB as backup
+      console.log('[GetSongBPM] Failed, trying AudioDB fallback');
+      return executeSearchAudioDBFallback(artist, song);
+    }
+
+    const data = await res.json();
+
+    if (!data.search?.length) {
+      return executeSearchAudioDBFallback(artist, song);
+    }
+
+    // Find best match
+    const track = data.search[0];
+    const result: string[] = [];
+
+    if (track.artist?.name) result.push(`Artist: ${track.artist.name}`);
+    if (track.song?.title) result.push(`Track: ${track.song.title}`);
+    if (track.song?.tempo) result.push(`BPM: ${track.song.tempo}`);
+    if (track.song?.key_of) result.push(`Key: ${track.song.key_of}`);
+    if (track.song?.camelot) result.push(`Camelot: ${track.song.camelot}`);
+    if (track.song?.time_sig) result.push(`Time signature: ${track.song.time_sig}`);
+
+    if (result.length <= 2) {
+      // Only got artist + title, no audio features
+      return executeSearchAudioDBFallback(artist, song);
+    }
+
+    return {
+      tool: 'search_audiodb',
+      success: true,
+      message: result.join('\n'),
+      data: {
+        artist: track.artist?.name,
+        track: track.song?.title,
+        bpm: track.song?.tempo || null,
+        key: track.song?.key_of || null,
+        camelot: track.song?.camelot || null,
+      },
+    };
+  } catch (e: any) {
+    return {
+      tool: 'search_audiodb',
+      success: false,
+      message: `Search failed: ${e.message}`,
+    };
+  }
+}
+
+/** Fallback: TheAudioDB (BPM only, no Key/Camelot) */
+async function executeSearchAudioDBFallback(artist: string, song: string): Promise<ToolCallResult> {
+  try {
     const url = `https://www.theaudiodb.com/api/v1/json/2/searchtrack.php?s=${encodeURIComponent(artist)}&t=${encodeURIComponent(song)}`;
-    console.log('[AudioDB] Searching:', { artist, song });
+    console.log('[AudioDB] Fallback search:', { artist, song });
 
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) {
-      return {
-        tool: 'search_audiodb',
-        success: false,
-        message: `AudioDB error: ${res.status}`,
-      };
+      return { tool: 'search_audiodb', success: false, message: `Не найдено: "${artist} - ${song}"` };
     }
 
     const data = await res.json();
     if (!data.track?.length) {
-      return {
-        tool: 'search_audiodb',
-        success: false,
-        message: `Не найдено в AudioDB: "${artist} - ${song}"`,
-      };
+      return { tool: 'search_audiodb', success: false, message: `Не найдено: "${artist} - ${song}"` };
     }
 
     const track = data.track[0];
@@ -341,36 +388,26 @@ async function executeSearchAudioDB(args: Record<string, unknown>): Promise<Tool
     if (track.strArtist) result.push(`Artist: ${track.strArtist}`);
     if (track.strTrack) result.push(`Track: ${track.strTrack}`);
     if (track.intBPM && track.intBPM !== '0') result.push(`BPM: ${track.intBPM}`);
-    if (track.strKey) result.push(`Key: ${track.strKey}`);
     if (track.strGenre) result.push(`Genre: ${track.strGenre}`);
-    if (track.strMood) result.push(`Mood: ${track.strMood}`);
 
-    if (result.length === 0) {
-      return {
-        tool: 'search_audiodb',
-        success: false,
-        message: `AudioDB: данные найдены, но BPM/Key отсутствуют`,
-      };
+    if (result.length <= 2) {
+      return { tool: 'search_audiodb', success: false, message: `Данные найдены, но BPM/Key отсутствуют` };
     }
 
     return {
       tool: 'search_audiodb',
       success: true,
-      message: result.join('\n'),
+      message: result.join('\n') + '\n⚠ Key/Camelot недоступны в этом источнике',
       data: {
         artist: track.strArtist,
         track: track.strTrack,
         bpm: track.intBPM || null,
-        key: track.strKey || null,
-        genre: track.strGenre || null,
+        key: null,
+        camelot: null,
       },
     };
   } catch (e: any) {
-    return {
-      tool: 'search_audiodb',
-      success: false,
-      message: `AudioDB search failed: ${e.message}`,
-    };
+    return { tool: 'search_audiodb', success: false, message: `Fallback failed: ${e.message}` };
   }
 }
 

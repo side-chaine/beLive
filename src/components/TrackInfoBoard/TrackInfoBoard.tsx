@@ -123,6 +123,9 @@ export function TrackInfoBoard() {
   const close = useTrackInfoStore(s => s.close);
   const setMeta = useTrackInfoStore(s => s.setMeta);
   const setFetchingApi = useTrackInfoStore(s => s.setFetchingApi);
+  const isAnalyzing = useTrackInfoStore(s => s.isAnalyzing);
+  const setAnalyzing = useTrackInfoStore(s => s.setAnalyzing);
+  const mergeMeta = useTrackInfoStore(s => s.mergeMeta);
   const currentTrack = useTrackStore(s => s.currentTrack);
 
   // Load meta on open
@@ -263,6 +266,48 @@ export function TrackInfoBoard() {
             <SimilarTracksList tracks={meta?.similarTracks} />
           </MetaCard>
         </div>
+
+        {/* Analyze Audio Button */}
+        {(!meta?.bpm || !meta?.key || !meta?.energy) && !isAnalyzing && (
+          <div className={styles.analyzeRow}>
+            <button
+              className={styles.analyzeButton}
+              onClick={async () => {
+                if (!trackId) return;
+                setAnalyzing(true);
+                try {
+                  const { analyzeAndPersist } = await import('../../services/audio-analysis.service');
+                  const result = await analyzeAndPersist(trackId);
+                  if (result) {
+                    mergeMeta({
+                      bpm: result.bpm,
+                      key: result.key,
+                      camelot: result.camelot,
+                      energy: result.energy,
+                      danceability: result.danceability,
+                      mood: result.mood,
+                      analysedAt: result.analysedAt,
+                      analysisEngine: result.analysisEngine,
+                    });
+                  }
+                } catch (e) {
+                  console.warn('[TrackInfoBoard] Analysis failed:', e);
+                } finally {
+                  setAnalyzing(false);
+                }
+              }}
+            >
+              🔍 Analyze Audio
+            </button>
+            <span className={styles.analyzeHint}>Detects BPM, Key, Energy from real audio (~20s)</span>
+          </div>
+        )}
+        {isAnalyzing && (
+          <div className={styles.analyzingRow}>
+            <span className={styles.analyzingSpinner}>⟳</span>
+            <span className={styles.analyzingText}>Analyzing audio…</span>
+          </div>
+        )}
 
         {/* Зона 3: AI Expert */}
         <TrackInfoErrorBoundary>

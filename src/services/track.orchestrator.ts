@@ -472,36 +472,6 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
       if (iEd || vEd) we.loadDualWaveforms(iEd, vEd).catch(() => {});
     }
     _mark('Steps 12-14: Autoplay + SyncEditor');
-    // ─── Step 15: Async audio analysis (fire-and-forget) ───
-    (async () => {
-      try {
-        const { analyzeAndPersist } = await import('./audio-analysis.service');
-        const result = await analyzeAndPersist(track.id);
-        if (result) {
-          // Update UI if TrackInfoBoard is open for this track
-          try {
-            const { useTrackInfoStore } = await import('../stores/trackInfo.store');
-            const state = useTrackInfoStore.getState();
-            if (state.isOpen && state.trackId === track.id) {
-              state.mergeMeta({
-                bpm: result.bpm,
-                key: result.key,
-                camelot: result.camelot,
-                energy: result.energy,
-                danceability: result.danceability,
-                mood: result.mood,
-                analysedAt: result.analysedAt,
-                analysisEngine: result.analysisEngine,
-              });
-            }
-          } catch (_) {}
-          console.log(`[AudioAnalysis] Track ${track.id}: BPM=${result.bpm}, Key=${result.key}, Energy=${result.energy}`);
-        }
-      } catch (e) {
-        console.warn('[AudioAnalysis] Failed:', e);
-      }
-    })();
-    _mark('Step 15: Audio analysis async started');
   } catch (e: unknown) {
     if ((e as { name?: string })?.name === 'AbortError') return;
     console.error('Error loading track:', e);

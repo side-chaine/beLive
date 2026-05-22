@@ -154,6 +154,64 @@
   color: #fb923c;
 }
 
+/* ── Analyze button ── */
+.analyzeRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 4px;
+}
+
+.analyzeButton {
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 8px;
+  color: #818cf8;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.analyzeButton:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.5);
+  text-shadow: 0 0 6px rgba(99, 102, 241, 0.4);
+}
+
+.analyzeHint {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.analyzingRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 4px;
+}
+
+.analyzingSpinner {
+  display: inline-block;
+  font-size: 18px;
+  color: var(--neon-bpm);
+  animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.analyzingText {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
 /* ── Structure diagram ── */
 .structureContainer {
   display: flex;

@@ -15,6 +15,7 @@ interface TrackInfoState {
   // Meta data
   meta: TrackMeta | null;
   isFetchingApi: boolean;
+  isAnalyzing: boolean;
 
   // AI Expert (Phase 1B — stub)
   activeExpert: AiExpert | null;
@@ -33,6 +34,7 @@ interface TrackInfoState {
   setMeta: (meta: TrackMeta) => void;
   mergeMeta: (partial: Partial<TrackMeta>) => void;
   setFetchingApi: (v: boolean) => void;
+  setAnalyzing: (v: boolean) => void;
 
   // Actions — AI (Phase 1B stub)
   setActiveExpert: (expert: AiExpert | null) => void;
@@ -52,6 +54,7 @@ const initialState = {
   isFirstReveal: true,
   meta: null as TrackMeta | null,
   isFetchingApi: false,
+  isAnalyzing: false,
   activeExpert: null as AiExpert | null,
   aiMessages: [] as AiMessage[],
   isAiStreaming: false,
@@ -76,6 +79,7 @@ export const useTrackInfoStore = create<TrackInfoState>((set, get) => ({
     meta: s.meta ? { ...s.meta, ...partial } : partial as TrackMeta,
   })),
   setFetchingApi: (v) => set({ isFetchingApi: v }),
+  setAnalyzing: (v) => set({ isAnalyzing: v }),
   setActiveExpert: (expert) => set({ activeExpert: expert }),
   addAiMessage: (msg) => set((s) => ({
     aiMessages: [...s.aiMessages, msg],

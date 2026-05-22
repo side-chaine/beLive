@@ -212,7 +212,17 @@ export async function fetchTrackMeta(
 
   if (!title.trim() || title.trim().length < 2) return null;
 
-  let merged = createEmptyMeta();
+  // Read existing meta from IDB to preserve analysis data (bpm, key, energy etc.)
+  const existingTrack = await getTrack(trackId);
+  const existingMeta = existingTrack?.trackMeta;
+
+  // Start from existing meta or create empty — preserves audio analysis results!
+  let merged: TrackMeta = existingMeta || createEmptyMeta();
+
+  // Update analysedAt only if this is a fresh meta
+  if (!existingMeta) {
+    merged.analysedAt = new Date().toISOString();
+  }
 
   // Parallel: MusicBrainz + Last.fm + GetSongBPM
   const [mbResult, lfResult, gsbResult] = await Promise.allSettled([
@@ -221,14 +231,22 @@ export async function fetchTrackMeta(
     fetchGetSongBPM(artist, title),
   ]);
 
+  // Merge API results — ONLY overwrite with non-null values
+  // This preserves existing analysis fields (bpm, key, camelot, energy, etc.)
+  const mergeNonNull = (target: TrackMeta, source: TrackMetaPartial) => {
+    for (const [k, v] of Object.entries(source)) {
+      if (v != null) (target as any)[k] = v;
+    }
+  };
+
   if (mbResult.status === 'fulfilled' && mbResult.value) {
-    merged = { ...merged, ...mbResult.value };
+    mergeNonNull(merged, mbResult.value);
   }
   if (lfResult.status === 'fulfilled' && lfResult.value) {
-    merged = { ...merged, ...lfResult.value };
+    mergeNonNull(merged, lfResult.value);
   }
   if (gsbResult.status === 'fulfilled' && gsbResult.value) {
-    merged = { ...merged, ...gsbResult.value };
+    mergeNonNull(merged, gsbResult.value);
   }
 
   // Diagnostic: log merged result
@@ -248,6 +266,8 @@ export async function fetchTrackMeta(
     hasKey: !!merged.key,
     releaseDate: merged.releaseDate || 'none',
     label: merged.label || 'none',
+    bpm: merged.bpm ?? 'none',
+    key: merged.key ?? 'none',
   });
 
   // Save to IDB (fire and forget)
