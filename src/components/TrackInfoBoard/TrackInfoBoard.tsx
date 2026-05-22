@@ -53,6 +53,7 @@ function MetaCard({
   loading,
   wide,
   permanent,
+  neonClass,
   children,
 }: {
   label: string;
@@ -61,6 +62,7 @@ function MetaCard({
   loading?: boolean;
   wide?: boolean;
   permanent?: boolean;
+  neonClass?: string;
   children?: React.ReactNode;
 }) {
   return (
@@ -70,10 +72,12 @@ function MetaCard({
         <div className={styles.skeleton} />
       ) : children ? (
         children
-      ) : permanent && !value ? (
+      ) : value ? (
+        <span className={`${styles.cardValue} ${neonClass || ''}`}>{value}</span>
+      ) : permanent ? (
         <span className={styles.cardValueNa}>N/A</span>
       ) : (
-        <span className={styles.cardValue}>{value || '—'}</span>
+        <span className={styles.cardValue}>—</span>
       )}
     </div>
   );
@@ -222,18 +226,21 @@ export function TrackInfoBoard() {
             value={meta?.key && meta?.camelot ? `${meta.key} / ${meta.camelot}` : null}
             icon="🔑"
             permanent
+            neonClass={meta?.key ? styles.neonKey : undefined}
           />
           <MetaCard
             label="BPM"
             value={meta?.bpm ? String(Math.round(meta.bpm)) : null}
             icon="🥁"
             permanent
+            neonClass={meta?.bpm ? styles.neonBpm : undefined}
           />
           <MetaCard
             label="Energy"
             value={meta?.energy ? `${Math.round(meta.energy * 100)}%` : null}
             icon="⚡"
             permanent
+            neonClass={meta?.energy ? styles.neonEnergy : undefined}
           />
           <MetaCard
             label="Label"

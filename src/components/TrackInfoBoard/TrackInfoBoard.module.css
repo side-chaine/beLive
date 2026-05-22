@@ -138,6 +138,22 @@
   font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
 }
 
+/* ── Neon glow for audio analysis values ── */
+.neonBpm {
+  text-shadow: 0 0 6px var(--neon-bpm), 0 0 16px var(--neon-bpm);
+  color: #818cf8;
+}
+
+.neonKey {
+  text-shadow: 0 0 6px var(--neon-key), 0 0 16px var(--neon-key);
+  color: #c084fc;
+}
+
+.neonEnergy {
+  text-shadow: 0 0 6px var(--neon-energy), 0 0 16px var(--neon-energy);
+  color: #fb923c;
+}
+
 /* ── Structure diagram ── */
 .structureContainer {
   display: flex;
@@ -691,4 +707,93 @@
 .chatSendBtn:disabled {
   opacity: 0.2;
   cursor: not-allowed;
+}
+
+/* ── Quick Reply buttons ── */
+.quickReplies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 0 2px;
+}
+
+.quickReplyBtn {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 10.5px;
+  padding: 5px 11px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--bl-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.quickReplyBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--bl-text-primary);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.quickReplyBtn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* Type-specific colors */
+.quickReplySeek {
+  border-color: rgba(249, 115, 22, 0.25);
+  color: rgba(251, 146, 60, 0.85);
+}
+
+.quickReplySeek:hover {
+  border-color: rgba(249, 115, 22, 0.5);
+  color: rgba(253, 186, 116, 1);
+  background: rgba(249, 115, 22, 0.08);
+}
+
+.quickReplyExpert {
+  border-color: rgba(129, 140, 248, 0.25);
+  color: rgba(165, 180, 252, 0.85);
+}
+
+.quickReplyExpert:hover {
+  border-color: rgba(129, 140, 248, 0.5);
+  color: rgba(199, 210, 254, 1);
+  background: rgba(129, 140, 248, 0.08);
+}
+
+.quickReplySearch {
+  border-color: rgba(34, 211, 238, 0.25);
+  color: rgba(103, 232, 249, 0.85);
+}
+
+.quickReplySearch:hover {
+  border-color: rgba(34, 211, 238, 0.5);
+  color: rgba(165, 243, 252, 1);
+  background: rgba(34, 211, 238, 0.08);
+}
+
+.quickReplySearchAudio {
+  border-color: rgba(168, 85, 247, 0.25);
+  color: rgba(196, 181, 253, 0.85);
+}
+
+.quickReplySearchAudio:hover {
+  border-color: rgba(168, 85, 247, 0.5);
+  color: rgba(221, 214, 254, 1);
+  background: rgba(168, 85, 247, 0.08);
+}
+
+.quickReplyQuery {
+  border-color: rgba(255, 255, 255, 0.06);
+  color: var(--bl-text-muted);
+}
+
+.quickReplyQuery:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--bl-text-secondary);
+  background: rgba(255, 255, 255, 0.04);
 }
