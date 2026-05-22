@@ -383,7 +383,6 @@ export function QuickActions() {
   return (
     <div style={{ display: 'flex', gap: 6, alignItems: 'center', position: 'relative' }}>
       <button onClick={openCatalog} style={btnStyle()}>Catalog</button>
-      <button onClick={() => useAiSettingsStore.getState().setShowSettings(true)} style={btnStyle()} title="AI Settings"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ display: 'block' }}><path d="M7 1L8.8 4.6L12.8 5.2L10 8L10.6 12L7 10.2L3.4 12L4 8L1.2 5.2L5.2 4.6L7 1Z" fill="currentColor" opacity="0.6"/></svg></button>
       <button
         ref={avatarBtnRef}
         onClick={toggleMenu}
@@ -416,6 +415,17 @@ export function QuickActions() {
           <div style={{ padding: '8px 16px', borderBottom: '1px solid #333', marginBottom: 4 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>User</div>
             <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>Settings & Preferences</div>
+          </div>
+
+          {/* AI Settings */}
+          <div
+            style={{ padding: '8px 16px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            onClick={() => { useAiSettingsStore.getState().setShowSettings(true); closeMenu(); }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            <span style={{ fontWeight: 500, color: '#eee' }}>AI Settings</span>
+            <span style={{ fontSize: 10, color: '#666' }}>Configure</span>
           </div>
 
           {/* Graphics section - performance tier controls */}
