@@ -53,7 +53,7 @@ export default defineConfig({
 
       workbox: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}', '**/*.wasm'],
         globIgnores: ['**/*.jpg', '**/*.jpeg'],
         runtimeCaching: [
           {
@@ -93,6 +93,10 @@ export default defineConfig({
       }
     })
   ],
+
+  optimizeDeps: {
+    exclude: ['@libraz/libsonare'],
+  },
 
   server: {
     host: '0.0.0.0',

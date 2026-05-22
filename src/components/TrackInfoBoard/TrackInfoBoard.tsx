@@ -5,6 +5,45 @@ import { fetchTrackMeta, loadCachedTrackMeta } from '../../services/track-meta.s
 import { StructureDiagram } from './StructureDiagram';
 import { AiExpertPanel } from './AiExpertPanel';
 import styles from './TrackInfoBoard.module.css';
+import React from 'react';
+
+/* ── ErrorBoundary — ловит ошибки рендеринга ── */
+class TrackInfoErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; errorMsg: string }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, errorMsg: '' };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, errorMsg: error.message || 'Unknown error' };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('[TrackInfoBoard] Error caught:', error.message, info.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          padding: '20px',
+          textAlign: 'center',
+          color: 'rgba(255,255,255,0.5)',
+          fontFamily: 'SF Mono, monospace',
+          fontSize: '12px',
+        }}>
+          <div style={{ fontSize: '24px', marginBottom: '8px', opacity: 0.3 }}>⚠️</div>
+          <div>Something went wrong</div>
+          <div style={{ fontSize: '10px', marginTop: '4px', opacity: 0.3 }}>{this.state.errorMsg}</div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 /* ── Reusable MetaCard ── */
 function MetaCard({
@@ -118,7 +157,7 @@ export function TrackInfoBoard() {
           danceability: null,
           mood: null,
           analysedAt: new Date().toISOString(),
-          essentiaVersion: null,
+          analysisEngine: null,
         });
       }
       setFetchingApi(false);
@@ -219,7 +258,9 @@ export function TrackInfoBoard() {
         </div>
 
         {/* Зона 3: AI Expert */}
-        <AiExpertPanel />
+        <TrackInfoErrorBoundary>
+          <AiExpertPanel />
+        </TrackInfoErrorBoundary>
 
         {/* Footer */}
         <div className={styles.footer}>

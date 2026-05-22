@@ -27,7 +27,7 @@ export interface TrackMeta {
 
   // Metadata
   analysedAt: string | null;
-  essentiaVersion: string | null;
+  analysisEngine: string | null;
 }
 
 export interface SimilarTrack {

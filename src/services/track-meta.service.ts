@@ -140,6 +140,45 @@ async function fetchLastFm(
   }
 }
 
+// ─── GetSongBPM API ───
+const GETSONGBPM_KEY = import.meta.env.VITE_GETSONGBPM_KEY || '';
+
+async function fetchGetSongBPM(
+  artist: string,
+  title: string,
+): Promise<TrackMetaPartial | null> {
+  if (!GETSONGBPM_KEY) return null;
+  try {
+    const query = [artist, title].filter(Boolean).join(' ');
+    if (!query.trim()) return null;
+
+    const url = `https://api.getsongbpm.com/search/?api_key=${GETSONGBPM_KEY}&type=both&lookup=song:${encodeURIComponent(title)}+artist:${encodeURIComponent(artist)}`;
+    const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!resp.ok) return null;
+
+    const data = await resp.json();
+    const track = data.search?.[0];
+    if (!track?.song) return null;
+
+    const result: TrackMetaPartial = {};
+    if (track.song.tempo) result.bpm = Number(track.song.tempo);
+    if (track.song.key_of) result.key = track.song.key_of;
+    if (track.song.camelot) result.camelot = track.song.camelot;
+
+    console.log('[TrackMeta] GetSongBPM:', {
+      artist,
+      title,
+      bpm: result.bpm ?? 'none',
+      key: result.key ?? 'none',
+      camelot: result.camelot ?? 'none',
+    });
+
+    return result;
+  } catch {
+    return null;
+  }
+}
+
 // ─── Main: fetch + save to IDB ───
 function createEmptyMeta(): TrackMeta {
   return {
@@ -159,7 +198,7 @@ function createEmptyMeta(): TrackMeta {
     danceability: null,
     mood: null,
     analysedAt: new Date().toISOString(),
-    essentiaVersion: null,
+    analysisEngine: null,
   };
 }
 
@@ -175,10 +214,11 @@ export async function fetchTrackMeta(
 
   let merged = createEmptyMeta();
 
-  // Parallel: MusicBrainz + Last.fm
-  const [mbResult, lfResult] = await Promise.allSettled([
+  // Parallel: MusicBrainz + Last.fm + GetSongBPM
+  const [mbResult, lfResult, gsbResult] = await Promise.allSettled([
     fetchMusicBrainz(artist, title),
     fetchLastFm(artist, title),
+    fetchGetSongBPM(artist, title),
   ]);
 
   if (mbResult.status === 'fulfilled' && mbResult.value) {
@@ -186,6 +226,9 @@ export async function fetchTrackMeta(
   }
   if (lfResult.status === 'fulfilled' && lfResult.value) {
     merged = { ...merged, ...lfResult.value };
+  }
+  if (gsbResult.status === 'fulfilled' && gsbResult.value) {
+    merged = { ...merged, ...gsbResult.value };
   }
 
   // Diagnostic: log merged result
