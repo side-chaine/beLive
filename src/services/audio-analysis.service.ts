@@ -187,7 +187,7 @@ export async function analyzeTrack(
     const { samples, sampleRate } = await decodeAudioFromArrayBuffer(audioData);
 
     const t0 = performance.now();
-    const result = _analyzeFn(analysisSamples, analysisSr);
+    const result = _analyzeFn(samples, sampleRate);
     const elapsed = performance.now() - t0;
     console.log(`[AudioAnalysis] analyze() took ${elapsed.toFixed(0)}ms`);
 

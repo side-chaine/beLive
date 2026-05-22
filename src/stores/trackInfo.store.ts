@@ -101,6 +101,9 @@ export const useTrackInfoStore = create<TrackInfoState>((set, get) => ({
 // Auto-close on track change
 if (typeof document !== 'undefined') {
   document.addEventListener('before-track-change', () => {
-    useTrackInfoStore.getState().close();
+    const state = useTrackInfoStore.getState();
+    state.close();
+    state.clearAiMessages();
+    state.setActiveExpert(null);
   });
 }
