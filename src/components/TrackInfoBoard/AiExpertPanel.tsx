@@ -71,7 +71,11 @@ function extractReplies(text: string): QuickReply[] {
   return replies;
 }
 
-export function AiExpertPanel() {
+interface AiExpertPanelProps {
+  compact?: boolean;
+}
+
+export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
   const activeExpert = useTrackInfoStore(s => s.activeExpert);
   const aiMessages = useTrackInfoStore(s => s.aiMessages);
   const isAiStreaming = useTrackInfoStore(s => s.isAiStreaming);
@@ -88,6 +92,14 @@ export function AiExpertPanel() {
   const isConfigured = useAiSettingsStore(s => s.isConfigured);
   const coachName = useAiSettingsStore(s => s.coachName);
   const [inputValue, setInputValue] = useState('');
+
+  // Compact mode — always vocal-coach, no tabs
+  useEffect(() => {
+    if (compact && activeExpert !== 'vocal-coach') {
+      setActiveExpert('vocal-coach');
+    }
+  }, [compact, activeExpert]);
+
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Derive active block
@@ -378,7 +390,8 @@ export function AiExpertPanel() {
 
   return (
     <div className={styles.aiExpertPanel}>
-      {/* Expert tabs — ALL 4 */}
+      {/* Expert tabs — hidden in compact mode */}
+      {!compact && (
       <div className={styles.expertTabs}>
         {EXPERT_TABS.map(t => (
           <button
@@ -392,9 +405,10 @@ export function AiExpertPanel() {
           </button>
         ))}
       </div>
+      )}
 
       {/* Chat area */}
-      <div className={styles.chatArea}>
+      <div className={styles.chatArea} style={compact ? { maxHeight: '160px' } : undefined}>
         {!activeExpert ? (
           <div className={styles.chatEmpty}>
             <span className={styles.chatEmptyIcon}>🤖</span>
@@ -464,6 +478,7 @@ export function AiExpertPanel() {
         <div className={styles.chatInputArea}>
           <input
             className={styles.chatInput}
+            data-billy-input={compact ? 'true' : undefined}
             type="text"
             value={inputValue}
             onChange={e => setInputValue(e.target.value)}

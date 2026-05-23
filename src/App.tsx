@@ -16,6 +16,7 @@ import { LiveSubtitle } from './components/LiveSubtitle';
 import { CameraPreview } from './components/CameraPreview';
 import { LiveControls } from './components/LiveControls';
 import { ControlDeck } from './components/ControlDeck';
+import { BillyDock } from './components/BillyDock/BillyDock';
 // TC-PITCH-04: Removed PianoOverlay import (now PitchTab in dock)
 
 import { initTextStyleBridge, destroyTextStyleBridge } from './bridges/textStyle.bridge';
@@ -115,10 +116,9 @@ export default function App() {
       {syncOpen ? (
         <SyncEditorPanel />
       ) : (
-        <>
-          <ControlDeck />
-        </>
+        <ControlDeck />
       )}
+      <BillyDock />
       <TriggerDebugOverlay />
       <PlaybackPerfOverlay />
       {trackInfoOpen && <TrackInfoBoard />}

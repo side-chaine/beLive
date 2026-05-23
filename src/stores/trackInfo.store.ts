@@ -22,6 +22,9 @@ interface TrackInfoState {
   aiMessages: AiMessage[];
   isAiStreaming: boolean;
 
+  // Billy Dock (Phase 1.5)
+  billyCollapsed: boolean;
+
   // Internal
   _revealedTracks: Set<number>;
   _clickedBlockType: string | null;
@@ -58,6 +61,7 @@ const initialState = {
   activeExpert: null as AiExpert | null,
   aiMessages: [] as AiMessage[],
   isAiStreaming: false,
+  billyCollapsed: false,
   _clickedBlockType: null as string | null,
   _revealedTracks: new Set<number>(),
 };
@@ -93,6 +97,7 @@ export const useTrackInfoStore = create<TrackInfoState>((set, get) => ({
     return { aiMessages: msgs };
   }),
   setAiStreaming: (v) => set({ isAiStreaming: v }),
+  setBillyCollapsed: (v: boolean) => set({ billyCollapsed: v }),
   clearAiMessages: () => set({ aiMessages: [] }),
   setClickedBlockType: (type) => set({ _clickedBlockType: type }),
   reset: () => set(initialState),

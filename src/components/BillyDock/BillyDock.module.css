@@ -1,0 +1,443 @@
+/* ═══ BillyDock — Animated Mascot ═══ */
+
+/* ── Root container ── */
+.root {
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--bl-deck-height, 48px) - 10px);
+  z-index: 999996;
+  width: 64px;
+  height: 91px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: opacity 0.2s ease, bottom 0.15s ease;
+}
+
+.root:hover {
+  opacity: 0.85;
+}
+
+.root:focus-visible {
+  outline: 2px solid var(--bl-accent, #9b59b6);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Active state when TrackInfoBoard is open ── */
+.boardOpen {
+  opacity: 1;
+}
+
+.boardOpen::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bl-accent, #9b59b6);
+  box-shadow: 0 0 6px var(--bl-accent, #9b59b6);
+}
+
+/* ── Loop indicator — orange inner ring (::before) ── */
+.looping::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(249, 115, 22, 0.4);
+  animation: loopPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes loopPulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.04); }
+}
+
+/* ── Recording indicator — red outer ring (::after) ── */
+.recording::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 0, 0, 0.5);
+  animation: recPulse 1s ease-in-out infinite;
+}
+
+@keyframes recPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+/* ═══ SVG Elements ═══ */
+.billy {
+  overflow: visible;
+  display: block;
+}
+
+/* ── Animated groups — outer (CSS keyframes) ── */
+.legL, .legR, .armL, .armR, .head, .eyes {
+  transform-box: view-box;
+}
+
+.eyes {
+  transform-origin: 70px 68px;
+}
+
+.armL {
+  transform-origin: 46px 114px;
+}
+
+.armR {
+  transform-origin: 94px 114px;
+}
+
+.legL {
+  transform-origin: 54px 158px;
+}
+
+.legR {
+  transform-origin: 86px 158px;
+}
+
+.head {
+  transform-origin: 70px 60px;
+}
+
+/* ── Inner reactive groups (JS-driven micro-transforms) ── */
+.bodyReactive,
+.armLReactive,
+.armRReactive,
+.headReactive {
+  transform-box: view-box;
+}
+
+/* ── Pupils — positioned via inline attrs (Phase 1.5: eye tracking) ── */
+.pupilL, .pupilR {
+  /* cx/cy animated via JS refs in Phase 1.5 */
+}
+
+/* ── Block color glow on eyes/head ── */
+.eyesGlow {
+  filter: drop-shadow(0 0 4px var(--bl-billy-block-color, transparent));
+}
+
+.headGlow {
+  filter: drop-shadow(0 0 8px var(--bl-billy-block-color, transparent));
+}
+
+/* ── Chorus glow — intensified (Phase 1.5) ── */
+.eyesGlowChorus {
+  filter: drop-shadow(0 0 6px var(--bl-billy-block-color, transparent))
+          drop-shadow(0 0 12px var(--bl-billy-block-color, transparent));
+}
+
+.headGlowChorus {
+  filter: drop-shadow(0 0 12px var(--bl-billy-block-color, transparent))
+          drop-shadow(0 0 20px var(--bl-billy-block-color, transparent));
+}
+
+/* ═══ State: IDLE ═══ */
+.idle .billy {
+  animation: idleBody 1.8s ease-in-out infinite;
+}
+
+.idle .head {
+  animation: headWobble 1.8s ease-in-out infinite;
+}
+
+.idle .eyes {
+  animation: blink 4s ease-in-out infinite;
+}
+
+.idle .armL {
+  animation: armLIdle 1.8s ease-in-out infinite;
+}
+
+.idle .armR {
+  animation: armRIdle 1.8s ease-in-out infinite;
+}
+
+.idle .legL {
+  animation: legLIdle 1.8s ease-in-out infinite;
+}
+
+.idle .legR {
+  animation: legRIdle 1.8s ease-in-out infinite;
+}
+
+@keyframes idleBody {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+@keyframes headWobble {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(2.5deg); }
+  75% { transform: rotate(-2.5deg); }
+}
+
+@keyframes blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.07); }
+}
+
+@keyframes armLIdle {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-14deg); }
+}
+
+@keyframes armRIdle {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(14deg); }
+}
+
+@keyframes legLIdle {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(5deg); }
+}
+
+@keyframes legRIdle {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-5deg); }
+}
+
+/* ═══ State: DANCE ═══ */
+/* Arms + head: CSS keyframes as BASE (always works) */
+/* JS audio-reactive adds chaos via inner <g> transforms */
+.dance .billy {
+  animation: danceBody 0.55s ease-in-out infinite;
+}
+
+.dance .armL {
+  animation: danceArmL 0.8s ease-in-out infinite;
+}
+
+.dance .armR {
+  animation: danceArmR 0.8s ease-in-out infinite;
+}
+
+.dance .legL {
+  animation: danceLegL 0.55s ease-in-out infinite;
+}
+
+.dance .legR {
+  animation: danceLegR 0.55s ease-in-out infinite;
+}
+
+.dance .head {
+  animation: headWobble 0.55s ease-in-out infinite;
+}
+
+@keyframes danceBody {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(-5deg) translateY(-7px); }
+  75% { transform: rotate(5deg) translateY(-7px); }
+}
+
+@keyframes danceArmL {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-25deg); }
+  75% { transform: rotate(12deg); }
+}
+
+@keyframes danceArmR {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(12deg); }
+  75% { transform: rotate(-25deg); }
+}
+
+@keyframes danceLegL {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-22deg); }
+  75% { transform: rotate(12deg); }
+}
+
+@keyframes danceLegR {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(12deg); }
+  75% { transform: rotate(-22deg); }
+}
+
+/* ═══ State: THINK ═══ */
+.think .billy {
+  animation: none;
+  transform: none;
+}
+
+.think .head {
+  animation: thinkHead 2.5s ease-in-out infinite;
+}
+
+.think .armR {
+  transform: rotate(-38deg);
+  animation: none;
+}
+
+@keyframes thinkHead {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-10deg); }
+}
+
+/* ═══ State: SLEEP ═══ */
+.sleep .billy {
+  animation: sleepBody 2.6s ease-in-out infinite;
+}
+
+.sleep .eyes {
+  transform: scaleY(0.1);
+  animation: none;
+}
+
+@keyframes sleepBody {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(3px) rotate(-4deg); }
+}
+
+/* ZZZ animation */
+.zzz {
+  transform-box: view-box;
+}
+
+.z1 {
+  animation: zzz1 2.2s ease-out infinite;
+}
+
+.z2 {
+  animation: zzz2 2.2s ease-out 0.7s infinite;
+}
+
+@keyframes zzz1 {
+  0%, 100% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  25% { opacity: 1; }
+  75% { opacity: 0; transform: translate(8px, -16px) scale(1); }
+}
+
+@keyframes zzz2 {
+  0%, 35% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  65% { opacity: 1; }
+  100% { opacity: 0; transform: translate(12px, -22px) scale(1.3); }
+}
+
+/* ═══ State: JUMP (one-shot) ═══ */
+.jump .billy {
+  animation: jumpBody 0.72s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.jump .armL {
+  animation: jumpArmL 0.72s ease forwards;
+}
+
+.jump .armR {
+  animation: jumpArmR 0.72s ease forwards;
+}
+
+@keyframes jumpBody {
+  0% { transform: translateY(0) scaleY(1); }
+  15% { transform: translateY(5px) scaleY(0.85); }
+  45% { transform: translateY(-44px) scaleY(1.06); }
+  72% { transform: translateY(-46px) scaleY(1); }
+  88% { transform: translateY(0) scaleY(0.88); }
+  100% { transform: translateY(0) scaleY(1); }
+}
+
+@keyframes jumpArmL {
+  0% { transform: rotate(0deg); }
+  35%, 68% { transform: rotate(-55deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes jumpArmR {
+  0% { transform: rotate(0deg); }
+  35%, 68% { transform: rotate(55deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* ═══ PUCK state — collapsed Billy (Phase 1.5, CSS ready) ═══ */
+.puck {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bl-surface-raised, #1a1a1a);
+  border: 1.5px solid var(--bl-accent, #9b59b6);
+  overflow: hidden;
+  box-shadow: 0 0 8px rgba(155, 89, 182, 0.15);
+  transition: width 0.4s ease, height 0.4s ease, border-radius 0.4s ease,
+              box-shadow 0.3s ease;
+}
+
+.puck:hover {
+  width: 64px;
+  height: 91px;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(155, 89, 182, 0.25);
+}
+
+.puckBlockGlow {
+  box-shadow:
+    0 0 8px rgba(155, 89, 182, 0.15),
+    inset 0 0 6px var(--bl-billy-block-color, transparent);
+}
+
+.puckUnread {
+  animation: unreadPulse 2s ease-in-out infinite;
+}
+
+@keyframes unreadPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(155, 89, 182, 0.15); }
+  50% { box-shadow: 0 0 16px rgba(155, 89, 182, 0.4); }
+}
+
+.puckBlink circle:first-child,
+.puckBlink circle:nth-child(2) {
+  transform: scaleY(0.1);
+  transform-origin: center;
+  transition: transform 0.1s ease;
+}
+
+/* ═══ Accessibility: reduced motion ═══ */
+@media (prefers-reduced-motion: reduce) {
+  .idle .billy,
+  .dance .billy,
+  .sleep .billy,
+  .jump .billy {
+    animation: none !important;
+  }
+  .idle .head,
+  .idle .eyes,
+  .idle .armL,
+  .idle .armR,
+  .idle .legL,
+  .idle .legR,
+  .dance .armL,
+  .dance .armR,
+  .dance .legL,
+  .dance .legR,
+  .dance .head,
+  .think .head,
+  .sleep .eyes {
+    animation: none !important;
+  }
+  .think .armR {
+    transform: rotate(-38deg) !important;
+  }
+  .sleep .eyes {
+    transform: scaleY(0.1) !important;
+  }
+  .z1, .z2 {
+    animation: none !important;
+    opacity: 0.7;
+  }
+  .looping::before,
+  .recording::after {
+    animation: none !important;
+    opacity: 0.5;
+  }
+  .puckUnread {
+    animation: none !important;
+    opacity: 0.7;
+  }
+}

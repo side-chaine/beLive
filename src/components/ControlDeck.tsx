@@ -68,7 +68,9 @@ export function ControlDeck() {
     ro.observe(el);
     return () => {
       ro.disconnect();
-      document.documentElement.style.removeProperty('--bl-deck-height');
+      // НЕ удаляем --bl-deck-height — BillyDock зависит от этого значения
+      // даже когда ControlDeck не смонтирован (syncOpen=true)
+      // SyncEditorPanel также публикует эту var — покрытие есть
     };
   }, []);
   
