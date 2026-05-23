@@ -142,11 +142,31 @@
 
 /* ═══ State: IDLE ═══ */
 .idle .billy {
-  animation: idleBody 1.8s ease-in-out infinite;
+  animation: idleBody 2.5s ease-in-out infinite;
 }
 
 .idle .head {
-  animation: headWobble 1.8s ease-in-out infinite;
+  animation: headWobble 2.5s ease-in-out infinite;
+}
+
+.idle .armL {
+  animation: armLIdle 2.5s ease-in-out infinite;
+}
+
+.idle .armR {
+  animation: armRIdle 2.5s ease-in-out infinite;
+}
+
+.idle .legL {
+  animation: legLIdle 2.5s ease-in-out infinite;
+}
+
+.idle .legR {
+  animation: legRIdle 2.5s ease-in-out infinite;
+}
+
+.idle .head {
+  animation: headWobble 2.5s ease-in-out infinite;
 }
 
 .idle .eyes {
@@ -154,19 +174,19 @@
 }
 
 .idle .armL {
-  animation: armLIdle 1.8s ease-in-out infinite;
+  animation: armLIdle 2.5s ease-in-out infinite;
 }
 
 .idle .armR {
-  animation: armRIdle 1.8s ease-in-out infinite;
+  animation: armRIdle 2.5s ease-in-out infinite;
 }
 
 .idle .legL {
-  animation: legLIdle 1.8s ease-in-out infinite;
+  animation: legLIdle 2.5s ease-in-out infinite;
 }
 
 .idle .legR {
-  animation: legRIdle 1.8s ease-in-out infinite;
+  animation: legRIdle 2.5s ease-in-out infinite;
 }
 
 @keyframes idleBody {
@@ -209,7 +229,7 @@
 /* Arms + head: CSS keyframes as BASE (always works) */
 /* JS audio-reactive adds chaos via inner <g> transforms */
 .dance .billy {
-  animation: danceBody 0.55s ease-in-out infinite;
+  animation: danceBody 0.7s ease-in-out infinite;
 }
 
 .dance .armL {
@@ -221,11 +241,11 @@
 }
 
 .dance .legL {
-  animation: danceLegL 0.55s ease-in-out infinite;
+  animation: danceLegL 0.7s ease-in-out infinite;
 }
 
 .dance .legR {
-  animation: danceLegR 0.55s ease-in-out infinite;
+  animation: danceLegR 0.7s ease-in-out infinite;
 }
 
 .dance .head {

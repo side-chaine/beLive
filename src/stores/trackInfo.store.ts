@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { TrackMeta, AiExpert } from '../types/track-meta.types';
 
 interface AiMessage {
@@ -46,6 +47,7 @@ interface TrackInfoState {
   setAiStreaming: (v: boolean) => void;
   clearAiMessages: () => void;
   setClickedBlockType: (type: string) => void;
+  setBillyCollapsed: (v: boolean) => void;
 
   // Reset
   reset: () => void;
@@ -66,7 +68,9 @@ const initialState = {
   _revealedTracks: new Set<number>(),
 };
 
-export const useTrackInfoStore = create<TrackInfoState>((set, get) => ({
+export const useTrackInfoStore = create<TrackInfoState>()(
+  persist(
+    (set, get) => ({
   ...initialState,
   open: (trackId) => {
     const isFirstReveal = !get()._revealedTracks.has(trackId);
@@ -101,7 +105,15 @@ export const useTrackInfoStore = create<TrackInfoState>((set, get) => ({
   clearAiMessages: () => set({ aiMessages: [] }),
   setClickedBlockType: (type) => set({ _clickedBlockType: type }),
   reset: () => set(initialState),
-}));
+  }),
+  {
+    name: 'bl-track-info',
+    partialize: (state) => ({
+      activeExpert: state.activeExpert,
+      _clickedBlockType: state._clickedBlockType,
+    }),
+  })
+);
 
 // Auto-close on track change
 if (typeof document !== 'undefined') {

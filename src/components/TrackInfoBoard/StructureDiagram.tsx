@@ -91,7 +91,7 @@ export function StructureDiagram() {
     <div className={styles.structureContainer}>
       {/* TrackMap label — simple, no SVG artifact */}
       <div className={styles.trackMapAnchor}>
-        <span className={styles.anchorLabel}>▼ TrackMap</span>
+        <span className={styles.anchorLabel}>🧬 DNA</span>
       </div>
 
       {/* Timeline bar — proportional segments */}

@@ -196,13 +196,14 @@ export function TrackInfoBoard() {
 
   return (
     <div className={styles.overlay} onClick={close}>
+      <div className={styles.dnaHelix} />
       <div
         className={`${styles.board} ${isFirstReveal ? styles.firstReveal : ''}`}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className={styles.headerBar}>
-          <span className={styles.boardTitle}>TrackMap</span>
+          <span className={styles.boardTitle}>🧬 DNA</span>
           <div className={styles.headerActions}>
             <button className={styles.refreshButton} onClick={handleRefresh} title="Refresh">↻</button>
             <button className={styles.closeButton} onClick={close}>ESC ✕</button>

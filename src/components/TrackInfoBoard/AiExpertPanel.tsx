@@ -20,6 +20,8 @@ import {
   parseQuickReplies,
   type QuickReply,
 } from './ai-tools';
+import type { PracticeScenarioId } from '../../practice/practice-scenarios';
+import { PracticeSessionCard } from './PracticeSessionCard';
 import styles from './TrackInfoBoard.module.css';
 
 /* ── Expert tab config — ALL 4 experts ── */
@@ -85,13 +87,13 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
   const addAiMessage = useTrackInfoStore(s => s.addAiMessage);
   const appendAiToken = useTrackInfoStore(s => s.appendAiToken);
   const setAiStreaming = useTrackInfoStore(s => s.setAiStreaming);
-  const clearAiMessages = useTrackInfoStore(s => s.clearAiMessages);
   const currentTrack = useTrackStore(s => s.currentTrack);
   const blocks = useBlocksStore(s => s.blocks);
   const activeLineIndex = useLyricsStore(s => s.activeLineIndex);
   const isConfigured = useAiSettingsStore(s => s.isConfigured);
   const coachName = useAiSettingsStore(s => s.coachName);
   const [inputValue, setInputValue] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Compact mode — always vocal-coach, no tabs
   useEffect(() => {
@@ -205,11 +207,27 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
   const processAiResponse = useCallback(async (fullText: string, expert: AiExpert) => {
     // 1. Process [SEEK], [STRUCTURE], [CATALOG]
     const cmd = parseTextCommand(fullText);
-    if (cmd && cmd.tool !== 'search_wikipedia' && cmd.tool !== 'search_audiodb') {
-      console.log('[AI] Command:', cmd);
-      const result = await executeToolCall(cmd.tool, cmd.args);
-      if (result.success) {
-        console.log('[AI] Tool OK:', result.message);
+    if (cmd) {
+      // Player control tools — SAFETY: NOT auto-executed from AI text
+      // These MUST go through [ACTION] quick reply click for user consent
+      const PLAYER_TOOLS = [
+        'set_playback_rate',
+        'loop_section',
+        'set_stem_volume',
+        'switch_mode',
+        'toggle_vocal_mix',
+      ];
+
+      if (PLAYER_TOOLS.includes(cmd.tool)) {
+        // Strip from display, log warning, do NOT execute
+        console.log('[AI] Player command blocked (not through ACTION button):', cmd.tool, cmd.args);
+      } else if (cmd.tool !== 'search_wikipedia' && cmd.tool !== 'search_audiodb') {
+        // Legacy/info tools: safe to auto-execute
+        console.log('[AI] Command:', cmd);
+        const result = await executeToolCall(cmd.tool, cmd.args);
+        if (result.success) {
+          console.log('[AI] Tool OK:', result.message);
+        }
       }
     }
 
@@ -269,7 +287,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
   // Expert tab click
   const handleExpertClick = useCallback(async (expert: AiExpert) => {
     if (activeExpert === expert) return;
-    clearAiMessages();
+    // НЕ очищаем сообщения при смене эксперта — пользователь хочет контекст
     setActiveExpert(expert);
 
     if (!isConfigured()) {
@@ -280,7 +298,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
     const q = getAutoQuery(expert);
     addAiMessage({ role: 'user', content: q });
     await sendToAi(q, expert, []);
-  }, [activeExpert, isConfigured, sendToAi, setActiveExpert, clearAiMessages, addAiMessage]);
+  }, [activeExpert, isConfigured, sendToAi, setActiveExpert, addAiMessage]);
 
   // Quick Reply click handler
   const handleQuickReply = useCallback(async (reply: QuickReply) => {
@@ -348,7 +366,6 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
       }
 
       case 'search-audio': {
-        // AudioDB search via QuickReply
         const searchQuery = reply.action.startsWith('SEARCH_AUDIO:')
           ? reply.action.slice(13).trim()
           : reply.action;
@@ -356,7 +373,6 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
         addAiMessage({ role: 'assistant', content: `Ищу BPM/Key: "${searchQuery}"...` });
         const result = await executeToolCall('search_audiodb', { query: searchQuery });
         if (result.success) {
-          // Continue with AI commentary
           await sendToAi(
             `AudioDB результат для "${searchQuery}":\n${result.message}\n\nПриведи конкретные BPM/Key и ответь кратко с [ACTION] кнопками.`,
             activeExpert,
@@ -365,6 +381,155 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
         } else {
           addAiMessage({ role: 'assistant', content: `⚠️ Данные не найдены: ${result.message}` });
         }
+        break;
+      }
+
+      /* ═══ Wave G: Player Controls ═══ */
+
+      case 'bpm': {
+        const bpmValue = reply.action.startsWith('BPM:')
+          ? reply.action.slice(4).trim()
+          : reply.action;
+        addAiMessage({ role: 'user', content: reply.label });
+        const result = await executeToolCall('set_playback_rate', { rate: parseFloat(bpmValue) });
+        addAiMessage({
+          role: 'assistant',
+          content: result.success ? `✓ ${result.message}` : `⚠ ${result.message}`,
+        });
+        break;
+      }
+
+      case 'loop': {
+        const loopRaw = reply.action.startsWith('LOOP:')
+          ? reply.action.slice(5).trim()
+          : reply.action;
+        addAiMessage({ role: 'user', content: reply.label });
+        if (loopRaw.toLowerCase() === 'off') {
+          const r = await executeToolCall('loop_section', { enabled: false });
+          addAiMessage({ role: 'assistant', content: r.success ? `✓ ${r.message}` : `⚠ ${r.message}` });
+        } else {
+          const parts = loopRaw.split(':');
+          const r = await executeToolCall('loop_section', {
+            sectionType: parts[0] || '',
+            occurrence: parts[1] ? parseInt(parts[1], 10) : 1,
+          });
+          addAiMessage({ role: 'assistant', content: r.success ? `✓ ${r.message}` : `⚠ ${r.message}` });
+        }
+        break;
+      }
+
+      case 'volume': {
+        const volRaw = reply.action.startsWith('VOLUME:')
+          ? reply.action.slice(7).trim()
+          : reply.action;
+        const volParts = volRaw.split(':');
+        addAiMessage({ role: 'user', content: reply.label });
+        const r = await executeToolCall('set_stem_volume', {
+          stemId: volParts[0] || '',
+          volume: volParts[1] ? parseFloat(volParts[1]) : 0,
+        });
+        addAiMessage({ role: 'assistant', content: r.success ? `✓ ${r.message}` : `⚠ ${r.message}` });
+        break;
+      }
+
+      case 'mode': {
+        const modeVal = reply.action.startsWith('MODE:')
+          ? reply.action.slice(5).trim()
+          : reply.action;
+        addAiMessage({ role: 'user', content: reply.label });
+        const r = await executeToolCall('switch_mode', { mode: modeVal });
+        addAiMessage({ role: 'assistant', content: r.success ? `✓ ${r.message}` : `⚠ ${r.message}` });
+        break;
+      }
+
+      case 'vocalmix': {
+        const vmRaw = reply.action.startsWith('VOCALMIX:')
+          ? reply.action.slice(9).trim()
+          : reply.action;
+        const vmEnabled = vmRaw.toLowerCase() !== 'off' && vmRaw.toLowerCase() !== 'false';
+        addAiMessage({ role: 'user', content: reply.label });
+        const r = await executeToolCall('toggle_vocal_mix', { enabled: vmEnabled });
+        addAiMessage({ role: 'assistant', content: r.success ? `✓ ${r.message}` : `⚠ ${r.message}` });
+        break;
+      }
+
+      case 'scenario': {
+        addAiMessage({ role: 'user', content: reply.label });
+
+        // Parse SCENARIO:id:target
+        const scenarioMatch = reply.action.match(/^SCENARIO:([^:\]]+)(?::([^\]]+))?$/);
+        if (!scenarioMatch) {
+          addAiMessage({ role: 'assistant', content: '⚠️ Не удалось распознать сценарий' });
+          break;
+        }
+
+        const scenarioId = scenarioMatch[1] as PracticeScenarioId;
+        const scenarioTarget = scenarioMatch[2] || null;
+
+        // Dynamic imports for practice modules
+        const { usePracticeStore } = await import('../../stores/practice-session.store');
+        const { getScenario, resolveTargetBlock } = await import('../../practice/practice-scenarios');
+        const { runPracticeActions } = await import('../../practice/billy-action-runner');
+
+        // Resolve target block
+        const target = resolveTargetBlock({
+          requestedBlockType: scenarioTarget || undefined,
+        });
+
+        if (!target) {
+          addAiMessage({ role: 'assistant', content: '⚠️ Не удалось найти блок для сценария' });
+          break;
+        }
+
+        // Get scenario definition
+        const scenario = getScenario(scenarioId);
+        if (!scenario) {
+          addAiMessage({ role: 'assistant', content: `⚠️ Сценарий "${scenarioId}" не найден` });
+          break;
+        }
+
+        // Generate start actions
+        const ctx = { requestedBlockType: target.blockType, requestedBlockId: target.blockId };
+        const startActions = typeof scenario.startActions === 'function'
+          ? scenario.startActions(ctx)
+          : scenario.startActions;
+
+        // Execute start actions through runner
+        const stepResults = await runPracticeActions({ actions: startActions });
+
+        const allSuccessful = stepResults.every(sr => sr.result.success);
+        if (!allSuccessful) {
+          const failedStep = stepResults.find(sr => !sr.result.success);
+          addAiMessage({ role: 'assistant', content: `⚠️ Ошибка запуска: ${failedStep?.result.message || 'неизвестная'}` });
+          break;
+        }
+
+        // Start practice session in store (after actions confirmed)
+        const ruNames: Record<string, string> = {
+          intro: 'Вступление', verse: 'Куплет', prechorus: 'Пре-хорус',
+          chorus: 'Припев', bridge: 'Бридж', interlude: 'Интерлюдия', outro: 'Заключение',
+        };
+        const blockLabel = ruNames[target.blockType] || target.blockType;
+
+        usePracticeStore.getState().startPractice(scenarioId, `🔥 Разгон ${blockLabel}`);
+
+        // Confirm session is active
+        const { isActive } = usePracticeStore.getState();
+        if (!isActive) {
+          addAiMessage({ role: 'assistant', content: '⚠️ Не удалось запустить сценарий' });
+          break;
+        }
+
+        // Report confirmed state from actual results
+        const rateResult = stepResults.find(sr => sr.action.tool === 'set_playback_rate');
+        const ratePct = rateResult?.result.success
+          ? Math.round((rateResult.action.args.rate as number) * 100)
+          : 80;
+
+        addAiMessage({
+          role: 'assistant',
+          content: `🔥 Разгон ${blockLabel} начат!\n\nТемп: ${ratePct}% от оригинала. ${blockLabel} на повторе.\nКаждый круг +5%. Жми "Следующий круг" когда готов.`,
+        });
         break;
       }
     }
@@ -376,6 +541,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
     if (!t || isAiStreaming || !activeExpert) return;
     addAiMessage({ role: 'user', content: t });
     setInputValue('');
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
     await sendToAi(t, activeExpert, aiMessages);
   }, [inputValue, isAiStreaming, activeExpert, aiMessages, addAiMessage, sendToAi]);
 
@@ -454,10 +620,18 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
                             reply.type === 'expert' ? styles.quickReplyExpert :
                             reply.type === 'search' ? styles.quickReplySearch :
                             reply.type === 'search-audio' ? styles.quickReplySearchAudio :
+                            reply.type === 'bpm' ? styles.quickReplyBpm :
+                            reply.type === 'loop' ? styles.quickReplyLoop :
+                            reply.type === 'volume' ? styles.quickReplyVolume :
+                            reply.type === 'mode' ? styles.quickReplyMode :
+                            reply.type === 'vocalmix' ? styles.quickReplyVocalmix :
+                            reply.type === 'scenario' ? styles.quickReplyScenario :
                             styles.quickReplyQuery
                           }`}
                           onClick={() => handleQuickReply(reply)}
                           disabled={isAiStreaming}
+                          data-action-type={reply.type}
+                          data-action-value={reply.action}
                         >
                           {reply.label}
                         </button>
@@ -468,6 +642,8 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
               );
             })}
             {isAiStreaming && <div className={styles.streamingBar} />}
+            {/* Practice Session Card — live state, NOT in aiMessages */}
+            <PracticeSessionCard />
             <div ref={chatEndRef} />
           </>
         )}
@@ -476,12 +652,17 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
       {/* Input */}
       {activeExpert && (
         <div className={styles.chatInputArea}>
-          <input
+          <textarea
+            ref={textareaRef}
             className={styles.chatInput}
             data-billy-input={compact ? 'true' : undefined}
-            type="text"
+            rows={1}
             value={inputValue}
-            onChange={e => setInputValue(e.target.value)}
+            onChange={e => {
+              setInputValue(e.target.value);
+              e.target.style.height = 'auto';
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+            }}
             onKeyDown={handleKey}
             placeholder={tab ? `Спроси ${coachName}...` : 'Введите вопрос...'}
             disabled={isAiStreaming}

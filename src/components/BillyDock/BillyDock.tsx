@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { useBillyState, type BillyAnimation } from '../../hooks/useBillyState';
 import { useBillyAudioReactive } from '../../hooks/useBillyAudioReactive';
 import { useTrackInfoStore } from '../../stores/trackInfo.store';
+import { useDeckStore } from '../../stores/deck.store';
 import { useTrackStore } from '../../stores/track.store';
 import { useBlocksStore } from '../../stores/blocks.store';
 import { useLyricsStore } from '../../stores/lyrics.store';
@@ -77,12 +78,28 @@ export function BillyDock() {
     if (jumpTimerRef.current) clearTimeout(jumpTimerRef.current);
     jumpTimerRef.current = setTimeout(() => setClickJump(false), JUMP_DURATION);
 
-    // Open TrackInfoBoard with vocal-coach expert
+    // Клик на Billy → открывает док с billy tab, НЕ overlay
+    const deck = useDeckStore.getState();
+    if (deck.activeTabId === 'billy' && deck.expanded) {
+      // Уже открыт — закрыть
+      deck.setTab('');
+      return;
+    }
+    // Открыть billy tab в доке
+    deck.setTab('billy');
+    if (!deck.expanded) deck.toggle();
+
+    // Установить vocal-coach как активного эксперта
     const track = useTrackStore.getState().currentTrack;
     if (track?.id) {
-      useTrackInfoStore.getState().open(Number(track.id));
       useTrackInfoStore.getState().setActiveExpert('vocal-coach');
     }
+
+    // Фокус на input после анимации
+    setTimeout(() => {
+      const input = document.querySelector<HTMLTextAreaElement>('[data-billy-input="true"]');
+      input?.focus();
+    }, 150);
   }, []);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {

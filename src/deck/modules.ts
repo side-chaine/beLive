@@ -103,4 +103,12 @@ registerModule({
     })),
 });
 
+registerModule({
+  id: 'billy',
+  label: '🤖',
+  order: 45,
+  modes: ['rehearsal', 'karaoke', 'concert', 'live'],
+  load: () => import('./BillyChatModule').then(m => ({ default: m.BillyChatModule })),
+});
+
 

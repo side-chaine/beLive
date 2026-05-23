@@ -10,6 +10,9 @@
 import { useBlocksStore } from '../../stores/blocks.store';
 import { useMarkersStore } from '../../stores/markers.store';
 import { useTrackStore } from '../../stores/track.store';
+import { useLoopStore } from '../../stores/loop.store';
+import { useAudioStore } from '../../stores/audio.store';
+import { useStemStore } from '../../stem/stem.store';
 import { getBlockTimeRange } from '../../utils/block-time-range';
 import { getStructureFormula } from '../../utils/structure-formula';
 
@@ -29,7 +32,8 @@ export interface ToolCallResult {
 export interface QuickReply {
   label: string;
   action: string;
-  type: 'seek' | 'query' | 'expert' | 'search' | 'search-audio';
+  type: 'seek' | 'query' | 'expert' | 'search' | 'search-audio'
+      | 'bpm' | 'loop' | 'volume' | 'mode' | 'vocalmix' | 'scenario';
 }
 
 /* ═══ Text Command Parsing ═══ */
@@ -37,12 +41,12 @@ export interface QuickReply {
 /** Parse [SEEK], [STRUCTURE], [CATALOG], [SEARCH], [SEARCH_AUDIO] */
 export function parseTextCommand(text: string): ToolCall | null {
   // [SEEK: sectionType] or [SEEK: sectionType:N]
-  const seekMatch = text.match(/\[SEEK:\s*(\w+)(?::(\d+))?\]/i);
+  const seekMatch = text.match(/\[SEEK:\s*([\w-]+)(?::(\d+))?\]/i);
   if (seekMatch) {
     return {
       tool: 'seek_to_section',
       args: {
-        sectionType: seekMatch[1].toLowerCase(),
+        sectionType: normalizeSectionType(seekMatch[1]),
         occurrence: seekMatch[2] ? parseInt(seekMatch[2], 10) : 1,
       },
     };
@@ -107,6 +111,12 @@ export function parseQuickReplies(text: string): { cleanText: string; replies: Q
     else if (action.startsWith('EXPERT:')) type = 'expert';
     else if (action.startsWith('SEARCH_AUDIO:')) type = 'search-audio';
     else if (action.startsWith('SEARCH:')) type = 'search';
+    else if (action.startsWith('BPM:')) type = 'bpm';
+    else if (action.startsWith('LOOP:')) type = 'loop';
+    else if (action.startsWith('VOLUME:')) type = 'volume';
+    else if (action.startsWith('MODE:')) type = 'mode';
+    else if (action.startsWith('VOCALMIX:')) type = 'vocalmix';
+    else if (action.startsWith('SCENARIO:')) type = 'scenario';
     replies.push({ label, action, type });
   }
 
@@ -135,6 +145,16 @@ export async function executeToolCall(
       return executeSearchWikipedia(args);
     case 'search_audiodb':
       return executeSearchAudioDB(args);
+    case 'set_playback_rate':
+      return executeSetPlaybackRate(args);
+    case 'loop_section':
+      return executeLoopSection(args);
+    case 'set_stem_volume':
+      return executeSetStemVolume(args);
+    case 'switch_mode':
+      return executeSwitchMode(args);
+    case 'toggle_vocal_mix':
+      return executeToggleVocalMix(args);
     default:
       return { tool: toolName, success: false, message: `Unknown tool: ${toolName}` };
   }
@@ -143,10 +163,11 @@ export async function executeToolCall(
 /* ═══ Tool Implementations ═══ */
 
 async function executeSeekToSection(args: Record<string, unknown>): Promise<ToolCallResult> {
-  const sectionType = args.sectionType as string;
+  const rawSectionType = args.sectionType as string;
+  const sectionType = normalizeSectionType(rawSectionType);
   const occurrence = (args.occurrence as number) || 1;
 
-  if (!sectionType) {
+  if (!rawSectionType) {
     return { tool: 'seek_to_section', success: false, message: 'sectionType is required' };
   }
 
@@ -409,6 +430,236 @@ async function executeSearchAudioDBFallback(artist: string, song: string): Promi
   } catch (e: any) {
     return { tool: 'search_audiodb', success: false, message: `Fallback failed: ${e.message}` };
   }
+}
+
+/* ═══ Normalization ═══ */
+
+/**
+ * Normalize section type string to canonical block type.
+ * Handles hyphenated variations from AI output:
+ *   "pre-chorus"  → "prechorus"
+ *   "Pre-Chorus"  → "prechorus"
+ *   "post-chorus" → "chorus"
+ * Falls back to lowercased input if no mapping found.
+ */
+export function normalizeSectionType(raw: string): string {
+  const normalized = raw
+    .toLowerCase()
+    .replace(/[–—-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const map: Record<string, string> = {
+    'pre-chorus': 'prechorus',
+    'pre chorus': 'prechorus',
+    'post-chorus': 'chorus',
+    'post chorus': 'chorus',
+    'postchorus': 'chorus',
+  };
+
+  return map[normalized] ?? normalized;
+}
+
+/**
+ * Normalize stem ID for player commands.
+ * Handles singular/plural variations from AI output:
+ *   "vocal" → "vocals"
+ *   "drum"  → "drums"
+ *   "instrument" → "instrumental"
+ * Falls back to lowercased input if no mapping found.
+ */
+export function normalizeStemId(raw: string): string {
+  const normalized = raw.toLowerCase().trim();
+  const map: Record<string, string> = {
+    'vocal': 'vocals',
+    'drum': 'drums',
+    'instrument': 'instrumental',
+  };
+  return map[normalized] ?? normalized;
+}
+
+/* ═══ Player Control Tools — Wave G ═══ */
+
+async function executeSetPlaybackRate(
+  args: Record<string, unknown>
+): Promise<ToolCallResult> {
+  const audioStore = useAudioStore.getState();
+  const currentRate = audioStore.playbackRate;
+
+  let targetRate: number;
+  if (args.rate !== undefined) {
+    targetRate = Number(args.rate);
+  } else if (args.delta !== undefined) {
+    targetRate = currentRate + Number(args.delta);
+  } else {
+    return {
+      tool: 'set_playback_rate',
+      success: false,
+      message: 'Укажите темп: [BPM:0.9] или [BPM:+0.05]',
+    };
+  }
+
+  // Trainer safe range: 0.5–1.25
+  targetRate = Math.max(0.5, Math.min(1.25, targetRate));
+  targetRate = Math.round(targetRate * 100) / 100;
+
+  const ae = (window as any).audioEngine;
+  if (ae?.setPlaybackRate) {
+    ae.setPlaybackRate(targetRate);
+  }
+  audioStore.setPlaybackRate(targetRate);
+
+  const pct = Math.round(targetRate * 100);
+  const label = targetRate > 1 ? 'быстрее' : targetRate < 1 ? 'медленнее' : 'норма';
+  return {
+    tool: 'set_playback_rate',
+    success: true,
+    message: `Темп: ${pct}% (${label})`,
+  };
+}
+
+async function executeLoopSection(
+  args: Record<string, unknown>
+): Promise<ToolCallResult> {
+  const loopStore = useLoopStore.getState();
+
+  // LOOP:off — снять повтор
+  if (args.enabled === false) {
+    if (loopStore.isLooping) {
+      loopStore.clearLoop();
+    }
+    return { tool: 'loop_section', success: true, message: 'Повтор снят' };
+  }
+
+  const sectionType = normalizeSectionType(String(args.sectionType || ''));
+  const occurrence = Number(args.occurrence || 1);
+
+  const blocks = useBlocksStore.getState().blocks;
+  if (!blocks?.length) {
+    return { tool: 'loop_section', success: false, message: 'Нет блоков для loop' };
+  }
+
+  const matching = blocks.filter(b => b.type === sectionType);
+  const target = matching[occurrence - 1];
+  if (!target) {
+    const ruNames: Record<string, string> = {
+      intro: 'Вступление', verse: 'Куплет', prechorus: 'Пре-хорус',
+      chorus: 'Припев', bridge: 'Бридж', interlude: 'Интерлюдия', outro: 'Заключение',
+    };
+    const label = ruNames[sectionType] || sectionType;
+    return {
+      tool: 'loop_section',
+      success: false,
+      message: `${label}${occurrence > 1 ? ` #${occurrence}` : ''} не найден`,
+    };
+  }
+
+  // Если уже на этом блоке — toggle снимет
+  if (loopStore.isLooping && loopStore.loopBlockIds?.includes(target.id)) {
+    loopStore.toggleBlock(target);
+    return { tool: 'loop_section', success: true, message: 'Повтор снят' };
+  }
+
+  // Если loop активен на другом блоке — заменить
+  if (loopStore.isLooping) {
+    loopStore.replaceLoop(target);
+  } else {
+    loopStore.toggleBlock(target);
+  }
+
+  const ruNames: Record<string, string> = {
+    intro: 'Вступление', verse: 'Куплет', prechorus: 'Пре-хорус',
+    chorus: 'Припев', bridge: 'Бридж', interlude: 'Интерлюдия', outro: 'Заключение',
+  };
+  const label = ruNames[sectionType] || sectionType;
+  return { tool: 'loop_section', success: true, message: `${label} на повторе` };
+}
+
+async function executeSetStemVolume(
+  args: Record<string, unknown>
+): Promise<ToolCallResult> {
+  const stemId = normalizeStemId(String(args.stemId || ''));
+  const volume = Math.max(0, Math.min(1, Number(args.volume ?? 0)));
+
+  const ae = (window as any).audioEngine;
+  if (ae?.setStemVolume) {
+    ae.setStemVolume(stemId, volume);
+  }
+
+  // Store mirror
+  useStemStore.getState().setStemVolume(stemId, volume);
+
+  const pct = Math.round(volume * 100);
+  const ruStem: Record<string, string> = {
+    instrumental: 'инструментал',
+    vocals: 'вокал',
+  };
+  const label = ruStem[stemId] || stemId;
+  return {
+    tool: 'set_stem_volume',
+    success: true,
+    message: `${label}: ${pct}%${volume === 0 ? ' (мьют)' : ''}`,
+  };
+}
+
+async function executeSwitchMode(
+  args: Record<string, unknown>
+): Promise<ToolCallResult> {
+  const mode = String(args.mode || '');
+  const validModes = ['rehearsal', 'karaoke', 'concert', 'live'];
+  if (!validModes.includes(mode)) {
+    return { tool: 'switch_mode', success: false, message: `Неизвестный режим: "${mode}"` };
+  }
+
+  const switchFn = (window as any).beLiveSwitchMode;
+  if (switchFn) {
+    switchFn(mode);
+  } else {
+    console.warn('[Billy] beLiveSwitchMode not available, using store fallback');
+    const { useModeStore } = await import('../../stores/mode.store');
+    useModeStore.getState().setMode(mode as any);
+  }
+
+  const ruModes: Record<string, string> = {
+    rehearsal: 'репетиция',
+    karaoke: 'караоке',
+    concert: 'концерт',
+    live: 'живой звук',
+  };
+  return {
+    tool: 'switch_mode',
+    success: true,
+    message: `Режим: ${ruModes[mode] || mode}`,
+  };
+}
+
+async function executeToggleVocalMix(
+  args: Record<string, unknown>
+): Promise<ToolCallResult> {
+  const ae = (window as any).audioEngine;
+  const audioStore = useAudioStore.getState();
+
+  let targetEnabled: boolean;
+  if (args.enabled !== undefined) {
+    targetEnabled = !!args.enabled;
+  } else {
+    targetEnabled = !audioStore.vocalMixEnabled;
+  }
+
+  if (targetEnabled) {
+    ae?.enableVocalMix?.();
+  } else {
+    ae?.disableVocalMix?.();
+  }
+
+  // Mirror store
+  audioStore.setVocalMixEnabled(targetEnabled);
+
+  return {
+    tool: 'toggle_vocal_mix',
+    success: true,
+    message: targetEnabled ? 'VocalMix включён' : 'VocalMix выключен',
+  };
 }
 
 /* ═══ Helpers ═══ */

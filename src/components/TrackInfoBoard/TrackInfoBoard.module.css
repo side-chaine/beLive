@@ -1,4 +1,26 @@
 /* ═══ Track Info Board — Chalkboard Theme ═══ */
+
+.dnaHelix {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.04;
+  background: repeating-linear-gradient(
+    135deg,
+    transparent 0px, transparent 20px,
+    var(--bl-accent, #9b59b6) 20px, var(--bl-accent, #9b59b6) 21px,
+    transparent 21px, transparent 40px
+  );
+  background-size: 200% 200%;
+  animation: dnaRotate 25s linear infinite;
+}
+
+@keyframes dnaRotate {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 200% 200%; }
+}
+
 .overlay {
   position: fixed;
   top: 0;
@@ -720,12 +742,16 @@
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid var(--bl-border-default);
   border-radius: 8px;
-  padding: 9px 12px;
+  padding: 8px 12px;
   color: var(--bl-text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 12px;
   outline: none;
   transition: border-color 0.15s ease;
+  resize: none;
+  overflow-y: auto;
+  max-height: 120px;
+  line-height: 1.5;
 }
 
 .chatInput:focus {
@@ -854,4 +880,115 @@
   border-color: rgba(255, 255, 255, 0.15);
   color: var(--bl-text-secondary);
   background: rgba(255, 255, 255, 0.04);
+}
+
+/* ═══ Practice Session Card (TC-CARD) ═══ */
+
+.practiceSessionCard {
+  margin: 8px 12px;
+  padding: 12px;
+  background: rgba(34, 211, 238, 0.06);
+  border: 1px solid rgba(34, 211, 238, 0.15);
+  border-radius: 10px;
+}
+
+.practiceSessionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.practiceSessionIcon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.practiceSessionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bl-text-primary);
+  flex: 1;
+}
+
+.practiceSessionTempo {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--bl-accent, #22d3ee);
+  font-variant-numeric: tabular-nums;
+}
+
+.practiceSessionProgress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.practiceSessionProgressBar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.practiceSessionProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #22d3ee, #06b6d4);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.practiceSessionProgressText {
+  font-size: 11px;
+  color: var(--bl-text-muted);
+  white-space: nowrap;
+  min-width: 60px;
+  text-align: right;
+}
+
+.practiceSessionButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.practiceSessionBtn {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--bl-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.practiceSessionBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--bl-text-primary);
+}
+
+.practiceSessionBtnPrimary {
+  background: rgba(34, 211, 238, 0.12);
+  border-color: rgba(34, 211, 238, 0.25);
+  color: #22d3ee;
+}
+
+.practiceSessionBtnPrimary:hover {
+  background: rgba(34, 211, 238, 0.2);
+  border-color: rgba(34, 211, 238, 0.4);
+}
+
+.practiceSessionBtnDanger {
+  border-color: rgba(239, 68, 68, 0.25);
+  color: rgba(239, 68, 68, 0.8);
+}
+
+.practiceSessionBtnDanger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: rgb(239, 68, 68);
 }
