@@ -54,6 +54,7 @@ export function ControlDeck() {
   const hasVocals = useAudioStore(s => s.hasVocals);
   const playbackRate = useAudioStore(s => s.playbackRate);
   const isPracticeActive = usePracticeStore(s => s.isActive);
+  const practiceCurrentRate = usePracticeStore(s => s.currentRate);
   const vocalMixEnabled = useAudioStore(s => s.vocalMixEnabled);
   const micEnabled = useAudioStore(s => s.micEnabled);
   const micVolume = useAudioStore(s => s.micVolume);
@@ -338,7 +339,7 @@ export function ControlDeck() {
                 textAlign: 'center' as const,
                 lineHeight: 1,
               }}
-            >{Math.round((playbackRate || 1) * 100)}%</button>
+            >{Math.round(((isPracticeActive ? practiceCurrentRate : playbackRate) || 1) * 100)}%</button>
             <button
               disabled={isPracticeActive}
               title={isPracticeActive ? 'Управление темпом через карточку тренировки' : '+5% playback rate'}
