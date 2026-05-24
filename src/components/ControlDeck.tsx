@@ -7,6 +7,7 @@ import '../deck/modules';
 import { TransportBar } from './TransportBar';
 import styles from './ControlDeck.module.css';
 import { useAudioStore } from '../stores/audio.store';
+import { usePracticeStore } from '../stores/practice-session.store';
 import { useStemStore } from '../stem/stem.store';
 import { useSyncStore } from '../sync/store/sync.store';
 import { requestOpenSync, requestCloseSync } from '../sync/bridge/sync.bridge';
@@ -52,6 +53,7 @@ export function ControlDeck() {
   const vocalsVolume = useStemStore(s => s.stemVolumes['vocals'] ?? 1);
   const hasVocals = useAudioStore(s => s.hasVocals);
   const playbackRate = useAudioStore(s => s.playbackRate);
+  const isPracticeActive = usePracticeStore(s => s.isActive);
   const vocalMixEnabled = useAudioStore(s => s.vocalMixEnabled);
   const micEnabled = useAudioStore(s => s.micEnabled);
   const micVolume = useAudioStore(s => s.micVolume);
@@ -295,6 +297,8 @@ export function ControlDeck() {
             marginLeft: 4,
           }}>
             <button
+              disabled={isPracticeActive}
+              title={isPracticeActive ? 'Управление темпом через карточку тренировки' : '-5% playback rate'}
               onClick={() => {
                 // Interrupt practice first if active, then continue requested action
                 interruptPracticeSession(() => {
@@ -312,9 +316,10 @@ export function ControlDeck() {
                 cursor: 'pointer',
                 lineHeight: 1,
               }}
-              title='-5% playback rate'
             >-5</button>
             <button
+              disabled={isPracticeActive}
+              title={isPracticeActive ? 'Управление темпом через карточку тренировки' : 'Reset playback rate'}
               onClick={() => {
                 // Interrupt practice first if active, then continue requested action
                 interruptPracticeSession(() => {
@@ -333,9 +338,10 @@ export function ControlDeck() {
                 textAlign: 'center' as const,
                 lineHeight: 1,
               }}
-              title='Reset playback rate'
             >{Math.round((playbackRate || 1) * 100)}%</button>
             <button
+              disabled={isPracticeActive}
+              title={isPracticeActive ? 'Управление темпом через карточку тренировки' : '+5% playback rate'}
               onClick={() => {
                 // Interrupt practice first if active, then continue requested action
                 interruptPracticeSession(() => {
@@ -353,7 +359,6 @@ export function ControlDeck() {
                 cursor: 'pointer',
                 lineHeight: 1,
               }}
-              title='+5% playback rate'
             >+5</button>
           </div>
 

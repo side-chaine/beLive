@@ -63,6 +63,9 @@ export interface PracticeSessionState {
 
   // ── UI State ──
   totalExpectedPasses: number;
+  isAutoAdvance: boolean;
+  isPassInProgress: boolean;
+  toggleAutoAdvance: () => void;
 }
 
 /* ═══ Snapshot Capture ═══ */
@@ -142,9 +145,37 @@ function restoreSnapshot(snapshot: PracticeSnapshot): void {
 
 /* ═══ Store ═══ */
 
+// Guard flag: prevents safety sync from detecting practice's own rate changes
+let _isPracticeRateChange = false;
+
 function emitPracticeEvent(type: string, detail: unknown) {
   if (typeof document !== 'undefined') {
     document.dispatchEvent(new CustomEvent(`practice:${type}`, { detail }));
+  }
+}
+
+// Auto-pass: listen for loop completion
+let autoPassListener: ((e: Event) => void) | null = null;
+
+function startAutoPassDetection() {
+  if (autoPassListener) return;
+  
+  autoPassListener = ((e: Event) => {
+    const state = usePracticeStore.getState();
+    if (!state.isActive || state.practiceStatus !== 'running' || !state.isAutoAdvance) return;
+    if (state.isPassInProgress) return;
+    
+    // Loop completed one cycle → auto +5%
+    state.nextPass();
+  }) as EventListener;
+  
+  document.addEventListener('loopcompleted', autoPassListener);
+}
+
+function stopAutoPassDetection() {
+  if (autoPassListener) {
+    document.removeEventListener('loopcompleted', autoPassListener);
+    autoPassListener = null;
   }
 }
 
@@ -158,6 +189,8 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
   currentRate: 1.0,
   practiceStatus: 'idle' as const,
   totalExpectedPasses: 4,
+  isAutoAdvance: true,
+  isPassInProgress: false,
 
   startPractice: (scenarioId, label, preCapturedSnapshot, targetBlockId) => {
     if (get().isActive) {
@@ -175,11 +208,15 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
       currentRate: 0.8,
       practiceStatus: 'running',
       totalExpectedPasses,
+      isAutoAdvance: true,
+      isPassInProgress: false,
     });
+    startAutoPassDetection();
     emitPracticeEvent('started', { scenarioId });
   },
 
   endPractice: () => {
+    stopAutoPassDetection();
     const s = get();
     if (s.snapshot) {
       restoreSnapshot(s.snapshot);
@@ -192,6 +229,7 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
   },
 
   completeAndKeep: () => {
+    stopAutoPassDetection();
     if (!get().isActive) return;
     const loopState = useLoopStore.getState();
     if (loopState.isLooping) {
@@ -204,7 +242,14 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
     });
   },
 
+  toggleAutoAdvance: () => {
+    const current = get().isAutoAdvance;
+    set({ isAutoAdvance: !current });
+    emitPracticeEvent(current ? 'auto-paused' : 'auto-resumed', {});
+  },
+
   cancelPractice: () => {
+    stopAutoPassDetection();
     const s = get();
     if (s.practiceStatus !== 'idle') {
       emitPracticeEvent('cancelled', { scenarioId: s.scenarioId });
@@ -216,6 +261,7 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
   },
 
   restoreAndCancel: (preCapturedSnapshot) => {
+    stopAutoPassDetection();
     try {
       restoreSnapshot(preCapturedSnapshot);
     } catch {
@@ -235,53 +281,64 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
   nextPass: async () => {
     const s = get();
     if (!s.isActive || s.practiceStatus !== 'running') return;
+    if (s.isPassInProgress) return; // ★ GUARD ★
+    
+    set({ isPassInProgress: true });
+    
+    try {
+      const { getScenario } = await import('../practice/practice-scenarios');
+      const { runPracticeActions } = await import('../practice/billy-action-runner');
+      const scenario = getScenario(s.scenarioId as PracticeScenarioId);
+      if (!scenario) return;
 
-    const { getScenario } = await import('../practice/practice-scenarios');
-    const { runPracticeActions } = await import('../practice/billy-action-runner');
-    const scenario = getScenario(s.scenarioId as PracticeScenarioId);
-    if (!scenario) return;
+      const newPasses = s.passesCount + 1;
+      const newRate = Math.min(1.0, s.currentRate + 0.05);
 
-    const newPasses = s.passesCount + 1;
-    const newRate = Math.min(1.0, s.currentRate + 0.05);
+      const progress: PracticeProgress = {
+        currentRate: newRate,
+        totalPasses: newPasses,
+        completedBlockIds: [],
+      };
 
-    const progress: PracticeProgress = {
-      currentRate: newRate,
-      totalPasses: newPasses,
-      completedBlockIds: [],
-    };
+      const ctx: PracticeContext = {};
+      const actions = typeof scenario.perPassActions === 'function'
+        ? scenario.perPassActions(ctx, progress)
+        : scenario.perPassActions;
 
-    const ctx: PracticeContext = {};
-    const actions = typeof scenario.perPassActions === 'function'
-      ? scenario.perPassActions(ctx, progress)
-      : scenario.perPassActions;
-
-    // ★ RUN FIRST → VERIFY LOOP → SET ★
-    if (actions.length > 0) {
-      const results = await runPracticeActions({ actions });
-      if (!results.every(r => r.result.success)) return;
-    }
-
-    // ★ VERIFY LOOP STILL ACTIVE ★
-    const loopState = useLoopStore.getState();
-    if (!loopState.isLooping && s.snapshot?.hadLoop) {
-      console.warn('[PracticeStore] Loop cleared during nextPass — this should not happen');
-    }
-
-    set({ passesCount: newPasses, currentRate: newRate });
-    emitPracticeEvent('pass-complete', { passesCount: newPasses, currentRate: newRate });
-
-    // Check completion
-    if (scenario.isComplete(progress, ctx)) {
-      const completeActions = typeof scenario.onCompleteActions === 'function'
-        ? scenario.onCompleteActions(ctx, progress)
-        : scenario.onCompleteActions;
-
-      if (completeActions.length > 0) {
-        await runPracticeActions({ actions: completeActions });
+      // ★ SET FLAG: rate change is from practice, not external ★
+      _isPracticeRateChange = true;
+      
+      try {
+        if (actions.length > 0) {
+          const results = await runPracticeActions({ actions });
+          if (!results.every(r => r.result.success)) return;
+        }
+      } finally {
+        _isPracticeRateChange = false;
       }
 
-      set({ practiceStatus: 'completed' });
-      emitPracticeEvent('completed', { passesCount: newPasses, currentRate: newRate });
+      // Verify loop still active
+      const loopState = useLoopStore.getState();
+      if (!loopState.isLooping && s.snapshot?.hadLoop) {
+        console.warn('[PracticeStore] Loop cleared during nextPass');
+      }
+
+      set({ passesCount: newPasses, currentRate: newRate });
+      emitPracticeEvent('pass-complete', { passesCount: newPasses, currentRate: newRate });
+
+      // Check completion
+      if (scenario.isComplete(progress, ctx)) {
+        const completeActions = typeof scenario.onCompleteActions === 'function'
+          ? scenario.onCompleteActions(ctx, progress)
+          : scenario.onCompleteActions;
+        if (completeActions.length > 0) {
+          await runPracticeActions({ actions: completeActions });
+        }
+        set({ practiceStatus: 'completed' });
+        emitPracticeEvent('completed', { passesCount: newPasses, currentRate: newRate });
+      }
+    } finally {
+      set({ isPassInProgress: false });
     }
   },
 
@@ -331,4 +388,25 @@ if (typeof document !== 'undefined') {
       state.cancelPractice();
     }
   });
+}
+
+// Safety sync: external rate changes during active practice
+if (typeof document !== 'undefined') {
+  document.addEventListener('playback-rate-changed', ((e: Event) => {
+    // ★ IGNORE if rate change came from practice system ★
+    if (_isPracticeRateChange) return;
+    
+    const state = usePracticeStore.getState();
+    if (!state.isActive) return;
+
+    const newRate = (e as CustomEvent).detail?.rate;
+    if (newRate != null && Math.abs(newRate - state.currentRate) > 0.001) {
+      // External rate change detected during practice — sync currentRate
+      console.warn('[PracticeStore] External rate change detected during practice:', {
+        was: state.currentRate,
+        now: newRate,
+      });
+      usePracticeStore.setState({ currentRate: newRate });
+    }
+  }) as EventListener);
 }

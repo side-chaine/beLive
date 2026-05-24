@@ -1044,6 +1044,21 @@
   background: linear-gradient(90deg, #22c55e, #10b981) !important;
 }
 
+/* Auto Badge */
+.practiceSessionAutoBadge {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #f97316;
+  padding: 2px 0;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.practiceSessionAutoBadge.paused {
+  color: #a3a3a3;
+}
+
 /* ── Real-time Loop Progress — playhead ── */
 .practiceSessionLoopProgress {
   padding: 0 4px;

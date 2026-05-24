@@ -8,7 +8,7 @@ import styles from './TrackInfoBoard.module.css';
  * PracticeSessionCard — live trainer widget.
  * Shows REAL state from practice store.
  * Buttons call store methods, NOT AI.
- * Includes real-time loop progress bar (10Hz).
+ * Includes real-time loop progress bar (10Hz) + auto-advance.
  */
 export function PracticeSessionCard() {
   const isActive = usePracticeStore(s => s.isActive);
@@ -21,6 +21,9 @@ export function PracticeSessionCard() {
   const repeatPass = usePracticeStore(s => s.repeatPass);
   const endPractice = usePracticeStore(s => s.endPractice);
   const completeAndKeep = usePracticeStore(s => s.completeAndKeep);
+  const isAutoAdvance = usePracticeStore(s => s.isAutoAdvance);
+  const isPassInProgress = usePracticeStore(s => s.isPassInProgress);
+  const toggleAutoAdvance = usePracticeStore(s => s.toggleAutoAdvance);
 
   // Real-time loop progress (10Hz update)
   const [loopProgress, setLoopProgress] = useState(0);
@@ -50,7 +53,7 @@ export function PracticeSessionCard() {
       const position = currentTime - loopState.loopStartTime;
       const progress = ((position % duration) + duration) % duration / duration;
       setLoopProgress(progress);
-    }, 100); // 10Hz
+    }, 100);
 
     return () => clearInterval(interval);
   }, [isActive, practiceStatus]);
@@ -134,44 +137,68 @@ export function PracticeSessionCard() {
       </div>
 
       {/* BUTTONS */}
-      <div className={styles.practiceSessionButtons}>
-        {practiceStatus === 'running' && (
-          <>
+      {practiceStatus === 'running' && (
+        <>
+          {/* Auto badge */}
+          <div className={`${styles.practiceSessionAutoBadge} ${!isAutoAdvance ? styles.paused : ''}`}>
+            {isAutoAdvance ? '⚡ Авто-разгон' : '⏸ Авто на паузе'}
+          </div>
+          
+          <div className={styles.practiceSessionButtons}>
+            {isAutoAdvance ? (
+              <button
+                className={styles.practiceSessionBtn}
+                onClick={toggleAutoAdvance}
+              >
+                ⏸ Пауза
+              </button>
+            ) : (
+              <button
+                className={`${styles.practiceSessionBtn} ${styles.practiceSessionBtnPrimary}`}
+                onClick={toggleAutoAdvance}
+              >
+                ▶ Авто
+              </button>
+            )}
+            
             <button
               className={`${styles.practiceSessionBtn} ${styles.practiceSessionBtnPrimary}`}
               onClick={nextPass}
+              disabled={isPassInProgress}
             >
-              Следующий круг (+5%)
+              ⏩ +5%
             </button>
+            
             <button className={styles.practiceSessionBtn} onClick={repeatPass}>
-              Ещё раз
+              ↻ Ещё раз
             </button>
+            
             <button
               className={`${styles.practiceSessionBtn} ${styles.practiceSessionBtnDanger}`}
               onClick={endPractice}
             >
-              Стоп
+              ⏹ Стоп
             </button>
-          </>
-        )}
+          </div>
+        </>
+      )}
 
-        {practiceStatus === 'completed' && (
-          <>
-            <button
-              className={`${styles.practiceSessionBtn} ${styles.practiceSessionBtnPrimary}`}
-              onClick={completeAndKeep}
-            >
-              ✅ Оставить результат
-            </button>
-            <button
-              className={`${styles.practiceSessionBtn} ${styles.practiceSessionBtnDanger}`}
-              onClick={endPractice}
-            >
-              ↩ Вернуть как было
-            </button>
-          </>
-        )}
-      </div>
+      {practiceStatus === 'completed' && (
+        <div className={styles.practiceSessionButtons}>
+          <button
+            className={`${styles.practiceSessionBtn} ${styles.practiceSessionBtnPrimary}`}
+            onClick={completeAndKeep}
+          >
+            ✅ Оставить результат
+          </button>
+          <button
+            className={`${styles.practiceSessionBtn} ${styles.practiceSessionBtnDanger}`}
+            onClick={endPractice}
+          >
+            ↩ Вернуть как было
+          </button>
+        </div>
+      )}
     </div>
   );
 }
