@@ -143,8 +143,8 @@ export function BillyDock() {
         styles.root,
         stateClass,
         trackInfoOpen ? styles.boardOpen : '',
-        isLooping ? styles.looping : '',
-        isRecording ? styles.recording : '',
+        isLooping ? styles.loopActive : '',
+        isRecording ? styles.recActive : '',
       ].filter(Boolean).join(' ')}
       style={{ '--bl-billy-block-color': activeBlockColor } as React.CSSProperties}
       onClick={handleClick}
@@ -220,11 +220,15 @@ export function BillyDock() {
               <line x1="57" y1="19" x2="51" y2="101" stroke="#2c2c2c" strokeWidth=".7"/>
               <line x1="70" y1="18" x2="70" y2="102" stroke="#2c2c2c" strokeWidth=".7"/>
               <line x1="83" y1="19" x2="89" y2="101" stroke="#2c2c2c" strokeWidth=".7"/>
+              {/* Recording indicator — red dot on mic head */}
+              <circle className={styles.recDot} cx="70" cy="33" r="3" fill="#ff3333"/>
               {/* Воротник */}
               <rect x="38" y="97" width="64" height="9" rx="4.5" fill="#b0b0b0" stroke="#909090" strokeWidth=".8"/>
               <rect x="40" y="99" width="60" height="5" rx="2.5" fill="#d4d4d4"/>
               {/* Оранжевый акцент */}
               <rect x="53" y="106" width="34" height="5" rx="2.5" fill="#f97316"/>
+              {/* Loop indicator — orange dot on collar */}
+              <circle className={styles.loopDot} cx="70" cy="103" r="3.5" fill="#f97316"/>
               {/* Глаза */}
               <g className={`${styles.eyes} ${hasGlow ? styles.eyesGlow : ''}`}>
                 <ellipse cx="53" cy="68" rx="11" ry="12" fill="white"/>
@@ -253,6 +257,8 @@ export function BillyDock() {
 
         </g>
       </svg>
+      {/* Ground shadow — independent of SVG animation */}
+      <div className={styles.shadow} aria-hidden="true" />
     </div>
   );
 }

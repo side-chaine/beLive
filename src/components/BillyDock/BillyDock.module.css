@@ -42,41 +42,41 @@
   box-shadow: 0 0 6px var(--bl-accent, #9b59b6);
 }
 
-/* ── Loop indicator — orange inner ring (::before) ── */
-.looping::before {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(249, 115, 22, 0.4);
-  animation: loopPulse 1.5s ease-in-out infinite;
-}
-
-@keyframes loopPulse {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.04); }
-}
-
-/* ── Recording indicator — red outer ring (::after) ── */
-.recording::after {
-  content: '';
-  position: absolute;
-  inset: -6px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 0, 0, 0.5);
-  animation: recPulse 1s ease-in-out infinite;
-}
-
-@keyframes recPulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.8; }
-}
 
 /* ═══ SVG Elements ═══ */
 .billy {
   overflow: visible;
   display: block;
 }
+
+  /* ── Ground shadow (HTML div — independent of SVG transforms) ── */
+  .shadow {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    width: 40px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.12);
+    transform: translateX(-50%);
+    pointer-events: none;
+    transition: transform 0.3s ease, opacity 0.3s ease, width 0.3s ease;
+  }
+
+  .jump .shadow {
+    width: 20px;
+    opacity: 0.05;
+  }
+
+  .dance .shadow {
+    width: 44px;
+    opacity: 0.15;
+  }
+
+  .sleep .shadow {
+    width: 32px;
+    opacity: 0.06;
+  }
 
 /* ── Animated groups — outer (CSS keyframes) ── */
 .legL, .legR, .armL, .armR, .head, .eyes {
@@ -106,6 +106,38 @@
 .head {
   transform-origin: 70px 60px;
 }
+
+  /* ── Loop indicator dot on collar ── */
+  .loopDot {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .loopActive .loopDot {
+    opacity: 1;
+    animation: loopDotPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes loopDotPulse {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.25); }
+  }
+
+  /* ── Recording indicator dot on head ── */
+  .recDot {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .recActive .recDot {
+    opacity: 1;
+    animation: recDotPulse 1s ease-in-out infinite;
+  }
+  @keyframes recDotPulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.3); }
+  }
 
 /* ── Inner reactive groups (JS-driven micro-transforms) ── */
 .bodyReactive,
@@ -225,62 +257,34 @@
   50% { transform: rotate(-5deg); }
 }
 
-/* ═══ State: DANCE ═══ */
-/* Arms + head: CSS keyframes as BASE (always works) */
-/* JS audio-reactive adds chaos via inner <g> transforms */
-.dance .billy {
-  animation: danceBody 0.7s ease-in-out infinite;
-}
+  /* ═══ State: DANCE ═══ */
+  .dance .billy {
+    animation: danceBody 1.2s ease-in-out infinite;
+  }
 
-.dance .armL {
-  animation: danceArmL 0.8s ease-in-out infinite;
-}
+  .dance .armL,
+  .dance .armR,
+  .dance .legL,
+  .dance .legR {
+    animation: none;
+  }
 
-.dance .armR {
-  animation: danceArmR 0.8s ease-in-out infinite;
-}
+  .dance .head {
+    animation: danceHead 1.2s ease-in-out infinite;
+  }
 
-.dance .legL {
-  animation: danceLegL 0.7s ease-in-out infinite;
-}
+  @keyframes danceBody {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
 
-.dance .legR {
-  animation: danceLegR 0.7s ease-in-out infinite;
-}
+  /* (removed — arms/legs static in dance) */
 
-.dance .head {
-  animation: headWobble 0.55s ease-in-out infinite;
-}
-
-@keyframes danceBody {
-  0%, 100% { transform: rotate(0deg) translateY(0); }
-  25% { transform: rotate(-5deg) translateY(-7px); }
-  75% { transform: rotate(5deg) translateY(-7px); }
-}
-
-@keyframes danceArmL {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-25deg); }
-  75% { transform: rotate(12deg); }
-}
-
-@keyframes danceArmR {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(12deg); }
-  75% { transform: rotate(-25deg); }
-}
-
-@keyframes danceLegL {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-22deg); }
-  75% { transform: rotate(12deg); }
-}
-
-@keyframes danceLegR {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(12deg); }
-  75% { transform: rotate(-22deg); }
-}
+  @keyframes danceHead {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(2deg); }
+    75% { transform: rotate(-2deg); }
+  }
 
 /* ═══ State: THINK ═══ */
 .think .billy {
@@ -422,6 +426,48 @@
   transition: transform 0.1s ease;
 }
 
+/* ═══ Performance Tier: Billy Degradation ═══ */
+
+/* ── Lite: CSS-only Billy, zero JS overhead ── */
+[data-visual-tier="lite"] .headGlow,
+[data-visual-tier="lite"] .eyesGlow,
+[data-visual-tier="lite"] .eyesGlowChorus,
+[data-visual-tier="lite"] .headGlowChorus {
+  filter: none;
+}
+
+[data-visual-tier="lite"] .dance .billy {
+  animation: danceBodyLite 1.2s ease-in-out infinite;
+}
+
+@keyframes danceBodyLite {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+[data-visual-tier="lite"] .loopDot,
+[data-visual-tier="lite"] .recDot {
+  animation: none;
+}
+
+[data-visual-tier="lite"] .terminatorGlow {
+  animation: none;
+}
+
+[data-visual-tier="lite"] .scanLine {
+  opacity: 0;
+}
+
+/* ── Balanced: moderate Billy ── */
+[data-visual-tier="balanced"] .headGlow,
+[data-visual-tier="balanced"] .headGlowChorus {
+  filter: none;
+}
+
+[data-visual-tier="balanced"] .scanLine {
+  opacity: 0;
+}
+
 /* ═══ Accessibility: reduced motion ═══ */
 @media (prefers-reduced-motion: reduce) {
   .idle .billy,
@@ -455,13 +501,13 @@
     animation: none !important;
     opacity: 0.7;
   }
-  .looping::before,
-  .recording::after {
-    animation: none !important;
-    opacity: 0.5;
-  }
+
   .puckUnread {
     animation: none !important;
     opacity: 0.7;
+  }
+
+  .shadow {
+    transition: none;
   }
 }
