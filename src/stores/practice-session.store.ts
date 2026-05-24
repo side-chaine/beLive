@@ -26,6 +26,8 @@ export interface PracticeSessionState {
   isActive: boolean;
   /** Current scenario ID (e.g. 'bpm-ramp', 'focus-mix') */
   scenarioId: string | null;
+  /** Block ID being practiced (for TrackMap highlight) */
+  targetBlockId: string | null;
   /** Snapshot captured at session start */
   snapshot: PracticeSnapshot | null;
   /** Human-readable label for the current practice */
@@ -40,9 +42,11 @@ export interface PracticeSessionState {
   practiceStatus: 'idle' | 'running' | 'paused' | 'completed';
 
   /** Actions */
-  startPractice: (scenarioId: string, label?: string) => void;
+  startPractice: (scenarioId: string, label?: string, preCapturedSnapshot?: PracticeSnapshot, targetBlockId?: string) => void;
   endPractice: () => void;
   cancelPractice: () => void;
+  completeAndKeep: () => void;
+  restoreAndCancel: (preCapturedSnapshot: PracticeSnapshot) => void;
   getSnapshot: () => PracticeSnapshot;
 
   // ── Progress Actions ──
@@ -56,6 +60,9 @@ export interface PracticeSessionState {
   resumePractice: () => Promise<void>;
   /** Run onCompleteActions, then set completed */
   completePractice: () => Promise<void>;
+
+  // ── UI State ──
+  totalExpectedPasses: number;
 }
 
 /* ═══ Snapshot Capture ═══ */
@@ -135,31 +142,41 @@ function restoreSnapshot(snapshot: PracticeSnapshot): void {
 
 /* ═══ Store ═══ */
 
+function emitPracticeEvent(type: string, detail: unknown) {
+  if (typeof document !== 'undefined') {
+    document.dispatchEvent(new CustomEvent(`practice:${type}`, { detail }));
+  }
+}
+
 export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
   isActive: false,
   scenarioId: null,
+  targetBlockId: null,
   snapshot: null,
   label: null,
   passesCount: 0,
   currentRate: 1.0,
   practiceStatus: 'idle' as const,
+  totalExpectedPasses: 4,
 
-  startPractice: (scenarioId, label) => {
+  startPractice: (scenarioId, label, preCapturedSnapshot, targetBlockId) => {
     if (get().isActive) {
       get().endPractice();
     }
-
-    const snapshot = captureSnapshot();
-
+    const snapshot = preCapturedSnapshot || captureSnapshot();
+    const totalExpectedPasses = scenarioId === 'bpm-ramp' ? 4 : 4;
     set({
       isActive: true,
       scenarioId,
+      targetBlockId: targetBlockId ?? null,
       snapshot,
       label: label ?? scenarioId,
       passesCount: 0,
       currentRate: 0.8,
       practiceStatus: 'running',
+      totalExpectedPasses,
     });
+    emitPracticeEvent('started', { scenarioId });
   },
 
   endPractice: () => {
@@ -167,28 +184,48 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
     if (s.snapshot) {
       restoreSnapshot(s.snapshot);
     }
-
+    emitPracticeEvent('ended', { scenarioId: s.scenarioId });
     set({
-      isActive: false,
-      scenarioId: null,
-      snapshot: null,
-      label: null,
-      passesCount: 0,
-      currentRate: 1.0,
-      practiceStatus: 'idle',
+      isActive: false, scenarioId: null, targetBlockId: null, snapshot: null, label: null,
+      passesCount: 0, currentRate: 1.0, practiceStatus: 'idle',
+    });
+  },
+
+  completeAndKeep: () => {
+    if (!get().isActive) return;
+    const loopState = useLoopStore.getState();
+    if (loopState.isLooping) {
+      loopState.clearLoop();
+    }
+    emitPracticeEvent('completed-kept', { passesCount: get().passesCount });
+    set({
+      isActive: false, scenarioId: null, targetBlockId: null, snapshot: null, label: null,
+      passesCount: 0, currentRate: 1.0, practiceStatus: 'idle',
     });
   },
 
   cancelPractice: () => {
+    const s = get();
+    if (s.practiceStatus !== 'idle') {
+      emitPracticeEvent('cancelled', { scenarioId: s.scenarioId });
+    }
     set({
-      isActive: false,
-      scenarioId: null,
-      snapshot: null,
-      label: null,
-      passesCount: 0,
-      currentRate: 1.0,
-      practiceStatus: 'idle',
+      isActive: false, scenarioId: null, targetBlockId: null, snapshot: null, label: null,
+      passesCount: 0, currentRate: 1.0, practiceStatus: 'idle',
     });
+  },
+
+  restoreAndCancel: (preCapturedSnapshot) => {
+    try {
+      restoreSnapshot(preCapturedSnapshot);
+    } catch {
+      // Best effort — session cleaned regardless
+    }
+    set({
+      isActive: false, scenarioId: null, targetBlockId: null, snapshot: null, label: null,
+      passesCount: 0, currentRate: 1.0, practiceStatus: 'idle',
+    });
+    emitPracticeEvent('cancelled', { reason: 'partial-failure' });
   },
 
   getSnapshot: () => {
@@ -214,16 +251,24 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
     };
 
     const ctx: PracticeContext = {};
-
     const actions = typeof scenario.perPassActions === 'function'
       ? scenario.perPassActions(ctx, progress)
       : scenario.perPassActions;
 
-    set({ passesCount: newPasses, currentRate: newRate });
-
+    // ★ RUN FIRST → VERIFY LOOP → SET ★
     if (actions.length > 0) {
-      await runPracticeActions({ actions });
+      const results = await runPracticeActions({ actions });
+      if (!results.every(r => r.result.success)) return;
     }
+
+    // ★ VERIFY LOOP STILL ACTIVE ★
+    const loopState = useLoopStore.getState();
+    if (!loopState.isLooping && s.snapshot?.hadLoop) {
+      console.warn('[PracticeStore] Loop cleared during nextPass — this should not happen');
+    }
+
+    set({ passesCount: newPasses, currentRate: newRate });
+    emitPracticeEvent('pass-complete', { passesCount: newPasses, currentRate: newRate });
 
     // Check completion
     if (scenario.isComplete(progress, ctx)) {
@@ -236,6 +281,7 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
       }
 
       set({ practiceStatus: 'completed' });
+      emitPracticeEvent('completed', { passesCount: newPasses, currentRate: newRate });
     }
   },
 
@@ -276,3 +322,13 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
     set({ practiceStatus: 'completed' });
   },
 }));
+
+// Cleanup on track change
+if (typeof document !== 'undefined') {
+  document.addEventListener('before-track-change', () => {
+    const state = usePracticeStore.getState();
+    if (state.isActive) {
+      state.cancelPractice();
+    }
+  });
+}

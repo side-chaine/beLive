@@ -296,6 +296,18 @@
   border-bottom-width: 3px;
 }
 
+/* Practice target block highlight */
+.timelinePractice {
+  box-shadow: inset 0 0 8px rgba(34, 211, 238, 0.25) !important;
+  border-bottom-width: 3px !important;
+  animation: practicePulse 1.8s ease-in-out infinite;
+}
+
+@keyframes practicePulse {
+  0%, 100% { box-shadow: inset 0 0 8px rgba(34, 211, 238, 0.15); }
+  50% { box-shadow: inset 0 0 14px rgba(34, 211, 238, 0.35); }
+}
+
 .timelineLetter {
   font-size: 13px;
   font-weight: 700;
@@ -991,4 +1003,68 @@
   background: rgba(239, 68, 68, 0.1);
   border-color: rgba(239, 68, 68, 0.4);
   color: rgb(239, 68, 68);
+}
+
+/* Pass Dots */
+.practiceSessionPassDots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.passDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.passDotCompleted {
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
+}
+
+.passDotCurrent {
+  background: #f97316;
+  box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
+}
+
+.passDotUpcoming {
+  background: #404040;
+}
+
+/* Completed state — card glow */
+.practiceSessionCardCompleted {
+  border-color: #22c55e;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.2);
+}
+
+.practiceSessionProgressFillCompleted {
+  background: linear-gradient(90deg, #22c55e, #10b981) !important;
+}
+
+/* ── Real-time Loop Progress — playhead ── */
+.practiceSessionLoopProgress {
+  padding: 0 4px;
+  margin-top: 4px;
+}
+
+.practiceSessionLoopBar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.practiceSessionLoopFill {
+  height: 100%;
+  background: #f97316;
+  border-radius: 2px;
+  transition: width 0.1s linear;
+}
+
+.practiceSessionLoopFillActive {
+  background: linear-gradient(90deg, #f97316, #fb923c);
+  box-shadow: 0 0 6px rgba(249, 115, 22, 0.4);
 }

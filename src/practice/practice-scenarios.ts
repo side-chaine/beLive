@@ -63,7 +63,8 @@ const BPM_RAMP: PracticeScenario = {
   startActions: (ctx) => {
     const blockType = ctx.requestedBlockType || ctx.currentBlockType || 'chorus';
     return [
-      { tool: 'loop_section', args: { sectionType: blockType } },
+      { tool: 'seek_to_section', args: { sectionType: blockType } },
+      { tool: 'loop_section', args: { sectionType: blockType, enabled: true } },
       { tool: 'set_playback_rate', args: { rate: 0.8 } },
     ];
   },

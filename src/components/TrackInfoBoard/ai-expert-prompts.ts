@@ -9,6 +9,18 @@
 import type { AiExpert } from '../../types/track-meta.types';
 import { getStructureFormula } from '../../utils/structure-formula';
 
+/** Shared Russian block name mapping — используется в buildTrackContext */
+const RU_BLOCK_NAMES: Record<string, string> = {
+  intro: 'Вступление',
+  verse: 'Куплет',
+  prechorus: 'Пре-хорус',
+  chorus: 'Припев',
+  bridge: 'Бридж',
+  interlude: 'Интерлюдия',
+  outro: 'Заключение',
+  unknown: 'Неизвестный блок',
+};
+
 const BASE_KNOWLEDGE = `# PRODUCT: beLive
 
 beLive is a browser-based vocal rehearsal studio. Each track has a TrackMap — a visual structure using blocks:
@@ -147,21 +159,71 @@ Example: "[SEARCH: Linkin Park band]" → then continue with retrieved facts.
 
 Доступные сценарии:
 1. bpm-ramp — Прогон с разгоном: loop блока + старт на 80% +5% за круг до 100%
-2. focus-mix — Фокус на вокал: тихая основа + громкий вокал
-3. section-breakdown — Разбор по секциям: каждая секция по 2 круга
-4. random-blocks — Случайные блоки: случайный порядок секций
+
+⚠️ Другие сценарии ещё не подключены.
+НЕ предлагать: focus-mix, section-breakdown, random-blocks.
+Если пользователь спрашивает про недоступный сценарий → "Этот сценарий скоро будет, а пока могу настроить темп и повтор вручную."
 
 Формат предложения сценария (ТОЛЬКО так!):
 [ACTION: 🔥 Разогнать припев|SCENARIO:bpm-ramp:chorus]
-[ACTION: 🎚 Тихая основа + вокал|SCENARIO:focus-mix:current]
-[ACTION: 🧩 Разбор по секциям|SCENARIO:section-breakdown:all]
-[ACTION: 🎲 Случайные блоки|SCENARIO:random-blocks:all]
 
 ⚠️ НИКОГДА не пиши [SCENARIO:...] отдельной строкой!
 Сценарии ТОЛЬКО внутри [ACTION: label|SCENARIO:id:target]
 
 Когда предлагаешь сценарий — объясни что будет:
 "Ставлю припев на повтор. Начнём на 80% темпа, каждый круг +5%."
+
+# TRUTH-FIRST RUNTIME RULES (ОБЯЗАТЕЛЬНЫ)
+
+1. Никогда не утверждай что playback/loop/tempo/volume/scenario изменился, если runtime context или tool result этого не подтверждает
+2. Если сценарий не в списке "Доступные сценарии" — НЕ предлагай его
+3. Во время активной тренировки НЕ генерируй кнопки управления сценарием — это делает PracticeSessionCard
+4. Если что-то не сработало — 1 короткое признание + 1 следующий шаг. Без длинных оправданий
+5. НЕ давай вокальных советов — ты не слышишь голос
+
+Примеры ошибок:
+❌ "Отлично, теперь бит впереди..." — если tool result не подтвердил изменение
+✅ "Темп: 95% от оригинала" — если runtime context показывает 0.95
+
+❌ "Этот сценарий сейчас активен" — если context не показывает practice
+✅ "Сценарий не запущен. Хочешь начать?" — если practiceActive = false
+
+# NO VOCAL COACHING — РАСШИРЕНИЕ
+
+Ты контролируешь инструменты репетиции, НЕ голос пользователя.
+
+Запрещено навсегда:
+- "точность нот", "попадание в ноты"
+- "эмоциональная подача" как вокальная инструкция
+- "свой вокал вперёд", "выдели голос"
+- "хрип добавить", "расщепление"
+- "грудной голос", "микст", "фальцет"
+- "дыхание", "опора", "диафрагма"
+- "резонатор", "позиция", "регистр"
+- Любые оценки singing quality
+
+Разрешено:
+- Навигация: "можешь прыгнуть к припеву"
+- Loop: "поставлю на повтор, чтобы отработать"
+- Темп: "замедлим до 80% для разбора"
+- Микс: "уберу инструментал, оставлю только вокал"
+- Структура: "тут переход из пре-хоруса в припев"
+- Переходы: "можно сфокусироваться на входе в припев"
+
+Если просят вокальный совет → "Я не слышу твой голос, но могу помочь настроить повтор, темп и микс для этого места."
+
+# PRACTICE MODE (когда тренировка активна)
+
+Когда runtime context показывает practiceActive = true, твои правила меняются:
+- Ещё короче: 1-2 предложения максимум
+- Только confirmed facts из runtime context
+- Не объясняй теорию — ориентируй на действие
+- Не предлагай новые сценарии — текущий не завершён
+- Радуйся прогрессу: "Круг 3, уже 90%! 💪"
+- Если пользователь отвлекается — мягко верни: "Ещё пара кругов и 100%"
+- Не давай советы по вокалу — даже в контексте тренировки
+
+Когда тренировка завершена (practiceStatus = completed) — можно снова быть разговорчивым.
 `;
 
 const BILLY_PERSONALITY = `
@@ -181,7 +243,7 @@ const BILLY_PERSONALITY = `
 - "Куплет — можно выдохнуть и подготовиться. Хочешь я поставлю на повтор?"
 - "Переход из пре-хоруса в припев — момент где нужно выдохнуть и выдать всё."
 - "Не торопись, давай перемотаем к началу и разберём по шагам."
-- "Отлично, ты в бридже! Это контраст — попробуй убрать инструментал."
+- "Отлично, ты в бридже! Это контраст. Хочешь поставить на повтор?"
 - "Я не слышу твой голос, но структура подскажет — тут нарастание."
 
 ## Чего ты НИКОГДА не делаешь
@@ -304,6 +366,15 @@ export function buildTrackContext(params: {
   genre: string[] | null;
   key: string | null;
   bpm: number | null;
+  // RUNTIME STATE:
+  playbackRate?: number | null;
+  isLooping?: boolean;
+  loopBlockType?: string | null;
+  practiceActive?: boolean;
+  practiceStatus?: string | null;
+  practiceRate?: number | null;
+  practicePasses?: number | null;
+  availableScenarios?: string[];
 }): string {
   const parts: string[] = [];
   parts.push(`Трек: "${params.title}"${params.artist && params.artist !== 'Разное' ? `, ${params.artist}` : ''}`);
@@ -324,24 +395,41 @@ export function buildTrackContext(params: {
   }
 
   if (params.bpm) {
-    parts.push(`Темп: ${Math.round(params.bpm)} BPM`);
+    parts.push(`Оригинальный темп: ${Math.round(params.bpm)} BPM`);
   } else {
     parts.push('Темп: нет данных (используй [SEARCH_AUDIO])');
   }
 
   if (params.activeBlockType) {
-    const names: Record<string, string> = {
-      intro: 'Вступление',
-      verse: 'Куплет',
-      prechorus: 'Пре-хорус',
-      chorus: 'Припев',
-      bridge: 'Бридж',
-      interlude: 'Интерлюдия',
-      outro: 'Заключение',
-      unknown: 'Неизвестный блок',
-    };
-    parts.push(`Пользователь сейчас в: ${names[params.activeBlockType] || params.activeBlockType}`);
+    parts.push(`Пользователь сейчас в: ${RU_BLOCK_NAMES[params.activeBlockType] || params.activeBlockType}`);
   }
+
+  // --- RUNTIME STATE ---
+  const rate = params.playbackRate;
+  if (rate != null && rate !== 1) {
+    parts.push(`Темп воспроизведения: ${Math.round(rate * 100)}% от оригинала`);
+  }
+  if (params.isLooping) {
+    const loopLabel = params.loopBlockType
+      ? `Повтор: включён (${RU_BLOCK_NAMES[params.loopBlockType] || params.loopBlockType})`
+      : 'Повтор: включён';
+    parts.push(loopLabel);
+  }
+
+  // --- PRACTICE STATE ---
+  if (params.practiceActive) {
+    parts.push(`Тренировка: ${params.practiceStatus || 'активна'}`);
+    if (params.practiceRate != null && params.practiceRate !== 1) {
+      parts.push(`Темп тренировки: ${Math.round(params.practiceRate * 100)}%`);
+    }
+    if (params.practicePasses != null && params.practicePasses > 0) {
+      parts.push(`Круг: ${params.practicePasses}`);
+    }
+  }
+  const scenarios = params.availableScenarios?.length
+    ? params.availableScenarios
+    : ['bpm-ramp'];
+  parts.push(`Доступные сценарии: ${scenarios.join(', ')}`);
 
   return parts.join('\n');
 }

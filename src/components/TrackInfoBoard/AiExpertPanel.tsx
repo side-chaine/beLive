@@ -3,6 +3,9 @@ import { useTrackInfoStore } from '../../stores/trackInfo.store';
 import { useAiSettingsStore } from '../../stores/ai-settings.store';
 import { useTrackStore } from '../../stores/track.store';
 import { useBlocksStore } from '../../stores/blocks.store';
+import { useAudioStore } from '../../stores/audio.store';
+import { useLoopStore } from '../../stores/loop.store';
+import { usePracticeStore } from '../../stores/practice-session.store';
 import { useLyricsStore } from '../../stores/lyrics.store';
 import { aiHub } from '../../js/ai/registry';
 import type { AiExpert } from '../../types/track-meta.types';
@@ -21,7 +24,10 @@ import {
   type QuickReply,
 } from './ai-tools';
 import type { PracticeScenarioId } from '../../practice/practice-scenarios';
+import { getScenario, resolveTargetBlock } from '../../practice/practice-scenarios';
+import { runPracticeActions } from '../../practice/billy-action-runner';
 import { PracticeSessionCard } from './PracticeSessionCard';
+import { buildStartMessage, buildErrorMessage } from '../../practice/practice-messages';
 import styles from './TrackInfoBoard.module.css';
 
 /* ── Expert tab config — ALL 4 experts ── */
@@ -92,6 +98,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
   const activeLineIndex = useLyricsStore(s => s.activeLineIndex);
   const isConfigured = useAiSettingsStore(s => s.isConfigured);
   const coachName = useAiSettingsStore(s => s.coachName);
+  const isSessionActive = usePracticeStore(s => s.isActive);
   const [inputValue, setInputValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -124,8 +131,23 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
   }, [aiMessages.length, isAiStreaming]);
 
   // Build context for AI messages
+  // eslint-disable-next-line react-hooks/exhaustive-deps — stores stable, not reactive deps
   const buildCtx = useCallback(() => {
     const parsed = parseTrackName(currentTrack?.title || '');
+
+    // Read runtime state
+    const audioState = useAudioStore.getState();
+    const loopState = useLoopStore.getState();
+    const practiceState = usePracticeStore.getState();
+
+    // Determine loop block type from loopBlockIds
+    let loopBlockType: string | null = null;
+    if (loopState.isLooping && loopState.loopBlockIds?.length) {
+      const allBlocks = useBlocksStore.getState().blocks;
+      const loopBlock = allBlocks?.find(b => loopState.loopBlockIds.includes(b.id));
+      if (loopBlock) loopBlockType = loopBlock.type;
+    }
+
     return buildTrackContext({
       title: parsed.title || currentTrack?.title || 'Unknown',
       artist: parsed.artist === 'Разное' ? '' : parsed.artist,
@@ -134,6 +156,15 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
       genre: meta?.genre || null,
       key: meta?.key || null,
       bpm: meta?.bpm || null,
+      // RUNTIME STATE:
+      playbackRate: audioState.playbackRate,
+      isLooping: loopState.isLooping,
+      loopBlockType,
+      practiceActive: practiceState.isActive,
+      practiceStatus: practiceState.practiceStatus,
+      practiceRate: practiceState.currentRate,
+      practicePasses: practiceState.passesCount,
+      availableScenarios: ['bpm-ramp'],
     });
   }, [currentTrack, blocksList, effectiveBlock, meta]);
 
@@ -390,20 +421,26 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
         const bpmValue = reply.action.startsWith('BPM:')
           ? reply.action.slice(4).trim()
           : reply.action;
-        addAiMessage({ role: 'user', content: reply.label });
-        const result = await executeToolCall('set_playback_rate', { rate: parseFloat(bpmValue) });
-        addAiMessage({
-          role: 'assistant',
-          content: result.success ? `✓ ${result.message}` : `⚠ ${result.message}`,
-        });
+        const targetRate = parseFloat(bpmValue);
+        if (isNaN(targetRate)) {
+          addAiMessage({ role: 'assistant', content: '⚠️ Неверное значение темпа' });
+          break;
+        }
+        const result = await executeToolCall('set_playback_rate', { rate: targetRate });
+        if (result.success) {
+          const pct = Math.round(targetRate * 100);
+          addAiMessage({ role: 'assistant', content: `✓ Темп: ${pct}%` });
+        } else {
+          addAiMessage({ role: 'assistant', content: `⚠️ ${result.message}` });
+        }
         break;
       }
 
       case 'loop': {
+        addAiMessage({ role: 'user', content: reply.label });
         const loopRaw = reply.action.startsWith('LOOP:')
           ? reply.action.slice(5).trim()
           : reply.action;
-        addAiMessage({ role: 'user', content: reply.label });
         if (loopRaw.toLowerCase() === 'off') {
           const r = await executeToolCall('loop_section', { enabled: false });
           addAiMessage({ role: 'assistant', content: r.success ? `✓ ${r.message}` : `⚠ ${r.message}` });
@@ -419,11 +456,11 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
       }
 
       case 'volume': {
+        addAiMessage({ role: 'user', content: reply.label });
         const volRaw = reply.action.startsWith('VOLUME:')
           ? reply.action.slice(7).trim()
           : reply.action;
         const volParts = volRaw.split(':');
-        addAiMessage({ role: 'user', content: reply.label });
         const r = await executeToolCall('set_stem_volume', {
           stemId: volParts[0] || '',
           volume: volParts[1] ? parseFloat(volParts[1]) : 0,
@@ -433,103 +470,95 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
       }
 
       case 'mode': {
+        addAiMessage({ role: 'user', content: reply.label });
         const modeVal = reply.action.startsWith('MODE:')
           ? reply.action.slice(5).trim()
           : reply.action;
-        addAiMessage({ role: 'user', content: reply.label });
         const r = await executeToolCall('switch_mode', { mode: modeVal });
         addAiMessage({ role: 'assistant', content: r.success ? `✓ ${r.message}` : `⚠ ${r.message}` });
         break;
       }
 
       case 'vocalmix': {
+        addAiMessage({ role: 'user', content: reply.label });
         const vmRaw = reply.action.startsWith('VOCALMIX:')
           ? reply.action.slice(9).trim()
           : reply.action;
         const vmEnabled = vmRaw.toLowerCase() !== 'off' && vmRaw.toLowerCase() !== 'false';
-        addAiMessage({ role: 'user', content: reply.label });
         const r = await executeToolCall('toggle_vocal_mix', { enabled: vmEnabled });
         addAiMessage({ role: 'assistant', content: r.success ? `✓ ${r.message}` : `⚠ ${r.message}` });
         break;
       }
 
       case 'scenario': {
-        addAiMessage({ role: 'user', content: reply.label });
+        try {
+          // Parse scenario command
+          const scenarioMatch = reply.action.match(/^SCENARIO:([^:\]]+)(?::([^\]]+))?$/);
+          if (!scenarioMatch) {
+            addAiMessage({ role: 'assistant', content: '⚠️ Не удалось распознать сценарий' });
+            break;
+          }
 
-        // Parse SCENARIO:id:target
-        const scenarioMatch = reply.action.match(/^SCENARIO:([^:\]]+)(?::([^\]]+))?$/);
-        if (!scenarioMatch) {
-          addAiMessage({ role: 'assistant', content: '⚠️ Не удалось распознать сценарий' });
-          break;
+          const scenarioId = scenarioMatch[1] as PracticeScenarioId;
+          const scenarioTarget = scenarioMatch[2] || null;
+
+          // Resolve target block
+          const target = resolveTargetBlock({
+            requestedBlockType: scenarioTarget || undefined,
+          });
+          if (!target) {
+            addAiMessage({ role: 'assistant', content: '⚠️ Не удалось найти блок для сценария' });
+            break;
+          }
+
+          // Get scenario definition
+          const scenario = getScenario(scenarioId);
+          if (!scenario) {
+            addAiMessage({ role: 'assistant', content: `⚠️ Сценарий "${scenarioId}" не найден` });
+            break;
+          }
+
+          // ★ CAPTURE SNAPSHOT BEFORE ANY ACTIONS ★
+          const snapshotBefore = usePracticeStore.getState().getSnapshot();
+
+          // Generate and execute start actions
+          const ctx = { requestedBlockType: target.blockType, requestedBlockId: target.blockId };
+          const startActions = typeof scenario.startActions === 'function'
+            ? scenario.startActions(ctx)
+            : scenario.startActions;
+
+          const stepResults = await runPracticeActions({ actions: startActions });
+
+          // Check results — partial failure = restore from pre-captured snapshot
+          if (!stepResults.every(sr => sr.result.success)) {
+            const failedStep = stepResults.find(sr => !sr.result.success)!;
+            usePracticeStore.getState().restoreAndCancel(snapshotBefore);
+            addAiMessage({ role: 'assistant', content: buildErrorMessage(failedStep) });
+            break;
+          }
+
+          // All succeeded — start practice with pre-captured snapshot
+          const ruNames: Record<string, string> = {
+            intro: 'Вступление', verse: 'Куплет', prechorus: 'Пре-хорус',
+            chorus: 'Припев', bridge: 'Бридж', interlude: 'Интерлюдия', outro: 'Заключение',
+          };
+          const blockLabel = ruNames[target.blockType] || target.blockType;
+
+          usePracticeStore.getState().startPractice(scenarioId, `🔥 Разгон ${blockLabel}`, snapshotBefore, target.blockId);
+
+          addAiMessage({
+            role: 'assistant',
+            content: buildStartMessage(stepResults, blockLabel),
+          });
+
+        } catch (err: any) {
+          // Exception — cancel cleanly
+          try { usePracticeStore.getState().cancelPractice(); } catch {}
+          addAiMessage({
+            role: 'assistant',
+            content: `⚠️ Ошибка запуска: ${err?.message || 'неизвестная'}`,
+          });
         }
-
-        const scenarioId = scenarioMatch[1] as PracticeScenarioId;
-        const scenarioTarget = scenarioMatch[2] || null;
-
-        // Dynamic imports for practice modules
-        const { usePracticeStore } = await import('../../stores/practice-session.store');
-        const { getScenario, resolveTargetBlock } = await import('../../practice/practice-scenarios');
-        const { runPracticeActions } = await import('../../practice/billy-action-runner');
-
-        // Resolve target block
-        const target = resolveTargetBlock({
-          requestedBlockType: scenarioTarget || undefined,
-        });
-
-        if (!target) {
-          addAiMessage({ role: 'assistant', content: '⚠️ Не удалось найти блок для сценария' });
-          break;
-        }
-
-        // Get scenario definition
-        const scenario = getScenario(scenarioId);
-        if (!scenario) {
-          addAiMessage({ role: 'assistant', content: `⚠️ Сценарий "${scenarioId}" не найден` });
-          break;
-        }
-
-        // Generate start actions
-        const ctx = { requestedBlockType: target.blockType, requestedBlockId: target.blockId };
-        const startActions = typeof scenario.startActions === 'function'
-          ? scenario.startActions(ctx)
-          : scenario.startActions;
-
-        // Execute start actions through runner
-        const stepResults = await runPracticeActions({ actions: startActions });
-
-        const allSuccessful = stepResults.every(sr => sr.result.success);
-        if (!allSuccessful) {
-          const failedStep = stepResults.find(sr => !sr.result.success);
-          addAiMessage({ role: 'assistant', content: `⚠️ Ошибка запуска: ${failedStep?.result.message || 'неизвестная'}` });
-          break;
-        }
-
-        // Start practice session in store (after actions confirmed)
-        const ruNames: Record<string, string> = {
-          intro: 'Вступление', verse: 'Куплет', prechorus: 'Пре-хорус',
-          chorus: 'Припев', bridge: 'Бридж', interlude: 'Интерлюдия', outro: 'Заключение',
-        };
-        const blockLabel = ruNames[target.blockType] || target.blockType;
-
-        usePracticeStore.getState().startPractice(scenarioId, `🔥 Разгон ${blockLabel}`);
-
-        // Confirm session is active
-        const { isActive } = usePracticeStore.getState();
-        if (!isActive) {
-          addAiMessage({ role: 'assistant', content: '⚠️ Не удалось запустить сценарий' });
-          break;
-        }
-
-        // Report confirmed state from actual results
-        const rateResult = stepResults.find(sr => sr.action.tool === 'set_playback_rate');
-        const ratePct = rateResult?.result.success
-          ? Math.round((rateResult.action.args.rate as number) * 100)
-          : 80;
-
-        addAiMessage({
-          role: 'assistant',
-          content: `🔥 Разгон ${blockLabel} начат!\n\nТемп: ${ratePct}% от оригинала. ${blockLabel} на повторе.\nКаждый круг +5%. Жми "Следующий круг" когда готов.`,
-        });
         break;
       }
     }
@@ -612,7 +641,10 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
                   {/* Quick Reply buttons */}
                   {replies.length > 0 && !isAiStreaming && (
                     <div className={styles.quickReplies}>
-                      {replies.map((reply, j) => (
+                      {(isSessionActive
+                        ? replies.filter(r => ['seek', 'expert', 'search', 'search-audio'].includes(r.type))
+                        : replies
+                      ).map((reply, j) => (
                         <button
                           key={j}
                           className={`${styles.quickReplyBtn} ${

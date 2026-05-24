@@ -2,6 +2,7 @@ import { useBlocksStore } from '../../stores/blocks.store';
 import { useMarkersStore } from '../../stores/markers.store';
 import { useLyricsStore } from '../../stores/lyrics.store';
 import { useTrackInfoStore } from '../../stores/trackInfo.store';
+import { usePracticeStore } from '../../stores/practice-session.store';
 import { getBlockTimeRange } from '../../utils/block-time-range';
 import { BLOCK_TYPE_CONFIG } from '../../blocks/types';
 import styles from './TrackInfoBoard.module.css';
@@ -32,6 +33,7 @@ export function StructureDiagram() {
   const blocks = useBlocksStore(s => s.blocks);
   const markers = useMarkersStore(s => s.markers);
   const activeLineIndex = useLyricsStore(s => s.activeLineIndex);
+  const practiceTargetBlockId = usePracticeStore(s => s.targetBlockId);
 
   if (!blocks || blocks.length === 0) {
     return <div className={styles.emptyState}>No blocks — open Block Editor</div>;
@@ -67,6 +69,7 @@ export function StructureDiagram() {
       duration,
       widthPercent,
       isActive: block.id === activeBlockId,
+      isPracticeTarget: block.id === practiceTargetBlockId,
     };
   });
 
@@ -99,7 +102,7 @@ export function StructureDiagram() {
         {blockData.map((bd, i) => (
           <div
             key={bd.block.id || i}
-            className={`${styles.timelineBlock} ${bd.isActive ? styles.timelineActive : ''}`}
+            className={`${styles.timelineBlock} ${bd.isActive ? styles.timelineActive : ''} ${bd.isPracticeTarget ? styles.timelinePractice : ''}`}
             style={{
               width: `${bd.widthPercent}%`,
               background: `${bd.color}15`,

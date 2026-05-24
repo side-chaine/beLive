@@ -297,6 +297,10 @@
   animation: none;
 }
 
+.think .eyes {
+  animation: blink 4s ease-in-out infinite;
+}
+
 @keyframes thinkHead {
   0%, 100% { transform: rotate(0deg); }
   50% { transform: rotate(-10deg); }

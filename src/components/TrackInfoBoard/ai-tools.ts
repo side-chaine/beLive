@@ -163,55 +163,58 @@ export async function executeToolCall(
 /* ═══ Tool Implementations ═══ */
 
 async function executeSeekToSection(args: Record<string, unknown>): Promise<ToolCallResult> {
-  const rawSectionType = args.sectionType as string;
-  const sectionType = normalizeSectionType(rawSectionType);
-  const occurrence = (args.occurrence as number) || 1;
+  try {
+    const rawSectionType = args.sectionType as string;
+    const sectionType = normalizeSectionType(rawSectionType);
+    const occurrence = (args.occurrence as number) || 1;
 
-  if (!rawSectionType) {
-    return { tool: 'seek_to_section', success: false, message: 'sectionType is required' };
+    if (!rawSectionType) {
+      return { tool: 'seek_to_section', success: false, message: 'sectionType is required' };
+    }
+
+    const blocks = useBlocksStore.getState().blocks;
+    const markers = useMarkersStore.getState().markers;
+
+    if (!blocks?.length) {
+      return { tool: 'seek_to_section', success: false, message: 'Нет блоков в треке' };
+    }
+
+    const matchingBlocks = blocks.filter(b => b.type === sectionType);
+    if (matchingBlocks.length === 0) {
+      return {
+        tool: 'seek_to_section',
+        success: false,
+        message: `Секция "${sectionType}" не найдена`,
+      };
+    }
+
+    const targetIndex = Math.min(occurrence - 1, matchingBlocks.length - 1);
+    const targetBlock = matchingBlocks[targetIndex];
+
+    const range = getBlockTimeRange(targetBlock, markers);
+    if (!range) {
+      return {
+        tool: 'seek_to_section',
+        success: false,
+        message: `Нет тайминга для ${sectionType} #${targetIndex + 1}`,
+      };
+    }
+
+    const ae = (window as any).audioEngine;
+    if (ae?.setCurrentTime) {
+      ae.setCurrentTime(range.startTime);
+      return {
+        tool: 'seek_to_section',
+        success: true,
+        message: `Перемотка к ${sectionType} #${targetIndex + 1} (${formatTime(range.startTime)})`,
+        data: { sectionType, occurrence: targetIndex + 1, time: range.startTime },
+      };
+    }
+
+    return { tool: 'seek_to_section', success: false, message: 'Audio engine не доступен' };
+  } catch (err: any) {
+    return { tool: 'seek_to_section', success: false, message: `Ошибка перемотки: ${err?.message || 'неизвестная'}` };
   }
-
-  const blocks = useBlocksStore.getState().blocks;
-  const markers = useMarkersStore.getState().markers;
-
-  if (!blocks?.length) {
-    return { tool: 'seek_to_section', success: false, message: 'Нет блоков в треке' };
-  }
-
-  const matchingBlocks = blocks.filter(b => b.type === sectionType);
-  if (matchingBlocks.length === 0) {
-    return {
-      tool: 'seek_to_section',
-      success: false,
-      message: `Секция "${sectionType}" не найдена`,
-    };
-  }
-
-  const targetIndex = Math.min(occurrence - 1, matchingBlocks.length - 1);
-  const targetBlock = matchingBlocks[targetIndex];
-
-  // CORRECT: use getBlockTimeRange instead of target.startTime
-  const range = getBlockTimeRange(targetBlock, markers);
-  if (!range) {
-    return {
-      tool: 'seek_to_section',
-      success: false,
-      message: `Нет тайминга для ${sectionType} #${targetIndex + 1}`,
-    };
-  }
-
-  const ae = (window as any).audioEngine;
-  if (ae?.setCurrentTime) {
-    ae.setCurrentTime(range.startTime);
-    return {
-      tool: 'seek_to_section',
-      success: true,
-      message: `Перемотка к ${sectionType} #${targetIndex + 1} (${formatTime(range.startTime)})`,
-      data: { sectionType, occurrence: targetIndex + 1, time: range.startTime },
-    };
-  }
-
-  return { tool: 'seek_to_section', success: false, message: 'Audio engine не доступен' };
 }
 
 async function executeGetTrackStructure(_args: Record<string, unknown>): Promise<ToolCallResult> {
@@ -554,13 +557,30 @@ async function executeLoopSection(
     };
   }
 
-  // Если уже на этом блоке — toggle снимет
+  // ★ enabled:true — ГАРАНТИРУЕМ loop ON ★
+  if (args.enabled === true) {
+    if (loopStore.isLooping && loopStore.loopBlockIds?.includes(target.id)) {
+      return { tool: 'loop_section', success: true, message: 'Уже на повторе' };
+    }
+    if (loopStore.isLooping) {
+      loopStore.replaceLoop(target);
+    } else {
+      loopStore.toggleBlock(target);
+    }
+    const ruNames: Record<string, string> = {
+      intro: 'Вступление', verse: 'Куплет', prechorus: 'Пре-хорус',
+      chorus: 'Припев', bridge: 'Бридж', interlude: 'Интерлюдия', outro: 'Заключение',
+    };
+    const label = ruNames[sectionType] || sectionType;
+    return { tool: 'loop_section', success: true, message: `${label} на повторе` };
+  }
+
+  // Существующая toggle-логика (enabled НЕ true и НЕ false)
   if (loopStore.isLooping && loopStore.loopBlockIds?.includes(target.id)) {
     loopStore.toggleBlock(target);
     return { tool: 'loop_section', success: true, message: 'Повтор снят' };
   }
 
-  // Если loop активен на другом блоке — заменить
   if (loopStore.isLooping) {
     loopStore.replaceLoop(target);
   } else {
