@@ -123,7 +123,7 @@ export function useBillyAudioReactive(
 
     // Body micro-bounce from bass + beat
     // Applied to SVG root — additive with CSS danceBody keyframe
-    const bodyOffset = (audio.bass * -4) + (beatDecayRef.current * -6);
+    const bodyOffset = (audio.bass * -2) + (beatDecayRef.current * -3);
     if (r.bodyInner) {
       r.bodyInner.style.transform = `translateY(${bodyOffset}px)`;
     }
@@ -132,19 +132,21 @@ export function useBillyAudioReactive(
     const armChaos = (audio.mid + audio.high) * 0.5;
     const time = frameCountRef.current * 0.15;
 
-    if (r.armLInner) {
-      const angleL = Math.sin(time * 3.7) * armChaos * 18;
-      r.armLInner.style.transform = `rotate(${angleL}deg)`;
-    }
-    if (r.armRInner) {
-      const angleR = Math.cos(time * 4.3) * armChaos * 18;
-      r.armRInner.style.transform = `rotate(${angleR}deg)`;
-    }
+    // Arms: static in dance — animated only in celebrations (W2)
+    // INV-BILLY-T1: CSS keyframes OR JS inline transform on same <g> — never both
+    // if (r.armLInner) {
+    //   const angleL = Math.sin(time * 3.7) * armChaos * 18;
+    //   r.armLInner.style.transform = `rotate(${angleL}deg)`;
+    // }
+    // if (r.armRInner) {
+    //   const angleR = Math.cos(time * 4.3) * armChaos * 18;
+    //   r.armRInner.style.transform = `rotate(${angleR}deg)`;
+    // }
 
     // Head bob from vocal — applied to INNER group
     if (r.headInner) {
-      const headBob = Math.sin(time * 2.1) * audio.vocal * 6;
-      const headTilt = Math.cos(time * 1.7) * audio.vocal * 3;
+      const headBob = Math.sin(time * 2.1) * audio.vocal * 3;
+      const headTilt = Math.cos(time * 1.7) * audio.vocal * 2;
       r.headInner.style.transform = `rotate(${headTilt}deg) translateY(${headBob}px)`;
     }
   }, [animation, refs]);
