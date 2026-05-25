@@ -12,15 +12,17 @@ import { useLyricsStore } from '../../stores/lyrics.store';
 import { getBlockTypeConfig } from '../../blocks/types';
 import styles from './BillyDock.module.css';
 
-type EffectiveAnimation = BillyAnimation | 'jump';
+type EffectiveAnimation = BillyAnimation | 'jump' | 'walk' | 'somersault';
 
 const STATE_CLASS: Record<EffectiveAnimation, string> = {
-  idle: styles.idle,
-  dance: styles.dance,
-  think: styles.think,
-  sleep: styles.sleep,
-  jump: styles.jump,
-};
+    idle: styles.idle,
+    dance: styles.dance,
+    think: styles.think,
+    sleep: styles.sleep,
+    jump: styles.jump,
+    walk: styles.walk,
+    somersault: styles.somersault,
+  };
 
 const JUMP_DURATION = 750;
 
