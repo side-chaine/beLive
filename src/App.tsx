@@ -22,6 +22,7 @@ import { BillyDock } from './components/BillyDock/BillyDock';
 import { initTextStyleBridge, destroyTextStyleBridge } from './bridges/textStyle.bridge';
 import { initPlateBridge, destroyPlateBridge } from './bridges/plate.bridge';
 import { initPerformanceBridge } from './performance/performance.bridge';
+import { initBillyBridge } from './billy/billy.bridge';
 import { initTakesBridge } from './takes/takes.bridge';
 import { initExerciseBridge } from './exercises/exercise.bridge';
 import { useSyncStore } from './sync/store/sync.store';
@@ -70,6 +71,7 @@ export default function App() {
     const cleanupTextStyle = initTextStyleBridge();
     const cleanupPlate = initPlateBridge();
     const cleanupPerformance = initPerformanceBridge();
+    const cleanupBilly = initBillyBridge();
     const cleanupTakes = initTakesBridge();
     const cleanupExercise = initExerciseBridge();
     const cleanupMonitor = initMonitorBridge();
@@ -88,6 +90,7 @@ export default function App() {
       destroyTextStyleBridge();
       destroyPlateBridge();
       cleanupPerformance();
+      cleanupBilly();
       cleanupTakes();
       cleanupExercise();
       destroyMonitorBridge();

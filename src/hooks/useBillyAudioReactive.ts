@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { usePerformanceStore } from '../performance/performance.store';
 import type { BillyAnimation } from './useBillyState';
 
 /**
@@ -100,6 +101,7 @@ export function useBillyAudioReactive(
 ) {
   const frameCountRef = useRef(0);
   const beatDecayRef = useRef(0);
+  const audioBudget = usePerformanceStore(s => s.getBudget()?.audioReactive);
 
   const tick = useCallback(() => {
     if (animation !== 'dance') return;
@@ -109,13 +111,23 @@ export function useBillyAudioReactive(
 
     frameCountRef.current++;
 
-    // 30fps throttle — skip every other frame
-    if (frameCountRef.current % 2 !== 0) return;
+    // Tier-aware frame skip
+    // audioBudget?.enabled уже гарантирован на входе (ранний exit в useEffect)
+    const maxBands = audioBudget?.maxBands ?? 3;
+    const targetFps = maxBands <= 3  ? 15
+                    : maxBands <= 6  ? 30
+                    : 60;
+    const skipN = Math.round(60 / targetFps) - 1;
+    if (skipN > 0 && frameCountRef.current % (skipN + 1) !== 0) return;
+
+    // Tier-dependent feature flags (maxBands already declared above)
+    const applyBeat = maxBands >= 3;
+    const applyHead = maxBands >= 6;
 
     const audio = readAudioData();
 
     // Beat detection → decay over 3 ticks
-    if (audio.beat > 0.5) {
+    if (applyBeat && audio.beat > 0.5) {
       beatDecayRef.current = 1;
     } else {
       beatDecayRef.current = Math.max(0, beatDecayRef.current - 0.33);
@@ -144,7 +156,7 @@ export function useBillyAudioReactive(
     // }
 
     // Head bob from vocal — applied to INNER group
-    if (r.headInner) {
+    if (applyHead && r.headInner) {
       const headBob = Math.sin(time * 2.1) * audio.vocal * 3;
       const headTilt = Math.cos(time * 1.7) * audio.vocal * 2;
       r.headInner.style.transform = `rotate(${headTilt}deg) translateY(${headBob}px)`;
@@ -153,12 +165,16 @@ export function useBillyAudioReactive(
 
   useEffect(() => {
     if (animation !== 'dance') {
-      // Reset inline transforms when not dancing
       resetTransforms(refs);
       return;
     }
 
-    // Respect reduced motion preference — no micro-movements
+    // Lite tier: audio-reactive OFF — CSS keyframes sufficient
+    if (!audioBudget?.enabled) {
+      resetTransforms(refs);
+      return;
+    }
+
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     if (mq.matches) {
       resetTransforms(refs);
@@ -172,7 +188,6 @@ export function useBillyAudioReactive(
     };
     rafId = requestAnimationFrame(loop);
 
-    // Listen for reduced-motion changes at runtime
     const onChange = (e: MediaQueryListEvent) => {
       if (e.matches) {
         cancelAnimationFrame(rafId);
@@ -185,5 +200,5 @@ export function useBillyAudioReactive(
       cancelAnimationFrame(rafId);
       mq.removeEventListener('change', onChange);
     };
-  }, [animation, tick, refs]);
+  }, [animation, tick, refs, audioBudget?.enabled]);
 }

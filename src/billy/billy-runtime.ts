@@ -107,3 +107,6 @@ export function computePixelPosition(
 export function getInitialPixelPosition(): { pixelX: number; pixelY: number } {
   return computePixelPosition(CORNER_POS.x, CORNER_POS.y);
 }
+
+// ── Public alias for bridge (same as resetBillyHotState) ──
+export const resetBillyState = resetBillyHotState;
