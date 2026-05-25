@@ -12,6 +12,9 @@ export function useKeyboardShortcuts() {
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
       if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+        // Focus Mode → plain arrows не seek-ают, но Shift+Arrow (смена трека) работает!
+        if (!e.shiftKey && document.documentElement.getAttribute('data-billy-control') === 'true') return;
+
         const delta = e.code === 'ArrowLeft' ? -1 : 1;
         if (e.shiftKey) {
           // Shift+Arrow → track prev/next (accumulated)
