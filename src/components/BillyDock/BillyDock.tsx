@@ -12,7 +12,14 @@ import { useLyricsStore } from '../../stores/lyrics.store';
 import { getBlockTypeConfig } from '../../blocks/types';
 import styles from './BillyDock.module.css';
 
-type EffectiveAnimation = BillyAnimation | 'jump' | 'walk' | 'somersault';
+type EffectiveAnimation = BillyAnimation
+  | 'jump' | 'walk' | 'somersault'
+  | 'celebrate-backflip'
+  | 'celebrate-dual_pistols'
+  | 'celebrate-mic_drop'
+  | 'celebrate-boss_defeated'
+  | 'celebrate-fatality'
+  | 'celebrate-super_saiyan';
 
 const STATE_CLASS: Record<EffectiveAnimation, string> = {
     idle: styles.idle,
@@ -22,6 +29,12 @@ const STATE_CLASS: Record<EffectiveAnimation, string> = {
     jump: styles.jump,
     walk: styles.walk,
     somersault: styles.somersault,
+    'celebrate-backflip': styles.celebrateBackflip,
+    'celebrate-dual_pistols': styles.celebrateDualPistols,
+    'celebrate-mic_drop': styles.celebrateMicDrop,
+    'celebrate-boss_defeated': styles.celebrateBossDefeated,
+    'celebrate-fatality': styles.celebrateFatality,
+    'celebrate-super_saiyan': styles.celebrateSuperSaiyan,
   };
 
 const JUMP_DURATION = 750;
@@ -209,6 +222,8 @@ export function BillyDock() {
               <path d="M 53 118 Q 32 110 28 100" fill="none" stroke="#1c1c1c" strokeWidth="13" strokeLinecap="round"/>
               <path d="M 53 118 Q 32 110 28 100" fill="none" stroke="#282828" strokeWidth="9" strokeLinecap="round"/>
               <circle cx="26" cy="98" r="8" fill="#1c1c1c" stroke="#333" strokeWidth="1"/>
+              {/* Hand flash — celebration only */}
+              <circle className={styles.handFlashL} cx="26" cy="98" r="12" fill="#f97316" opacity="0"/>
             </g>
           </g>
 
@@ -225,6 +240,8 @@ export function BillyDock() {
               <path d="M 87 118 Q 108 110 112 100" fill="none" stroke="#1c1c1c" strokeWidth="13" strokeLinecap="round"/>
               <path d="M 87 118 Q 108 110 112 100" fill="none" stroke="#282828" strokeWidth="9" strokeLinecap="round"/>
               <circle cx="114" cy="98" r="8" fill="#1c1c1c" stroke="#333" strokeWidth="1"/>
+              {/* Hand flash — celebration only */}
+              <circle className={styles.handFlashR} cx="114" cy="98" r="12" fill="#f97316" opacity="0"/>
             </g>
           </g>
 
@@ -247,6 +264,14 @@ export function BillyDock() {
               <line x1="57" y1="19" x2="51" y2="101" stroke="#2c2c2c" strokeWidth=".7"/>
               <line x1="70" y1="18" x2="70" y2="102" stroke="#2c2c2c" strokeWidth=".7"/>
               <line x1="83" y1="19" x2="89" y2="101" stroke="#2c2c2c" strokeWidth=".7"/>
+              {/* Terminator glow behind eyes */}
+              <ellipse className={styles.terminatorGlow}
+                cx="70" cy="68" rx="40" ry="16"
+                fill="#ff4444" opacity="0"/>
+              {/* Celebration aura ring */}
+              <ellipse className={styles.auraRing}
+                cx="70" cy="100" rx="45" ry="55"
+                fill="none" stroke="#f97316" strokeWidth="2" opacity="0"/>
               {/* Recording indicator — red dot on mic head */}
               <circle className={styles.recDot} cx="70" cy="33" r="3" fill="#ff3333"/>
               {/* Воротник */}

@@ -506,6 +506,238 @@
   transition: transform 0.1s ease;
 }
 
+/* ═══ Celebration SVG Elements ═══ */
+
+.terminatorGlow {
+  transform-box: view-box;
+}
+
+.auraRing {
+  transform-box: view-box;
+}
+
+.handFlashL, .handFlashR {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* ── 1. BACKFLIP — Сальто мажор ── */
+.celebrateBackflip .billy {
+  animation: celebBackflip 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+.celebrateBackflip .armL {
+  animation: celebBackflipArms 1.2s ease forwards;
+}
+.celebrateBackflip .armR {
+  animation: celebBackflipArms 1.2s ease forwards;
+}
+.celebrateBackflip .shadow {
+  width: 12px;
+  opacity: 0.02;
+}
+
+@keyframes celebBackflip {
+  0%   { transform: translateY(0) rotate(0deg) scaleY(1); }
+  8%   { transform: translateY(6px) rotate(0deg) scaleY(0.82); }
+  25%  { transform: translateY(-55px) rotate(-360deg) scaleY(1.05); }
+  50%  { transform: translateY(-75px) rotate(-720deg) scaleY(1); }
+  72%  { transform: translateY(-35px) rotate(-1080deg) scaleY(1); }
+  88%  { transform: translateY(0) rotate(-1080deg) scaleY(0.85); }
+  100% { transform: translateY(0) rotate(-1080deg) scaleY(1); }
+}
+
+@keyframes celebBackflipArms {
+  0%, 8%   { transform: rotate(0deg); }
+  25%, 72% { transform: rotate(-65deg); }
+  100%     { transform: rotate(0deg); }
+}
+
+/* ── 2. DUAL PISTOLS — Дабл пистол 👉👉 ── */
+.celebrateDualPistols .armL {
+  animation: celebPistolL 1.0s ease forwards;
+}
+.celebrateDualPistols .armR {
+  animation: celebPistolR 1.0s ease forwards;
+}
+.celebrateDualPistols .handFlashL {
+  animation: celebFlashL 1.0s ease forwards;
+}
+.celebrateDualPistols .handFlashR {
+  animation: celebFlashR 1.0s ease forwards;
+}
+
+@keyframes celebPistolL {
+  0%, 20%  { transform: rotate(0deg); }
+  35%, 75% { transform: rotate(-75deg); }
+  100%     { transform: rotate(0deg); }
+}
+
+@keyframes celebPistolR {
+  0%, 30%  { transform: rotate(0deg); }
+  45%, 75% { transform: rotate(75deg); }
+  100%     { transform: rotate(0deg); }
+}
+
+@keyframes celebFlashL {
+  0%, 38%  { opacity: 0; transform: scale(1); }
+  42%      { opacity: 1; transform: scale(1.8); }
+  55%      { opacity: 0; transform: scale(2.2); }
+  100%     { opacity: 0; }
+}
+
+@keyframes celebFlashR {
+  0%, 48%  { opacity: 0; transform: scale(1); }
+  52%      { opacity: 1; transform: scale(1.8); }
+  65%      { opacity: 0; transform: scale(2.2); }
+  100%     { opacity: 0; }
+}
+
+/* ── 3. MIC DROP — Микрофон дроп ── */
+.celebrateMicDrop .head {
+  animation: celebMicDropHead 1.4s ease forwards;
+}
+.celebrateMicDrop .armR {
+  animation: celebMicDropArmR 1.4s ease forwards;
+}
+
+@keyframes celebMicDropHead {
+  0%, 15%  { transform: translateY(0); }
+  30%      { transform: translateY(-30px); }
+  50%      { transform: translateY(-32px) rotate(180deg); }
+  70%      { transform: translateY(-28px) rotate(360deg); }
+  85%      { transform: translateY(0) rotate(360deg) scaleY(0.88); }
+  100%     { transform: translateY(0) rotate(360deg) scaleY(1); }
+}
+
+@keyframes celebMicDropArmR {
+  0%, 10%  { transform: rotate(0deg); }
+  20%, 45% { transform: rotate(75deg); }
+  80%      { transform: rotate(15deg); }
+  100%     { transform: rotate(0deg); }
+}
+
+/* ── 4. BOSS DEFEATED — Босс повержен ── */
+.celebrateBossDefeated .armL {
+  animation: celebBossArmL 1.4s ease forwards;
+}
+.celebrateBossDefeated .armR {
+  animation: celebBossArmR 1.4s ease forwards;
+}
+.celebrateBossDefeated .eyes ellipse:first-of-type {
+  animation: celebBossWink 1.4s ease forwards;
+}
+
+@keyframes celebBossArmL {
+  0%, 20%  { transform: rotate(0deg); }
+  40%, 75% { transform: rotate(-55deg); }
+  100%     { transform: rotate(0deg); }
+}
+
+@keyframes celebBossArmR {
+  0%, 25%  { transform: rotate(0deg); }
+  45%, 75% { transform: rotate(55deg); }
+  100%     { transform: rotate(0deg); }
+}
+
+@keyframes celebBossWink {
+  0%, 60%  { transform: scaleY(1); }
+  70%      { transform: scaleY(0.1); }
+  80%, 100% { transform: scaleY(1); }
+}
+
+/* ── 5. FATALITY — Оранжевый взрыв ── */
+.celebrateFatality .billy {
+  animation: celebFatalityBody 1.8s ease forwards;
+}
+.celebrateFatality .head {
+  animation: celebFatalityHead 1.8s ease forwards;
+}
+.celebrateFatality .auraRing {
+  animation: celebFatalityAura 1.8s ease forwards;
+}
+.celebrateFatality .armL {
+  animation: celebFatalityArms 1.8s ease forwards;
+}
+.celebrateFatality .armR {
+  animation: celebFatalityArms 1.8s ease forwards;
+}
+
+@keyframes celebFatalityBody {
+  0%       { transform: scale(1); }
+  15%      { transform: scale(1.03); }
+  30%      { transform: scale(1.03); }
+  40%      { transform: scale(1.12); }
+  55%      { transform: scale(1.0); }
+  70%      { transform: scale(1.02); }
+  100%     { transform: scale(1); }
+}
+
+@keyframes celebFatalityHead {
+  0%, 15%  { transform: rotate(0deg); }
+  30%      { transform: rotate(-6deg); }
+  40%      { transform: rotate(0deg); }
+  100%     { transform: rotate(0deg); }
+}
+
+@keyframes celebFatalityAura {
+  0%, 30%  { opacity: 0; }
+  40%      { opacity: 0.6; stroke-width: 3; }
+  60%      { opacity: 0.3; stroke-width: 2.5; }
+  100%     { opacity: 0; stroke-width: 2; }
+}
+
+@keyframes celebFatalityArms {
+  0%, 15%  { transform: rotate(0deg); }
+  40%      { transform: rotate(55deg); }
+  70%      { transform: rotate(30deg); }
+  100%     { transform: rotate(0deg); }
+}
+
+/* ── 6. SUPER SAIYAN — Тряска + аура ── */
+.celebrateSuperSaiyan .billy {
+  animation: celebSaiyanBody 1.8s ease forwards;
+}
+.celebrateSuperSaiyan .eyes ellipse {
+  fill: #ffffff;
+  animation: celebSaiyanEyes 1.8s ease forwards;
+}
+.celebrateSuperSaiyan .pupilL,
+.celebrateSuperSaiyan .pupilR {
+  fill: #ff4444;
+}
+.celebrateSuperSaiyan .auraRing {
+  animation: celebSaiyanAura 1.8s ease forwards;
+}
+
+@keyframes celebSaiyanBody {
+  0%       { transform: translateY(0) scale(1); }
+  20%      { transform: translateY(-2px) scale(1.02); }
+  25%      { transform: translateY(0) scale(1); }
+  30%      { transform: translateY(-2px) scale(1.02); }
+  35%      { transform: translateY(0) scale(1); }
+  40%      { transform: translateY(-3px) scale(1.03); }
+  45%      { transform: translateY(0) scale(1.05); }
+  55%      { transform: translateY(-8px) scale(1.08); }
+  70%      { transform: translateY(-6px) scale(1.05); }
+  85%      { transform: translateY(-2px) scale(1.02); }
+  100%     { transform: translateY(0) scale(1); }
+}
+
+@keyframes celebSaiyanEyes {
+  0%, 45%  { filter: none; }
+  55%      { filter: drop-shadow(0 0 4px #fff); }
+  85%      { filter: drop-shadow(0 0 2px #fff); }
+  100%     { filter: none; }
+}
+
+@keyframes celebSaiyanAura {
+  0%, 45%  { opacity: 0; stroke: #f97316; }
+  55%      { opacity: 0.5; stroke: #f97316; stroke-width: 3; }
+  70%      { opacity: 0.3; stroke: #f97316; stroke-width: 2.5; }
+  100%     { opacity: 0; stroke: #f97316; stroke-width: 2; }
+}
+
+
 /* ═══ Performance Tier: Billy Degradation ═══ */
 
 /* ── Lite: CSS-only Billy, zero JS overhead ── */
@@ -542,6 +774,33 @@
 [data-visual-tier="lite"] .walk .armR { animation: none; transform: rotate(4deg); }
 [data-visual-tier="lite"] .walk .legL,
 [data-visual-tier="lite"] .walk .legR { animation: none; }
+
+  /* ── Lite: celebrations simplified (no aura, no flash, no glow) ── */
+  [data-visual-tier="lite"] .celebrateFatality .auraRing,
+  [data-visual-tier="lite"] .celebrateSuperSaiyan .auraRing {
+    display: none;
+  }
+
+  [data-visual-tier="lite"] .celebrateDualPistols .handFlashL,
+  [data-visual-tier="lite"] .celebrateDualPistols .handFlashR {
+    display: none;
+  }
+
+  [data-visual-tier="lite"] .celebrateSuperSaiyan .eyes ellipse {
+    fill: white;
+    filter: none;
+  }
+
+  /* ── Balanced: legendary celebrations simplified ── */
+  [data-visual-tier="balanced"] .celebrateFatality .auraRing,
+  [data-visual-tier="balanced"] .celebrateSuperSaiyan .auraRing {
+    opacity: 0;
+    animation: none;
+  }
+
+  [data-visual-tier="balanced"] .celebrateSuperSaiyan .eyes ellipse {
+    filter: none;
+  }
 
 /* ── Balanced: moderate Billy ── */
 [data-visual-tier="balanced"] .headGlow,
@@ -592,6 +851,29 @@
   .puckUnread {
     animation: none !important;
     opacity: 0.7;
+  }
+
+  .celebrateBackflip .billy,
+  .celebrateBackflip .armL,
+  .celebrateBackflip .armR,
+  .celebrateDualPistols .armL,
+  .celebrateDualPistols .armR,
+  .celebrateDualPistols .handFlashL,
+  .celebrateDualPistols .handFlashR,
+  .celebrateMicDrop .head,
+  .celebrateMicDrop .armR,
+  .celebrateBossDefeated .armL,
+  .celebrateBossDefeated .armR,
+  .celebrateBossDefeated .eyes ellipse,
+  .celebrateFatality .billy,
+  .celebrateFatality .head,
+  .celebrateFatality .auraRing,
+  .celebrateFatality .armL,
+  .celebrateFatality .armR,
+  .celebrateSuperSaiyan .billy,
+  .celebrateSuperSaiyan .eyes ellipse,
+  .celebrateSuperSaiyan .auraRing {
+    animation: none !important;
   }
 
   .shadow {
