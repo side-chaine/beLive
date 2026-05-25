@@ -11,6 +11,7 @@
 
 import type { PracticeAction } from './billy-action-runner';
 import { useBlocksStore } from '../stores/blocks.store';
+import { useStemStore } from '../stem/stem.store';
 import type { PracticeSnapshot } from '../stores/practice-session.store';
 
 // ── Types ──
@@ -31,10 +32,18 @@ export interface PracticeProgress {
   completedBlockIds: string[];
 }
 
+export interface ScenarioMeta {
+  startRate: number;
+  step: number;
+  targetRate: number;
+  totalPasses: number;
+}
+
 export interface PracticeScenario {
   id: PracticeScenarioId;
   title: string;
   icon: string;
+  meta?: ScenarioMeta;
   startActions: PracticeAction[] | ((ctx: PracticeContext) => PracticeAction[]);
   perPassActions: PracticeAction[] | ((ctx: PracticeContext, progress: PracticeProgress) => PracticeAction[]);
   isComplete: (progress: PracticeProgress, ctx: PracticeContext) => boolean;
@@ -94,13 +103,173 @@ const BPM_RAMP: PracticeScenario = {
 
 const SCENARIOS: Partial<Record<PracticeScenarioId, PracticeScenario>> = {
   'bpm-ramp': BPM_RAMP,
+
+  'focus-mix': {
+    id: 'focus-mix',
+    title: 'Фокус на стемы',
+    icon: '🎚',
+    meta: {
+      startRate: 1.0,
+      step: 0,
+      targetRate: 1.0,
+      totalPasses: 0, // dynamic — зависит от количества musicStems
+    },
+    startActions: (ctx) => {
+      const blockType = ctx.requestedBlockType || ctx.currentBlockType || 'verse';
+      return [
+        { tool: 'ensure_stems_enabled', args: {} },
+        { tool: 'seek_to_section', args: { sectionType: blockType } },
+        { tool: 'loop_section', args: { sectionType: blockType, enabled: true } },
+      ];
+    },
+    perPassActions: (_ctx, progress) => {
+      const stemState = useStemStore.getState();
+      const loaded = stemState.loadedStems || [];
+
+      const musicStems = loaded.filter(id =>
+        id !== 'vocals' && id !== 'backing' && id !== 'instrumental'
+      );
+      const vocalStems = loaded.filter(id =>
+        id === 'vocals' || id === 'backing'
+      );
+
+      const actions: PracticeAction[] = [];
+      const focusIndex = progress.totalPasses - 1; // 0-indexed
+
+      if (focusIndex >= 0 && focusIndex < musicStems.length) {
+        const focusStem = musicStems[focusIndex];
+        // Мьютим все musicStems кроме фокусного
+        musicStems.forEach(id => {
+          actions.push({ tool: 'set_stem_volume', args: { stemId: id, volume: id === focusStem ? 1.0 : 0 } });
+        });
+        // Вокал всегда играет
+        vocalStems.forEach(id => {
+          actions.push({ tool: 'set_stem_volume', args: { stemId: id, volume: 1.0 } });
+        });
+      }
+
+      return actions;
+    },
+    isComplete: (progress) => {
+      const stemState = useStemStore.getState();
+      const loaded = stemState.loadedStems || [];
+      const musicStems = loaded.filter(id =>
+        id !== 'vocals' && id !== 'backing' && id !== 'instrumental'
+      );
+      return progress.totalPasses >= musicStems.length;
+    },
+    onCompleteActions: () => {
+      const stemState = useStemStore.getState();
+      const loaded = stemState.loadedStems || [];
+      const actions: PracticeAction[] = [];
+
+      loaded.forEach(id => {
+        if (id !== 'instrumental') {
+          actions.push({ tool: 'set_stem_volume', args: { stemId: id, volume: 1.0 } });
+        }
+      });
+      actions.push({ tool: 'loop_section', args: { enabled: false } });
+
+      return actions;
+    },
+    restoreActions: (snapshot) => {
+      const stemState = useStemStore.getState();
+      const loaded = stemState.loadedStems || [];
+      const actions: PracticeAction[] = [];
+
+      loaded.forEach(id => {
+        if (id !== 'instrumental') {
+          const vol = snapshot.stemVolumes?.[id] ?? 1.0;
+          actions.push({ tool: 'set_stem_volume', args: { stemId: id, volume: vol } });
+        }
+      });
+
+      return actions;
+    },
+  } satisfies PracticeScenario,
+
+  'section-breakdown': {
+    id: 'section-breakdown',
+    title: 'Разбор по секциям',
+    icon: '🗺',
+    meta: {
+      startRate: 1.0,
+      step: 0,
+      targetRate: 1.0,
+      totalPasses: 0, // dynamic — depends on block count
+    },
+    startActions: (_ctx) => {
+      const blocks = useBlocksStore.getState().blocks || [];
+      const firstBlock = blocks[0];
+      if (!firstBlock) return [];
+      return [
+        { tool: 'seek_to_section', args: { sectionType: firstBlock.type, occurrence: 1 } },
+        { tool: 'loop_section', args: { sectionType: firstBlock.type, enabled: true } },
+      ];
+    },
+    perPassActions: (_ctx, progress) => {
+      const blocks = useBlocksStore.getState().blocks || [];
+      const nextIndex = progress.totalPasses;
+      const nextBlock = blocks[nextIndex];
+      if (!nextBlock) return [];
+      return [
+        { tool: 'seek_to_section', args: { sectionType: nextBlock.type } },
+        { tool: 'loop_section', args: { sectionType: nextBlock.type, enabled: true } },
+      ];
+    },
+    isComplete: (progress) => {
+      const blocks = useBlocksStore.getState().blocks || [];
+      return progress.totalPasses >= blocks.length;
+    },
+    onCompleteActions: [
+      { tool: 'loop_section', args: { enabled: false } },
+    ],
+    restoreActions: (snapshot) => snapshot.hadLoop
+      ? []
+      : [{ tool: 'loop_section', args: { enabled: false } }],
+  } satisfies PracticeScenario,
 };
 
 export function getScenario(id: PracticeScenarioId): PracticeScenario | undefined {
   return SCENARIOS[id];
 }
 
-export function getAvailableScenarios(ctx: PracticeContext): {
+/** Русские названия типов блоков — единый маппинг */
+export const BLOCK_TYPE_NAMES: Record<string, string> = {
+  intro: 'Вступление',
+  verse: 'Куплет',
+  prechorus: 'Пре-хорус',
+  chorus: 'Припев',
+  bridge: 'Бридж',
+  interlude: 'Интерлюдия',
+  outro: 'Заключение',
+  unknown: '???',
+};
+
+/** Построить русскую структурную формулу */
+export function getRussianStructureFormula(blocks: { type: string }[] | null): string {
+  if (!blocks || blocks.length === 0) return '';
+  return blocks.map(b => BLOCK_TYPE_NAMES[b.type] || b.type).join(' → ');
+}
+
+/** Сценарии которые РЕАЛИЗОВАНЫ и доступны в runtime */
+export const AVAILABLE_SCENARIO_IDS: readonly PracticeScenarioId[] = [
+  'bpm-ramp',
+  'focus-mix',
+  'section-breakdown',
+] as const;
+
+/** Проверка доступности сценария */
+export function isScenarioAvailable(id: string): boolean {
+  return (AVAILABLE_SCENARIO_IDS as readonly string[]).includes(id);
+}
+
+/** Получить все доступные сценарии */
+export function getAvailableScenarios(): PracticeScenarioId[] {
+  return [...AVAILABLE_SCENARIO_IDS];
+}
+
+export function getScenarioOptions(ctx: PracticeContext): {
   id: PracticeScenarioId;
   title: string;
   icon: string;
@@ -150,4 +319,63 @@ export function resolveTargetBlock(
   // 5. Any block
   const first = blocks[0];
   return { blockId: first.id, blockType: first.type };
+}
+
+/** Smart scenario suggestions based on track structure */
+export interface ScenarioSuggestion {
+  id: PracticeScenarioId;
+  target: string;
+  label: string;
+  reason: string;
+}
+
+export function suggestScenarios(
+  blocks: { type: string }[]
+): ScenarioSuggestion[] {
+  const suggestions: ScenarioSuggestion[] = [];
+  const hasChorus = blocks.some(b => b.type === 'chorus');
+  const hasVerse = blocks.some(b => b.type === 'verse');
+  const blockCount = blocks.length;
+
+  // bpm-ramp — проверяем через реестр
+  if (hasChorus && isScenarioAvailable('bpm-ramp')) {
+    suggestions.push({
+      id: 'bpm-ramp',
+      target: 'chorus',
+      label: '🔥 Разогнать припев',
+      reason: 'Припев — самое энергичное место, идеально для разгона темпа',
+    });
+  }
+
+  if (!hasChorus && hasVerse && isScenarioAvailable('bpm-ramp')) {
+    suggestions.push({
+      id: 'bpm-ramp',
+      target: 'verse',
+      label: '🔥 Разогнать куплет',
+      reason: 'Разгон темпа для проработки',
+    });
+  }
+
+  // focus-mix — проверяем через реестр
+  if (hasVerse && isScenarioAvailable('focus-mix')) {
+    suggestions.push({
+      id: 'focus-mix',
+      target: 'verse',
+      label: '🎚 Разобрать стемы куплета',
+      reason: 'Куплет — хорошее место чтобы услышать каждую партию отдельно',
+    });
+  }
+
+  // section-breakdown — проверяем через реестр
+  if (blockCount >= 5 && isScenarioAvailable('section-breakdown')) {
+    suggestions.push({
+      id: 'section-breakdown',
+      target: 'all',
+      label: '🗺 Пройти весь трек',
+      reason: `${blockCount} секций — пройдём по порядку`,
+    });
+  }
+
+  // Limit to 4 suggestions max
+  return suggestions.slice(0, 4);
 }

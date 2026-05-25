@@ -1059,6 +1059,15 @@
   color: #a3a3a3;
 }
 
+/* Pass Label — current pass description */
+.practiceSessionPassLabel {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #e5e5e5;
+  padding: 2px 0;
+  font-weight: 500;
+}
+
 /* ── Real-time Loop Progress — playhead ── */
 .practiceSessionLoopProgress {
   padding: 0 4px;

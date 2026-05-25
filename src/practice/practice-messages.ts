@@ -7,7 +7,8 @@ import type { PracticeStepResult } from './billy-action-runner';
 
 export function buildStartMessage(
   stepResults: PracticeStepResult[],
-  blockLabel: string
+  blockLabel: string,
+  scenarioId?: string
 ): string {
   const parts: string[] = [];
   const seekOk = stepResults.find(r => r.action.tool === 'seek_to_section' && r.result.success);
@@ -23,6 +24,16 @@ export function buildStartMessage(
 
   if (parts.length === 0) return '⚠️ Не удалось запустить сценарий';
 
+  // Scenario-specific intro
+  if (scenarioId === 'focus-mix') {
+    return `🎚 Фокус на стемы: ${blockLabel}\n${parts.join('\n')}\n\nНачнём с полного микса, потом услышим вокал + каждый инструмент отдельно!`;
+  }
+
+  if (scenarioId === 'section-breakdown') {
+    return `🗺 Разбор по секциям\n${parts.join('\n')}\n\nПройдём все секции по порядку. Авто-переход каждый круг.`;
+  }
+
+  // Default: bpm-ramp
   return `🔥 Разгон ${blockLabel} начат!\n${parts.join('\n')}\n\nЖми "Следующий круг", когда готов ускориться.`;
 }
 

@@ -7,19 +7,7 @@
  */
 
 import type { AiExpert } from '../../types/track-meta.types';
-import { getStructureFormula } from '../../utils/structure-formula';
-
-/** Shared Russian block name mapping — используется в buildTrackContext */
-const RU_BLOCK_NAMES: Record<string, string> = {
-  intro: 'Вступление',
-  verse: 'Куплет',
-  prechorus: 'Пре-хорус',
-  chorus: 'Припев',
-  bridge: 'Бридж',
-  interlude: 'Интерлюдия',
-  outro: 'Заключение',
-  unknown: 'Неизвестный блок',
-};
+import { getRussianStructureFormula, BLOCK_TYPE_NAMES } from '../../practice/practice-scenarios';
 
 const BASE_KNOWLEDGE = `# PRODUCT: beLive
 
@@ -157,12 +145,12 @@ Example: "[SEARCH: Linkin Park band]" → then continue with retrieved facts.
 Ты можешь предлагать пользователю тренировки. Сценарий — это
 запланированная последовательность действий которую ты ведёшь.
 
-Доступные сценарии:
-1. bpm-ramp — Прогон с разгоном: loop блока + старт на 80% +5% за круг до 100%
+Доступные сценарии — читай из контекста трека
 
-⚠️ Другие сценарии ещё не подключены.
-НЕ предлагать: focus-mix, section-breakdown, random-blocks.
-Если пользователь спрашивает про недоступный сценарий → "Этот сценарий скоро будет, а пока могу настроить темп и повтор вручную."
+Смотри в контекст трека — поле "Доступные сценарии" в низу контекста.
+Предлагай ТОЛЬКО сценарии из этого списка.
+Если сценария нет в списке — НЕ предлагай его, даже если ты знаешь что такой сценарий бывает.
+Если пользователь просит недоступный → "Скоро будет, а пока могу настроить темп и повтор вручную."
 
 Формат предложения сценария (ТОЛЬКО так!):
 [ACTION: 🔥 Разогнать припев|SCENARIO:bpm-ramp:chorus]
@@ -180,6 +168,8 @@ Example: "[SEARCH: Linkin Park band]" → then continue with retrieved facts.
 3. Во время активной тренировки НЕ генерируй кнопки управления сценарием — это делает PracticeSessionCard
 4. Если что-то не сработало — 1 короткое признание + 1 следующий шаг. Без длинных оправданий
 5. НЕ давай вокальных советов — ты не слышишь голос
+6. Структурную формулу ВСЕГДА давай по-русски: "Куплет → Пре-хорус → Припев", НЕ "A → P → B"
+   Английские буквы в структурной формуле ЗАПРЕЩЕНЫ в ответах пользователю
 
 Примеры ошибок:
 ❌ "Отлично, теперь бит впереди..." — если tool result не подтвердил изменение
@@ -224,6 +214,16 @@ Example: "[SEARCH: Linkin Park band]" → then continue with retrieved facts.
 - Не давай советы по вокалу — даже в контексте тренировки
 
 Когда тренировка завершена (practiceStatus = completed) — можно снова быть разговорчивым.
+
+# УПРАВЛЕНИЕ ГРОМКОСТЬЮ — ВАЖНО
+
+Громкость вокала и инструмента пользователь может менять сам в любой момент — слайдеры внизу экрана.
+
+Когда предлагаешь focus-mix или меняешь громкость:
+- ВСЕГДА предупреждай: "Сейчас уберу вокал, чтобы ты услышал только минус"
+- ПОСЛЕ изменения: "Вокал убран. Можешь вернуть слайдером внизу"
+- НЕ меняй громкость без предупреждения
+- Напоминай: "Громкость всегда под твоим контролем"
 `;
 
 const BILLY_PERSONALITY = `
@@ -379,7 +379,7 @@ export function buildTrackContext(params: {
   const parts: string[] = [];
   parts.push(`Трек: "${params.title}"${params.artist && params.artist !== 'Разное' ? `, ${params.artist}` : ''}`);
 
-  const formula = getStructureFormula(params.blocks);
+  const formula = getRussianStructureFormula(params.blocks);
   if (formula) {
     parts.push(`Структура: ${formula}`);
     parts.push(`Всего секций: ${params.blocks!.length}`);
@@ -401,7 +401,7 @@ export function buildTrackContext(params: {
   }
 
   if (params.activeBlockType) {
-    parts.push(`Пользователь сейчас в: ${RU_BLOCK_NAMES[params.activeBlockType] || params.activeBlockType}`);
+    parts.push(`Пользователь сейчас в: ${BLOCK_TYPE_NAMES[params.activeBlockType] || params.activeBlockType}`);
   }
 
   // --- RUNTIME STATE ---
@@ -411,7 +411,7 @@ export function buildTrackContext(params: {
   }
   if (params.isLooping) {
     const loopLabel = params.loopBlockType
-      ? `Повтор: включён (${RU_BLOCK_NAMES[params.loopBlockType] || params.loopBlockType})`
+      ? `Повтор: включён (${BLOCK_TYPE_NAMES[params.loopBlockType] || params.loopBlockType})`
       : 'Повтор: включён';
     parts.push(loopLabel);
   }

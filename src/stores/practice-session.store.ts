@@ -8,8 +8,10 @@ import { create } from 'zustand';
 import { useAudioStore } from './audio.store';
 import { useModeStore } from './mode.store';
 import { useLoopStore } from './loop.store';
+import { useBlocksStore } from './blocks.store';
 import { useStemStore } from '../stem/stem.store';
 import type { PracticeScenarioId, PracticeContext, PracticeProgress } from '../practice/practice-scenarios';
+import { BLOCK_TYPE_NAMES } from '../practice/practice-scenarios';
 
 /* ═══ Types ═══ */
 
@@ -19,6 +21,7 @@ export interface PracticeSnapshot {
   stemVolumes: Record<string, number>;
   hadLoop: boolean;
   vocalMixEnabled: boolean;
+  stemsEnabled: boolean;
 }
 
 export interface PracticeSessionState {
@@ -32,6 +35,8 @@ export interface PracticeSessionState {
   snapshot: PracticeSnapshot | null;
   /** Human-readable label for the current practice */
   label: string | null;
+  /** Current pass description (e.g. "80%", "Только минус", "Куплет") */
+  passLabel: string | null;
 
   // ── Progress Tracking (Wave G) ──
   /** Number of completed passes */
@@ -85,6 +90,7 @@ function captureSnapshot(): PracticeSnapshot {
     stemVolumes: { ...stemState.stemVolumes },
     hadLoop: loopState.isLooping,
     vocalMixEnabled: audioState.vocalMixEnabled ?? false,
+    stemsEnabled: stemState.stemsEnabled,
   };
 }
 
@@ -141,6 +147,11 @@ function restoreSnapshot(snapshot: PracticeSnapshot): void {
       useModeStore.getState().setMode(snapshot.mode as any);
     }
   }
+
+  // 6. Restore stems enabled state
+  if (snapshot.stemsEnabled !== undefined) {
+    useStemStore.setState({ stemsEnabled: snapshot.stemsEnabled });
+  }
 }
 
 /* ═══ Store ═══ */
@@ -185,6 +196,7 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
   targetBlockId: null,
   snapshot: null,
   label: null,
+  passLabel: null,
   passesCount: 0,
   currentRate: 1.0,
   practiceStatus: 'idle' as const,
@@ -197,7 +209,23 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
       get().endPractice();
     }
     const snapshot = preCapturedSnapshot || captureSnapshot();
-    const totalExpectedPasses = scenarioId === 'bpm-ramp' ? 4 : 4;
+    // Scenario-specific start rate (bpm-ramp=0.8, others=1.0)
+    let startRate = 0.8;
+    if (scenarioId === 'focus-mix' || scenarioId === 'section-breakdown') {
+      startRate = 1.0;
+    }
+    let totalExpectedPasses = 4;
+    if (scenarioId === 'focus-mix') {
+      const stemState = useStemStore.getState();
+      const musicStems = (stemState.loadedStems || []).filter(id =>
+        id !== 'vocals' && id !== 'backing' && id !== 'instrumental'
+      );
+      totalExpectedPasses = musicStems.length;
+    }
+    else if (scenarioId === 'section-breakdown') {
+      const blocks = useBlocksStore.getState().blocks || [];
+      totalExpectedPasses = blocks.length || 4;
+    }
     set({
       isActive: true,
       scenarioId,
@@ -205,11 +233,12 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
       snapshot,
       label: label ?? scenarioId,
       passesCount: 0,
-      currentRate: 0.8,
+      currentRate: startRate,
       practiceStatus: 'running',
       totalExpectedPasses,
       isAutoAdvance: true,
       isPassInProgress: false,
+      passLabel: scenarioId === 'focus-mix' ? 'Полный микс' : null,
     });
     startAutoPassDetection();
     emitPracticeEvent('started', { scenarioId });
@@ -323,8 +352,33 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
         console.warn('[PracticeStore] Loop cleared during nextPass');
       }
 
-      set({ passesCount: newPasses, currentRate: newRate });
-      emitPracticeEvent('pass-complete', { passesCount: newPasses, currentRate: newRate });
+      // Compute passLabel based on scenario
+      let passLabel: string | null = null;
+      if (s.scenarioId === 'focus-mix') {
+        const stemState = useStemStore.getState();
+        const musicStems = (stemState.loadedStems || []).filter(id =>
+          id !== 'vocals' && id !== 'backing' && id !== 'instrumental'
+        );
+        const RU_STEM_LABELS: Record<string, string> = {
+          bass: 'Бас', drums: 'Барабаны', guitar: 'Гитара', keys: 'Клавиши', other: 'Прочее',
+        };
+        const focusIndex = newPasses - 1;
+        if (focusIndex >= 0 && focusIndex < musicStems.length) {
+          const stemId = musicStems[focusIndex];
+          passLabel = `Вокал + ${RU_STEM_LABELS[stemId] || stemId}`;
+        }
+      } else if (s.scenarioId === 'section-breakdown') {
+        const blocks = useBlocksStore.getState().blocks || [];
+        const currentBlock = blocks[newPasses];
+        if (currentBlock) {
+          passLabel = BLOCK_TYPE_NAMES[currentBlock.type] || currentBlock.type;
+        }
+      } else if (s.scenarioId === 'bpm-ramp') {
+        passLabel = `${Math.round(newRate * 100)}%`;
+      }
+
+      set({ passesCount: newPasses, currentRate: newRate, passLabel });
+      emitPracticeEvent('pass-complete', { passesCount: newPasses, currentRate: newRate, passLabel });
 
       // Check completion
       if (scenario.isComplete(progress, ctx)) {

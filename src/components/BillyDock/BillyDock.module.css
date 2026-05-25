@@ -3,15 +3,21 @@
 /* ── Root container ── */
 .root {
   position: fixed;
-  right: 16px;
-  bottom: calc(var(--bl-deck-height, 48px) - 10px);
+  left: 0;
+  top: 0;
   z-index: 999996;
   width: 64px;
   height: 91px;
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
-  transition: opacity 0.2s ease, bottom 0.15s ease;
+  /* transform задаётся через JS: translate(pixelX, pixelY) scaleX(facing) */
+  /* INV-BILLY-INITPOS: начальная позиция = useLayoutEffect */
+}
+
+/* will-change: transform только когда Билли в движении */
+.moving {
+  will-change: transform;
 }
 
 .root:hover {

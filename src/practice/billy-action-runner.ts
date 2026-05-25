@@ -69,7 +69,6 @@ export async function runPracticeActions(
 
     try {
       const toolResult = await executeToolCall(action.tool, action.args);
-
       const stepResult: PracticeStepResult = {
         index: i,
         action,

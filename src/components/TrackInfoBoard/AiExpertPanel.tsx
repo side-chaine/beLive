@@ -24,7 +24,7 @@ import {
   type QuickReply,
 } from './ai-tools';
 import type { PracticeScenarioId } from '../../practice/practice-scenarios';
-import { getScenario, resolveTargetBlock } from '../../practice/practice-scenarios';
+import { getScenario, resolveTargetBlock, suggestScenarios, getAvailableScenarios, getRussianStructureFormula, BLOCK_TYPE_NAMES } from '../../practice/practice-scenarios';
 import { runPracticeActions } from '../../practice/billy-action-runner';
 import { PracticeSessionCard } from './PracticeSessionCard';
 import { buildStartMessage, buildErrorMessage } from '../../practice/practice-messages';
@@ -101,6 +101,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
   const isSessionActive = usePracticeStore(s => s.isActive);
   const [inputValue, setInputValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const lastGreetedTrackId = useRef<string | null>(null);
 
   // Compact mode — always vocal-coach, no tabs
   useEffect(() => {
@@ -108,6 +109,50 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
       setActiveExpert('vocal-coach');
     }
   }, [compact, activeExpert]);
+
+  // Proactive greeting on track load — React state driven, not DOM event
+  useEffect(() => {
+    const trackId = currentTrack?.id || currentTrack?.title;
+    if (!trackId) return; // no track yet
+    
+    // Already greeted for this track
+    if (lastGreetedTrackId.current === trackId) return;
+    lastGreetedTrackId.current = trackId;
+
+    // Don't greet if practice is active
+    const practiceState = usePracticeStore.getState();
+    if (practiceState.isActive) return;
+
+    const parsed = parseTrackName(currentTrack?.title || '');
+    const currentBlocks = useBlocksStore.getState().blocks || [];
+    const formula = getRussianStructureFormula(currentBlocks);
+
+    // Smart suggestions
+    const suggestions = suggestScenarios(currentBlocks);
+
+    // Build greeting
+    const title = parsed.title || currentTrack?.title || 'Трек';
+    const artist = parsed.artist && parsed.artist !== 'Разное' ? ` — ${parsed.artist}` : '';
+    
+    let greeting = `🎵 ${title}${artist}\n`;
+    if (formula) {
+      greeting += `Структура: ${formula}\n`;
+    }
+    greeting += '\nС чего начнём?\n';
+
+    // Add scenario buttons
+    suggestions.forEach(s => {
+      greeting += `[ACTION: ${s.label}|SCENARIO:${s.id}:${s.target}]\n`;
+    });
+
+    // Add navigation buttons if no suggestions
+    if (suggestions.length === 0) {
+      greeting += '[ACTION: ▶ К припеву|SEEK:chorus:1]\n';
+      greeting += '[ACTION: 🔄 На повтор|LOOP:chorus]\n';
+    }
+
+    addAiMessage({ role: 'assistant', content: greeting });
+  }, [currentTrack]);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -164,7 +209,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
       practiceStatus: practiceState.practiceStatus,
       practiceRate: practiceState.currentRate,
       practicePasses: practiceState.passesCount,
-      availableScenarios: ['bpm-ramp'],
+      availableScenarios: getAvailableScenarios(),
     });
   }, [currentTrack, blocksList, effectiveBlock, meta]);
 
@@ -538,17 +583,18 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
           }
 
           // All succeeded — start practice with pre-captured snapshot
-          const ruNames: Record<string, string> = {
-            intro: 'Вступление', verse: 'Куплет', prechorus: 'Пре-хорус',
-            chorus: 'Припев', bridge: 'Бридж', interlude: 'Интерлюдия', outro: 'Заключение',
-          };
-          const blockLabel = ruNames[target.blockType] || target.blockType;
+          const blockLabel = BLOCK_TYPE_NAMES[target.blockType] || target.blockType;
 
-          usePracticeStore.getState().startPractice(scenarioId, `🔥 Разгон ${blockLabel}`, snapshotBefore, target.blockId);
+          const SCENARIO_LABELS: Record<string, string> = {
+            'bpm-ramp': `🔥 Разгон ${blockLabel}`,
+            'focus-mix': `🎚 Фокус: ${blockLabel}`,
+            'section-breakdown': `🗺 Разбор трека`,
+          };
+          usePracticeStore.getState().startPractice(scenarioId, SCENARIO_LABELS[scenarioId] || `🔥 ${blockLabel}`, snapshotBefore, target.blockId);
 
           addAiMessage({
             role: 'assistant',
-            content: buildStartMessage(stepResults, blockLabel),
+            content: buildStartMessage(stepResults, blockLabel, scenarioId),
           });
 
         } catch (err: any) {

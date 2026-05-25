@@ -155,6 +155,8 @@ export async function executeToolCall(
       return executeSwitchMode(args);
     case 'toggle_vocal_mix':
       return executeToggleVocalMix(args);
+    case 'ensure_stems_enabled':
+      return executeEnsureStemsEnabled();
     default:
       return { tool: toolName, success: false, message: `Unknown tool: ${toolName}` };
   }
@@ -598,9 +600,8 @@ async function executeLoopSection(
 async function executeSetStemVolume(
   args: Record<string, unknown>
 ): Promise<ToolCallResult> {
-  const stemId = normalizeStemId(String(args.stemId || ''));
+  const stemId = normalizeStemId(String(args.stemId ?? args.stem ?? ''));
   const volume = Math.max(0, Math.min(1, Number(args.volume ?? 0)));
-
   const ae = (window as any).audioEngine;
   if (ae?.setStemVolume) {
     ae.setStemVolume(stemId, volume);
@@ -620,6 +621,16 @@ async function executeSetStemVolume(
     success: true,
     message: `${label}: ${pct}%${volume === 0 ? ' (мьют)' : ''}`,
   };
+}
+
+async function executeEnsureStemsEnabled(): Promise<ToolCallResult> {
+  const stemStore = useStemStore.getState();
+  if (stemStore.stemsEnabled) {
+    return { tool: 'ensure_stems_enabled', success: true, message: 'Стемы уже включены' };
+  }
+  
+  useStemStore.setState({ stemsEnabled: true });
+  return { tool: 'ensure_stems_enabled', success: true, message: 'Стемы включены' };
 }
 
 async function executeSwitchMode(

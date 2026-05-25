@@ -1,6 +1,9 @@
-import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import { useBillyState, type BillyAnimation } from '../../hooks/useBillyState';
+import { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
+import { useBillyAnimation, useBillyIsLooping, useBillyIsRecording, useBillyTrackInfoOpen, type BillyAnimation } from '../../hooks/useBillyState';
 import { useBillyAudioReactive } from '../../hooks/useBillyAudioReactive';
+import { useBillyLocomotion } from '../../hooks/useBillyLocomotion';
+import { getInitialPixelPosition } from '../../billy/billy-runtime';
+import { useBillyRuntimeStore } from '../../billy/billy-runtime.store';
 import { useTrackInfoStore } from '../../stores/trackInfo.store';
 import { useDeckStore } from '../../stores/deck.store';
 import { useTrackStore } from '../../stores/track.store';
@@ -30,7 +33,11 @@ interface BillyRefs {
 }
 
 export function BillyDock() {
-  const { animation, isLooping, isRecording, trackInfoOpen } = useBillyState();
+  const animation = useBillyAnimation();
+  const isLooping = useBillyIsLooping();
+  const isRecording = useBillyIsRecording();
+  const trackInfoOpen = useBillyTrackInfoOpen();
+  const runtimeMode = useBillyRuntimeStore(s => s.mode);
   const [clickJump, setClickJump] = useState(false);
   const jumpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -54,21 +61,24 @@ export function BillyDock() {
   }, []);
 
   // ── Block color from active block ──
-  const blocks = useBlocksStore(s => s.blocks);
-  const activeLineIndex = useLyricsStore(s => s.activeLineIndex);
-
-  const activeBlockColor = useMemo(() => {
-    if (activeLineIndex < 0 || !blocks?.length) return 'transparent';
-    for (const block of blocks) {
-      if (block.lineIndices?.includes(activeLineIndex)) {
+  const activeBlockColor = useBlocksStore(s => {
+    const idx = useLyricsStore.getState().activeLineIndex;
+    if (idx < 0 || !s.blocks?.length) return 'transparent';
+    for (const block of s.blocks) {
+      if (block.lineIndices?.includes(idx)) {
         return getBlockTypeConfig(block.type).color;
       }
     }
     return 'transparent';
-  }, [activeLineIndex, blocks]);
+  });
 
   // ── Effective animation ──
-  const effectiveAnimation: EffectiveAnimation = clickJump ? 'jump' : animation;
+  // BillyAnimation из useBillyState переопределяется runtime mode Position Engine
+  const effectiveAnimation: EffectiveAnimation = clickJump ? 'jump' :
+    runtimeMode === 'groove' ? 'dance' :
+    runtimeMode === 'think' ? 'think' :
+    runtimeMode === 'sleep' ? 'sleep' :
+    'idle';
   const stateClass = STATE_CLASS[effectiveAnimation] || styles.idle;
 
   // ── Click handler ──
@@ -109,6 +119,17 @@ export function BillyDock() {
     }
   }, [handleClick]);
 
+  // ── Locomotion ref ──
+  const billyRootRef = useRef<HTMLDivElement>(null);
+
+  // INV-BILLY-INITPOS: начальная позиция до первого paint
+  useLayoutEffect(() => {
+    if (billyRootRef.current) {
+      const { pixelX, pixelY } = getInitialPixelPosition();
+      billyRootRef.current.style.transform = `translate(${pixelX}px, ${pixelY}px)`;
+    }
+  }, []);
+
   // ── Audio-reactive refs (stable object via useRef) ──
   const billySvgRef = useRef<SVGSVGElement>(null);
   const bodyInnerRef = useRef<SVGGElement>(null);
@@ -134,11 +155,15 @@ export function BillyDock() {
   // ── Audio-reactive micro-movements ──
   useBillyAudioReactive(billyRefs, effectiveAnimation);
 
+  // ── Locomotion (Position Engine) ──
+  useBillyLocomotion({ rootRef: billyRootRef });
+
   // ── Glow classes ──
   const hasGlow = activeBlockColor !== 'transparent';
 
   return (
     <div
+      ref={billyRootRef}
       className={[
         styles.root,
         stateClass,

@@ -16,6 +16,7 @@ export function PracticeSessionCard() {
   const passesCount = usePracticeStore(s => s.passesCount);
   const currentRate = usePracticeStore(s => s.currentRate);
   const label = usePracticeStore(s => s.label);
+  const passLabel = usePracticeStore(s => s.passLabel);
   const totalExpectedPasses = usePracticeStore(s => s.totalExpectedPasses);
   const nextPass = usePracticeStore(s => s.nextPass);
   const repeatPass = usePracticeStore(s => s.repeatPass);
@@ -125,6 +126,12 @@ export function PracticeSessionCard() {
                 }`}
               />
             ))}
+          </div>
+        )}
+
+        {passLabel && (
+          <div className={styles.practiceSessionPassLabel}>
+            {passLabel}
           </div>
         )}
         

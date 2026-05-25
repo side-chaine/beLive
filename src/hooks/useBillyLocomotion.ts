@@ -12,6 +12,12 @@ import { useTrackInfoStore } from '../stores/trackInfo.store';
 import { useTrackStore } from '../stores/track.store';
 import { POSITION_DEADZONE, RESPONSIVENESS, LOCOMOTION_FPS } from '../billy/billy.constants';
 
+// ── Module-level rAF guard for HMR / StrictMode ──
+// Prevents duplicate rAF loops when React re-mounts the effect
+// without proper cleanup (fast-refresh / StrictMode edge cases).
+let _loopRunning = false;
+let _loopRafId: number | null = null;
+
 // ═══ Billy Locomotion Hook ═══
 // INV-BILLY-TICK: tickBilly не знает откуда её зовут
 // INV-BILLY-NO-RERENDER: Пишет transform напрямую в DOM через ref
@@ -81,7 +87,7 @@ export function useBillyLocomotion(refs: LocomotionRefs) {
         zone: storeState.zone,
         facing: storeState.facing,
         isMoving: hotState.isMoving,
-        modeTimer: storeState.modeTimer,
+        modeTimer: hotState.modeTimer,  // singleton, не store
         velocity: hotState.velocity,
         zones: storeState.zones,
       },
@@ -92,7 +98,7 @@ export function useBillyLocomotion(refs: LocomotionRefs) {
     // 6. Convert to pixels
     const { pixelX, pixelY } = computePixelPosition(result.posX, result.posY);
 
-    // 7. Update hot state (singleton)
+    // 7. Update hot state (singleton) — modeTimer тоже здесь, не в store
     setBillyHotState({
       posX: result.posX,
       posY: result.posY,
@@ -102,6 +108,7 @@ export function useBillyLocomotion(refs: LocomotionRefs) {
       pixelY,
       velocity: result.velocity,
       isMoving: result.isMoving,
+      modeTimer: result.modeTimer,
     });
 
     // 8. Write transform directly to DOM (INV-BILLY-NO-RERENDER)
@@ -112,14 +119,16 @@ export function useBillyLocomotion(refs: LocomotionRefs) {
     }
     rootEl.style.transform = `translate(${pixelX}px, ${pixelY}px) scaleX(${scaleX})`;
 
-    // 9. Write .moving class (for will-change)
-    if (result.isMoving) {
+    // 9. Write .moving class (for will-change) — с guard от лишних мутаций
+    const hasMoving = rootEl.classList.contains('moving');
+    if (result.isMoving && !hasMoving) {
       rootEl.classList.add('moving');
-    } else {
+    } else if (!result.isMoving && hasMoving) {
       rootEl.classList.remove('moving');
     }
 
     // 10. Update store ONLY on mode/zone/facing change (low-freq)
+    // modeTimer живёт в singleton (hotState), не в store — нет store write на каждый tick
     const modeChanged = result.mode !== storeState.mode;
     const zoneChanged = result.zone !== storeState.zone;
     const facingChanged = result.facing !== storeState.facing;
@@ -130,19 +139,21 @@ export function useBillyLocomotion(refs: LocomotionRefs) {
         prevMode: result.prevMode,
         zone: result.zone,
         facing: result.facing,
-        modeTimer: result.modeTimer,
       });
-    } else if (result.modeTimer !== storeState.modeTimer) {
-      // Timer update only (cheap)
-      useBillyRuntimeStore.setState({ modeTimer: result.modeTimer });
     }
   });
 
   // ── rAF Runner (INV-BILLY-TICK: tick не знает об оркестраторе) ──
   useEffect(() => {
+    // Module-level guard: prevent duplicate rAF loops on HMR / StrictMode
+    if (_loopRunning) {
+      console.warn('[Billy] useBillyLocomotion: loop already running — skipping duplicate (HMR/StrictMode guard)');
+      return;
+    }
+    _loopRunning = true;
+
     console.log('[Billy] rAF loop useEffect starting');
     // W2: собственный rAF. W3: миграция в scheduler — одна строка
-    let rafId: number;
     const loop = () => {
       frameCountRef.current++;
 
@@ -152,13 +163,17 @@ export function useBillyLocomotion(refs: LocomotionRefs) {
         tickBilly.current();
       }
 
-      rafId = requestAnimationFrame(loop);
+      _loopRafId = requestAnimationFrame(loop);
     };
 
-    rafId = requestAnimationFrame(loop);
+    _loopRafId = requestAnimationFrame(loop);
 
     return () => {
-      cancelAnimationFrame(rafId);
+      _loopRunning = false;
+      if (_loopRafId !== null) {
+        cancelAnimationFrame(_loopRafId);
+        _loopRafId = null;
+      }
     };
   }, []);
 
