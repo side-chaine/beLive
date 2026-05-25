@@ -125,3 +125,13 @@ export const REST_DURATION = 3_000;           // ms
 // Click-to-summon (W3+): right-click → бежит
 // Live mode: Billy HIDDEN (opacity 0, animations none)
 export const LIVE_MODE_BILLY_HIDDEN = true;
+
+// ── Eye Tracking ──
+export const PUPIL_OFFSET_MAX_X = 6;     // ±6px horizontal
+export const PUPIL_OFFSET_MAX_Y = 3;     // ±3px vertical
+export const PUPIL_RADIUS_BASE = 6.5;
+export const PUPIL_RADIUS_MIN = 3;
+export const PUPIL_RADIUS_MAX = 10;
+export const PUPIL_FOCUS_DELTA = -1;     // Control Mode → сужение
+export const PUPIL_CELEBRATE_DELTA = 1.5;// Celebration → расширение (W7)
+export const PUPIL_BEAT_DELTA = 0.5;     // Audio beat → расширение (Max+)

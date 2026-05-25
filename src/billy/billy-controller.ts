@@ -31,10 +31,12 @@ export interface BillyInputs {
   activeLineIndex: number;
   activeBlockType: string | null;
   mode: string; // app mode: rehearsal/karaoke/concert/live
-  // W3+ reserved (not used yet):
-  // controlDirection: 'left' | 'right' | 'none';
-  // jumpRequest: boolean;
-  // celebrateTrigger: string | null;
+
+  // W3 — Control Mode (INV-BILLY-CTRL: modifier, not mode)
+  controlActive: boolean;
+  controlDirection: 'left' | 'right' | 'none';
+  jumpRequest: 'single' | 'double' | null;
+  attackRequest: string | null; // 'limb' | null (W5: Mic Grab)
 }
 
 // ── Step Result ──

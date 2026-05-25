@@ -6,7 +6,7 @@ import {
   getPlaybackVisualScheduler,
   type PlaybackVisualFrameWriter,
 } from '../playback';
-import { getBillyHotState, resetBillyState } from './billy-runtime';
+import { getBillyHotState, resetBillyState, invalidateLineCache } from './billy-runtime';
 import { useBillyRuntimeStore } from './billy-runtime.store';
 
 // ═══ Billy Bridge ═══
@@ -50,6 +50,7 @@ const writer: PlaybackVisualFrameWriter = {
 // ── Event handlers ──
 function handleTrackChange(): void {
   resetBillyState();
+  invalidateLineCache();
   useBillyRuntimeStore.getState().setMode('sleep');
   // Force publish after reset
   writer.write();

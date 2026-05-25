@@ -15,6 +15,21 @@
   /* INV-BILLY-INITPOS: начальная позиция = useLayoutEffect */
 }
 
+/* ═══ Billy Color System — Data-Driven Foundation ═══ */
+/* Defaults (normal mode) — door to future customization */
+.root {
+  --bl-billy-eye-bg: white;
+  --bl-billy-pupil: #0a0a0a;
+  --bl-billy-mood: #666666;
+}
+
+/* Focus Mode — плавный переход глаз через CSS vars */
+[data-billy-control="true"] .root {
+  --bl-billy-eye-bg: #ff4444;
+  --bl-billy-pupil: #ffffff;
+  --bl-billy-mood: #f97316;
+}
+
 /* will-change: transform только когда Билли в движении */
 .moving {
   will-change: transform;
@@ -91,6 +106,11 @@
 
 .eyes {
   transform-origin: 70px 68px;
+}
+
+/* Eye background transition — smooth Focus Mode */
+.eyes ellipse {
+  transition: fill 0.3s ease;
 }
 
 .armL {
@@ -510,6 +530,41 @@
 
 .terminatorGlow {
   transform-box: view-box;
+  transition: opacity 0.3s ease;
+}
+
+/* Focus Mode → terminator glow pulse */
+[data-billy-control="true"] .terminatorGlow {
+  animation: terminatorGlowPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes terminatorGlowPulse {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.4; }
+}
+
+/* ── Scan Line — Focus Mode horizontal sweep ── */
+.scanLine {
+  transform-box: view-box;
+  transition: opacity 0.3s ease;
+}
+
+[data-billy-control="true"] .scanLine {
+  animation: scanLineSweep 1.5s linear infinite;
+}
+
+@keyframes scanLineSweep {
+  0%   { transform: translateX(-56px); opacity: 0; }
+  15%  { opacity: 0.7; }
+  85%  { opacity: 0.7; }
+  100% { transform: translateX(56px); opacity: 0; }
+}
+
+/* Scan line tier gates — override focus mode animation */
+[data-visual-tier="lite"] .scanLine,
+[data-visual-tier="balanced"] .scanLine {
+  animation: none !important;
+  opacity: 0 !important;
 }
 
 .auraRing {
@@ -519,6 +574,14 @@
 .handFlashL, .handFlashR {
   transform-box: fill-box;
   transform-origin: center;
+}
+
+/* ── Mood Dot — peripheral status indicator ── */
+.moodDot {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: fill 0.3s ease;
+  filter: drop-shadow(0 0 3px var(--bl-billy-mood, #666666));
 }
 
 /* ── 1. BACKFLIP — Сальто мажор ── */
@@ -763,12 +826,14 @@
 }
 
 [data-visual-tier="lite"] .terminatorGlow {
-  animation: none;
+  animation: none !important;
 }
 
-[data-visual-tier="lite"] .scanLine {
-  opacity: 0;
+[data-visual-tier="balanced"] .terminatorGlow {
+  animation: none !important;
 }
+
+
 
 [data-visual-tier="lite"] .walk .armL { animation: none; transform: rotate(-4deg); }
 [data-visual-tier="lite"] .walk .armR { animation: none; transform: rotate(4deg); }
@@ -808,9 +873,7 @@
   filter: none;
 }
 
-[data-visual-tier="balanced"] .scanLine {
-  opacity: 0;
-}
+
 
 /* ═══ Accessibility: reduced motion ═══ */
 @media (prefers-reduced-motion: reduce) {

@@ -1,7 +1,8 @@
-import { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useBillyAnimation, useBillyIsLooping, useBillyIsRecording, useBillyTrackInfoOpen, type BillyAnimation } from '../../hooks/useBillyState';
 import { useBillyAudioReactive } from '../../hooks/useBillyAudioReactive';
 import { useBillyLocomotion } from '../../hooks/useBillyLocomotion';
+import { useBillyControl } from '../../hooks/useBillyControl';
 import { getInitialPixelPosition } from '../../billy/billy-runtime';
 import { useBillyRuntimeStore } from '../../billy/billy-runtime.store';
 import { useTrackInfoStore } from '../../stores/trackInfo.store';
@@ -167,14 +168,48 @@ export function BillyDock() {
   billyRefs.current.armLInner = armLInnerRef.current;
   billyRefs.current.armRInner = armRInnerRef.current;
 
+  // ── Eye Tracking refs ──
+  const pupilLRef = useRef<SVGCircleElement>(null);
+  const pupilRRef = useRef<SVGCircleElement>(null);
+
+  const handlePupilUpdate = useCallback((offsetX: number, offsetY: number, radius: number) => {
+    const pl = pupilLRef.current;
+    const pr = pupilRRef.current;
+    if (pl) {
+      pl.setAttribute('cx', String(55 + offsetX));
+      pl.setAttribute('cy', String(69 + offsetY));
+      pl.setAttribute('r', String(radius));
+    }
+    if (pr) {
+      pr.setAttribute('cx', String(89 + offsetX));
+      pr.setAttribute('cy', String(69 + offsetY));
+      pr.setAttribute('r', String(radius));
+    }
+    // ── DIAGNOSTIC (temporary) ──
+    if (!pl || !pr) {
+      console.warn('[Billy] pupil refs not ready:', { pl: !!pl, pr: !!pr });
+    }
+  }, []);
+
   // ── Audio-reactive micro-movements ──
   useBillyAudioReactive(billyRefs, effectiveAnimation);
 
   // ── Locomotion (Position Engine) ──
-  useBillyLocomotion({ rootRef: billyRootRef });
+  useBillyLocomotion({ rootRef: billyRootRef, onPupilUpdate: handlePupilUpdate });
 
   // ── Glow classes ──
   const hasGlow = activeBlockColor !== 'transparent';
+
+  // ── Mood Color (for Mood Dot) — non-reactive via data-attr read, OK for current step ──
+  const controlActive = useBillyControl();
+  const moodColor = useMemo(() => {
+    if (trackInfoOpen) return '#9b59b6';  // purple — board open
+    if (effectiveAnimation === 'sleep') return '#6366f1';  // indigo
+    if (effectiveAnimation === 'think') return '#3b82f6';  // blue
+    if (effectiveAnimation === 'dance') return '#22c55e';  // green
+    if (controlActive) return '#f97316';                    // orange — focus
+    return '#666666';                                        // gray — idle
+  }, [effectiveAnimation, trackInfoOpen, controlActive]);
 
   return (
     <div
@@ -186,7 +221,10 @@ export function BillyDock() {
         isLooping ? styles.loopActive : '',
         isRecording ? styles.recActive : '',
       ].filter(Boolean).join(' ')}
-      style={{ '--bl-billy-block-color': activeBlockColor } as React.CSSProperties}
+      style={{
+        '--bl-billy-block-color': activeBlockColor,
+        '--bl-billy-mood': moodColor,
+      } as React.CSSProperties}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       title="Спроси Билли"
@@ -268,6 +306,10 @@ export function BillyDock() {
               <ellipse className={styles.terminatorGlow}
                 cx="70" cy="68" rx="40" ry="16"
                 fill="#ff4444" opacity="0"/>
+              {/* Focus Mode scan line — horizontal sweep */}
+              <line className={styles.scanLine}
+                x1="42" y1="68" x2="98" y2="68"
+                stroke="#ff4444" strokeWidth="1.5" opacity="0"/>
               {/* Celebration aura ring */}
               <ellipse className={styles.auraRing}
                 cx="70" cy="100" rx="45" ry="55"
@@ -283,11 +325,11 @@ export function BillyDock() {
               <circle className={styles.loopDot} cx="70" cy="103" r="3.5" fill="#f97316"/>
               {/* Глаза */}
               <g className={`${styles.eyes} ${hasGlow ? styles.eyesGlow : ''}`}>
-                <ellipse cx="53" cy="68" rx="11" ry="12" fill="white"/>
-                <ellipse cx="87" cy="68" rx="11" ry="12" fill="white"/>
+                <ellipse cx="53" cy="68" rx="11" ry="12" fill="var(--bl-billy-eye-bg, white)" className={styles.eyeBg}/>
+                <ellipse cx="87" cy="68" rx="11" ry="12" fill="var(--bl-billy-eye-bg, white)" className={styles.eyeBg}/>
                 {/* Зрачки — отдельные circle для Phase 1.5 eye tracking */}
-                <circle cx={55} cy={69} r="6.5" fill="#0a0a0a" className={styles.pupilL}/>
-                <circle cx={89} cy={69} r="6.5" fill="#0a0a0a" className={styles.pupilR}/>
+                <circle ref={pupilLRef} cx={55} cy={69} r="6.5" fill="var(--bl-billy-pupil, #0a0a0a)" className={styles.pupilL}/>
+                <circle ref={pupilRRef} cx={89} cy={69} r="6.5" fill="var(--bl-billy-pupil, #0a0a0a)" className={styles.pupilR}/>
                 {/* Блики */}
                 <circle cx="52" cy="66" r="2.8" fill="white"/>
                 <circle cx="86" cy="66" r="2.8" fill="white"/>
@@ -295,7 +337,7 @@ export function BillyDock() {
                 <circle cx="91" cy="72" r="1.1" fill="white"/>
               </g>
               {/* Рот */}
-              <path d="M 57 83 Q 70 93 83 83" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round"/>
+              <path d="M 57 83 Q 70 93 83 83" fill="none" stroke="var(--bl-billy-mouth, white)" strokeWidth="2.2" strokeLinecap="round"/>
             </g>
           </g>
 
@@ -308,6 +350,10 @@ export function BillyDock() {
           )}
 
         </g>
+              {/* Mood Dot — status indicator under feet */}
+              <circle className={styles.moodDot}
+                cx="70" cy="195" r="3"
+                fill="var(--bl-billy-mood, #666666)"/>
       </svg>
       {/* Ground shadow — independent of SVG animation */}
       <div className={styles.shadow} aria-hidden="true" />

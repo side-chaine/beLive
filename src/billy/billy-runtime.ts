@@ -87,6 +87,7 @@ export function resetBillyHotState(): void {
     modeTimer: 0,
     _lastTickTime: performance.now(),
   };
+  invalidateLineCache();
 }
 
 // ── Coordinate Conversion ──
@@ -110,3 +111,50 @@ export function getInitialPixelPosition(): { pixelX: number; pixelY: number } {
 
 // ── Public alias for bridge (same as resetBillyHotState) ──
 export const resetBillyState = resetBillyHotState;
+
+// ── Line Slot Cache (for Eye Tracking) ──
+// INV-BILLY-CACHE: querySelector только при смене строки (~1/сек)
+// НЕ в hot path — обновляется по событию, читается каждый tick
+export interface LineSlot {
+  lineIndex: number;
+  centerX: number;
+  centerY: number;
+  width: number;
+  isAboveFold: boolean;
+}
+
+let _activeLineSlot: LineSlot | null = null;
+let _cachedLineIndex: number = -1;
+
+export function getActiveLineSlot(): LineSlot | null {
+  return _activeLineSlot;
+}
+
+export function updateLineSlotCache(lineIndex: number): void {
+  if (lineIndex === _cachedLineIndex && _activeLineSlot) return; // cache hit
+  if (lineIndex < 0) {
+    _activeLineSlot = null;
+    _cachedLineIndex = lineIndex;
+    return;
+  }
+  const el = document.querySelector(`[data-line-index="${lineIndex}"]`);
+  if (!el) {
+    _activeLineSlot = null;
+    _cachedLineIndex = lineIndex;
+    return;
+  }
+  const rect = el.getBoundingClientRect();
+  _activeLineSlot = {
+    lineIndex,
+    centerX: rect.left + rect.width / 2,
+    centerY: rect.top + rect.height / 2,
+    width: rect.width,
+    isAboveFold: rect.top > 0 && rect.bottom < window.innerHeight,
+  };
+  _cachedLineIndex = lineIndex;
+}
+
+export function invalidateLineCache(): void {
+  _activeLineSlot = null;
+  _cachedLineIndex = -1;
+}
