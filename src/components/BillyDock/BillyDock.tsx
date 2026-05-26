@@ -3,6 +3,7 @@ import { useBillyAnimation, useBillyIsLooping, useBillyIsRecording, useBillyTrac
 import { useBillyAudioReactive } from '../../hooks/useBillyAudioReactive';
 import { useBillyLocomotion } from '../../hooks/useBillyLocomotion';
 import { useBillyControl } from '../../hooks/useBillyControl';
+import { useBillyKeyboard } from '../../hooks/useBillyKeyboard';
 import { getInitialPixelPosition } from '../../billy/billy-runtime';
 import { useBillyRuntimeStore } from '../../billy/billy-runtime.store';
 import { useTrackInfoStore } from '../../stores/trackInfo.store';
@@ -20,7 +21,8 @@ type EffectiveAnimation = BillyAnimation
   | 'celebrate-mic_drop'
   | 'celebrate-boss_defeated'
   | 'celebrate-fatality'
-  | 'celebrate-super_saiyan';
+  | 'celebrate-super_saiyan'
+  | 'micGrab' | 'doubleJump';
 
 const STATE_CLASS: Record<EffectiveAnimation, string> = {
     idle: styles.idle,
@@ -36,6 +38,8 @@ const STATE_CLASS: Record<EffectiveAnimation, string> = {
     'celebrate-boss_defeated': styles.celebrateBossDefeated,
     'celebrate-fatality': styles.celebrateFatality,
     'celebrate-super_saiyan': styles.celebrateSuperSaiyan,
+    micGrab: styles.micGrab,
+    doubleJump: styles.doubleJump,
   };
 
 const JUMP_DURATION = 750;
@@ -88,12 +92,52 @@ export function BillyDock() {
     return 'transparent';
   });
 
+  const controlActive = useBillyControl();
+
+  // ── Keyboard actions (transient states for CSS) ──
+  const [micGrabActive, setMicGrabActive] = useState(false);
+  const [jumpType, setJumpType] = useState<'single' | 'double' | null>(null);
+  const micGrabTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const keyJumpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useBillyKeyboard({
+    onAttack: () => {
+      setMicGrabActive(true);
+      if (micGrabTimerRef.current) clearTimeout(micGrabTimerRef.current);
+      micGrabTimerRef.current = setTimeout(() => setMicGrabActive(false), 800);
+    },
+    onJump: (type) => {
+      setJumpType(type);
+      if (keyJumpTimerRef.current) clearTimeout(keyJumpTimerRef.current);
+      const duration = type === 'double' ? 900 : 750;
+      keyJumpTimerRef.current = setTimeout(() => setJumpType(null), duration);
+    },
+    onFocusChange: (active) => {
+      if (!active) {
+        setMicGrabActive(false);
+        setJumpType(null);
+      }
+    },
+  });
+
+  // Cleanup keyboard timers
+  useEffect(() => {
+    return () => {
+      if (micGrabTimerRef.current) clearTimeout(micGrabTimerRef.current);
+      if (keyJumpTimerRef.current) clearTimeout(keyJumpTimerRef.current);
+    };
+  }, []);
+
   // ── Effective animation ──
   // BillyAnimation из useBillyState переопределяется runtime mode Position Engine
-  const effectiveAnimation: EffectiveAnimation = clickJump ? 'jump' :
+  const effectiveAnimation: EffectiveAnimation = micGrabActive ? 'micGrab' :
+    jumpType === 'double' ? 'doubleJump' :
+    jumpType ? 'jump' :
+    clickJump ? 'jump' :
     runtimeMode === 'groove' ? 'dance' :
     runtimeMode === 'think' ? 'think' :
     runtimeMode === 'sleep' ? 'sleep' :
+    controlActive ? 'walk' :
     'idle';
   const stateClass = STATE_CLASS[effectiveAnimation] || styles.idle;
 
@@ -192,7 +236,7 @@ export function BillyDock() {
   }, []);
 
   // ── Audio-reactive micro-movements ──
-  useBillyAudioReactive(billyRefs, effectiveAnimation);
+  useBillyAudioReactive(billyRefs, effectiveAnimation as BillyAnimation);
 
   // ── Locomotion (Position Engine) ──
   useBillyLocomotion({ rootRef: billyRootRef, onPupilUpdate: handlePupilUpdate });
@@ -201,7 +245,6 @@ export function BillyDock() {
   const hasGlow = activeBlockColor !== 'transparent';
 
   // ── Mood Color (for Mood Dot) — non-reactive via data-attr read, OK for current step ──
-  const controlActive = useBillyControl();
   const moodColor = useMemo(() => {
     if (trackInfoOpen) return '#9b59b6';  // purple — board open
     if (effectiveAnimation === 'sleep') return '#6366f1';  // indigo
