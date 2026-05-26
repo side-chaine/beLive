@@ -15,6 +15,10 @@ interface AiSettingsState {
   // Status
   lastVerifiedAt: string | null;
   showSettings: boolean;
+  /** Billy mode: 'user' = vocal coach, 'tech' = technical diagnostics */
+  billyMode: 'user' | 'tech';
+  /** Switch Billy mode */
+  setBillyMode: (mode: 'user' | 'tech') => void;
 
   // Actions
   setOpenRouterApiKey: (key: string) => void;
@@ -36,6 +40,7 @@ const initialState = {
   temperature: 0.7,
   lastVerifiedAt: null as string | null,
   showSettings: false,
+  billyMode: 'user' as const,
 };
 
 export const useAiSettingsStore = create<AiSettingsState>()(
@@ -53,6 +58,8 @@ export const useAiSettingsStore = create<AiSettingsState>()(
       return !!s.openRouterApiKey && !!s.modelId;
     },
     reset: () => set(initialState),
+    billyMode: 'user' as const,
+    setBillyMode: (mode) => set({ billyMode: mode }),
   }), {
     name: 'belive:ai-settings',
     version: 1,

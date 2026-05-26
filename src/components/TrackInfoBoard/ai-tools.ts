@@ -13,6 +13,7 @@ import { useTrackStore } from '../../stores/track.store';
 import { useLoopStore } from '../../stores/loop.store';
 import { useAudioStore } from '../../stores/audio.store';
 import { useStemStore } from '../../stem/stem.store';
+import { usePracticeStore } from '../../stores/practice-session.store';
 import { getBlockTimeRange } from '../../utils/block-time-range';
 import { getStructureFormula } from '../../utils/structure-formula';
 
@@ -66,6 +67,26 @@ export function parseTextCommand(text: string): ToolCall | null {
     return { tool: 'list_catalog_structures', args: {} };
   }
 
+  // [SNAPSHOT]
+  if (/\[SNAPSHOT\]/i.test(text)) {
+    return { tool: 'get_runtime_snapshot', args: {} };
+  }
+
+  // [STEM_COMPARE]
+  if (/\[STEM_COMPARE\]/i.test(text)) {
+    return { tool: 'stem_compare', args: {} };
+  }
+
+  // [EVENTS]
+  if (/\[EVENTS\]/i.test(text)) {
+    return { tool: 'get_recent_events', args: {} };
+  }
+
+  // [PERF]
+  if (/\[PERF\]/i.test(text)) {
+    return { tool: 'get_perf_metrics', args: {} };
+  }
+
   // [SEARCH_AUDIO: artist song] — BPM/Key lookup
   const audioMatch = text.match(/\[SEARCH_AUDIO:\s*([^\]]+)\]/i);
   if (audioMatch) {
@@ -90,7 +111,7 @@ export function parseTextCommand(text: string): ToolCall | null {
 /** Strip all text commands from display text */
 export function stripTextCommands(text: string): string {
   return text
-    .replace(/\[(?:SEEK|STRUCTURE|CATALOG|SEARCH|SEARCH_AUDIO)(?::[^\]]+)?\]/gi, '')
+    .replace(/\[(?:SEEK|STRUCTURE|CATALOG|SEARCH|SEARCH_AUDIO|SNAPSHOT|STEM_COMPARE|EVENTS|PERF)(?::[^\]]+)?\]/gi, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
@@ -157,6 +178,14 @@ export async function executeToolCall(
       return executeToggleVocalMix(args);
     case 'ensure_stems_enabled':
       return executeEnsureStemsEnabled();
+    case 'get_runtime_snapshot':
+      return executeGetRuntimeSnapshot();
+    case 'stem_compare':
+      return executeStemCompare();
+    case 'get_recent_events':
+      return executeGetRecentEvents();
+    case 'get_perf_metrics':
+      return executeGetPerfMetrics();
     default:
       return { tool: toolName, success: false, message: `Unknown tool: ${toolName}` };
   }
@@ -631,6 +660,233 @@ async function executeEnsureStemsEnabled(): Promise<ToolCallResult> {
   
   useStemStore.setState({ stemsEnabled: true });
   return { tool: 'ensure_stems_enabled', success: true, message: 'Стемы включены' };
+}
+
+async function executeGetRuntimeSnapshot(): Promise<ToolCallResult> {
+  try {
+    const audioState = useAudioStore.getState();
+    const loopState = useLoopStore.getState();
+    const blocksState = useBlocksStore.getState();
+    const stemState = useStemStore.getState();
+    const trackState = useTrackStore.getState();
+    const practiceState = usePracticeStore.getState();
+    const ae = (window as any).audioEngine;
+
+    const snapshot = {
+      audio: {
+        isPlaying: audioState.isPlaying,
+        currentTime: Math.round((audioState.currentTime ?? 0) * 100) / 100,
+        duration: Math.round((audioState.duration ?? 0) * 100) / 100,
+        playbackRate: audioState.playbackRate,
+        vocalMixEnabled: audioState.vocalMixEnabled,
+      },
+      stems: {
+        enabled: stemState.stemsEnabled,
+        loaded: stemState.loadedStems,
+        volumes: stemState.stemVolumes,
+        mutes: stemState.stemMutes,
+        engineVolumes: ae?.getStemVolumes?.() ?? 'N/A',
+      },
+      loop: {
+        isLooping: loopState.isLooping,
+        blockIds: loopState.loopBlockIds,
+        startTime: loopState.loopStartTime,
+        endTime: loopState.loopEndTime,
+        engineLoop: ae?.isLoopActive?.() ?? 'N/A',
+      },
+      blocks: {
+        count: blocksState.blocks.length,
+        types: blocksState.blocks.map((b: { type: string }) => b.type),
+        structure: blocksState.blocks.map((b: { type: string }) => b.type).join(' → '),
+      },
+      practice: {
+        isActive: practiceState.isActive,
+        scenarioId: practiceState.scenarioId,
+        passesCount: practiceState.passesCount,
+        currentRate: practiceState.currentRate,
+        passLabel: practiceState.passLabel,
+        isAutoAdvance: practiceState.isAutoAdvance,
+        isPassInProgress: practiceState.isPassInProgress,
+        status: practiceState.practiceStatus,
+      },
+      track: {
+        title: trackState.currentTrack?.title || 'N/A',
+        artist: trackState.currentTrack?.artist || 'N/A',
+      },
+      engine: {
+        stemCount: ae?.getLoadedStemIds?.()?.length ?? 'N/A',
+        contextState: ae?.getContextState?.() ?? 'N/A',
+      },
+    };
+
+    return {
+      tool: 'get_runtime_snapshot',
+      success: true,
+      message: JSON.stringify(snapshot, null, 2),
+      data: snapshot,
+    };
+  } catch (err: any) {
+    return {
+      tool: 'get_runtime_snapshot',
+      success: false,
+      message: `Snapshot failed: ${err?.message || 'unknown'}`,
+    };
+  }
+}
+
+async function executeStemCompare(): Promise<ToolCallResult> {
+  try {
+    const stemState = useStemStore.getState();
+    const practiceState = usePracticeStore.getState();
+    const ae = (window as any).audioEngine;
+
+    const storeVolumes = { ...stemState.stemVolumes };
+    const engineVolumes: Record<string, number> = {};
+
+    // Read actual volumes from AudioEngine
+    if (ae?.getLoadedStemIds) {
+      for (const id of ae.getLoadedStemIds()) {
+        try {
+          const vol = ae._stemVolumes?.[id];
+          engineVolumes[id] = vol != null ? Math.round(vol * 1000) / 1000 : -1;
+        } catch {
+          engineVolumes[id] = -1;
+        }
+      }
+    }
+
+    // Compute expected volumes from practice scenario
+    let expected: Record<string, number> | null = null;
+    if (practiceState.isActive && practiceState.scenarioId === 'focus-mix') {
+      expected = {};
+      const loaded = stemState.loadedStems || [];
+      const musicStems = loaded.filter(id =>
+        id !== 'vocals' && id !== 'backing' && id !== 'instrumental'
+      );
+      const focusIndex = practiceState.passesCount - 1;
+      if (focusIndex >= 0 && focusIndex < musicStems.length) {
+        const focusStem = musicStems[focusIndex];
+        musicStems.forEach(id => {
+          if (id !== 'instrumental') expected![id] = id === focusStem ? 1 : 0;
+        });
+        expected['vocals'] = 1;
+      } else {
+        loaded.forEach(id => { if (id !== 'instrumental') expected![id] = 1; });
+      }
+    }
+
+    // Find mismatches
+    const mismatches: string[] = [];
+    for (const id of Object.keys(storeVolumes)) {
+      if (id === 'instrumental') continue;
+      const store = storeVolumes[id];
+      const engine = engineVolumes[id];
+      if (expected && expected[id] !== undefined) {
+        if (Math.abs(store - expected[id]) > 0.01) {
+          mismatches.push(`${id}: expected=${expected[id]}, store=${store}`);
+        }
+      }
+      if (engine >= 0 && Math.abs(store - engine) > 0.01) {
+        mismatches.push(`${id}: STORE vs ENGINE drift: store=${store}, engine=${engine}`);
+      }
+    }
+
+    const status = mismatches.length === 0 ? '✅ ALL MATCH' : `⚠️ ${mismatches.length} MISMATCHES`;
+
+    return {
+      tool: 'stem_compare',
+      success: true,
+      message: `${status}\n\nStore: ${JSON.stringify(storeVolumes)}\nEngine: ${JSON.stringify(engineVolumes)}${expected ? `\nExpected: ${JSON.stringify(expected)}` : ''}${mismatches.length ? `\n\nMismatches:\n${mismatches.join('\n')}` : ''}`,
+      data: { storeVolumes, engineVolumes, expected, mismatches },
+    };
+  } catch (err: any) {
+    return { tool: 'stem_compare', success: false, message: `Compare failed: ${err?.message}` };
+  }
+}
+
+// ── Event Bus Capture ──
+
+const _eventLog: Array<{ time: number; type: string; detail: unknown }> = [];
+const MAX_EVENT_LOG = 50;
+let _eventCaptureActive = false;
+
+function startEventCapture() {
+  if (_eventCaptureActive) return;
+  _eventCaptureActive = true;
+
+  const captureEvents = [
+    'loopcompleted', 'playback-state-changed', 'before-track-change',
+    'track-loaded', 'track-stem-ready', 'track-fully-loaded',
+    'active-line-changed', 'playback-rate-changed', 'mode-changed',
+    'practice:started', 'practice:pass-complete', 'practice:completed',
+    'practice:completed-kept', 'practice:cancelled', 'practice:auto-paused',
+    'loop-set', 'loop-cleared',
+  ];
+
+  for (const eventType of captureEvents) {
+    document.addEventListener(eventType, ((e: Event) => {
+      _eventLog.push({
+        time: Date.now(),
+        type: eventType,
+        detail: (e as CustomEvent).detail ?? null,
+      });
+      if (_eventLog.length > MAX_EVENT_LOG) _eventLog.shift();
+    }) as EventListener);
+  }
+}
+
+// Auto-start capture when module loads
+if (typeof document !== 'undefined') startEventCapture();
+
+async function executeGetRecentEvents(): Promise<ToolCallResult> {
+  const last20 = _eventLog.slice(-20);
+  const formatted = last20.map(e => {
+    const time = new Date(e.time).toLocaleTimeString();
+    const detail = e.detail ? JSON.stringify(e.detail) : '';
+    return `[${time}] ${e.type} ${detail}`;
+  });
+
+  return {
+    tool: 'get_recent_events',
+    success: true,
+    message: `Last ${last20.length} events:\n${formatted.join('\n') || '(no events captured)'}`,
+    data: last20,
+  };
+}
+
+async function executeGetPerfMetrics(): Promise<ToolCallResult> {
+  try {
+    const ae = (window as any).audioEngine;
+    const perf = {
+      audio: {
+        contextState: ae?._context?.state ?? 'N/A',
+        sampleRate: ae?._context?.sampleRate ?? 'N/A',
+        baseLatency: ae?._context?.baseLatency ?? 'N/A',
+        outputLatency: ae?._context?.outputLatency ?? 'N/A',
+      },
+      memory: (performance as any).memory ? {
+        usedJSHeapSize: `${Math.round((performance as any).memory.usedJSHeapSize / 1048576)}MB`,
+        totalJSHeapSize: `${Math.round((performance as any).memory.totalJSHeapSize / 1048576)}MB`,
+        jsHeapSizeLimit: `${Math.round((performance as any).memory.jsHeapSizeLimit / 1048576)}MB`,
+      } : 'N/A (not in Chrome)',
+      stems: {
+        loadedCount: ae?.getLoadedStemIds?.()?.length ?? 'N/A',
+        ids: ae?.getLoadedStemIds?.() ?? [],
+      },
+      timing: {
+        pageLoadTime: Math.round(performance.now()) + 'ms since load',
+      },
+    };
+
+    return {
+      tool: 'get_perf_metrics',
+      success: true,
+      message: JSON.stringify(perf, null, 2),
+      data: perf,
+    };
+  } catch (err: any) {
+    return { tool: 'get_perf_metrics', success: false, message: `Perf check failed: ${err?.message}` };
+  }
 }
 
 async function executeSwitchMode(

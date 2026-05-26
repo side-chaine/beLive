@@ -508,6 +508,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       operatorButton.appendChild(span);
   }
+
+  // ★ Billy Mode Switcher — instant, no reload ★
+  import('./stores/ai-settings.store').then(mod => {
+    (window as any).billyMode = (mode?: 'user' | 'tech') => {
+      const store = mod.useAiSettingsStore.getState();
+      if (!mode) {
+        console.log(`🤖 Billy mode: ${store.billyMode}`);
+        return store.billyMode;
+      }
+      store.setBillyMode(mode);
+      const icon = mode === 'tech' ? '🛠️' : '🎤';
+      console.log(`${icon} Billy switched to ${mode} mode (instant, no reload needed)`);
+      return mode;
+    };
+  });
 });
 
 // Mount React Shell

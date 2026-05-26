@@ -98,6 +98,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
   const activeLineIndex = useLyricsStore(s => s.activeLineIndex);
   const isConfigured = useAiSettingsStore(s => s.isConfigured);
   const coachName = useAiSettingsStore(s => s.coachName);
+  const billyMode = useAiSettingsStore(s => s.billyMode);
   const isSessionActive = usePracticeStore(s => s.isActive);
   const [inputValue, setInputValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -277,7 +278,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
       const model = aiHub.getActiveModel();
       if (model) {
         const ctx = buildCtx();
-        const systemPrompt = getSystemPrompt(expert, coachName);
+        const systemPrompt = getSystemPrompt(expert, coachName, billyMode);
         const continuationMessages = [
           { role: 'system' as const, content: `${systemPrompt}\n\nTRACK CONTEXT:\n${ctx}` },
           ...aiMessages.filter(m => m.role !== 'system').slice(-6).map(m => ({ 
@@ -370,7 +371,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
     }
 
     const ctx = buildCtx();
-    const prompt = getSystemPrompt(expert, coachName);
+    const prompt = getSystemPrompt(expert, coachName, billyMode);
     const recent = history.filter(m => m.role !== 'system').slice(-10);
     const apiMsgs = [
       { role: 'system' as const, content: `${prompt}\n\nTRACK CONTEXT:\n${ctx}` },
