@@ -10,6 +10,7 @@ import {
   SPEED_MAX,
   RETREAT_DURATION,
   JUMP_DURATION,
+  WALK_TARGET_OFFSET,
   type BillyMode,
   type BillyZone,
 } from './billy.constants';
@@ -97,32 +98,72 @@ export function resolveMode(
   return 'patrol';
 }
 
+// ── Target Context (W3: control mode) ──
+export interface BillyTargetContext {
+  controlActive: boolean;
+  controlDirection: 'left' | 'right' | 'none';
+  patrolWaypointX: number;  // -1 = не активен
+  currentPosX: number;
+  currentPosY: number;
+}
+
+export const DEFAULT_TARGET_CONTEXT: BillyTargetContext = {
+  controlActive: false,
+  controlDirection: 'none',
+  patrolWaypointX: -1,
+  currentPosX: 0,
+  currentPosY: 0,
+};
+
 // ── Target Position by Mode ──
 export function resolveTarget(
   mode: BillyMode,
   zones: ZoneBounds,
+  ctx: BillyTargetContext = DEFAULT_TARGET_CONTEXT,
 ): { x: number; y: number } {
+  // ═══ Единая поверхность: верх ControlDeck ═══
+  const surfaceY = zones.ground.bottom;
+
+  // ═══ Control Mode: перехватывает ВСЕ режимы кроме jump ═══
+  if (ctx.controlActive && mode !== 'jump' && mode !== 'retreat') {
+    if (ctx.controlDirection !== 'none') {
+      const targetX = ctx.controlDirection === 'right'
+        ? Math.min(ctx.currentPosX + WALK_TARGET_OFFSET, zones.ground.right)
+        : Math.max(ctx.currentPosX - WALK_TARGET_OFFSET, zones.ground.left);
+      return { x: targetX, y: surfaceY };
+    }
+    // Стрелка отпущена — стоим на месте
+    return { x: ctx.currentPosX, y: surfaceY };
+  }
+
   switch (mode) {
     case 'sleep':
-    case 'think':
     case 'retreat':
-      // Corner — "дом" Билли
-      return { x: zones.corner.x, y: zones.corner.y };
+      // Дом — правый нижний угол, ноги НА поверхности
+      return { x: zones.corner.x, y: surfaceY };
 
-    case 'patrol':
-      // W2: idle drift на месте. W4: patrol по ground зоне
-      return { x: zones.corner.x, y: zones.corner.y };
+    case 'think':
+      // Наблюдает — ноги НА поверхности (не парит!)
+      return { x: zones.corner.x, y: surfaceY };
+
+    case 'patrol': {
+      // NPC patrol: к waypoint или fallback на corner
+      if (ctx.patrolWaypointX >= 0) {
+        return { x: ctx.patrolWaypointX, y: surfaceY };
+      }
+      return { x: zones.corner.x, y: surfaceY };
+    }
 
     case 'groove':
-      // Танцует на месте. Анимация = CSS, позиция стабильна
-      return { x: zones.corner.x, y: zones.corner.y };
+      // W2: стоит на месте, CSS танцует, глаза следят
+      return { x: zones.corner.x, y: surfaceY };
 
     case 'jump':
-      // Jump = CSS анимация, позиция не меняется
-      return { x: zones.corner.x, y: zones.corner.y };
+      // Прыжок = CSS анимация, позиция НЕ меняется
+      return { x: ctx.currentPosX, y: ctx.currentPosY };
 
     default:
-      return { x: CORNER_POS.x, y: CORNER_POS.y };
+      return { x: zones.corner.x, y: surfaceY };
   }
 }
 
@@ -185,16 +226,26 @@ export function stepBilly(
   const modeTimer = modeChanged ? 0 : state.modeTimer + dt * 1000;
 
   // 3. Resolve target position
-  const target = resolveTarget(newMode, state.zones);
+  const target = resolveTarget(newMode, state.zones, {
+    controlActive: inputs.controlActive,
+    controlDirection: inputs.controlDirection,
+    patrolWaypointX: -1,
+    currentPosX: state.posX,
+    currentPosY: state.posY,
+  });
   const targetX = target.x;
   const targetY = target.y;
 
   // 4. Choose lerp responsiveness
   const lerpBase = resolveLerpBase(newMode);
+  // Control Mode override — PLAYER responsiveness
+  const effectiveLerpBase = inputs.controlActive
+    ? RESPONSIVENESS.PLAYER
+    : lerpBase;
 
   // 5. Apply frame-rate independent lerp
-  const posX = lerpFir(state.posX, targetX, lerpBase, dt);
-  const posY = lerpFir(state.posY, targetY, lerpBase, dt);
+  const posX = lerpFir(state.posX, targetX, effectiveLerpBase, dt);
+  const posY = lerpFir(state.posY, targetY, effectiveLerpBase, dt);
 
   // 6. Compute movement state
   const dx = targetX - posX;

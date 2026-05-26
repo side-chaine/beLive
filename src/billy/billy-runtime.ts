@@ -3,6 +3,7 @@ import {
   BILLY_WIDTH,
   BILLY_HEIGHT,
   BILLY_HALF_WIDTH,
+  BILLY_VISUAL_FOOT_Y,
   type BillyMode,
   type BillyZone,
 } from './billy.constants';
@@ -100,7 +101,9 @@ export function computePixelPosition(
   const vh = window.innerHeight;
   return {
     pixelX: posX * vw - BILLY_HALF_WIDTH,
-    pixelY: posY * vh - BILLY_HEIGHT,  // y = футы (INV-BILLY-ANCHOR)
+    // BILLY_VISUAL_FOOT_Y (85) вместо BILLY_HEIGHT (91)
+    // Убирает 6px зазор между визуальными ногами и поверхностью
+    pixelY: posY * vh - BILLY_VISUAL_FOOT_Y,
   };
 }
 

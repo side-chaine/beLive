@@ -21,6 +21,7 @@ import { isBillyControlActive } from './useBillyControl';
 import {
   BILLY_HALF_WIDTH,
   BILLY_HEIGHT,
+  POSITION_DEADZONE,
   PUPIL_OFFSET_MAX_X,
   PUPIL_OFFSET_MAX_Y,
   PUPIL_RADIUS_BASE,
@@ -84,6 +85,12 @@ export function useBillyLocomotion(refs: LocomotionRefs) {
     const currentLineIdx = useLyricsStore.getState().activeLineIndex;
 
     // 4. Collect inputs
+    // ═══ W3 — Control Mode: direction из data-attr ═══
+    const controlActive = isBillyControlActive();
+    const dirAttr = document.documentElement.getAttribute('data-billy-direction');
+    const rawDirection = (dirAttr === 'left' || dirAttr === 'right') ? dirAttr : 'none';
+    const controlDirection = controlActive ? rawDirection : 'none';
+
     const inputs: BillyInputs = {
       isPlaying: useAudioStore.getState().isPlaying,
       isAiStreaming: useTrackInfoStore.getState().isAiStreaming,
@@ -95,10 +102,8 @@ export function useBillyLocomotion(refs: LocomotionRefs) {
       activeLineIndex: currentLineIdx,
       activeBlockType: null,    // TODO W8: из blocks.store
       mode: useModeStore.getState().mode,
-
-      // W3 — Control Mode
-      controlActive: isBillyControlActive(),
-      controlDirection: 'none',  // W5: из keyboard handler
+      controlActive,
+      controlDirection,
       jumpRequest: null,         // W5: из keyboard handler
       attackRequest: null,       // W5: из keyboard handler
     };
@@ -138,6 +143,30 @@ export function useBillyLocomotion(refs: LocomotionRefs) {
       isMoving: result.isMoving,
       modeTimer: result.modeTimer,
     });
+
+    // ═══ Surface Snap: мгновенная коррекция при сдвиге поверхности ═══
+    // INV-BILLY-SNAP: при surface shift >5% — мгновенный snap
+    const GROUNDED_MODES = new Set(['sleep', 'patrol', 'groove', 'think', 'retreat']);
+    if (GROUNDED_MODES.has(result.mode)) {
+      const surfaceY = storeState.zones.corner.y; // = groundBottom
+      const gap = Math.abs(result.posY - surfaceY);
+
+      if (gap > 0.05) {
+        // Поверхность сдвинулась значительно — мгновенный snap
+        setBillyHotState({
+          posY: surfaceY,
+          targetY: surfaceY,
+        });
+        // Обновляем pixelY тоже
+        const snapPixel = computePixelPosition(result.posX, surfaceY);
+        setBillyHotState({ pixelY: snapPixel.pixelY });
+      } else if (gap > 0.005) {
+        // Небольшой зазор — ускоренный lerp (50% за тик)
+        const correctedY = result.posY + (surfaceY - result.posY) * 0.5;
+        const snapPixel = computePixelPosition(result.posX, correctedY);
+        setBillyHotState({ posY: correctedY, pixelY: snapPixel.pixelY });
+      }
+    }
 
     // 8. Write transform directly to DOM (INV-BILLY-NO-RERENDER)
     const scaleX = result.facing === 'left' ? -1 : 1;

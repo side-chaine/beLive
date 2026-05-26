@@ -4,6 +4,7 @@ import { useBillyAudioReactive } from '../../hooks/useBillyAudioReactive';
 import { useBillyLocomotion } from '../../hooks/useBillyLocomotion';
 import { useBillyControl } from '../../hooks/useBillyControl';
 import { useBillyKeyboard } from '../../hooks/useBillyKeyboard';
+import { useBillyZoneCache } from '../../hooks/useBillyZoneCache';
 import { getInitialPixelPosition } from '../../billy/billy-runtime';
 import { useBillyRuntimeStore } from '../../billy/billy-runtime.store';
 import { useTrackInfoStore } from '../../stores/trackInfo.store';
@@ -53,6 +54,7 @@ interface BillyRefs {
 }
 
 export function BillyDock() {
+  useBillyZoneCache();  // ← Zone Bounds — реальная геометрия из CSS vars
   const animation = useBillyAnimation();
   const isLooping = useBillyIsLooping();
   const isRecording = useBillyIsRecording();
@@ -134,10 +136,10 @@ export function BillyDock() {
     jumpType === 'double' ? 'doubleJump' :
     jumpType ? 'jump' :
     clickJump ? 'jump' :
+    controlActive ? 'walk' :            // ← ПЕРЕД groove/think/sleep!
     runtimeMode === 'groove' ? 'dance' :
     runtimeMode === 'think' ? 'think' :
     runtimeMode === 'sleep' ? 'sleep' :
-    controlActive ? 'walk' :
     'idle';
   const stateClass = STATE_CLASS[effectiveAnimation] || styles.idle;
 

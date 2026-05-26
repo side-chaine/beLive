@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { stepBilly, type BillyInputs, type BillyStepResult } from '../billy-controller';
+import { stepBilly, type BillyInputs, type BillyStepResult, DEFAULT_TARGET_CONTEXT } from '../billy-controller';
+import type { BillyTargetContext } from '../billy-controller';
 import type { BillyMode, BillyZone } from '../billy.constants';
 import type { ZoneBounds } from '../billy-runtime.store';
 
@@ -23,8 +24,8 @@ interface StepState {
 // ── Helpers ──
 
 const CORNER_ZONES: ZoneBounds = {
-  ground: { top: 0, bottom: 0 },
-  corner: { x: 0.92, y: 0.92 },
+  ground: { top: 0.1, bottom: 0.85, left: 0.02, right: 0.98 },
+  corner: { x: 0.92, y: 0.85 },  // corner.y = ground.bottom (INV-BILLY-SURFACE)
 };
 
 function makeState(overrides: Partial<StepState> = {}): StepState {
@@ -236,15 +237,15 @@ describe('billy-controller (stepBilly)', () => {
   describe('position', () => {
 
     it('sleep mode stays in corner', () => {
-      const state = makeState({ mode: 'sleep', posX: 0.92, posY: 0.92 });
+      const state = makeState({ mode: 'sleep', posX: 0.92, posY: 0.85 });
       const inputs = makeInputs({ hasTrack: false });
       const result = step(state, inputs, DT);
       expect(result.posX).toBeCloseTo(0.92, 1);
-      expect(result.posY).toBeCloseTo(0.92, 1);
+      expect(result.posY).toBeCloseTo(0.85, 1); // surfaceY = ground.bottom
     });
 
     it('patrol mode stays in place', () => {
-      const state = makeState({ mode: 'patrol', posX: 0.5, posY: 0.92 });
+      const state = makeState({ mode: 'patrol', posX: 0.5, posY: 0.85 });
       const inputs = makeInputs({ hasTrack: true });
       const result = step(state, inputs, DT);
       expect(result.posX).toBeCloseTo(0.5, 1);
@@ -265,10 +266,125 @@ describe('billy-controller (stepBilly)', () => {
     it('returns to previous mode after retreat duration', () => {
       // After RETREAT_DURATION ms, retreat should end
       const RETREAT_DURATION = 400;
-      const state = makeState({ mode: 'retreat', prevMode: 'groove', modeTimer: RETREAT_DURATION + 1 });
+      const state = makeState({ mode: 'retreat', prevMode: 'groove', modeTimer: RETREAT_DURATION + 1, posY: 0.85 });
       const inputs = makeInputs({ isOverlayOpen: false, isPlaying: true });
       const result = step(state, inputs, DT);
       expect(result.mode).toBe('groove');
     });
   });
+});
+
+describe('control movement', () => {
+  it('control right → targetX increases from current position', () => {
+    const ctx: BillyTargetContext = {
+      ...DEFAULT_TARGET_CONTEXT,
+      controlActive: true,
+      controlDirection: 'right',
+      currentPosX: 0.5,
+    };
+    const result = stepBilly(
+      makeState({ mode: 'patrol', posX: 0.5 }),
+      makeInputs({ controlActive: true, controlDirection: 'right' }),
+      DT,
+      ctx,
+    );
+    expect(result.targetX).toBeGreaterThan(0.5);
+  });
+
+  it('control left → targetX decreases from current position', () => {
+    const ctx: BillyTargetContext = {
+      ...DEFAULT_TARGET_CONTEXT,
+      controlActive: true,
+      controlDirection: 'left',
+      currentPosX: 0.5,
+    };
+    const result = stepBilly(
+      makeState({ mode: 'patrol', posX: 0.5 }),
+      makeInputs({ controlActive: true, controlDirection: 'left' }),
+      DT,
+      ctx,
+    );
+    expect(result.targetX).toBeLessThan(0.5);
+  });
+
+  it('control none → stays in place', () => {
+    const ctx: BillyTargetContext = {
+      ...DEFAULT_TARGET_CONTEXT,
+      controlActive: true,
+      controlDirection: 'none',
+      currentPosX: 0.5,
+    };
+    const result = stepBilly(
+      makeState({ mode: 'patrol', posX: 0.5 }),
+      makeInputs({ controlActive: true, controlDirection: 'none' }),
+      DT,
+      ctx,
+    );
+    expect(result.targetX).toBeCloseTo(0.5, 2);
+  });
+
+  it('control right → facing right', () => {
+    const ctx: BillyTargetContext = {
+      ...DEFAULT_TARGET_CONTEXT,
+      controlActive: true,
+      controlDirection: 'right',
+      currentPosX: 0.5,
+    };
+    const result = stepBilly(
+      makeState({ mode: 'patrol', posX: 0.5, facing: 'left' }),
+      makeInputs({ controlActive: true, controlDirection: 'right' }),
+      DT,
+      ctx,
+    );
+    expect(result.facing).toBe('right');
+  });
+
+  it('control left → facing left', () => {
+    const ctx: BillyTargetContext = {
+      ...DEFAULT_TARGET_CONTEXT,
+      controlActive: true,
+      controlDirection: 'left',
+      currentPosX: 0.5,
+    };
+    const result = stepBilly(
+      makeState({ mode: 'patrol', posX: 0.5, facing: 'right' }),
+      makeInputs({ controlActive: true, controlDirection: 'left' }),
+      DT,
+      ctx,
+    );
+    expect(result.facing).toBe('left');
+  });
+
+  it('clamped at ground.left boundary', () => {
+    const ctx: BillyTargetContext = {
+      ...DEFAULT_TARGET_CONTEXT,
+      controlActive: true,
+      controlDirection: 'left',
+      currentPosX: CORNER_ZONES.ground.left,
+    };
+    const result = stepBilly(
+      makeState({ mode: 'patrol', posX: CORNER_ZONES.ground.left }),
+      makeInputs({ controlActive: true, controlDirection: 'left' }),
+      DT,
+      ctx,
+    );
+    expect(result.targetX).toBeGreaterThanOrEqual(CORNER_ZONES.ground.left);
+  });
+
+  it('clamped at ground.right boundary', () => {
+    const ctx: BillyTargetContext = {
+      ...DEFAULT_TARGET_CONTEXT,
+      controlActive: true,
+      controlDirection: 'right',
+      currentPosX: CORNER_ZONES.ground.right,
+    };
+    const result = stepBilly(
+      makeState({ mode: 'patrol', posX: CORNER_ZONES.ground.right }),
+      makeInputs({ controlActive: true, controlDirection: 'right' }),
+      DT,
+      ctx,
+    );
+    expect(result.targetX).toBeLessThanOrEqual(CORNER_ZONES.ground.right);
+  });
+
 });

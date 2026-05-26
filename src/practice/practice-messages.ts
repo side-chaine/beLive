@@ -26,7 +26,7 @@ export function buildStartMessage(
 
   // Scenario-specific intro
   if (scenarioId === 'focus-mix') {
-    return `🎚 Фокус на стемы: ${blockLabel}\n${parts.join('\n')}\n\nНачнём с полного микса, потом услышим вокал + каждый инструмент отдельно!`;
+    return `🎚 Фокус на стемы: ${blockLabel}\n${parts.join('\n')}\n\nНачнём с полного микса — потом по кругу будешь слышать вокал + каждый инструмент по очереди. Авто-переключение каждый круг!`;
   }
 
   if (scenarioId === 'section-breakdown') {

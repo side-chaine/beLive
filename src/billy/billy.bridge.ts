@@ -18,15 +18,6 @@ import { useBillyRuntimeStore } from './billy-runtime.store';
 // ── CSS Vars ──
 const CSS_VAR_POS_X = '--bl-billy-pos-x';
 const CSS_VAR_POS_Y = '--bl-billy-pos-y';
-const CSS_VAR_Z = '--bl-billy-z';
-
-// ── Z-index по зоне ──
-const Z_INDEX_BY_ZONE: Record<string, number> = {
-  corner: 999996,
-  ground: 100,
-  plaque: 110,
-  rope: 90,
-};
 
 // ── Writer для PlaybackVisualScheduler ──
 const BILLY_WRITER_ID = 'billy-position-writer';
@@ -35,15 +26,10 @@ const writer: PlaybackVisualFrameWriter = {
   id: BILLY_WRITER_ID,
   write() {
     const hot = getBillyHotState();
-    const store = useBillyRuntimeStore.getState();
 
     // Normalized position (0..1) — для CSS calc consumers
     queueCssVar(CSS_VAR_POS_X, String(hot.posX));
     queueCssVar(CSS_VAR_POS_Y, String(hot.posY));
-
-    // Z-index по зоне
-    const z = Z_INDEX_BY_ZONE[store.zone] ?? 999996;
-    queueCssVar(CSS_VAR_Z, String(z));
   },
 };
 
@@ -84,7 +70,6 @@ export function initBillyBridge(): () => void {
     const root = document.documentElement;
     root.style.removeProperty(CSS_VAR_POS_X);
     root.style.removeProperty(CSS_VAR_POS_Y);
-    root.style.removeProperty(CSS_VAR_Z);
     clearQueuedCssVars();
     console.log('[BillyBridge] disposed');
   };

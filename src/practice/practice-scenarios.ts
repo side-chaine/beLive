@@ -140,11 +140,11 @@ const SCENARIOS: Partial<Record<PracticeScenarioId, PracticeScenario>> = {
         const focusStem = musicStems[focusIndex];
         // Мьютим все musicStems кроме фокусного
         musicStems.forEach(id => {
-          actions.push({ tool: 'set_stem_volume', args: { stemId: id, volume: id === focusStem ? 1.0 : 0 } });
+          actions.push({ tool: 'set_stem_volume', args: { stemId: id, volume: id === focusStem ? 1.0 : 0 }, delayMs: 0 });
         });
         // Вокал всегда играет
         vocalStems.forEach(id => {
-          actions.push({ tool: 'set_stem_volume', args: { stemId: id, volume: 1.0 } });
+          actions.push({ tool: 'set_stem_volume', args: { stemId: id, volume: 1.0 }, delayMs: 0 });
         });
       }
 
@@ -165,7 +165,7 @@ const SCENARIOS: Partial<Record<PracticeScenarioId, PracticeScenario>> = {
 
       loaded.forEach(id => {
         if (id !== 'instrumental') {
-          actions.push({ tool: 'set_stem_volume', args: { stemId: id, volume: 1.0 } });
+          actions.push({ tool: 'set_stem_volume', args: { stemId: id, volume: 1.0 }, delayMs: 0 });
         }
       });
       actions.push({ tool: 'loop_section', args: { enabled: false } });
@@ -180,7 +180,7 @@ const SCENARIOS: Partial<Record<PracticeScenarioId, PracticeScenario>> = {
       loaded.forEach(id => {
         if (id !== 'instrumental') {
           const vol = snapshot.stemVolumes?.[id] ?? 1.0;
-          actions.push({ tool: 'set_stem_volume', args: { stemId: id, volume: vol } });
+          actions.push({ tool: 'set_stem_volume', args: { stemId: id, volume: vol }, delayMs: 0 });
         }
       });
 

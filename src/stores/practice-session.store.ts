@@ -238,7 +238,7 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
       totalExpectedPasses,
       isAutoAdvance: true,
       isPassInProgress: false,
-      passLabel: scenarioId === 'focus-mix' ? 'Полный микс' : null,
+      passLabel: scenarioId === 'focus-mix' ? 'Full Mix' : null,
     });
     startAutoPassDetection();
     emitPracticeEvent('started', { scenarioId });
@@ -330,42 +330,19 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
       };
 
       const ctx: PracticeContext = {};
-      const actions = typeof scenario.perPassActions === 'function'
-        ? scenario.perPassActions(ctx, progress)
-        : scenario.perPassActions;
 
-      // ★ SET FLAG: rate change is from practice, not external ★
-      _isPracticeRateChange = true;
-      
-      try {
-        if (actions.length > 0) {
-          const results = await runPracticeActions({ actions });
-          if (!results.every(r => r.result.success)) return;
-        }
-      } finally {
-        _isPracticeRateChange = false;
-      }
-
-      // Verify loop still active
-      const loopState = useLoopStore.getState();
-      if (!loopState.isLooping && s.snapshot?.hadLoop) {
-        console.warn('[PracticeStore] Loop cleared during nextPass');
-      }
-
-      // Compute passLabel based on scenario
+      // ★ COMPUTE PASS LABEL SYNCHRONOUSLY (before async actions) ★
       let passLabel: string | null = null;
       if (s.scenarioId === 'focus-mix') {
         const stemState = useStemStore.getState();
         const musicStems = (stemState.loadedStems || []).filter(id =>
           id !== 'vocals' && id !== 'backing' && id !== 'instrumental'
         );
-        const RU_STEM_LABELS: Record<string, string> = {
-          bass: 'Бас', drums: 'Барабаны', guitar: 'Гитара', keys: 'Клавиши', other: 'Прочее',
-        };
         const focusIndex = newPasses - 1;
         if (focusIndex >= 0 && focusIndex < musicStems.length) {
           const stemId = musicStems[focusIndex];
-          passLabel = `Вокал + ${RU_STEM_LABELS[stemId] || stemId}`;
+          const stemLabel = stemId.charAt(0).toUpperCase() + stemId.slice(1);
+          passLabel = `Vocals + ${stemLabel}`;
         }
       } else if (s.scenarioId === 'section-breakdown') {
         const blocks = useBlocksStore.getState().blocks || [];
@@ -377,7 +354,36 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
         passLabel = `${Math.round(newRate * 100)}%`;
       }
 
+      // ★ UPDATE STATE IMMEDIATELY — label visible before actions complete ★
       set({ passesCount: newPasses, currentRate: newRate, passLabel });
+
+      // ★ THEN RUN ASYNC ACTIONS ★
+      const actions = typeof scenario.perPassActions === 'function'
+        ? scenario.perPassActions(ctx, progress)
+        : scenario.perPassActions;
+
+      // ★ SET FLAG: rate change is from practice, not external ★
+      _isPracticeRateChange = true;
+      
+      try {
+        if (actions.length > 0) {
+          const results = await runPracticeActions({ actions });
+          if (!results.every(r => r.result.success)) {
+            // Roll back on failure
+            set({ passesCount: s.passesCount, currentRate: s.currentRate, passLabel: s.passLabel });
+            return;
+          }
+        }
+      } finally {
+        _isPracticeRateChange = false;
+      }
+
+      // Verify loop still active
+      const loopState = useLoopStore.getState();
+      if (!loopState.isLooping && s.snapshot?.hadLoop) {
+        console.warn('[PracticeStore] Loop cleared during nextPass');
+      }
+
       emitPracticeEvent('pass-complete', { passesCount: newPasses, currentRate: newRate, passLabel });
 
       // Check completion
@@ -389,7 +395,7 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
           await runPracticeActions({ actions: completeActions });
         }
         set({ practiceStatus: 'completed' });
-        emitPracticeEvent('completed', { passesCount: newPasses, currentRate: newRate });
+        emitPracticeEvent('completed', { passesCount: newPasses, currentRate: newRate, scenarioId: s.scenarioId });
       }
     } finally {
       set({ isPassInProgress: false });

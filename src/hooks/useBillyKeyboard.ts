@@ -41,7 +41,7 @@ export function useBillyKeyboard(callbacks: KeyboardCallbacks = {}) {
   callbacksRef.current = callbacks;
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (!shouldIntercept(e)) return;
 
       if (e.code === KEY_TOGGLE) {
@@ -50,6 +50,10 @@ export function useBillyKeyboard(callbacks: KeyboardCallbacks = {}) {
         const nowActive = toggleBillyControl();
         if (nowActive !== wasActive) {
           callbacksRef.current.onFocusChange?.(nowActive);
+          // Сброс direction при выходе из Focus Mode
+          if (!nowActive) {
+            document.documentElement.removeAttribute('data-billy-direction');
+          }
         }
         return;
       }
@@ -57,17 +61,26 @@ export function useBillyKeyboard(callbacks: KeyboardCallbacks = {}) {
       if (e.code === KEY_ESCAPE && isBillyControlActive()) {
         e.preventDefault();
         setBillyControlActive(false);
+        document.documentElement.removeAttribute('data-billy-direction');
         callbacksRef.current.onFocusChange?.(false);
         return;
       }
 
-      // ── Arrow keys: перехват в Focus Mode ──
+      // ── Arrow keys: пишем direction в DOM ──
       if (isBillyControlActive() && !e.shiftKey &&
-          (e.code === 'ArrowLeft' || e.code === 'ArrowRight' ||
-           e.code === 'ArrowUp' || e.code === 'ArrowDown')) {
+          (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) {
         e.preventDefault();
         e.stopPropagation();
-        // W10: movement direction from arrows
+        const dir = e.code === 'ArrowLeft' ? 'left' : 'right';
+        document.documentElement.setAttribute('data-billy-direction', dir);
+        return;
+      }
+
+      // ArrowUp/ArrowDown — перехватываем без действия (W4: vertical)
+      if (isBillyControlActive() && !e.shiftKey &&
+          (e.code === 'ArrowUp' || e.code === 'ArrowDown')) {
+        e.preventDefault();
+        e.stopPropagation();
         return;
       }
 
@@ -95,8 +108,27 @@ export function useBillyKeyboard(callbacks: KeyboardCallbacks = {}) {
       }
     };
 
-    window.addEventListener('keydown', handler, { capture: true });
-    return () => window.removeEventListener('keydown', handler, { capture: true });
+    const handleKeyUp = (e: KeyboardEvent) => {
+      // Сброс direction при отпускании стрелки
+      if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+        const current = document.documentElement.getAttribute('data-billy-direction');
+        // Сброс только если текущее направление совпадает с отпущенной клавишей
+        if (e.code === 'ArrowLeft' && current === 'left') {
+          document.documentElement.removeAttribute('data-billy-direction');
+        }
+        if (e.code === 'ArrowRight' && current === 'right') {
+          document.documentElement.removeAttribute('data-billy-direction');
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, { capture: true });
+      window.removeEventListener('keyup', handleKeyUp);
+      document.documentElement.removeAttribute('data-billy-direction');
+    };
   }, []);
 
   useEffect(() => {

@@ -249,7 +249,7 @@
 
 @keyframes idleBody {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-2px); }
+  50% { transform: translateY(-1px); } /* INV-BILLY-NO-IDLE-LIFT: ≤1px для grounded */
 }
 
 @keyframes headWobble {

@@ -12,8 +12,13 @@ import { useTrackInfoStore } from '../stores/trackInfo.store';
 
 // ── Zone Boundaries (absolute px, updated on resize/track-change) ──
 export interface ZoneBounds {
-  ground: { top: number; bottom: number };
-  corner: { x: number; y: number };
+  ground: {
+    top: number;     // normalized: (headerH + wagonH) / vh
+    bottom: number;  // normalized: (vh - deckH) / vh
+    left: number;    // normalized: безопасный левый край
+    right: number;   // normalized: безопасный правый край
+  };
+  corner: { x: number; y: number }; // normalized
 }
 
 // ── Billy Runtime State (low-frequency only) ──
@@ -45,7 +50,7 @@ const initialState: BillyRuntimeState = {
   zone: 'corner',
   facing: 'right',
   zones: {
-    ground: { top: 0, bottom: 0 },
+    ground: { top: 0.1, bottom: 0.85, left: 0.02, right: 0.98 },
     corner: { x: CORNER_POS.x, y: CORNER_POS.y },
   },
 };
@@ -63,7 +68,10 @@ export const useBillyRuntimeStore = create<BillyRuntimeState & BillyRuntimeActio
   setZone: (zone) => set({ zone }),
 
   updateZoneCache: (zones) => set(state => ({
-    zones: { ...state.zones, ...zones },
+    zones: {
+      ground: { ...state.zones.ground, ...(zones.ground ?? {}) },
+      corner: zones.corner ?? state.zones.corner,
+    },
   })),
 
   setFacing: (facing) => set({ facing }),

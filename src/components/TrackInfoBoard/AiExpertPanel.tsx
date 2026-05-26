@@ -175,6 +175,52 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [aiMessages.length, isAiStreaming]);
 
+  // ★ Billy NEVER goes silent — always offer next steps after practice ★
+  useEffect(() => {
+    const handlePracticeCompleted = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      const passesCount = detail?.passesCount ?? 0;
+      const scenarioId = detail?.scenarioId;
+
+      const blocks = useBlocksStore.getState().blocks || [];
+      const suggestions = suggestScenarios(blocks);
+
+      const passWord = passesCount === 1 ? 'круг' : passesCount < 5 ? 'круга' : 'кругов';
+      const parts = [
+        `🎉 Отлично! ${passesCount} ${passWord} пройдено!`,
+        '',
+        'Что дальше?',
+      ];
+
+      suggestions.forEach(s => {
+        parts.push(`[ACTION:${s.label}|SCENARIO:${s.id}:${s.target}]`);
+      });
+
+      addAiMessage({ role: 'assistant', content: parts.join('\n') });
+    };
+
+    const handlePracticeCancelled = () => {
+      const blocks = useBlocksStore.getState().blocks || [];
+      const suggestions = suggestScenarios(blocks);
+
+      const parts = ['Тренировка остановлена. Попробуем что-нибудь другое?', ''];
+      suggestions.forEach(s => {
+        parts.push(`[ACTION:${s.label}|SCENARIO:${s.id}:${s.target}]`);
+      });
+
+      addAiMessage({ role: 'assistant', content: parts.join('\n') });
+    };
+
+    document.addEventListener('practice:completed', handlePracticeCompleted);
+    document.addEventListener('practice:completed-kept', handlePracticeCompleted);
+    document.addEventListener('practice:cancelled', handlePracticeCancelled);
+    return () => {
+      document.removeEventListener('practice:completed', handlePracticeCompleted);
+      document.removeEventListener('practice:completed-kept', handlePracticeCompleted);
+      document.removeEventListener('practice:cancelled', handlePracticeCancelled);
+    };
+  }, [addAiMessage]);
+
   // Build context for AI messages
   // eslint-disable-next-line react-hooks/exhaustive-deps — stores stable, not reactive deps
   const buildCtx = useCallback(() => {

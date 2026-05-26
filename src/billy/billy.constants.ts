@@ -9,6 +9,19 @@ export const BILLY_WIDTH = 64;
 export const BILLY_HEIGHT = 91;
 export const BILLY_HALF_WIDTH = BILLY_WIDTH / 2;
 
+// ── Visual Foot Anchor ──
+// ViewBox: 0 0 140 200, Render: 91px (scale = 91/200 = 0.455)
+// Обувь в viewBox: ellipse cy=182, ry=6 → низ = y=188
+// Визуальный низ ног: 188 × 0.455 = 85.5 ≈ 85px
+// BILLY_HEIGHT (91) включает 6px пустого пространства под ногами
+export const BILLY_VISUAL_FOOT_Y = 85;
+
+// ── Walk Control ──
+// Target offset для control mode: target всегда впереди Billy
+// Скорость = offset × lerpFactor × fps ≈ 0.02 × 0.25 × 30 ≈ 0.27 norm/sec
+// ≈ 3.7 сек на пересечение экрана — комфортная ходьба
+export const WALK_TARGET_OFFSET = 0.02;
+
 // ── Coordinate System ──
 // Billy position: нормализованная 0..1 по viewport
 // posX: 0 = левый край, 1 = правый край
@@ -21,7 +34,7 @@ export const POS_MAX = 1;
 // Frame-rate independent: lerpAdj = 1 - Math.pow(1 - base, dt * 60)
 // (INV-BILLY-FRAMERATE)
 export const RESPONSIVENESS = {
-  PLAYER:       0.18,  // Control Mode — быстрый отклик
+  PLAYER:       0.25,  // Control Mode — отзывчивый (~120ms lag)
   CHASE:        0.12,  // Важная задача — подбежать к строке
   NPC_GROOVE:   0.08,  // Танец на месте
   NPC_PATROL:   0.05,  // Ленивый патруль
@@ -46,11 +59,11 @@ export const SPEED_MAX = 5;      // максимальная скорость
 // ── Zone Z-Index ──
 // Меняется только при смене зоны (редко), не каждый кадр
 export const ZONE_Z_INDEX = {
-  corner:  999996,  // "Дом" — поверх всего
-  ground:  100,     // Над ControlDeck, под overlays
-  plaque:  110,     // Над плашкой
-  rope:    50,      // Над WagonTrain
-  retreat: 999996,  // Overlay retreat — в углу
+  corner:  999996,   // Поверх всего (как Header)
+  ground:  999994,   // ПОД ControlDeck (z:999995), НАД RehearsalLyrics (z:5-19)
+  plaque:  110,      // Над RehearsalLyrics (z:5)
+  rope:    90,       // Над WagonTrain (z:10) и KaraokeLyricsBoard (z:50)
+  retreat: 999996,   // Overlay retreat = corner
 } as const;
 
 // ── Corner Position (normalized 0..1) ──
@@ -59,6 +72,9 @@ export const CORNER_POS = {
   x: 0.92,  // правый край с отступом
   y: 0.92,  // над ControlDeck
 } as const;
+
+// ── Safe Margins ──
+export const BILLY_MARGIN_X = BILLY_HALF_WIDTH; // 32px — не вылезать за viewport
 
 // ── Transient Durations (ms) ──
 export const JUMP_DURATION = 750;
