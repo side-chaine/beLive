@@ -393,9 +393,9 @@ export function BillyDock() {
           )}
 
         </g>
-              {/* Mood Dot — status indicator under feet */}
+              {/* Mood Dot — status indicator on first body stripe */}
               <circle className={styles.moodDot}
-                cx="70" cy="195" r="3"
+                cx="70" cy="117" r="2.5"
                 fill="var(--bl-billy-mood, #666666)"/>
       </svg>
       {/* Ground shadow — independent of SVG animation */}
