@@ -14,6 +14,10 @@ export interface UserProfile {
   preferences?: UserProfilePreferences;
   isGuest: boolean;
   pinHash?: string;
+  /** Server-side ID, появляется при миграции на сервер */
+  serverId?: string;
+  /** Статус миграции: local → migrating → synced */
+  migrationStatus?: 'local' | 'migrating' | 'synced';
 }
 
 export interface OnboardingStep {
@@ -33,7 +37,35 @@ export function isUserProfile(obj: unknown): obj is UserProfile {
   );
 }
 
-export type BillyMood = 'friendly' | 'professional' | 'cheerleader';
+export type BillyMood = 'quiet' | 'helpful' | 'attentive';
+
+export interface UserStats {
+  userId: string;
+  serverId?: string;
+  totalTracks: number;
+  totalSessions: number;
+  totalPracticeMinutes: number;
+  currentStreak: number;
+  longestStreak: number;
+  lastPracticeDate: string | null;
+  milestones: UserMilestone[];
+  updatedAt: string;
+}
+
+export interface UserMilestone {
+  id: string;
+  type: MilestoneType;
+  achievedAt: string;
+  data?: Record<string, unknown>;
+}
+
+export type MilestoneType =
+  | 'first_track'
+  | 'first_sync'
+  | 'first_recording'
+  | 'streak_3'
+  | 'streak_7'
+  | 'streak_30';
 
 export interface UserProfilePreferences {
   theme?: string;

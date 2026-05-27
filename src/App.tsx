@@ -46,9 +46,6 @@ import { tryActivateV2 } from './audio/featureFlag';
 import { initMonitorBridge, destroyMonitorBridge } from './bridges/monitor.bridge';
 import { AiSettingsModal } from './components/AiSettingsModal';
 import { useAiSettingsStore } from './stores/ai-settings.store';
-import { LandingPage } from './components/landing/LandingPage';
-import { useUserProfileStore } from './stores/user-profile.store';
-
 export default function App() {
   const mode = useModeStore((s) => s.mode);
   const syncOpen = useSyncStore((s) => s.open);
@@ -56,9 +53,6 @@ export default function App() {
   const aiSettingsOpen = useAiSettingsStore(s => s.showSettings);
   useBackgroundManagers();
   useKeyboardShortcuts();
-  const isOnboarded = useUserProfileStore(s => s.isOnboarded);
-  const setShowOnboarding = useUserProfileStore(s => s.setShowOnboarding);
-  const showOnboarding = useUserProfileStore(s => s.showOnboarding);
 
   useEffect(() => {
     tryActivateV2();
@@ -101,35 +95,6 @@ export default function App() {
       destroyMonitorBridge();
     };
   }, []);
-
-  if (!isOnboarded) {
-    return <LandingPage onStart={() => setShowOnboarding(true)} />;
-  }
-
-  // Заглушка онбординга (будет заменён в TC-AUTH-005/006/007)
-  if (showOnboarding && !isOnboarded) {
-    return (
-      <div style={{
-        position: 'fixed',
-        inset: 0,
-        background: '#0a0a0a',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 10000,
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 64, marginBottom: 24 }}>🎤</div>
-          <div style={{ color: '#fff', fontSize: 32, fontWeight: 600 }}>
-            Как тебя зовут?
-          </div>
-          <div style={{ color: '#666', fontSize: 16, marginTop: 8 }}>
-            Полный онбординг будет в TC-AUTH-005/006/007
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div id="belive-react" data-track-info={trackInfoOpen ? 'active' : 'inactive'}>

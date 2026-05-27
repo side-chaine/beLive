@@ -1,4 +1,4 @@
-.landing-root {
+.lp-root {
   position: fixed;
   inset: 0;
   background: #0a0a0a;
@@ -6,93 +6,207 @@
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
-.landing-content {
+.lp-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
+  gap: 14px;
   text-align: center;
-  padding: 20px;
+  padding: 32px 24px;
+  max-width: 380px;
+  width: 100%;
 }
 
-.landing-billy {
-  font-size: 120px;
-  line-height: 1;
-  transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-  filter: drop-shadow(0 0 40px rgba(255, 255, 255, 0.15));
-  animation: billy-pulse 3s ease-in-out infinite;
+/* ── Logo (SVG Mic) ──────────────────── */
+.lp-logo {
+  color: #fff;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: lp-glow 3s ease-in-out infinite;
 }
 
-@keyframes billy-pulse {
-  0%, 100% { filter: drop-shadow(0 0 40px rgba(255, 255, 255, 0.15)); }
-  50% { filter: drop-shadow(0 0 60px rgba(255, 255, 255, 0.25)); }
+.lp-logo.visible {
+  opacity: 1;
+  transform: scale(1);
 }
 
-.landing-title {
-  font-size: 64px;
+@keyframes lp-glow {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.06)); }
+  50% { filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.14)); }
+}
+
+/* ── Title ───────────────────────────── */
+.lp-title {
+  font-size: 48px;
   font-weight: 800;
   color: #fff;
   letter-spacing: -2px;
   margin: 0;
   opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(12px);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.landing-title.visible {
+.lp-title.visible {
   opacity: 1;
   transform: translateY(0);
 }
 
-.landing-subtitle {
-  font-size: 18px;
-  color: #666;
+/* ── Subtitle ────────────────────────── */
+.lp-subtitle {
+  font-size: 15px;
+  color: #555;
   margin: 0;
+  letter-spacing: 0.2px;
   opacity: 0;
-  transform: translateY(15px);
-  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
+  transform: translateY(10px);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.landing-subtitle.visible {
+.lp-subtitle.visible {
   opacity: 1;
   transform: translateY(0);
 }
 
-.landing-start-btn {
-  margin-top: 16px;
-  padding: 16px 48px;
-  font-size: 18px;
-  font-weight: 600;
-  color: #0a0a0a;
-  background: #fff;
-  border: none;
-  border-radius: 12px;
+/* ── Avatar preview ──────────────────── */
+.lp-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 2px solid rgba(255, 255, 255, 0.06);
+  margin-top: 4px;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.lp-avatar.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ── Input ───────────────────────────── */
+.lp-input {
+  padding: 11px 20px;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #fff;
+  outline: none;
+  text-align: center;
+  width: 220px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lp-input.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.lp-input:focus {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.lp-input::placeholder {
+  color: #444;
+}
+
+/* ── Start button ────────────────────── */
+.lp-start {
+  padding: 12px 44px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
   cursor: pointer;
   opacity: 0;
-  transform: translateY(15px);
-  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
+  transform: translateY(8px);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.landing-start-btn.visible {
+.lp-start.visible {
   opacity: 1;
   transform: translateY(0);
 }
 
-.landing-start-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+.lp-start:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
-.landing-start-btn:active {
-  transform: scale(0.98);
+.lp-start:active {
+  transform: scale(0.97);
 }
 
-/* Mobile-first */
+.lp-start:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Social ──────────────────────────── */
+.lp-social {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lp-social.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.lp-social-label {
+  font-size: 12px;
+  color: #444;
+}
+
+.lp-social-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.lp-social-btn {
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #444;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 5px;
+  cursor: not-allowed;
+  transition: all 0.15s;
+}
+
+.lp-social-btn:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.lp-social-soon {
+  font-size: 11px;
+  color: #333;
+}
+
+/* ── Mobile ──────────────────────────── */
 @media (max-width: 480px) {
-  .landing-title { font-size: 48px; }
-  .landing-billy { font-size: 80px; }
-  .landing-subtitle { font-size: 16px; }
+  .lp-title { font-size: 38px; }
+  .lp-logo svg { width: 44px; height: 44px; }
 }

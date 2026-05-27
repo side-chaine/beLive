@@ -8,7 +8,7 @@ import type { Playlist } from '../catalog/types';
 import type { StemAutomationData, StemDisplayOrder } from '../stem/stemTypes';
 
 const DB_NAME = (globalThis as any).__DB_NAME || 'TextAppDB';
-const DB_VERSION = 8;
+const DB_VERSION = 9;
 
 // ── Types ──────────────────────────────────────────────
 
@@ -55,6 +55,25 @@ export interface TrackRecord {
 
   dateAdded: string;
   lastModified: string;
+  /** Guest or profile ID. null/undefined = guest tracks */
+  userId?: string | null;
+}
+
+export interface UserRecord {
+  id: string;
+  serverId?: string;
+  name: string;
+  emoji: string;
+  isGuest: boolean;
+  createdAt: string;
+  lastSeenAt: string;
+  pinHash?: string;
+  migrationStatus?: 'local' | 'migrating' | 'synced';
+  preferences: {
+    theme?: string;
+    language?: string;
+    billyMood?: 'quiet' | 'helpful' | 'attentive';
+  };
 }
 
 // ── Connection ─────────────────────────────────────────
@@ -80,6 +99,19 @@ function _getDB(): Promise<IDBDatabase> {
         db.createObjectStore('temp_audio_files', { keyPath: 'id' });
       if (!db.objectStoreNames.contains('my_music'))
         db.createObjectStore('my_music', { keyPath: 'trackId' });
+
+      // TC-AUTH-003: users store
+      if (!db.objectStoreNames.contains('users')) {
+        const userStore = db.createObjectStore('users', { keyPath: 'id' });
+        userStore.createIndex('name', 'name', { unique: false });
+        userStore.createIndex('createdAt', 'createdAt', { unique: false });
+      }
+
+      // TC-AUTH-003: userId index on tracks (for existing databases)
+      const trackStore = req.transaction?.objectStore('tracks');
+      if (trackStore && !trackStore.indexNames.contains('userId')) {
+        trackStore.createIndex('userId', 'userId', { unique: false });
+      }
     };
     req.onsuccess = () => { _db = req.result; resolve(_db!); };
     req.onerror = () => reject(req.error);
@@ -190,6 +222,71 @@ export async function addToMyMusic(trackId: number): Promise<void> {
 export async function removeFromMyMusic(trackId: number): Promise<void> {
   const db = await _getDB();
   await _req(_tx(db, 'my_music', 'readwrite').delete(trackId));
+}
+
+// ── Users CRUD (TC-AUTH-003) ────────────────────────────
+
+export async function getUser(id: string): Promise<UserRecord | undefined> {
+  const db = await _getDB();
+  return _req(_tx(db, 'users').get(id));
+}
+
+export async function getUserByName(name: string): Promise<UserRecord | undefined> {
+  const db = await _getDB();
+  const index = _tx(db, 'users').index('name');
+  return _req(index.get(name));
+}
+
+export async function saveUser(user: UserRecord): Promise<UserRecord> {
+  const db = await _getDB();
+  await _req(_tx(db, 'users', 'readwrite').put(user));
+  return user;
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  const db = await _getDB();
+  await _req(_tx(db, 'users', 'readwrite').delete(id));
+}
+
+export async function getAllUsers(): Promise<UserRecord[]> {
+  const db = await _getDB();
+  return _req(_tx(db, 'users').getAll());
+}
+
+// ── Guest → Profile Migration (TC-AUTH-003) ─────────────
+
+export async function migrateGuestTracksToProfile(profileId: string): Promise<number> {
+  const db = await _getDB();
+  const tx = db.transaction(['tracks'], 'readwrite');
+  const store = tx.objectStore('tracks');
+
+  return new Promise<number>((resolve, reject) => {
+    const request = store.openCursor();
+    let migrated = 0;
+
+    request.onsuccess = (event) => {
+      const cursor = (event.target as IDBRequest).result;
+      if (cursor) {
+        const track = cursor.value;
+        if (!track.userId) {
+          track.userId = profileId;
+          cursor.update(track);
+          migrated++;
+        }
+        cursor.continue();
+      } else {
+        tx.oncomplete = () => resolve(migrated);
+      }
+    };
+
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function migrateGuestMyMusicToProfile(profileId: string): Promise<number> {
+  const db = await _getDB();
+  const rows = await _req<any[]>(_tx(db, 'my_music').getAll());
+  return rows.length;
 }
 
 // ── Playlists (app_state) ──────────────────────────────
