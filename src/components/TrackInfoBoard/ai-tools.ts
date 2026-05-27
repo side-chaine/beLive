@@ -685,7 +685,21 @@ async function executeGetRuntimeSnapshot(): Promise<ToolCallResult> {
         loaded: stemState.loadedStems,
         volumes: stemState.stemVolumes,
         mutes: stemState.stemMutes,
-        engineVolumes: ae?.getStemVolumes?.() ?? 'N/A',
+        engineVolumes: (() => {
+          try {
+            const sv = (ae as any)?._stemVolumes;
+            if (sv && typeof sv === 'object') {
+              const result: Record<string, number> = {};
+              if (sv instanceof Map) {
+                sv.forEach((v: number, k: string) => { result[k] = v; });
+              } else {
+                Object.entries(sv).forEach(([k, v]) => { result[k] = v as number; });
+              }
+              return result;
+            }
+            return 'N/A';
+          } catch { return 'N/A'; }
+        })(),
       },
       loop: {
         isLooping: loopState.isLooping,
@@ -714,8 +728,21 @@ async function executeGetRuntimeSnapshot(): Promise<ToolCallResult> {
         artist: trackState.currentTrack?.artist || 'N/A',
       },
       engine: {
-        stemCount: ae?.getLoadedStemIds?.()?.length ?? 'N/A',
-        contextState: ae?.getContextState?.() ?? 'N/A',
+        stemCount: (() => {
+          try {
+            const stems = (ae as any)?.stems;
+            return stems instanceof Map ? stems.size : (stems ? Object.keys(stems).length : 'N/A');
+          } catch { return 'N/A'; }
+        })(),
+        contextState: (() => {
+          try { return (ae as any)?._context?.state ?? 'N/A'; } catch { return 'N/A'; }
+        })(),
+        isPlaying: (() => {
+          try { return (ae as any)?._isPlaying ?? 'N/A'; } catch { return 'N/A'; }
+        })(),
+        loopActive: (() => {
+          try { return (ae as any)?._loopActive ?? 'N/A'; } catch { return 'N/A'; }
+        })(),
       },
     };
 
@@ -743,16 +770,20 @@ async function executeStemCompare(): Promise<ToolCallResult> {
     const storeVolumes = { ...stemState.stemVolumes };
     const engineVolumes: Record<string, number> = {};
 
-    // Read actual volumes from AudioEngine
-    if (ae?.getLoadedStemIds) {
-      for (const id of ae.getLoadedStemIds()) {
-        try {
-          const vol = ae._stemVolumes?.[id];
-          engineVolumes[id] = vol != null ? Math.round(vol * 1000) / 1000 : -1;
-        } catch {
-          engineVolumes[id] = -1;
-        }
+    // Read actual volumes from AudioEngine (private V2 fields)
+    try {
+      const sv = (ae as any)?._stemVolumes;
+      if (sv instanceof Map) {
+        sv.forEach((v: number, k: string) => {
+          engineVolumes[k] = Math.round(v * 1000) / 1000;
+        });
+      } else if (sv && typeof sv === 'object') {
+        Object.entries(sv).forEach(([k, v]) => {
+          engineVolumes[k] = Math.round((v as number) * 1000) / 1000;
+        });
       }
+    } catch {
+      // Best effort
     }
 
     // Compute expected volumes from practice scenario
@@ -870,8 +901,18 @@ async function executeGetPerfMetrics(): Promise<ToolCallResult> {
         jsHeapSizeLimit: `${Math.round((performance as any).memory.jsHeapSizeLimit / 1048576)}MB`,
       } : 'N/A (not in Chrome)',
       stems: {
-        loadedCount: ae?.getLoadedStemIds?.()?.length ?? 'N/A',
-        ids: ae?.getLoadedStemIds?.() ?? [],
+        loadedCount: (() => {
+          try {
+            const stems = (ae as any)?.stems;
+            return stems instanceof Map ? stems.size : 'N/A';
+          } catch { return 'N/A'; }
+        })(),
+        ids: (() => {
+          try {
+            const stems = (ae as any)?.stems;
+            return stems instanceof Map ? Array.from(stems.keys()) : [];
+          } catch { return []; }
+        })(),
       },
       timing: {
         pageLoadTime: Math.round(performance.now()) + 'ms since load',

@@ -46,7 +46,6 @@ import { tryActivateV2 } from './audio/featureFlag';
 import { initMonitorBridge, destroyMonitorBridge } from './bridges/monitor.bridge';
 import { AiSettingsModal } from './components/AiSettingsModal';
 import { useAiSettingsStore } from './stores/ai-settings.store';
-
 export default function App() {
   const mode = useModeStore((s) => s.mode);
   const syncOpen = useSyncStore((s) => s.open);
