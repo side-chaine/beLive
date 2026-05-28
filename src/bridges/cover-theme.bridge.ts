@@ -1,3 +1,4 @@
+import { useModeStore } from '../stores/mode.store';
 import { useTrackStore } from '../stores/track.store';
 import { applyCoverTheme } from '../services/cover-theme-applicator';
 import '../styles/cover-theme.css';
@@ -9,7 +10,9 @@ export function initCoverThemeBridge(): () => void {
   // Now currentCoverTheme is set in track.bridge.syncAll()
   const unsub = useTrackStore.subscribe((state, prevState) => {
     if (state.currentCoverTheme !== prevState.currentCoverTheme) {
-      applyCoverTheme(state.currentCoverTheme);
+      if (useModeStore.getState().mode === 'rehearsal') {
+        applyCoverTheme(state.currentCoverTheme);
+      }
     }
   });
 
@@ -28,7 +31,7 @@ export function initCoverThemeBridge(): () => void {
   // At boot, currentCoverTheme is null because syncAll hasn't completed.
   // The store subscription above will apply the theme when syncAll finishes.
   const { currentCoverTheme } = useTrackStore.getState();
-  if (currentCoverTheme) {
+  if (currentCoverTheme && useModeStore.getState().mode === 'rehearsal') {
     applyCoverTheme(currentCoverTheme);
   }
 

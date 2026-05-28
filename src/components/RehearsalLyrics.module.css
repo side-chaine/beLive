@@ -536,37 +536,51 @@
   position: absolute;
   inset: 0;
   z-index: 0;
-  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    var(--bl-cover-bg-tint-strong, transparent) 0%,
+    var(--bl-cover-bg-tint, transparent) 50%,
+    transparent 80%
+  );
+  transition: background 0.6s ease;
+}
+
+.coverArtImage {
+  position: absolute;
+  left: var(--plate-cover-center, 50%);
+  top: 0;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: var(--plate-cover-width, 70%);
+  max-width: 700px;
+  object-fit: cover;
+  opacity: 0.5;
+  border-radius: 12px;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.6) 10%,
+    rgba(0, 0, 0, 1) 30%,
+    rgba(0, 0, 0, 1) 70%,
+    rgba(0, 0, 0, 0.6) 90%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.6) 10%,
+    rgba(0, 0, 0, 1) 30%,
+    rgba(0, 0, 0, 1) 70%,
+    rgba(0, 0, 0, 0.6) 90%,
+    transparent 100%
+  );
+  box-shadow: 0 0 80px 40px var(--bl-cover-bg-tint-strong, transparent);
+  transition: opacity 0.6s ease;
   pointer-events: none;
 }
 
-.coverBgImage {
-  position: absolute;
-  inset: -40px; /* overflow для blur edge */
-  width: calc(100% + 80px);
-  height: calc(100% + 80px);
-  object-fit: cover;
-  filter: blur(40px) saturate(1.5);
-  opacity: 0.15;
-  transition: opacity 0.6s ease;
-}
 
-/* Performance tiers */
-:global([data-visual-tier="lite"]) .coverBgImage {
-  filter: blur(10px) saturate(1.1);
-  opacity: 0.08;
-}
-
-:global([data-visual-tier="balanced"]) .coverBgImage {
-  filter: blur(20px) saturate(1.3);
-  opacity: 0.12;
-}
-
-:global([data-visual-tier="max"]) .coverBgImage,
-:global([data-visual-tier="ultra"]) .coverBgImage {
-  filter: blur(40px) saturate(1.5);
-  opacity: 0.15;
-}
 
 /* ═══ ПС Travel Overlay — Transition-based appear ═══
    Appear: opacity + transform transition с data-mounted="true" attr.
