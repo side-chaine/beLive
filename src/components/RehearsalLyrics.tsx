@@ -5,8 +5,8 @@ import { useBlocksStore, type TextBlock } from '../stores/blocks.store';
 import { useLoopStore } from '../stores/loop.store';
 import { useTextStyleStore } from '../stores/textStyle.store';
 import { useWordSyncStore } from '../stores/wordSync.store';
-import { useTrackStore } from '../stores/track.store';
 import { useMarkersStore } from '../stores/markers.store';
+import { useTrackStore } from '../stores/track.store';
 import { usePlateStore } from '../stores/plate.store';
 import { useAudioStore } from '../stores/audio.store';
 import { TRANSITION_PRESETS, DEFAULT_PRESET } from '../data/transition-presets';
@@ -46,10 +46,9 @@ export function RehearsalLyrics() {
   const lineOthersLevel = useTextStyleStore(s => s.lineOthersLevel);
   const lineOthersSource = useTextStyleStore(s => s.lineOthersSource);
 
-  // W12: Cover background scene
-  // TC-COVER-03: Use blob URL from currentTrack (offline-ready)
+  const useAutoBg = usePlateStore(s => s.useAutoBg);
   const currentTrack = useTrackStore(s => s.currentTrack);
-  const coverBgEnabled = usePlateStore(s => s.coverBg);
+  const coverArtUrl = currentTrack?.coverArtUrl || null;
   const tier = useEffectiveTier();
 
   // Transition preset from plate store
@@ -68,28 +67,13 @@ export function RehearsalLyrics() {
 
   const isPlaying = useAudioStore(s => s.isPlaying);
 
-  const coverUrl = currentTrack?.coverArtUrl || null;
-  const showCoverBg = coverUrl && coverBgEnabled;
+  const showCoverBg = useAutoBg;
 
-  // Crossfade state: previous + current cover
-  const [displayUrl, setDisplayUrl] = useState<string | null>(coverUrl);
-  const [fadeOutUrl, setFadeOutUrl] = useState<string | null>(null);
-  const prevUrlRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (coverUrl !== prevUrlRef.current) {
-      setFadeOutUrl(prevUrlRef.current); // Old cover fades out
-      setDisplayUrl(coverUrl);            // New cover fades in
-      prevUrlRef.current = coverUrl;
-    }
-  }, [coverUrl]);
 
-  // TC-COVER-08: Cleanup fadeOutUrl after crossfade completes
-  useEffect(() => {
-    if (!fadeOutUrl) return;
-    const timeout = setTimeout(() => setFadeOutUrl(null), 700);
-    return () => clearTimeout(timeout);
-  }, [fadeOutUrl]);
+
+
+
 
   // W12: Plate settings from store
   const plateWidth = usePlateStore(s => s.width);
@@ -137,6 +121,7 @@ export function RehearsalLyrics() {
   // Block Cue: sync horizontal position with plate center
   const [cueLeft, setCueLeft] = useState('50%');
   const [cueTop, setCueTop] = useState<string>('');
+  const [coverCenterX, setCoverCenterX] = useState('50%');
 
   const hasBlocks = blocks.length > 0;
 
@@ -196,6 +181,7 @@ export function RehearsalLyrics() {
       if (rect.width <= 0) return; // Guard: skip transition state
       const centerX = rect.left + rect.width / 2;
       setCueLeft(`${centerX}px`);
+      setCoverCenterX(`${centerX}px`);
     };
 
     // Delay first calculation to ensure DOM is settled
@@ -767,27 +753,17 @@ export function RehearsalLyrics() {
         style={{
           alignItems: rootAlignItems,
           '--plate-cue-x': cueLeft,
+          '--plate-cover-width': `${Math.min(plateWidth, 70)}%`,
+          '--plate-cover-center': coverCenterX,
           ...presetStyle,
         } as React.CSSProperties}
       >
-        {/* W12: Cover Background Scene — blurred cover art under entire scene */}
         {showCoverBg && (
           <div className={styles.coverBackground}>
-            {fadeOutUrl && (
+            {coverArtUrl && (
               <img
-                key={fadeOutUrl}
-                src={fadeOutUrl}
-                className={styles.coverBgImage}
-                style={{ opacity: 0 }}
-                alt=""
-              />
-            )}
-            {displayUrl && (
-              <img
-                key={displayUrl}
-                src={displayUrl}
-                className={styles.coverBgImage}
-                style={{ opacity: 1 }}
+                src={coverArtUrl}
+                className={styles.coverArtImage}
                 alt=""
               />
             )}

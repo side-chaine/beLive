@@ -9,13 +9,11 @@
   flex-wrap: nowrap;
   padding: 2px 12px;
   width: 100%;
-  max-width: calc(100vw - 24px);
+  max-width: 100%;
   overflow-x: auto;
   scrollbar-width: none;
-  background: var(--bl-cover-bg-tint, var(--bl-surface-sunken, rgba(20, 20, 20, 0.35)));
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border-radius: 12px;
+  background: var(--bl-surface-base, #0a0a14);
+  border-radius: 0;
 }
 
 .root::-webkit-scrollbar {

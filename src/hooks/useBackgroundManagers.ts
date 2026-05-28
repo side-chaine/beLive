@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { useModeStore } from '../stores/mode.store';
 import { useTrackStore } from '../stores/track.store';  // TC-COVER-04
+import { usePlateStore } from '../stores/plate.store';
 import { BACKGROUND_CONFIG } from '../backgrounds/backgroundConfig';
 import { ConcertBackgroundManager } from '../backgrounds/ConcertBackground';
 import { KaraokeBackgroundManager } from '../backgrounds/KaraokeBackground';
 import { RehearsalBackgroundManager } from '../backgrounds/RehearsalBackground';
+import { applyCoverTheme } from '../services/cover-theme-applicator';
 
 interface BgManagers {
   concert: ConcertBackgroundManager;
@@ -54,6 +56,7 @@ export function useBackgroundManagers(): void {
   const prevModeRef = useRef<string | null>(null);
   const mode = useModeStore((s) => s.mode);
   const coverTheme = useTrackStore((s) => s.currentCoverTheme);  // TC-COVER-04
+  const useAutoBg = usePlateStore(s => s.useAutoBg);
 
   useEffect(() => {
     const managers = createManagers();
@@ -83,14 +86,19 @@ export function useBackgroundManagers(): void {
   }, []);
 
   useEffect(() => {
-    if (!managersRef.current || !mode || mode === prevModeRef.current) return;
-    prevModeRef.current = mode;
+    if (!managersRef.current || !mode) return;
+    if (mode !== 'rehearsal') {
+      applyCoverTheme(null);
+    } else {
+      applyCoverTheme(coverTheme);
+    }
     startForMode(managersRef.current, mode);
   }, [mode]);
 
-  // TC-COVER-04: Update dimming when coverTheme changes
+  // TC-BG-08: Cover art background only when user enabled it
   useEffect(() => {
     if (!managersRef.current?.rehearsal) return;
-    managersRef.current.rehearsal.setCoverArtState(!!coverTheme, coverTheme?.isDark);
-  }, [coverTheme]);
+    const coverArtActive = !!coverTheme && useAutoBg;
+    managersRef.current.rehearsal.setCoverArtState(coverArtActive, coverTheme?.isDark);
+  }, [coverTheme, useAutoBg]);
 }

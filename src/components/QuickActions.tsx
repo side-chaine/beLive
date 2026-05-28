@@ -31,6 +31,8 @@ function GraphicsTierControls({
 }: GraphicsTierControlsProps) {
   const { tier, autoDetect, detectedTier } = usePerformanceTier();
   const { setTier, setAutoDetect } = usePerformanceStore();
+  const useAutoBg = usePlateStore(s => s.useAutoBg);
+  const setUseAutoBg = usePlateStore(s => s.setUseAutoBg);
 
   const tiers: PerformanceTier[] = ['lite', 'balanced', 'max', 'ultra'];
 
@@ -40,7 +42,7 @@ function GraphicsTierControls({
   };
 
   const handleUseAuto = () => {
-    setAutoDetect(true);
+    setUseAutoBg(!useAutoBg);
     onClose();
   };
 
@@ -122,21 +124,21 @@ function GraphicsTierControls({
         style={{
           ...menuItemStyle,
           paddingLeft: 20,
-          background: autoDetect ? `${accentColor}15` : undefined,
-          borderLeft: autoDetect ? `2px solid ${accentColor}` : '2px solid transparent',
+          background: useAutoBg ? `${accentColor}15` : undefined,
+          borderLeft: useAutoBg ? `2px solid ${accentColor}` : '2px solid transparent',
         }}
         onClick={handleUseAuto}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = `${accentColor}22`;
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = autoDetect ? `${accentColor}15` : 'transparent';
+          e.currentTarget.style.background = useAutoBg ? `${accentColor}15` : 'transparent';
         }}
       >
-        <span style={{ fontWeight: autoDetect ? 500 : 400, color: autoDetect ? '#fff' : '#ccc' }}>
+        <span style={{ fontWeight: useAutoBg ? 500 : 400, color: useAutoBg ? '#fff' : '#ccc' }}>
           Use Auto
         </span>
-        {autoDetect && <span style={checkmarkStyle}>✓</span>}
+        {useAutoBg && <span style={checkmarkStyle}>✓</span>}
       </div>
     </div>
   );
@@ -286,10 +288,6 @@ export function QuickActions() {
   const mode = useModeStore((s) => s.mode);
   const color = MODE_COLORS[mode] || '#fff';
   const setCatalogOpen = useUIStore((s) => s.setCatalogOpen);
-
-  // W12: Cover Background toggle
-  const coverBg = usePlateStore(s => s.coverBg);
-  const setCoverBg = usePlateStore(s => s.setCoverBg);
 
   const openCatalog = useCallback(() => {
     setCatalogOpen(true);

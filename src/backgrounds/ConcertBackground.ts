@@ -31,6 +31,8 @@ export class ConcertBackgroundManager {
       this.timerId = null;
     }
     this.isActive = false;
+    this.body.style.removeProperty('background-image');
+    this.body.style.removeProperty('background');
     this.body.classList.remove('concert-active');
   }
 

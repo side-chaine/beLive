@@ -8,6 +8,8 @@ interface PlateState {
   glowIntensity: number;     // 0-100, default 40
   vignetteIntensity: number; // 0-100, default 30
   transitionPreset: string;
+  useAutoBg: boolean;
+  setUseAutoBg: (v: boolean) => void;
 
   setWidth: (w: number) => void;
   setPosition: (p: 'left' | 'center' | 'right') => void;
@@ -23,6 +25,7 @@ export const usePlateStore = create<PlateState>()(
       width: 80,
       position: 'center',
       coverBg: true,
+      useAutoBg: true,
       glowIntensity: 40,
       vignetteIntensity: 30,
       transitionPreset: 'smooth',
@@ -30,6 +33,7 @@ export const usePlateStore = create<PlateState>()(
       setWidth: (width) => set({ width: Math.max(50, Math.min(100, width)) }),
       setPosition: (position) => set({ position }),
       setCoverBg: (coverBg) => set({ coverBg }),
+      setUseAutoBg: (useAutoBg) => set({ useAutoBg }),
       setGlowIntensity: (glowIntensity) => set({ glowIntensity: Math.max(0, Math.min(100, glowIntensity)) }),
       setVignetteIntensity: (vignetteIntensity) => set({ vignetteIntensity: Math.max(0, Math.min(100, vignetteIntensity)) }),
       setTransitionPreset: (transitionPreset) => set({ transitionPreset }),
