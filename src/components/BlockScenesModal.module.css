@@ -1,0 +1,429 @@
+/* ── OVERLAY ── */
+
+.overlay {
+  position: fixed;
+  top: var(--react-header-height, 48px);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+/* ── MODAL — fullscreen ── */
+
+.modal {
+  background: #08080f;
+  border-radius: 12px;
+  padding: 12px 20px 12px;
+  width: 98vw;
+  height: calc(100vh - var(--react-header-height, 48px) - 16px);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 120px rgba(0, 0, 0, 0.8);
+}
+
+/* ── TOP BAR (tabs + done) ── */
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 8px;
+  overflow: hidden;
+}
+
+.tabs {
+  display: flex;
+  gap: 0;
+}
+
+.tab {
+  padding: 5px 14px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tab:hover { color: rgba(255, 255, 255, 0.7); }
+
+.tabActive {
+  composes: tab;
+  color: #fff;
+  border-bottom-color: var(--bl-cover-accent, #f59e0b);
+}
+
+.closeBtn {
+  background: var(--bl-cover-accent, #f59e0b);
+  border: none;
+  color: #000;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 6px 20px;
+  border-radius: 8px;
+  transition: opacity 0.15s;
+}
+
+.closeBtn:hover { opacity: 0.85; }
+
+/* ── TRACKMAP LAYOUT ── */
+
+.trackMap {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: auto;
+  padding: 4px 2px 8px;
+  flex: 1;
+  min-height: 0;
+  align-items: flex-start;
+}
+
+/* ── BLOCK COLUMN ── */
+
+.blockColumn {
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  max-width: 500px;
+  flex: 1 1 auto;
+  border-radius: 10px 10px 0 0;
+  overflow: visible;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 2px solid var(--block-color, #6b7280);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.blockColumn:hover { border-color: rgba(255, 255, 255, 0.12); }
+
+.blockColumnSelected {
+  border-color: var(--block-color, #f59e0b);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+}
+
+/* ── COLUMN HEADER ── */
+
+.columnHeader {
+  padding: 10px 8px 8px;
+  text-align: center;
+  cursor: pointer;
+  border-bottom: 3px solid var(--block-color, #6b7280);
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.columnHeader::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  transition: background 0.12s;
+}
+
+.columnHeader:hover::after { background: rgba(0, 0, 0, 0.3); }
+.columnHeaderFilled {
+  box-shadow: inset 0 -14px 22px -12px var(--block-color, rgba(0,0,0,0.3));
+}
+
+.columnHeaderFilled::after { background: rgba(0, 0, 0, 0.55); }
+.columnHeaderFilled:hover::after { background: rgba(0, 0, 0, 0.4); }
+
+.columnName {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #fff;
+  position: relative;
+  z-index: 1;
+}
+
+.headerPlus {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.35);
+  position: relative;
+  z-index: 1;
+}
+
+.headerTrash {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.6);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fff;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  transition: background 0.12s, transform 0.12s;
+}
+
+.headerTrash:hover {
+  background: rgba(239, 68, 68, 0.9);
+  transform: scale(1.15);
+}
+
+/* ── SUB-BLOCK GROUP ── */
+
+.subBlocksRow {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  gap: 0;
+  min-height: 0;
+  align-items: flex-start;
+}
+
+.subBlock {
+  display: flex;
+  flex-direction: column;
+  flex: var(--sub-lines, 1);
+  min-width: 0;
+  position: relative;
+}
+
+.subBlockDivided {
+  border-left: 2px dashed var(--block-color, #6b7280);
+  margin-left: 2px;
+  padding-left: 2px;
+}
+
+@supports (color: color-mix(in srgb, red 50%, blue)) {
+  .subBlockDivided {
+    border-left-color: color-mix(in srgb, var(--block-color, #6b7280) 40%, transparent);
+  }
+}
+
+
+
+/* ── LINE CELLS ── */
+
+.cell {
+  height: 38px;
+  min-width: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: box-shadow 0.12s, background-color 0.12s;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+}
+
+.cell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.06);
+  transition: background 0.12s;
+  pointer-events: none;
+}
+
+.cell:hover::after { background: rgba(255, 255, 255, 0.1); }
+.cellFilled {
+  border-left: 2px solid var(--block-color, #f59e0b);
+}
+
+.cellFilled::after { background: rgba(0, 0, 0, 0.3); }
+.cellFilled:hover::after { background: rgba(0, 0, 0, 0.15); }
+
+.cellSelected {
+  box-shadow: inset 0 0 0 2px var(--block-color, #f59e0b) !important;
+}
+
+.cellSelected::after { background: rgba(0, 0, 0, 0.15) !important; }
+
+.cellPlus {
+  display: none;
+}
+
+/* CSS-only lyric tooltip */
+.cell[data-lyric]::before {
+  content: attr(data-lyric);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(8, 8, 15, 0.95);
+  color: rgba(255, 255, 255, 0.88);
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.3;
+  white-space: nowrap;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.cell[data-lyric]:hover::before {
+  opacity: 1;
+}
+
+.cellRemove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.55);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #fff;
+  font-size: 9px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transition: opacity 0.12s, background 0.12s, transform 0.12s;
+}
+
+.cell:hover .cellRemove {
+  opacity: 1;
+}
+
+.cellRemove:hover {
+  background: rgba(239, 68, 68, 0.9);
+  transform: scale(1.2);
+}
+
+
+
+.cellNum {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.3);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  position: relative;
+  z-index: 1;
+}
+
+.cellFilled .cellNum {
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+/* ── ACTION BUTTONS (shared with custom tab) ── */
+
+.actionBtn {
+  padding: 6px 14px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: #ccc;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.actionBtn:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.actionBtnDanger { composes: actionBtn; color: #ef4444; border-color: rgba(239, 68, 68, 0.25); }
+.actionBtnDanger:hover { background: rgba(239, 68, 68, 0.08); }
+
+/* ── CUSTOM TAB ── */
+
+.customSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 40px 0;
+  flex: 1;
+  justify-content: center;
+}
+
+.customPreview {
+  width: 360px;
+  height: 200px;
+  border-radius: 12px;
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.customPreview:hover { border-color: rgba(255, 255, 255, 0.2); }
+.customPlus { font-size: 42px; color: rgba(255, 255, 255, 0.2); }
+.customActions { display: flex; gap: 12px; }
+
+.emptyState { text-align: center; color: rgba(255, 255, 255, 0.3); padding: 40px; font-size: 16px; }
+
+/* ── ACCESSIBILITY ── */
+
+@media (prefers-reduced-motion: reduce) {
+  .blockColumn, .columnHeader, .cell, .actionBtn, .closeBtn {
+    transition: none !important;
+  }
+}
+
+/* ── SCROLLBAR ── */
+
+.trackMap::-webkit-scrollbar { height: 5px; width: 5px; }
+.trackMap::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.03); border-radius: 3px; }
+.trackMap::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+.trackMap::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+.headerCount {
+  font-size: 9px;
+  font-weight: 400;
+  opacity: 0.45;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ── ACTIVE BLOCK HIGHLIGHT ── */
+
+.blockColumnActive {
+  border-color: var(--block-color, #6b7280);
+}
+
+@supports (color: color-mix(in srgb, red 50%, blue)) {
+  .blockColumnActive {
+    box-shadow: 0 0 16px -4px color-mix(in srgb, var(--block-color, #6b7280) 25%, transparent);
+  }
+}

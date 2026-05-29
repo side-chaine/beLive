@@ -3,7 +3,7 @@
  * Checks IDB storage availability before saving backgrounds
  */
 
-const MAX_BACKGROUNDS_PER_TRACK = 12;
+const MAX_BACKGROUNDS_PER_TRACK = 20;
 const WARN_QUOTA_PERCENT = 80;
 
 export interface StorageQuotaResult {

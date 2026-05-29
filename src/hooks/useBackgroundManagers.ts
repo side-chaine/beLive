@@ -7,6 +7,7 @@ import { ConcertBackgroundManager } from '../backgrounds/ConcertBackground';
 import { KaraokeBackgroundManager } from '../backgrounds/KaraokeBackground';
 import { RehearsalBackgroundManager } from '../backgrounds/RehearsalBackground';
 import { applyCoverTheme } from '../services/cover-theme-applicator';
+import { initBlockScenePreload, revokeAllScenes } from '../services/block-scene.service';
 
 interface BgManagers {
   concert: ConcertBackgroundManager;
@@ -53,11 +54,11 @@ function startForMode(mgrs: BgManagers, mode: string): void {
 
 export function useBackgroundManagers(): void {
   const managersRef = useRef<BgManagers | null>(null);
-  const prevModeRef = useRef<string | null>(null);
   const mode = useModeStore((s) => s.mode);
   const coverTheme = useTrackStore((s) => s.currentCoverTheme);  // TC-COVER-04
   const useAutoBg = usePlateStore(s => s.useAutoBg);
   const customBgUrl = useTrackStore(s => s.currentTrack?.customBgUrl);
+  const hasBlockScenes = useTrackStore(s => s.hasBlockScenes);
 
   useEffect(() => {
     const managers = createManagers();
@@ -100,19 +101,45 @@ export function useBackgroundManagers(): void {
   useEffect(() => {
     if (!managersRef.current?.rehearsal) return;
     const hasCustomBg = !!customBgUrl;
-    const coverArtActive = !!coverTheme && useAutoBg;
-    // Custom bg on body: no dimming needed (user's photo is the bg)
-    // Cover art only: dim pexels to let cover art show through
+    // Block scenes override cover art dimming
+    const coverArtActive = hasBlockScenes ? false : (!!coverTheme && useAutoBg);
     managersRef.current.rehearsal.setCoverArtState(
-      hasCustomBg ? false : coverArtActive,
+      coverArtActive || hasCustomBg,
       coverTheme?.isDark,
       hasCustomBg,
     );
-  }, [coverTheme, useAutoBg, customBgUrl]);
+  }, [coverTheme, useAutoBg, customBgUrl, hasBlockScenes]);
 
   // Custom background on body (Layer 1) — full screen
   useEffect(() => {
     if (!managersRef.current?.rehearsal) return;
     managersRef.current.rehearsal.setCustomBg(customBgUrl || null);
   }, [customBgUrl]);
+
+  // Block scenes lifecycle
+  useEffect(() => {
+    const cleanupPreload = initBlockScenePreload();
+    return () => {
+      cleanupPreload();
+      revokeAllScenes();
+    };
+  }, []);
+
+  // Apply preloaded scenes to manager
+  useEffect(() => {
+    const onScenesLoaded = (e: Event) => {
+      const { trackId, sceneCount, sceneMap } = (e as CustomEvent).detail;
+      const currentId = useTrackStore.getState().currentTrack?.id;
+      if (String(trackId) !== String(currentId)) return;
+
+      useTrackStore.getState().setHasBlockScenes(sceneCount > 0);
+
+      if (managersRef.current?.rehearsal && sceneCount > 0 && sceneMap) {
+        managersRef.current.rehearsal.setBlockSceneMap(sceneMap);
+      }
+    };
+
+    document.addEventListener('block-scenes-loaded', onScenesLoaded);
+    return () => document.removeEventListener('block-scenes-loaded', onScenesLoaded);
+  }, []);
 }

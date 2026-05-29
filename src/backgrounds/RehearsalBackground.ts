@@ -1,3 +1,5 @@
+import type { SceneMap, SceneEntry } from '../services/idb.service';
+
 export class RehearsalBackgroundManager {
   private imagePaths: string[];
   private interval: number;
@@ -7,13 +9,36 @@ export class RehearsalBackgroundManager {
   private isActive: boolean = false;
   private _currentBlockIndex: number | null = null;
   private _boundHandler: ((e: Event) => void) | null = null;
-  private _currentBlockId: string | null = null;
   private _cache: Map<string, HTMLImageElement>;
   private _decoded: Map<string, boolean>;
   private _coverArtActive: boolean = false;  // TC-COVER-04
   private _coverIsDark: boolean = false;     // TC-COVER-04
   private _customBgActive: boolean = false;
   private _customBgUrl: string | null = null;
+  private _sceneLayerA: HTMLDivElement;
+  private _sceneLayerB: HTMLDivElement;
+  private _activeSceneLayer: 'A' | 'B' = 'A';
+  private _sceneMap: SceneMap = { blockScenes: new Map(), lineScenes: new Map() };
+  private _lastSceneSwitch: number = 0;
+  private readonly BLOCK_SWITCH_COOLDOWN = 300;
+  private readonly LINE_SWITCH_COOLDOWN = 150;
+  private _crossfadeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private _createSceneDiv(id: string): HTMLDivElement {
+    const div = document.createElement('div');
+    div.id = id;
+    Object.assign(div.style, {
+      position: 'fixed',
+      inset: '0',
+      zIndex: '-1',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      opacity: '0',
+      transition: 'opacity 0.3s ease',
+      pointerEvents: 'none',
+    });
+    return div;
+  }
 
   constructor(imagePaths: string[], interval: number = 0) {
     this.imagePaths = imagePaths;
@@ -21,6 +46,8 @@ export class RehearsalBackgroundManager {
     this.body = document.body;
     this._cache = new Map();
     this._decoded = new Map();
+    this._sceneLayerA = this._createSceneDiv('bg-scene-a');
+    this._sceneLayerB = this._createSceneDiv('bg-scene-b');
   }
 
   private _preloadAll(): void {
@@ -43,6 +70,8 @@ export class RehearsalBackgroundManager {
   start(): void {
     if (!this.imagePaths || this.imagePaths.length === 0) return;
     this.body.classList.add('rehearsal-active');
+    document.body.appendChild(this._sceneLayerA);
+    document.body.appendChild(this._sceneLayerB);
     this.isActive = true;
     this._preloadAll();
     if (this._customBgUrl) {
@@ -67,6 +96,16 @@ export class RehearsalBackgroundManager {
       this.timerId = null;
     }
     this.isActive = false;
+    // Clear backgroundImage before revoke to prevent ERR_FILE_NOT_FOUND
+    this._sceneLayerA.style.backgroundImage = '';
+    this._sceneLayerB.style.backgroundImage = '';
+    this._sceneLayerA.remove();
+    this._sceneLayerB.remove();
+    this._sceneMap = { blockScenes: new Map(), lineScenes: new Map() };
+    if (this._crossfadeTimer) {
+      clearTimeout(this._crossfadeTimer);
+      this._crossfadeTimer = null;
+    }
     this.body.style.removeProperty('background-image');
     this.body.style.removeProperty('background');
     this.body.style.removeProperty('background-size');
@@ -160,6 +199,80 @@ export class RehearsalBackgroundManager {
     }
   }
 
+  /**
+   * Set mapping: blockIndex/lineIndex → scene Object URL
+   * Called from useBackgroundManagers when scenes are loaded
+   */
+  setBlockSceneMap(sceneMap: SceneMap): void {
+    this._sceneMap = sceneMap;
+    // Apply scene for current block if available
+    if (this._currentBlockIndex !== null) {
+      const entry = this._resolveSceneUrl(this._currentBlockIndex, 0);
+      this.setBlockScene(entry?.url || null);
+    }
+  }
+
+  /**
+   * Crossfade to a block scene URL (or null = hide scene layer)
+   */
+  setBlockScene(url: string | null): void {
+    if (!this.isActive) return;
+
+    if (url === null) {
+      // No scene — fade out scene layers, show body bg
+      this._sceneLayerA.style.opacity = '0';
+      this._sceneLayerB.style.opacity = '0';
+      return;
+    }
+
+    // Preload image BEFORE crossfade to prevent white flash
+    const img = new Image();
+    img.src = url;
+
+    const doCrossfade = () => {
+      const nextLayer = this._activeSceneLayer === 'A' ? this._sceneLayerB : this._sceneLayerA;
+      const currentLayer = this._activeSceneLayer === 'A' ? this._sceneLayerA : this._sceneLayerB;
+
+      nextLayer.style.backgroundImage = `url('${url}')`;
+      nextLayer.style.opacity = '1';
+      currentLayer.style.opacity = '0';
+
+      // Swap after transition
+      if (this._crossfadeTimer) clearTimeout(this._crossfadeTimer);
+      this._crossfadeTimer = setTimeout(() => this._swapLayers(), 700);
+
+      nextLayer.addEventListener('transitionend', () => {
+        if (this._crossfadeTimer) {
+          clearTimeout(this._crossfadeTimer);
+          this._crossfadeTimer = null;
+        }
+        this._swapLayers();
+      }, { once: true });
+
+      this._activeSceneLayer = this._activeSceneLayer === 'A' ? 'B' : 'A';
+    };
+
+    // If image already cached — crossfade immediately
+    if (img.complete && img.naturalWidth > 0) {
+      doCrossfade();
+    } else {
+      img.onload = () => doCrossfade();
+      img.onerror = () => {
+        console.warn('[RehearsalBg] Scene image failed to load:', url);
+        doCrossfade(); // Still try — might be a CORS issue that browser handles
+      };
+      // Safety timeout — crossfade anyway after 500ms
+      setTimeout(() => doCrossfade(), 500);
+    }
+  }
+
+  private _swapLayers(): void {
+    this._crossfadeTimer = null;
+    const prevLayer = this._activeSceneLayer === 'A' ? this._sceneLayerB : this._sceneLayerA;
+    prevLayer.style.opacity = '0';
+    prevLayer.style.backgroundImage = '';
+  }
+
   // TC-COVER-04: Update dimming when cover art state changes
   setCoverArtState(active: boolean, isDark?: boolean, hasCustomBg?: boolean): void {
     const wasActive = this._coverArtActive;
@@ -199,18 +312,38 @@ export class RehearsalBackgroundManager {
           : (lyricsDisplay.textBlocks || []);
         const newBlockIndex = this._getBlockIndexByLine(processedBlocks, lineIndex);
         if (newBlockIndex === null) return;
-        const newBlockId = processedBlocks[newBlockIndex]?.id || `idx-${newBlockIndex}`;
         if (this._currentBlockIndex === null) {
           this._currentBlockIndex = newBlockIndex;
-          this._currentBlockId = newBlockId;
           return;
         }
-        if (newBlockIndex !== this._currentBlockIndex || newBlockId !== this._currentBlockId) {
+        // Compute line index within block for scene lookup
+        const lineIdxInBlock = this._getLineIndexInBlock(processedBlocks, newBlockIndex, lineIndex);
+        const sceneEntry = this._resolveSceneUrl(newBlockIndex, lineIdxInBlock);
+
+        // Determine cooldown based on transition type
+        const blockChanged = newBlockIndex !== this._currentBlockIndex;
+        const now = Date.now();
+        const cooldown = blockChanged ? this.BLOCK_SWITCH_COOLDOWN : this.LINE_SWITCH_COOLDOWN;
+        if (sceneEntry && now - this._lastSceneSwitch < cooldown) {
+          // Cooldown — still update block tracking but skip scene switch
           this._currentBlockIndex = newBlockIndex;
-          this._currentBlockId = newBlockId;
+          return;
+        }
+        this._lastSceneSwitch = now;
+
+        this._currentBlockIndex = newBlockIndex;
+
+        // Pexels slideshow (block-based cycling)
+        if (blockChanged) {
           const imgIndex = newBlockIndex % this.imagePaths.length;
           this._setBackground(imgIndex);
         }
+
+        // Scene transition
+        this.setBlockScene(sceneEntry?.url || null);
+
+        // Lookahead: prefetch next line
+        this._prefetchNextLine(newBlockIndex, lineIdxInBlock, processedBlocks);
       } catch (_) {}
     };
     document.addEventListener('active-line-changed', this._boundHandler);
@@ -225,9 +358,6 @@ export class RehearsalBackgroundManager {
           ? lyricsDisplay._splitLargeBlocks(lyricsDisplay.textBlocks || [])
           : (lyricsDisplay.textBlocks || []);
         this._currentBlockIndex = this._getBlockIndexByLine(processedBlocks, currentLine);
-        this._currentBlockId = this._currentBlockIndex !== null 
-          ? processedBlocks?.[this._currentBlockIndex]?.id || null 
-          : null;
       }
     } catch (_) {}
   }
@@ -241,5 +371,34 @@ export class RehearsalBackgroundManager {
       if (lineIndex >= min && lineIndex <= max) return i;
     }
     return null;
+  }
+
+  private _getLineIndexInBlock(blocks: any[], blockIndex: number, globalLineIndex: number): number {
+    const block = blocks[blockIndex];
+    if (!block?.lineIndices) return -1;
+    return block.lineIndices.indexOf(globalLineIndex);
+  }
+
+  private _resolveSceneUrl(blockIndex: number, lineIdxInBlock: number): SceneEntry | null {
+    // 1. Line-level (priority)
+    if (lineIdxInBlock >= 0) {
+      const lineKey = `${blockIndex}_${lineIdxInBlock}`;
+      const lineEntry = this._sceneMap.lineScenes.get(lineKey);
+      if (lineEntry) return lineEntry;
+    }
+    // 2. Block-level (fallback)
+    return this._sceneMap.blockScenes.get(blockIndex) || null;
+  }
+
+  private _prefetchNextLine(blockIndex: number, currentLineIdx: number, blocks: any[]): void {
+    const block = blocks[blockIndex];
+    if (!block?.lineIndices) return;
+    const nextIdx = currentLineIdx + 1;
+    if (nextIdx >= block.lineIndices.length) return;
+    const entry = this._resolveSceneUrl(blockIndex, nextIdx);
+    if (entry) {
+      const img = new Image();
+      img.src = entry.url;
+    }
   }
 }

@@ -18,12 +18,14 @@ export interface TrackState {
   currentTrack: TrackMeta | null;
   currentTrackIndex: number;
   currentCoverTheme: CoverArtTheme | null;
+  hasBlockScenes: boolean;
 
   setTracksMeta: (t: TrackMeta[]) => void;
   setCurrentTrack: (t: TrackMeta | null) => void;
   setCurrentTrackIndex: (i: number) => void;
   removeTrack: (id: string) => void;
   setCurrentCoverTheme: (theme: CoverArtTheme | null) => void;
+  setHasBlockScenes: (v: boolean) => void;
 }
 
 export const useTrackStore = create<TrackState>((set) => ({
@@ -31,11 +33,13 @@ export const useTrackStore = create<TrackState>((set) => ({
   currentTrack: null,
   currentTrackIndex: -1,
   currentCoverTheme: null,
+  hasBlockScenes: false,
 
   setTracksMeta: (t) => set({ tracksMeta: t }),
   setCurrentTrack: (t) => set({ currentTrack: t }),
   setCurrentTrackIndex: (i) => set({ currentTrackIndex: i }),
   setCurrentCoverTheme: (theme) => set({ currentCoverTheme: theme }),
+  setHasBlockScenes: (hasBlockScenes) => set({ hasBlockScenes }),
   removeTrack: (id) => set((state) => {
     const removedIndex = state.tracksMeta.findIndex((t) => t.id === id);
     if (removedIndex === -1) return state;

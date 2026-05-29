@@ -83,9 +83,10 @@ export interface UserRecord {
 // ── Block Scene Types (Wave 2) ──────────────────────────
 
 export interface BlockScene {
-  id: string;            // `${trackId}_${blockIndex}`
+  id: string;            // `${trackId}_${blockIndex}` or `${trackId}_${blockIndex}_${lineIndex}`
   trackId: number;
   blockIndex: number;
+  lineIndex?: number | null;  // null/absent = block-level, number = line-level within block
   blockId?: string;      // optional, for stabilisation on block reorder
   blob: Blob;
   theme: import('../types/cover-theme.types').CoverArtTheme;
@@ -96,10 +97,25 @@ export interface BlockSceneMeta {
   id: string;
   trackId: number;
   blockIndex: number;
+  lineIndex?: number | null;  // null/absent = block-level, number = line-level
   blockId?: string;
   theme: import('../types/cover-theme.types').CoverArtTheme;
   addedAt: string;
   // NO blob — for listing/preview without heavy reads
+}
+
+// ── Scene Map Types (Wave 2.5) ──────────────────────────
+
+export interface SceneEntry {
+  url: string;
+  theme: import('../types/cover-theme.types').CoverArtTheme;
+}
+
+export interface SceneMap {
+  /** blockIndex → Object URL + theme for block-level scene */
+  blockScenes: Map<number, SceneEntry>;
+  /** `${blockIndex}_${lineIdxInBlock}` → Object URL + theme for line-level scene */
+  lineScenes: Map<string, SceneEntry>;
 }
 
 // ── Connection ─────────────────────────────────────────
