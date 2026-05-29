@@ -62,6 +62,8 @@ export interface UploadSession {
   coverArtUrl?: string | null;
   /** TC-COVER-06: Cover art blob from ZIP for offline use */
   coverArtBlob?: Blob | null;
+  /** TC-CBG-08: Custom background blob from ZIP */
+  customBgBlob?: Blob;
   /** TC-COVER-01: Cover theme restored from ZIP export */
   coverTheme?: import('../types/cover-theme.types').CoverArtTheme | null;
   /** TC-LRC-05: Original lyrics with structural tags for LRC Picker */
@@ -524,6 +526,17 @@ export async function saveTrack(): Promise<void> {
     if (session.coverArtBlob) {
       trackData.coverArtBlob = session.coverArtBlob;
     }
+    // TC-CBG-08: Custom background + theme extraction
+    if (session.customBgBlob) {
+      trackData.customBgBlob = session.customBgBlob;
+      try {
+        const { extractThemeFromBlob } = await import('../services/cover-art.service');
+        const theme = await extractThemeFromBlob(session.customBgBlob);
+        if (theme) trackData.customBgTheme = theme;
+      } catch (e) {
+        console.warn('[Upload] Custom bg theme extraction failed:', e);
+      }
+    }
     if (session.coverTheme) {
       trackData.coverTheme = session.coverTheme;
     }
@@ -863,6 +876,28 @@ export async function handleZipFileSelect(file: File): Promise<void> {
         console.warn('[Upload] Failed to extract cover art from ZIP:', e);
       }
     }
+
+      // TC-CBG-08: Extract custom background from ZIP
+      const bgFolder = zip.folder('backgrounds');
+      if (bgFolder) {
+        const bgEntries: Array<{ path: string; file: any }> = [];
+        bgFolder.forEach((path: string, file: any) => {
+          if (!file.dir) bgEntries.push({ path, file });
+        });
+        if (bgEntries.length > 0) {
+          try {
+            const first = bgEntries[0];
+            const ab = await first.file.async('arraybuffer');
+            const isPng = first.path.toLowerCase().endsWith('.png');
+            uploadSession.customBgBlob = new Blob([ab], {
+              type: isPng ? 'image/png' : 'image/jpeg',
+            });
+            console.log('[CustomBg] Extracted from ZIP:', Math.round(ab.byteLength / 1024) + 'KB');
+          } catch (e) {
+            console.warn('[Upload] Failed to extract custom bg:', e);
+          }
+        }
+      }
 
     // Save track
     await saveTrack();

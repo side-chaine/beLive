@@ -7,6 +7,9 @@ export interface TrackMeta {
   artist?: string;
   coverArtUrl?: string | null;
   coverTheme?: CoverArtTheme | null;
+  /** Custom background Object URL (runtime only, not persisted).
+   *  When set, takes priority over coverArtUrl for background rendering. */
+  customBgUrl?: string | null;
   index: number;
 }
 

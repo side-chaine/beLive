@@ -6,6 +6,11 @@ import { usePlateStore } from '../stores/plate.store';
 import { useStemStore } from '../stem/stem.store';
 import { useAiSettingsStore } from '../stores/ai-settings.store';
 import type { PerformanceTier } from '../performance/performance.types';
+import { resizeImage } from '../utils/image-resize';
+import { extractThemeFromBlob } from '../services/cover-art.service';
+import { updateTrackField } from '../services/idb.service';
+import { useTrackStore } from '../stores/track.store';
+import type { CoverArtTheme } from '../types/cover-theme.types';
 
 const MODE_COLORS: Record<string, string> = {
   concert: '#3498db',
@@ -20,6 +25,10 @@ interface GraphicsTierControlsProps {
   checkmarkStyle: React.CSSProperties;
   accentColor: string;
   onClose: () => void;
+  customBgUrl: string | null;
+  bgInputRef: React.RefObject<HTMLInputElement | null>;
+  onBgUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  onRemoveBg: () => Promise<void>;
 }
 
 function GraphicsTierControls({
@@ -28,6 +37,10 @@ function GraphicsTierControls({
   checkmarkStyle,
   accentColor,
   onClose,
+  customBgUrl,
+  bgInputRef,
+  onBgUpload,
+  onRemoveBg,
 }: GraphicsTierControlsProps) {
   const { tier, autoDetect, detectedTier } = usePerformanceTier();
   const { setTier, setAutoDetect } = usePerformanceStore();
@@ -140,6 +153,51 @@ function GraphicsTierControls({
         </span>
         {useAutoBg && <span style={checkmarkStyle}>✓</span>}
       </div>
+
+      {/* Custom Background — always visible */}
+      <div
+        style={{
+          ...menuItemStyle,
+          paddingLeft: 20,
+          background: customBgUrl ? `${accentColor}15` : undefined,
+          borderLeft: customBgUrl ? `2px solid ${accentColor}` : '2px solid transparent',
+        }}
+        onClick={() => bgInputRef.current?.click()}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = customBgUrl ? `${accentColor}25` : `${accentColor}10`; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = customBgUrl ? `${accentColor}15` : ''; }}
+      >
+        <span style={{ fontWeight: customBgUrl ? 500 : 400, color: customBgUrl ? '#fff' : '#ccc' }}>
+          Custom Background
+        </span>
+        {customBgUrl && <span style={checkmarkStyle}>✓</span>}
+      </div>
+
+      {/* Remove Background — only when customBg exists */}
+      {customBgUrl && (
+        <div
+          style={{
+            ...menuItemStyle,
+            paddingLeft: 20,
+            borderLeft: '2px solid transparent',
+          }}
+          onClick={onRemoveBg}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(239, 68, 68, 0.1)'; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ''; }}
+        >
+          <span style={{ fontWeight: 400, color: '#ef4444' }}>
+            Remove Background
+          </span>
+        </div>
+      )}
+
+      {/* Hidden file input */}
+      <input
+        ref={bgInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={onBgUpload}
+      />
     </div>
   );
 }
@@ -288,6 +346,49 @@ export function QuickActions() {
   const mode = useModeStore((s) => s.mode);
   const color = MODE_COLORS[mode] || '#fff';
   const setCatalogOpen = useUIStore((s) => s.setCatalogOpen);
+  const customBgUrl = useTrackStore(s => s.currentTrack?.customBgUrl) || null;
+  const currentTrackId = useTrackStore(s => s.currentTrack?.id);
+  const bgInputRef = useRef<HTMLInputElement>(null);
+
+  const MAX_BG_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+
+  const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentTrackId) return;
+    e.target.value = '';
+
+    if (file.size > MAX_BG_FILE_SIZE) {
+      console.warn('[CustomBg] File too large:', Math.round(file.size / 1024 / 1024) + 'MB');
+      return;
+    }
+
+    try {
+      const resized = await resizeImage(file);
+      let theme: CoverArtTheme | null = null;
+      try { theme = await extractThemeFromBlob(resized); } catch (_) {}
+
+      await updateTrackField(Number(currentTrackId), {
+        customBgBlob: resized,
+        customBgTheme: theme,
+      });
+      document.dispatchEvent(new CustomEvent('tracks-changed'));
+    } catch (err) {
+      console.error('[CustomBg] Upload failed:', err);
+    }
+  };
+
+  const removeCustomBg = async () => {
+    if (!currentTrackId) return;
+    try {
+      await updateTrackField(Number(currentTrackId), {
+        customBgBlob: null,
+        customBgTheme: null,
+      });
+      document.dispatchEvent(new CustomEvent('tracks-changed'));
+    } catch (err) {
+      console.error('[CustomBg] Remove failed:', err);
+    }
+  };
 
   const openCatalog = useCallback(() => {
     setCatalogOpen(true);
@@ -433,6 +534,10 @@ export function QuickActions() {
             checkmarkStyle={checkmarkStyle}
             accentColor={color}
             onClose={closeMenu}
+            customBgUrl={customBgUrl}
+            bgInputRef={bgInputRef}
+            onBgUpload={handleBgUpload}
+            onRemoveBg={removeCustomBg}
           />
           <StemsToggle
             menuItemStyle={menuItemStyle}

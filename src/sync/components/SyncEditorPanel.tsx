@@ -273,6 +273,13 @@ export default function SyncEditorPanel() {
         }
       }
 
+      // TC-CBG-07: Custom background file
+      if (fullTrack.customBgBlob) {
+        const bgExt = fullTrack.customBgBlob.type?.includes('png') ? 'png' : 'jpg';
+        zip.file(`backgrounds/bg_01.${bgExt}`, fullTrack.customBgBlob, { compression: 'STORE' });
+        console.log('[Export] Custom background added to ZIP:', bgExt, Math.round(fullTrack.customBgBlob.size / 1024) + 'KB');
+      }
+
       // Markers + blocks (export.json)
       const markers = mm.getMarkers?.() || [];
       const textBlocks = ld.textBlocks || [];
@@ -290,6 +297,13 @@ export default function SyncEditorPanel() {
         coverTheme: fullTrack.coverTheme || undefined,
         // TC-LRC-04: Preserve original lyrics with structural tags for LRC Picker reimport
         lyricsOriginalContent: fullTrack.lyricsOriginalContent || undefined,
+        // TC-CBG-07: backgrounds metadata
+        ...(fullTrack.customBgBlob ? {
+          backgrounds: [{
+            file: `backgrounds/bg_01.${fullTrack.customBgBlob.type?.includes('png') ? 'png' : 'jpg'}`,
+            trackId: Number(meta.id),
+          }],
+        } : {}),
       };
       zip.file('export.json', JSON.stringify(exportData, null, 2));
 

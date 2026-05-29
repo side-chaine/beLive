@@ -12,6 +12,8 @@ export class RehearsalBackgroundManager {
   private _decoded: Map<string, boolean>;
   private _coverArtActive: boolean = false;  // TC-COVER-04
   private _coverIsDark: boolean = false;     // TC-COVER-04
+  private _customBgActive: boolean = false;
+  private _customBgUrl: string | null = null;
 
   constructor(imagePaths: string[], interval: number = 0) {
     this.imagePaths = imagePaths;
@@ -43,12 +45,19 @@ export class RehearsalBackgroundManager {
     this.body.classList.add('rehearsal-active');
     this.isActive = true;
     this._preloadAll();
-    this._setBackground();
-    if (this.interval && this.interval > 0 && this.imagePaths.length > 1) {
-      this.timerId = setInterval(
-        this._setBackground.bind(this), 
-        this.interval
-      );
+    if (this._customBgUrl) {
+      this.body.style.setProperty('background-image', `url('${this._customBgUrl}')`);
+      this.body.style.setProperty('background-size', 'cover');
+      this.body.style.setProperty('background-position', 'center');
+      this.body.style.setProperty('background-repeat', 'no-repeat');
+    } else {
+      this._setBackground();
+      if (this.interval && this.interval > 0 && this.imagePaths.length > 1) {
+        this.timerId = setInterval(
+          this._setBackground.bind(this), 
+          this.interval
+        );
+      }
     }
   }
 
@@ -60,6 +69,9 @@ export class RehearsalBackgroundManager {
     this.isActive = false;
     this.body.style.removeProperty('background-image');
     this.body.style.removeProperty('background');
+    this.body.style.removeProperty('background-size');
+    this.body.style.removeProperty('background-position');
+    this.body.style.removeProperty('background-repeat');
     this.body.classList.remove('rehearsal-active');
     if (this._boundHandler) {
       document.removeEventListener('active-line-changed', this._boundHandler);
@@ -69,6 +81,7 @@ export class RehearsalBackgroundManager {
 
   private _setBackground(forcedIndex: number | null = null): void {
     if (!this.isActive) return;
+    if (this._customBgUrl) return;
     let nextIndex = forcedIndex;
     if (typeof nextIndex !== 'number' || nextIndex < 0) {
       do {
@@ -91,7 +104,9 @@ export class RehearsalBackgroundManager {
     const apply = (): void => {
       if (!this.isActive) return;
       if (this._coverArtActive) {
-        const dimAlpha = this._coverIsDark ? 0.45 : 0.70;
+        const dimAlpha = this._customBgActive
+          ? 0.80                              // stronger dim under custom bg
+          : (this._coverIsDark ? 0.45 : 0.70); // original cover art dimming
         this.body.style.setProperty('background-image',
           `linear-gradient(rgba(0,0,0,${dimAlpha}), rgba(0,0,0,${dimAlpha})), url('${imagePath}')`);
       } else {
@@ -119,14 +134,41 @@ export class RehearsalBackgroundManager {
     }
   }
 
+  setCustomBg(url: string | null): void {
+    this._customBgUrl = url;
+    if (url) {
+      if (this.timerId) {
+        clearInterval(this.timerId);
+        this.timerId = null;
+      }
+      this.body.style.setProperty('background-image', `url('${url}')`);
+      this.body.style.setProperty('background-size', 'cover');
+      this.body.style.setProperty('background-position', 'center');
+      this.body.style.setProperty('background-repeat', 'no-repeat');
+    } else {
+      this.body.style.removeProperty('background-size');
+      this.body.style.removeProperty('background-position');
+      this.body.style.removeProperty('background-repeat');
+      this.lastImageIndex = -1;
+      this._setBackground();
+      if (this.interval && this.interval > 0 && this.imagePaths.length > 1) {
+        this.timerId = setInterval(
+          this._setBackground.bind(this),
+          this.interval
+        );
+      }
+    }
+  }
+
   // TC-COVER-04: Update dimming when cover art state changes
-  setCoverArtState(active: boolean, isDark?: boolean): void {
+  setCoverArtState(active: boolean, isDark?: boolean, hasCustomBg?: boolean): void {
     const wasActive = this._coverArtActive;
-    if (this._coverArtActive === active && this._coverIsDark === !!isDark) return;
+    const prevCustomBg = this._customBgActive;
+    if (this._coverArtActive === active && this._coverIsDark === !!isDark && this._customBgActive === !!hasCustomBg) return;
     this._coverArtActive = active;
     this._coverIsDark = !!isDark;
-    // New random background when cover art first appears on a track
-    if (active && !wasActive) {
+    this._customBgActive = !!hasCustomBg;
+    if ((active && !wasActive) || (!!hasCustomBg && !prevCustomBg)) {
       this.lastImageIndex = -1;
     }
     this._setBackground();

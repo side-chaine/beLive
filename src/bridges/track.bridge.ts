@@ -2,7 +2,8 @@ import { useTrackStore, TrackMeta } from '../stores/track.store';
 import { getAllTracks } from '../services/idb.service';
 import { parseTrackName } from '../catalog/types';
 
-// TC-COVER-04: Track cover art Object URLs for cleanup
+// Contains Object URLs for both coverArt and customBg blobs
+// Revoked on: syncAll (deferred 1200ms), catalog-cleared, bridge dispose
 const _coverArtObjectUrls = new Set<string>();
 
 function revokeAllCoverArtUrls() {
@@ -31,13 +32,27 @@ async function readTracksMetaFromIDB(): Promise<TrackMeta[]> {
       } else if (t.coverArtUrl?.startsWith('http')) {
         coverUrl = t.coverArtUrl;
       }
-      
+
+      let customBgUrl: string | null = null;
+      if (t.customBgBlob) {
+        customBgUrl = URL.createObjectURL(t.customBgBlob);
+        _coverArtObjectUrls.add(customBgUrl);
+      }
+
+      // 💎 Effective theme: when customBg is active, its theme takes priority over coverTheme.
+      // This flows through currentCoverTheme → cover-theme.bridge (FROZEN) → :root CSS vars.
+      // When customBg is removed, effectiveTheme reverts to coverTheme automatically.
+      const effectiveTheme = t.customBgBlob
+        ? (t.customBgTheme || t.coverTheme)
+        : t.coverTheme;
+
       return {
         id: String(t.id ?? ''),
         title: t.title,
         artist: parsed.artist,
         coverArtUrl: coverUrl,
-        coverTheme: t.coverTheme || null,  // TC-COVER-01: undefined → null
+        coverTheme: effectiveTheme || null,
+        customBgUrl,
         index: i,
       };
     });

@@ -57,6 +57,7 @@ export function useBackgroundManagers(): void {
   const mode = useModeStore((s) => s.mode);
   const coverTheme = useTrackStore((s) => s.currentCoverTheme);  // TC-COVER-04
   const useAutoBg = usePlateStore(s => s.useAutoBg);
+  const customBgUrl = useTrackStore(s => s.currentTrack?.customBgUrl);
 
   useEffect(() => {
     const managers = createManagers();
@@ -98,7 +99,20 @@ export function useBackgroundManagers(): void {
   // TC-BG-08: Cover art background only when user enabled it
   useEffect(() => {
     if (!managersRef.current?.rehearsal) return;
+    const hasCustomBg = !!customBgUrl;
     const coverArtActive = !!coverTheme && useAutoBg;
-    managersRef.current.rehearsal.setCoverArtState(coverArtActive, coverTheme?.isDark);
-  }, [coverTheme, useAutoBg]);
+    // Custom bg on body: no dimming needed (user's photo is the bg)
+    // Cover art only: dim pexels to let cover art show through
+    managersRef.current.rehearsal.setCoverArtState(
+      hasCustomBg ? false : coverArtActive,
+      coverTheme?.isDark,
+      hasCustomBg,
+    );
+  }, [coverTheme, useAutoBg, customBgUrl]);
+
+  // Custom background on body (Layer 1) — full screen
+  useEffect(() => {
+    if (!managersRef.current?.rehearsal) return;
+    managersRef.current.rehearsal.setCustomBg(customBgUrl || null);
+  }, [customBgUrl]);
 }

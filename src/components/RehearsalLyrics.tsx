@@ -49,6 +49,7 @@ export function RehearsalLyrics() {
   const useAutoBg = usePlateStore(s => s.useAutoBg);
   const currentTrack = useTrackStore(s => s.currentTrack);
   const coverArtUrl = currentTrack?.coverArtUrl || null;
+  const customBgUrl = useTrackStore(s => s.currentTrack?.customBgUrl) || null;
   const tier = useEffectiveTier();
 
   // Transition preset from plate store
@@ -67,10 +68,11 @@ export function RehearsalLyrics() {
 
   const isPlaying = useAudioStore(s => s.isPlaying);
 
-  const showCoverBg = useAutoBg;
-
-
-
+  // Custom background visible even when useAutoBg=false (user's explicit choice)
+  const showCoverBg = useAutoBg || !!customBgUrl;
+  // Custom bg renders on body (Layer 1) — not in plate (Layer 3)
+  // Plate img shows cover art only when no custom bg
+  const effectiveBgUrl = customBgUrl ? null : coverArtUrl;
 
 
 
@@ -760,9 +762,10 @@ export function RehearsalLyrics() {
       >
         {showCoverBg && (
           <div className={styles.coverBackground}>
-            {coverArtUrl && (
+            {effectiveBgUrl && (
               <img
-                src={coverArtUrl}
+                key={effectiveBgUrl}
+                src={effectiveBgUrl}
                 className={styles.coverArtImage}
                 alt=""
               />
