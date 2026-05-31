@@ -1,9 +1,9 @@
-# 📘 Block Scenes Editor — Architecture Document v1.0
+# 📘 Block Scenes Editor — Architecture Document v2.0
 
-**Status:** Current implementation baseline  
-**Date:** 2026-05-29  
-**Authors:** Центр_28.3 + Центр_28.4  
-**Next Phase:** Block Scenes Editor v2 (effects, transitions, plate controls, fonts)
+**Status:** Proactive Visual + ZIP Roundtrip  
+**Date:** 2026-05-31  
+**Authors:** Центр_28.3 + Центр_28.4 + Центр_29 + Центр_29.1  
+**Next Phase:** Block Scenes Editor v3 (effects, transitions, plate controls, fonts)
 
 ---
 
@@ -84,8 +84,14 @@ Track Load
   │
   ├─ document 'block-scenes-loaded' { trackId, sceneCount, sceneMap }
   │    └─ useBackgroundManagers.onScenesLoaded()
+  │         ├─ Resolve currentTrack via trackCatalog (synchronous, no race)
+  │         ├─ Fallback to store if trackCatalog unavailable
   │         ├─ useTrackStore.setHasBlockScenes(sceneCount > 0)
   │         └─ managers.rehearsal.setBlockSceneMap(sceneMap)
+  │              ├─ Compute fingerprint → skip if unchanged (no crossfade)
+  │              ├─ PROACTIVE APPLY: resolve blockIndex from window.lyricsDisplay
+  │              ├─ Dedup: skip setBlockScene if URL unchanged
+  │              └─ setBlockScene(url) — crossfade with preload
   │
   └─ Playback active-line-changed
        └─ RehearsalBackground._boundHandler()
@@ -93,38 +99,50 @@ Track Load
             ├─ _getLineIndexInBlock() — global lineIndex → local lineIdxInBlock
             ├─ _resolveSceneUrl(blockIndex, lineIdxInBlock) — line > block > null
             ├─ Cooldown: BLOCK=300ms, LINE=150ms
-            ├─ setBlockScene(url) — crossfade with preload
+            ├─ setBlockScene(url) — dedup + crossfade with preload
             └─ _prefetchNextLine() — lookahead 1 line
 ```
 
-### 3.1 Double Preload Guard
+### 3.1 Source-Aware Events
 
-```typescript
-let _lastPreloadedTrackId: number | null = null;
-let _preloadInProgress = false;
+All `tracks-changed` dispatches now carry `{ detail: { source } }`:
 
-const doPreload = async () => {
-  if (_lastPreloadedTrackId === numId || _preloadInProgress) return;
-  _preloadInProgress = true;
-  try {
-    const sceneMap = await preloadScenesForTrack(numId);
-    _lastPreloadedTrackId = numId;
-    // dispatch event...
-  } finally {
-    _preloadInProgress = false;
-  }
-};
-```
+| Source | Emitter | Consumer Action |
+|--------|---------|-----------------|
+| `'scene-crud'` | BlockScenesModal (6 places), upload.service (ZIP import) | `softReloadScenesForTrack()` |
+| `'catalog'` | CatalogLayout (ZIP import, manual upload) | Skip — `doPreload` handles via `track-loaded` |
+| `'track-import'` | upload.service | Skip — `doPreload` handles |
+| `'track-delete'` | track.actions | Skip — cleanup handled by `before-track-change` |
+| No source | Backward compat | `softReloadScenesForTrack()` |
 
-Without `_preloadInProgress`: eager call + event call both fire synchronously before async preload completes → double load.
+### 3.2 Proactive Scene Apply
 
-### 3.2 Object URL Lifecycle
+When `setBlockSceneMap` receives a valid sceneMap:
+1. Compute fingerprint → if unchanged, update URLs silently (no crossfade)
+2. Resolve current blockIndex from `window.lyricsDisplay` or fallback to block 0
+3. Save `_currentBlockIndex` for future `active-line-changed` events
+4. Apply scene via `setBlockScene()` with dedup guard
+
+### 3.3 Race Condition Guard in onScenesLoaded
+
+`track.bridge.ts` updates store with 100ms debounce. `block-scenes-loaded` fires before store is updated.
+**Fix:** `onScenesLoaded` reads `currentTrackIndex` from `window.trackCatalog` (synchronous) instead of store.
+Fallback to store if trackCatalog unavailable.
+
+### 3.4 Object URL Lifecycle
 
 | URL Type | Managed By | Revoked On |
 |----------|-----------|-----------|
 | Scene Object URLs | `block-scene.service._sceneObjectUrls` Set | `before-track-change`, track switch |
 | Cover art Object URLs | `track.bridge._coverArtObjectUrls` Set | `syncAll` (deferred 1200ms) |
 | Preview URLs (modal) | `previewUrlsRef` Map | Modal close, unmount |
+
+### 3.5 ZIP Scene Roundtrip Events
+
+| Event | When | Purpose |
+|-------|------|---------|
+| `tracks-changed` source=`track-import` | Inside `saveTrack()` during ZIP import | Skip softReload — doPreload handles |
+| `tracks-changed` source=`scene-crud` | After scene import loop completes | softReload to pick up all imported scenes |
 
 ---
 
@@ -146,10 +164,12 @@ Layer 4: .activeBlock — backdrop-filter blur
 Layer 5: WagonTrain — solid bg
 ```
 
-### 4.1 Crossfade Mechanism
+### 4.1 Crossfade + Dedup Mechanism
 
 ```
 RehearsalBackground.setBlockScene(url)
+  ├─ Dedup guard: skip if url === _lastAppliedSceneUrl
+  ├─ Update _lastAppliedSceneUrl = url
   ├─ new Image() → img.src = url  (preload first)
   ├─ img.onload → doCrossfade()
   │    ├─ nextLayer = (activeLayer === 'A') ? B : A
@@ -161,7 +181,31 @@ RehearsalBackground.setBlockScene(url)
   └─ Fallback: setTimeout(500ms) if img.onload doesn't fire
 ```
 
-### 4.2 hasBlockScenes Flag
+### 4.2 Fingerprint + Unchanged Path
+
+When `setBlockSceneMap` is called with data that hasn't changed (fingerprint match):
+- `_sceneMap` is still updated with new Object URLs (for future `_resolveSceneUrl` calls)
+- Active layer's `backgroundImage` is updated directly without crossfade
+- Image preload ensures no broken image during decode
+
+### 4.3 clearAllScenes() — Atomic Reset
+
+```typescript
+clearAllScenes(): void {
+  this._sceneMap = { blockScenes: new Map(), lineScenes: new Map() };
+  this._sceneLayerA.style.opacity = '0';
+  this._sceneLayerB.style.opacity = '0';
+  this._sceneLayerA.style.backgroundImage = '';
+  this._sceneLayerB.style.backgroundImage = '';
+  this._lastSceneFingerprint = '';
+  this._lastAppliedSceneUrl = null;
+  this._currentBlockIndex = null;
+}
+```
+
+Used in: `before-track-change`, `onTracksChanged` when sceneCount === 0.
+
+### 4.4 hasBlockScenes Flag
 
 When `hasBlockScenes = true`:
 - Cover art background in plate is suppressed (`effectiveBgUrl = null`)
@@ -178,8 +222,8 @@ When `hasBlockScenes = true`:
 .overlay (fixed, below header)
   └── .modal (98vw × calc(100vh - header - 16px))
        ├── .topBar
-       │    ├── .tabs [Scenes | Custom]
-       │    └── .closeBtn [Done]
+       │    ├── .tabs [Scenes | Custom] + packProgress indicator
+       │    └── .topActions [Upload Pack btn] + [Done btn]
        ├── .trackMap (flex row, scroll, align-items: flex-start)
        │    ├── .blockColumn × N (flex: 1 1 auto, border-bottom colored)
        │    │    ├── .columnHeader (block name · count, thumbnail if filled, ✕ if scenes exist)
@@ -242,9 +286,26 @@ Current playback block gets `.blockColumnActive` class:
 
 Computed from `lyricsStore.activeLineIndex` + `block.lineIndices.includes()`.
 
+### 5.7 Upload Pack (Bulk Upload)
+
+**Button:** "Upload Pack" in topBar
+**Input:** `<input type="file" accept="image/*" multiple>`
+**Flow:**
+1. User selects multiple files
+2. Natural sort by filename (`1, 2, ... 10, 11` — not `1, 10, 11, 2`)
+3. Quota pre-check: `MAX_BG_PER_TRACK - currentCount`
+4. Collect all empty cells in reading order (block 0 line 0, block 0 line 1, ... block 1 line 0, ...)
+5. Skip cells that already have line-level scenes
+6. Upload one by one with progress indicator (`12/52`)
+7. Dispatch `tracks-changed` with `source: 'scene-crud'`
+
+**Limit:** `MAX_BG_PER_TRACK = 100` (raised from 20)
+
 ---
 
 ## 6. UPLOAD FLOW
+
+### 6.1 Single Upload
 
 ```
 User clicks empty cell/header
@@ -253,12 +314,43 @@ User clicks empty cell/header
             └─> handleSceneUpload(e) or handleLineUpload(e)
                  ├─ resizeImage(file) — max 1920px, JPEG/PNG auto
                  ├─ extractThemeFromBlob(resized) — median cut color extraction
-                 ├─ Check quota (MAX_BG_PER_TRACK = 20)
+                 ├─ Check quota (MAX_BG_PER_TRACK = 100)
                  ├─ uploadBlockScene(trackId, blockIndex, file, blockId, lineIndex?)
                  │    ├─ idbSaveScene(scene) — write to beLive_scenes DB
                  │    └─ return BlockSceneMeta
                  ├─ loadScenes() — reload all scenes + preview URLs
-                 └─ document.dispatchEvent('tracks-changed')
+                 └─ document.dispatchEvent('tracks-changed', { detail: { source: 'scene-crud' } })
+```
+
+### 6.2 Bulk Upload Pack
+
+```
+User clicks "Upload Pack" button
+  └─> <input type="file" accept="image/*" multiple> onChange
+       └─> handlePackUpload(e)
+            ├─ Natural sort files by filename
+            ├─ Quota pre-check: MAX_BG_PER_TRACK - currentCount
+            ├─ Collect empty cells in reading order
+            ├─ For each file → uploadLineScene() + update progress
+            ├─ loadScenes()
+            └─ document.dispatchEvent('tracks-changed', { detail: { source: 'scene-crud' } })
+```
+
+### 6.3 ZIP Import
+
+```
+User imports ZIP archive containing scenes/
+  └─> handleZipFileSelect(file)
+       ├─ Extract export.json → parse scenes[] metadata
+       ├─ saveTrack() (audio, lyrics, markers, etc.)
+       ├─ Capture jsonScenes before detachUploadSession()
+       ├─ For each scene in jsonScenes:
+       │    ├─ Read blob from ZIP (scenes/block_line.ext)
+       │    ├─ resizeImage(blob) — max 1920px
+       │    ├─ saveScene() to beLive_scenes DB (with new trackId)
+       │    └─ importedCount++
+       ├─ Dispatch 'tracks-changed' { source: 'scene-crud' }
+       └─ Show notification with scene count
 ```
 
 ---
@@ -314,34 +406,126 @@ Priority: `customBgUrl` takes precedence over `coverArtUrl` but is overridden by
 
 | File | Role | Lines |
 |------|------|-------|
-| `src/components/BlockScenesModal.tsx` | Main UI component | ~400 |
-| `src/components/BlockScenesModal.module.css` | Styles | ~280 |
-| `src/services/block-scene.service.ts` | Upload, preload, delete, SceneMap | ~260 |
+| `src/components/BlockScenesModal.tsx` | Main UI component + Upload Pack | ~500 |
+| `src/components/BlockScenesModal.module.css` | Styles | ~480 |
+| `src/services/block-scene.service.ts` | Upload, preload, delete, SceneMap, softReload | ~380 |
+| `src/services/upload.service.ts` | ZIP import + scene roundtrip | ~970 |
 | `src/services/idb.service.ts` | beLive_scenes DB CRUD | ~500 |
-| `src/backgrounds/RehearsalBackground.ts` | Runtime scene switching | ~400 |
-| `src/hooks/useBackgroundManagers.ts` | Wiring: preload → manager | ~145 |
+| `src/backgrounds/RehearsalBackground.ts` | Runtime scene switching + proactive apply + fingerprint | ~480 |
+| `src/hooks/useBackgroundManagers.ts` | Wiring: preload → manager + source filter + race fix | ~230 |
+| `src/sync/components/SyncEditorPanel.tsx` | ZIP export + scene export | ~1300 |
 | `src/utils/block-utils.ts` | createSubBlocks(), echo detection | ~430 |
-| `src/utils/image-resize.ts` | Canvas resize, max 1920px | ~70 |
-| `src/utils/storage-quota.ts` | Quota check, MAX_BG_PER_TRACK=20 | ~47 |
+| `src/utils/image-resize.ts` | Image resize, max 1920px | ~70 |
+| `src/utils/storage-quota.ts` | Quota check, MAX_BG_PER_TRACK=100 | ~47 |
 
 ---
 
 ## 11. KNOWN ISSUES (for next Architect)
 
-### 11.1 Scenes not applied after "Done"
-**Symptom:** User uploads scenes, clicks Done, but backgrounds don't change until track restart (sometimes 2 restarts).  
-**Likely cause:** `block-scenes-loaded` event fires during modal open, but `useBackgroundManagers` may not re-read sceneMap after modal closes.  
-**Fix needed:** Force sceneMap refresh when modal closes with `setOpen(false)`.
+### 11.1 ~~Scenes not applied after "Done"~~ — ✅ FIXED (TC-29-01/04)
+**Symptom:** User uploads scenes, clicks Done, but backgrounds don't change until track restart.  
+**Fix:** Proactive Scene Apply in `setBlockSceneMap` — resolves blockIndex from `window.lyricsDisplay` immediately.
 
-### 11.2 BS-08 ZIP roundtrip
-Block scenes are NOT exported/imported via ZIP. Need to add scene blobs to ZIP export and restore on import.
+### 11.2 BS-08 ZIP roundtrip — ✅ FIXED (TC-29-09)
+**What was fixed:** Scene blobs are now exported to `scenes/` folder in ZIP + `scenes[]` array in `export.json`.  
+**Import:** Extracts scenes from ZIP, resizes, saves to `beLive_scenes` DB, dispatches `scene-crud` for softReload.
 
 ### 11.3 Pexels slideshow during scenes
 When hasBlockScenes=true, pexels should only change on block change. Currently it may also change on line change in some code paths.
 
+### 11.4 Mode switch loses scenes (pre-existing)
+Switching rehearsal → concert → rehearsal loses sceneMap because `stop()` clears it. No `block-scenes-loaded` fires on mode return.  
+**Workaround:** Manually trigger preload or switch tracks.  
+**Proper fix:** Export `triggerScenePreload(trackId)` from block-scene.service and call from useBackgroundManagers on mode→rehearsal.
+
+### 11.5 Unnecessary crossfade after softReload
+When softReload creates new Object URLs for identical visual content, fingerprint matches and unchanged path avoids crossfade. However, if fingerprint changes (CRUD on another block), the current block may crossfade to the same visual. This is documented as acceptable — content-hash comparison is overkill.
+
 ---
 
-## 12. FROZEN GUARD
+## 12. ZIP SCENE ROUNDTRIP
+
+### 12.1 Purpose
+
+ZIP scene roundtrip allows users to export a track (audio, lyrics, markers, scenes) and import it back — including all block/line background scenes — enabling backup, cloning, and sharing of complete visual productions.
+
+### 12.2 Export Flow (SyncEditorPanel)
+
+```
+User clicks "Export" in SyncEditorPanel
+  ├─ Read all scenes for current track from beLive_scenes DB
+  ├─ Write export.json with scenes[] metadata array
+  ├─ For each scene: write blob to scenes/{blockIndex}_{lineIndex}.{ext}
+  ├─ Compression strategy:
+  │    ├─ Audio/images → STORE (no compression, faster access)
+  │    └─ Text/json → DEFLATE (better compression ratio)
+  └─ Return completed Blob for download
+```
+
+### 12.3 Import Flow
+
+```
+User imports ZIP via CatalogLayout
+  ├─ Parse export.json — extract scenes[] metadata
+  ├─ saveTrack() — saves audio, lyrics, markers
+  ├─ Capture jsonScenes BEFORE detachUploadSession()
+  ├─ For each scene in jsonScenes:
+  │    ├─ Read blob from ZIP path scenes/{blockIndex}_{lineIndex}.{ext}
+  │    ├─ resizeImage(blob) — max 1920px
+  │    ├─ saveScene() to beLive_scenes DB with NEW trackId
+  │    └─ importedCount++
+  ├─ Dispatch 'tracks-changed' { source: 'scene-crud' }
+  └─ Show notification: "Imported {importedCount} scenes"
+```
+
+### 12.4 Data Structures
+
+**export.json scenes[] entry:**
+```typescript
+interface ExportedSceneMeta {
+  blockIndex: number;
+  lineIndex: number | null;     // null = block-level scene
+  blockId: string | null;
+  filename: string;             // "scenes/block_line.ext"
+  theme: CoverArtTheme;
+}
+```
+
+**beLive_scenes DB record (after import):**
+```typescript
+interface BlockScene {
+  id: string;                   // NEW: `${newTrackId}_${blockIndex}_${lineIndex}`
+  trackId: number;              // NEW: mapped to imported track
+  blockIndex: number;           // Preserved from export
+  lineIndex: number | null;     // Preserved from export
+  blockId: string | null;       // Preserved from export
+  blob: Blob;                   // Resized, re-compressed
+  theme: CoverArtTheme;         // Re-extracted
+  addedAt: string;              // NEW: current timestamp
+}
+```
+
+### 12.5 Roundtrip Fidelity
+
+| Field | Preserved | Notes |
+|-------|-----------|-------|
+| `blockIndex` | ✅ | Unchanged |
+| `lineIndex` | ✅ | Unchanged |
+| `blockId` | ✅ | Unchanged |
+| Image blob | ✅ | Resized to max 1920px |
+| Theme colors | ✅ | Re-extracted from resized blob |
+| `id` | ❌ | Regenerated with new trackId |
+| `trackId` | ❌ | Mapped to imported track |
+| `addedAt` | ❌ | Set to import timestamp |
+| Higher-level metadata | ❌ | Not scene-related |
+
+### 12.6 Event Sequence
+
+See [Section 3.5](#35-zip-scene-roundtrip-events) for the complete event topology.
+
+---
+
+## 13. FROZEN GUARD
 
 ```
 ❌ src/audio/core/AudioEngineV2.ts
@@ -355,7 +539,7 @@ When hasBlockScenes=true, pexels should only change on block change. Currently i
 
 ---
 
-## 13. BLOCK EDITOR v2 — ROADMAP
+## 14. BLOCK EDITOR v2 — ROADMAP
 
 The current system is the **scene assignment layer** of a larger Block Editor vision:
 
@@ -393,5 +577,5 @@ The current system is the **scene assignment layer** of a larger Block Editor vi
 
 ---
 
-*Document v1.0 — Центр_28.3 — 2026-05-29*  
-*Wave 2.5 complete. 8 MICRO-PACKs delivered. 7 files changed. 0 frozen violations. 🚀*
+*Document v2.0 — Центр_28.3 + Центр_28.4 + Центр_29 + Центр_29.1 — 2026-05-31*  
+*Centre 29 complete. 9 TC delivered (TC-29-01 through TC-29-09) + 1 hotfix. Block Scenes Editor v2 — Proactive Visual + ZIP Roundtrip operational.*
