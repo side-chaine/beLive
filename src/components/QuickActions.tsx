@@ -125,7 +125,7 @@ function GraphicsTierControls({
       {/* Divider */}
       <div style={{ borderTop: '1px solid #333', margin: '4px 0' }} />
 
-      {/* Use Auto option */}
+      {/* Show Cover option */}
       <div
         style={{
           ...menuItemStyle,
@@ -142,7 +142,7 @@ function GraphicsTierControls({
         }}
       >
         <span style={{ fontWeight: useAutoBg ? 500 : 400, color: useAutoBg ? '#fff' : '#ccc' }}>
-          Use Auto
+          Show Cover
         </span>
         {useAutoBg && <span style={checkmarkStyle}>✓</span>}
       </div>

@@ -427,3 +427,50 @@
     box-shadow: 0 0 16px -4px color-mix(in srgb, var(--block-color, #6b7280) 25%, transparent);
   }
 }
+
+/* ── UPLOAD PACK ── */
+
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.packBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 5px 14px;
+  border-radius: 6px;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.packBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.packBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.packProgress {
+  font-size: 11px;
+  color: var(--bl-cover-accent, #f59e0b);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 0 4px;
+  animation: packPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes packPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}

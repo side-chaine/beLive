@@ -114,7 +114,7 @@ export function CatalogLayout({ color, onClose }: Props) {
     setZipBusy(true);
     try {
       handleZipFileSelect(file);
-      setTimeout(() => document.dispatchEvent(new Event('tracks-changed')), 2000)
+      setTimeout(() => document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'catalog' } })), 2000)
     } catch {
       alert('ZIP failed.');
     } finally {
@@ -275,7 +275,7 @@ export function CatalogLayout({ color, onClose }: Props) {
             background: showManual ? T.surfaceH : 'transparent',
           }}>{showManual ? '▲ Ручная загрузка' : '▶ Ручная загрузка'}</div>
           {showManual && <div style={{ marginBottom: 8 }}>
-            <UploadPanel onClose={() => { setShowManual(false); setPendingLyricsTrackId(null); setPendingLyricsTitle(''); }} onSaved={() => { setShowManual(false); setPendingLyricsTrackId(null); setPendingLyricsTitle(''); setTimeout(() => { document.dispatchEvent(new Event('tracks-changed')); onClose(); }, 500); }} autoOpenLyrics={pendingLyricsTrackId !== null} pendingTrackId={pendingLyricsTrackId} pendingTrackTitle={pendingLyricsTrackId ? pendingLyricsTitle : null} />
+            <UploadPanel onClose={() => { setShowManual(false); setPendingLyricsTrackId(null); setPendingLyricsTitle(''); }} onSaved={() => { setShowManual(false); setPendingLyricsTrackId(null); setPendingLyricsTitle(''); setTimeout(() => { document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'catalog' } })); onClose(); }, 500); }} autoOpenLyrics={pendingLyricsTrackId !== null} pendingTrackId={pendingLyricsTrackId} pendingTrackTitle={pendingLyricsTrackId ? pendingLyricsTitle : null} />
             <div style={{
               border: `1px dashed ${T.border2}`,
               borderRadius: T.r,

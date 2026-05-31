@@ -37,6 +37,17 @@ function revokeAllSceneUrls(): void {
   _sceneObjectUrls.clear();
 }
 
+/**
+ * Defensive ID parsing — guards against NaN, 0, negative, unsafe integers.
+ * Used everywhere a raw trackId needs validation.
+ */
+function toSafeId(raw: unknown): number | null {
+  if (raw == null) return null;
+  const num = Number(raw);
+  if (isNaN(num) || num <= 0 || num > Number.MAX_SAFE_INTEGER) return null;
+  return num;
+}
+
 // ── Scene CRUD ────────────────────────────────────────────
 
 /**
@@ -150,16 +161,17 @@ export async function getLineScenesForBlock(
  */
 export async function deleteBlockScene(sceneId: string): Promise<void> {
   await idbDeleteScene(sceneId);
-  console.log(`[BlockScene] Deleted: ${sceneId}`);
-}
 
-/**
- * Clear all scenes for a track
- */
-export async function clearAllBlockScenes(trackId: number): Promise<void> {
-  await idbClearScenes(trackId);
-  revokeAllSceneUrls();
-  console.log(`[BlockScene] Cleared all for trackId=${trackId}`);
+  // Extract trackId from sceneId format: "${trackId}_${blockIndex}[_${lineIndex}]"
+  const parts = sceneId.split('_');
+  const trackId = Number(parts[0]);
+
+  if (!isNaN(trackId) && trackId > 0) {
+    const remaining = await getScenesCountForTrack(trackId);
+    useTrackStore.getState().setHasBlockScenes(remaining > 0);
+  }
+
+  console.log(`[BlockScene] Deleted: ${sceneId}`);
 }
 
 // ── Preload & Object URLs ────────────────────────────────
@@ -200,6 +212,51 @@ export async function preloadScenesForTrack(trackId: number): Promise<SceneMap> 
 }
 
 /**
+ * Soft reload: creates new Object URLs without revoking old ones.
+ * Returns old URLs for deferred revocation (caller controls timing).
+ * Use when scene layers are actively displaying (e.g., after modal CRUD).
+ *
+ * Unlike preloadScenesForTrack which revokes all URLs first (causing
+ * white flash on active display), this keeps old URLs alive until
+ * crossfade completes.
+ */
+export async function softReloadScenesForTrack(
+  trackId: number,
+): Promise<{ sceneMap: SceneMap; oldUrls: string[] }> {
+  // Snapshot old URLs WITHOUT revoking — they're still displayed in scene layers
+  const oldUrls = Array.from(_sceneObjectUrls);
+  _sceneObjectUrls.clear();
+
+  const scenes = await getScenesForTrack(trackId);
+  if (scenes.length === 0) {
+    return { sceneMap: { blockScenes: new Map(), lineScenes: new Map() }, oldUrls };
+  }
+
+  const blockScenes = new Map<number, SceneEntry>();
+  const lineScenes = new Map<string, SceneEntry>();
+
+  for (const scene of scenes) {
+    const blob = await getSceneBlob(scene.id);
+    if (!blob) continue;
+
+    const url = URL.createObjectURL(blob);
+    _sceneObjectUrls.add(url);
+
+    const entry: SceneEntry = { url, theme: scene.theme };
+
+    if (scene.lineIndex != null) {
+      const key = `${scene.blockIndex}_${scene.lineIndex}`;
+      lineScenes.set(key, entry);
+    } else {
+      blockScenes.set(scene.blockIndex, entry);
+    }
+  }
+
+  console.log(`[BlockScene] Soft reloaded ${blockScenes.size} block + ${lineScenes.size} line scenes for trackId=${trackId}`);
+  return { sceneMap: { blockScenes, lineScenes }, oldUrls };
+}
+
+/**
  * Revoke all scene Object URLs (e.g. on track change)
  */
 export function revokeAllScenes(): void {
@@ -215,21 +272,52 @@ export function revokeAllScenes(): void {
 export function initBlockScenePreload(): () => void {
   let _lastPreloadedTrackId: number | null = null;
   let _preloadInProgress = false;
+  let _queuedTrackId: number | null = null;
 
-  const doPreload = async () => {
-    const trackId = useTrackStore.getState().currentTrack?.id;
-    if (!trackId) return;
-    const numId = Number(trackId);
-    if (_lastPreloadedTrackId === numId || _preloadInProgress) return;
+  const doPreload = async (explicitTrackId?: number) => {
+    // Resolve trackId: explicit → trackCatalog (immediate) → store (delayed by syncAll)
+    let numId: number | null = toSafeId(explicitTrackId);
+
+    if (numId === null) {
+      try {
+        const tc = (window as any).trackCatalog;
+        const idx = tc?.currentTrackIndex;
+        if (typeof idx === 'number' && idx >= 0) {
+          numId = toSafeId(tc?.tracks?.[idx]?.id);
+        }
+      } catch {}
+    }
+
+    if (numId === null) {
+      numId = toSafeId(useTrackStore.getState().currentTrack?.id);
+    }
+
+    if (numId === null) return;
+
+    // Dedup: already preloaded this track
+    if (_lastPreloadedTrackId === numId) return;
+
+    // Concurrency: queue last-wins if busy
+    if (_preloadInProgress) {
+      _queuedTrackId = numId;
+      return;
+    }
+
     _preloadInProgress = true;
     try {
       const sceneMap = await preloadScenesForTrack(numId);
       _lastPreloadedTrackId = numId;
       const sceneCount = sceneMap.blockScenes.size + sceneMap.lineScenes.size;
-      console.log(`[BlockScene] Preloaded ${sceneMap.blockScenes.size} block + ${sceneMap.lineScenes.size} line scenes for trackId=${numId}`);
       document.dispatchEvent(new CustomEvent('block-scenes-loaded', {
         detail: { trackId: numId, sceneCount, sceneMap },
       }));
+
+      // Process queued load (last-wins)
+      if (_queuedTrackId !== null && _queuedTrackId !== numId) {
+        const nextId = _queuedTrackId;
+        _queuedTrackId = null;
+        doPreload(nextId).catch(e => console.warn('[BlockScene] Queued preload failed:', e));
+      }
     } catch (e) {
       console.warn('[BlockScene] Preload failed:', e);
     } finally {
@@ -237,8 +325,32 @@ export function initBlockScenePreload(): () => void {
     }
   };
 
-  const onTrackLoaded = () => { _lastPreloadedTrackId = null; doPreload(); };
-  const onBeforeTrackChange = () => { _lastPreloadedTrackId = null; revokeAllScenes(); };
+  const onTrackLoaded = () => {
+    // Read trackId from trackCatalog (set by orchestrator BEFORE track-loaded)
+    let catalogId: number | undefined;
+    try {
+      const tc = (window as any).trackCatalog;
+      const idx = tc?.currentTrackIndex;
+      if (typeof idx === 'number' && idx >= 0) {
+        const safe = toSafeId(tc?.tracks?.[idx]?.id);
+        if (safe !== null) catalogId = safe;
+      }
+    } catch {}
+
+    // Only reset guard if trackId CHANGED from what eager preload already loaded
+    // This prevents double preload when eager doPreload already handled this track
+    if (catalogId !== undefined && catalogId !== _lastPreloadedTrackId) {
+      _lastPreloadedTrackId = null;
+    }
+
+    doPreload(catalogId);
+  };
+
+  const onBeforeTrackChange = () => {
+    _lastPreloadedTrackId = null;
+    _queuedTrackId = null;
+    revokeAllScenes();
+  };
 
   document.addEventListener('track-loaded', onTrackLoaded);
   document.addEventListener('before-track-change', onBeforeTrackChange);

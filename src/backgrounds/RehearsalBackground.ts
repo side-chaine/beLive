@@ -23,6 +23,8 @@ export class RehearsalBackgroundManager {
   private readonly BLOCK_SWITCH_COOLDOWN = 300;
   private readonly LINE_SWITCH_COOLDOWN = 150;
   private _crossfadeTimer: ReturnType<typeof setTimeout> | null = null;
+  private _lastSceneFingerprint: string = '';
+  private _lastAppliedSceneUrl: string | null = null;
 
   private _createSceneDiv(id: string): HTMLDivElement {
     const div = document.createElement('div');
@@ -102,6 +104,9 @@ export class RehearsalBackgroundManager {
     this._sceneLayerA.remove();
     this._sceneLayerB.remove();
     this._sceneMap = { blockScenes: new Map(), lineScenes: new Map() };
+    this._currentBlockIndex = null;
+    this._lastSceneFingerprint = '';
+    this._lastAppliedSceneUrl = null;
     if (this._crossfadeTimer) {
       clearTimeout(this._crossfadeTimer);
       this._crossfadeTimer = null;
@@ -204,12 +209,103 @@ export class RehearsalBackgroundManager {
    * Called from useBackgroundManagers when scenes are loaded
    */
   setBlockSceneMap(sceneMap: SceneMap): void {
+    const fingerprint = this._computeSceneFingerprint(sceneMap);
+    const unchanged = fingerprint === this._lastSceneFingerprint;
+
+    // Всегда обновляем _sceneMap (новые URLs для будущих _resolveSceneUrl)
     this._sceneMap = sceneMap;
-    // Apply scene for current block if available
-    if (this._currentBlockIndex !== null) {
-      const entry = this._resolveSceneUrl(this._currentBlockIndex, 0);
-      this.setBlockScene(entry?.url || null);
+
+    if (unchanged) {
+      // Данные не изменились — обновляем URL активного слоя без crossfade
+      if (this.isActive && this._currentBlockIndex !== null) {
+        let lineIdxInBlock = 0;
+        try {
+          const ld = (window as any).lyricsDisplay;
+          if (ld && typeof ld.currentLine === 'number') {
+            const processedBlocks = (typeof ld._splitLargeBlocks === 'function')
+              ? ld._splitLargeBlocks(ld.textBlocks)
+              : ld.textBlocks;
+            lineIdxInBlock = this._getLineIndexInBlock(processedBlocks, this._currentBlockIndex, ld.currentLine);
+          }
+        } catch (_) {}
+        const entry = this._resolveSceneUrl(this._currentBlockIndex, lineIdxInBlock);
+        if (entry?.url) {
+          const activeLayer = this._activeSceneLayer === 'A' ? this._sceneLayerA : this._sceneLayerB;
+          // Preload before applying — prevents broken image during decode
+          const img = new Image();
+          img.src = entry.url;
+          const apply = () => {
+            activeLayer.style.backgroundImage = `url('${entry.url}')`;
+            this._lastAppliedSceneUrl = entry.url;
+          };
+          if (img.complete && img.naturalWidth > 0) {
+            apply();
+          } else {
+            img.onload = apply;
+            img.onerror = apply; // Apply anyway — better than stuck blank
+          }
+        }
+      }
+      return;
     }
+
+    this._lastSceneFingerprint = fingerprint;
+
+    // ── PROACTIVE APPLY ──
+    let blockIndex: number | null = this._currentBlockIndex;
+    let lineIdxInBlock: number = 0;
+
+    if (blockIndex === null) {
+      // Source: lyricsDisplay boundary shell
+      try {
+        const ld = (window as any).lyricsDisplay;
+        if (ld && Array.isArray(ld.textBlocks) && ld.textBlocks.length > 0) {
+          const currentLine = typeof ld.currentLine === 'number' ? ld.currentLine : 0;
+          const processedBlocks = (typeof ld._splitLargeBlocks === 'function')
+            ? ld._splitLargeBlocks(ld.textBlocks)
+            : ld.textBlocks;
+          blockIndex = this._getBlockIndexByLine(processedBlocks, currentLine);
+          if (blockIndex !== null) {
+            lineIdxInBlock = this._getLineIndexInBlock(processedBlocks, blockIndex, currentLine);
+          }
+        }
+      } catch (_) {}
+
+      // Fallback: block 0 (начало трека)
+      if (blockIndex === null) {
+        blockIndex = 0;
+        lineIdxInBlock = 0;
+      }
+    } else {
+      // Уже есть blockIndex — резолвим lineIdxInBlock
+      try {
+        const ld = (window as any).lyricsDisplay;
+        if (ld && typeof ld.currentLine === 'number') {
+          const processedBlocks = (typeof ld._splitLargeBlocks === 'function')
+            ? ld._splitLargeBlocks(ld.textBlocks)
+            : ld.textBlocks;
+          lineIdxInBlock = this._getLineIndexInBlock(processedBlocks, blockIndex, ld.currentLine);
+        }
+      } catch (_) {}
+    }
+
+    // Сохраняем для будущих active-line-changed
+    this._currentBlockIndex = blockIndex;
+
+    // Применяем сцену (dedup guard внутри setBlockScene)
+    const entry = this._resolveSceneUrl(blockIndex, lineIdxInBlock);
+    this.setBlockScene(entry?.url || null);
+  }
+
+  clearAllScenes(): void {
+    this._sceneMap = { blockScenes: new Map(), lineScenes: new Map() };
+    this._sceneLayerA.style.opacity = '0';
+    this._sceneLayerB.style.opacity = '0';
+    this._sceneLayerA.style.backgroundImage = '';
+    this._sceneLayerB.style.backgroundImage = '';
+    this._lastSceneFingerprint = '';
+    this._lastAppliedSceneUrl = null;
+    this._currentBlockIndex = null;
   }
 
   /**
@@ -218,14 +314,23 @@ export class RehearsalBackgroundManager {
   setBlockScene(url: string | null): void {
     if (!this.isActive) return;
 
+    // Dedup guard — skip если уже показываем этот URL
+    if (url === this._lastAppliedSceneUrl) return;
+
     if (url === null) {
-      // No scene — fade out scene layers, show body bg
+      // Cleanup pending crossfade timer
+      if (this._crossfadeTimer) {
+        clearTimeout(this._crossfadeTimer);
+        this._crossfadeTimer = null;
+      }
+      this._lastAppliedSceneUrl = null;
       this._sceneLayerA.style.opacity = '0';
       this._sceneLayerB.style.opacity = '0';
       return;
     }
 
-    // Preload image BEFORE crossfade to prevent white flash
+    this._lastAppliedSceneUrl = url;
+
     const img = new Image();
     img.src = url;
 
@@ -237,7 +342,6 @@ export class RehearsalBackgroundManager {
       nextLayer.style.opacity = '1';
       currentLayer.style.opacity = '0';
 
-      // Swap after transition
       if (this._crossfadeTimer) clearTimeout(this._crossfadeTimer);
       this._crossfadeTimer = setTimeout(() => this._swapLayers(), 700);
 
@@ -252,16 +356,14 @@ export class RehearsalBackgroundManager {
       this._activeSceneLayer = this._activeSceneLayer === 'A' ? 'B' : 'A';
     };
 
-    // If image already cached — crossfade immediately
     if (img.complete && img.naturalWidth > 0) {
       doCrossfade();
     } else {
       img.onload = () => doCrossfade();
       img.onerror = () => {
         console.warn('[RehearsalBg] Scene image failed to load:', url);
-        doCrossfade(); // Still try — might be a CORS issue that browser handles
+        doCrossfade();
       };
-      // Safety timeout — crossfade anyway after 500ms
       setTimeout(() => doCrossfade(), 500);
     }
   }
@@ -271,6 +373,18 @@ export class RehearsalBackgroundManager {
     const prevLayer = this._activeSceneLayer === 'A' ? this._sceneLayerB : this._sceneLayerA;
     prevLayer.style.opacity = '0';
     prevLayer.style.backgroundImage = '';
+  }
+
+  private _computeSceneFingerprint(sceneMap: SceneMap): string {
+    const blocks = [...sceneMap.blockScenes.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([k, v]) => `${k}:${v.theme?.primary ?? 'x'}:${v.theme?.accent ?? 'x'}`)
+      .join(',');
+    const lines = [...sceneMap.lineScenes.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${k}:${v.theme?.primary ?? 'x'}:${v.theme?.accent ?? 'x'}`)
+      .join(',');
+    return `${blocks}|${lines}`;
   }
 
   // TC-COVER-04: Update dimming when cover art state changes
@@ -296,9 +410,8 @@ export class RehearsalBackgroundManager {
     this._boundHandler = (e: Event) => {
       try {
         if (!this.isActive) return;
-        if (!lyricsDisplay || 
-            !Array.isArray(lyricsDisplay.textBlocks) || 
-            lyricsDisplay.textBlocks.length === 0) {
+        const ld = (window as any).lyricsDisplay || lyricsDisplay;
+        if (!ld || !Array.isArray(ld.textBlocks) || ld.textBlocks.length === 0) {
           return;
         }
         if (blockLoopControl && 
@@ -307,9 +420,9 @@ export class RehearsalBackgroundManager {
         }
         const lineIndex = (e as CustomEvent).detail?.lineIndex;
         if (typeof lineIndex !== 'number') return;
-        const processedBlocks = (typeof lyricsDisplay._splitLargeBlocks === 'function')
-          ? lyricsDisplay._splitLargeBlocks(lyricsDisplay.textBlocks || [])
-          : (lyricsDisplay.textBlocks || []);
+        const processedBlocks = (typeof ld._splitLargeBlocks === 'function')
+          ? ld._splitLargeBlocks(ld.textBlocks || [])
+          : (ld.textBlocks || []);
         const newBlockIndex = this._getBlockIndexByLine(processedBlocks, lineIndex);
         if (newBlockIndex === null) return;
         if (this._currentBlockIndex === null) {
@@ -348,15 +461,16 @@ export class RehearsalBackgroundManager {
     };
     document.addEventListener('active-line-changed', this._boundHandler);
     try {
-      if (lyricsDisplay && 
-          Array.isArray(lyricsDisplay.textBlocks) && 
-          lyricsDisplay.textBlocks.length > 0) {
-        const currentLine = typeof lyricsDisplay.currentLine === 'number' 
-          ? lyricsDisplay.currentLine 
+      const ldInit = (window as any).lyricsDisplay || lyricsDisplay;
+      if (ldInit && 
+          Array.isArray(ldInit.textBlocks) && 
+          ldInit.textBlocks.length > 0) {
+        const currentLine = typeof ldInit.currentLine === 'number' 
+          ? ldInit.currentLine 
           : 0;
-        const processedBlocks = (typeof lyricsDisplay._splitLargeBlocks === 'function')
-          ? lyricsDisplay._splitLargeBlocks(lyricsDisplay.textBlocks || [])
-          : (lyricsDisplay.textBlocks || []);
+        const processedBlocks = (typeof ldInit._splitLargeBlocks === 'function')
+          ? ldInit._splitLargeBlocks(ldInit.textBlocks || [])
+          : (ldInit.textBlocks || []);
         this._currentBlockIndex = this._getBlockIndexByLine(processedBlocks, currentLine);
       }
     } catch (_) {}

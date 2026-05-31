@@ -15,6 +15,8 @@ import { resizeImage } from '../utils/image-resize';
 import { extractThemeFromBlob } from '../services/cover-art.service';
 import { updateTrackField } from '../services/idb.service';
 import type { CoverArtTheme } from '../types/cover-theme.types';
+import { getScenesCountForTrack } from '../services/idb.service';
+import { MAX_BG_PER_TRACK } from '../utils/storage-quota';
 import { createSubBlocks } from '../utils/block-utils';
 import { MAX_SUB_BLOCK_LINES } from '../slot-matrix/slot-matrix.utils';
 import styles from './BlockScenesModal.module.css';
@@ -43,6 +45,8 @@ export function BlockScenesModal() {
   const sceneInputRef = useRef<HTMLInputElement>(null);
   const lineInputRef = useRef<HTMLInputElement>(null);
   const customInputRef = useRef<HTMLInputElement>(null);
+const packInputRef = useRef<HTMLInputElement>(null);
+const [packProgress, setPackProgress] = useState<{ current: number; total: number } | null>(null);
 
   const trackId = currentTrack?.id ? Number(currentTrack.id) : null;
 
@@ -85,6 +89,8 @@ export function BlockScenesModal() {
     try {
       const sceneList = await getBlockScenes(trackId);
       setScenes(sceneList);
+      // Sync hasBlockScenes flag — critical for cover art restore after delete
+      useTrackStore.getState().setHasBlockScenes(sceneList.length > 0);
       revokeOldUrls();
       const urls = new Map<string, string>();
       for (const scene of sceneList) {
@@ -157,7 +163,7 @@ export function BlockScenesModal() {
       const block = blocks[selectedBlockIndex];
       await uploadBlockScene(trackId, selectedBlockIndex, file, block?.id);
       await loadScenes();
-      document.dispatchEvent(new CustomEvent('tracks-changed'));
+      document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'scene-crud' } }));
     } catch (err) {
       console.error('[BackgroundModal] Upload failed:', err);
     }
@@ -172,7 +178,7 @@ export function BlockScenesModal() {
       const block = blocks[selectedBlockIndex];
       await uploadLineScene(trackId, selectedBlockIndex, selectedLineIndex, file, block?.id);
       await loadScenes();
-      document.dispatchEvent(new CustomEvent('tracks-changed'));
+      document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'scene-crud' } }));
     } catch (err) {
       console.error('[BackgroundModal] Line upload failed:', err);
     }
@@ -189,7 +195,7 @@ export function BlockScenesModal() {
       if (selectedBlockIndex === blockIndex) {
         setSelectedLineIndex(null);
       }
-      document.dispatchEvent(new CustomEvent('tracks-changed'));
+      document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'scene-crud' } }));
     } catch (err) {
       console.error('[BackgroundModal] Block scenes remove failed:', err);
     }
@@ -207,7 +213,7 @@ export function BlockScenesModal() {
       if (selectedBlockIndex === blockIndex && selectedLineIndex === localLineIndex) {
         setSelectedLineIndex(null);
       }
-      document.dispatchEvent(new CustomEvent('tracks-changed'));
+      document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'scene-crud' } }));
     } catch (err) {
       console.error('[BackgroundModal] Inline line remove failed:', err);
     }
@@ -223,7 +229,7 @@ export function BlockScenesModal() {
       try { theme = await extractThemeFromBlob(resized); } catch (_) {}
       await updateTrackField(trackId, { customBgBlob: resized, customBgTheme: theme });
       setCustomPreview(URL.createObjectURL(resized));
-      document.dispatchEvent(new CustomEvent('tracks-changed'));
+      document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'scene-crud' } }));
     } catch (err) {
       console.error('[BackgroundModal] Custom upload failed:', err);
     }
@@ -234,26 +240,95 @@ export function BlockScenesModal() {
     try {
       await updateTrackField(trackId, { customBgBlob: null, customBgTheme: null });
       setCustomPreview(null);
-      document.dispatchEvent(new CustomEvent('tracks-changed'));
+      document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'scene-crud' } }));
     } catch (err) {
       console.error('[BackgroundModal] Custom remove failed:', err);
     }
   };
 
+  const handlePackUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length || !trackId) return;
+    e.target.value = '';
+
+    // Natural sort: 1, 2, ... 10, 11 (НЕ 1, 10, 11, 2)
+    files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+
+    // Quota pre-check
+    const currentCount = await getScenesCountForTrack(trackId);
+    const availableSlots = MAX_BG_PER_TRACK - currentCount;
+
+    // Собрать все пустые ячейки в порядке чтения (блоки по порядку, строки внутри)
+    const emptyCells: { blockIndex: number; lineIndex: number }[] = [];
+    for (const block of blocks) {
+      const subBlocks = createSubBlocks(block.lineIndices, MAX_SUB_BLOCK_LINES, lyricsLines);
+      let subOffset = 0;
+      for (const sub of subBlocks) {
+        for (let i = 0; i < sub.lineIndices.length; i++) {
+          const localIdx = subOffset + i;
+          const lineKey = `${block.index}_${localIdx}`;
+          // Пропускаем только если УЖЕ есть line-scene на этой ячейке
+          if (!lineSceneMap.has(lineKey)) {
+            emptyCells.push({ blockIndex: block.index, lineIndex: localIdx });
+          }
+        }
+        subOffset += sub.lineIndices.length;
+      }
+    }
+
+    const toUpload = Math.min(files.length, emptyCells.length, availableSlots);
+
+    if (toUpload < files.length) {
+      console.warn(`[PackUpload] ${toUpload}/${files.length} will fit (empty cells: ${emptyCells.length}, quota: ${availableSlots})`);
+    }
+
+    if (toUpload === 0) return;
+
+    // Загрузка с прогрессом
+    let uploaded = 0;
+    setPackProgress({ current: 0, total: toUpload });
+
+    for (let i = 0; i < toUpload; i++) {
+      const { blockIndex, lineIndex } = emptyCells[i];
+      const block = blocks[blockIndex];
+      try {
+        await uploadLineScene(trackId, blockIndex, lineIndex, files[i], block?.id);
+        uploaded++;
+      } catch (err) {
+        console.warn(`[PackUpload] Failed: block=${blockIndex} line=${lineIndex}`, err);
+      }
+      setPackProgress({ current: i + 1, total: toUpload });
+    }
+
+    await loadScenes();
+    document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'scene-crud' } }));
+    setPackProgress(null);
+
+    console.log(`[PackUpload] Done: ${uploaded}/${toUpload} uploaded`);
+  };
+
   return (
     <div className={styles.overlay} onClick={() => setOpen(false)}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        {/* Minimal top bar: tabs + close */}
+        {/* Minimal top bar: tabs + pack upload + close */}
         <div className={styles.topBar}>
           <div className={styles.tabs}>
-            <button className={tab === 'scenes' ? styles.tabActive : styles.tab} onClick={() => setTab('scenes')}>
-              Scenes
-            </button>
-            <button className={tab === 'custom' ? styles.tabActive : styles.tab} onClick={() => setTab('custom')}>
-              Custom
-            </button>
+            {packProgress && (
+              <span className={styles.packProgress}>
+                {packProgress.current}/{packProgress.total}
+              </span>
+            )}
           </div>
-          <button className={styles.closeBtn} onClick={() => setOpen(false)}>Done</button>
+          <div className={styles.topActions}>
+            <button
+              className={styles.packBtn}
+              onClick={() => packInputRef.current?.click()}
+              disabled={!!packProgress || blocks.length === 0}
+            >
+              Upload Pack
+            </button>
+            <button className={styles.closeBtn} onClick={() => setOpen(false)}>Done</button>
+          </div>
         </div>
 
         {tab === 'scenes' && (
@@ -368,6 +443,7 @@ export function BlockScenesModal() {
         <input ref={sceneInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleSceneUpload} />
         <input ref={lineInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLineUpload} />
         <input ref={customInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleCustomUpload} />
+        <input ref={packInputRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handlePackUpload} />
       </div>
     </div>
   );
