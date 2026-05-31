@@ -56,7 +56,7 @@ export async function deleteTrack(id: number): Promise<void> {
         }
       }
     }
-    document.dispatchEvent(new Event('tracks-changed'));
+    document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'track-delete' } }));
   } catch (e) {
     console.error('Error deleting track:', e);
   }

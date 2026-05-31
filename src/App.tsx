@@ -45,6 +45,7 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { tryActivateV2 } from './audio/featureFlag';
 import { initMonitorBridge, destroyMonitorBridge } from './bridges/monitor.bridge';
 import { AiSettingsModal } from './components/AiSettingsModal';
+import { BlockScenesModal } from './components/BlockScenesModal';
 import { useAiSettingsStore } from './stores/ai-settings.store';
 export default function App() {
   const mode = useModeStore((s) => s.mode);
@@ -99,6 +100,7 @@ export default function App() {
   return (
     <div id="belive-react" data-track-info={trackInfoOpen ? 'active' : 'inactive'}>
       <BlockEditorModal />
+      <BlockScenesModal />
 
       <Header />
       <CatalogPanel />

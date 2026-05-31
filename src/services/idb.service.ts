@@ -38,6 +38,10 @@ export interface TrackRecord {
   coverArtBlob?: Blob | null;
   /** Extracted dominant colors from cover art. Optional = backward compat. */
   coverTheme?: import('../types/cover-theme.types').CoverArtTheme | null;
+  /** Custom background image. Wave 1: one per track. Used as effectiveTheme when active. */
+  customBgBlob?: Blob | null;
+  /** Extracted colors from custom background. Used as effectiveTheme when customBg is active. */
+  customBgTheme?: import('../types/cover-theme.types').CoverArtTheme | null;
   /** Track meta (MusicBrainz, Last.fm, Essentia.js). Optional = backward compat. */
   trackMeta?: import('../types/track-meta.types').TrackMeta | null;
   /** Transition preset ID for preview slot animations (TC-82-*) */
@@ -76,6 +80,44 @@ export interface UserRecord {
   };
 }
 
+// ── Block Scene Types (Wave 2) ──────────────────────────
+
+export interface BlockScene {
+  id: string;            // `${trackId}_${blockIndex}` or `${trackId}_${blockIndex}_${lineIndex}`
+  trackId: number;
+  blockIndex: number;
+  lineIndex?: number | null;  // null/absent = block-level, number = line-level within block
+  blockId?: string;      // optional, for stabilisation on block reorder
+  blob: Blob;
+  theme: import('../types/cover-theme.types').CoverArtTheme;
+  addedAt: string;
+}
+
+export interface BlockSceneMeta {
+  id: string;
+  trackId: number;
+  blockIndex: number;
+  lineIndex?: number | null;  // null/absent = block-level, number = line-level
+  blockId?: string;
+  theme: import('../types/cover-theme.types').CoverArtTheme;
+  addedAt: string;
+  // NO blob — for listing/preview without heavy reads
+}
+
+// ── Scene Map Types (Wave 2.5) ──────────────────────────
+
+export interface SceneEntry {
+  url: string;
+  theme: import('../types/cover-theme.types').CoverArtTheme;
+}
+
+export interface SceneMap {
+  /** blockIndex → Object URL + theme for block-level scene */
+  blockScenes: Map<number, SceneEntry>;
+  /** `${blockIndex}_${lineIdxInBlock}` → Object URL + theme for line-level scene */
+  lineScenes: Map<string, SceneEntry>;
+}
+
 // ── Connection ─────────────────────────────────────────
 
 let _db: IDBDatabase | null = null;
@@ -83,11 +125,12 @@ let _dbPromise: Promise<IDBDatabase> | null = null;
 
 function _getDB(): Promise<IDBDatabase> {
   if (_db) return Promise.resolve(_db);
-  if (_dbPromise) return _dbPromise;
 
   _dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
+
     req.onupgradeneeded = (e) => {
+      console.log(`[IDB] Upgrade: v${e.oldVersion} → v${e.newVersion}`);
       const db = (e.target as IDBOpenDBRequest).result;
       if (!db.objectStoreNames.contains('tracks')) {
         const s = db.createObjectStore('tracks', { keyPath: 'id' });
@@ -112,10 +155,39 @@ function _getDB(): Promise<IDBDatabase> {
       if (trackStore && !trackStore.indexNames.contains('userId')) {
         trackStore.createIndex('userId', 'userId', { unique: false });
       }
+
+
+
+      console.log('[IDB] Upgrade complete, stores:', [...db.objectStoreNames]);
     };
-    req.onsuccess = () => { _db = req.result; resolve(_db!); };
-    req.onerror = () => reject(req.error);
+
+    req.onsuccess = () => {
+      _db = req.result;
+
+      // Handle version change from another tab — close gracefully
+      _db.onversionchange = () => {
+        console.warn('[IDB] Version change requested — closing connection');
+        _db?.close();
+        _db = null;
+        _dbPromise = null;
+      };
+
+      resolve(_db!);
+    };
+
+    req.onerror = () => {
+      console.error('[IDB] Open failed:', req.error);
+      _dbPromise = null; // Reset so next call can retry
+      reject(req.error);
+    };
+
+    req.onblocked = () => {
+      console.warn('[IDB] Upgrade blocked — close other tabs with this app open');
+      _dbPromise = null; // Allow retry on next call
+      reject(new Error('[IDB] Database upgrade blocked. Please close other tabs and reload.'));
+    };
   });
+
   return _dbPromise;
 }
 
@@ -287,6 +359,98 @@ export async function migrateGuestMyMusicToProfile(profileId: string): Promise<n
   const db = await _getDB();
   const rows = await _req<any[]>(_tx(db, 'my_music').getAll());
   return rows.length;
+}
+
+// ── Scenes Database (separate from TextAppDB to avoid migration blocking) ──
+
+const SCENES_DB_NAME = 'beLive_scenes';
+const SCENES_DB_VERSION = 1;
+
+let _scenesDb: IDBDatabase | null = null;
+
+function _getScenesDB(): Promise<IDBDatabase> {
+  if (_scenesDb) return Promise.resolve(_scenesDb);
+
+  return new Promise<IDBDatabase>((resolve, reject) => {
+    const req = indexedDB.open(SCENES_DB_NAME, SCENES_DB_VERSION);
+
+    req.onupgradeneeded = (e) => {
+      console.log(`[ScenesDB] Upgrade: v${e.oldVersion} → v${e.newVersion}`);
+      const db = (e.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains('custom_backgrounds')) {
+        const store = db.createObjectStore('custom_backgrounds', { keyPath: 'id' });
+        store.createIndex('trackId', 'trackId', { unique: false });
+      }
+      console.log('[ScenesDB] Stores:', [...db.objectStoreNames]);
+    };
+
+    req.onsuccess = () => {
+      _scenesDb = req.result;
+      _scenesDb.onversionchange = () => {
+        _scenesDb?.close();
+        _scenesDb = null;
+      };
+      resolve(_scenesDb!);
+    };
+
+    req.onerror = () => {
+      console.error('[ScenesDB] Open failed:', req.error);
+      _scenesDb = null;
+      reject(req.error);
+    };
+
+    req.onblocked = () => {
+      console.warn('[ScenesDB] Upgrade blocked');
+      _scenesDb = null;
+      reject(new Error('[ScenesDB] Database upgrade blocked'));
+    };
+  });
+}
+
+// ── Block Scenes CRUD (Wave 2) ────────────────────────────
+
+export async function getScenesForTrack(trackId: number): Promise<BlockSceneMeta[]> {
+  const db = await _getScenesDB();
+  const store = _tx(db, 'custom_backgrounds');
+  const index = store.index('trackId');
+  const records = await _req<any[]>(index.getAll(trackId));
+  return records.map(({ blob, ...meta }) => meta as BlockSceneMeta);
+}
+
+export async function getSceneBlob(sceneId: string): Promise<Blob | null> {
+  const db = await _getScenesDB();
+  const record = await _req<any>(_tx(db, 'custom_backgrounds').get(sceneId));
+  return record?.blob || null;
+}
+
+export async function getFullScene(sceneId: string): Promise<BlockScene | null> {
+  const db = await _getScenesDB();
+  const record = await _req<any>(_tx(db, 'custom_backgrounds').get(sceneId));
+  return record || null;
+}
+
+export async function saveScene(scene: BlockScene): Promise<void> {
+  const db = await _getScenesDB();
+  await _req(_tx(db, 'custom_backgrounds', 'readwrite').put(scene));
+}
+
+export async function deleteScene(sceneId: string): Promise<void> {
+  const db = await _getScenesDB();
+  await _req(_tx(db, 'custom_backgrounds', 'readwrite').delete(sceneId));
+}
+
+export async function clearScenesForTrack(trackId: number): Promise<void> {
+  const db = await _getScenesDB();
+  const records = await getScenesForTrack(trackId);
+  const store = _tx(db, 'custom_backgrounds', 'readwrite');
+  for (const record of records) {
+    store.delete(record.id);
+  }
+}
+
+export async function getScenesCountForTrack(trackId: number): Promise<number> {
+  const scenes = await getScenesForTrack(trackId);
+  return scenes.length;
 }
 
 // ── Playlists (app_state) ──────────────────────────────

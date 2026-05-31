@@ -6,6 +6,8 @@ import { usePlateStore } from '../stores/plate.store';
 import { useStemStore } from '../stem/stem.store';
 import { useAiSettingsStore } from '../stores/ai-settings.store';
 import type { PerformanceTier } from '../performance/performance.types';
+import { useTrackStore } from '../stores/track.store';
+import { useBlockSceneStore } from '../stores/blockScene.store';
 
 const MODE_COLORS: Record<string, string> = {
   concert: '#3498db',
@@ -20,6 +22,7 @@ interface GraphicsTierControlsProps {
   checkmarkStyle: React.CSSProperties;
   accentColor: string;
   onClose: () => void;
+  customBgUrl: string | null;
 }
 
 function GraphicsTierControls({
@@ -28,11 +31,14 @@ function GraphicsTierControls({
   checkmarkStyle,
   accentColor,
   onClose,
+  customBgUrl,
 }: GraphicsTierControlsProps) {
   const { tier, autoDetect, detectedTier } = usePerformanceTier();
   const { setTier, setAutoDetect } = usePerformanceStore();
   const useAutoBg = usePlateStore(s => s.useAutoBg);
   const setUseAutoBg = usePlateStore(s => s.setUseAutoBg);
+  const hasBlockScenes = useTrackStore(s => s.hasBlockScenes);
+  const setBlockSceneOpen = useBlockSceneStore(s => s.setOpen);
 
   const tiers: PerformanceTier[] = ['lite', 'balanced', 'max', 'ultra'];
 
@@ -119,7 +125,7 @@ function GraphicsTierControls({
       {/* Divider */}
       <div style={{ borderTop: '1px solid #333', margin: '4px 0' }} />
 
-      {/* Use Auto option */}
+      {/* Show Cover option */}
       <div
         style={{
           ...menuItemStyle,
@@ -136,10 +142,28 @@ function GraphicsTierControls({
         }}
       >
         <span style={{ fontWeight: useAutoBg ? 500 : 400, color: useAutoBg ? '#fff' : '#ccc' }}>
-          Use Auto
+          Show Cover
         </span>
         {useAutoBg && <span style={checkmarkStyle}>✓</span>}
       </div>
+
+              {/* Background — unified entry point */}
+              <div
+                style={{
+                  ...menuItemStyle,
+                  paddingLeft: 20,
+                  background: (customBgUrl || hasBlockScenes) ? `${accentColor}15` : '',
+                  borderLeft: (customBgUrl || hasBlockScenes) ? `2px solid ${accentColor}` : '2px solid transparent',
+                }}
+                onClick={() => setBlockSceneOpen(true)}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = (customBgUrl || hasBlockScenes) ? `${accentColor}25` : `${accentColor}10`; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = (customBgUrl || hasBlockScenes) ? `${accentColor}15` : ''; }}
+              >
+                <span style={{ fontWeight: (customBgUrl || hasBlockScenes) ? 500 : 400, color: (customBgUrl || hasBlockScenes) ? '#fff' : '#ccc' }}>
+                  Background
+                </span>
+                {(customBgUrl || hasBlockScenes) && <span style={checkmarkStyle}>✓</span>}
+              </div>
     </div>
   );
 }
@@ -288,6 +312,8 @@ export function QuickActions() {
   const mode = useModeStore((s) => s.mode);
   const color = MODE_COLORS[mode] || '#fff';
   const setCatalogOpen = useUIStore((s) => s.setCatalogOpen);
+  const customBgUrl = useTrackStore(s => s.currentTrack?.customBgUrl) || null;
+
 
   const openCatalog = useCallback(() => {
     setCatalogOpen(true);
@@ -433,6 +459,7 @@ export function QuickActions() {
             checkmarkStyle={checkmarkStyle}
             accentColor={color}
             onClose={closeMenu}
+            customBgUrl={customBgUrl}
           />
           <StemsToggle
             menuItemStyle={menuItemStyle}

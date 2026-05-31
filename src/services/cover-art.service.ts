@@ -143,6 +143,19 @@ export async function fetchCoverArtAndUpdate(
 
 // ─── Color Extraction (Canvas-based Median Cut) ───
 
+/**
+ * Extract dominant color theme from a Blob (for custom backgrounds)
+ * Creates temporary Object URL, extracts colors, revokes URL
+ */
+export async function extractThemeFromBlob(blob: Blob): Promise<CoverArtTheme | null> {
+  const url = URL.createObjectURL(blob);
+  try {
+    return await extractDominantColors(url);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 async function extractDominantColors(imageUrl: string): Promise<CoverArtTheme | null> {
   return new Promise((resolve) => {
     const img = new Image();

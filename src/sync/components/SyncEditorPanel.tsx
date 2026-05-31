@@ -273,6 +273,47 @@ export default function SyncEditorPanel() {
         }
       }
 
+      // TC-CBG-07: Custom background file
+      if (fullTrack.customBgBlob) {
+        const bgExt = fullTrack.customBgBlob.type?.includes('png') ? 'png' : 'jpg';
+        zip.file(`backgrounds/bg_01.${bgExt}`, fullTrack.customBgBlob, { compression: 'STORE' });
+        console.log('[Export] Custom background added to ZIP:', bgExt, Math.round(fullTrack.customBgBlob.size / 1024) + 'KB');
+      }
+
+      // ── 4b. Block Scenes (beLive_scenes → ZIP) ──
+      let scenesExportData: Array<{
+        blockIndex: number;
+        lineIndex: number | null;
+        blockId?: string;
+        file: string;
+        theme: any;
+      }> = [];
+
+      try {
+        const { getBlockScenes, getBlockSceneBlob } = await import('../../services/block-scene.service');
+        const sceneMetas = await getBlockScenes(Number(meta.id));
+        if (sceneMetas.length > 0) {
+          for (const scene of sceneMetas) {
+            const blob = await getBlockSceneBlob(scene.id);
+            if (!blob) continue;
+            const ext = blob.type?.includes('png') ? 'png' : 'jpg';
+            const linePart = scene.lineIndex != null ? `_${scene.lineIndex}` : '';
+            const fileName = `scenes/${scene.blockIndex}${linePart}.${ext}`;
+            zip.file(fileName, blob, { compression: 'STORE' });
+            scenesExportData.push({
+              blockIndex: scene.blockIndex,
+              lineIndex: scene.lineIndex ?? null,
+              blockId: scene.blockId || undefined,
+              file: fileName,
+              theme: { ...scene.theme, coverUrl: '' },  // Zero out dead blob URLs
+            });
+          }
+          console.log(`[Sync] Exported ${scenesExportData.length} scenes to ZIP`);
+        }
+      } catch (sceneErr) {
+        console.warn('[Sync] Scene export failed (non-critical):', sceneErr);
+      }
+
       // Markers + blocks (export.json)
       const markers = mm.getMarkers?.() || [];
       const textBlocks = ld.textBlocks || [];
@@ -290,6 +331,14 @@ export default function SyncEditorPanel() {
         coverTheme: fullTrack.coverTheme || undefined,
         // TC-LRC-04: Preserve original lyrics with structural tags for LRC Picker reimport
         lyricsOriginalContent: fullTrack.lyricsOriginalContent || undefined,
+        // TC-CBG-07: backgrounds metadata
+        ...(fullTrack.customBgBlob ? {
+          backgrounds: [{
+            file: `backgrounds/bg_01.${fullTrack.customBgBlob.type?.includes('png') ? 'png' : 'jpg'}`,
+            trackId: Number(meta.id),
+          }],
+        } : {}),
+        ...(scenesExportData.length > 0 ? { scenes: scenesExportData } : {}),
       };
       zip.file('export.json', JSON.stringify(exportData, null, 2));
 

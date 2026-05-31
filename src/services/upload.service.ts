@@ -62,6 +62,8 @@ export interface UploadSession {
   coverArtUrl?: string | null;
   /** TC-COVER-06: Cover art blob from ZIP for offline use */
   coverArtBlob?: Blob | null;
+  /** TC-CBG-08: Custom background blob from ZIP */
+  customBgBlob?: Blob;
   /** TC-COVER-01: Cover theme restored from ZIP export */
   coverTheme?: import('../types/cover-theme.types').CoverArtTheme | null;
   /** TC-LRC-05: Original lyrics with structural tags for LRC Picker */
@@ -70,6 +72,14 @@ export interface UploadSession {
   additionalStems?: Record<string, File> | null;
   /** W7: Override track title from ZIP filename (mvsep bundles) */
   overrideTitle?: string | null;
+  /** TC-29-09: Block scenes metadata from ZIP export.json */
+  jsonScenes?: Array<{
+    blockIndex: number;
+    lineIndex: number | null;
+    blockId?: string;
+    file: string;
+    theme: import('../types/cover-theme.types').CoverArtTheme;
+  }> | null;
 }
 
 function createFreshSession(): UploadSession {
@@ -288,6 +298,10 @@ export async function handleFileSelect(
           // TC-LRC-05: Restore original lyrics content with structural tags
           if (data.lyricsOriginalContent && typeof data.lyricsOriginalContent === 'string') {
             uploadSession.lyricsOriginalContent = data.lyricsOriginalContent;
+          }
+          // TC-29-09: Block scenes metadata
+          if (data.scenes && Array.isArray(data.scenes)) {
+            uploadSession.jsonScenes = data.scenes;
           }
         } else {
           showNotification('error', '❌ JSON должен содержать массив markers');
@@ -524,6 +538,17 @@ export async function saveTrack(): Promise<void> {
     if (session.coverArtBlob) {
       trackData.coverArtBlob = session.coverArtBlob;
     }
+    // TC-CBG-08: Custom background + theme extraction
+    if (session.customBgBlob) {
+      trackData.customBgBlob = session.customBgBlob;
+      try {
+        const { extractThemeFromBlob } = await import('../services/cover-art.service');
+        const theme = await extractThemeFromBlob(session.customBgBlob);
+        if (theme) trackData.customBgTheme = theme;
+      } catch (e) {
+        console.warn('[Upload] Custom bg theme extraction failed:', e);
+      }
+    }
     if (session.coverTheme) {
       trackData.coverTheme = session.coverTheme;
     }
@@ -615,7 +640,7 @@ export async function saveTrack(): Promise<void> {
           }
         }
         showNotification('success', `✅ Трек "${savedTrack.title}" успешно сохранён`);
-        document.dispatchEvent(new Event('tracks-changed'));
+        document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'track-import' } }));
       } catch (e) {
         console.warn('Ошибка при применении JSON маркеров:', e);
       }
@@ -864,10 +889,93 @@ export async function handleZipFileSelect(file: File): Promise<void> {
       }
     }
 
-    // Save track
+      // TC-CBG-08: Extract custom background from ZIP
+      const bgFolder = zip.folder('backgrounds');
+      if (bgFolder) {
+        const bgEntries: Array<{ path: string; file: any }> = [];
+        bgFolder.forEach((path: string, file: any) => {
+          if (!file.dir) bgEntries.push({ path, file });
+        });
+        if (bgEntries.length > 0) {
+          try {
+            const first = bgEntries[0];
+            const ab = await first.file.async('arraybuffer');
+            const isPng = first.path.toLowerCase().endsWith('.png');
+            uploadSession.customBgBlob = new Blob([ab], {
+              type: isPng ? 'image/png' : 'image/jpeg',
+            });
+            console.log('[CustomBg] Extracted from ZIP:', Math.round(ab.byteLength / 1024) + 'KB');
+          } catch (e) {
+            console.warn('[Upload] Failed to extract custom bg:', e);
+          }
+        }
+      }
+
+    // TC-29-09: Capture scenes before detachUploadSession() inside saveTrack()
+    const sessionScenes = uploadSession.jsonScenes;
+
     await saveTrack();
 
-    showNotification('success', '✅ ZIP архив успешно распакован и файлы распределены!');
+    // ── TC-29-09: Import block scenes from ZIP ──
+    let importedCount = 0;
+    if (sessionScenes && sessionScenes.length > 0) {
+      try {
+        const { saveScene } = await import('./idb.service');
+        const { resizeImage } = await import('../utils/image-resize');
+        const savedTrack = (window as any).trackCatalog?.tracks?.[
+          (window as any).trackCatalog?.tracks?.length - 1
+        ];
+        const newTrackId = savedTrack?.id;
+
+        if (newTrackId) {
+          for (const sceneMeta of sessionScenes) {
+            try {
+              const sceneZipEntry = zip.file(sceneMeta.file);
+              if (!sceneZipEntry) {
+                console.warn(`[SceneImport] File not found in ZIP: ${sceneMeta.file}`);
+                continue;
+              }
+              const ab = await sceneZipEntry.async('arraybuffer');
+              const isPng = sceneMeta.file.toLowerCase().endsWith('.png');
+              const rawBlob = new Blob([ab], { type: isPng ? 'image/png' : 'image/jpeg' });
+
+              // Resize — same as manual upload (max 1920px)
+              const resized = await resizeImage(rawBlob);
+
+              const sceneId = sceneMeta.lineIndex != null
+                ? `${newTrackId}_${sceneMeta.blockIndex}_${sceneMeta.lineIndex}`
+                : `${newTrackId}_${sceneMeta.blockIndex}`;
+
+              await saveScene({
+                id: sceneId,
+                trackId: newTrackId,
+                blockIndex: sceneMeta.blockIndex,
+                lineIndex: sceneMeta.lineIndex ?? null,
+                blockId: sceneMeta.blockId,
+                blob: resized,
+                theme: sceneMeta.theme,
+                addedAt: new Date().toISOString(),
+              });
+              importedCount++;
+            } catch (sceneErr) {
+              console.warn(`[SceneImport] Failed: block=${sceneMeta.blockIndex} line=${sceneMeta.lineIndex}`, sceneErr);
+            }
+          }
+          console.log(`[SceneImport] Imported ${importedCount}/${sessionScenes.length} scenes for trackId=${newTrackId}`);
+
+          // Trigger scene reload — preload ran before import completed
+          if (importedCount > 0) {
+            document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'scene-crud' } }));
+          }
+        }
+      } catch (sceneImportErr) {
+        console.warn('[SceneImport] Scene import failed:', sceneImportErr);
+        // Non-critical — track is already saved
+      }
+    }
+
+    const sceneNote = importedCount > 0 ? ` (+${importedCount} сцен)` : '';
+    showNotification('success', `✅ ZIP архив успешно распакован и файлы распределены!${sceneNote}`);
 
   } catch (err: any) {
     console.error('handleZipFileSelect error:', err);
