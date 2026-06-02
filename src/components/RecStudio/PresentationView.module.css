@@ -1,0 +1,299 @@
+/* ═══ Root ═══ */
+.root {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  background: var(--bl-surface-base, #0a0a14);
+}
+
+/* ═══ Empty state ═══ */
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 14px;
+}
+
+/* ═══ Slide content ═══ */
+.slideContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 64px;
+  position: relative;
+  transition: opacity 0.3s ease;
+}
+
+.slideContent[data-transitioning='true'] {
+  opacity: 0;
+}
+
+.slideInner {
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ═══ Slide type badge ═══ */
+.slideTypeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: rgba(155, 89, 182, 0.12);
+  color: rgba(155, 89, 182, 0.8);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 20px;
+}
+
+/* ═══ Slide title ═══ */
+.slideTitle {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--bl-c-text-primary, #fff);
+  margin: 0 0 12px 0;
+  letter-spacing: -0.02em;
+}
+
+/* ═══ Slide subtitle ═══ */
+.slideSubtitle {
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 20px 0;
+}
+
+/* ═══ Slide description ═══ */
+.slideDescription {
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 24px 0;
+}
+
+/* ═══ Slide bullets ═══ */
+.slideBullets {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px 0;
+}
+
+.slideBullet {
+  font-size: 18px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 4px 0 4px 24px;
+  position: relative;
+}
+
+.slideBullet::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: rgba(155, 89, 182, 0.7);
+  font-size: 20px;
+}
+
+/* ═══ Feature hint ═══ */
+.slideFeatureHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(108, 59, 170, 0.2) 0%, rgba(155, 89, 182, 0.15) 100%);
+  border: 1px solid rgba(155, 89, 182, 0.2);
+  color: rgba(155, 89, 182, 0.9);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* ═══ Next step preview ═══ */
+.nextPreview {
+  position: absolute;
+  bottom: 72px;
+  right: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  max-width: 260px;
+}
+
+.nextLabel {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+}
+
+.nextTitle {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nextType {
+  flex-shrink: 0;
+  color: rgba(155, 89, 182, 0.6);
+  font-size: 11px;
+}
+
+/* ═══ Notes overlay ═══ */
+.notesOverlay {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: rgba(10, 10, 20, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  max-width: 280px;
+  pointer-events: none;
+}
+
+.notesIcon {
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.notesText {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* ═══ Control bar ═══ */
+.controlBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(10, 10, 20, 0.6);
+  backdrop-filter: blur(8px);
+  flex-shrink: 0;
+  height: 48px;
+  transition: opacity 0.3s ease;
+}
+
+/* Auto-hide when mouse idle */
+.root[data-mouse-idle='true'] .controlBar {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.root[data-mouse-idle='true'] .nextPreview {
+  opacity: 0;
+}
+
+.root[data-mouse-idle='true'] .notesOverlay {
+  opacity: 0;
+}
+
+.controlLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+
+.controlCenter {
+  display: flex;
+  align-items: center;
+}
+
+.controlRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+  justify-content: flex-end;
+}
+
+/* ═══ Position text ═══ */
+.positionText {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.02em;
+}
+
+/* ═══ REC indicator ═══ */
+.recIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.recDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e74c3c;
+  animation: recPulse 1s ease-in-out infinite;
+}
+
+@keyframes recPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ═══ REC button ═══ */
+.recButton {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.recButton:hover {
+  background: rgba(231, 76, 60, 0.3);
+}
+
+/* ═══ Stop button ═══ */
+.stopButton {
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.stopButton:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+}

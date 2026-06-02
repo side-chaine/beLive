@@ -26,12 +26,12 @@ import { registerModule } from './registry';
 
 registerModule({
   id: 'rec',
-  label: 'Rec',
-  order: 30,
+  label: 'Rec Studio',
+  order: 29,
   modes: ['rehearsal', 'karaoke', 'concert', 'live'],
   load: () =>
-    import('../components/RecordingPanel').then(m => ({
-      default: m.RecordingPanel,
+    import('../components/RecStudio/RecStudioEntry').then(m => ({
+      default: m.RecStudioEntry,
     })),
 });
 

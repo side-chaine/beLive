@@ -47,11 +47,18 @@ import { initMonitorBridge, destroyMonitorBridge } from './bridges/monitor.bridg
 import { AiSettingsModal } from './components/AiSettingsModal';
 import { BlockScenesModal } from './components/BlockScenesModal';
 import { useAiSettingsStore } from './stores/ai-settings.store';
+import { useRecStudioStore } from './stores/recStudio.store';
+import { RecStudioFullscreen } from './components/RecStudio/RecStudioFullscreen';
+import { FeatureOverlay } from './components/RecStudio/FeatureOverlay';
+import { PresenterDock } from './components/RecStudio/PresenterDock';
 export default function App() {
   const mode = useModeStore((s) => s.mode);
   const syncOpen = useSyncStore((s) => s.open);
   const trackInfoOpen = useTrackInfoStore((s) => s.isOpen);
   const aiSettingsOpen = useAiSettingsStore(s => s.showSettings);
+  const recStudioVisible = useRecStudioStore(s => s.activeMode !== 'entry' && !s.featureActive && !s.isPresenting);
+  const isPresenting = useRecStudioStore(s => s.isPresenting);
+  const featureActive = useRecStudioStore(s => s.featureActive);
   useBackgroundManagers();
   useKeyboardShortcuts();
 
@@ -104,7 +111,7 @@ export default function App() {
 
       <Header />
       <CatalogPanel />
-      {mode === 'rehearsal' && !syncOpen && (
+      {mode === 'rehearsal' && !syncOpen && !recStudioVisible && !featureActive && (
         <>
           <div data-wagon-train-wrapper>
             <WagonTrain />
@@ -112,19 +119,23 @@ export default function App() {
           <RehearsalLyrics />
         </>
       )}
-      {syncOpen && <SyncLyrics />}
-      {(mode === 'karaoke' || mode === 'concert') && <KaraokeLyricsBoard />}
-      <CameraPreview />
-      <LiveSubtitle />
-      <LiveControls />
+      {syncOpen && !recStudioVisible && !featureActive && <SyncLyrics />}
+      {(mode === 'karaoke' || mode === 'concert') && !recStudioVisible && !featureActive && <KaraokeLyricsBoard />}
+      {!recStudioVisible && !featureActive && <CameraPreview />}
+      {!recStudioVisible && !featureActive && <LiveSubtitle />}
+      {!recStudioVisible && !featureActive && <LiveControls />}
       {syncOpen ? (
         <SyncEditorPanel />
+      ) : recStudioVisible ? (
+        <RecStudioFullscreen />
       ) : (
         <ControlDeck />
       )}
-      <BillyDock />
-      <TriggerDebugOverlay />
-      <PlaybackPerfOverlay />
+      {featureActive && <FeatureOverlay />}
+      {isPresenting && <PresenterDock />}
+      {!recStudioVisible && !featureActive && <BillyDock />}
+      {!recStudioVisible && !featureActive && <TriggerDebugOverlay />}
+      {!recStudioVisible && !featureActive && <PlaybackPerfOverlay />}
       {trackInfoOpen && <TrackInfoBoard />}
       {aiSettingsOpen && <AiSettingsModal onClose={() => useAiSettingsStore.getState().setShowSettings(false)} />}
     </div>

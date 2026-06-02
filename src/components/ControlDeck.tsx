@@ -18,6 +18,7 @@ import { useExerciseStore } from '../exercises/exercise.store';
 import { CoverArt } from './CoverArt';
 import { useTrackStore } from '../stores/track.store';
 import { useTrackInfoStore } from '../stores/trackInfo.store';
+import { useRecStudioStore } from '../stores/recStudio.store';
 
 export function ControlDeck() {
   const expanded = useDeckStore(s => s.expanded);
@@ -26,6 +27,8 @@ export function ControlDeck() {
   const toggle = useDeckStore(s => s.toggle);
   const setTab = useDeckStore(s => s.setTab);
   const mode = useModeStore(s => s.mode);
+  const recFeatureActive = useRecStudioStore(s => s.featureActive);
+  const deactivateFeature = useRecStudioStore(s => s.deactivateFeature);
   const rootRef = useRef<HTMLDivElement>(null);
   // TC-PITCH-03: Piano = tab, not overlay
   const pianoOpen = activeTabId === 'pitch';
@@ -134,6 +137,11 @@ export function ControlDeck() {
                 onClick={() => {
                   // Interrupt practice first if active, then continue requested action
                   interruptPracticeSession(() => {
+                    // Если клик на Rec Studio таб и feature активна — вернуться к сценарию
+                    if (t.id === 'rec' && recFeatureActive) {
+                      deactivateFeature();
+                      return;
+                    }
                     setTab(t.id);
                   });
                 }}

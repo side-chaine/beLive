@@ -1,0 +1,641 @@
+.root {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 999999;
+  background: var(--bl-surface-base, #0a0a14);
+  display: flex;
+  flex-direction: column;
+  color: var(--bl-c-text-primary, #fff);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden;
+}
+
+/* ── Header ── */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+  background: var(--bl-surface-base, #0a0a14);
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--bl-text-muted, #888);
+}
+
+.closeButton {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--bl-text-secondary, #aaa);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.closeButton:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.scenarioTitle {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.pointIndicator, .stepIndicator {
+  padding: 3px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+}
+
+/* ── Content ── */
+
+.content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Point List (left) ── */
+
+.pointList {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 12px 8px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pointItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pointItem:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.pointItemActive {
+  background: rgba(155, 89, 182, 0.15);
+}
+
+.pointIndex {
+  font-size: 11px;
+  color: var(--bl-text-muted, #666);
+  min-width: 16px;
+}
+
+.pointItemActive .pointIndex {
+  color: #9b59b6;
+}
+
+.pointTitle {
+  font-size: 13px;
+  color: var(--bl-text-secondary, #aaa);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pointItemActive .pointTitle {
+  color: #fff;
+}
+
+.addPointButton {
+  margin-top: 8px;
+  padding: 6px 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--bl-text-muted, #666);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.addPointButton:hover {
+  border-color: rgba(155, 89, 182, 0.4);
+  color: #9b59b6;
+}
+
+/* ── Workspace (center) ── */
+
+
+
+/* ── Step Strip ── */
+
+.stepStrip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+  flex-grow: 0;
+  height: 72px;
+}
+
+.stepChip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--bl-text-muted, #888);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.stepChip:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.stepChipActive {
+  background: rgba(155, 89, 182, 0.2);
+  color: #fff;
+}
+
+.stepChipType {
+  font-size: 10px;
+}
+
+.stepChipTitle {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.addStepButton {
+  width: 28px;
+  height: 28px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--bl-text-muted, #666);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.addStepButton:hover {
+  border-color: rgba(155, 89, 182, 0.4);
+  color: #9b59b6;
+}
+
+/* ── Bottom Bar ── */
+
+.bottomBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+  flex-grow: 0;
+  height: 48px;
+}
+
+.recordButton {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.recordButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+}
+
+/* ═══ Feature activation button ═══ */
+.featureButton {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6c3baa 0%, #9b59b6 100%);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.featureButton:hover {
+  background: linear-gradient(135deg, #7d4dbb 0%, #a966c4 100%);
+  transform: translateY(-1px);
+}
+
+.featureButton:active {
+  transform: translateY(0);
+}
+
+.navHint {
+  font-size: 11px;
+  color: var(--bl-text-muted, #555);
+}
+
+.bottomBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ═══════════════════════════════════════
+   PointList + StepStrip styles
+   (live here to avoid CSS wrapper conflicts)
+   ═══════════════════════════════════════ */
+
+/* ── PointList ── */
+
+.plRoot {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.plHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+}
+
+.plHeaderTitle {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--bl-text-muted, #666);
+}
+
+.plHeaderCount {
+  font-size: 10px;
+  padding: 1px 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  color: var(--bl-text-muted, #666);
+}
+
+.plList {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.plItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 32px;
+}
+
+.plItem:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.plItemActive {
+  background: rgba(155, 89, 182, 0.12);
+}
+
+.plItemActive:hover {
+  background: rgba(155, 89, 182, 0.18);
+}
+
+.plIndex {
+  font-size: 10px;
+  color: var(--bl-text-muted, #555);
+  min-width: 14px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.plItemActive .plIndex {
+  color: #9b59b6;
+}
+
+.plTitle {
+  flex: 1;
+  font-size: 12px;
+  color: var(--bl-text-secondary, #999);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.plItemActive .plTitle {
+  color: #fff;
+  font-weight: 500;
+}
+
+.plTitleInput {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(155, 89, 182, 0.3);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+  color: #fff;
+  outline: none;
+  min-width: 0;
+}
+
+.plActions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0;
+}
+
+.plItem:hover .plActions {
+  opacity: 1;
+}
+
+.plActionBtn {
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--bl-text-muted, #666);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.plActionBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #aaa;
+}
+
+.plDeleteBtn:hover {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.plAddButton {
+  margin: 6px;
+  padding: 6px 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--bl-text-muted, #555);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.plAddButton:hover {
+  border-color: rgba(155, 89, 182, 0.3);
+  color: #9b59b6;
+}
+
+/* ── StepStrip ── */
+
+.ssRoot {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 8px 12px;
+  flex-shrink: 0;
+  flex-grow: 0;
+  height: 72px;
+}
+
+.ssStrip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ssStrip::-webkit-scrollbar {
+  display: none;
+}
+
+.ssChip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--bl-text-muted, #888);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.ssChip:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.ssChipActive {
+  background: rgba(155, 89, 182, 0.18);
+  color: #fff;
+}
+
+.ssChipActive:hover {
+  background: rgba(155, 89, 182, 0.25);
+}
+
+.ssChipType {
+  font-size: 9px;
+  flex-shrink: 0;
+}
+
+.ssChipActive .ssChipType {
+  color: #c39bd3;
+}
+
+.ssChipTitle {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ssChipInput {
+  width: 80px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(155, 89, 182, 0.3);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 12px;
+  color: #fff;
+  outline: none;
+}
+
+.ssChipActions {
+  display: flex;
+  gap: 1px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  margin-left: 2px;
+}
+
+.ssChip:hover .ssChipActions {
+  opacity: 1;
+}
+
+.ssChipAction {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--bl-text-muted, #666);
+  font-size: 9px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ssChipAction:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #aaa;
+}
+
+.ssChipDelete:hover {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+}
+
+/* ── Add Step ── */
+
+.ssAddArea {
+  flex-shrink: 0;
+  position: relative;
+}
+
+.ssAddButton {
+  padding: 5px 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--bl-text-muted, #555);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ssAddButton:hover {
+  border-color: rgba(155, 89, 182, 0.3);
+  color: #9b59b6;
+}
+
+.ssTypePicker {
+  background: rgba(15, 15, 30, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 140px;
+}
+
+.ssTypeOption {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--bl-text-secondary, #aaa);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.ssTypeOption:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.ssTypeCancel {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--bl-text-muted, #555);
+  font-size: 11px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ssTypeCancel:hover {
+  color: var(--bl-text-secondary, #888);
+}

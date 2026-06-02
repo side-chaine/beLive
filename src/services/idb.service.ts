@@ -494,3 +494,91 @@ export async function clearCatalogClearedFlag(): Promise<void> {
     await _req(_tx(db, 'app_state', 'readwrite').delete('catalog_cleared_v1'));
   } catch (_) {}
 }
+
+// ── Generic App State Helpers ──
+
+async function loadFromAppState<T>(key: string): Promise<T | null> {
+  const db = await _getDB();
+  const row = await _req<any>(_tx(db, 'app_state').get(key));
+  return row?.value ?? null;
+}
+
+async function saveToAppState<T>(key: string, value: T): Promise<void> {
+  const db = await _getDB();
+  await _req(
+    _tx(db, 'app_state', 'readwrite').put({
+      key,
+      value,
+      lastUpdated: Date.now(),
+    }),
+  );
+}
+
+// ── Rec Studio Scenario Persistence ──
+
+const REC_SCENARIO_KEY = 'rec_studio_scenario_v1';
+
+interface RecScenarioPersisted {
+  schemaVersion: number;
+  scenario: import('../types/rec-studio.types').RecScenario;
+}
+
+export async function loadRecScenario(): Promise<import('../types/rec-studio.types').RecScenario | null> {
+  const raw = await loadFromAppState<RecScenarioPersisted>(REC_SCENARIO_KEY);
+  if (!raw) return null;
+  return raw.scenario;
+}
+
+export async function saveRecScenario(scenario: import('../types/rec-studio.types').RecScenario): Promise<void> {
+  const persisted: RecScenarioPersisted = {
+    schemaVersion: 1,
+    scenario,
+  };
+  await saveToAppState(REC_SCENARIO_KEY, persisted);
+}
+
+// ── Rec Studio Slide Image Persistence ──
+// Используем beLive_scenes DB → custom_backgrounds store (тот же что и Block Scenes)
+// Key: 'rec_img_${imageId}', trackId: 'rec'
+
+export async function saveStepImage(imageId: string, blob: Blob): Promise<void> {
+  const db = await _getScenesDB();
+  await _req(
+    _tx(db, 'custom_backgrounds', 'readwrite').put({
+      id: `rec_img_${imageId}`,
+      trackId: 'rec',
+      blob,
+    }),
+  );
+}
+
+export async function getStepImage(imageId: string): Promise<Blob | null> {
+  const db = await _getScenesDB();
+  const record = await _req<any>(_tx(db, 'custom_backgrounds').get(`rec_img_${imageId}`));
+  return record?.blob ?? null;
+}
+
+export async function deleteStepImage(imageId: string): Promise<void> {
+  const db = await _getScenesDB();
+  await _req(_tx(db, 'custom_backgrounds', 'readwrite').delete(`rec_img_${imageId}`));
+}
+
+export async function deleteStepImagesByPrefix(stepId: string): Promise<void> {
+  const db = await _getScenesDB();
+  const tx = db.transaction('custom_backgrounds', 'readwrite');
+  const store = tx.objectStore('custom_backgrounds');
+  const request = store.getAllKeys();
+  await new Promise<void>((resolve, reject) => {
+    request.onsuccess = () => {
+      const keys = request.result as string[];
+      const prefix = `rec_img_${stepId}_`;
+      keys.forEach(key => {
+        if (typeof key === 'string' && key.startsWith(prefix)) {
+          store.delete(key);
+        }
+      });
+    };
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useTrackStore, TrackState } from '../stores/track.store';
 import { interruptPracticeSession } from '../exercises/exercise.interruption';
+import { useRecStudioStore } from '../stores/recStudio.store';
 
 export function useKeyboardShortcuts() {
   const tracksMeta = useTrackStore((s: TrackState) => s.tracksMeta);
@@ -14,6 +15,16 @@ export function useKeyboardShortcuts() {
       if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
         // Focus Mode → plain arrows не seek-ают, Shift+Arrow (смена трека) работает
         if (!e.shiftKey && document.documentElement.getAttribute('data-billy-control') === 'true') return;
+        // ── Rec Studio scenario guard ──
+        const recStudioState = useRecStudioStore.getState();
+        if (recStudioState.activeMode === 'scenario') {
+          // Если презентация активна и слайд НЕ показан → beLive владеет стрелками
+          if (recStudioState.isPresenting && !recStudioState.showSlide) {
+            // let through — стрелки для seek
+          } else {
+            return;
+          }
+        }
         const delta = e.code === 'ArrowLeft' ? -1 : 1;
         if (e.shiftKey) {
           // Shift+Arrow → track prev/next (accumulated)

@@ -12,6 +12,7 @@ import {
   toggleBillyControl,
 } from './useBillyControl';
 import { useTrackInfoStore } from '../stores/trackInfo.store';
+import { useRecStudioStore } from '../stores/recStudio.store';
 
 // ── Constants ──
 const KEY_TOGGLE = 'Slash';
@@ -43,6 +44,17 @@ export function useBillyKeyboard(callbacks: KeyboardCallbacks = {}) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!shouldIntercept(e)) return;
+
+      // ── Rec Studio scenario guard ──
+      const recStudioState = useRecStudioStore.getState();
+      if (recStudioState.activeMode === 'scenario' && !recStudioState.featureActive) {
+        // Если презентация активна и слайд НЕ показан → Billy работает
+        if (recStudioState.isPresenting && !recStudioState.showSlide) {
+          // let through
+        } else {
+          return;
+        }
+      }
 
       if (e.code === KEY_TOGGLE) {
         e.preventDefault();
