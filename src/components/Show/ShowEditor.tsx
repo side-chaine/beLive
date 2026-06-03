@@ -144,7 +144,7 @@ export function ShowEditor() {
               )}
             </div>
             <div className={styles.navHint}>
-              ← → шаги &nbsp; ↑ ↓ пункты
+              ← → шаги &nbsp; ↑ ↓ пункты &nbsp; Space — записать
             </div>
           </div>
         </>

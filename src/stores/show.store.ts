@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import type {
   ShowScenario, ShowPoint, ShowStep,
-  ShowMode, StepType, FeatureSnapshot
+  ShowMode, StepType, FeatureSnapshot,
+  ShowSubSlide
 } from '../types/show.types';
 import { getFeature, captureSnapshot, restoreSnapshot } from '../components/Show/featureRegistry';
 import { useRecordingStore } from './recording.store';
@@ -24,6 +25,7 @@ function createEmptyScenario(): ShowScenario {
             id: generateId(),
             type: 'content' as StepType,
             title: '',
+            subSlides: [{}],
           },
         ],
       },
@@ -47,6 +49,65 @@ function findStepLocation(
   return null;
 }
 
+/** Ленивая миграция: legacy content-шаг → subSlides */
+function migrateStepToSubSlides(step: ShowStep): ShowStep {
+  // Идемпотентность: undefined = не мигрирован, [] = мигрирован (пустой шаг)
+  if (step.subSlides !== undefined) return step;
+  // Только content-шаги
+  if (step.type !== 'content') return step;
+
+  const subSlides: ShowSubSlide[] = [];
+
+  if (step.imageIds?.length) {
+    // Есть фото — каждое фото = отдельный суб-слайд
+    step.imageIds.forEach((imageId, idx) => {
+      const caption = step.imageCaptions?.[idx] || '';
+      subSlides.push({
+        imageId,
+        title: idx === 0 ? step.title : undefined,
+        // subSlides[0]: step.description приоритетнее caption
+        // subSlides[1+]: caption → description
+        description: idx === 0
+          ? (step.description || caption || undefined)
+          : (caption || undefined),
+        bullets: idx === 0 ? step.bullets?.map(text => ({ text })) : undefined,
+      });
+    });
+  } else if (step.description || step.bullets?.length) {
+    // Нет фото, есть текст — один текстовый суб-слайд
+    subSlides.push({
+      title: step.title,
+      description: step.description,
+      bullets: step.bullets?.map(text => ({ text })),
+    });
+  } else if (step.title) {
+    // Только заголовок — один суб-слайд с заголовком
+    subSlides.push({
+      title: step.title,
+    });
+  }
+  // Пустой шаг → subSlides=[] (маркер "мигрирован, но пуст")
+
+  return { ...step, subSlides };
+}
+
+/** Мигрировать все content-шаги в сценарии */
+function migrateScenarioSteps(scenario: ShowScenario): {
+  scenario: ShowScenario;
+  migrated: boolean;
+} {
+  let migrated = false;
+  const points = scenario.points.map(point => {
+    const steps = point.steps.map(step => {
+      const migratedStep = migrateStepToSubSlides(step);
+      if (migratedStep !== step) migrated = true;
+      return migratedStep;
+    });
+    return { ...point, steps };
+  });
+  return { scenario: { ...scenario, points }, migrated };
+}
+
 // ── Store ──
 
 interface ShowState {
@@ -57,6 +118,9 @@ interface ShowState {
   scenario: ShowScenario;
   activePointIndex: number;
   activeStepIndex: number;
+  // ── Sub-slide navigation (НОВОЕ) ──
+  activeSubSlideIndex: number;
+  activeBulletIndex: number;  // -1 = нет активного пункта
 
   // ── Feature state ──
   featureActive: boolean;
@@ -108,6 +172,10 @@ interface ShowState {
   prevStep: () => void;
   nextPoint: () => void;
   prevPoint: () => void;
+  // ── Sub-slide screen navigation (НОВОЕ) ──
+  nextScreen: () => void;
+  prevScreen: () => void;
+  getCurrentScreenInfo: () => ScreenInfo;
 
   // ── Feature ──
   activateFeature: () => void;
@@ -118,12 +186,40 @@ interface ShowState {
   load: () => Promise<void>;
 }
 
+// ── Screen info types ──
+
+export type ScreenInfo =
+  | {
+      type: 'subslide';
+      subSlideIndex: number;
+      totalSubSlides: number;
+      bulletIndex: number;
+      totalBullets: number;
+      isFirst: boolean;
+      isLast: boolean;
+      screenNumber: number;
+      totalScreens: number;
+      stepIndex: number;
+      totalSteps: number;
+      pointIndex: number;
+      totalPoints: number;
+    }
+  | {
+      type: 'legacy';
+      stepIndex: number;
+      totalSteps: number;
+      pointIndex: number;
+      totalPoints: number;
+    };
+
 export const useShowStore = create<ShowState>()((set, get) => ({
   // ── Initial state ──
   activeMode: 'entry',
   scenario: createEmptyScenario(),
   activePointIndex: 0,
   activeStepIndex: 0,
+  activeSubSlideIndex: 0,
+  activeBulletIndex: -1,
 
   featureActive: false,
   activeFeatureId: null,
@@ -167,7 +263,7 @@ export const useShowStore = create<ShowState>()((set, get) => ({
     const newPoint: ShowPoint = {
       id: generateId(),
       title: title ?? 'Новый пункт',
-      steps: [{ id: generateId(), type: 'content', title: '' }],
+      steps: [{ id: generateId(), type: 'content', title: '', subSlides: [{}] }],
     };
     set(s => ({
       scenario: {
@@ -187,6 +283,8 @@ export const useShowStore = create<ShowState>()((set, get) => ({
       },
       activePointIndex: Math.min(s.activePointIndex, Math.max(0, s.scenario.points.length - 2)),
       activeStepIndex: 0,
+      activeSubSlideIndex: 0,
+      activeBulletIndex: -1,
     }));
   },
 
@@ -218,6 +316,10 @@ export const useShowStore = create<ShowState>()((set, get) => ({
       type: type ?? 'content',
       title: '',
     };
+    // Content-шаги создаются с одним пустым суб-слайдом
+    if ((type ?? 'content') === 'content') {
+      newStep.subSlides = [{}];
+    }
     set(s => ({
       scenario: {
         ...s.scenario,
@@ -238,10 +340,12 @@ export const useShowStore = create<ShowState>()((set, get) => ({
         points: s.scenario.points.map(p => ({
           ...p,
           steps: p.steps.filter(st => st.id !== stepId),
-        })).filter(p => p.steps.length > 0), // Удалить пустые пункты
+        })).filter(p => p.steps.length > 0),
         updatedAt: Date.now(),
       },
       activeStepIndex: Math.max(0, s.activeStepIndex - 1),
+      activeSubSlideIndex: 0,
+      activeBulletIndex: -1,
     }));
   },
 
@@ -283,24 +387,58 @@ export const useShowStore = create<ShowState>()((set, get) => ({
     if (!point) return;
 
     if (activeStepIndex < point.steps.length - 1) {
-      set({ activeStepIndex: activeStepIndex + 1, scenarioComplete: false });
+      set({
+        activeStepIndex: activeStepIndex + 1,
+        activeSubSlideIndex: 0,
+        activeBulletIndex: -1,
+        scenarioComplete: false,
+      });
     } else if (activePointIndex < scenario.points.length - 1) {
-      set({ activePointIndex: activePointIndex + 1, activeStepIndex: 0, scenarioComplete: false });
+      set({
+        activePointIndex: activePointIndex + 1,
+        activeStepIndex: 0,
+        activeSubSlideIndex: 0,
+        activeBulletIndex: -1,
+        scenarioComplete: false,
+      });
     } else {
-      // Конец сценария
       set({ scenarioComplete: true });
     }
   },
 
   prevStep: () => {
     const { scenario, activePointIndex, activeStepIndex } = get();
+    let newPointIdx = activePointIndex;
+    let newStepIdx = activeStepIndex;
+
     if (activeStepIndex > 0) {
-      set({ activeStepIndex: activeStepIndex - 1, scenarioComplete: false });
+      newStepIdx = activeStepIndex - 1;
     } else if (activePointIndex > 0) {
-      const prevPoint = scenario.points[activePointIndex - 1];
+      newPointIdx = activePointIndex - 1;
+      const prevPoint = scenario.points[newPointIdx];
+      newStepIdx = prevPoint ? prevPoint.steps.length - 1 : 0;
+    } else {
+      return;
+    }
+
+    const newStep = scenario.points[newPointIdx]?.steps[newStepIdx];
+    if (newStep?.subSlides?.length) {
+      const lastSubSlide = newStep.subSlides[newStep.subSlides.length - 1];
       set({
-        activePointIndex: activePointIndex - 1,
-        activeStepIndex: prevPoint ? prevPoint.steps.length - 1 : 0,
+        activePointIndex: newPointIdx,
+        activeStepIndex: newStepIdx,
+        activeSubSlideIndex: newStep.subSlides.length - 1,
+        activeBulletIndex: lastSubSlide.bullets?.length
+          ? lastSubSlide.bullets.length - 1
+          : -1,
+        scenarioComplete: false,
+      });
+    } else {
+      set({
+        activePointIndex: newPointIdx,
+        activeStepIndex: newStepIdx,
+        activeSubSlideIndex: 0,
+        activeBulletIndex: -1,
         scenarioComplete: false,
       });
     }
@@ -309,15 +447,140 @@ export const useShowStore = create<ShowState>()((set, get) => ({
   nextPoint: () => {
     const { scenario, activePointIndex } = get();
     if (activePointIndex < scenario.points.length - 1) {
-      set({ activePointIndex: activePointIndex + 1, activeStepIndex: 0, scenarioComplete: false });
+      set({
+        activePointIndex: activePointIndex + 1,
+        activeStepIndex: 0,
+        activeSubSlideIndex: 0,
+        activeBulletIndex: -1,
+        scenarioComplete: false,
+      });
     }
   },
 
   prevPoint: () => {
     const { activePointIndex } = get();
     if (activePointIndex > 0) {
-      set({ activePointIndex: activePointIndex - 1, activeStepIndex: 0, scenarioComplete: false });
+      set({
+        activePointIndex: activePointIndex - 1,
+        activeStepIndex: 0,
+        activeSubSlideIndex: 0,
+        activeBulletIndex: -1,
+        scenarioComplete: false,
+      });
     }
+  },
+
+  // ── Sub-slide screen navigation ──
+
+  nextScreen: () => {
+    const s = get();
+    const step = s.scenario.points[s.activePointIndex]?.steps[s.activeStepIndex];
+
+    // Feature/HTML → legacy
+    if (!step || step.type !== 'content' || !step.subSlides?.length) {
+      s.nextStep();
+      return;
+    }
+
+    const { activeSubSlideIndex: si, activeBulletIndex: bi } = s;
+    const slide = step.subSlides[si];
+    const bulletCount = slide?.bullets?.length ?? 0;
+
+    if (bi === -1 && bulletCount > 0) {
+      // Показать первый bullet
+      set({ activeBulletIndex: 0 });
+    } else if (bi >= 0 && bi < bulletCount - 1) {
+      // Следующий bullet
+      set({ activeBulletIndex: bi + 1 });
+    } else if (si < step.subSlides.length - 1) {
+      // Следующий суб-слайд (bullets кончились или их нет)
+      set({ activeSubSlideIndex: si + 1, activeBulletIndex: -1 });
+    } else {
+      // Последний экран шага → следующий шаг
+      s.nextStep();
+    }
+  },
+
+  prevScreen: () => {
+    const s = get();
+    const step = s.scenario.points[s.activePointIndex]?.steps[s.activeStepIndex];
+
+    // Feature/HTML → legacy
+    if (!step || step.type !== 'content' || !step.subSlides?.length) {
+      s.prevStep();
+      return;
+    }
+
+    const { activeSubSlideIndex: si, activeBulletIndex: bi } = s;
+
+    if (bi > 0) {
+      // Предыдущий bullet
+      set({ activeBulletIndex: bi - 1 });
+    } else if (bi === 0) {
+      // Вернуться к заголовку (без подсветки bullets)
+      set({ activeBulletIndex: -1 });
+    } else if (si > 0) {
+      // Предыдущий суб-слайд → последний bullet (или -1 если нет bullets)
+      const prevSlide = step.subSlides[si - 1];
+      const lastBullet = prevSlide?.bullets?.length
+        ? prevSlide.bullets.length - 1
+        : -1;
+      set({ activeSubSlideIndex: si - 1, activeBulletIndex: lastBullet });
+    } else {
+      // Первый экран шага → предыдущий шаг
+      s.prevStep();
+    }
+  },
+
+  getCurrentScreenInfo: () => {
+    const { scenario, activePointIndex, activeStepIndex,
+            activeSubSlideIndex, activeBulletIndex } = get();
+
+    const point = scenario.points[activePointIndex];
+    const step = point?.steps[activeStepIndex];
+
+    // Feature/HTML или нет суб-слайдов → legacy
+    if (!step || step.type !== 'content' || !step.subSlides?.length) {
+      return {
+        type: 'legacy' as const,
+        stepIndex: activeStepIndex,
+        totalSteps: point?.steps.length ?? 0,
+        pointIndex: activePointIndex,
+        totalPoints: scenario.points.length,
+      };
+    }
+
+    // Content с суб-слайдами
+    const subSlide = step.subSlides[activeSubSlideIndex];
+    const bullets = subSlide?.bullets ?? [];
+
+    // Абсолютный номер экрана внутри шага (для progress)
+    let screenNumber = 0;
+    for (let i = 0; i < activeSubSlideIndex; i++) {
+      screenNumber += Math.max(1, step.subSlides[i].bullets?.length ?? 0);
+    }
+    screenNumber += activeBulletIndex + 1; // bullet=-1 → 0, bullet=0 → 1
+
+    const totalScreens = step.subSlides.reduce(
+      (acc, ss) => acc + Math.max(1, ss.bullets?.length ?? 0), 0
+    );
+
+    return {
+      type: 'subslide' as const,
+      subSlideIndex: activeSubSlideIndex,
+      totalSubSlides: step.subSlides.length,
+      bulletIndex: activeBulletIndex,
+      totalBullets: bullets.length,
+      isFirst: activeSubSlideIndex === 0 && activeBulletIndex <= 0,
+      isLast: activeSubSlideIndex === step.subSlides.length - 1
+        && activeBulletIndex >= bullets.length - 1,
+      screenNumber,
+      totalScreens,
+      stepIndex: activeStepIndex,
+      totalSteps: point.steps.length,
+      pointIndex: activePointIndex,
+      totalPoints: scenario.points.length,
+    };
   },
 
   // ── Feature ──
@@ -373,7 +636,12 @@ export const useShowStore = create<ShowState>()((set, get) => ({
     if (featureSourceStepId) {
       const loc = findStepLocation(scenario, featureSourceStepId);
       if (loc) {
-        set({ activePointIndex: loc.pointIndex, activeStepIndex: loc.stepIndex });
+        set({
+          activePointIndex: loc.pointIndex,
+          activeStepIndex: loc.stepIndex,
+          activeSubSlideIndex: 0,
+          activeBulletIndex: -1,
+        });
       }
     }
 
@@ -382,6 +650,8 @@ export const useShowStore = create<ShowState>()((set, get) => ({
       activeFeatureId: null,
       featureSourceStepId: null,
       _featureSnapshot: null,
+      activeSubSlideIndex: 0,
+      activeBulletIndex: -1,
     });
 
     // Auto: перейти к следующему шагу
@@ -402,7 +672,14 @@ export const useShowStore = create<ShowState>()((set, get) => ({
       if (saved) dockPos = JSON.parse(saved);
     } catch {}
 
-    set({ isPresenting: true, showSlide: false, scenarioComplete: false, dockPosition: dockPos });
+    set({
+      isPresenting: true,
+      showSlide: false,
+      scenarioComplete: false,
+      dockPosition: dockPos,
+      activeSubSlideIndex: 0,
+      activeBulletIndex: -1,
+    });
   },
 
   stopPresentation: () => {
@@ -439,7 +716,18 @@ export const useShowStore = create<ShowState>()((set, get) => ({
       const { loadShowScenario } = await import('../services/idb.service');
       const scenario = await loadShowScenario();
       if (scenario) {
-        set({ scenario, activePointIndex: 0, activeStepIndex: 0 });
+        const { scenario: migrated, migrated: wasMigrated } = migrateScenarioSteps(scenario);
+        set({
+          scenario: migrated,
+          activePointIndex: 0,
+          activeStepIndex: 0,
+          activeSubSlideIndex: 0,
+          activeBulletIndex: -1,
+        });
+        if (wasMigrated) {
+          const { saveShowScenario } = await import('../services/idb.service');
+          await saveShowScenario(migrated);
+        }
       }
     } catch (e) {
       console.error('[Show] Load failed:', e);

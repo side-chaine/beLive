@@ -26,6 +26,33 @@ export interface FeatureSnapshot {
   // ── ИНВАРИАНТ: при добавлении нового поля → обновить captureSnapshot + restoreSnapshot ──
 }
 
+/** Цветовая палитра для суб-слайдов */
+export const SLIDE_COLORS = [
+  '#9b59b6', // фиолетовый (default)
+  '#e74c3c', // красный
+  '#3498db', // синий
+  '#2ecc71', // зелёный
+  '#f39c12', // оранжевый
+] as const;
+
+export type SlideColor = typeof SLIDE_COLORS[number];
+
+/** Пункт внутри суб-слайда */
+export interface SubSlideBullet {
+  text: string;
+  color?: SlideColor;
+}
+
+/** Суб-слайд внутри content-шага */
+export interface ShowSubSlide {
+  imageId?: string;
+  title?: string;
+  titleColor?: SlideColor;
+  description?: string;
+  descriptionColor?: SlideColor;
+  bullets?: SubSlideBullet[];
+}
+
 /** Сценарий — главный объект Show */
 export interface ShowScenario {
   title: string;
@@ -54,6 +81,7 @@ export interface ShowStep {
   imageCaptions?: string[];  // Параллельно imageIds — подпись под каждым фото
   background?: string;
   notes?: string;
+  subSlides?: ShowSubSlide[];  // ★ НОВОЕ — суб-слайды
   
   // ── Feature step ──
   action?: FeatureAction;

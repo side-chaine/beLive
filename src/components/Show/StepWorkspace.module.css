@@ -506,4 +506,380 @@
   color: rgba(255, 255, 255, 0.25);
 }
 
+/* ═══ Sub-slides section ═══ */
+.subSlidesSection {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subSlideCard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 12px;
+  animation: workspaceIn 250ms ease;
+}
+
+.subSlideHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.subSlideIndex {
+  font-size: 11px;
+  color: rgba(155, 89, 182, 0.6);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.subSlideActions {
+  display: flex;
+  gap: 2px;
+}
+
+.subSlideAction {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.subSlideAction:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.subSlideActionDelete:hover {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+}
+
+/* ═══ Sub-slide image ═══ */
+.subSlideImageArea {
+  margin-bottom: 10px;
+}
+
+.subSlideImageThumb {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.subSlideImageImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.subSlideImageRemove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.subSlideImageThumb:hover .subSlideImageRemove {
+  opacity: 1;
+}
+
+.subSlideImageRemove:hover {
+  background: rgba(231, 76, 60, 0.8);
+  color: #fff;
+}
+
+.subSlideImageDropZone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.subSlideImageDropZone:hover {
+  border-color: rgba(155, 89, 182, 0.3);
+  background: rgba(155, 89, 182, 0.03);
+}
+
+.subSlideImageDropIcon {
+  font-size: 20px;
+}
+
+.subSlideImageDropText {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* ═══ Sub-slide fields ═══ */
+.subSlideField {
+  margin-bottom: 8px;
+}
+
+.subSlideFieldRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.subSlideFieldLabel {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.2);
+  min-width: 62px;
+  flex-shrink: 0;
+  padding-top: 5px;
+}
+
+.subSlideFieldInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  outline: none;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 3px 0;
+  min-width: 0;
+}
+
+.subSlideFieldInput::placeholder {
+  color: rgba(255, 255, 255, 0.12);
+}
+
+.subSlideFieldInput:focus {
+  border-bottom-color: rgba(155, 89, 182, 0.25);
+}
+
+.subSlideFieldTextarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  outline: none;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 3px 0;
+  min-width: 0;
+  overflow: hidden;
+  max-height: 40vh;
+  min-height: 24px;
+  font-family: inherit;
+  resize: none;
+}
+
+.subSlideFieldTextarea::placeholder {
+  color: rgba(255, 255, 255, 0.12);
+}
+
+.subSlideFieldTextarea:focus {
+  border-bottom-color: rgba(155, 89, 182, 0.2);
+}
+
+/* ═══ Color picker ═══ */
+.colorPicker {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  padding-top: 2px;
+}
+
+.subSlideFieldRow:hover .colorPicker {
+  opacity: 1;
+}
+
+.subSlideBulletRow:hover .colorPicker {
+  opacity: 1;
+}
+
+.colorSwatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  padding: 0;
+}
+
+.colorSwatch:hover {
+  transform: scale(1.2);
+}
+
+.colorSwatchActive {
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.2);
+  opacity: 1 !important;
+}
+
+/* ═══ Sub-slide bullets ═══ */
+.subSlideBulletsSection {
+  margin-top: 6px;
+}
+
+.subSlideBulletRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.subSlideBulletDot {
+  color: rgba(155, 89, 182, 0.5);
+  font-size: 14px;
+  flex-shrink: 0;
+  width: 14px;
+  text-align: center;
+}
+
+.subSlideBulletInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  outline: none;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 2px 0;
+  min-width: 0;
+}
+
+.subSlideBulletInput::placeholder {
+  color: rgba(255, 255, 255, 0.12);
+}
+
+.subSlideBulletInput:focus {
+  border-bottom-color: rgba(155, 89, 182, 0.2);
+}
+
+.subSlideBulletRemove {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.12);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 4px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.subSlideBulletRow:hover .subSlideBulletRemove {
+  opacity: 1;
+}
+
+.subSlideBulletRemove:hover {
+  color: rgba(231, 76, 60, 0.7);
+}
+
+.subSlideBulletAdd {
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 11px;
+  padding: 4px 10px;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.subSlideBulletAdd:hover {
+  border-color: rgba(155, 89, 182, 0.25);
+  color: rgba(155, 89, 182, 0.6);
+}
+
+/* ═══ Add sub-slide area ═══ */
+.addSubSlideArea {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  transition: all 0.15s ease;
+}
+
+.addSubSlideAreaDragOver {
+  background: rgba(155, 89, 182, 0.06);
+  border-color: rgba(155, 89, 182, 0.3);
+}
+
+.addSubSlideAreaDragOver .addSubSlideBtn {
+  border-color: rgba(155, 89, 182, 0.25);
+  color: rgba(155, 89, 182, 0.5);
+}
+
+.addSubSlideArea:active {
+  background: rgba(155, 89, 182, 0.04);
+  border-color: rgba(155, 89, 182, 0.2);
+}
+
+.addSubSlideBtn {
+  flex: 1;
+  padding: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.addSubSlideBtn:hover {
+  border-color: rgba(155, 89, 182, 0.3);
+  color: rgba(155, 89, 182, 0.6);
+  background: rgba(155, 89, 182, 0.03);
+}
+
+.addSubSlideBtn:active {
+  transform: scale(0.98);
+  background: rgba(155, 89, 182, 0.06);
+}
+
+.addSubSlideIcon {
+  font-size: 16px;
+}
+
 

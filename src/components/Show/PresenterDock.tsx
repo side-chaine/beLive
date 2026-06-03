@@ -4,6 +4,29 @@ import { useRecordingStore } from '../../stores/recording.store';
 import { loadStepImageUrl } from '../../services/show.image.service';
 import { loadStepHtmlUrl, revokeAllHtmlUrls } from '../../services/show.html.service';
 import styles from './PresenterDock.module.css';
+import type { ShowSubSlide, SlideColor } from '../../types/show.types';
+
+// ── Title inheritance helper ──
+
+function getInheritedTitle(
+  step: { title?: string; subSlides?: ShowSubSlide[] },
+  subSlideIndex: number
+): { text: string; color?: SlideColor } | null {
+  const subSlides = step.subSlides;
+  if (!subSlides?.length) {
+    return step.title ? { text: step.title } : null;
+  }
+
+  // Walk backward from current sub-slide for non-empty title
+  for (let i = subSlideIndex; i >= 0; i--) {
+    if (subSlides[i].title) {
+      return { text: subSlides[i].title!, color: subSlides[i].titleColor };
+    }
+  }
+
+  // Fallback to step title
+  return step.title ? { text: step.title } : null;
+}
 
 export function PresenterDock() {
   const scenario = useShowStore(s => s.scenario);
@@ -11,12 +34,12 @@ export function PresenterDock() {
   const activeStepIndex = useShowStore(s => s.activeStepIndex);
   const showSlide = useShowStore(s => s.showSlide);
   const toggleSlide = useShowStore(s => s.toggleSlide);
-  const nextStep = useShowStore(s => s.nextStep);
-  const prevStep = useShowStore(s => s.prevStep);
   const activateFeature = useShowStore(s => s.activateFeature);
   const stopPresentation = useShowStore(s => s.stopPresentation);
   const dockPosition = useShowStore(s => s.dockPosition);
   const setDockPosition = useShowStore(s => s.setDockPosition);
+  const activeSubSlideIndex = useShowStore(s => s.activeSubSlideIndex);
+  const activeBulletIndex = useShowStore(s => s.activeBulletIndex);
 
   const isRecording = useRecordingStore(s => s.isRecording);
   const duration = useRecordingStore(s => s.duration);
@@ -42,17 +65,37 @@ export function PresenterDock() {
   const currentPoint = scenario.points[activePointIndex];
   const currentStep = currentPoint?.steps[activeStepIndex];
 
-  // ── Load images for current step ──
+  // ── Load images for current step (legacy + sub-slides) ──
   useEffect(() => {
     const step = scenario.points[activePointIndex]?.steps[activeStepIndex];
-    if (!step?.imageIds?.length) {
+    if (!step) {
       setImageUrls({});
       return;
     }
+
+    const allImageIds: string[] = [];
+
+    // Legacy imageIds
+    if (step.imageIds?.length) {
+      allImageIds.push(...step.imageIds);
+    }
+
+    // Sub-slide imageIds
+    if (step.subSlides?.length) {
+      step.subSlides.forEach(ss => {
+        if (ss.imageId) allImageIds.push(ss.imageId);
+      });
+    }
+
+    if (allImageIds.length === 0) {
+      setImageUrls({});
+      return;
+    }
+
     let cancelled = false;
     const urls: Record<string, string> = {};
     Promise.all(
-      step.imageIds.map(async (imageId) => {
+      allImageIds.map(async (imageId) => {
         const url = await loadStepImageUrl(imageId);
         if (url) urls[imageId] = url;
       })
@@ -62,12 +105,12 @@ export function PresenterDock() {
     return () => { cancelled = true; };
   }, [activePointIndex, activeStepIndex]);
 
-  // ── Reset image index on step change ──
+  // ── Reset on navigation change ──
   useEffect(() => {
     setActiveImageIndex(0);
     activeImageIndexRef.current = 0;
     setLightboxUrl(null);
-  }, [activePointIndex, activeStepIndex]);
+  }, [activePointIndex, activeStepIndex, activeSubSlideIndex]);
 
   // ── Load HTML slide on step change ──
   useEffect(() => {
@@ -193,9 +236,10 @@ export function PresenterDock() {
       // ── Arrow navigation: ↑↓ = steps, ←→ = photo carousel ──
       if (store.showSlide) {
         // Read CURRENT step from store (not stale closure)
-        const { activePointIndex: pi, activeStepIndex: si, scenario } = store;
-        const step = scenario.points[pi]?.steps[si];
-        const hasMultipleImages = (step?.imageIds?.length ?? 0) > 1;
+        // Read CURRENT step from store (not stale closure)
+        const { activePointIndex: pi, activeStepIndex: si, scenario: sc } = store;
+        const curStep = sc.points[pi]?.steps[si];
+        const hasSubSlides = curStep?.type === 'content' && curStep.subSlides?.length;
 
         switch (e.code) {
           case 'ArrowDown':
@@ -210,25 +254,37 @@ export function PresenterDock() {
             break;
           case 'ArrowRight':
             e.preventDefault();
-            if (hasMultipleImages) {
-              const maxIdx = step.imageIds!.length - 1;
-              const newIdx = Math.min(activeImageIndexRef.current + 1, maxIdx);
-              activeImageIndexRef.current = newIdx;
-              setActiveImageIndex(newIdx);
+            (document.activeElement as HTMLElement)?.blur?.();
+            if (hasSubSlides) {
+              store.nextScreen();
             } else {
-              (document.activeElement as HTMLElement)?.blur?.();
-              store.nextStep();
+              // Legacy carousel navigation
+              const hasMultipleImages = (curStep?.imageIds?.length ?? 0) > 1;
+              if (hasMultipleImages) {
+                const maxIdx = curStep.imageIds!.length - 1;
+                const newIdx = Math.min(activeImageIndexRef.current + 1, maxIdx);
+                activeImageIndexRef.current = newIdx;
+                setActiveImageIndex(newIdx);
+              } else {
+                store.nextStep();
+              }
             }
             break;
           case 'ArrowLeft':
             e.preventDefault();
-            if (hasMultipleImages && activeImageIndexRef.current > 0) {
-              const newIdx = activeImageIndexRef.current - 1;
-              activeImageIndexRef.current = newIdx;
-              setActiveImageIndex(newIdx);
+            (document.activeElement as HTMLElement)?.blur?.();
+            if (hasSubSlides) {
+              store.prevScreen();
             } else {
-              (document.activeElement as HTMLElement)?.blur?.();
-              store.prevStep();
+              // Legacy carousel navigation
+              const hasMultipleImages = (curStep?.imageIds?.length ?? 0) > 1;
+              if (hasMultipleImages && activeImageIndexRef.current > 0) {
+                const newIdx = activeImageIndexRef.current - 1;
+                activeImageIndexRef.current = newIdx;
+                setActiveImageIndex(newIdx);
+              } else {
+                store.prevStep();
+              }
             }
             break;
         }
@@ -289,11 +345,12 @@ export function PresenterDock() {
           {currentStep.title || 'Без заголовка'}
         </span>
 
-        <button type="button" className={styles.navBtn} onClick={() => { prevStep(); (document.activeElement as HTMLElement)?.blur?.(); }} title="Предыдущий шаг (↑)">↑</button>
+        <button type="button" className={styles.navBtn} onClick={() => { useShowStore.getState().prevStep(); (document.activeElement as HTMLElement)?.blur?.(); }} title="Предыдущий шаг (↑)">↑</button>
         <span className={styles.position}>
           {activeStepIndex + 1}/{currentPoint?.steps.length || 0}
+          {currentStep?.subSlides?.length ? ` · ${activeSubSlideIndex + 1}/${currentStep.subSlides.length}` : ''}
         </span>
-        <button type="button" className={styles.navBtn} onClick={() => { nextStep(); (document.activeElement as HTMLElement)?.blur?.(); }} title="Следующий шаг (↓)">↓</button>
+        <button type="button" className={styles.navBtn} onClick={() => { useShowStore.getState().nextStep(); (document.activeElement as HTMLElement)?.blur?.(); }} title="Следующий шаг (↓)">↓</button>
 
         {currentStep.type === 'feature' && currentStep.action && (
           <button type="button" className={styles.activateBtn} onClick={activateFeature} title="Активировать функцию">
@@ -348,73 +405,169 @@ export function PresenterDock() {
           >
             ✕
           </button>
-          <div className={styles.slideContent} key={`slide-${activePointIndex}-${activeStepIndex}`} data-step-type={currentStep.type}>
+          <div
+            className={styles.slideContent}
+            key={`slide-${activePointIndex}-${activeStepIndex}-${currentStep.subSlides?.length ? activeSubSlideIndex : 0}`}
+            data-step-type={currentStep.type}
+          >
             {currentStep.type === 'feature' && (
               <div className={styles.slideTypeBadge}>◆ Функция</div>
             )}
-            <h1 className={styles.slideTitle}>{currentStep.title || 'Без заголовка'}</h1>
-            {currentStep.subtitle && (
-              <h2 className={styles.slideSubtitle}>{currentStep.subtitle}</h2>
-            )}
-            {currentStep.description && (
-              <p className={styles.slideDescription}>{currentStep.description}</p>
-            )}
-            {currentStep.bullets && currentStep.bullets.filter(b => b.trim()).length > 0 && (
-              <ul className={styles.slideBullets}>
-                {currentStep.bullets.filter(b => b.trim()).map((b, i) => (
-                  <li key={i} className={styles.slideBullet}>{b}</li>
-                ))}
-              </ul>
-            )}
-            {currentStep.imageIds && currentStep.imageIds.length > 0 && (() => {
-              const visibleIds = currentStep.imageIds.filter(id => imageUrls[id]);
-              if (visibleIds.length === 0) return null;
-              const safeIndex = Math.min(activeImageIndex, visibleIds.length - 1);
-              const url = imageUrls[visibleIds[safeIndex]];
-              const caption = currentStep.imageCaptions?.[currentStep.imageIds.indexOf(visibleIds[safeIndex])];
-              return (
-                <div className={styles.imageCarousel}>
-                  <div className={styles.carouselMain}>
-                    <button
-                      type="button"
-                      className={styles.carouselNav}
-                      onClick={() => { const i = Math.max(0, safeIndex - 1); setActiveImageIndex(i); activeImageIndexRef.current = i; }}
-                      style={{ opacity: safeIndex > 0 ? 1 : 0.2, pointerEvents: safeIndex > 0 ? 'auto' : 'none' }}
-                    >
-                      ‹
-                    </button>
-                    <div className={styles.carouselImageContainer}>
-                      {url && (
+
+            {/* ── Content step with sub-slides ── */}
+            {currentStep.type === 'content' && currentStep.subSlides?.length ? (
+              (() => {
+                const safeSSIndex = Math.max(0, Math.min(activeSubSlideIndex, currentStep.subSlides.length - 1));
+                const subSlide = currentStep.subSlides[safeSSIndex];
+
+                if (!subSlide) {
+                  return <div className={styles.subSlideEmpty}>◌ Пустой слайд</div>;
+                }
+
+                const inheritedTitle = getInheritedTitle(currentStep, safeSSIndex);
+                const imageUrl = subSlide.imageId ? imageUrls[subSlide.imageId] : null;
+                const bullets = subSlide.bullets?.filter(b => b.text.trim()) || [];
+                const hasContent = inheritedTitle || subSlide.description || bullets.length || imageUrl;
+
+                return (
+                  <>
+                    {inheritedTitle && (
+                      <h1 className={styles.slideTitle} style={inheritedTitle.color ? { color: inheritedTitle.color } : undefined}>
+                        {inheritedTitle.text}
+                      </h1>
+                    )}
+                    {currentStep.subtitle && (
+                      <h2 className={styles.slideSubtitle}>{currentStep.subtitle}</h2>
+                    )}
+                    {imageUrl && (
+                      <div className={styles.subSlideImageContainer}>
                         <img
-                          key={url}
-                          src={url}
+                          key={imageUrl}
+                          src={imageUrl}
                           alt=""
-                          className={styles.carouselImage}
-                          onClick={() => setLightboxUrl(url)}
+                          className={styles.subSlideImage}
+                          onClick={() => setLightboxUrl(imageUrl)}
                         />
-                      )}
-                      {caption && (
-                        <div className={styles.carouselCaption}>{caption}</div>
+                      </div>
+                    )}
+                    {subSlide.description && (
+                      <p
+                        className={styles.slideDescription}
+                        style={subSlide.descriptionColor ? { color: subSlide.descriptionColor } : undefined}
+                      >
+                        {subSlide.description}
+                      </p>
+                    )}
+                    {bullets.length > 0 && (
+                      <ul className={styles.slideBullets}>
+                        {bullets.map((bullet, i) => {
+                          let state: 'past' | 'current' | 'future';
+                          if (activeBulletIndex === -1) {
+                            state = 'future';
+                          } else if (i < activeBulletIndex) {
+                            state = 'past';
+                          } else if (i === activeBulletIndex) {
+                            state = 'current';
+                          } else {
+                            state = 'future';
+                          }
+                          return (
+                            <li
+                              key={i}
+                              className={`${styles.slideBullet} ${
+                                state === 'past' ? styles.slideBulletPast :
+                                state === 'current' ? styles.slideBulletCurrent :
+                                styles.slideBulletFuture
+                              }`}
+                              style={state === 'current' && bullet.color ? { color: bullet.color } : undefined}
+                            >
+                              {bullet.text}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                    {!hasContent && (
+                      <div className={styles.subSlideEmpty}>
+                        ◌ Пустой слайд
+                      </div>
+                    )}
+                  </>
+                );
+              })()
+            ) : (
+              /* ── Legacy / Feature / HTML rendering ── */
+              <>
+                {currentStep.type !== 'html' && currentStep.title && (
+                  <h1 className={styles.slideTitle}>{currentStep.title}</h1>
+                )}
+                {currentStep.type !== 'html' && currentStep.subtitle && (
+                  <h2 className={styles.slideSubtitle}>{currentStep.subtitle}</h2>
+                )}
+                {currentStep.type !== 'html' && currentStep.description && (
+                  <p className={styles.slideDescription}>{currentStep.description}</p>
+                )}
+                {currentStep.type !== 'html' && currentStep.bullets && currentStep.bullets.filter(b => b.trim()).length > 0 && (
+                  <ul className={styles.slideBullets}>
+                    {currentStep.bullets.filter(b => b.trim()).map((b, i) => (
+                      <li key={i} className={styles.slideBullet}>{b}</li>
+                    ))}
+                  </ul>
+                )}
+                  {/* LEGACY: carousel path for content steps without subSlides (defensive) */}
+                  {/* After migration, all content steps have subSlides. This path is a safety net. */}
+                {currentStep.type !== 'html' && currentStep.imageIds && currentStep.imageIds.length > 0 && (() => {
+                  const visibleIds = currentStep.imageIds.filter(id => imageUrls[id]);
+                  if (visibleIds.length === 0) return null;
+                  const safeIndex = Math.min(activeImageIndex, visibleIds.length - 1);
+                  const url = imageUrls[visibleIds[safeIndex]];
+                  const caption = currentStep.imageCaptions?.[currentStep.imageIds.indexOf(visibleIds[safeIndex])];
+                  return (
+                    <div className={styles.imageCarousel}>
+                      <div className={styles.carouselMain}>
+                        <button
+                          type="button"
+                          className={styles.carouselNav}
+                          onClick={() => { const i = Math.max(0, safeIndex - 1); setActiveImageIndex(i); activeImageIndexRef.current = i; }}
+                          style={{ opacity: safeIndex > 0 ? 1 : 0.2, pointerEvents: safeIndex > 0 ? 'auto' : 'none' }}
+                        >
+                          ‹
+                        </button>
+                        <div className={styles.carouselImageContainer}>
+                          {url && (
+                            <img
+                              key={url}
+                              src={url}
+                              alt=""
+                              className={styles.carouselImage}
+                              onClick={() => setLightboxUrl(url)}
+                            />
+                          )}
+                          {caption && (
+                            <div className={styles.carouselCaption}>{caption}</div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          className={styles.carouselNav}
+                          onClick={() => { const i = Math.min(visibleIds.length - 1, safeIndex + 1); setActiveImageIndex(i); activeImageIndexRef.current = i; }}
+                          style={{ opacity: safeIndex < visibleIds.length - 1 ? 1 : 0.2, pointerEvents: safeIndex < visibleIds.length - 1 ? 'auto' : 'none' }}
+                        >
+                          ›
+                        </button>
+                      </div>
+                      {visibleIds.length > 1 && (
+                        <div className={styles.carouselCounter}>
+                          {safeIndex + 1} / {visibleIds.length}
+                        </div>
                       )}
                     </div>
-                    <button
-                      type="button"
-                      className={styles.carouselNav}
-                      onClick={() => { const i = Math.min(visibleIds.length - 1, safeIndex + 1); setActiveImageIndex(i); activeImageIndexRef.current = i; }}
-                      style={{ opacity: safeIndex < visibleIds.length - 1 ? 1 : 0.2, pointerEvents: safeIndex < visibleIds.length - 1 ? 'auto' : 'none' }}
-                    >
-                      ›
-                    </button>
-                  </div>
-                  {visibleIds.length > 1 && (
-                    <div className={styles.carouselCounter}>
-                      {safeIndex + 1} / {visibleIds.length}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-            {/* ── HTML slide ── */}
+                  );
+                })()}
+              </>
+            )}
+
+            {/* ── HTML slide (unchanged) ── */}
             {currentStep.type === 'html' && currentStep.htmlId && htmlSlideUrl && (
               <div className={styles.htmlSlideWrapper}>
                 {!htmlSlideLoaded && (
@@ -440,10 +593,46 @@ export function PresenterDock() {
             <button type="button" className={styles.slideBackBtn} onClick={toggleSlide}>
               🎮 beLive
             </button>
-            <span className={styles.slidePosition}>
-              {activePointIndex + 1}/{scenario.points.length} · {activeStepIndex + 1}/{currentPoint?.steps.length || 0}
+            <div className={styles.slideNavGroup}>
+              <button
+                type="button"
+                className={styles.slideNavBtn}
+                onClick={() => {
+                  const store = useShowStore.getState();
+                  if (currentStep?.subSlides?.length) {
+                    store.prevScreen();
+                  } else {
+                    store.prevStep();
+                  }
+                }}
+                title="← Предыдущий экран"
+              >
+                ‹
+              </button>
+              <span className={styles.slidePosition}>
+                {activePointIndex + 1}/{scenario.points.length} · {activeStepIndex + 1}/{currentPoint?.steps.length || 0}
+                {currentStep?.subSlides?.length ? ` · ${activeSubSlideIndex + 1}/${currentStep.subSlides.length}` : ''}
+              </span>
+              <button
+                type="button"
+                className={styles.slideNavBtn}
+                onClick={() => {
+                  const store = useShowStore.getState();
+                  if (currentStep?.subSlides?.length) {
+                    store.nextScreen();
+                  } else {
+                    store.nextStep();
+                  }
+                }}
+                title="Следующий экран →"
+              >
+                ›
+              </button>
+            </div>
+            <span className={styles.slideHint}>
+              Space — свернуть
+              {currentStep?.subSlides?.length ? ' · ← → — экраны' : ' · ← → — навигация'}
             </span>
-            <span className={styles.slideHint}>Space — свернуть · ← → — навигация</span>
           </div>
         </div>
       )}
