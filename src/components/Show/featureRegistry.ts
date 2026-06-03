@@ -1,4 +1,4 @@
-import type { FeatureSnapshot } from '../../types/rec-studio.types';
+import type { FeatureSnapshot } from '../../types/show.types';
 import { useDeckStore } from '../../stores/deck.store';
 import { getModuleById } from '../../deck/registry';
 

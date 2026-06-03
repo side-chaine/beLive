@@ -1,17 +1,17 @@
 import { useEffect } from 'react';
-import { useRecStudioStore } from '../../stores/recStudio.store';
+import { useShowStore } from '../../stores/show.store';
 import { useRecordingStore } from '../../stores/recording.store';
 import styles from './FeatureOverlay.module.css';
 
 export function FeatureOverlay() {
-  const deactivateFeature = useRecStudioStore(s => s.deactivateFeature);
-  const scenario = useRecStudioStore(s => s.scenario);
-  const activePointIndex = useRecStudioStore(s => s.activePointIndex);
-  const activeStepIndex = useRecStudioStore(s => s.activeStepIndex);
+  const deactivateFeature = useShowStore(s => s.deactivateFeature);
+  const scenario = useShowStore(s => s.scenario);
+  const activePointIndex = useShowStore(s => s.activePointIndex);
+  const activeStepIndex = useShowStore(s => s.activeStepIndex);
   const isRecording = useRecordingStore(s => s.isRecording);
   const duration = useRecordingStore(s => s.duration);
 
-  // ── Escape handler — глобальный, т.к. RecStudio не рендерится при featureActive ──
+  // ── Escape handler — глобальный, т.к. Show не рендерится при featureActive ──
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.code === 'Escape') {

@@ -12,7 +12,7 @@ import {
   toggleBillyControl,
 } from './useBillyControl';
 import { useTrackInfoStore } from '../stores/trackInfo.store';
-import { useRecStudioStore } from '../stores/recStudio.store';
+import { useShowStore } from '../stores/show.store';
 
 // ── Constants ──
 const KEY_TOGGLE = 'Slash';
@@ -45,15 +45,16 @@ export function useBillyKeyboard(callbacks: KeyboardCallbacks = {}) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!shouldIntercept(e)) return;
 
-      // ── Rec Studio scenario guard ──
-      const recStudioState = useRecStudioStore.getState();
-      if (recStudioState.activeMode === 'scenario' && !recStudioState.featureActive) {
-        // Если презентация активна и слайд НЕ показан → Billy работает
-        if (recStudioState.isPresenting && !recStudioState.showSlide) {
-          // let through
-        } else {
+      // ── Show scenario guard ──
+      const showState = useShowStore.getState();
+      if (showState.activeMode === 'scenario' && !showState.featureActive) {
+        // ❄️ INV-SHOW-KEY-01: During presentation, PresenterDock owns keyboard.
+        // Billy must NOT intercept Space (jump) or any other key.
+        // Arrows still work via useKeyboardShortcuts (separate handler).
+        if (showState.isPresenting) {
           return;
         }
+        return;
       }
 
       if (e.code === KEY_TOGGLE) {

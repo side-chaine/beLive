@@ -1,18 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import { useRecStudioStore } from '../../stores/recStudio.store';
-import type { RecPoint } from '../../types/rec-studio.types';
+import { useShowStore } from '../../stores/show.store';
+import type { ShowPoint } from '../../types/show.types';
 
 interface PointListProps {
   styles: Record<string, string>;
 }
 
 export function PointList({ styles: s }: PointListProps) {
-  const scenario = useRecStudioStore(s => s.scenario);
-  const activePointIndex = useRecStudioStore(s => s.activePointIndex);
-  const updatePoint = useRecStudioStore(s => s.updatePoint);
-  const removePoint = useRecStudioStore(s => s.removePoint);
-  const addPoint = useRecStudioStore(s => s.addPoint);
-  const movePoint = useRecStudioStore(s => s.movePoint);
+  const scenario = useShowStore(s => s.scenario);
+  const activePointIndex = useShowStore(s => s.activePointIndex);
+  const updatePoint = useShowStore(s => s.updatePoint);
+  const removePoint = useShowStore(s => s.removePoint);
+  const addPoint = useShowStore(s => s.addPoint);
+  const movePoint = useShowStore(s => s.movePoint);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -25,7 +25,7 @@ export function PointList({ styles: s }: PointListProps) {
     }
   }, [editingId]);
 
-  const startEdit = (point: RecPoint) => {
+  const startEdit = (point: ShowPoint) => {
     setEditingId(point.id);
     setEditValue(point.title);
   };
@@ -55,7 +55,7 @@ export function PointList({ styles: s }: PointListProps) {
             key={point.id}
             className={`${s.plItem} ${i === activePointIndex ? s.plItemActive : ''}`}
             onClick={() => {
-              useRecStudioStore.setState({ activePointIndex: i, activeStepIndex: 0 });
+              useShowStore.setState({ activePointIndex: i, activeStepIndex: 0 });
             }}
           >
             <span className={s.plIndex}>{i + 1}</span>

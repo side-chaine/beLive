@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 import type {
-  RecScenario, RecPoint, RecStep,
-  RecStudioMode, StepType, FeatureSnapshot
-} from '../types/rec-studio.types';
-import { getFeature, captureSnapshot, restoreSnapshot } from '../components/RecStudio/featureRegistry';
+  ShowScenario, ShowPoint, ShowStep,
+  ShowMode, StepType, FeatureSnapshot
+} from '../types/show.types';
+import { getFeature, captureSnapshot, restoreSnapshot } from '../components/Show/featureRegistry';
 import { useRecordingStore } from './recording.store';
 
 // ── Helpers ──
@@ -12,7 +12,7 @@ function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
 }
 
-function createEmptyScenario(): RecScenario {
+function createEmptyScenario(): ShowScenario {
   return {
     title: 'Новый сценарий',
     points: [
@@ -34,7 +34,7 @@ function createEmptyScenario(): RecScenario {
 
 /** Найти индексы пункта и шага по ID шага */
 function findStepLocation(
-  scenario: RecScenario,
+  scenario: ShowScenario,
   stepId: string
 ): { pointIndex: number; stepIndex: number } | null {
   for (let pi = 0; pi < scenario.points.length; pi++) {
@@ -49,12 +49,12 @@ function findStepLocation(
 
 // ── Store ──
 
-interface RecStudioState {
+interface ShowState {
   // ── Режим ──
-  activeMode: RecStudioMode;
+  activeMode: ShowMode;
 
   // ── Сценарий (ОДИН, текущий) ──
-  scenario: RecScenario;
+  scenario: ShowScenario;
   activePointIndex: number;
   activeStepIndex: number;
 
@@ -94,13 +94,13 @@ interface RecStudioState {
   // ── Points ──
   addPoint: (title?: string) => void;
   removePoint: (pointId: string) => void;
-  updatePoint: (pointId: string, data: Partial<RecPoint>) => void;
+  updatePoint: (pointId: string, data: Partial<ShowPoint>) => void;
   movePoint: (fromIndex: number, toIndex: number) => void;
 
   // ── Steps ──
   addStep: (pointId: string, type?: StepType) => void;
   removeStep: (stepId: string) => void;
-  updateStep: (stepId: string, data: Partial<RecStep>) => void;
+  updateStep: (stepId: string, data: Partial<ShowStep>) => void;
   moveStep: (pointId: string, fromIndex: number, toIndex: number) => void;
 
   // ── Navigation ──
@@ -118,7 +118,7 @@ interface RecStudioState {
   load: () => Promise<void>;
 }
 
-export const useRecStudioStore = create<RecStudioState>()((set, get) => ({
+export const useShowStore = create<ShowState>()((set, get) => ({
   // ── Initial state ──
   activeMode: 'entry',
   scenario: createEmptyScenario(),
@@ -164,7 +164,7 @@ export const useRecStudioStore = create<RecStudioState>()((set, get) => ({
 
   // ── Points ──
   addPoint: (title) => {
-    const newPoint: RecPoint = {
+    const newPoint: ShowPoint = {
       id: generateId(),
       title: title ?? 'Новый пункт',
       steps: [{ id: generateId(), type: 'content', title: '' }],
@@ -213,7 +213,7 @@ export const useRecStudioStore = create<RecStudioState>()((set, get) => ({
 
   // ── Steps ──
   addStep: (pointId, type) => {
-    const newStep: RecStep = {
+    const newStep: ShowStep = {
       id: generateId(),
       type: type ?? 'content',
       title: '',
@@ -347,7 +347,7 @@ export const useRecStudioStore = create<RecStudioState>()((set, get) => ({
         _featureSnapshot: snapshot,
       });
     } catch (e) {
-      console.error('[RecStudio] Feature execute failed:', e);
+      console.error('[Show] Feature execute failed:', e);
       // Store НЕ меняется — инвариант сохраняется
     }
   },
@@ -360,7 +360,7 @@ export const useRecStudioStore = create<RecStudioState>()((set, get) => ({
       try {
         feature.deactivate();
       } catch (e) {
-        console.error('[RecStudio] Feature deactivate failed:', e);
+        console.error('[Show] Feature deactivate failed:', e);
       }
     }
 
@@ -427,22 +427,22 @@ export const useRecStudioStore = create<RecStudioState>()((set, get) => ({
   save: async () => {
     const { scenario } = get();
     try {
-      const { saveRecScenario } = await import('../services/idb.service');
-      await saveRecScenario(scenario);
+      const { saveShowScenario } = await import('../services/idb.service');
+      await saveShowScenario(scenario);
     } catch (e) {
-      console.error('[RecStudio] Save failed:', e);
+      console.error('[Show] Save failed:', e);
     }
   },
 
   load: async () => {
     try {
-      const { loadRecScenario } = await import('../services/idb.service');
-      const scenario = await loadRecScenario();
+      const { loadShowScenario } = await import('../services/idb.service');
+      const scenario = await loadShowScenario();
       if (scenario) {
         set({ scenario, activePointIndex: 0, activeStepIndex: 0 });
       }
     } catch (e) {
-      console.error('[RecStudio] Load failed:', e);
+      console.error('[Show] Load failed:', e);
     }
   },
 }));
@@ -454,11 +454,11 @@ let _saveTimer: ReturnType<typeof setTimeout> | null = null;
 function scheduleAutoSave(): void {
   if (_saveTimer) clearTimeout(_saveTimer);
   _saveTimer = setTimeout(() => {
-    useRecStudioStore.getState().save();
+    useShowStore.getState().save();
   }, 2000);
 }
 
-useRecStudioStore.subscribe((state, prevState) => {
+useShowStore.subscribe((state, prevState) => {
   if (state.scenario !== prevState.scenario) {
     scheduleAutoSave();
   }

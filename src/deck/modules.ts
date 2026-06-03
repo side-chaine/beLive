@@ -25,13 +25,13 @@ import { registerModule } from './registry';
 // });
 
 registerModule({
-  id: 'rec',
-  label: 'Rec Studio',
+  id: 'show',
+  label: 'Show',
   order: 29,
   modes: ['rehearsal', 'karaoke', 'concert', 'live'],
   load: () =>
-    import('../components/RecStudio/RecStudioEntry').then(m => ({
-      default: m.RecStudioEntry,
+    import('../components/Show/ShowEntry').then(m => ({
+      default: m.ShowEntry,
     })),
 });
 

@@ -514,30 +514,30 @@ async function saveToAppState<T>(key: string, value: T): Promise<void> {
   );
 }
 
-// ── Rec Studio Scenario Persistence ──
+// ── Show Scenario Persistence ──
 
 const REC_SCENARIO_KEY = 'rec_studio_scenario_v1';
 
-interface RecScenarioPersisted {
+interface ShowScenarioPersisted {
   schemaVersion: number;
-  scenario: import('../types/rec-studio.types').RecScenario;
+  scenario: import('../types/show.types').ShowScenario;
 }
 
-export async function loadRecScenario(): Promise<import('../types/rec-studio.types').RecScenario | null> {
-  const raw = await loadFromAppState<RecScenarioPersisted>(REC_SCENARIO_KEY);
+export async function loadShowScenario(): Promise<import('../types/show.types').ShowScenario | null> {
+  const raw = await loadFromAppState<ShowScenarioPersisted>(REC_SCENARIO_KEY);
   if (!raw) return null;
   return raw.scenario;
 }
 
-export async function saveRecScenario(scenario: import('../types/rec-studio.types').RecScenario): Promise<void> {
-  const persisted: RecScenarioPersisted = {
+export async function saveShowScenario(scenario: import('../types/show.types').ShowScenario): Promise<void> {
+  const persisted: ShowScenarioPersisted = {
     schemaVersion: 1,
     scenario,
   };
   await saveToAppState(REC_SCENARIO_KEY, persisted);
 }
 
-// ── Rec Studio Slide Image Persistence ──
+// ── Show Slide Image Persistence ──
 // Используем beLive_scenes DB → custom_backgrounds store (тот же что и Block Scenes)
 // Key: 'rec_img_${imageId}', trackId: 'rec'
 
@@ -581,4 +581,29 @@ export async function deleteStepImagesByPrefix(stepId: string): Promise<void> {
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
+}
+
+// ── Show HTML Persistence ──
+// Key: 'rec_html_${htmlId}', trackId: 'rec'
+
+export async function saveStepHtml(htmlId: string, blob: Blob): Promise<void> {
+  const db = await _getScenesDB();
+  await _req(
+    _tx(db, 'custom_backgrounds', 'readwrite').put({
+      id: `rec_html_${htmlId}`,
+      trackId: 'rec',
+      blob,
+    }),
+  );
+}
+
+export async function getStepHtml(htmlId: string): Promise<Blob | null> {
+  const db = await _getScenesDB();
+  const record = await _req<any>(_tx(db, 'custom_backgrounds').get(`rec_html_${htmlId}`));
+  return record?.blob ?? null;
+}
+
+export async function deleteStepHtml(htmlId: string): Promise<void> {
+  const db = await _getScenesDB();
+  await _req(_tx(db, 'custom_backgrounds', 'readwrite').delete(`rec_html_${htmlId}`));
 }

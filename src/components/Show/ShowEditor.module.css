@@ -68,9 +68,25 @@
   margin: 0;
 }
 
-.pointIndicator, .stepIndicator {
-  padding: 3px 8px;
-  background: rgba(255, 255, 255, 0.06);
+.breadcrumb {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.breadcrumbSep {
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 13px;
+}
+
+.breadcrumbIndex {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.25);
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 4px;
 }
 

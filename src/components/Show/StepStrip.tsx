@@ -1,21 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useRecStudioStore } from '../../stores/recStudio.store';
-import type { RecStep, StepType } from '../../types/rec-studio.types';
+import { useShowStore } from '../../stores/show.store';
+import type { ShowStep, StepType } from '../../types/show.types';
 
 interface StepStripProps {
   styles: Record<string, string>;
 }
 
 export function StepStrip({ styles: s }: StepStripProps) {
-  const scenario = useRecStudioStore(s => s.scenario);
-  const activePointIndex = useRecStudioStore(s => s.activePointIndex);
-  const activeStepIndex = useRecStudioStore(s => s.activeStepIndex);
-  const updateStep = useRecStudioStore(s => s.updateStep);
-  const removeStep = useRecStudioStore(s => s.removeStep);
-  const addStep = useRecStudioStore(s => s.addStep);
-  const moveStep = useRecStudioStore(s => s.moveStep);
-
+  const scenario = useShowStore(s => s.scenario);
+  const activePointIndex = useShowStore(s => s.activePointIndex);
+  const activeStepIndex = useShowStore(s => s.activeStepIndex);
+  const updateStep = useShowStore(s => s.updateStep);
+  const removeStep = useShowStore(s => s.removeStep);
+  const addStep = useShowStore(s => s.addStep);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [showTypePicker, setShowTypePicker] = useState(false);
@@ -59,7 +57,7 @@ export function StepStrip({ styles: s }: StepStripProps) {
     closePicker();
   }, [activePointIndex]);
 
-  const startEdit = (step: RecStep) => {
+  const startEdit = (step: ShowStep) => {
     setEditingId(step.id);
     setEditValue(step.title || '');
   };
@@ -77,16 +75,14 @@ export function StepStrip({ styles: s }: StepStripProps) {
   };
 
   const handleAddStep = (type: StepType) => {
-    // Save scroll before state change
-    if (stripRef.current) {
-      scrollLeftRef.current = stripRef.current.scrollLeft;
-    }
     addStep(currentPoint.id, type);
+    // Auto-activate new step (it's added at the end)
+    useShowStore.setState({ activeStepIndex: currentPoint.steps.length });
     setShowTypePicker(false);
-    // Гарантированное восстановление scroll ПОСЛЕ React re-render
+    // Scroll strip to end — new step should be visible
     requestAnimationFrame(() => {
       if (stripRef.current) {
-        stripRef.current.scrollLeft = scrollLeftRef.current;
+        stripRef.current.scrollLeft = stripRef.current.scrollWidth;
       }
     });
   };
@@ -115,7 +111,7 @@ export function StepStrip({ styles: s }: StepStripProps) {
             key={step.id}
             className={`${s.ssChip} ${i === activeStepIndex ? s.ssChipActive : ''}`}
             onClick={() => {
-              useRecStudioStore.setState({ activeStepIndex: i });
+              useShowStore.setState({ activeStepIndex: i });
             }}
           >
             <span className={s.ssChipType}>
@@ -145,24 +141,7 @@ export function StepStrip({ styles: s }: StepStripProps) {
             )}
 
             <div className={s.ssChipActions}>
-              {i > 0 && (
-                <button
-                  type="button"
-                  className={s.ssChipAction}
-                  onClick={(e) => { e.stopPropagation(); moveStep(currentPoint.id, i, i - 1); }}
-                >
-                  ←
-                </button>
-              )}
-              {i < steps.length - 1 && (
-                <button
-                  type="button"
-                  className={s.ssChipAction}
-                  onClick={(e) => { e.stopPropagation(); moveStep(currentPoint.id, i, i + 1); }}
-                >
-                  →
-                </button>
-              )}
+
               {steps.length > 1 && (
                 <button
                   type="button"
@@ -213,13 +192,20 @@ export function StepStrip({ styles: s }: StepStripProps) {
               </button>
               <button
                 type="button"
+                className={s.ssTypeOption}
+                onClick={() => handleAddStep('html')}
+              >
+                ◇ HTML
+              </button>
+              <button
+                type="button"
                 className={s.ssTypeCancel}
                 onClick={closePicker}
               >
                 Отмена
               </button>
             </div>,
-            document.querySelector('[data-rec-studio-root]') ?? document.body
+            document.querySelector('[data-show-root]') ?? document.body
           )}
         </div>
       </div>

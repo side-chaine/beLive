@@ -1,8 +1,8 @@
-import { useRecStudioStore } from '../../stores/recStudio.store';
-import styles from './RecStudioEntry.module.css';
+import { useShowStore } from '../../stores/show.store';
+import styles from './ShowEntry.module.css';
 
-export function RecStudioEntry() {
-  const openScenario = useRecStudioStore(s => s.openScenario);
+export function ShowEntry() {
+  const openScenario = useShowStore(s => s.openScenario);
 
   return (
     <div className={styles.root}>

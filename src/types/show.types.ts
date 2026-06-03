@@ -1,8 +1,8 @@
-/** Режим Rec Studio */
-export type RecStudioMode = 'entry' | 'scenario';
+/** Режим Show */
+export type ShowMode = 'entry' | 'scenario';
 
 /** Тип шага сценария */
-export type StepType = 'content' | 'feature';
+export type StepType = 'content' | 'feature' | 'html';
 
 /** Действие при feature-шаге */
 export interface FeatureAction {
@@ -26,22 +26,22 @@ export interface FeatureSnapshot {
   // ── ИНВАРИАНТ: при добавлении нового поля → обновить captureSnapshot + restoreSnapshot ──
 }
 
-/** Сценарий — главный объект Rec Studio */
-export interface RecScenario {
+/** Сценарий — главный объект Show */
+export interface ShowScenario {
   title: string;
-  points: RecPoint[];
+  points: ShowPoint[];
   updatedAt: number;
 }
 
 /** Пункт сценария (тема) */
-export interface RecPoint {
+export interface ShowPoint {
   id: string;
   title: string;
-  steps: RecStep[];
+  steps: ShowStep[];
 }
 
 /** Шаг сценария */
-export interface RecStep {
+export interface ShowStep {
   id: string;
   type: StepType;
   
@@ -51,6 +51,7 @@ export interface RecStep {
   description?: string;
   bullets?: string[];
   imageIds?: string[];
+  imageCaptions?: string[];  // Параллельно imageIds — подпись под каждым фото
   background?: string;
   notes?: string;
   
@@ -58,4 +59,7 @@ export interface RecStep {
   action?: FeatureAction;
   actionLabel?: string;
   overlayNote?: string;
+
+  // ── HTML step ──
+  htmlId?: string;
 }
