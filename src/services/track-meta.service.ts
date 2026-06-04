@@ -140,6 +140,20 @@ async function fetchLastFm(
   }
 }
 
+// ─── Open Key → Camelot Conversion ─────────────────────
+
+const OPEN_KEY_TO_CAMELOT: Record<string, string> = {
+  '1d': '8B', '2d': '3B', '3d': '10B', '4d': '5B', '5d': '12B', '6d': '7B',
+  '7d': '2B', '8d': '9B', '9d': '4B', '10d': '11B', '11d': '6B', '12d': '1B',
+  '1m': '5A', '2m': '12A', '3m': '7A', '4m': '2A', '5m': '9A', '6m': '4A',
+  '7m': '11A', '8m': '6A', '9m': '1A', '10m': '8A', '11m': '3A', '12m': '10A',
+};
+
+function openKeyToCamelot(openKey: string): string | null {
+  const key = openKey.trim().toLowerCase();
+  return OPEN_KEY_TO_CAMELOT[key] || null;
+}
+
 // ─── GetSongBPM API ───
 const GETSONGBPM_KEY = import.meta.env.VITE_GETSONGBPM_KEY || '';
 
@@ -163,7 +177,7 @@ async function fetchGetSongBPM(
     const result: TrackMetaPartial = {};
     if (track.tempo) result.bpm = Number(track.tempo);
     if (track.key_of) result.key = track.key_of;
-    if (track.open_key) result.camelot = track.open_key;
+    if (track.open_key) result.camelot = openKeyToCamelot(track.open_key);
 
     console.log('[TrackMeta] GetSongBPM:', {
       artist,
