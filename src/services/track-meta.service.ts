@@ -152,7 +152,7 @@ async function fetchGetSongBPM(
     const query = [artist, title].filter(Boolean).join(' ');
     if (!query.trim()) return null;
 
-    const url = `https://api.getsongbpm.com/search/?api_key=${GETSONGBPM_KEY}&type=both&lookup=song:${encodeURIComponent(title)}+artist:${encodeURIComponent(artist)}`;
+    const url = `https://api.getsong.co/search/?api_key=${GETSONGBPM_KEY}&type=both&lookup=song:${encodeURIComponent(title)}+artist:${encodeURIComponent(artist)}`;
     const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!resp.ok) return null;
 
