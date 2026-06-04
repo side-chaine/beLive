@@ -323,6 +323,14 @@ export function TrackInfoBoard() {
               ? `Analysed: ${new Date(meta.analysedAt).toLocaleDateString()}`
               : 'No analysis data'}
           </span>
+          <a
+            href="https://getsongbpm.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontSize: '11px', color: '#52525b', textDecoration: 'none' }}
+          >
+            BPM data by GetSongBPM
+          </a>
         </div>
       </div>
     </div>
