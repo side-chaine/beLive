@@ -367,8 +367,8 @@ async function executeSearchAudioDB(args: Record<string, unknown>): Promise<Tool
 
     console.log('[GetSongBPM] Searching:', { artist, song });
 
-    // GetSongBPM API (free, no API key needed for basic lookup)
-    const url = `https://api.getsongbpm.com/search/?api_key=2&type=both&lookup=song:${encodeURIComponent(song)}+artist:${encodeURIComponent(artist)}`;
+    // GetSongBPM API
+    const url = `https://api.getsongbpm.com/search/?api_key=${import.meta.env.VITE_GETSONGBPM_KEY || '4c7a9693c630d32f608f5ccbe09db806'}&type=both&lookup=song:${encodeURIComponent(song)}+artist:${encodeURIComponent(artist)}`;
 
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
 
