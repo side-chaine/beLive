@@ -158,12 +158,12 @@ async function fetchGetSongBPM(
 
     const data = await resp.json();
     const track = data.search?.[0];
-    if (!track?.song) return null;
+    if (!track) return null;
 
     const result: TrackMetaPartial = {};
-    if (track.song.tempo) result.bpm = Number(track.song.tempo);
-    if (track.song.key_of) result.key = track.song.key_of;
-    if (track.song.camelot) result.camelot = track.song.camelot;
+    if (track.tempo) result.bpm = Number(track.tempo);
+    if (track.key_of) result.key = track.key_of;
+    if (track.open_key) result.camelot = track.open_key;
 
     console.log('[TrackMeta] GetSongBPM:', {
       artist,
