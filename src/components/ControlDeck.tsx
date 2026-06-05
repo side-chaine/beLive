@@ -16,6 +16,7 @@ import { useRecordingStore } from '../stores/recording.store';
 import { interruptPracticeSession } from '../exercises/exercise.interruption';
 import { useExerciseStore } from '../exercises/exercise.store';
 import { CoverArt } from './CoverArt';
+import { BpmButtons } from './BpmButtons';
 import { useTrackStore } from '../stores/track.store';
 import { useTrackInfoStore } from '../stores/trackInfo.store';
 import { useShowStore } from '../stores/show.store';
@@ -298,78 +299,16 @@ export function ControlDeck() {
             </div>
           )}
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            flexShrink: 0,
-            marginLeft: 4,
-          }}>
-            <button
-              disabled={isPracticeActive}
-              title={isPracticeActive ? 'Управление темпом через карточку тренировки' : '-5% playback rate'}
-              onClick={() => {
-                // Interrupt practice first if active, then continue requested action
-                interruptPracticeSession(() => {
-                  const r = Math.max(0.25, (playbackRate || 1) - 0.05);
-                  (window as any).audioEngine?.setPlaybackRate?.(Math.round(r * 100) / 100);
-                });
-              }}
-              style={{
-                background: 'transparent',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: 'rgba(255,255,255,0.4)',
-                fontSize: 12,
-                padding: '4px 10px',
-                borderRadius: 4,
-                cursor: 'pointer',
-                lineHeight: 1,
-              }}
-            >-5</button>
-            <button
-              disabled={isPracticeActive}
-              title={isPracticeActive ? 'Управление темпом через карточку тренировки' : 'Reset playback rate'}
-              onClick={() => {
-                // Interrupt practice first if active, then continue requested action
-                interruptPracticeSession(() => {
-                  (window as any).audioEngine?.setPlaybackRate?.(1);
-                });
-              }}
-              style={{
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: (playbackRate || 1) !== 1 ? '#ff8c00' : 'rgba(255,255,255,0.5)',
-                fontSize: 12,
-                padding: '4px 10px',
-                borderRadius: 4,
-                cursor: 'pointer',
-                minWidth: 42,
-                textAlign: 'center' as const,
-                lineHeight: 1,
-              }}
-            >{Math.round(((isPracticeActive ? practiceCurrentRate : playbackRate) || 1) * 100)}%</button>
-            <button
-              disabled={isPracticeActive}
-              title={isPracticeActive ? 'Управление темпом через карточку тренировки' : '+5% playback rate'}
-              onClick={() => {
-                // Interrupt practice first if active, then continue requested action
-                interruptPracticeSession(() => {
-                  const r = Math.min(4, (playbackRate || 1) + 0.05);
-                  (window as any).audioEngine?.setPlaybackRate?.(Math.round(r * 100) / 100);
-                });
-              }}
-              style={{
-                background: 'transparent',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: 'rgba(255,255,255,0.4)',
-                fontSize: 12,
-                padding: '4px 10px',
-                borderRadius: 4,
-                cursor: 'pointer',
-                lineHeight: 1,
-              }}
-            >+5</button>
-          </div>
+          <BpmButtons
+            playbackRate={(isPracticeActive ? practiceCurrentRate : playbackRate) || 1}
+            disabled={isPracticeActive}
+            onChange={(rate) => {
+              interruptPracticeSession(() => {
+                const safe = Math.max(0.25, Math.min(4, rate));
+                (window as any).audioEngine?.setPlaybackRate?.(safe);
+              });
+            }}
+          />
 
           <div style={{
             display: 'flex',

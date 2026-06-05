@@ -1,0 +1,275 @@
+/* ============================================================
+ * BpmButtons.module.css
+ * ------------------------------------------------------------
+ * BPM capsule: unified control module
+ *
+ * DESIGN:
+ *   Letters B/P/M = engraved into surface (always visible).
+ *   Once per minute: bright neon flash (Legacy-style pulse).
+ *   Between pulses: quiet engraving.
+ *
+ *   Center = display (BPM label + value) always visible.
+ *   Sides = ghost controls -5/+5.
+ *   Capsule = transparent (matches VMix/Mic background).
+ *
+ * Style: "Legacy pulse on clean surface"
+ *
+ * Performance:
+ *   lite      — static engraving only
+ *   balanced  — engraving + 60s showcase
+ *   max       — + beat-pulse
+ *   ultra     — + box-shadow glow
+ *
+ * NO transform on hover/active — capsule never shifts.
+ * ============================================================ */
+
+/* ===== Color tokens ===== */
+.capsule {
+  --bpm-accent: #ff8c00;
+  --bpm-accent-rgb: 255, 140, 0;
+}
+
+/* ===== Capsule — transparent background ===== */
+.capsule {
+  display: flex;
+  align-items: stretch;
+  height: 28px;
+  overflow: hidden;
+
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-top-color: rgba(255, 255, 255, 0.10);
+  border-bottom-color: rgba(0, 0, 0, 0.30);
+  border-radius: 6px;
+  background: transparent;
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.35),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.02);
+
+  margin-left: 4px;
+  flex-shrink: 0;
+
+  transition: border-color 0.2s ease, box-shadow 0.3s ease;
+}
+
+.capsule[data-modified="true"] {
+  border-color: rgba(var(--bpm-accent-rgb, 255, 140, 0), 0.30);
+  border-top-color: rgba(var(--bpm-accent-rgb, 255, 140, 0), 0.22);
+  border-bottom-color: rgba(var(--bpm-accent-rgb, 255, 140, 0), 0.12);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.35),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.02),
+    0 0 8px rgba(var(--bpm-accent-rgb, 255, 140, 0), 0.10);
+}
+
+.capsule[data-disabled="true"] {
+  opacity: 0.5;
+}
+
+/* ===== Section base ===== */
+.section {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.section:focus-visible {
+  outline: 2px solid var(--bl-accent, #9b59b6);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+.section:active:not(:disabled) {
+  transition: none;
+}
+
+.section:disabled {
+  cursor: not-allowed;
+}
+
+/* ===== Side buttons (-5, +5) ===== */
+.side {
+  width: 30px;
+  color: rgba(255, 255, 255, 0.38);
+  font-family: var(--bl-font-family-mono, 'JetBrains Mono', 'SF Mono', monospace);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.side:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.58);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.side:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.side:first-of-type {
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.15);
+}
+
+.side:last-of-type {
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 1px 0 0 rgba(0, 0, 0, 0.15);
+}
+
+/* ===== Center — display module ===== */
+.center {
+  min-width: 54px;
+  padding: 0 6px;
+  line-height: 1;
+  font-size: 11px;
+}
+
+.centerDigit {
+  font-family: var(--bl-font-family-mono, 'JetBrains Mono', 'SF Mono', monospace);
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.60);
+  line-height: 1;
+  pointer-events: none;
+}
+
+.center:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.center:hover:not(:disabled) .centerDigit {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+
+.center:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* Modified center — keep accent even on hover */
+.capsule[data-modified="true"] .center:hover:not(:disabled) .centerDigit {
+  color: var(--bpm-accent, #ff8c00);
+}
+
+/* ===== Digit visibility (hover / modified) ===== */
+.digit {
+  opacity: 0;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+/* All digits visible on capsule hover */
+.capsule:hover .digit,
+/* All digits visible when rate is modified */
+.capsule[data-modified="true"] .digit {
+  opacity: 1;
+}
+
+/* Digits turn accent when modified */
+.capsule[data-modified="true"] .digit {
+  color: var(--bpm-accent, #ff8c00);
+}
+
+/* ===== ::before — Engraved letters ===== */
+/*
+ * Engrave technique:
+ *   - Shadow inside cut (top-left) = depth
+ *   - Light catching bottom-right edge = realism
+ *   - Letter always visible as quiet engraving
+ *   - Once per minute: bright neon flash (Legacy pulse)
+ */
+.section::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -53%);
+  font-size: 2.2em;
+  font-family: 'Arial Black', sans-serif;
+  font-weight: 900;
+
+  /* Quiet engraving — always visible */
+  color: rgba(255, 255, 255, 0.12);
+  text-shadow:
+    -1px -1px 1px rgba(0, 0, 0, 0.40),
+    1px 1px 1px rgba(255, 255, 255, 0.06);
+
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Hover or modified → letters fade out, digits show */
+.capsule:hover .section::before,
+.capsule[data-modified="true"] .section::before {
+  opacity: 0;
+}
+
+/* ===== 60s Showcase — Legacy pulse ===== */
+/*
+ * Base = quiet engraving (matches default ::before).
+ * Peak = bright neon flash — Legacy-style pulse.
+ * Then fades back to engraving.
+ */
+@keyframes bpm-showcase {
+  0%, 6%, 100% {
+    color: rgba(255, 255, 255, 0.12);
+    text-shadow:
+      -1px -1px 1px rgba(0, 0, 0, 0.40),
+      1px 1px 1px rgba(255, 255, 255, 0.06);
+  }
+  3% {
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow:
+      0 0 4px #fff,
+      0 0 12px #ff8c00,
+      0 0 25px #ff8c00;
+  }
+}
+
+.section[data-letter="B"]::before {
+  content: "B";
+  animation: bpm-showcase 60s ease-in-out 0s infinite;
+}
+
+.section[data-letter="P"]::before {
+  content: "P";
+  animation: bpm-showcase 60s ease-in-out 2s infinite;
+}
+
+.section[data-letter="M"]::before {
+  content: "M";
+  animation: bpm-showcase 60s ease-in-out 4s infinite;
+}
+
+/* ===== Tier gating ===== */
+
+[data-visual-tier="lite"] .section::before {
+  animation: none !important;
+}
+
+[data-visual-tier="max"] .capsule {
+  background: rgba(var(--bpm-accent-rgb, 255, 140, 0), calc(0.03 + 0.05 * var(--bl-audio-beat, 0)));
+}
+
+[data-visual-tier="ultra"] .capsule {
+  background: rgba(var(--bpm-accent-rgb, 255, 140, 0), calc(0.04 + 0.07 * var(--bl-audio-beat, 0)));
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.35),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.02),
+    0 0 calc(8px * var(--bl-audio-beat, 0)) rgba(var(--bpm-accent-rgb, 255, 140, 0), 0.15);
+}
+
+[data-visual-tier="ultra"] .capsule[data-modified="true"] {
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.35),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.02),
+    0 0 10px rgba(var(--bpm-accent-rgb, 255, 140, 0), 0.25);
+}
