@@ -54,6 +54,7 @@ function startForMode(mgrs: BgManagers, mode: string): void {
 
 export function useBackgroundManagers(): void {
   const managersRef = useRef<BgManagers | null>(null);
+  const lastAppliedSceneCountRef = useRef(0);
   const mode = useModeStore((s) => s.mode);
   const coverTheme = useTrackStore((s) => s.currentCoverTheme);  // TC-COVER-04
   const useAutoBg = usePlateStore(s => s.useAutoBg);
@@ -122,6 +123,7 @@ export function useBackgroundManagers(): void {
       if (managersRef.current?.rehearsal) {
         managersRef.current.rehearsal.clearAllScenes();
       }
+      lastAppliedSceneCountRef.current = 0;
       useTrackStore.getState().setHasBlockScenes(false);
     };
 
@@ -163,6 +165,10 @@ export function useBackgroundManagers(): void {
 
       if (!currentId || String(trackId) !== currentId) return;
 
+      // Stale event guard: late doPreload может прийти после softReload с меньшим sceneCount
+      if (sceneCount < lastAppliedSceneCountRef.current) return;
+
+      lastAppliedSceneCountRef.current = sceneCount;
       useTrackStore.getState().setHasBlockScenes(sceneCount > 0);
 
       // Убран sceneCount > 0 guard — defensive consistency с onTracksChanged
@@ -217,6 +223,7 @@ export function useBackgroundManagers(): void {
           const sceneCount = sceneMap.blockScenes.size + sceneMap.lineScenes.size;
 
           useTrackStore.getState().setHasBlockScenes(sceneCount > 0);
+          lastAppliedSceneCountRef.current = sceneCount;
 
           // Когда scenes удалены → немедленно вернуть cover art в плашку
           if (sceneCount === 0 && managersRef.current?.rehearsal) {

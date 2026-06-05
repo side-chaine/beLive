@@ -145,8 +145,8 @@ async function fetchLastFm(
 const OPEN_KEY_TO_CAMELOT: Record<string, string> = {
   '1d': '8B', '2d': '3B', '3d': '10B', '4d': '5B', '5d': '12B', '6d': '7B',
   '7d': '2B', '8d': '9B', '9d': '4B', '10d': '11B', '11d': '6B', '12d': '1B',
-  '1m': '5A', '2m': '12A', '3m': '7A', '4m': '2A', '5m': '9A', '6m': '4A',
-  '7m': '11A', '8m': '6A', '9m': '1A', '10m': '8A', '11m': '3A', '12m': '10A',
+  '1m': '8A', '2m': '3A', '3m': '10A', '4m': '5A', '5m': '12A', '6m': '7A',
+  '7m': '2A', '8m': '9A', '9m': '4A', '10m': '11A', '11m': '6A', '12m': '1A',
 };
 
 function openKeyToCamelot(openKey: string): string | null {
