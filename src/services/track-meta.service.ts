@@ -174,10 +174,18 @@ async function fetchGetSongBPM(
     const track = data.search?.[0];
     if (!track) return null;
 
+    // DEBUG: log raw track to see API response format
+    console.log('[TrackMeta] GetSongBPM raw:', JSON.stringify(track));
+
     const result: TrackMetaPartial = {};
     if (track.tempo) result.bpm = Number(track.tempo);
     if (track.key_of) result.key = track.key_of;
-    if (track.open_key) result.camelot = openKeyToCamelot(track.open_key);
+    // Prefer direct camelot from API if available, else convert open_key
+    if (track.camelot) {
+      result.camelot = track.camelot;
+    } else if (track.open_key) {
+      result.camelot = openKeyToCamelot(track.open_key);
+    }
 
     console.log('[TrackMeta] GetSongBPM:', {
       artist,
