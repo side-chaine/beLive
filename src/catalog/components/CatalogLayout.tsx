@@ -9,6 +9,8 @@ import { useDeckStore } from '../../stores/deck.store';
 import { useSyncStore } from '../../sync/store/sync.store';
 import { parseTrackName } from '../types';
 import type { ShowcaseSection } from '../types';
+import { OnboardingAccordion } from '../../components/onboarding/OnboardingAccordion';
+import { useUserProfileStore } from '../../stores/user-profile.store';
 
 interface Props { color: string; onClose: () => void; }
 
@@ -62,6 +64,19 @@ export function CatalogLayout({ color, onClose }: Props) {
   const [hovId, setHovId] = useState<number | null>(null);
   const zipRef = useRef<HTMLInputElement>(null);
   const trackListRef = useRef<HTMLDivElement>(null);
+
+  const onboardingComplete = useUserProfileStore(s => s.catalogOnboardingComplete);
+  const [onboardingStep, setOnboardingStep] = useState(1);
+
+  // Hydration guard — предотвратить flash onboarding
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setHydrated(true), 500);
+    if (tracks.length > 0) { setHydrated(true); clearTimeout(t); }
+    return () => clearTimeout(t);
+  }, [tracks.length]);
+
+  const showOnboarding = tracks.length === 0 && !onboardingComplete && hydrated;
 
   // Auto-scroll to bottom when new tracks added
   useEffect(() => {
@@ -238,6 +253,9 @@ export function CatalogLayout({ color, onClose }: Props) {
         {/* ═══ COL 2: SHOWCASE ═══ */}
         <div style={{ ...colBase, padding: 20 }}>
           <div style={{ flex: 1, overflow: 'auto', paddingRight: 6 }}>
+            {showOnboarding && (
+              <OnboardingAccordion onActiveStepChange={setOnboardingStep} />
+            )}
             {sections.map(sec => (
               <Sec key={sec.id} s={sec} play={play} tracks={tracks} idx={currentIdx} rec={store.recentTrackIds} />
             ))}
@@ -249,7 +267,8 @@ export function CatalogLayout({ color, onClose }: Props) {
 
           {/* 1. ZIP */}
           <input ref={zipRef} type="file" accept=".zip" style={{ display: 'none' }} onChange={e => { const f = e.target?.files?.[0]; if (f) handleZip(f); e.target.value = ''; }} />
-          <div onClick={() => zipRef.current?.click()}
+          <div className={`bl-catalog-dropzone ${showOnboarding && onboardingStep === 3 ? 'bl-catalog-dropzone--highlight' : ''}`}
+            onClick={() => zipRef.current?.click()}
             onMouseEnter={() => setZipHover(true)} onMouseLeave={() => setZipHover(false)}
             onDragOver={e => { e.preventDefault(); setZipOver(true); }} onDragLeave={() => setZipOver(false)}
             onDrop={e => { e.preventDefault(); setZipOver(false); const f = e.dataTransfer?.files?.[0]; if (f) handleZip(f); }}

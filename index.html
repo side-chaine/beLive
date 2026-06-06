@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#6366f1">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="/beLive/img/icon-192.png">
+  <link rel="apple-touch-icon" href="/img/icon-192.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>beLive - Трансляции для музыкантов</title>
@@ -37,6 +37,10 @@
         console.log('✅ Pitchy библиотека загружена в beLive');
     </script>
     <link rel="stylesheet" href="css/rehearsal-styles.css">
+    <style>
+      html.bl-surface-welcome header.app-header,
+      html.bl-surface-welcome div#app-root > .app-container { display: none !important; }
+    </style>
 
     <!-- Google Fonts for Font Selector -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -381,7 +385,6 @@
     </script>
     <!-- 🎵 CORE ENGINE & UTILITIES -->
     <!-- КРИТИЧЕСКИ ВАЖНЫЙ ПОРЯДОК ЗАГРУЗКИ -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     
     
     <!-- 🎵 COMPONENT SCRIPTS -->

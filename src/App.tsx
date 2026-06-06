@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { initAudioBridge } from './bridges/audio.bridge';
 import { initLyricsBridge } from './bridges/lyrics.bridge';
 import { initMarkersBridge } from './bridges/markers.bridge';
@@ -51,6 +51,13 @@ import { useShowStore } from './stores/show.store';
 import { ShowEditor } from './components/Show/ShowEditor';
 import { FeatureOverlay } from './components/Show/FeatureOverlay';
 import { PresenterDock } from './components/Show/PresenterDock';
+import { useAppStore } from './stores/app.store';
+import { authService } from './services/auth.service';
+import { WelcomePage } from './components/welcome/WelcomePage';
+import { LoadingSplash } from './components/welcome/LoadingSplash';
+import { UserRoom } from './components/profile/UserRoom';
+import { useUIStore } from './stores/ui.store';
+import { useUserProfileStore } from './stores/user-profile.store';
 export default function App() {
   const mode = useModeStore((s) => s.mode);
   const syncOpen = useSyncStore((s) => s.open);
@@ -62,7 +69,11 @@ export default function App() {
   useBackgroundManagers();
   useKeyboardShortcuts();
 
+  const surface = useAppStore(s => s.surface);
+  const authChecked = useAppStore(s => s.authChecked);
+
   useEffect(() => {
+    if (surface !== 'app') return;
     tryActivateV2();
     initTrackEventListeners();
     const cleanupAudio = initAudioBridge();
@@ -102,7 +113,54 @@ export default function App() {
       cleanupExercise();
       destroyMonitorBridge();
     };
+  }, [surface]);
+
+  // Surface-reactive class — синхронизирует html класс с surface
+  useEffect(() => {
+    const html = document.documentElement;
+    if (surface === 'welcome') {
+      html.classList.add('bl-surface-welcome');
+    } else {
+      html.classList.remove('bl-surface-welcome');
+    }
+    return () => html.classList.remove('bl-surface-welcome');
+  }, [surface]);
+
+  // Auth check
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('auth')) {
+      authService.handleCallback(params).then(async (data) => {
+        if (data) {
+          const { useUserProfileStore } = await import('./stores/user-profile.store');
+          useUserProfileStore.getState().createOAuthProfile(data);
+        }
+        useAppStore.getState().setSurface('app');
+        useAppStore.getState().setAuthChecked(true);
+        window.history.replaceState({}, '', '/');
+      });
+      return;
+    }
+    authService.checkExistingAuth().then(isValid => {
+      useAppStore.getState().setSurface(isValid ? 'app' : 'welcome');
+      useAppStore.getState().setAuthChecked(true);
+    });
   }, []);
+
+  // Auto-catalog
+  const openedCatalogRef = useRef(false);
+  useEffect(() => {
+    if (surface === 'app' && !openedCatalogRef.current) {
+      const { isReturning } = useUserProfileStore.getState();
+      if (!isReturning) {
+        useUIStore.getState().setCatalogOpen(true);
+      }
+      openedCatalogRef.current = true;
+    }
+  }, [surface]);
+
+  if (!authChecked) return <LoadingSplash />;
+  if (surface === 'welcome') return <WelcomePage />;
 
   return (
     <div id="belive-react" data-track-info={trackInfoOpen ? 'active' : 'inactive'}>
@@ -138,6 +196,7 @@ export default function App() {
       {!showActive && !featureActive && <PlaybackPerfOverlay />}
       {trackInfoOpen && <TrackInfoBoard />}
       {aiSettingsOpen && <AiSettingsModal onClose={() => useAiSettingsStore.getState().setShowSettings(false)} />}
+      {surface === 'profile' && <UserRoom />}
     </div>
   );
 }

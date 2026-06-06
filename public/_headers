@@ -1,0 +1,18 @@
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Service-Worker-Allowed: /
+
+/assets/*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/*.css
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.jpg
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=604800
+
+/manifest.webmanifest
+  Cache-Control: public, max-age=300
+
+/index.html
+  Cache-Control: public, max-age=60, stale-while-revalidate=300

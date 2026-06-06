@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { UserProfile, UserState } from '../types/user.types';
+import type { UserProfile, UserState, OnboardingProgress } from '../types/user.types';
 
 // Генерация UUID v4
 function generateId(): string {
@@ -30,6 +30,18 @@ interface UserProfileStoreState extends UserState {
   setShowOnboarding: (show: boolean) => void;
   logout: () => void;
   deleteProfile: () => void;
+
+  // OAuth
+  createOAuthProfile: (data: {
+    name: string; email: string; avatarUrl?: string;
+    serverId?: string; authToken: string;
+  }) => UserProfile;
+
+  // Onboarding
+  catalogOnboardingComplete: boolean;
+  onboardingProgress: OnboardingProgress;
+  setCatalogOnboardingComplete: (v: boolean) => void;
+  setOnboardingProgress: (p: Partial<OnboardingProgress>) => void;
 }
 
 const initialState = {
@@ -42,6 +54,8 @@ const initialState = {
   isReturning: false,
   userName: '',
   userAvatar: '🎤',
+  catalogOnboardingComplete: false,
+  onboardingProgress: { step1Done: false, step2Done: false, activeStep: 1 },
 };
 
 export const useUserProfileStore = create<UserProfileStoreState>()(
@@ -66,6 +80,34 @@ export const useUserProfileStore = create<UserProfileStoreState>()(
         isReturning: false,
         userName: name,
         userAvatar: emoji,
+        isOnboarded: true,
+        showOnboarding: false,
+      });
+      return profile;
+    },
+    
+    createOAuthProfile: (data) => {
+      const profile: UserProfile = {
+        id: data.serverId || generateId(),
+        name: data.name,
+        avatarUrl: data.avatarUrl,
+        email: data.email,
+        authProvider: 'google',
+        serverId: data.serverId,
+        authToken: data.authToken,
+        isGuest: false,
+        createdAt: new Date().toISOString(),
+        lastSeenAt: new Date().toISOString(),
+        preferences: {},
+      };
+      set({
+        currentUser: profile,
+        currentUserId: profile.id,
+        isLoggedIn: true,
+        isGuest: false,
+        isReturning: false,
+        userName: data.name,
+        userAvatar: data.avatarUrl ? '' : '🎤',
         isOnboarded: true,
         showOnboarding: false,
       });
@@ -112,9 +154,41 @@ export const useUserProfileStore = create<UserProfileStoreState>()(
     deleteProfile: () => {
       set(initialState);
     },
+
+    setCatalogOnboardingComplete: (v) => set({ catalogOnboardingComplete: v }),
+
+    setOnboardingProgress: (p) => set((s) => ({
+      onboardingProgress: { ...s.onboardingProgress, ...p }
+    })),
   }), {
     name: 'belive:user-profile',
-    version: 1,
+    version: 2,
+    migrate: (persisted: any, version: number) => {
+      // v1 → v2: добавить новые поля, не теряя старые
+      if (version === 1) {
+        return {
+          ...persisted,
+          catalogOnboardingComplete: persisted.catalogOnboardingComplete ?? false,
+          onboardingProgress: persisted.onboardingProgress ?? {
+            step1Done: false, step2Done: false, activeStep: 1,
+          },
+        };
+      }
+      return persisted;
+    },
+    partialize: (state) => ({
+      currentUserId: state.currentUserId,
+      isOnboarded: state.isOnboarded,
+      showOnboarding: state.showOnboarding,
+      currentUser: state.currentUser,
+      isLoggedIn: state.isLoggedIn,
+      isGuest: state.isGuest,
+      isReturning: state.isReturning,
+      userName: state.userName,
+      userAvatar: state.userAvatar,
+      catalogOnboardingComplete: state.catalogOnboardingComplete,
+      onboardingProgress: state.onboardingProgress,
+    }),
     onRehydrateStorage: () => (state) => {
       if (state?.currentUser) {
         state.isLoggedIn = true;
@@ -122,6 +196,8 @@ export const useUserProfileStore = create<UserProfileStoreState>()(
         state.isReturning = true;
         state.userName = state.currentUser.name;
         state.userAvatar = state.currentUser.emoji ?? '🎤';
+        state.catalogOnboardingComplete ??= false;
+        state.onboardingProgress ??= { step1Done: false, step2Done: false, activeStep: 1 };
       }
     },
   })

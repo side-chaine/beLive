@@ -18,11 +18,25 @@ export interface UserProfile {
   serverId?: string;
   /** Статус миграции: local → migrating → synced */
   migrationStatus?: 'local' | 'migrating' | 'synced';
+  /** Провайдер авторизации */
+  authProvider?: 'google' | 'guest';
+  /** Email пользователя (только для OAuth) */
+  email?: string;
+  /** URL аватара (только для OAuth, Google) */
+  avatarUrl?: string;
+  /** ⚠️ TECH DEBT: localStorage JWT. v3.0 → httpOnly cookie через CF Worker */
+  authToken?: string;
 }
 
 export interface OnboardingStep {
   step: 'welcome' | 'name' | 'avatar' | 'done';
   completed: boolean;
+}
+
+export interface OnboardingProgress {
+  step1Done: boolean;
+  step2Done: boolean;
+  activeStep: number;
 }
 
 export function isUserProfile(obj: unknown): obj is UserProfile {

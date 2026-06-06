@@ -5,6 +5,7 @@ import { usePerformanceTier, usePerformanceStore } from '../performance/performa
 import { usePlateStore } from '../stores/plate.store';
 import { useStemStore } from '../stem/stem.store';
 import { useAiSettingsStore } from '../stores/ai-settings.store';
+import { useAppStore } from '../stores/app.store';
 import type { PerformanceTier } from '../performance/performance.types';
 import { useTrackStore } from '../stores/track.store';
 import { useBlockSceneStore } from '../stores/blockScene.store';
@@ -313,6 +314,7 @@ export function QuickActions() {
   const color = MODE_COLORS[mode] || '#fff';
   const setCatalogOpen = useUIStore((s) => s.setCatalogOpen);
   const customBgUrl = useTrackStore(s => s.currentTrack?.customBgUrl) || null;
+  const setSurface = useAppStore(s => s.setSurface);
 
 
   const openCatalog = useCallback(() => {
@@ -439,6 +441,19 @@ export function QuickActions() {
           <div style={{ padding: '8px 16px', borderBottom: '1px solid #333', marginBottom: 4 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>User</div>
             <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>Settings & Preferences</div>
+          </div>
+
+          {/* Room / Profile */}
+          <div style={{
+            padding: '8px 16px', cursor: 'pointer',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          }}
+            onClick={() => { setSurface('profile'); closeMenu(); }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            <span style={{ fontWeight: 500, color: '#eee' }}>🏠 Комната</span>
+            <span style={{ fontSize: 10, color: '#666' }}>Profile</span>
           </div>
 
           {/* AI Settings */}

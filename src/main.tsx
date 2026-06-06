@@ -525,6 +525,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
+  // Surface guard — скрыть legacy header если нет профиля
+  if (!localStorage.getItem('belive:user-profile')) {
+    document.documentElement.classList.add('bl-surface-welcome');
+  }
+
 // Mount React Shell
 const reactRoot = document.getElementById('react-root');
 if (reactRoot) {

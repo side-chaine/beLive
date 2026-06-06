@@ -1,0 +1,129 @@
+.bl-userroom-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 999995;
+  animation: bl-overlay-in 0.2s ease-out;
+}
+
+@keyframes bl-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.bl-userroom {
+  background: #1a1a2e;
+  border-radius: 16px;
+  max-width: 360px;
+  width: 90%;
+  padding: 1.5rem;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  animation: bl-room-in 0.25s ease-out;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+@keyframes bl-room-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.bl-userroom__back {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 1rem;
+  transition: color 0.2s;
+}
+
+.bl-userroom__back:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.bl-userroom__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.bl-userroom__avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bl-userroom__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bl-userroom__avatar-emoji {
+  font-size: 2rem;
+}
+
+.bl-userroom__name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.bl-userroom__email {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 0.25rem;
+}
+
+.bl-userroom__section {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.bl-userroom__section-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #ccc;
+  margin-bottom: 0.25rem;
+}
+
+.bl-userroom__section-soon {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.2);
+  font-style: italic;
+}
+
+.bl-userroom__logout {
+  display: block;
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 1.5rem;
+  border: 1px solid rgba(255, 59, 48, 0.2);
+  border-radius: 12px;
+  background: rgba(255, 59, 48, 0.08);
+  color: rgba(255, 59, 48, 0.8);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bl-userroom__logout:hover {
+  background: rgba(255, 59, 48, 0.15);
+  border-color: rgba(255, 59, 48, 0.3);
+  color: #ff3b30;
+}
