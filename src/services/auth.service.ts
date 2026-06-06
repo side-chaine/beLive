@@ -44,26 +44,35 @@ export const authService = {
   },
 
   async handleCallback(params: URLSearchParams): Promise<AuthCallbackData | null> {
-    const authToken = params.get('auth');
-    const name = params.get('name');
-    const email = params.get('email');
-    const avatarUrl = params.get('avatar');
-    const serverId = params.get('sid');
+    const token = params.get('auth');
+    if (!token) return null;
+    if (!this._isTokenValid(token)) return null;
 
-    if (!authToken || !name || !email) return null;
-    if (!this._isTokenValid(authToken)) return null;
+    try {
+      const payload = JSON.parse(this._decodeBase64Url(token.split('.')[1]));
+      return {
+        authToken: token,
+        name: payload.name || payload.given_name || 'User',
+        email: payload.email || '',
+        avatarUrl: payload.picture || undefined,
+        serverId: payload.sub || undefined,
+      };
+    } catch {
+      return null;
+    }
+  },
 
-    return { authToken, name, email, avatarUrl: avatarUrl || undefined, serverId: serverId || undefined };
+  _decodeBase64Url(str: string): string {
+    let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) base64 += '=';
+    return atob(base64);
   },
 
   _isTokenValid(token: string): boolean {
     try {
       const parts = token.split('.');
       if (parts.length !== 3) return false;
-      // Worker использует URL-safe base64 (без =, - вместо +, _ вместо /)
-      const payload = JSON.parse(atob(
-        parts[1].replace(/-/g, '+').replace(/_/g, '/')
-      ));
+      const payload = JSON.parse(this._decodeBase64Url(parts[1]));
       return payload.exp > Date.now() / 1000;
     } catch {
       return false;
