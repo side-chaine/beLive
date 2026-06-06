@@ -44,12 +44,25 @@ export const authService = {
   },
 
   async handleCallback(params: URLSearchParams): Promise<AuthCallbackData | null> {
+    console.log('[auth] handleCallback called, params:', Object.fromEntries(params.entries()));
+
     const token = params.get('auth');
+    console.log('[auth] token from URL:', token ? token.substring(0, 30) + '...' : 'NULL');
+
     if (!token) return null;
-    if (!this._isTokenValid(token)) return null;
+
+    const valid = this._isTokenValid(token);
+    console.log('[auth] token valid:', valid);
+
+    if (!valid) return null;
 
     try {
-      const payload = JSON.parse(this._decodeBase64Url(token.split('.')[1]));
+      const payloadStr = this._decodeBase64Url(token.split('.')[1]);
+      console.log('[auth] decoded payload:', payloadStr.substring(0, 200));
+
+      const payload = JSON.parse(payloadStr);
+      console.log('[auth] parsed payload keys:', Object.keys(payload));
+
       return {
         authToken: token,
         name: payload.name || payload.given_name || 'User',
@@ -57,7 +70,8 @@ export const authService = {
         avatarUrl: payload.picture || undefined,
         serverId: payload.sub || undefined,
       };
-    } catch {
+    } catch (e) {
+      console.error('[auth] handleCallback error:', e);
       return null;
     }
   },
