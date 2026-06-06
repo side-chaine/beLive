@@ -5,7 +5,7 @@ import { resolve } from 'path'
 
 export default defineConfig({
   root: './',
-  base: '/beLive/',
+  base: '/',
   publicDir: 'public',
 
   build: {
@@ -33,17 +33,17 @@ export default defineConfig({
         background_color: '#6366f1',
         display: 'standalone',
         orientation: 'landscape',
-        scope: '/beLive/',
-        start_url: '/beLive/',
+        scope: '/',
+        start_url: '/',
         icons: [
           {
-            src: '/beLive/img/icon-192.png',
+            src: '/img/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/beLive/img/icon-512.png',
+            src: '/img/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
