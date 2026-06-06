@@ -1,7 +1,6 @@
 const USE_MOCK_AUTH = import.meta.env.VITE_USE_MOCK_AUTH === 'true';
 const CF_WORKER_URL = import.meta.env.VITE_AUTH_WORKER_URL 
   || 'https://belive-auth.nikitosss007.workers.dev';
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 interface AuthCallbackData {
   authToken: string; name: string; email: string;
@@ -16,28 +15,21 @@ export const authService = {
     }
 
     // Env guard
-    if (!CF_WORKER_URL || !GOOGLE_CLIENT_ID) {
-      console.warn('[auth] OAuth not configured. Set VITE_AUTH_WORKER_URL and VITE_GOOGLE_CLIENT_ID');
+    if (!CF_WORKER_URL) {
+      console.warn('[auth] VITE_AUTH_WORKER_URL not configured');
       if (import.meta.env.DEV) {
         await this._mockAuth();
         return;
       }
-      throw new Error('OAuth not configured');
+      throw new Error('Auth not configured');
     }
 
     // ⚠️ iOS PWA KNOWN LIMITATION: OAuth opens Safari, user must manually
     // return to PWA after authorization. Callback URL params persist in
     // PWA's session and are processed on next app load.
     // v3.0: investigate ASWebAuthenticationSession or universal links.
-    const redirectUri = `${CF_WORKER_URL}/auth/callback`;
-    const params = new URLSearchParams({
-      client_id: GOOGLE_CLIENT_ID,
-      redirect_uri: redirectUri,
-      response_type: 'code',
-      scope: 'openid email profile',
-      access_type: 'offline',
-    });
-    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+    // Редирект на Worker — он строит Google OAuth URL и обрабатывает callback
+    window.location.href = `${CF_WORKER_URL}/auth/google`;
   },
 
   async checkExistingAuth(): Promise<boolean> {
@@ -68,7 +60,10 @@ export const authService = {
     try {
       const parts = token.split('.');
       if (parts.length !== 3) return false;
-      const payload = JSON.parse(atob(parts[1]));
+      // Worker использует URL-safe base64 (без =, - вместо +, _ вместо /)
+      const payload = JSON.parse(atob(
+        parts[1].replace(/-/g, '+').replace(/_/g, '/')
+      ));
       return payload.exp > Date.now() / 1000;
     } catch {
       return false;
