@@ -5,7 +5,7 @@ import { resolve } from 'path'
 
 export default defineConfig({
   root: './',
-  base: '/',
+  base: process.env.CF_PAGES ? '/' : '/beLive/',
   publicDir: 'public',
 
   build: {
