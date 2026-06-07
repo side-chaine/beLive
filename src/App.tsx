@@ -129,16 +129,12 @@ export default function App() {
   // Auth check
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    console.log('[auth] App mount, URL search:', window.location.search);
-    console.log('[auth] has auth param:', params.has('auth'));
 
     if (params.has('auth')) {
       authService.handleCallback(params).then(async (data) => {
-        console.log('[auth] handleCallback result:', data);
         if (data) {
           const { useUserProfileStore } = await import('./stores/user-profile.store');
           useUserProfileStore.getState().createOAuthProfile(data);
-          console.log('[auth] profile created');
         } else {
           console.warn('[auth] handleCallback returned null!');
         }
@@ -149,7 +145,6 @@ export default function App() {
       return;
     }
     authService.checkExistingAuth().then(isValid => {
-      console.log('[auth] checkExistingAuth result:', isValid);
       useAppStore.getState().setSurface(isValid ? 'app' : 'welcome');
       useAppStore.getState().setAuthChecked(true);
     });

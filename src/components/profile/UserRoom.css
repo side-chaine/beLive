@@ -127,3 +127,74 @@
   border-color: rgba(255, 59, 48, 0.3);
   color: #ff3b30;
 }
+
+/* Guest Upgrade Block */
+.bl-userroom__guest-upgrade {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem 0;
+}
+
+.bl-userroom__guest-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.bl-userroom__guest-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 0.5rem;
+}
+
+.bl-userroom__guest-desc {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 1.5rem;
+  max-width: 240px;
+  line-height: 1.4;
+}
+
+.bl-userroom__google-btn {
+  background: #fff;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  padding: 0.65rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.bl-userroom__google-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+}
+
+.bl-userroom__google-btn:active {
+  transform: translateY(0);
+}
+
+.bl-userroom__login-btn {
+  display: block;
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 1.5rem;
+  border: 1px solid rgba(0, 122, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(0, 122, 255, 0.1);
+  color: #007aff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bl-userroom__login-btn:hover {
+  background: rgba(0, 122, 255, 0.2);
+  border-color: rgba(0, 122, 255, 0.5);
+}

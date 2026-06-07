@@ -23,7 +23,7 @@ interface UserProfileStoreState extends UserState {
   userAvatar: string;
   
   // Actions
-  createProfile: (name: string, emoji: string) => UserProfile;
+  createProfile: (name: string, emoji: string, isGuest?: boolean) => UserProfile;
   updateProfile: (updates: Partial<UserProfile>) => void;
   updatePreferences: (prefs: Partial<UserProfile['preferences']>) => void;
   setOnboarded: () => void;
@@ -62,12 +62,12 @@ export const useUserProfileStore = create<UserProfileStoreState>()(
   persist((set, get) => ({
     ...initialState,
     
-    createProfile: (name: string, emoji: string) => {
+    createProfile: (name: string, emoji: string, isGuest: boolean = false) => {
       const profile: UserProfile = {
         id: generateId(),
         name,
         emoji,
-        isGuest: false,
+        isGuest,
         createdAt: new Date().toISOString(),
         lastSeenAt: new Date().toISOString(),
         preferences: {},
@@ -76,7 +76,7 @@ export const useUserProfileStore = create<UserProfileStoreState>()(
         currentUser: profile,
         currentUserId: profile.id,
         isLoggedIn: true,
-        isGuest: false,
+        isGuest,
         isReturning: false,
         userName: name,
         userAvatar: emoji,

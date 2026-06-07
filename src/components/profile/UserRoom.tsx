@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useAppStore } from '../../stores/app.store';
 import { useUserProfileStore } from '../../stores/user-profile.store';
+import { authService } from '../../services/auth.service';
 import './UserRoom.css';
 
 export function UserRoom() {
@@ -9,6 +10,7 @@ export function UserRoom() {
   const logout = useUserProfileStore(s => s.logout);
   const userName = useUserProfileStore(s => s.userName);
   const userAvatar = useUserProfileStore(s => s.userAvatar);
+  const isGuest = useUserProfileStore(s => s.isGuest);
 
   // Escape closes
   useEffect(() => {
@@ -35,15 +37,29 @@ export function UserRoom() {
           ← Назад
         </button>
 
-        <div className="bl-userroom__header">
-          <div className="bl-userroom__avatar">
-            {avatarContent}
+        {isGuest ? (
+          <div className="bl-userroom__guest-upgrade">
+            <div className="bl-userroom__guest-icon">🚀</div>
+            <h3 className="bl-userroom__guest-title">Зарегистрируйся!</h3>
+            <p className="bl-userroom__guest-desc">Статистика, прогресс, ИИ и сохранение данных</p>
+            <button
+              className="bl-userroom__google-btn"
+              onClick={() => authService.initiateGoogleOAuth()}
+            >
+              Войти через Google
+            </button>
           </div>
-          <div className="bl-userroom__name">{currentUser?.name || userName}</div>
-          {currentUser?.email && (
-            <div className="bl-userroom__email">{currentUser.email}</div>
-          )}
-        </div>
+        ) : (
+          <div className="bl-userroom__header">
+            <div className="bl-userroom__avatar">
+              {avatarContent}
+            </div>
+            <div className="bl-userroom__name">{currentUser?.name || userName}</div>
+            {currentUser?.email && (
+              <div className="bl-userroom__email">{currentUser.email}</div>
+            )}
+          </div>
+        )}
 
         <div className="bl-userroom__section">
           <div className="bl-userroom__section-title">Настройки</div>
@@ -57,12 +73,20 @@ export function UserRoom() {
 
         <div className="bl-userroom__section">
           <div className="bl-userroom__section-title">Статистика</div>
-          <div className="bl-userroom__section-soon">скоро...</div>
+          <div className="bl-userroom__section-soon">
+            {isGuest ? 'Доступно после регистрации' : 'скоро...'}
+          </div>
         </div>
 
-        <button className="bl-userroom__logout" onClick={handleLogout}>
-          🚪 Выйти
-        </button>
+        {isGuest ? (
+          <button className="bl-userroom__login-btn" onClick={() => authService.initiateGoogleOAuth()}>
+            Войти / Зарегистрироваться
+          </button>
+        ) : (
+          <button className="bl-userroom__logout" onClick={handleLogout}>
+            🚪 Выйти
+          </button>
+        )}
       </div>
     </div>
   );
