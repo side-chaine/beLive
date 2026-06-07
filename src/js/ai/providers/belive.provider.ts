@@ -77,7 +77,7 @@ export class BeliveProvider implements AIProvider {
     }
 
     // Get JWT token from auth store
-    const { useUserProfileStore } = await import('../../stores/user-profile.store');
+    const { useUserProfileStore } = await import('../../../stores/user-profile.store');
     const token = useUserProfileStore.getState().currentUser?.authToken;
 
     if (!token) {
