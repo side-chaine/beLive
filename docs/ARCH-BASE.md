@@ -1,6 +1,6 @@
 # ARCH-BASE
 > Базовый Context Pack для любого Архитектора beLive
-> Версия: 1.2 | Обновлён: 2026-04-19
+> Версия: 1.3 | Обновлён: 2026-06-07
 > **Использование:** этот файл + TASK-XXX = полный контекст архитектора
 
 ---
@@ -115,13 +115,31 @@ Product Surfaces (Rehearsal, Karaoke, Live, Takes, Exercises)
 src/
 ├── audio/core/AudioEngineV2.ts    ← транспорт (591 строк)
 ├── audio/compat/patchV1.ts        ← V1→V2 compat
-├── bridges/                       ← 13 файлов синхронизации
+├── bridges/                       ← 13+ файлов синхронизации
 ├── services/
 │   ├── track.orchestrator.ts      ← 21-step load pipeline
+│   ├── auth.service.ts            ← Google OAuth, Guest Mode, JWT callback
 │   ├── idb.service.ts             ← IndexedDB
 │   └── upload.service.ts          ← ZIP upload
-├── stores/                        ← 17 Zustand stores
-├── components/                    ← UI поверхности
+├── stores/
+│   ├── app.store.ts               ← Surface gate (welcome|app|profile)
+│   ├── user-profile.store.ts      ← OAuth, Guest, migrate v2
+│   └── ... (17+ Zustand stores)
+├── components/
+│   ├── welcome/
+│   │   ├── WelcomePage.tsx        ← Стартовый экран (Guest)
+│   │   ├── WelcomePage.css
+│   │   └── LoadingSplash.tsx      ← Сплаш при загрузке
+│   ├── profile/
+│   │   ├── UserRoom.tsx           ← Профиль + Guest Upgrade UI
+│   │   └── UserRoom.css
+│   ├── app/App.tsx                ← Surface Gate, загрузка, Auth Check
+│   ├── app/App.css
+│   └── ... (остальные UI поверхности)
+├── js/
+│   ├── ai/providers/
+│   │   └── belive.provider.ts     ← beLive AI (CF Worker, JWT auth)
+│   └── ... (legacy boundary shells)
 ├── takes/                         ← Takes система
 ├── exercises/
 │   ├── exercise.recipes.ts
@@ -137,6 +155,112 @@ src/
 ├── theme/                         ← app chrome тема
 └── catalog/components/CatalogLayout.tsx
 ```
+
+---
+
+## 🔐 SURFACE GATE (app.store.surface)
+
+Единственный контроллер навигации. Без URL-роутинга.
+
+| Surface     | Компонент        | Условие                                |
+|-------------|------------------|----------------------------------------|
+| `welcome`   | WelcomePage      | По умолчанию для Guest / первый вход    |
+| `app`       | App (основной UI) | После регистрации / skip / OAuth вход   |
+| `profile`   | UserRoom         | Из QuickActions / после OAuth callback |
+
+```ts
+// src/stores/app.store.ts
+type AppSurface = 'welcome' | 'app' | 'profile';
+```
+
+---
+
+## 🔑 AUTH FLOW
+
+### Google OAuth Flow
+1. `authService.initiateGoogleOAuth()` → открывает `{CF_WORKER_URL}/auth/google`
+2. Worker редиректит на Google Consent Screen
+3. После согласия → Worker callback → JWT → URL params (`?auth=...&name=...&email=...`)
+4. `authService.handleCallback()` → парсит URL → `createOAuthProfile()` → `setSurface('app')`
+
+### Компоненты
+| Компонент | Файл | Назначение |
+|-----------|------|------------|
+| `authService` | `src/services/auth.service.ts` | Google OAuth, JWT callback, Mock auth |
+| `useAppStore` | `src/stores/app.store.ts` | Surface gate, authChecked флаг |
+| `useUserProfileStore` | `src/stores/user-profile.store.ts` | Профиль, JWT, isGuest, persist+ migrate v2 |
+
+---
+
+## 👤 GUEST MODE
+
+Guest-режим — архитектурный принцип, не фича.
+
+- Вход: `authService.skipAuth()` → `createProfile('Гость', '🎤', true)` → `setSurface('app')`
+- Guest **не использует** beLive AI (отдает `AUTH_REQUIRED`)
+- Guest **не видит** статистику ("Доступно после регистрации")
+- Guest видит блок апгрейда в UserRoom
+
+### Ключевые поля стора
+```ts
+isGuest: true           // Флаг гостя
+currentUser.isGuest: true // В профиле
+```
+
+---
+
+## 🤖 beLive AI PROVIDER
+
+| Провайдер | Тип | API ключ | Аутентификация |
+|-----------|-----|----------|----------------|
+| **beLive AI** | `belive.provider.ts` | Не нужен | JWT (из профиля) |
+| OpenRouter | openrouter-direct | User API key | Самостоятельно |
+
+### Характеристики beLive AI
+- Работает через CF Worker (`belive-ai`)
+- SSE streaming (`data:` events)
+- Бесплатные модели: DeepSeek V3, Gemini Flash, Llama 4
+- 20 запросов/день (KV rate limit)
+- Guest: возвращает `AIError("Требуется авторизация")`
+
+---
+
+## 🌐 ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ
+
+```env
+# Auth
+VITE_AUTH_WORKER_URL=https://belive-auth.nikitosss007.workers.dev
+VITE_USE_MOCK_AUTH=false          # false для продакшена
+
+# AI
+VITE_AI_WORKER_URL=https://belive-ai.nikitosss007.workers.dev
+
+# API Keys
+VITE_GETSONGBPM_KEY=***
+VITE_LASTFM_API_KEY=***
+
+# Base path для деплоя
+VITE_BASE_PATH=/                   # CloudFlare Pages
+```
+
+### Dev-окружение
+```env
+VITE_USE_MOCK_AUTH=true            # Локальная разработка (без Worker)
+VITE_GATEWAY_URL=http://localhost:8787
+```
+
+---
+
+## ⚡ CF WORKERS
+
+| Worker | URL | Назначение |
+|--------|-----|------------|
+| `belive-auth` | `https://belive-auth.nikitosss007.workers.dev` | Google OAuth, JWT |
+| `belive-ai` | `https://belive-ai.nikitosss007.workers.dev` | AI proxy (SSE streaming, KV rate limit) |
+
+### Cекреты Workers
+- `belive-auth`: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `JWT_SECRET`, `SESSION_SECRET`
+- `belive-ai`: `OPENROUTER_API_KEY`, KV: `belive-ai-rates`
 
 ---
 
