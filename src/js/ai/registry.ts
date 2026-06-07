@@ -77,11 +77,25 @@ export class AIHub extends EventTarget {
     request: ChatRequest,
     callbacks?: StreamCallbacks
   ): Promise<string | void> {
-    const model = this.getActiveModel();
+    let model = this.getActiveModel();
     if (!model) {
       callbacks?.onError?.(new AIError('NO_MODEL_SELECTED', 'No active AI model selected.'));
       return;
     }
+
+    // 🛡️ GUARD: Если модель от OpenRouter, но API ключа нет → fallback на beLive
+    if (model.provider === 'openrouter-direct') {
+      const raw = localStorage.getItem('belive:ai-settings');
+      const hasKey = raw ? !!JSON.parse(raw)?.state?.openRouterApiKey : false;
+      if (!hasKey) {
+        const fallback = this.models.find(m => m.provider === 'belive');
+        if (fallback) {
+          this.setActiveModel(fallback.id);
+          model = fallback;
+        }
+      }
+    }
+
     const provider = this.providers.get(model.provider);
     if (!provider) {
       callbacks?.onError?.(new AIError('PROVIDER_NOT_FOUND', `AI provider ${model.provider} not found.`));
