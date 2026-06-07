@@ -13,23 +13,15 @@ export class BeliveProvider implements AIProvider {
   readonly displayName = 'beLive AI';
   readonly models = [
     {
-      id: 'deepseek/deepseek-chat-v3-0324:free',
-      shortName: 'DeepSeek V3',
+      id: 'deepseek/deepseek-r1:free',
+      shortName: 'DeepSeek R1',
       provider: 'belive',
       contextWindow: 64000,
       costTier: 'free' as const,
       capabilities: ['chat'],
     },
     {
-      id: 'google/gemini-2.0-flash-001',
-      shortName: 'Gemini 2.0 Flash',
-      provider: 'belive',
-      contextWindow: 1000000,
-      costTier: 'free' as const,
-      capabilities: ['chat', 'vision'],
-    },
-    {
-      id: 'meta-llama/llama-4-maverick',
+      id: 'meta-llama/llama-4-maverick:free',
       shortName: 'Llama 4 Maverick',
       provider: 'belive',
       contextWindow: 1000000,
@@ -94,7 +86,7 @@ export class BeliveProvider implements AIProvider {
     const { signal } = this.currentAbortController;
 
     // Двойная защита: если модель не указана — используем дефолтную
-    const modelToUse = request.model || 'deepseek/deepseek-chat-v3-0324:free';
+    const modelToUse = request.model || 'meta-llama/llama-4-maverick:free';
 
     try {
       const res = await fetch(AI_WORKER_URL, {
