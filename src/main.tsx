@@ -21,6 +21,7 @@ import { getColorForBlockType, buildBlocksFromMarkers, computeSections, getBlock
 import { aiHub } from './js/ai/registry';
 import { GatewayProvider } from './js/ai/providers/gateway-provider';
 import { OpenRouterDirectProvider } from './js/ai/providers/openrouter-direct.provider';
+import { BeliveProvider } from './js/ai/providers/belive.provider';
 import { useAiSettingsStore } from './stores/ai-settings.store';
 import { ModelDropdownUI } from './js/ui/model-dropdown-ui'; // Новый импорт
 import { AIChatUI } from './js/ui/ai-chat-ui'; // Новый импорт
@@ -431,6 +432,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── OpenRouter Direct Provider (works without localhost gateway) ──
   const orProvider = new OpenRouterDirectProvider();
   aiHub.register(orProvider);
+
+  // ── beLive AI Provider (built-in, requires OAuth) ──
+  const aiWorkerUrl = import.meta.env.VITE_AI_WORKER_URL;
+  if (aiWorkerUrl) {
+    const beliveProvider = new BeliveProvider();
+    aiHub.register(beliveProvider);
+  }
 
   // Auto-select model after persist hydrates from localStorage
   // (persist loads async — settings may not be available at boot)

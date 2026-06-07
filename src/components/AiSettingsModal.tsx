@@ -24,6 +24,8 @@ export function AiSettingsModal({ onClose }: { onClose: () => void }) {
   const setCoachName = useAiSettingsStore(s => s.setCoachName);
   const setTemperature = useAiSettingsStore(s => s.setTemperature);
   const markVerified = useAiSettingsStore(s => s.markVerified);
+  const provider = useAiSettingsStore(s => s.provider);
+  const setProvider = useAiSettingsStore(s => s.setProvider);
 
   const [keyInput, setKeyInput] = useState(openRouterApiKey);
   const [showKey, setShowKey] = useState(false);
@@ -90,7 +92,7 @@ export function AiSettingsModal({ onClose }: { onClose: () => void }) {
   }, [keyInput, modelId, onClose, setOpenRouterApiKey, setModelId]);
 
   const selectedModel = PROVIDER_MODELS.find(m => m.id === modelId);
-  const isConfigured = !!keyInput.trim();
+  const isConfigured = provider === 'belive' || !!keyInput.trim();
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -112,17 +114,55 @@ export function AiSettingsModal({ onClose }: { onClose: () => void }) {
 
         {/* Content */}
         <div className={styles.content}>
-          {/* API Provider */}
+          {/* AI Provider Selector */}
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>API PROVIDER</div>
-            <div className={styles.selectRow}>
-              <span className={styles.providerBadge}>OR</span>
-              <span className={styles.providerName}>OpenRouter</span>
-              <span className={styles.providerTag}>Local API Key</span>
+            <div className={styles.sectionTitle}>AI PROVIDER</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => setProvider('belive')}
+                style={{
+                  flex: 1, display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '10px 12px', borderRadius: 8, cursor: 'pointer',
+                  border: `2px solid ${provider === 'belive' ? '#6366f1' : '#333'}`,
+                  background: provider === 'belive' ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.04)',
+                  color: '#fff', fontSize: 13, fontFamily: 'inherit',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <span style={{
+                  background: provider === 'belive' ? '#6366f1' : '#555',
+                  color: '#fff', borderRadius: 4, padding: '2px 6px',
+                  fontWeight: 700, fontSize: 11,
+                }}>BL</span>
+                <span style={{ fontWeight: 500 }}>beLive AI</span>
+                <span style={{ marginLeft: 'auto', fontSize: 11, color: '#888' }}>Built-in</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setProvider('openrouter-direct')}
+                style={{
+                  flex: 1, display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '10px 12px', borderRadius: 8, cursor: 'pointer',
+                  border: `2px solid ${provider === 'openrouter-direct' ? '#6366f1' : '#333'}`,
+                  background: provider === 'openrouter-direct' ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.04)',
+                  color: '#fff', fontSize: 13, fontFamily: 'inherit',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <span style={{
+                  background: provider === 'openrouter-direct' ? '#6366f1' : '#555',
+                  color: '#fff', borderRadius: 4, padding: '2px 6px',
+                  fontWeight: 700, fontSize: 11,
+                }}>OR</span>
+                <span style={{ fontWeight: 500 }}>OpenRouter</span>
+                <span style={{ marginLeft: 'auto', fontSize: 11, color: '#888' }}>API Key</span>
+              </button>
             </div>
           </div>
 
-          {/* API Key */}
+          {/* API Key — only for OpenRouter */}
+          {provider === 'openrouter-direct' && (
           <div className={styles.section}>
             <div className={styles.sectionTitle}>OPENROUTER API KEY</div>
             <div className={styles.keyRow}>
@@ -159,6 +199,17 @@ export function AiSettingsModal({ onClose }: { onClose: () => void }) {
               {testResult === 'fail' && <span className={styles.statusFail}>● Invalid key</span>}
             </div>
           </div>
+          )}
+
+          {/* beLive AI info */}
+          {provider === 'belive' && (
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>BE LIVE AI</div>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
+              Built-in AI assistant. Requires Google login. 20 requests/day limit.
+            </div>
+          </div>
+          )}
 
           {/* Model */}
           <div className={styles.section}>
@@ -261,9 +312,16 @@ export function AiSettingsModal({ onClose }: { onClose: () => void }) {
 
         {/* Footer */}
         <div className={styles.footer}>
-          <button className={styles.testBtn} onClick={handleTest} disabled={testing || !keyInput.trim()} type="button">
-            {testing ? 'Checking...' : 'Test Connection'}
-          </button>
+          {provider === 'openrouter-direct' && (
+            <button className={styles.testBtn} onClick={handleTest} disabled={testing || !keyInput.trim()} type="button">
+              {testing ? 'Checking...' : 'Test Connection'}
+            </button>
+          )}
+          {provider === 'belive' && (
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginRight: 'auto' }}>
+              ✓ Always available
+            </span>
+          )}
           <button className={styles.saveBtn} onClick={handleSave} type="button">Save</button>
         </div>
       </div>

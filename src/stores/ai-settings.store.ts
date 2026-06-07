@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 
 interface AiSettingsState {
   // Provider
-  provider: 'openrouter-direct' | 'gateway';
+  provider: 'openrouter-direct' | 'gateway' | 'belive';
   // OpenRouter
   openRouterApiKey: string;
   // Model
