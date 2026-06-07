@@ -65,10 +65,10 @@ export const authService = {
 
       return {
         authToken: token,
-        name: payload.name || payload.given_name || 'User',
-        email: payload.email || '',
-        avatarUrl: payload.picture || undefined,
-        serverId: payload.sub || undefined,
+        name: params.get('name') || payload.name || payload.given_name || 'User',
+        email: params.get('email') || payload.email || '',
+        avatarUrl: params.get('avatar') || payload.avatar || payload.picture || undefined,
+        serverId: params.get('sid') || payload.sub || undefined,
       };
     } catch (e) {
       console.error('[auth] handleCallback error:', e);
