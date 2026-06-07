@@ -1,18 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAiSettingsStore } from '../stores/ai-settings.store';
 import { aiHub } from '../js/ai/registry';
+import { useUserProfileStore } from '../stores/user-profile.store';
+import { AI_MODELS } from '../stores/ai-settings.store';
 import styles from './AiSettingsModal.module.css';
-
-const PROVIDER_MODELS = [
-  { id: 'deepseek/deepseek-chat-v3-0324', name: 'DeepSeek V3', cost: 'free', ctx: '64K' },
-  { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1', cost: 'free', ctx: '64K' },
-  { id: 'meta-llama/llama-4-maverick', name: 'Llama 4 Maverick', cost: 'free', ctx: '1M' },
-  { id: 'google/gemini-2.0-flash-001', name: 'Gemini 2.0 Flash', cost: 'low', ctx: '1M' },
-  { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini', cost: 'low', ctx: '128K' },
-  { id: 'anthropic/claude-3.5-haiku', name: 'Claude 3.5 Haiku', cost: 'low', ctx: '200K' },
-];
-
-const COST_LABELS: Record<string, string> = { free: 'Free', low: 'Paid' };
 
 export function AiSettingsModal({ onClose }: { onClose: () => void }) {
   const openRouterApiKey = useAiSettingsStore(s => s.openRouterApiKey);
@@ -24,8 +15,9 @@ export function AiSettingsModal({ onClose }: { onClose: () => void }) {
   const setCoachName = useAiSettingsStore(s => s.setCoachName);
   const setTemperature = useAiSettingsStore(s => s.setTemperature);
   const markVerified = useAiSettingsStore(s => s.markVerified);
-  const provider = useAiSettingsStore(s => s.provider);
   const setProvider = useAiSettingsStore(s => s.setProvider);
+
+  const isGuest = useUserProfileStore(s => s.isGuest);
 
   const [keyInput, setKeyInput] = useState(openRouterApiKey);
   const [showKey, setShowKey] = useState(false);
@@ -60,13 +52,13 @@ export function AiSettingsModal({ onClose }: { onClose: () => void }) {
       setTestResult(ok ? 'ok' : 'fail');
       if (ok) {
         markVerified();
-        console.log('[AI] Connection test: OK');
+
       } else {
-        console.log('[AI] Connection test: FAIL — status:', res.status);
+
       }
     } catch (err) {
       setTestResult('fail');
-      console.log('[AI] Connection test: FAIL —', err);
+
     }
     setTesting(false);
   }, [keyInput, setOpenRouterApiKey, markVerified]);
@@ -74,25 +66,22 @@ export function AiSettingsModal({ onClose }: { onClose: () => void }) {
   const handleModelChange = useCallback((id: string) => {
     setModelId(id);
     aiHub.setActiveModel(id);
-    console.log('[AI] Model selected:', id);
+
   }, [setModelId]);
 
   const handleSave = useCallback(() => {
-    setOpenRouterApiKey(keyInput);
+    if (keyInput.trim()) {
+      setOpenRouterApiKey(keyInput);
+      setProvider('openrouter-direct');
+    } else {
+      setProvider('belive');
+    }
     if (modelId) {
       aiHub.setActiveModel(modelId);
-    } else if (keyInput) {
-      const defaultModel = 'deepseek/deepseek-chat-v3-0324';
-      setModelId(defaultModel);
-      aiHub.setActiveModel(defaultModel);
     }
-    console.log('[AI] Settings saved. Model:', aiHub.getActiveModel()?.shortName || 'none');
     useAiSettingsStore.getState().setShowSettings(false);
     onClose();
   }, [keyInput, modelId, onClose, setOpenRouterApiKey, setModelId]);
-
-  const selectedModel = PROVIDER_MODELS.find(m => m.id === modelId);
-  const isConfigured = provider === 'belive' || !!keyInput.trim();
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -114,210 +103,199 @@ export function AiSettingsModal({ onClose }: { onClose: () => void }) {
 
         {/* Content */}
         <div className={styles.content}>
-          {/* AI Provider Selector */}
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>AI PROVIDER</div>
-            <div style={{ display: 'flex', gap: 8 }}>
+          {/* Guest block */}
+          {isGuest && (
+            <div className={styles.section}>
+              <div style={{ fontSize: 24, marginBottom: 8, textAlign: 'center' }}>⭐</div>
+              <div style={{ textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5, marginBottom: 12 }}>
+                Billy — твой вокальный коуч<br />
+                Войди через Google, чтобы получить умного помощника.
+              </div>
               <button
                 type="button"
-                onClick={() => setProvider('belive')}
+                onClick={() => {
+                  window.location.href = `${import.meta.env.VITE_AUTH_WORKER_URL || '/auth/google'}/auth/google`;
+                }}
                 style={{
-                  flex: 1, display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '10px 12px', borderRadius: 8, cursor: 'pointer',
-                  border: `2px solid ${provider === 'belive' ? '#6366f1' : '#333'}`,
-                  background: provider === 'belive' ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.04)',
+                  width: '100%', padding: '10px 12px', borderRadius: 8, cursor: 'pointer',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'rgba(255,255,255,0.06)',
                   color: '#fff', fontSize: 13, fontFamily: 'inherit',
-                  transition: 'all 0.15s',
                 }}
               >
-                <span style={{
-                  background: provider === 'belive' ? '#6366f1' : '#555',
-                  color: '#fff', borderRadius: 4, padding: '2px 6px',
-                  fontWeight: 700, fontSize: 11,
-                }}>BL</span>
-                <span style={{ fontWeight: 500 }}>beLive AI</span>
-                <span style={{ marginLeft: 'auto', fontSize: 11, color: '#888' }}>Built-in</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setProvider('openrouter-direct')}
-                style={{
-                  flex: 1, display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '10px 12px', borderRadius: 8, cursor: 'pointer',
-                  border: `2px solid ${provider === 'openrouter-direct' ? '#6366f1' : '#333'}`,
-                  background: provider === 'openrouter-direct' ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.04)',
-                  color: '#fff', fontSize: 13, fontFamily: 'inherit',
-                  transition: 'all 0.15s',
-                }}
-              >
-                <span style={{
-                  background: provider === 'openrouter-direct' ? '#6366f1' : '#555',
-                  color: '#fff', borderRadius: 4, padding: '2px 6px',
-                  fontWeight: 700, fontSize: 11,
-                }}>OR</span>
-                <span style={{ fontWeight: 500 }}>OpenRouter</span>
-                <span style={{ marginLeft: 'auto', fontSize: 11, color: '#888' }}>API Key</span>
+                Войти через Google
               </button>
             </div>
-          </div>
+          )}
 
-          {/* API Key — only for OpenRouter */}
-          {provider === 'openrouter-direct' && (
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>OPENROUTER API KEY</div>
-            <div className={styles.keyRow}>
+          {/* Billy active — only for logged in */}
+          {!isGuest && (
+            <div className={styles.section}>
+              <div className={styles.sectionTitle}>BILLY STATUS</div>
+              <div style={{ fontSize: 13, color: 'rgba(34,197,94,0.8)', lineHeight: 1.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>✅</span> Билли активен
+                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginLeft: 'auto' }}>Built-in AI · 20/день</span>
+              </div>
+            </div>
+          )}
+
+          {/* Coach Name — always visible */}
+          {!isGuest && (
+            <div className={styles.section}>
+              <div className={styles.sectionTitle}>COACH NAME</div>
               <input
-                className={styles.keyInput}
-                type={showKey ? 'text' : 'password'}
-                value={keyInput}
-                onChange={e => setKeyInput(e.target.value)}
-                placeholder="sk-or-v1-..."
-                autoFocus
+                className={styles.textInput}
+                type="text"
+                value={coachName}
+                onChange={e => setCoachName(e.target.value)}
+                placeholder="Билли"
               />
-              <button
-                className={styles.keyToggle}
-                onClick={() => setShowKey(!showKey)}
-                title={showKey ? 'Hide' : 'Show'}
-                type="button"
-              >
-                {showKey ? (
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M1 7C1 7 3 2 7 2C11 2 13 7 13 7C13 7 11 12 7 12C3 12 1 7 1 7Z" stroke="currentColor" strokeWidth="1.2" />
-                    <circle cx="7" cy="7" r="2" stroke="currentColor" strokeWidth="1.2" />
-                  </svg>
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M2 2L12 12M5 5.5C5 4.1 6.1 3 7.5 3C8.9 3 10 4.1 10 5.5M3 7C3 7 4 4.5 7 4.5C10 4.5 11 7 11 7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                    <path d="M1 7C1 7 3 12 7 12C11 12 13 7 13 7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                  </svg>
-                )}
-              </button>
             </div>
-            <div className={styles.sectionFooter}>
-              <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className={styles.link}>Get API key →</a>
-              {testResult === 'ok' && <span className={styles.statusOk}>● Verified</span>}
-              {testResult === 'fail' && <span className={styles.statusFail}>● Invalid key</span>}
-            </div>
-          </div>
           )}
 
-          {/* beLive AI info */}
-          {provider === 'belive' && (
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>BE LIVE AI</div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
-              Built-in AI assistant. Requires Google login. 20 requests/day limit.
-            </div>
-          </div>
-          )}
-
-          {/* Model */}
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>MODEL</div>
-            <select
-              className={styles.modelSelect}
-              value={customModelMode ? '__custom__' : modelId}
-              onChange={e => {
-                if (e.target.value === '__custom__') {
-                  setCustomModelMode(true);
-                } else {
-                  setCustomModelMode(false);
-                  setCustomModelId('');
-                  handleModelChange(e.target.value);
-                }
-              }}
-              disabled={!isConfigured}
-            >
-              {!isConfigured && (<option value="">Enter API key first</option>)}
-              {isConfigured && !modelId && !customModelMode && (<option value="">Select model...</option>)}
-              {PROVIDER_MODELS.map(m => (
-                <option key={m.id} value={m.id}>{m.name} ({COST_LABELS[m.cost] || m.cost}) — {m.ctx} ctx</option>
-              ))}
-              <option value="__custom__">Custom model...</option>
-            </select>
-            {customModelMode && (
-              <div className={styles.customModelSection}>
-                <input
-                  className={styles.textInput}
-                  type="text"
-                  value={customModelId}
-                  onChange={e => setCustomModelId(e.target.value)}
-                  placeholder="e.g. openai/gpt-4o"
-                  autoFocus
-                />
-                <button
-                  className={styles.customModelApply}
-                  onClick={() => {
-                    if (customModelId.trim()) {
-                      handleModelChange(customModelId.trim());
-                    }
-                  }}
-                  disabled={!customModelId.trim()}
-                  type="button"
-                >
-                  Apply
-                </button>
+          {/* Advanced section — только для залогиненных */}
+          {!isGuest && (
+            <>
+              <div className={styles.advancedToggle} onClick={() => setShowAdvanced(!showAdvanced)}>
+                <svg className={`${styles.advancedArrow} ${showAdvanced ? styles.advancedArrowOpen : ''}`} width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path d="M3 2L7 5L3 8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span>НАСТРОИТЬ СВОЙ AI</span>
               </div>
-            )}
-            {!customModelMode && selectedModel && (
-              <div className={styles.modelMeta}>
-                <span className={`${styles.modelCostBadge} ${selectedModel.cost === 'free' ? styles.modelCostFree : styles.modelCostPaid}`}>{selectedModel.cost === 'free' ? 'Free' : 'Paid'}</span>
-                <span className={styles.modelCtxInfo}>{selectedModel.ctx} context</span>
-              </div>
-            )}
-          </div>
 
-          {/* Coach Name */}
-          <div className={styles.section}>
-            <div className={styles.sectionTitle}>COACH NAME</div>
-            <input
-              className={styles.textInput}
-              type="text"
-              value={coachName}
-              onChange={e => setCoachName(e.target.value)}
-              placeholder="Билли"
-            />
-          </div>
+              {showAdvanced && (
+                <div className={styles.advancedContent}>
+                  {/* API Key */}
+                  <div className={styles.section}>
+                    <div className={styles.sectionTitle}>OPENROUTER API KEY</div>
+                    <div className={styles.keyRow}>
+                      <input
+                        className={styles.keyInput}
+                        type={showKey ? 'text' : 'password'}
+                        value={keyInput}
+                        onChange={e => {
+                          setKeyInput(e.target.value);
+                          if (e.target.value.trim()) {
+                            setProvider('openrouter-direct');
+                          } else {
+                            setProvider('belive');
+                          }
+                        }}
+                        placeholder="sk-or-v1-..."
+                      />
+                      <button
+                        className={styles.keyToggle}
+                        onClick={() => setShowKey(!showKey)}
+                        title={showKey ? 'Hide' : 'Show'}
+                        type="button"
+                      >
+                        {showKey ? (
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M1 7C1 7 3 2 7 2C11 2 13 7 13 7C13 7 11 12 7 12C3 12 1 7 1 7Z" stroke="currentColor" strokeWidth="1.2" />
+                            <circle cx="7" cy="7" r="2" stroke="currentColor" strokeWidth="1.2" />
+                          </svg>
+                        ) : (
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M2 2L12 12M5 5.5C5 4.1 6.1 3 7.5 3C8.9 3 10 4.1 10 5.5M3 7C3 7 4 4.5 7 4.5C10 4.5 11 7 11 7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                            <path d="M1 7C1 7 3 12 7 12C11 12 13 7 13 7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                    <div className={styles.sectionFooter}>
+                      <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className={styles.link}>Get API key →</a>
+                      {testResult === 'ok' && <span className={styles.statusOk}>● Verified</span>}
+                      {testResult === 'fail' && <span className={styles.statusFail}>● Invalid key</span>}
+                    </div>
+                  </div>
 
-          {/* Advanced (collapsible) */}
-          <div className={styles.advancedToggle} onClick={() => setShowAdvanced(!showAdvanced)}>
-            <svg className={`${styles.advancedArrow} ${showAdvanced ? styles.advancedArrowOpen : ''}`} width="10" height="10" viewBox="0 0 10 10" fill="none">
-              <path d="M3 2L7 5L3 8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span>ADVANCED</span>
-          </div>
+                  {/* Model select — OpenRouter models */}
+                  <div className={styles.section}>
+                    <div className={styles.sectionTitle}>MODEL</div>
+                    <select
+                      className={styles.modelSelect}
+                      value={customModelMode ? '__custom__' : modelId}
+                      onChange={e => {
+                        if (e.target.value === '__custom__') {
+                          setCustomModelMode(true);
+                        } else {
+                          setCustomModelMode(false);
+                          setCustomModelId('');
+                          handleModelChange(e.target.value);
+                          if (keyInput.trim()) {
+                            setProvider('openrouter-direct');
+                          }
+                        }
+                      }}
+                      disabled={!keyInput.trim()}
+                    >
+                      {!keyInput.trim() && (<option value="">Enter API key first</option>)}
+                      {keyInput.trim() && !modelId && !customModelMode && (<option value="">Select model...</option>)}
+                      {AI_MODELS.openrouter.map(m => (
+                        <option key={m.id} value={m.id}>{m.shortName} ({m.costTier === 'free' ? 'Free' : 'Paid'}) — {(m.ctx / 1000).toFixed(0)}K ctx</option>
+                      ))}
+                      <option value="__custom__">Custom model...</option>
+                    </select>
+                    {customModelMode && (
+                      <div className={styles.customModelSection}>
+                        <input
+                          className={styles.textInput}
+                          type="text"
+                          value={customModelId}
+                          onChange={e => setCustomModelId(e.target.value)}
+                          placeholder="e.g. openai/gpt-4o"
+                          autoFocus
+                        />
+                        <button
+                          className={styles.customModelApply}
+                          onClick={() => {
+                            if (customModelId.trim()) {
+                              handleModelChange(customModelId.trim());
+                            }
+                          }}
+                          disabled={!customModelId.trim()}
+                          type="button"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
-          {showAdvanced && (
-            <div className={styles.advancedContent}>
-              <div className={styles.sectionTitle}>TEMPERATURE</div>
-              <div className={styles.tempRow}>
-                <input
-                  className={styles.tempRange}
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  value={temperature}
-                  onChange={e => setTemperature(parseFloat(e.target.value))}
-                />
-                <span className={styles.tempValue}>{temperature.toFixed(1)}</span>
-              </div>
-              <div className={styles.tempLabels}>
-                <span>Precise</span>
-                <span>Creative</span>
-              </div>
-            </div>
+                  {/* Temperature */}
+                  <div className={styles.section}>
+                    <div className={styles.sectionTitle}>TEMPERATURE</div>
+                    <div className={styles.tempRow}>
+                      <input
+                        className={styles.tempRange}
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value={temperature}
+                        onChange={e => setTemperature(parseFloat(e.target.value))}
+                      />
+                      <span className={styles.tempValue}>{temperature.toFixed(1)}</span>
+                    </div>
+                    <div className={styles.tempLabels}>
+                      <span>Precise</span>
+                      <span>Creative</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
         {/* Footer */}
         <div className={styles.footer}>
-          {provider === 'openrouter-direct' && (
-            <button className={styles.testBtn} onClick={handleTest} disabled={testing || !keyInput.trim()} type="button">
+          {!isGuest && keyInput.trim() && (
+            <button className={styles.testBtn} onClick={handleTest} disabled={testing} type="button">
               {testing ? 'Checking...' : 'Test Connection'}
             </button>
           )}
-          {provider === 'belive' && (
+          {!isGuest && !keyInput.trim() && (
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginRight: 'auto' }}>
               ✓ Always available
             </span>

@@ -134,11 +134,7 @@ export class OpenRouterDirectProvider implements AIProvider {
 
     const temperature = request.temperature ?? this.getTemperature();
 
-    console.log('[AI] OpenRouter stream:', {
-      model: request.model,
-      msgCount: request.messages.length,
-      temperature,
-    });
+
 
     try {
       const res = await fetch(OPENROUTER_API_URL, {
@@ -194,7 +190,7 @@ export class OpenRouterDirectProvider implements AIProvider {
 
           const jsonStr = line.slice(6).trim();
           if (jsonStr === '[DONE]') {
-            console.log('[AI] Stream done. Tokens:', tokenCount, 'Chars:', fullText.length);
+
             callbacks.onDone?.(fullText);
             return;
           }
@@ -205,7 +201,7 @@ export class OpenRouterDirectProvider implements AIProvider {
 
             // Future: Wave C — tool call handling
             if (delta?.tool_calls) {
-              console.log('[AI] Tool call received (Wave C):', delta.tool_calls);
+
             }
 
             if (delta?.content) {
@@ -219,11 +215,11 @@ export class OpenRouterDirectProvider implements AIProvider {
         }
       }
 
-      console.log('[AI] Stream ended without [DONE]. Tokens:', tokenCount);
+
       callbacks.onDone?.(fullText);
     } catch (e: any) {
       if (e.name === 'AbortError') {
-        console.log('[AI] Stream aborted.');
+
         return;
       }
       console.error('[AI] Stream error:', e.message);

@@ -49,6 +49,14 @@ export class AIHub extends EventTarget {
   }
 
   getActiveModel(): ModelInfo | null {
+    if (this._activeModel) return this._activeModel;
+    // Fallback: auto-select first belive model when none is set
+    const fallback = this.models.find(m => m.provider === 'belive');
+    if (fallback) {
+      this._activeModel = fallback;
+      localStorage.setItem('belive:active-model', fallback.id);
+      this.dispatchEvent(new CustomEvent('modelChanged', { detail: fallback }));
+    }
     return this._activeModel;
   }
 

@@ -270,7 +270,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
 
     const toolName = audioMatch ? 'search_audiodb' : 'search_wikipedia';
     const searchQuery = searchMatch[1].trim();
-    console.log('[AI] Search tool:', toolName, searchQuery);
+
 
     const result = await executeToolCall(toolName, { query: searchQuery });
     if (result.success) {
@@ -304,12 +304,12 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
             },
             onDone: () => {
               setAiStreaming(false);
-              console.log('[AI] Search continuation done');
+
               // Check for nested [SEEK] commands in continuation
               const cmd = parseTextCommand(continuationText);
               if (cmd) {
                 executeToolCall(cmd.tool, cmd.args).then(r => {
-                  if (r.success) console.log('[AI] Nested tool OK:', r.message);
+
                 });
               }
             },
@@ -343,13 +343,13 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
 
       if (PLAYER_TOOLS.includes(cmd.tool)) {
         // Strip from display, log warning, do NOT execute
-        console.log('[AI] Player command blocked (not through ACTION button):', cmd.tool, cmd.args);
+
       } else if (cmd.tool !== 'search_wikipedia' && cmd.tool !== 'search_audiodb') {
         // Legacy/info tools: safe to auto-execute
-        console.log('[AI] Command:', cmd);
+
         const result = await executeToolCall(cmd.tool, cmd.args);
         if (result.success) {
-          console.log('[AI] Tool OK:', result.message);
+
         }
       }
     }
@@ -379,7 +379,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
       { role: 'user' as const, content: userText },
     ];
 
-    console.log('[AI] Send:', { model: model.id, expert, msgs: apiMsgs.length });
+
 
     setAiStreaming(true);
     addAiMessage({ role: 'assistant', content: '' });
@@ -395,7 +395,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
         },
         onDone: () => {
           setAiStreaming(false);
-          console.log('[AI] Done, chars:', full.length);
+
           processAiResponse(full, expert);
         },
         onError: (e: any) => {

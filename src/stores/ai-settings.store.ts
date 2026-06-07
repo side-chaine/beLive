@@ -1,9 +1,27 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export type AiProviderId = 'belive' | 'openrouter-direct' | 'gateway';
+
+export const AI_MODELS = {
+  belive: [
+    { id: 'deepseek/deepseek-chat-v3-0324:free', shortName: 'DeepSeek V3', costTier: 'free' as const, ctx: 64000 },
+    { id: 'deepseek/deepseek-r1:free', shortName: 'DeepSeek R1', costTier: 'free' as const, ctx: 64000 },
+    { id: 'meta-llama/llama-4-maverick:free', shortName: 'Llama 4 Maverick', costTier: 'free' as const, ctx: 1000000 },
+  ],
+  openrouter: [
+    { id: 'deepseek/deepseek-chat-v3-0324', shortName: 'DeepSeek V3', costTier: 'free' as const, ctx: 64000 },
+    { id: 'deepseek/deepseek-r1', shortName: 'DeepSeek R1', costTier: 'free' as const, ctx: 64000 },
+    { id: 'meta-llama/llama-4-maverick', shortName: 'Llama 4 Maverick', costTier: 'free' as const, ctx: 1000000 },
+    { id: 'google/gemini-2.0-flash-001', shortName: 'Gemini 2.0 Flash', costTier: 'low' as const, ctx: 1000000 },
+    { id: 'openai/gpt-4o-mini', shortName: 'GPT-4o Mini', costTier: 'low' as const, ctx: 128000 },
+    { id: 'anthropic/claude-3.5-haiku', shortName: 'Claude 3.5 Haiku', costTier: 'low' as const, ctx: 200000 },
+  ],
+};
+
 interface AiSettingsState {
   // Provider
-  provider: 'openrouter-direct' | 'gateway' | 'belive';
+  provider: AiProviderId;
   // OpenRouter
   openRouterApiKey: string;
   // Model
@@ -25,7 +43,7 @@ interface AiSettingsState {
   setModelId: (id: string) => void;
   setCoachName: (name: string) => void;
   setTemperature: (t: number) => void;
-  setProvider: (p: 'openrouter-direct' | 'gateway') => void;
+  setProvider: (p: AiProviderId) => void;
   markVerified: () => void;
   setShowSettings: (show: boolean) => void;
   isConfigured: () => boolean;
@@ -33,7 +51,7 @@ interface AiSettingsState {
 }
 
 const initialState = {
-  provider: 'openrouter-direct' as const,
+  provider: 'belive' as const,
   openRouterApiKey: '',
   modelId: '',
   coachName: 'Билли',
@@ -54,8 +72,11 @@ export const useAiSettingsStore = create<AiSettingsState>()(
     markVerified: () => set({ lastVerifiedAt: new Date().toISOString() }),
     setShowSettings: (show: boolean) => set({ showSettings: show }),
     isConfigured: () => {
-      const s = get();
-      return !!s.openRouterApiKey && !!s.modelId;
+      const state = get();
+      if (state.provider === 'belive') {
+        return true; // Billy всегда доступен для залогиненных юзеров
+      }
+      return !!state.openRouterApiKey && !!state.modelId;
     },
     reset: () => set(initialState),
     billyMode: 'user' as const,
@@ -63,5 +84,13 @@ export const useAiSettingsStore = create<AiSettingsState>()(
   }), {
     name: 'belive:ai-settings',
     version: 1,
+    partialize: (state) => ({
+      provider: state.provider,
+      openRouterApiKey: state.openRouterApiKey,
+      modelId: state.modelId,
+      coachName: state.coachName,
+      temperature: state.temperature,
+      billyMode: state.billyMode,
+    }),
   })
 );
