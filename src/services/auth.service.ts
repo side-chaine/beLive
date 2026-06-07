@@ -8,6 +8,14 @@ interface AuthCallbackData {
 }
 
 export const authService = {
+  async skipAuth(): Promise<void> {
+    const { useUserProfileStore } = await import('../stores/user-profile.store');
+    const { useAppStore } = await import('../stores/app.store');
+    useUserProfileStore.getState().createProfile('Гость', '🎤');
+    useAppStore.getState().setSurface('app');
+    useAppStore.getState().setAuthChecked(true);
+  },
+
   async initiateGoogleOAuth(): Promise<void> {
     if (USE_MOCK_AUTH) {
       await this._mockAuth();
@@ -34,12 +42,12 @@ export const authService = {
 
   async checkExistingAuth(): Promise<boolean> {
     const { useUserProfileStore } = await import('../stores/user-profile.store');
-    if (USE_MOCK_AUTH) {
-      // Не пропускать WelcomePage — проверить есть ли реальный профиль
-      return !!useUserProfileStore.getState().currentUser;
-    }
     const store = useUserProfileStore.getState();
-    if (!store.currentUser?.authToken) return false;
+    // Любой существующий профиль = авторизован (гость или OAuth)
+    if (!store.currentUser) return false;
+    // Гостевой профиль — без authToken
+    if (!store.currentUser.authToken) return true;
+    // OAuth пользователь — проверить что токен не истёк
     return this._isTokenValid(store.currentUser.authToken);
   },
 

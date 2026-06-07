@@ -3,10 +3,6 @@
   display: flex; align-items: center; justify-content: center;
   background: var(--bl-bg, #0a0a0a);
   z-index: 9999998;
-  /* BillyDock CSS vars — чтобы не перекрыл контент */
-  --react-header-height: 0px;
-  --wagon-train-height: 0px;
-  --bl-deck-height: 0px;
   /* iOS safe areas */
   padding:
     env(safe-area-inset-top, 0)
@@ -16,17 +12,24 @@
 }
 .bl-welcome__content {
   display: flex; flex-direction: column; align-items: center;
-  gap: 2.5rem; padding: 2rem; max-width: 400px; width: 100%;
-  position: relative; z-index: 9999999; /* выше BillyDock (999996) */
+  gap: 1.25rem; padding: 2rem; max-width: 400px; width: 100%;
 }
-.bl-welcome__speech-bubble {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 16px 16px 16px 4px;
-  padding: 12px 20px; color: #fff; font-size: 1.1rem;
-  max-width: 280px; text-align: center;
-  animation: bl-bubble-in 0.4s ease-out;
+.bl-welcome__brand {
+  text-align: center; margin-bottom: 1rem;
 }
+.bl-welcome__title {
+  color: rgba(255,255,255,0.5); font-size: 1rem; font-weight: 400;
+  margin: 0; letter-spacing: 0.05em;
+}
+.bl-welcome__name {
+  color: #fff; font-size: 2.5rem; font-weight: 700;
+  margin: 0.25rem 0 0; letter-spacing: 0.02em;
+}
+.bl-welcome__subtitle {
+  color: rgba(255,255,255,0.35); font-size: 0.95rem;
+  margin: 0.25rem 0 0;
+}
+
 .bl-welcome__google-btn {
   display: flex; align-items: center; gap: 12px;
   padding: 14px 32px;
@@ -41,19 +44,37 @@
   transform: translateY(-1px);
 }
 .bl-welcome__google-btn:active { transform: translateY(0); }
-.bl-welcome__ios-hint {
-  color: rgba(255,255,255,0.4); font-size: 0.8rem; text-align: center;
-}
-.bl-welcome__version { color: rgba(255,255,255,0.3); font-size: 0.85rem; }
 
-@keyframes bl-bubble-in {
-  from { opacity: 0; transform: translateY(8px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+.bl-welcome__vk-btn {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 32px;
+  border: 1px solid rgba(255,255,255,0.2); border-radius: 12px;
+  background: rgba(255,255,255,0.08); color: #fff;
+  font-size: 1rem; font-weight: 500;
+  width: 100%; justify-content: center;
+  opacity: 0.3; cursor: not-allowed;
 }
+
+.bl-welcome__skip-btn {
+  background: none; border: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 0.9rem; cursor: pointer;
+  padding: 8px 16px; transition: color 0.2s;
+}
+.bl-welcome__skip-btn:hover { color: rgba(255,255,255,0.7); }
+
+.bl-welcome__hint {
+  font-size: 0.75rem; color: rgba(255,255,255,0.25);
+  text-align: center; max-width: 280px;
+}
+
+.bl-welcome__version { color: rgba(255,255,255,0.3); font-size: 0.85rem; margin-top: 1rem; }
+
 @media (max-width: 480px) {
   .bl-welcome__content { padding: 1.5rem; }
-  .bl-welcome__google-btn { padding: 16px 24px; font-size: 1.05rem; }
+  .bl-welcome__google-btn,
+  .bl-welcome__vk-btn { padding: 16px 24px; font-size: 1.05rem; }
 }
 @media (max-height: 420px) {
-  .bl-welcome__content { gap: 1.5rem; }
+  .bl-welcome__content { gap: 1rem; }
 }

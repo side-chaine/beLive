@@ -1,26 +1,16 @@
-import { useState } from 'react';
-import { BillyDock } from '../BillyDock/BillyDock';
 import { authService } from '../../services/auth.service';
 import './WelcomePage.css';
 
-const GREETINGS = [
-  'Привет! Я Билли. Поём?',
-  'Закини трек — покажу что умею',
-  'Хей! Готов петь? 🎤',
-];
-
 export function WelcomePage() {
-  const [greeting] = useState(() =>
-    GREETINGS[Math.floor(Math.random() * GREETINGS.length)]
-  );
-
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const isPWA = window.matchMedia('(display-mode: standalone)').matches;
-
   return (
     <div className="bl-welcome">
       <div className="bl-welcome__content">
-        <div className="bl-welcome__speech-bubble">{greeting}</div>
+        <div className="bl-welcome__brand">
+          <h1 className="bl-welcome__title">Welcome to</h1>
+          <h2 className="bl-welcome__name">beLIVE</h2>
+          <p className="bl-welcome__subtitle">Art Platform</p>
+        </div>
+
         <button className="bl-welcome__google-btn" onClick={() => authService.initiateGoogleOAuth()}>
           <svg className="bl-welcome__google-icon" viewBox="0 0 24 24" width="20" height="20">
             <path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
@@ -30,14 +20,21 @@ export function WelcomePage() {
           </svg>
           Войти через Google
         </button>
-        {isIOS && isPWA && (
-          <div className="bl-welcome__ios-hint">
-            После входа вернись в приложение вручную
-          </div>
-        )}
+
+        <button className="bl-welcome__vk-btn" disabled>
+          VK Войти через VK
+        </button>
+
+        <button className="bl-welcome__skip-btn" onClick={() => authService.skipAuth()}>
+          Пропустить →
+        </button>
+
+        <p className="bl-welcome__hint">
+          Сохранить прогресс и получить доступ к ИИ и статистике
+        </p>
+
         <div className="bl-welcome__version">beLive · v2</div>
       </div>
-      <BillyDock />
     </div>
   );
 }
