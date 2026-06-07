@@ -17,12 +17,19 @@
 .bl-welcome__brand {
   text-align: center; margin-bottom: 1rem;
 }
+.bl-welcome__title,
+.bl-welcome__name {
+  background: linear-gradient(90deg, #a855f7, #6366f1, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .bl-welcome__title {
-  color: rgba(255,255,255,0.5); font-size: 1rem; font-weight: 400;
+  font-size: 1rem; font-weight: 400;
   margin: 0; letter-spacing: 0.05em;
 }
 .bl-welcome__name {
-  color: #fff; font-size: 2.5rem; font-weight: 700;
+  font-size: 2.5rem; font-weight: 700;
   margin: 0.25rem 0 0; letter-spacing: 0.02em;
 }
 .bl-welcome__subtitle {
