@@ -13,14 +13,6 @@ export class BeliveProvider implements AIProvider {
   readonly displayName = 'beLive AI';
   readonly models = [
     {
-      id: 'deepseek/deepseek-r1:free',
-      shortName: 'DeepSeek R1',
-      provider: 'belive',
-      contextWindow: 64000,
-      costTier: 'free' as const,
-      capabilities: ['chat'],
-    },
-    {
       id: 'meta-llama/llama-4-maverick:free',
       shortName: 'Llama 4 Maverick',
       provider: 'belive',
