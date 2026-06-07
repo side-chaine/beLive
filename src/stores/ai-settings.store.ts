@@ -3,6 +3,9 @@ import { persist } from 'zustand/middleware';
 
 export type AiProviderId = 'belive' | 'openrouter-direct' | 'gateway';
 
+/** Модель по умолчанию для beLive AI провайдера */
+export const BELIVE_DEFAULT_MODEL = 'deepseek/deepseek-chat-v3-0324:free';
+
 export const AI_MODELS = {
   belive: [
     { id: 'deepseek/deepseek-chat-v3-0324:free', shortName: 'DeepSeek V3', costTier: 'free' as const, ctx: 64000 },
@@ -68,7 +71,13 @@ export const useAiSettingsStore = create<AiSettingsState>()(
     setModelId: (id) => set({ modelId: id }),
     setCoachName: (name) => set({ coachName: name }),
     setTemperature: (t) => set({ temperature: t }),
-    setProvider: (p) => set({ provider: p }),
+    setProvider: (p) => {
+      const updates: Partial<AiSettingsState> = { provider: p };
+      if (p === 'belive' && !get().modelId) {
+        updates.modelId = BELIVE_DEFAULT_MODEL;
+      }
+      set(updates);
+    },
     markVerified: () => set({ lastVerifiedAt: new Date().toISOString() }),
     setShowSettings: (show: boolean) => set({ showSettings: show }),
     isConfigured: () => {

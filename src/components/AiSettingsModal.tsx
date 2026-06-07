@@ -134,7 +134,7 @@ export function AiSettingsModal({ onClose }: { onClose: () => void }) {
               <div className={styles.sectionTitle}>BILLY STATUS</div>
               <div style={{ fontSize: 13, color: 'rgba(34,197,94,0.8)', lineHeight: 1.5, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span>✅</span> Билли активен
-                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginLeft: 'auto' }}>Built-in AI · 20/день</span>
+                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginLeft: 'auto' }}>Built-in AI</span>
               </div>
             </div>
           )}

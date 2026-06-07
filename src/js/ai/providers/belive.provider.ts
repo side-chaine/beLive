@@ -93,6 +93,9 @@ export class BeliveProvider implements AIProvider {
     this.currentAbortController = new AbortController();
     const { signal } = this.currentAbortController;
 
+    // Двойная защита: если модель не указана — используем дефолтную
+    const modelToUse = request.model || 'deepseek/deepseek-chat-v3-0324:free';
+
     try {
       const res = await fetch(AI_WORKER_URL, {
         method: 'POST',
@@ -101,7 +104,7 @@ export class BeliveProvider implements AIProvider {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          model: request.model,
+          model: modelToUse,
           messages: request.messages,
           stream: true,
           temperature: request.temperature ?? 0.7,
