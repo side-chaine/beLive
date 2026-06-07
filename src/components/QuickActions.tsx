@@ -9,6 +9,7 @@ import { useAppStore } from '../stores/app.store';
 import type { PerformanceTier } from '../performance/performance.types';
 import { useTrackStore } from '../stores/track.store';
 import { useBlockSceneStore } from '../stores/blockScene.store';
+import { useUserProfileStore } from '../stores/user-profile.store';
 
 const MODE_COLORS: Record<string, string> = {
   concert: '#3498db',
@@ -315,6 +316,9 @@ export function QuickActions() {
   const setCatalogOpen = useUIStore((s) => s.setCatalogOpen);
   const customBgUrl = useTrackStore(s => s.currentTrack?.customBgUrl) || null;
   const setSurface = useAppStore(s => s.setSurface);
+  const avatarUrl = useUserProfileStore(s => s.currentUser?.avatarUrl);
+  const userAvatar = useUserProfileStore(s => s.userAvatar);
+  const userName = useUserProfileStore(s => s.userName);
 
 
   const openCatalog = useCallback(() => {
@@ -412,12 +416,38 @@ export function QuickActions() {
       <button
         ref={avatarBtnRef}
         onClick={toggleMenu}
-        style={btnStyle(menuOpen)}
-        title="User Menu"
+        title={userName || 'User Menu'}
         aria-expanded={menuOpen}
         aria-haspopup="true"
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: '50%',
+          border: `2px solid ${menuOpen ? color : '#555'}`,
+          background: 'rgba(255,255,255,0.08)',
+          cursor: 'pointer',
+          padding: 0,
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.2s ease',
+          flexShrink: 0,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = color;
+          e.currentTarget.style.transform = 'scale(1.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = menuOpen ? color : '#555';
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
       >
-        👤
+        {avatarUrl ? (
+          <img src={avatarUrl} alt={userName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <span style={{ fontSize: '1rem', lineHeight: 1 }}>{userAvatar || '🎤'}</span>
+        )}
       </button>
 
       {menuOpen && (
