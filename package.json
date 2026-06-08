@@ -105,7 +105,7 @@
     "strip-json-comments": "^3.1.1",
     "supports-color": "^7.2.0",
     "type-check": "^0.4.0",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "uri-js": "^4.4.1",
     "vite": "^5.0.0",
     "vite-plugin-pwa": "^0.20.5",
