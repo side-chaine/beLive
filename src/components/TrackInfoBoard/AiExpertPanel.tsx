@@ -82,9 +82,11 @@ function extractReplies(text: string): QuickReply[] {
 
 interface AiExpertPanelProps {
   compact?: boolean;
+  standalone?: boolean;
+  initialMessage?: string;
 }
 
-export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
+export function AiExpertPanel({ compact = false, standalone = false, initialMessage }: AiExpertPanelProps = {}) {
   const activeExpert = useTrackInfoStore(s => s.activeExpert);
   const aiMessages = useTrackInfoStore(s => s.aiMessages);
   const isAiStreaming = useTrackInfoStore(s => s.isAiStreaming);
@@ -113,19 +115,17 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
     }
   }, [compact, activeExpert]);
 
-  // Auto-send catalog question on mount
+  // Auto-send initialMessage on mount (for standalone/BillyCloud mode)
   useEffect(() => {
-    const question = useTrackInfoStore.getState().pendingCatalogQuestion;
-    if (!question || activeExpert) return;
-    
-    useTrackInfoStore.getState().setPendingCatalogQuestion(null);
-    useTrackInfoStore.getState().setActiveExpert('vocal-coach');
-    addAiMessage({ role: 'user', content: question });
-    sendToAi(question, 'vocal-coach', []);
+    if (!initialMessage || activeExpert) return;
+    setActiveExpert('vocal-coach');
+    addAiMessage({ role: 'user', content: initialMessage });
+    sendToAi(initialMessage, 'vocal-coach', []);
   }, []);
 
   // Proactive greeting on track load — React state driven, not DOM event
   useEffect(() => {
+    if (standalone) return; // no greeting in standalone mode
     const trackId = currentTrack?.id || currentTrack?.title;
     if (!trackId) return; // no track yet
     
@@ -383,11 +383,13 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
       return;
     }
 
-    const ctx = buildCtx();
     const prompt = getSystemPrompt(expert, coachName, billyMode);
     const recent = history.filter(m => m.role !== 'system').slice(-10);
+    const systemContent = standalone
+      ? prompt
+      : `${prompt}\n\nTRACK CONTEXT:\n${buildCtx()}`;
     const apiMsgs = [
-      { role: 'system' as const, content: `${prompt}\n\nTRACK CONTEXT:\n${ctx}` },
+      { role: 'system' as const, content: systemContent },
       ...recent.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
       { role: 'user' as const, content: userText },
     ];
@@ -422,7 +424,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
         },
       },
     );
-  }, [buildCtx, coachName, addAiMessage, appendAiToken, setAiStreaming, processAiResponse]);
+  }, [buildCtx, coachName, addAiMessage, appendAiToken, setAiStreaming, processAiResponse, standalone]);
 
   // Expert tab click
   const handleExpertClick = useCallback(async (expert: AiExpert) => {

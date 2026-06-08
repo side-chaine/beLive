@@ -1,0 +1,180 @@
+/* ═══════════════════════════════════════════════════════
+   BillyCloud + PremiumGateOverlay
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Trigger: Help button with pulse ── */
+.bl-catalog-billy-trigger {
+  display: block;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  animation: bl-pulse 2s ease-in-out infinite;
+  transition: background 0.2s;
+  margin-bottom: 10px;
+}
+
+.bl-catalog-billy-trigger:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+@keyframes bl-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(100, 100, 255, 0.3); }
+  50% { box-shadow: 0 0 12px 4px rgba(100, 100, 255, 0.15); }
+}
+
+/* ── Billy hint buttons ── */
+.bl-catalog-billy-hints {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.bl-catalog-billy-hints button {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bl-catalog-billy-hints button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+/* ── Cloud overlay ── */
+.bl-billy-cloud-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 999990;
+  animation: bl-overlay-in 0.2s ease-out;
+}
+
+@keyframes bl-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Cloud panel ── */
+.bl-billy-cloud {
+  background: #1a1a2e;
+  border-radius: 16px 16px 0 0;
+  width: 100%;
+  max-width: 480px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  animation: bl-cloud-in 0.3s ease-out;
+}
+
+@keyframes bl-cloud-in {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* ── Cloud header ── */
+.bl-billy-cloud__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.bl-billy-cloud__close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.bl-billy-cloud__close:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+/* ── Cloud body ── */
+.bl-billy-cloud__body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 200px;
+}
+
+/* ── Gate variant (centered) ── */
+.bl-billy-cloud--gate {
+  text-align: center;
+  padding: 2rem 1.5rem;
+  max-height: none;
+  border-radius: 16px;
+  margin: auto;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 20, 30, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  max-width: 340px;
+  width: 90%;
+}
+
+.bl-billy-cloud--gate h3 {
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.bl-billy-cloud--gate p {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Gate buttons ── */
+.bl-billy-cloud__gate-btn {
+  display: block;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #fff;
+  padding: 10px 24px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.bl-billy-cloud__gate-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.bl-billy-cloud__later-btn {
+  display: block;
+  margin: 0.75rem auto 0;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.bl-billy-cloud__later-btn:hover {
+  color: rgba(255, 255, 255, 0.5);
+}
