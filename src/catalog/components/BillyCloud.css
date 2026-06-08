@@ -51,21 +51,38 @@
   color: #fff;
 }
 
-/* ── BillyCloud — inline panel (NOT fixed overlay) ── */
+/* ── Cloud overlay ── */
+.bl-billy-cloud-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 999990;
+  animation: bl-overlay-in 0.2s ease-out;
+}
+
+@keyframes bl-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Cloud panel ── */
 .bl-billy-cloud {
-  background: rgba(26, 26, 46, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  background: #1a1a2e;
+  border-radius: 16px 16px 0 0;
+  width: 100%;
+  max-width: 480px;
+  max-height: 70vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  animation: bl-cloud-in 0.25s ease-out;
-  margin-top: 12px;
+  animation: bl-cloud-in 0.3s ease-out;
 }
 
 @keyframes bl-cloud-in {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
 }
 
 /* ── Cloud header ── */
@@ -73,11 +90,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   color: #fff;
   font-weight: 600;
-  font-size: 13px;
   flex-shrink: 0;
 }
 
@@ -85,7 +101,7 @@
   background: none;
   border: none;
   color: rgba(255, 255, 255, 0.4);
-  font-size: 1rem;
+  font-size: 1.2rem;
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 6px;
@@ -97,54 +113,41 @@
   color: #fff;
 }
 
-/* ── Cloud body — contains AiExpertPanel ── */
+/* ── Cloud body ── */
 .bl-billy-cloud__body {
   flex: 1;
-  min-height: 0;
-  /* AiExpertPanel inside handles its own height */
+  overflow-y: auto;
+  min-height: 200px;
 }
 
-/* ── PremiumGateOverlay (fixed overlay, NOT inline) ── */
-.bl-premium-gate-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
+/* ── Gate variant (centered) ── */
+.bl-billy-cloud--gate {
+  text-align: center;
+  padding: 2rem 1.5rem;
+  max-height: none;
+  border-radius: 16px;
+  margin: auto;
   align-items: center;
   justify-content: center;
-  z-index: 999990;
-  animation: bl-overlay-in 0.2s ease-out;
-}
-
-@keyframes bl-overlay-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-.bl-premium-gate {
   background: rgba(20, 20, 30, 0.98);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 2rem;
   max-width: 340px;
   width: 90%;
-  text-align: center;
 }
 
-.bl-premium-gate h3 {
+.bl-billy-cloud--gate h3 {
   color: #fff;
-  margin: 0 0 0.5rem;
-  font-size: 17px;
+  margin-bottom: 0.5rem;
 }
 
-.bl-premium-gate p {
+.bl-billy-cloud--gate p {
   color: rgba(255, 255, 255, 0.5);
   font-size: 0.85rem;
   margin-bottom: 1.5rem;
-  line-height: 1.5;
 }
 
-.bl-premium-gate__btn {
+/* ── Gate buttons ── */
+.bl-billy-cloud__gate-btn {
   display: block;
   width: 100%;
   background: rgba(255, 255, 255, 0.08);
@@ -157,11 +160,11 @@
   transition: background 0.2s;
 }
 
-.bl-premium-gate__btn:hover {
+.bl-billy-cloud__gate-btn:hover {
   background: rgba(255, 255, 255, 0.12);
 }
 
-.bl-premium-gate__later {
+.bl-billy-cloud__later-btn {
   display: block;
   margin: 0.75rem auto 0;
   background: none;
@@ -172,6 +175,6 @@
   transition: color 0.2s;
 }
 
-.bl-premium-gate__later:hover {
+.bl-billy-cloud__later-btn:hover {
   color: rgba(255, 255, 255, 0.5);
 }
