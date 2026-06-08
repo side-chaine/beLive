@@ -66,6 +66,7 @@ export function CatalogLayout({ color, onClose }: Props) {
   const [hovId, setHovId] = useState<number | null>(null);
   const zipRef = useRef<HTMLInputElement>(null);
   const trackListRef = useRef<HTMLDivElement>(null);
+  const safetyTimedOut = useRef(false); // guard: safety timeout already reset UI
 
   const onboardingComplete = useUserProfileStore(s => s.catalogOnboardingComplete);
   const [onboardingStep, setOnboardingStep] = useState(1);
@@ -132,12 +133,14 @@ export function CatalogLayout({ color, onClose }: Props) {
     if (zipBusy) return;
     setZipBusy(true);
     setZipProgress(0);
+    safetyTimedOut.current = false;
 
-    // Safety timeout: force-reset zipBusy after 30s if stuck
+    // Safety timeout: force-reset zipBusy after 60s if stuck (SceneImport can take 45s+)
     const safetyTimer = setTimeout(() => {
       console.warn('[ZIP] safety timeout — forcing zipBusy=false');
+      safetyTimedOut.current = true;
       setZipBusy(false);
-    }, 30000);
+    }, 60000);
 
     try {
       await handleZipFileSelect(file, (pct) => setZipProgress(pct));
@@ -148,9 +151,11 @@ export function CatalogLayout({ color, onClose }: Props) {
       clearTimeout(safetyTimer);
       alert('ZIP failed.');
     } finally {
-      console.log('[ZIP] finally called');
+      console.log('[ZIP] finally called, timedOut=', safetyTimedOut.current);
       clearTimeout(safetyTimer);
-      setZipBusy(false);
+      if (!safetyTimedOut.current) {
+        setZipBusy(false);
+      }
     }
   }, [zipBusy]);
 
@@ -345,10 +350,10 @@ export function CatalogLayout({ color, onClose }: Props) {
             ) : (
               <>
                 <div style={{ fontSize: 15, fontWeight: 700, color: (zipOver || zipHover) ? T.orange : T.dim, transition: 'color 0.2s' }}>
-                  {zipBusy ? '⏳ Обработка ZIP…' : 'ZIP Трек'}
+                  {zipBusy ? 'Подготовка трека…' : 'ZIP Трек'}
                 </div>
                 <div style={{ fontSize: 10, color: T.mute, marginTop: 3 }}>
-                  {zipBusy ? 'Пожалуйста подождите 5–10 секунд' : 'Перетащите .zip или нажмите'}
+                  {zipBusy ? 'Пожалуйста подождите' : 'Перетащите .zip или нажмите'}
                 </div>
               </>
             )}
