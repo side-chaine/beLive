@@ -1,4 +1,5 @@
 import { AIProvider, ChatRequest, ModelInfo, StreamCallbacks, AIError } from './types';
+import { useUserProfileStore } from '../../stores/user-profile.store';
 
 export class AIHub extends EventTarget {
   private providers = new Map<string, AIProvider>();
@@ -94,6 +95,12 @@ export class AIHub extends EventTarget {
           model = fallback;
         }
       }
+    }
+
+    // 🛡️ PREMIUM GATE: гости не могут использовать AI
+    if (useUserProfileStore.getState().isGuest) {
+      callbacks?.onError?.(new AIError('PREMIUM_GATE', 'Войдите, чтобы разблокировать Билли'));
+      return;
     }
 
     const provider = this.providers.get(model.provider);

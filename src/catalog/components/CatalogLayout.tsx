@@ -11,6 +11,9 @@ import { parseTrackName } from '../types';
 import type { ShowcaseSection } from '../types';
 import { OnboardingAccordion } from '../../components/onboarding/OnboardingAccordion';
 import { useUserProfileStore } from '../../stores/user-profile.store';
+import { useTrackInfoStore } from '../../stores/trackInfo.store';
+import { useUIStore } from '../../stores/ui.store';
+import { authService } from '../../services/auth.service';
 
 interface Props { color: string; onClose: () => void; }
 
@@ -67,6 +70,7 @@ export function CatalogLayout({ color, onClose }: Props) {
 
   const onboardingComplete = useUserProfileStore(s => s.catalogOnboardingComplete);
   const [onboardingStep, setOnboardingStep] = useState(1);
+  const [showPremiumGate, setShowPremiumGate] = useState(false);
 
   // Hydration guard — предотвратить flash onboarding
   const [hydrated, setHydrated] = useState(false);
@@ -136,6 +140,22 @@ export function CatalogLayout({ color, onClose }: Props) {
       setZipBusy(false);
     }
   }, [zipBusy]);
+
+  const handleAskBilly = useCallback((question: string) => {
+    const { isGuest } = useUserProfileStore.getState();
+    
+    if (isGuest) {
+      setShowPremiumGate(true);
+      return;
+    }
+    
+    // Close catalog, open TrackInfoBoard with fake track
+    useUIStore.getState().setCatalogOpen(false);
+    useTrackInfoStore.getState().setActiveExpert('vocal-coach');
+    useTrackInfoStore.getState().clearAiMessages();
+    useTrackInfoStore.getState().setPendingCatalogQuestion(question);
+    useTrackInfoStore.getState().open(-1);
+  }, []);
 
   const filtered = searchQuery.trim()
     ? tracks.filter(t => { const q = searchQuery.toLowerCase(); return t.title?.toLowerCase().includes(q) || t.artist?.toLowerCase().includes(q); })
@@ -260,6 +280,44 @@ export function CatalogLayout({ color, onClose }: Props) {
               <Sec key={sec.id} s={sec} play={play} tracks={tracks} idx={currentIdx} rec={store.recentTrackIds} />
             ))}
           </div>
+          {/* ═══ Billy hints (TC-071) ═══ */}
+          <div style={{
+            marginTop: 'auto',
+            padding: '16px',
+            background: 'linear-gradient(135deg, rgba(249,115,22,0.06), rgba(168,85,247,0.06))',
+            border: '1px solid rgba(255,255,255,0.06)',
+            borderRadius: '10px',
+          }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', marginBottom: '10px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              🤖 Спроси Билли
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {[
+                { label: '🤔 Как загрузить трек?', question: 'Как загрузить трек в beLive?' },
+                { label: '📦 Что такое ZIP?', question: 'Что такое ZIP-архив для репетиции?' },
+                { label: '🚀 С чего начать?', question: 'С чего начать работу в beLive?' },
+              ].map(btn => (
+                <button
+                  key={btn.question}
+                  onClick={() => handleAskBilly(btn.question)}
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '20px',
+                    color: 'rgba(255,255,255,0.5)',
+                    padding: '0.4rem 0.8rem',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#fff'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}
+                >
+                  {btn.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* ═══ COL 3: SEARCH / UPLOAD ═══ */}
@@ -348,6 +406,61 @@ export function CatalogLayout({ color, onClose }: Props) {
           </div>
         </div>
       </div>
+      {showPremiumGate && (
+        <div onClick={() => setShowPremiumGate(false)} style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(0,0,0,0.7)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 999999,
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: 'rgba(20,20,30,0.98)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '14px',
+            padding: '2rem',
+            maxWidth: '340px',
+            width: '90%',
+            textAlign: 'center',
+          }}>
+            <div style={{ fontSize: '36px', marginBottom: '0.75rem', opacity: 0.3 }}>🔒</div>
+            <h3 style={{ margin: '0 0 0.5rem', color: '#fff', fontSize: '17px' }}>
+              Войдите, чтобы разблокировать Билли
+            </h3>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '1.25rem', lineHeight: 1.5 }}>
+              ИИ-ассистент доступен только для авторизованных пользователей
+            </p>
+            <button
+              onClick={() => authService.initiateGoogleOAuth()}
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: '8px',
+                color: '#fff',
+                padding: '10px 24px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                width: '100%',
+              }}
+            >
+              Войти через Google
+            </button>
+            <button
+              onClick={() => setShowPremiumGate(false)}
+              style={{
+                display: 'block',
+                margin: '0.75rem auto 0',
+                background: 'none',
+                border: 'none',
+                color: 'rgba(255,255,255,0.3)',
+                fontSize: '12px',
+                cursor: 'pointer',
+              }}
+            >
+              Позже
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

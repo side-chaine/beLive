@@ -26,7 +26,7 @@
   "bugs": {
     "url": "https://github.com/side-chaine/beLive/issues"
   },
-  "homepage": "https://side-chaine.github.io/beLive/",
+  "homepage": "https://app.mybelive.com",
   "type": "module",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
