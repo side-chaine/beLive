@@ -1,6 +1,6 @@
 # ARCH-BASE
 > Базовый Context Pack для любого Архитектора beLive
-> Версия: 1.3 | Обновлён: 2026-06-07
+> Версия: 1.4 | Обновлён: 2026-06-08
 > **Использование:** этот файл + TASK-XXX = полный контекст архитектора
 
 ---
@@ -219,9 +219,10 @@ currentUser.isGuest: true // В профиле
 ### Характеристики beLive AI
 - Работает через CF Worker (`belive-ai`)
 - SSE streaming (`data:` events)
-- Бесплатные модели: DeepSeek V3, Gemini Flash, Llama 4
+- Модель: `openrouter/free` (авто-роутер OpenRouter)
 - 20 запросов/день (KV rate limit)
-- Guest: возвращает `AIError("Требуется авторизация")`
+- Guest: UI-блок с кнопкой "Войти через Google" (TC-070C)
+- **Magic Billy UI**: Guest→⭐ блок логина, Logged in→✅ Билли активен, Advanced→свой API Key
 
 ---
 
