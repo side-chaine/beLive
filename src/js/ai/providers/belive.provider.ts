@@ -13,10 +13,10 @@ export class BeliveProvider implements AIProvider {
   readonly displayName = 'beLive AI';
   readonly models = [
     {
-      id: 'meta-llama/llama-4-maverick:free',
-      shortName: 'Llama 4 Maverick',
+      id: 'openrouter/free',
+      shortName: 'beLive AI (Auto)',
       provider: 'belive',
-      contextWindow: 1000000,
+      contextWindow: 200000,
       costTier: 'free' as const,
       capabilities: ['chat'],
     },
@@ -78,7 +78,7 @@ export class BeliveProvider implements AIProvider {
     const { signal } = this.currentAbortController;
 
     // Двойная защита: если модель не указана — используем дефолтную
-    const modelToUse = request.model || 'meta-llama/llama-4-maverick:free';
+    const modelToUse = request.model || 'openrouter/free';
 
     try {
       const res = await fetch(AI_WORKER_URL, {

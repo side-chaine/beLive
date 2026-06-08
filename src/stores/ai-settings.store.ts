@@ -4,11 +4,11 @@ import { persist } from 'zustand/middleware';
 export type AiProviderId = 'belive' | 'openrouter-direct' | 'gateway';
 
 /** Модель по умолчанию для beLive AI провайдера */
-export const BELIVE_DEFAULT_MODEL = 'meta-llama/llama-4-maverick:free';
+export const BELIVE_DEFAULT_MODEL = 'openrouter/free';
 
 export const AI_MODELS = {
   belive: [
-    { id: 'meta-llama/llama-4-maverick:free', shortName: 'Llama 4 Maverick', costTier: 'free' as const, ctx: 1000000 },
+    { id: 'openrouter/free', shortName: 'beLive AI (Auto)', costTier: 'free' as const, ctx: 200000 },
   ],
   openrouter: [
     { id: 'deepseek/deepseek-chat-v3-0324', shortName: 'DeepSeek V3', costTier: 'free' as const, ctx: 64000 },
