@@ -317,7 +317,7 @@ export function CatalogLayout({ color, onClose }: Props) {
               <div className="bl-catalog-dropzone__shimmer" />
             )}
             <div style={{ fontSize: 15, fontWeight: 700, color: (zipOver || zipHover) ? T.orange : T.dim, transition: 'color 0.2s' }}>
-              {zipBusy && zipProgress < 100 ? `Загружаю… ${zipProgress}%` : zipBusy ? '⏳ Обработка ZIP…' : 'ZIP Трек'}
+              {zipBusy && zipProgress < 100 ? `Загрузка ${zipProgress}%` : zipBusy ? '⏳ Обработка ZIP…' : 'ZIP Трек'}
             </div>
             <div style={{ fontSize: 10, color: T.mute, marginTop: 3 }}>
               {zipBusy && zipProgress < 100 ? 'Чтение архива…' : zipBusy ? 'Пожалуйста подождите 5–10 секунд' : 'Перетащите .zip или нажмите'}

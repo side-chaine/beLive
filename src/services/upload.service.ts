@@ -123,11 +123,16 @@ export async function readFileAsText(file: File): Promise<string> {
 /**
  * Read file as ArrayBuffer
  */
-export async function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
+export async function readFileAsArrayBuffer(file: File, onProgress?: (pct: number) => void): Promise<ArrayBuffer> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => resolve(e.target?.result as ArrayBuffer);
     reader.onerror = (e) => reject(e);
+    reader.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    };
     reader.readAsArrayBuffer(file);
   });
 }
@@ -690,9 +695,7 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
     // W7: Capture ZIP filename for overrideTitle (mvsep bundles)
     const zipFileName = file.name;
     const JSZip = (await import('jszip')).default;
-    const zip = await JSZip.loadAsync(await readFileAsArrayBuffer(file), {
-      onProgress: (meta: { percent: number }) => onProgress?.(Math.round(meta.percent)),
-    } as any);
+    const zip = await JSZip.loadAsync(await readFileAsArrayBuffer(file, onProgress));
 
     let instrumentalFile: File | null = null;
     let vocalFile: File | null = null;
