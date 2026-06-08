@@ -109,7 +109,7 @@
     "uri-js": "^4.4.1",
     "vite": "^5.0.0",
     "vite-plugin-pwa": "^0.20.5",
-    "vite-tsconfig-paths": "^5.1.4",
+    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.6",
     "which": "^2.0.2",
     "word-wrap": "^1.2.5",
