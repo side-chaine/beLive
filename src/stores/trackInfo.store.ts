@@ -26,9 +26,6 @@ interface TrackInfoState {
   // Billy Dock (Phase 1.5)
   billyCollapsed: boolean;
 
-  // Catalog Billy trigger
-  pendingCatalogQuestion: string | null;
-
   // Internal
   _revealedTracks: Set<number>;
   _clickedBlockType: string | null;
@@ -51,7 +48,6 @@ interface TrackInfoState {
   clearAiMessages: () => void;
   setClickedBlockType: (type: string) => void;
   setBillyCollapsed: (v: boolean) => void;
-  setPendingCatalogQuestion: (q: string | null) => void;
 
   // Reset
   reset: () => void;
@@ -68,7 +64,6 @@ const initialState = {
   aiMessages: [] as AiMessage[],
   isAiStreaming: false,
   billyCollapsed: false,
-  pendingCatalogQuestion: null as string | null,
   _clickedBlockType: null as string | null,
   _revealedTracks: new Set<number>(),
 };
@@ -107,7 +102,6 @@ export const useTrackInfoStore = create<TrackInfoState>()(
   }),
   setAiStreaming: (v) => set({ isAiStreaming: v }),
   setBillyCollapsed: (v: boolean) => set({ billyCollapsed: v }),
-  setPendingCatalogQuestion: (q) => set({ pendingCatalogQuestion: q }),
   clearAiMessages: () => set({ aiMessages: [] }),
   setClickedBlockType: (type) => set({ _clickedBlockType: type }),
   reset: () => set(initialState),

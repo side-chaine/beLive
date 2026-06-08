@@ -127,11 +127,10 @@ export function TrackInfoBoard() {
   const setAnalyzing = useTrackInfoStore(s => s.setAnalyzing);
   const mergeMeta = useTrackInfoStore(s => s.mergeMeta);
   const currentTrack = useTrackStore(s => s.currentTrack);
-  const isFakeTrack = trackId !== null && trackId < 0;
 
   // Load meta on open
   useEffect(() => {
-    if (!isOpen || !trackId || trackId < 0) return;
+    if (!isOpen || !trackId) return;
     let cancelled = false;
     (async () => {
       // Try cache first
@@ -206,14 +205,11 @@ export function TrackInfoBoard() {
         <div className={styles.headerBar}>
           <span className={styles.boardTitle}>🧬 DNA</span>
           <div className={styles.headerActions}>
-            {!isFakeTrack && (
-              <button className={styles.refreshButton} onClick={handleRefresh} title="Refresh">↻</button>
-            )}
+            <button className={styles.refreshButton} onClick={handleRefresh} title="Refresh">↻</button>
             <button className={styles.closeButton} onClick={close}>ESC ✕</button>
           </div>
         </div>
 
-        {!isFakeTrack && (<>
         {/* Зона 1: Structure — ABABCB */}
         <MetaCard label="Structure" wide>
           <StructureDiagram />
@@ -314,7 +310,6 @@ export function TrackInfoBoard() {
             <span className={styles.analyzingText}>Analyzing audio…</span>
           </div>
         )}
-        </>)}
 
         {/* Зона 3: AI Expert */}
         <TrackInfoErrorBoundary>

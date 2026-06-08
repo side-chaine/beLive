@@ -7,7 +7,6 @@ import { useAudioStore } from '../../stores/audio.store';
 import { useLoopStore } from '../../stores/loop.store';
 import { usePracticeStore } from '../../stores/practice-session.store';
 import { useLyricsStore } from '../../stores/lyrics.store';
-import { authService } from '../../services/auth.service';
 import { aiHub } from '../../js/ai/registry';
 import type { AiExpert } from '../../types/track-meta.types';
 import type { ChatRequest } from '../../js/ai/types';
@@ -102,7 +101,6 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
   const billyMode = useAiSettingsStore(s => s.billyMode);
   const isSessionActive = usePracticeStore(s => s.isActive);
   const [inputValue, setInputValue] = useState('');
-  const [showPremiumGate, setShowPremiumGate] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lastGreetedTrackId = useRef<string | null>(null);
 
@@ -112,17 +110,6 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
       setActiveExpert('vocal-coach');
     }
   }, [compact, activeExpert]);
-
-  // Auto-send catalog question on mount
-  useEffect(() => {
-    const question = useTrackInfoStore.getState().pendingCatalogQuestion;
-    if (!question || activeExpert) return;
-    
-    useTrackInfoStore.getState().setPendingCatalogQuestion(null);
-    useTrackInfoStore.getState().setActiveExpert('vocal-coach');
-    addAiMessage({ role: 'user', content: question });
-    sendToAi(question, 'vocal-coach', []);
-  }, []);
 
   // Proactive greeting on track load — React state driven, not DOM event
   useEffect(() => {
@@ -413,12 +400,8 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
         },
         onError: (e: any) => {
           setAiStreaming(false);
-          if (e.code === 'PREMIUM_GATE' || e.message === 'PREMIUM_GATE') {
-            setShowPremiumGate(true);
-          } else {
-            console.error('[AI] Error:', e.message);
-            addAiMessage({ role: 'system', content: `❌ ${e.message}` });
-          }
+          console.error('[AI] Error:', e.message);
+          addAiMessage({ role: 'system', content: `❌ ${e.message}` });
         },
       },
     );
@@ -721,51 +704,6 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
           </div>
         ) : (
           <>
-              {showPremiumGate && (
-                <div style={{
-                  textAlign: 'center',
-                  padding: '2rem 1.5rem',
-                  background: 'rgba(0,0,0,0.4)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                }}>
-                  <div style={{ fontSize: '32px', marginBottom: '0.5rem', opacity: 0.3 }}>🔒</div>
-                  <h3 style={{ margin: '0 0 0.5rem', color: '#fff', fontSize: '16px' }}>
-                    Войдите, чтобы разблокировать Билли
-                  </h3>
-                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '1rem', lineHeight: 1.5 }}>
-                    ИИ-ассистент доступен только для авторизованных пользователей
-                  </p>
-                  <button
-                    onClick={() => authService.initiateGoogleOAuth()}
-                    style={{
-                      background: 'rgba(255,255,255,0.08)',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                      borderRadius: '8px',
-                      color: '#fff',
-                      padding: '8px 20px',
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Войти через Google
-                  </button>
-                  <button
-                    onClick={() => setShowPremiumGate(false)}
-                    style={{
-                      display: 'block',
-                      margin: '0.75rem auto 0',
-                      background: 'none',
-                      border: 'none',
-                      color: 'rgba(255,255,255,0.3)',
-                      fontSize: '11px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Позже
-                  </button>
-                </div>
-              )}
             {aiMessages.map((msg, i) => {
               const replies = msg.role === 'assistant' ? extractReplies(msg.content) : [];
               return (
