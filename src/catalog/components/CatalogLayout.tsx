@@ -10,6 +10,7 @@ import { useSyncStore } from '../../sync/store/sync.store';
 import { parseTrackName } from '../types';
 import type { ShowcaseSection } from '../types';
 import { OnboardingAccordion } from '../../components/onboarding/OnboardingAccordion';
+import { CatalogBillyChat } from './CatalogBillyChat';
 import { useUserProfileStore } from '../../stores/user-profile.store';
 
 interface Props { color: string; onClose: () => void; }
@@ -67,6 +68,8 @@ export function CatalogLayout({ color, onClose }: Props) {
 
   const onboardingComplete = useUserProfileStore(s => s.catalogOnboardingComplete);
   const [onboardingStep, setOnboardingStep] = useState(1);
+  const [isChatMode, setIsChatMode] = useState(false);
+  const isGuest = useUserProfileStore(s => s.isGuest);
 
   // Hydration guard — предотвратить flash onboarding
   const [hydrated, setHydrated] = useState(false);
@@ -253,12 +256,35 @@ export function CatalogLayout({ color, onClose }: Props) {
         {/* ═══ COL 2: SHOWCASE ═══ */}
         <div style={{ ...colBase, padding: 20 }}>
           <div style={{ flex: 1, overflow: 'auto', paddingRight: 6 }}>
-            {showOnboarding && (
-              <OnboardingAccordion onActiveStepChange={setOnboardingStep} />
+            {!isChatMode ? (
+              <>
+                {showOnboarding && (
+                  <OnboardingAccordion onActiveStepChange={setOnboardingStep} />
+                )}
+                {sections.map(sec => (
+                  <Sec key={sec.id} s={sec} play={play} tracks={tracks} idx={currentIdx} rec={store.recentTrackIds} />
+                ))}
+                <button className="bl-catalog-ask-billy" onClick={() => setIsChatMode(true)}>
+                  Спроси Билли 🤔
+                </button>
+              </>
+            ) : (
+              <>
+                <button className="bl-catalog-back-to-steps" onClick={() => setIsChatMode(false)}>
+                  ← К шагам
+                </button>
+                {isGuest ? (
+                  <div className="bl-catalog-premium-gate">
+                    <p>🚀 Войдите, чтобы спросить Билли</p>
+                    <button onClick={() => {}}>
+                      Войти через Google
+                    </button>
+                  </div>
+                ) : (
+                  <CatalogBillyChat />
+                )}
+              </>
             )}
-            {sections.map(sec => (
-              <Sec key={sec.id} s={sec} play={play} tracks={tracks} idx={currentIdx} rec={store.recentTrackIds} />
-            ))}
           </div>
         </div>
 

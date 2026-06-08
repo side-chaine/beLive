@@ -178,3 +178,152 @@
   0%, 100% { border-color: rgba(255, 180, 50, 0.6); }
   50% { border-color: rgba(255, 180, 50, 0.2); }
 }
+
+/* ===== Billy Catalog Chat ===== */
+.bl-chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 200px;
+}
+
+.bl-chat__messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+}
+
+.bl-chat__empty {
+  text-align: center;
+  color: rgba(255,255,255,0.3);
+  font-size: 0.85rem;
+  padding: 0.5rem 0 1rem;
+}
+
+.bl-chat__quick-qs {
+  text-align: center;
+  padding: 0.5rem 0;
+}
+
+.bl-chat__quick-btn {
+  display: inline-block;
+  margin: 0.25rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.7);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bl-chat__quick-btn:hover {
+  background: rgba(255,255,255,0.10);
+  color: #fff;
+}
+
+.bl-chat__msg {
+  padding: 0.4rem 0.8rem;
+  border-radius: 12px;
+  margin-bottom: 0.4rem;
+  max-width: 85%;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.bl-chat__msg--user {
+  background: rgba(0, 122, 255, 0.15);
+  color: #fff;
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
+}
+
+.bl-chat__msg--assistant {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.85);
+  margin-right: auto;
+  border-bottom-left-radius: 4px;
+}
+
+.bl-chat__input-row {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.bl-chat__input-row input {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  color: #fff;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.bl-chat__input-row input:focus {
+  border-color: rgba(0, 122, 255, 0.4);
+}
+
+.bl-chat__input-row button {
+  background: rgba(0, 122, 255, 0.2);
+  border: none;
+  border-radius: 8px;
+  color: #007aff;
+  padding: 0 0.75rem;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.bl-catalog-ask-billy {
+  width: 100%;
+  margin-top: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 0.5rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.bl-catalog-ask-billy:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.bl-catalog-back-to-steps {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+  padding: 0;
+}
+
+.bl-catalog-premium-gate {
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+.bl-catalog-premium-gate p {
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.bl-catalog-premium-gate button {
+  background: #fff;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.25rem;
+  cursor: pointer;
+  font-weight: 600;
+}
