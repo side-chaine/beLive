@@ -685,12 +685,14 @@ export async function saveTrack(): Promise<void> {
  * Handle ZIP file selection — exact port without legacy DOM dependencies
  * F58-TC-007: Calls TS handleFileSelect + saveTrack
  */
-export async function handleZipFileSelect(file: File): Promise<void> {
+export async function handleZipFileSelect(file: File, onProgress?: (pct: number) => void): Promise<void> {
   try {
     // W7: Capture ZIP filename for overrideTitle (mvsep bundles)
     const zipFileName = file.name;
     const JSZip = (await import('jszip')).default;
-    const zip = await JSZip.loadAsync(await readFileAsArrayBuffer(file));
+    const zip = await JSZip.loadAsync(await readFileAsArrayBuffer(file), {
+      onProgress: (meta: { percent: number }) => onProgress?.(Math.round(meta.percent)),
+    } as any);
 
     let instrumentalFile: File | null = null;
     let vocalFile: File | null = null;

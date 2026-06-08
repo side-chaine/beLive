@@ -33,6 +33,6 @@ export function cancelUpload(): void {
   resetUploadSessionSvc();
 }
 
-export function handleZipFileSelect(file: File): void {
-  void handleZipFileSelectSvc(file);
+export function handleZipFileSelect(file: File, onProgress?: (pct: number) => void): void {
+  void handleZipFileSelectSvc(file, onProgress);
 }

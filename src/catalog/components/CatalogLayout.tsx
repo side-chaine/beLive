@@ -60,6 +60,7 @@ export function CatalogLayout({ color, onClose }: Props) {
   const [pendingLyricsTitle, setPendingLyricsTitle] = useState<string>(''); // TC-GENIUS-001: Track title for Genius link
   const [zipOver, setZipOver] = useState(false);
   const [zipBusy, setZipBusy] = useState(false);
+  const [zipProgress, setZipProgress] = useState(0);
   const [zipHover, setZipHover] = useState(false);
   const [plOpen, setPlOpen] = useState(false);
   const [hovId, setHovId] = useState<number | null>(null);
@@ -130,8 +131,9 @@ export function CatalogLayout({ color, onClose }: Props) {
   const handleZip = useCallback(async (file: File) => {
     if (zipBusy) return;
     setZipBusy(true);
+    setZipProgress(0);
     try {
-      handleZipFileSelect(file);
+      handleZipFileSelect(file, (pct) => setZipProgress(pct));
       setTimeout(() => document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'catalog' } })), 2000)
     } catch {
       alert('ZIP failed.');
@@ -299,24 +301,36 @@ export function CatalogLayout({ color, onClose }: Props) {
 
           {/* 1. ZIP */}
           <input ref={zipRef} type="file" accept=".zip" style={{ display: 'none' }} onChange={e => { const f = e.target?.files?.[0]; if (f) handleZip(f); e.target.value = ''; }} />
-          <div className={`bl-catalog-dropzone ${showOnboarding && onboardingStep === 3 ? 'bl-catalog-dropzone--highlight' : ''}`}
-            onClick={() => zipRef.current?.click()}
+          <div className={`bl-catalog-dropzone ${showOnboarding && onboardingStep === 3 ? 'bl-catalog-dropzone--highlight' : ''} ${zipBusy ? 'bl-catalog-dropzone--busy' : ''}`}
+            onClick={() => !zipBusy && zipRef.current?.click()}
             onMouseEnter={() => setZipHover(true)} onMouseLeave={() => setZipHover(false)}
-            onDragOver={e => { e.preventDefault(); setZipOver(true); }} onDragLeave={() => setZipOver(false)}
-            onDrop={e => { e.preventDefault(); setZipOver(false); const f = e.dataTransfer?.files?.[0]; if (f) handleZip(f); }}
+            onDragOver={e => { if (!zipBusy) { e.preventDefault(); setZipOver(true); }}} onDragLeave={() => setZipOver(false)}
+            onDrop={e => { if (!zipBusy) { e.preventDefault(); setZipOver(false); const f = e.dataTransfer?.files?.[0]; if (f) handleZip(f); }}}
             style={{
               border: (zipOver || zipHover) ? `2px dashed ${T.orange}` : `2px dashed ${T.border2}`,
-              borderRadius: T.rL, padding: '18px 12px', textAlign: 'center', cursor: 'pointer',
+              borderRadius: T.rL, padding: '18px 12px', textAlign: 'center', cursor: zipBusy ? 'default' : 'pointer',
               background: zipOver ? T.orangeD : zipHover ? 'rgba(255,140,0,0.03)' : 'transparent',
               marginBottom: 10, transition: 'all 0.2s',
-              opacity: zipBusy ? 0.75 : 1,
+              position: 'relative', overflow: 'hidden',
             }}>
+            {zipBusy && zipProgress < 100 && (
+              <div className="bl-catalog-dropzone__shimmer" />
+            )}
             <div style={{ fontSize: 15, fontWeight: 700, color: (zipOver || zipHover) ? T.orange : T.dim, transition: 'color 0.2s' }}>
-              {zipBusy ? '⏳ Обработка ZIP…' : 'ZIP Трек'}
+              {zipBusy && zipProgress < 100 ? `Загружаю… ${zipProgress}%` : zipBusy ? '⏳ Обработка ZIP…' : 'ZIP Трек'}
             </div>
             <div style={{ fontSize: 10, color: T.mute, marginTop: 3 }}>
-              {zipBusy ? 'Пожалуйста подождите 5–10 секунд' : 'Перетащите .zip или нажмите'}
+              {zipBusy && zipProgress < 100 ? 'Чтение архива…' : zipBusy ? 'Пожалуйста подождите 5–10 секунд' : 'Перетащите .zip или нажмите'}
             </div>
+            {zipBusy && zipProgress < 100 && (
+              <div style={{
+                position: 'absolute', bottom: 0, left: 0, height: 3,
+                width: `${zipProgress}%`,
+                background: T.orange,
+                transition: 'width 0.3s ease',
+                borderRadius: '0 2px 2px 0',
+              }} />
+            )}
           </div>
 
           {/* 2. Manual upload */}
