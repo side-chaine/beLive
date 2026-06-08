@@ -302,6 +302,13 @@ export function CatalogLayout({ color, onClose }: Props) {
                 </button>
               ))}
             </div>
+            {/* BillyCloud inline (под шагами, не bottom-sheet) */}
+            {billyCloudOpen && (
+              <BillyCloud
+                initialQuestion={billyQuestion}
+                onClose={() => setBillyCloudOpen(false)}
+              />
+            )}
           </div>
         </div>
 
@@ -391,12 +398,6 @@ export function CatalogLayout({ color, onClose }: Props) {
           </div>
         </div>
       </div>
-      {billyCloudOpen && (
-        <BillyCloud
-          initialQuestion={billyQuestion}
-          onClose={() => setBillyCloudOpen(false)}
-        />
-      )}
       {premiumGateOpen && (
         <PremiumGateOverlay onClose={() => setPremiumGateOpen(false)} />
       )}

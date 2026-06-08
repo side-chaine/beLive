@@ -8,9 +8,10 @@ interface BillyCloudProps {
 }
 
 /**
- * BillyCloud — облачко чата Билли, рендерится поверх каталога.
+ * BillyCloud — inline-панель чата Билли внутри каталога.
+ * Рендерится под блоком шагов, НЕ как bottom-sheet.
  * Использует AiExpertPanel в standalone + compact режиме.
- * ESC или клик вне облака закрывает.
+ * ESC закрывает.
  */
 export function BillyCloud({ initialQuestion, onClose }: BillyCloudProps) {
   useEffect(() => {
@@ -22,25 +23,23 @@ export function BillyCloud({ initialQuestion, onClose }: BillyCloudProps) {
   }, [onClose]);
 
   return (
-    <div className="bl-billy-cloud-overlay" onClick={onClose}>
-      <div className="bl-billy-cloud" onClick={e => e.stopPropagation()}>
-        <div className="bl-billy-cloud__header">
-          <span>🤖 Спроси Билли</span>
-          <button
-            className="bl-billy-cloud__close"
-            onClick={onClose}
-            aria-label="Закрыть"
-          >
-            ✕
-          </button>
-        </div>
-        <div className="bl-billy-cloud__body">
-          <AiExpertPanel
-            compact
-            standalone
-            initialMessage={initialQuestion}
-          />
-        </div>
+    <div className="bl-billy-cloud">
+      <div className="bl-billy-cloud__header">
+        <span>🤖 Спроси Билли</span>
+        <button
+          className="bl-billy-cloud__close"
+          onClick={onClose}
+          aria-label="Закрыть"
+        >
+          ✕
+        </button>
+      </div>
+      <div className="bl-billy-cloud__body">
+        <AiExpertPanel
+          compact
+          standalone
+          initialMessage={initialQuestion}
+        />
       </div>
     </div>
   );

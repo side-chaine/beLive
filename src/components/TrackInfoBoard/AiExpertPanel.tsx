@@ -116,12 +116,49 @@ export function AiExpertPanel({ compact = false, standalone = false, initialMess
   }, [compact, activeExpert]);
 
   // Auto-send initialMessage on mount (for standalone/BillyCloud mode)
+  // Uses aiHub.sendMessage() directly to avoid closure issues with sendToAi
   useEffect(() => {
     if (!initialMessage || activeExpert) return;
-    setActiveExpert('vocal-coach');
-    addAiMessage({ role: 'user', content: initialMessage });
-    sendToAi(initialMessage, 'vocal-coach', []);
-  }, []);
+
+    const doSend = async () => {
+      const model = aiHub.getActiveModel();
+      if (!model) return;
+
+      setActiveExpert('vocal-coach');
+      addAiMessage({ role: 'user', content: initialMessage });
+
+      const prompt = getSystemPrompt('vocal-coach', coachName, billyMode);
+      const apiMsgs: ChatRequest['messages'] = [
+        { role: 'system', content: prompt },
+        { role: 'user', content: initialMessage },
+      ];
+
+      setAiStreaming(true);
+      addAiMessage({ role: 'assistant', content: '' });
+
+      let full = '';
+      await aiHub.sendMessage(
+        { model: model.id, messages: apiMsgs, stream: true } as ChatRequest,
+        {
+          onToken: (token: string) => {
+            full += token;
+            appendAiToken(token);
+          },
+          onDone: () => {
+            setAiStreaming(false);
+          },
+          onError: (e: any) => {
+            setAiStreaming(false);
+            if (e.code === 'PREMIUM_GATE' || e.message === 'PREMIUM_GATE') {
+              setShowPremiumGate(true);
+            }
+          },
+        },
+      );
+    };
+
+    doSend();
+  }, [initialMessage, activeExpert, coachName, billyMode, addAiMessage, appendAiToken, setAiStreaming, setActiveExpert]);
 
   // Proactive greeting on track load — React state driven, not DOM event
   useEffect(() => {
