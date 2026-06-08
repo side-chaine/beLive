@@ -87,7 +87,15 @@ export function CatalogBillyChat() {
         )}
         {messages.map((msg, i) => (
           <div key={i} className={msgClass(msg.role)}>
-            {msg.text}
+            {isStreaming && i === messages.length - 1 && msg.role === 'assistant' && !msg.text ? (
+              <div className="bl-chat__skeleton">
+                <div className="bl-skeleton-line" style={{ width: '85%' }} />
+                <div className="bl-skeleton-line" style={{ width: '70%' }} />
+                <div className="bl-skeleton-line" style={{ width: '45%' }} />
+              </div>
+            ) : (
+              msg.text
+            )}
           </div>
         ))}
         <div ref={chatEndRef} />
