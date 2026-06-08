@@ -133,7 +133,7 @@ export function CatalogLayout({ color, onClose }: Props) {
     setZipBusy(true);
     setZipProgress(0);
     try {
-      handleZipFileSelect(file, (pct) => setZipProgress(pct));
+      await handleZipFileSelect(file, (pct) => setZipProgress(pct));
       setTimeout(() => document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'catalog' } })), 2000)
     } catch {
       alert('ZIP failed.');
