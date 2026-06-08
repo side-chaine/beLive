@@ -351,20 +351,3 @@
 .bl-catalog-dropzone--busy {
   pointer-events: none;
 }
-
-.bl-catalog-dropzone__shimmer {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(255, 140, 0, 0.06) 50%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
-  animation: zip-shimmer 1.5s ease-in-out infinite;
-}
-
-@keyframes zip-shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}

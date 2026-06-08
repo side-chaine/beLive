@@ -132,12 +132,24 @@ export function CatalogLayout({ color, onClose }: Props) {
     if (zipBusy) return;
     setZipBusy(true);
     setZipProgress(0);
+
+    // Safety timeout: force-reset zipBusy after 30s if stuck
+    const safetyTimer = setTimeout(() => {
+      console.warn('[ZIP] safety timeout — forcing zipBusy=false');
+      setZipBusy(false);
+    }, 30000);
+
     try {
       await handleZipFileSelect(file, (pct) => setZipProgress(pct));
+      clearTimeout(safetyTimer);
       setTimeout(() => document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'catalog' } })), 2000)
-    } catch {
+    } catch (err) {
+      console.error('[ZIP] handleZip error:', err);
+      clearTimeout(safetyTimer);
       alert('ZIP failed.');
     } finally {
+      console.log('[ZIP] finally called');
+      clearTimeout(safetyTimer);
       setZipBusy(false);
     }
   }, [zipBusy]);
@@ -313,23 +325,32 @@ export function CatalogLayout({ color, onClose }: Props) {
               marginBottom: 10, transition: 'all 0.2s',
               position: 'relative', overflow: 'hidden',
             }}>
-            {zipBusy && zipProgress < 100 && (
-              <div className="bl-catalog-dropzone__shimmer" />
-            )}
-            <div style={{ fontSize: 15, fontWeight: 700, color: (zipOver || zipHover) ? T.orange : T.dim, transition: 'color 0.2s' }}>
-              {zipBusy && zipProgress < 100 ? `Загрузка ${zipProgress}%` : zipBusy ? '⏳ Обработка ZIP…' : 'ZIP Трек'}
-            </div>
-            <div style={{ fontSize: 10, color: T.mute, marginTop: 3 }}>
-              {zipBusy && zipProgress < 100 ? 'Чтение архива…' : zipBusy ? 'Пожалуйста подождите 5–10 секунд' : 'Перетащите .zip или нажмите'}
-            </div>
-            {zipBusy && zipProgress < 100 && (
-              <div style={{
-                position: 'absolute', bottom: 0, left: 0, height: 3,
-                width: `${zipProgress}%`,
-                background: T.orange,
-                transition: 'width 0.3s ease',
-                borderRadius: '0 2px 2px 0',
-              }} />
+            {zipBusy && zipProgress < 100 ? (
+              <>
+                {/*** Skeleton shimmer lines (like BillyChat) ***/}
+                <div style={{ padding: '0.25rem 0' }}>
+                  <div className="bl-skeleton-line" style={{ width: '85%', margin: '0 auto 8px' }} />
+                  <div className="bl-skeleton-line" style={{ width: '70%', margin: '0 auto 8px' }} />
+                  <div className="bl-skeleton-line" style={{ width: '45%', margin: '0 auto 8px' }} />
+                </div>
+                {/*** Progress bar ***/}
+                <div style={{
+                  position: 'absolute', bottom: 0, left: 0, height: 3,
+                  width: `${zipProgress}%`,
+                  background: T.orange,
+                  transition: 'width 0.3s ease',
+                  borderRadius: '0 2px 2px 0',
+                }} />
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 15, fontWeight: 700, color: (zipOver || zipHover) ? T.orange : T.dim, transition: 'color 0.2s' }}>
+                  {zipBusy ? '⏳ Обработка ZIP…' : 'ZIP Трек'}
+                </div>
+                <div style={{ fontSize: 10, color: T.mute, marginTop: 3 }}>
+                  {zipBusy ? 'Пожалуйста подождите 5–10 секунд' : 'Перетащите .zip или нажмите'}
+                </div>
+              </>
             )}
           </div>
 
