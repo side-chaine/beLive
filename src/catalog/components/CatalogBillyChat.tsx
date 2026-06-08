@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { aiHub } from '../../js/ai/registry';
 import type { Message } from '../../js/ai/types';
-
-const SCOUT_SYSTEM_PROMPT = `Ты — Билли, ИИ-помощник вокальной студии beLive. Сейчас пользователь находится в каталоге и ещё не загрузил трек. Твоя задача — помочь ему загрузить первый трек. Отвечай только на вопросы про: как загрузить ZIP-архив, как разделить трек на вокал и минус через mvsep.com, как подготовить текст, и что такое beLive. На вопросы не связанные с загрузкой треков и beLive, вежливо отказывай и возвращай к теме загрузки. Отвечай коротко и по делу.`;
+import { getActiveSkill, buildSystemPrompt } from '../../billy/skill-registry';
+import { BillyMessageRenderer } from '../../billy/BillyMessageRenderer';
 
 const QUICK_QUESTIONS = [
   "Как загрузить трек?",
@@ -34,15 +34,18 @@ export function CatalogBillyChat() {
     const assistantMessage: ChatMessage = { role: 'assistant', text: '' };
     setMessages([...newMessages, assistantMessage]);
 
+    const skill = getActiveSkill();
+    const systemPrompt = buildSystemPrompt(skill);
+
     const aiMessages: Message[] = [
-      { role: 'system', content: SCOUT_SYSTEM_PROMPT },
+      { role: 'system', content: systemPrompt },
       ...newMessages.map(m => ({ role: m.role, content: m.text })),
     ];
 
     const model = aiHub.getActiveModel()?.id || 'openrouter/free';
     let fullText = '';
     await aiHub.sendMessage(
-      { model, messages: aiMessages, stream: true },
+      { model, messages: aiMessages, stream: true, temperature: skill.temperature, maxTokens: skill.maxTokens },
       {
         onToken: (token) => {
           fullText += token;
@@ -59,6 +62,24 @@ export function CatalogBillyChat() {
         }
       }
     );
+  };
+
+  const handleBillyAction = (action: string) => {
+    switch (action) {
+      case 'open-mvsep':
+        window.open('https://mvsep.com/ru', '_blank');
+        break;
+      case 'highlight-zip': {
+        const dropzone = document.querySelector('.bl-catalog-dropzone');
+        if (dropzone) {
+          dropzone.classList.add('bl-catalog-dropzone--highlight');
+          setTimeout(() => dropzone.classList.remove('bl-catalog-dropzone--highlight'), 3000);
+        }
+        break;
+      }
+      default:
+        console.warn('[billy] Unknown action:', action);
+    }
   };
 
   const msgClass = (role: string) =>
@@ -94,7 +115,9 @@ export function CatalogBillyChat() {
                 <div className="bl-skeleton-line" style={{ width: '45%' }} />
               </div>
             ) : (
-              msg.text
+              msg.role === 'assistant'
+                ? <BillyMessageRenderer content={msg.text} onAction={handleBillyAction} />
+                : msg.text
             )}
           </div>
         ))}

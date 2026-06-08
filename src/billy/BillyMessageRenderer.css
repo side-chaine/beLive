@@ -1,0 +1,44 @@
+.bl-billy-message {
+  line-height: 1.5;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.bl-billy-action-btn {
+  display: inline-block;
+  background: rgba(0, 122, 255, 0.15);
+  border: 1px solid rgba(0, 122, 255, 0.3);
+  border-radius: 6px;
+  color: #007aff;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin: 0.15rem 0.1rem;
+  transition: all 0.15s;
+}
+
+.bl-billy-action-btn:hover {
+  background: rgba(0, 122, 255, 0.25);
+  border-color: rgba(0, 122, 255, 0.5);
+}
+
+.bl-billy-action-btn--highlight {
+  background: rgba(255, 165, 0, 0.15);
+  border-color: rgba(255, 165, 0, 0.3);
+  color: #ff9500;
+}
+
+.bl-billy-action-btn--highlight:hover {
+  background: rgba(255, 165, 0, 0.25);
+  border-color: rgba(255, 165, 0, 0.5);
+}
+
+.bl-billy-link {
+  color: #007aff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.bl-billy-link:hover {
+  color: #4da3ff;
+}

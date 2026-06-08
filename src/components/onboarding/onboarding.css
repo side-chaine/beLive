@@ -351,3 +351,15 @@
 .bl-catalog-dropzone--busy {
   pointer-events: none;
 }
+
+/* ===== TC-074: Billy Action — ZIP Dropzone Highlight ===== */
+.bl-catalog-dropzone--highlight {
+  border-color: rgba(255, 165, 0, 0.6) !important;
+  box-shadow: 0 0 16px rgba(255, 165, 0, 0.15);
+  animation: bl-billy-zip-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes bl-billy-zip-pulse {
+  0%, 100% { box-shadow: 0 0 16px rgba(255, 165, 0, 0.15); }
+  50% { box-shadow: 0 0 24px rgba(255, 165, 0, 0.3); }
+}
