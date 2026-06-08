@@ -71,6 +71,7 @@ export function CatalogLayout({ color, onClose }: Props) {
   const onboardingComplete = useUserProfileStore(s => s.catalogOnboardingComplete);
   const [onboardingStep, setOnboardingStep] = useState(1);
   const [isChatMode, setIsChatMode] = useState(false);
+  const [showBillyExpanded, setShowBillyExpanded] = useState(false);
   const isGuest = useUserProfileStore(s => s.isGuest);
 
   // Hydration guard — предотвратить flash onboarding
@@ -82,6 +83,13 @@ export function CatalogLayout({ color, onClose }: Props) {
   }, [tracks.length]);
 
   const showOnboarding = tracks.length === 0 && !onboardingComplete && hydrated;
+
+  // Reset chat mode when onboarding completes (tracks loaded)
+  useEffect(() => {
+    if (tracks.length > 0) {
+      setIsChatMode(false);
+    }
+  }, [tracks.length]);
 
   // Auto-scroll to bottom when new tracks added
   useEffect(() => {
@@ -273,25 +281,30 @@ export function CatalogLayout({ color, onClose }: Props) {
         </div>
 
         {/* ═══ COL 2: SHOWCASE ═══ */}
-        <div style={{ ...colBase, padding: 20 }}>
-          {!isChatMode ? (
-            <>
-              <div style={{ flex: 1, overflow: 'auto', paddingRight: 6 }}>
-                {showOnboarding && (
+        {/*
+          TC-073: Unified onboarding card + Billy chat.
+          Three visual states:
+          1. showOnboarding=true → full-height card (steps | chat)
+          2. showOnboarding=false, showBillyExpanded=true → full-height chat
+          3. showOnboarding=false, showBillyExpanded=false → collapsed header + sections
+        */}
+        <div style={{ ...colBase, padding: (showOnboarding || showBillyExpanded) ? 0 : 20 }}>
+          {showOnboarding ? (
+            /* ── ONBOARDING: full-height card ── */
+            !isChatMode ? (
+              /* Steps mode */
+              <>
+                <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
                   <OnboardingAccordion onActiveStepChange={setOnboardingStep} />
-                )}
-                {sections.map(sec => (
-                  <Sec key={sec.id} s={sec} play={play} tracks={tracks} idx={currentIdx} rec={store.recentTrackIds} />
-                ))}
-              </div>
-              <button className="bl-catalog-ask-billy" onClick={() => setIsChatMode(true)}
-                style={{ flexShrink: 0 }}>
-                Спроси Билли 🤔
-              </button>
-            </>
-          ) : (
-            <>
-              {isGuest ? (
+                </div>
+                <button className="bl-catalog-ask-billy" onClick={() => setIsChatMode(true)}
+                  style={{ flexShrink: 0, margin: '0 20px 20px' }}>
+                  Спроси Билли 🤔
+                </button>
+              </>
+            ) : (
+              /* Chat mode */
+              isGuest ? (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <div className="bl-catalog-premium-gate">
                     <p>🚀 Войдите, чтобы спросить Билли</p>
@@ -301,15 +314,57 @@ export function CatalogLayout({ color, onClose }: Props) {
               ) : (
                 <>
                   <button className="bl-catalog-back-to-steps" onClick={() => setIsChatMode(false)}
-                    style={{ flexShrink: 0, marginBottom: 8 }}>
+                    style={{ flexShrink: 0, margin: '20px 20px 0', padding: 0 }}>
                     ← К шагам
                   </button>
-                  <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '0 20px 20px' }}>
                     <CatalogBillyChat />
                   </div>
                 </>
-              )}
-            </>
+              )
+            )
+          ) : (
+            /* ── POST-ONBOARDING ── */
+            showBillyExpanded ? (
+              /* Expanded Billy — full-height chat */
+              isGuest ? (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+                  <div className="bl-catalog-premium-gate">
+                    <p>🚀 Войдите, чтобы спросить Билли</p>
+                    <button onClick={() => {}}>Войти через Google</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <button className="bl-catalog-back-to-steps" onClick={() => setShowBillyExpanded(false)}
+                    style={{ flexShrink: 0, margin: '20px 20px 0', padding: 0 }}>
+                    ← Свернуть
+                  </button>
+                  <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '0 20px 20px' }}>
+                    <CatalogBillyChat />
+                  </div>
+                </>
+              )
+            ) : (
+              /* Collapsed: compact header + sections */
+              <>
+                <button onClick={() => setShowBillyExpanded(true)}
+                  style={{
+                    width: '100%', padding: '14px 20px', borderRadius: T.rL, cursor: 'pointer',
+                    background: T.surfaceH, border: `1px solid ${T.border2}`, color: T.dim,
+                    fontSize: 14, textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    flexShrink: 0, marginBottom: 14, transition: 'all 0.2s',
+                  }}>
+                  <span>🎤 Спроси Билли</span>
+                  <span style={{ fontSize: 11 }}>▼</span>
+                </button>
+                <div style={{ flex: 1, overflow: 'auto', paddingRight: 6 }}>
+                  {sections.map(sec => (
+                    <Sec key={sec.id} s={sec} play={play} tracks={tracks} idx={currentIdx} rec={store.recentTrackIds} />
+                  ))}
+                </div>
+              </>
+            )
           )}
         </div>
 
