@@ -139,12 +139,18 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
 
     if (params.has('auth')) {
+      console.log('[007-DIAG] Auth callback detected, token present:', params.get('auth')?.substring(0, 20) + '...');
       authService.handleCallback(params).then(async (data) => {
         if (data) {
+          console.log('[007-DIAG] handleCallback OK, authToken:', data.authToken.substring(0, 20) + '...');
           const { useUserProfileStore } = await import('./stores/user-profile.store');
+          console.log('[007-DIAG] Before createOAuthProfile, currentUser:', useUserProfileStore.getState().currentUser);
           useUserProfileStore.getState().createOAuthProfile(data);
+          console.log('[007-DIAG] After createOAuthProfile, currentUser:', useUserProfileStore.getState().currentUser);
+          console.log('[007-DIAG] LocalStorage:', localStorage.getItem('belive:user-profile')?.substring(0, 100));
         } else {
           console.warn('[auth] handleCallback returned null!');
+          console.log('[007-DIAG] Raw auth param:', params.get('auth'));
         }
         useAppStore.getState().setSurface('app');
         useAppStore.getState().setAuthChecked(true);
@@ -153,6 +159,7 @@ export default function App() {
       return;
     }
     authService.checkExistingAuth().then(isValid => {
+      console.log('[007-DIAG] checkExistingAuth:', isValid, 'currentUser:', useUserProfileStore.getState().currentUser);
       useAppStore.getState().setSurface(isValid ? 'app' : 'welcome');
       useAppStore.getState().setAuthChecked(true);
     });
