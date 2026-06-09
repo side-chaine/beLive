@@ -1156,6 +1156,9 @@ export async function completeMvsepTrack(
     if (track?.title) {
       const { fetchCoverArtAndUpdate } = await import('./cover-art.service');
       fetchCoverArtAndUpdate(trackId, track.title).catch(() => {});
+      // Prefetch lrclib so waitForCache finds it when user pastes lyrics
+      const { prefetch } = await import('./auto-lyrics.service');
+      prefetch(track.title);
     }
   } catch {
     // enrichment is optional
