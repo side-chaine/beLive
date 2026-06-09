@@ -59,6 +59,11 @@ export function resolveApiKey(): { key: string; source: MvsepKeySource } {
     return { key: userKey.trim(), source: 'user' };
   }
 
+  // Phase 1.5: Worker has the shared key — client doesn't need it
+  if (MVSEP_WORKER_URL) {
+    return { key: '', source: 'beLive' };
+  }
+
   const sharedKey = MVSEP_API_TOKEN;
   if (sharedKey) {
     return { key: sharedKey, source: 'beLive' };
