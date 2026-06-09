@@ -1109,6 +1109,35 @@ export async function completeMvsepTrack(
     })
   );
 
+  // ─── ZIP Pipeline Parity ────────────────────────────────────
+
+  // Block 1: Sync in-memory trackCatalog with IDB
+  try {
+    if (w.trackCatalog && idb?.getAllTracks) {
+      const freshTracks = await idb.getAllTracks();
+      w.trackCatalog.tracks.length = 0;
+      w.trackCatalog.tracks.push(...freshTracks);
+    }
+  } catch {
+    // non-critical
+  }
+
+  // Block 2: Dispatch track-saved to trigger lyrics modal (🔥 KEY)
+  const trackForLyrics = await idb.getTrack(trackId);
+  const trackTitle = trackForLyrics?.title || '';
+  const hasLyrics = !!(trackForLyrics?.lyrics && trackForLyrics.lyrics.trim().length > 0);
+  document.dispatchEvent(new CustomEvent('track-saved', {
+    detail: { trackId, title: trackTitle, hasLyrics }
+  }));
+
+  // Block 3: Stem count notification
+  const totalStems = stemsMap.size;
+  if (totalStems < 7) {
+    showNotification('info', `✅ ${totalStems} из 7 стемов получено`);
+  } else {
+    showNotification('success', '✅ Все 7 стемов загружены!');
+  }
+
   // Notification
   if (totalReceived < totalExpected) {
     const { showNotification } = await import('./upload.service');

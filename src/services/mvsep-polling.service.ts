@@ -45,6 +45,7 @@ function getAdaptiveDelay(pollCount: number): number {
 
 class MvsepPollingService {
   private active: Map<string, PollingJob> = new Map();
+  private errorCount: Map<string, number> = new Map();
 
   /**
    * Start polling a MVSEP job.
@@ -76,6 +77,7 @@ class MvsepPollingService {
     if (job) {
       if (job.timer) clearTimeout(job.timer);
       this.active.delete(hash);
+      this.errorCount.delete(hash);
     }
 
     // Also remove from store
@@ -149,8 +151,15 @@ class MvsepPollingService {
         job.timer = setTimeout(() => this.tick(hash), delay);
       }
     } catch (err: any) {
-      console.error('[MvsepPolling] tick error:', err);
-      await this.handleFailed(hash, job.trackId, err.message);
+      const errors = (this.errorCount.get(hash) || 0) + 1;
+      this.errorCount.set(hash, errors);
+      if (errors >= 3) {
+        this.errorCount.delete(hash);
+        await this.handleFailed(hash, job.trackId, `Network error 3x: ${err.message}`);
+      } else {
+        console.warn(`[MVSEP] Poll error ${errors}/3:`, err.message);
+        job.timer = setTimeout(() => this.tick(hash), 30_000);
+      }
     }
   }
 
@@ -225,7 +234,7 @@ function mapStatusToInternal(
 ): 'queued' | 'processing' | 'failed' {
   if (status === 'waiting') return 'queued';
   if (status === 'processing') return 'processing';
-  return 'failed';
+  return 'queued';
 }
 
 // ─── Export singleton ────────────────────────────────────────
