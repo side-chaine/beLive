@@ -101,6 +101,8 @@ export const useUserProfileStore = create<UserProfileStoreState>()(
         lastSeenAt: new Date().toISOString(),
         preferences: {},
       };
+      console.log('[007-DIAG] createOAuthProfile data:', { ...data, authToken: data.authToken ? data.authToken.substring(0, 20) + '...' : 'UNDEFINED!' });
+      console.log('[007-DIAG] profile.authToken:', profile.authToken ? profile.authToken.substring(0, 20) + '...' : 'UNDEFINED!');
       set({
         currentUser: profile,
         currentUserId: profile.id,
@@ -112,6 +114,7 @@ export const useUserProfileStore = create<UserProfileStoreState>()(
         isOnboarded: true,
         showOnboarding: false,
       });
+      console.log('[007-DIAG] After set(), get().currentUser.authToken:', get().currentUser?.authToken ? get().currentUser.authToken.substring(0, 20) + '...' : 'UNDEFINED!');
       return profile;
     },
     

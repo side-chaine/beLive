@@ -90,10 +90,16 @@ export const authService = {
   _isTokenValid(token: string): boolean {
     try {
       const parts = token.split('.');
-      if (parts.length !== 3) return false;
+      if (parts.length !== 3) {
+        console.warn('[007-DIAG] _isTokenValid: not 3 parts, got', parts.length);
+        return false;
+      }
       const payload = JSON.parse(this._decodeBase64Url(parts[1]));
-      return payload.exp > Date.now() / 1000;
-    } catch {
+      const isValid = payload.exp > Date.now() / 1000;
+      if (!isValid) console.warn('[007-DIAG] _isTokenValid: EXPIRED, exp:', payload.exp, 'now:', Date.now() / 1000);
+      return isValid;
+    } catch (e) {
+      console.warn('[007-DIAG] _isTokenValid: caught', e);
       return false;
     }
   },
