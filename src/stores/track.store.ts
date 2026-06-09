@@ -11,6 +11,7 @@ export interface TrackMeta {
    *  When set, takes priority over coverArtUrl for background rendering. */
   customBgUrl?: string | null;
   index: number;
+  mvsepStatus?: 'processing' | 'done' | 'failed' | 'timeout' | null;
 }
 
 export interface TrackState {

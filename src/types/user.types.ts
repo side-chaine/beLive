@@ -26,6 +26,8 @@ export interface UserProfile {
   avatarUrl?: string;
   /** ⚠️ TECH DEBT: localStorage JWT. v3.0 → httpOnly cookie через CF Worker */
   authToken?: string;
+  /** Персональный API-ключ MVSEP (опционально, свой ключ — без лимита beLive) */
+  mvsepApiKey?: string | null;
 }
 
 export interface OnboardingStep {

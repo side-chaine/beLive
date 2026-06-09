@@ -198,3 +198,40 @@
   background: rgba(0, 122, 255, 0.2);
   border-color: rgba(0, 122, 255, 0.5);
 }
+
+/* ── MVSEP API Key ───────────────────────── */
+.bl-userroom__mvsep-input {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: #ccc;
+  font-size: 12px;
+  font-family: monospace;
+  margin-bottom: 6px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.bl-userroom__mvsep-input:focus {
+  border-color: #6366f1;
+}
+
+.bl-userroom__mvsep-btn {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.bl-userroom__mvsep-help {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+.bl-userroom__mvsep-help a {
+  color: #6366f1;
+}

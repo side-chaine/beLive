@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react';
+import './CatalogLayout.css';
 import { UploadPanel } from '../../components/UploadPanel';
 import { CoverArt } from '../../components/CoverArt';
 import { useTrackStore } from '../../stores/track.store';
-import { loadTrack, deleteTrack } from '../../services/track.actions';
+import { loadTrack, deleteTrack, getTracksArray } from '../../services/track.actions';
 import { handleZipFileSelect } from '../../services/upload.actions';
 import { useCatalogStore } from '../store/catalog.store';
 import { useDeckStore } from '../../stores/deck.store';
@@ -12,6 +13,23 @@ import type { ShowcaseSection } from '../types';
 import { OnboardingAccordion } from '../../components/onboarding/OnboardingAccordion';
 import { CatalogBillyChat } from './CatalogBillyChat';
 import { useUserProfileStore } from '../../stores/user-profile.store';
+import { useAppStore } from '../../stores/app.store';
+import {
+  canAutoSeparate,
+  resolveApiKey,
+  submitTrack,
+  isAudioFile,
+  isZipFile,
+  getMaxFileSize,
+  getDailyUsageInfo,
+  incrementDailyUsage,
+} from '../../services/mvsep.service';
+import { mvsepPollingService } from '../../services/mvsep-polling.service';
+import { useMvsepStore, getEstimatedProgress, getElapsedString } from '../../stores/mvsep.store';
+import {
+  createMvsepPlaceholder,
+  cancelMvsepPlaceholder,
+} from '../../services/upload.actions';
 
 interface Props { color: string; onClose: () => void; }
 
@@ -62,6 +80,13 @@ export function CatalogLayout({ color, onClose }: Props) {
   const [zipBusy, setZipBusy] = useState(false);
   const [zipProgress, setZipProgress] = useState(0);
   const [zipHover, setZipHover] = useState(false);
+  // MVSEP Smart Cell state
+  const [mvsepState, setMvsepState] = useState<
+    'idle' | 'uploading' | 'active' | 'limit_reached' | 'error' | 'auth_required' | 'concurrent' | 'no_key'
+  >('idle');
+  const [mvsepProgress, setMvsepProgress] = useState(0);
+  const [mvsepError, setMvsepError] = useState('');
+  const [dragHint, setDragHint] = useState('');
   const [plOpen, setPlOpen] = useState(false);
   const [hovId, setHovId] = useState<number | null>(null);
   const zipRef = useRef<HTMLInputElement>(null);
@@ -122,7 +147,30 @@ export function CatalogLayout({ color, onClose }: Props) {
     return () => document.removeEventListener('track-saved', handler);
   }, []);
 
+  // Reset smart cell state when MVSEP job completes
+  useEffect(() => {
+    const unsub = useMvsepStore.subscribe((state) => {
+      const jobs = state.activeJobs;
+      const hasActive = [...jobs.values()].some(
+        (j) => j.status !== 'done' && j.status !== 'failed' && j.status !== 'timeout'
+      );
+      if (!hasActive && mvsepState === 'active') {
+        setMvsepState('idle');
+      }
+    });
+    return unsub;
+  }, [mvsepState]);
+
   const play = useCallback((index: number) => {
+    // MVSEP guard: block playback for processing tracks
+    const t = getTracksArray()[index];
+    if (t?.mvsepStatus && t.mvsepStatus !== 'done') {
+      const w = window as any;
+      if (w.showAppNotification) {
+        w.showAppNotification('⏳ Трек ещё обрабатывается', 'info');
+      }
+      return;
+    }
     loadTrack(index, { autoplay: true, openSyncEditor: false });
     (window as any).beLiveSwitchMode?.('rehearsal');
     useSyncStore.getState().closeSync();
@@ -163,9 +211,169 @@ export function CatalogLayout({ color, onClose }: Props) {
       clearTimeout(safetyTimer);
       if (!safetyTimedOut.current) {
         setZipBusy(false);
+        setMvsepState('idle');
       }
     }
   }, [zipBusy]);
+
+  // ─── MVSEP Smart Cell Handlers ──────────────────────────────
+
+  const handleMvsepUpload = useCallback(async (file: File) => {
+    // 1. Pre-checks
+    const check = canAutoSeparate();
+
+    if (!check.allowed) {
+      switch (check.reason) {
+        case 'auth_required':
+          setMvsepState('auth_required');
+          return;
+        case 'limit_reached':
+          setMvsepState('limit_reached');
+          return;
+        case 'concurrent':
+          setMvsepState('concurrent');
+          return;
+        case 'no_key':
+          setMvsepState('no_key');
+          return;
+      }
+      return;
+    }
+
+    // 2. File size check
+    if (file.size > getMaxFileSize()) {
+      const w = window as any;
+      if (w.showAppNotification) {
+        w.showAppNotification('❌ Максимум 50 МБ', 'error');
+      }
+      return;
+    }
+
+    // 3. Submit to MVSEP
+    setMvsepState('uploading');
+    setMvsepProgress(0);
+
+    try {
+      const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as ArrayBuffer);
+        reader.onerror = (e) => reject(e);
+        reader.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setMvsepProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      });
+
+      const result = await submitTrack(arrayBuffer, file.name);
+
+      // 4. Create placeholder in catalog
+      const trackId = await createMvsepPlaceholder(file.name, result.hash);
+
+      // 5. Add to store
+      useMvsepStore.getState().addJob(result.hash, trackId, file.name, result.keySource);
+
+      // 6. Increment daily usage (only for beLive shared key)
+      if (result.keySource === 'beLive') {
+        incrementDailyUsage();
+      }
+
+      // 7. Start polling
+      mvsepPollingService.startPolling(result.hash, trackId);
+
+      setMvsepState('active');
+    } catch (err: any) {
+      if (err.message?.includes('LIMIT') || err.message?.includes('403')) {
+        setMvsepState('limit_reached');
+        setMvsepError('Лимит MVSEP исчерпан');
+      } else {
+        setMvsepState('error');
+        setMvsepError(err.message || 'Ошибка отправки');
+      }
+    }
+  }, []);
+
+  const handleSmartDrop = useCallback(async (file: File) => {
+    const name = file.name.toLowerCase();
+
+    if (isZipFile(name)) {
+      await handleZip(file);
+      return;
+    }
+
+    if (isAudioFile(name)) {
+      await handleMvsepUpload(file);
+      return;
+    }
+
+    const w = window as any;
+    if (w.showAppNotification) {
+      w.showAppNotification('❌ Неподдерживаемый формат. Используйте MP3, WAV, FLAC или ZIP', 'error');
+    }
+  }, [handleZip, handleMvsepUpload]);
+
+  const handleSmartDropMultiple = useCallback(async (files: FileList) => {
+    const audioFiles = [...files].filter((f) => isAudioFile(f.name));
+    const zipFiles = [...files].filter((f) => isZipFile(f.name));
+
+    for (const zip of zipFiles) {
+      await handleZip(zip);
+    }
+
+    if (audioFiles.length > 0) {
+      if (audioFiles.length > 1) {
+        const w = window as any;
+        if (w.showAppNotification) {
+          w.showAppNotification(
+            `🎵 Обрабатываем «${audioFiles[0].name}». Остальные добавьте по одному.`,
+            'info'
+          );
+        }
+      }
+      await handleMvsepUpload(audioFiles[0]);
+    }
+  }, [handleZip, handleMvsepUpload]);
+
+  const handleCancelMvsep = useCallback(async () => {
+    const jobs = useMvsepStore.getState().activeJobs;
+    for (const [hash, job] of jobs) {
+      if (job.status !== 'done' && job.status !== 'failed') {
+        mvsepPollingService.stopPolling(hash);
+        await cancelMvsepPlaceholder(job.trackId);
+      }
+    }
+    setMvsepState('idle');
+  }, []);
+
+  /** Small badge showing MVSEP quota status */
+  function MvsepQuotaBadge() {
+    const { key, source } = resolveApiKey();
+
+    if (source === 'user') {
+      return (
+        <span style={{ fontSize: 9, color: '#6366f1', fontWeight: 600 }}>
+          🔑 свой
+        </span>
+      );
+    }
+
+    if (source === 'beLive') {
+      const { used, limit } = getDailyUsageInfo();
+      const color = used >= limit
+        ? (T.orange || '#f97316')
+        : used > limit - 3
+          ? (T.orange || '#f97316')
+          : (T.green || '#4ade80');
+      return (
+        <span style={{ fontSize: 9, color, fontWeight: 600 }}>
+          {used}/{limit}
+        </span>
+      );
+    }
+
+    return null;
+  }
 
   const filtered = searchQuery.trim()
     ? tracks.filter(t => { const q = searchQuery.toLowerCase(); return t.title?.toLowerCase().includes(q) || t.artist?.toLowerCase().includes(q); })
@@ -371,44 +579,370 @@ export function CatalogLayout({ color, onClose }: Props) {
         {/* ═══ COL 3: SEARCH / UPLOAD ═══ */}
         <div style={colBase}>
 
-          {/* 1. ZIP */}
-          <input ref={zipRef} type="file" accept=".zip" style={{ display: 'none' }} onChange={e => { const f = e.target?.files?.[0]; if (f) handleZip(f); e.target.value = ''; }} />
-          <div className={`bl-catalog-dropzone ${showOnboarding && onboardingStep === 3 ? 'bl-catalog-dropzone--highlight' : ''} ${zipBusy ? 'bl-catalog-dropzone--busy' : ''}`}
-            onClick={() => !zipBusy && zipRef.current?.click()}
-            onMouseEnter={() => setZipHover(true)} onMouseLeave={() => setZipHover(false)}
-            onDragOver={e => { if (!zipBusy) { e.preventDefault(); setZipOver(true); }}} onDragLeave={() => setZipOver(false)}
-            onDrop={e => { if (!zipBusy) { e.preventDefault(); setZipOver(false); const f = e.dataTransfer?.files?.[0]; if (f) handleZip(f); }}}
+          {/* ─── Smart Cell: Track Preparation ─── */}
+          <div
+            className={`bl-catalog-dropzone ${showOnboarding && onboardingStep === 3 ? 'bl-catalog-dropzone--highlight' : ''} ${mvsepState === 'active' ? 'mvsep-processing' : ''}`}
             style={{
-              border: (zipOver || zipHover) ? `2px dashed ${T.orange}` : `2px dashed ${T.border2}`,
-              borderRadius: T.rL, padding: '18px 12px', textAlign: 'center', cursor: zipBusy ? 'default' : 'pointer',
-              background: zipOver ? T.orangeD : zipHover ? 'rgba(255,140,0,0.03)' : 'transparent',
-              marginBottom: 10, transition: 'all 0.2s',
-              position: 'relative', overflow: 'hidden',
-            }}>
-            {zipBusy && zipProgress < 100 ? (
+              position: 'relative',
+              border: (zipOver || zipHover) ? `2px dashed ${T.orange}` : mvsepState === 'limit_reached' || mvsepState === 'no_key' ? `2px dashed ${T.orange}` : `2px dashed ${T.border2}`,
+              borderRadius: T.rL,
+              padding: mvsepState === 'active' ? '16px 12px' : '18px 12px',
+              textAlign: 'center',
+              cursor: mvsepState === 'active' ? 'default' : 'pointer',
+              background: zipOver ? 'rgba(99,102,241,0.1)' : zipHover ? 'rgba(255,140,0,0.03)' : 'transparent',
+              marginBottom: 10,
+              transition: 'all 0.2s',
+              overflow: 'hidden',
+              minHeight: mvsepState === 'active' ? 80 : undefined,
+            }}
+            onClick={() => {
+              if (mvsepState === 'active') return;
+              const input = document.getElementById('bl-smart-file-input') as HTMLInputElement;
+              input?.click();
+            }}
+            onMouseEnter={() => setZipHover(true)} onMouseLeave={() => setZipHover(false)}
+            onDragOver={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              const items = e.dataTransfer?.items;
+              if (items && items.length > 0) {
+                const item = items[0];
+                const name = (item as any).name || '';
+                if (name) {
+                  if (isZipFile(name)) {
+                    setDragHint('📦 ZIP — распаковка');
+                    setZipOver(true);
+                  } else if (isAudioFile(name)) {
+                    const check = canAutoSeparate();
+                    if (check.allowed) {
+                      setDragHint('🎵 Авто-разделение через MVSEP');
+                      setZipOver(true);
+                    } else {
+                      setDragHint('⚠️ Только ZIP при лимите');
+                      setZipOver(true);
+                    }
+                  } else {
+                    setDragHint('❌ Неподдерживаемый формат');
+                  }
+                } else {
+                  const mime = item.type || '';
+                  if (mime.includes('zip') || mime.includes('compressed')) {
+                    setDragHint('📦 ZIP — распаковка');
+                    setZipOver(true);
+                  } else if (mime.startsWith('audio/')) {
+                    const check = canAutoSeparate();
+                    if (check.allowed) {
+                      setDragHint('🎵 Авто-разделение через MVSEP');
+                      setZipOver(true);
+                    } else {
+                      setDragHint('⚠️ Только ZIP при лимите');
+                      setZipOver(true);
+                    }
+                  } else {
+                    setZipOver(true);
+                  }
+                }
+              } else {
+                setZipOver(true);
+              }
+            }}
+            onDragLeave={() => { setZipOver(false); setDragHint(''); }}
+            onDrop={e => {
+              e.preventDefault();
+              setZipOver(false);
+              setDragHint('');
+              const files = e.dataTransfer?.files;
+              if (files && files.length > 0) {
+                if (files.length === 1) {
+                  handleSmartDrop(files[0]);
+                } else {
+                  handleSmartDropMultiple(files);
+                }
+              }
+            }}
+          >
+            {/* Hidden file input — accepts both ZIP and audio */}
+            <input
+              id="bl-smart-file-input"
+              type="file"
+              accept=".zip,.mp3,.wav,.flac,.ogg,.m4a,.aac,audio/*"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleSmartDrop(file);
+                e.target.value = '';
+              }}
+            />
+
+            {/* Drag-over hint */}
+            {dragHint && zipOver && (
+              <div style={{
+                position: 'absolute', inset: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(99,102,241,0.12)',
+                backdropFilter: 'blur(2px)',
+                WebkitBackdropFilter: 'blur(2px)',
+                borderRadius: 8,
+                fontSize: 13, fontWeight: 600,
+                color: dragHint.includes('⚠️')
+                  ? (T.orange || '#f97316')
+                  : dragHint.includes('❌')
+                    ? (T.orange || '#f97316')
+                    : '#6366f1',
+                zIndex: 2,
+                pointerEvents: 'none',
+              }}>
+                {dragHint}
+              </div>
+            )}
+
+            {/* State: IDLE */}
+            {mvsepState === 'idle' && !zipBusy && (
               <>
-                {/*** Skeleton shimmer lines (like BillyChat) ***/}
-                <div style={{ padding: '0.25rem 0' }}>
-                  <div className="bl-skeleton-line" style={{ width: '85%', margin: '0 auto 8px' }} />
-                  <div className="bl-skeleton-line" style={{ width: '70%', margin: '0 auto 8px' }} />
-                  <div className="bl-skeleton-line" style={{ width: '45%', margin: '0 auto 8px' }} />
+                <div style={{ fontSize: 14, fontWeight: 600, color: T.text, marginBottom: 4 }}>
+                  🎵 Трек или ZIP
                 </div>
-                {/*** Progress bar ***/}
-                <div style={{
-                  position: 'absolute', bottom: 0, left: 0, height: 3,
-                  width: `${zipProgress}%`,
-                  background: T.orange,
-                  transition: 'width 0.3s ease',
-                  borderRadius: '0 2px 2px 0',
-                }} />
+                <div style={{ fontSize: 11, color: T.dim, marginBottom: 2 }}>
+                  Перетащите mp3, wav или .zip
+                </div>
+                <div style={{ fontSize: 10, color: T.dim, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>или нажмите для выбора</span>
+                  <MvsepQuotaBadge />
+                </div>
               </>
-            ) : (
+            )}
+
+            {/* State: UPLOADING */}
+            {mvsepState === 'uploading' && (
               <>
-                <div style={{ fontSize: 15, fontWeight: 700, color: (zipOver || zipHover) ? T.orange : T.dim, transition: 'color 0.2s' }}>
-                  {zipBusy ? 'Подготовка трека…' : 'ZIP Трек'}
+                <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 6 }}>
+                  ⏳ Отправка на MVSEP...
                 </div>
-                <div style={{ fontSize: 10, color: T.mute, marginTop: 3 }}>
-                  {zipBusy ? 'Пожалуйста подождите' : 'Перетащите .zip или нажмите'}
+                <div style={{
+                  height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.1)',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    height: '100%', borderRadius: 2,
+                    background: '#6366f1',
+                    width: `${mvsepProgress}%`,
+                    transition: 'width 0.3s',
+                  }} />
+                </div>
+              </>
+            )}
+
+            {/* State: ACTIVE (processing) */}
+            {mvsepState === 'active' && (() => {
+              const jobs = useMvsepStore.getState().activeJobs;
+              const activeJob = [...jobs.values()].find(
+                (j) => j.status !== 'done' && j.status !== 'failed' && j.status !== 'timeout'
+              );
+              if (!activeJob) return null;
+              const progress = getEstimatedProgress(activeJob);
+              const elapsed = getElapsedString(activeJob.submittedAt);
+              return (
+                <>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 4 }}>
+                    🔄 Разделяем «{activeJob.fileName.replace(/\.[^.]+$/, '')}»...
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{
+                      flex: 1, height: 4, borderRadius: 2,
+                      background: 'rgba(255,255,255,0.1)', overflow: 'hidden',
+                    }}>
+                      <div style={{
+                        height: '100%', borderRadius: 2,
+                        background: '#6366f1',
+                        width: `${progress}%`,
+                        transition: 'width 1s',
+                      }} />
+                    </div>
+                    <span style={{ fontSize: 10, color: T.dim }}>MVSEP {elapsed}</span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleCancelMvsep(); }}
+                      style={{
+                        background: 'transparent', border: 'none',
+                        color: T.dim, fontSize: 12, cursor: 'pointer',
+                        padding: '2px 4px',
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
+
+            {/* State: LIMIT REACHED */}
+            {mvsepState === 'limit_reached' && (
+              <>
+                <div style={{ fontSize: 13, fontWeight: 600, color: T.orange, marginBottom: 4 }}>
+                  ⚠️ Лимит на сегодня
+                </div>
+                <div style={{ fontSize: 11, color: T.dim, marginBottom: 6 }}>
+                  Кидайте .zip или добавьте свой ключ
+                </div>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); useAppStore.getState().setSurface('profile'); }}
+                    style={{
+                      padding: '4px 8px', borderRadius: 4,
+                      border: '1px solid #6366f1',
+                      background: 'transparent',
+                      color: '#6366f1',
+                      fontSize: 10, cursor: 'pointer',
+                    }}
+                  >
+                    🔑 Добавить ключ
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); window.open('https://mvsep.com/ru', '_blank'); }}
+                    style={{
+                      padding: '4px 8px', borderRadius: 4,
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      background: 'transparent',
+                      color: T.dim,
+                      fontSize: 10, cursor: 'pointer',
+                    }}
+                  >
+                    🔗 mvsep.com
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* State: AUTH_REQUIRED (Guest) */}
+            {mvsepState === 'auth_required' && (
+              <>
+                <div style={{ fontSize: 14, fontWeight: 600, color: T.text, marginBottom: 4 }}>
+                  🎵 Трек или ZIP
+                </div>
+                <div style={{ fontSize: 11, color: T.dim, marginBottom: 6 }}>
+                  Войдите для авто-разделения или кидайте .zip
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); useAppStore.getState().setSurface('welcome'); }}
+                  style={{
+                    padding: '4px 10px', borderRadius: 4,
+                    border: '1px solid #6366f1',
+                    background: '#6366f1',
+                    color: '#fff',
+                    fontSize: 11, cursor: 'pointer',
+                  }}
+                >
+                  🔑 Войти через Google
+                </button>
+              </>
+            )}
+
+            {/* State: NO_KEY */}
+            {mvsepState === 'no_key' && (
+              <>
+                <div style={{ fontSize: 14, fontWeight: 600, color: T.text, marginBottom: 4 }}>
+                  🎵 Трек или ZIP
+                </div>
+                <div style={{ fontSize: 11, color: T.dim, marginBottom: 6 }}>
+                  Только .zip — добавьте ключ MVSEP для авто-разделения
+                </div>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      useAppStore.getState().setSurface('profile');
+                    }}
+                    style={{
+                      padding: '4px 8px', borderRadius: 4,
+                      border: '1px solid #6366f1',
+                      background: 'transparent',
+                      color: '#6366f1',
+                      fontSize: 10, cursor: 'pointer',
+                    }}
+                  >
+                    🔑 Добавить ключ
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* State: CONCURRENT */}
+            {mvsepState === 'concurrent' && (
+              <>
+                <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 4 }}>
+                  ⏳ Трек в очереди
+                </div>
+                <div style={{ fontSize: 11, color: T.dim, marginBottom: 6 }}>
+                  Перед вами 1 трек на разделение
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); useAppStore.getState().setSurface('profile'); }}
+                  style={{
+                    padding: '4px 8px', borderRadius: 4,
+                    border: '1px solid #6366f1',
+                    background: 'transparent',
+                    color: '#6366f1',
+                    fontSize: 10, cursor: 'pointer',
+                  }}
+                >
+                  🔑 Свой ключ — без очереди
+                </button>
+              </>
+            )}
+
+            {/* State: ERROR */}
+            {mvsepState === 'error' && (
+              <>
+                <div style={{ fontSize: 13, fontWeight: 600, color: T.orange, marginBottom: 4 }}>
+                  ❌ Ошибка
+                </div>
+                <div style={{ fontSize: 11, color: T.dim, marginBottom: 6 }}>
+                  {mvsepError}
+                </div>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setMvsepState('idle'); }}
+                    style={{
+                      padding: '4px 8px', borderRadius: 4,
+                      border: '1px solid #6366f1',
+                      background: 'transparent',
+                      color: '#6366f1',
+                      fontSize: 10, cursor: 'pointer',
+                    }}
+                  >
+                    🔄 Повторить
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); window.open('https://mvsep.com/ru', '_blank'); }}
+                    style={{
+                      padding: '4px 8px', borderRadius: 4,
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      background: 'transparent',
+                      color: T.dim,
+                      fontSize: 10, cursor: 'pointer',
+                    }}
+                  >
+                    🔗 mvsep.com
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* State: ZIP BUSY — existing flow */}
+            {zipBusy && (
+              <>
+                <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 6 }}>
+                  📦 Распаковка ZIP...
+                </div>
+                <div style={{
+                  height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.1)',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    height: '100%', borderRadius: 2,
+                    background: '#6366f1',
+                    width: `${zipProgress}%`,
+                    transition: 'width 0.3s',
+                  }} />
                 </div>
               </>
             )}
@@ -422,19 +956,7 @@ export function CatalogLayout({ color, onClose }: Props) {
           }}>{showManual ? '▲ Ручная загрузка' : '▶ Ручная загрузка'}</div>
           {showManual && <div style={{ marginBottom: 8 }}>
             <UploadPanel onClose={() => { setShowManual(false); setPendingLyricsTrackId(null); setPendingLyricsTitle(''); }} onSaved={() => { setShowManual(false); setPendingLyricsTrackId(null); setPendingLyricsTitle(''); setTimeout(() => { document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'catalog' } })); onClose(); }, 500); }} autoOpenLyrics={pendingLyricsTrackId !== null} pendingTrackId={pendingLyricsTrackId} pendingTrackTitle={pendingLyricsTrackId ? pendingLyricsTitle : null} />
-            <div style={{
-              border: `1px dashed ${T.border2}`,
-              borderRadius: T.r,
-              padding: '12px 10px',
-              textAlign: 'center',
-              marginTop: 8,
-              background: 'rgba(255,255,255,0.02)',
-            }}>
-              <div style={{ fontSize: 11, color: T.dim, marginBottom: 4 }}>
-                Стемы: Drums, Bass, Guitar, Keys, Other
-              </div>
-              <div style={{ fontSize: 11, color: T.orange, fontWeight: 600 }}>Скоро</div>
-            </div>
+
           </div>}
 
 
@@ -455,15 +977,57 @@ export function CatalogLayout({ color, onClose }: Props) {
               const p = parseTrackName(t.title || '');
               const label = p.artist !== 'Разное' ? `${p.artist} — ${p.title}` : p.title || `Track ${t.index + 1}`;
               return (
-                <div key={t.id ?? i} style={{
-                  display: 'flex', alignItems: 'center', padding: '6px 10px', borderRadius: T.r,
-                  marginBottom: 2, background: a ? T.orangeD : T.surface,
-                  border: `1px solid ${a ? T.orange + '22' : T.border}`, cursor: 'pointer',
-                }}>
+                <div key={t.id ?? i}
+                  className={`track-card${t.mvsepStatus === 'processing' ? ' track-card--mvsep-processing' : ''}${t.mvsepStatus === 'failed' || t.mvsepStatus === 'timeout' ? ' track-card--mvsep-failed' : ''}`}
+                  style={{
+                    display: 'flex', alignItems: 'center', padding: '6px 10px', borderRadius: T.r,
+                    marginBottom: 2, background: a ? T.orangeD : T.surface,
+                    border: `1px solid ${a ? T.orange + '22' : T.border}`, cursor: 'pointer',
+                  }}>
                   <CoverArt url={t.coverArtUrl} title={t.title} size={32} borderRadius={6} />
+                  {/* MVSEP Status Badge */}
+                  {t.mvsepStatus === 'processing' && (
+                    <div className="mvsep-badge mvsep-badge--processing" style={{ marginLeft: 4, flexShrink: 0 }}>
+                      🔄
+                    </div>
+                  )}
+                  {t.mvsepStatus === 'failed' && (
+                    <div className="mvsep-badge mvsep-badge--failed" style={{ marginLeft: 4, flexShrink: 0 }}>
+                      ❌
+                    </div>
+                  )}
+                  {t.mvsepStatus === 'timeout' && (
+                    <div className="mvsep-badge mvsep-badge--timeout" style={{ marginLeft: 4, flexShrink: 0 }}>
+                      ⏱️
+                    </div>
+                  )}
                   <span onClick={() => play(t.index)} style={{ flex: 1, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: a ? T.orange : T.text, marginLeft: 8 }}>
                     {a && '▶ '}{label}
                   </span>
+                  {/* MVSEP failed/timeout actions */}
+                  {(t.mvsepStatus === 'failed' || t.mvsepStatus === 'timeout') && (
+                    <div className="mvsep-card-actions" style={{ marginRight: 8 }}>
+                      <button
+                        className="mvsep-card-action mvsep-card-action--primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const input = document.getElementById('bl-smart-file-input') as HTMLInputElement;
+                          input?.click();
+                        }}
+                      >
+                        🔄
+                      </button>
+                      <button
+                        className="mvsep-card-action mvsep-card-action--danger"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteTrack(Number(t.id));
+                        }}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', gap: 1, flexShrink: 0 }}>
                     {isBuilding && <IB c={T.purple} onClick={() => addToBuildingPlaylist({ trackId: Number(t.id), title: label, addedAt: new Date().toISOString() })}>+</IB>}
                     {!inMy && <IB c={T.green} onClick={() => addToMyMusic(Number(t.id))}>+</IB>}

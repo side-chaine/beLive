@@ -42,6 +42,7 @@ interface UserProfileStoreState extends UserState {
   onboardingProgress: OnboardingProgress;
   setCatalogOnboardingComplete: (v: boolean) => void;
   setOnboardingProgress: (p: Partial<OnboardingProgress>) => void;
+  setMvsepApiKey: (key: string | null) => void;
 }
 
 const initialState = {
@@ -160,6 +161,17 @@ export const useUserProfileStore = create<UserProfileStoreState>()(
     setOnboardingProgress: (p) => set((s) => ({
       onboardingProgress: { ...s.onboardingProgress, ...p }
     })),
+
+    setMvsepApiKey: (key: string | null) =>
+      set((state) => {
+        if (!state.currentUser) return state;
+        return {
+          currentUser: {
+            ...state.currentUser,
+            mvsepApiKey: key,
+          },
+        };
+      }),
   }), {
     name: 'belive:user-profile',
     version: 2,

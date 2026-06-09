@@ -12,6 +12,7 @@ import type { StemDataEntry } from './idb.service';
 import { fetchCoverArtAndUpdate } from './cover-art.service';
 import { parseLrcString, lrcToMarkers } from './auto-lyrics.service';
 import { useTrackStore } from '../stores/track.store';
+import { useMvsepStore } from '../stores/mvsep.store';
 
 // W6.2: Stem classification keywords (filename substring → stem slot)
 // Instrumental is NEVER matched here — it's the file with NO stem keyword
@@ -30,7 +31,7 @@ const STEM_CLASSIFICATION_KEYWORDS: Readonly<Record<string, string[]>> = {
 const BACKING_VOCAL_PATTERNS = ['back_voc', 'bgvoc', 'bvoc', 'backing_vocal', '_bv', 'bv_', 'back_vox'];
 
 /** Classify a filename into a stem slot using keyword matching. Returns null = instrumental */
-function classifyStemFromFilename(baseName: string): string | null {
+export function classifyStemFromFilename(baseName: string): string | null {
   const lower = baseName.toLowerCase();
 
   // Check backing vocal FIRST — if matched, it's backing stem, not lead vocal
@@ -986,4 +987,166 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
     console.error('handleZipFileSelect error:', err);
     showNotification('error', `❌ Ошибка обработки ZIP: ${err.message}`);
   }
+}
+
+// ─── MVSEP Track Lifecycle ──────────────────────────────────
+
+/**
+ * Create a placeholder track in IDB for MVSEP processing.
+ * Track appears in catalog with "Processing..." badge.
+ * NOT playable until completeMvsepTrack() is called.
+ */
+export async function createMvsepPlaceholder(
+  fileName: string,
+  hash: string
+): Promise<number> {
+  const w = window as any;
+  const idb = w.idbService;
+  if (!idb) throw new Error('idbService not available');
+
+  const trackTitle = getFileNameWithoutExtension(fileName);
+
+  // TODO(Phase 2): Replace with crypto.randomUUID()
+  const trackId = Date.now();
+
+  const trackData: any = {
+    id: trackId,
+    title: trackTitle,
+    instrumentalData: new ArrayBuffer(0), // placeholder — not playable
+    instrumentalType: 'audio/mpeg',
+    dateAdded: new Date().toISOString(),
+    lastModified: new Date().toISOString(),
+    mvsepStatus: 'processing' as const,
+    mvsepHash: hash,
+    mvsepSubmittedAt: new Date().toISOString(),
+    lyrics: '',
+    blocksData: [],
+    syncMarkers: [],
+  };
+
+  const saved = await idb.saveTrack(trackData);
+
+  document.dispatchEvent(
+    new CustomEvent('tracks-changed', {
+      detail: { source: 'mvsep-placeholder' },
+    })
+  );
+
+  return saved.id;
+}
+
+/**
+ * Complete MVSEP track with downloaded stems.
+ * Updates the placeholder with real audio data.
+ * StemsMap keys: 'instrumental', 'vocals', 'drums', 'bass', 'keys', 'guitar', 'other'
+ */
+export async function completeMvsepTrack(
+  trackId: number,
+  stemsMap: Map<string, Blob>
+): Promise<void> {
+  const w = window as any;
+  const idb = w.idbService;
+  if (!idb) throw new Error('idbService not available');
+
+  // Read blobs as ArrayBuffers
+  const instrumentalBlob = stemsMap.get('instrumental');
+  if (!instrumentalBlob) {
+    throw new Error('No instrumental stem from MVSEP');
+  }
+
+  const instrumentalData = await instrumentalBlob.arrayBuffer();
+  const vocalsBlob = stemsMap.get('vocals');
+  const vocalsData = vocalsBlob ? await vocalsBlob.arrayBuffer() : null;
+
+  // Build stemsData for additional stems
+  const stemsData: Record<string, import('./idb.service').StemDataEntry> = {};
+  const stemOrder = ['drums', 'bass', 'keys', 'guitar', 'other'] as const;
+  const stemDisplayOrder: Array<{ stemId: string; label: string }> = [];
+
+  for (const stemId of stemOrder) {
+    const blob = stemsMap.get(stemId);
+    if (blob) {
+      stemsData[stemId] = {
+        data: await blob.arrayBuffer(),
+        type: blob.type || 'audio/mpeg',
+      };
+      const labels: Record<string, string> = {
+        drums: '🥁 Drums',
+        bass: '🎸 Bass',
+        keys: '🎹 Keys',
+        guitar: '🎸 Guitar',
+        other: '🎵 Other',
+      };
+      stemDisplayOrder.push({ stemId, label: labels[stemId] || stemId });
+    }
+  }
+
+  // Count received stems for notification
+  const totalExpected = 7;
+  const totalReceived = 1 + (vocalsData ? 1 : 0) + Object.keys(stemsData).length;
+
+  // Update track in IDB
+  const updates: any = {
+    instrumentalData,
+    instrumentalType: 'audio/mpeg',
+    vocalsData,
+    vocalsType: vocalsData ? 'audio/mpeg' : null,
+    mvsepStatus: 'done' as const,
+    lastModified: new Date().toISOString(),
+  };
+
+  if (Object.keys(stemsData).length > 0) {
+    updates.stemsData = stemsData;
+    updates.stemDisplayOrder = stemDisplayOrder;
+    updates.stemsMode = true;
+  }
+
+  await idb.updateTrackField(trackId, updates);
+
+  document.dispatchEvent(
+    new CustomEvent('tracks-changed', {
+      detail: { source: 'mvsep-complete' },
+    })
+  );
+
+  // Notification
+  if (totalReceived < totalExpected) {
+    const { showNotification } = await import('./upload.service');
+    showNotification(
+      'success',
+      `✅ ${totalReceived} из ${totalExpected} стемов получено`
+    );
+  } else {
+    const { showNotification } = await import('./upload.service');
+    showNotification('success', '✅ Все стемы получены!');
+  }
+
+  // Fire-and-forget enrichment
+  try {
+    const track = await idb.getTrack(trackId);
+    if (track?.title) {
+      const { fetchCoverArtAndUpdate } = await import('./cover-art.service');
+      fetchCoverArtAndUpdate(trackId, track.title).catch(() => {});
+    }
+  } catch {
+    // enrichment is optional
+  }
+}
+
+/**
+ * Cancel and delete a MVSEP placeholder track.
+ * Used when user cancels processing or deletes failed placeholder.
+ */
+export async function cancelMvsepPlaceholder(trackId: number): Promise<void> {
+  const w = window as any;
+  const idb = w.idbService;
+  if (!idb) return;
+
+  await idb.deleteTrack(trackId);
+
+  document.dispatchEvent(
+    new CustomEvent('tracks-changed', {
+      detail: { source: 'mvsep-cancel' },
+    })
+  );
 }

@@ -61,6 +61,10 @@ export interface TrackRecord {
   lastModified: string;
   /** Guest or profile ID. null/undefined = guest tracks */
   userId?: string | null;
+  // MVSEP integration fields (optional, no DB migration needed)
+  mvsepStatus?: 'processing' | 'done' | 'failed' | 'timeout' | null;
+  mvsepHash?: string | null;
+  mvsepSubmittedAt?: string | null;
 }
 
 export interface UserRecord {
@@ -213,6 +217,17 @@ function _req<T>(request: IDBRequest<T>): Promise<T> {
 export async function getAllTracks(): Promise<TrackRecord[]> {
   const db = await _getDB();
   return _req(_tx(db, 'tracks').getAll());
+}
+
+/**
+ * Get all tracks that are currently being processed by MVSEP.
+ * Used for boot resume — resume orphaned jobs.
+ */
+export async function getMvsepProcessingTracks(): Promise<TrackRecord[]> {
+  const all = await getAllTracks();
+  return all.filter(
+    (t) => t.mvsepStatus === 'processing'
+  );
 }
 
 export async function getTrack(id: number): Promise<TrackRecord | undefined> {

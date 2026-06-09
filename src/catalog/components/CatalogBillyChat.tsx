@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { aiHub } from '../../js/ai/registry';
 import type { Message } from '../../js/ai/types';
+import { useAppStore } from '../../stores/app.store';
 import { getActiveSkill, buildSystemPrompt } from '../../billy/skill-registry';
 import { BillyMessageRenderer } from '../../billy/BillyMessageRenderer';
 
@@ -77,6 +78,34 @@ export function CatalogBillyChat() {
         }
         break;
       }
+      case 'mvsep-upload':
+        {
+          const input = document.getElementById('bl-smart-file-input') as HTMLInputElement;
+          if (input) {
+            input.accept = '.mp3,.wav,.flac,.ogg,.m4a,.aac,audio/*';
+            input.click();
+          }
+        }
+        return;
+
+      case 'open-mvsep-profile':
+        window.open('https://mvsep.com/profile', '_blank');
+        return;
+
+      case 'mvsep-api-key':
+        useAppStore.getState().setSurface('profile');
+        return;
+
+      case 'zip-upload':
+        {
+          const input = document.getElementById('bl-smart-file-input') as HTMLInputElement;
+          if (input) {
+            input.accept = '.zip';
+            input.click();
+          }
+        }
+        return;
+
       default:
         console.warn('[billy] Unknown action:', action);
     }

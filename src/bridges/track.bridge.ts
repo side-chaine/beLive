@@ -53,6 +53,7 @@ async function readTracksMetaFromIDB(): Promise<TrackMeta[]> {
         coverArtUrl: coverUrl,
         coverTheme: effectiveTheme || null,
         customBgUrl,
+        mvsepStatus: (t as any).mvsepStatus || null,
         index: i,
       };
     });

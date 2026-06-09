@@ -58,6 +58,7 @@ import { LoadingSplash } from './components/welcome/LoadingSplash';
 import { UserRoom } from './components/profile/UserRoom';
 import { useUIStore } from './stores/ui.store';
 import { useUserProfileStore } from './stores/user-profile.store';
+import { mvsepPollingService } from './services/mvsep-polling.service';
 export default function App() {
   const mode = useModeStore((s) => s.mode);
   const syncOpen = useSyncStore((s) => s.open);
@@ -93,6 +94,13 @@ export default function App() {
     const cleanupTakes = initTakesBridge();
     const cleanupExercise = initExerciseBridge();
     const cleanupMonitor = initMonitorBridge();
+
+    // MVSEP: Resume orphaned stem separation jobs after tab close
+    setTimeout(() => {
+      mvsepPollingService.resumeOrphanedJobs().catch((err) => {
+        console.error('[MVSEP] Boot resume failed:', err);
+      });
+    }, 2000); // Delay: IDB needs to be ready
 
     return () => {
       cleanupAudio();

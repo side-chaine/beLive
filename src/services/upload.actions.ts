@@ -11,6 +11,9 @@ import {
   clearFile as clearFileSvc,
   saveTrack as saveTrackSvc,
   handleZipFileSelect as handleZipFileSelectSvc,
+  createMvsepPlaceholder as createMvsepPlaceholderSvc,
+  completeMvsepTrack as completeMvsepTrackSvc,
+  cancelMvsepPlaceholder as cancelMvsepPlaceholderSvc,
 } from './upload.service';
 
 export function resetUploadSession(): void {
@@ -35,4 +38,22 @@ export function cancelUpload(): void {
 
 export function handleZipFileSelect(file: File, onProgress?: (pct: number) => void): Promise<void> {
   return handleZipFileSelectSvc(file, onProgress);
+}
+
+export async function createMvsepPlaceholder(
+  fileName: string,
+  hash: string
+): Promise<number> {
+  return createMvsepPlaceholderSvc(fileName, hash);
+}
+
+export async function completeMvsepTrack(
+  trackId: number,
+  stemsMap: Map<string, Blob>
+): Promise<void> {
+  return completeMvsepTrackSvc(trackId, stemsMap);
+}
+
+export async function cancelMvsepPlaceholder(trackId: number): Promise<void> {
+  return cancelMvsepPlaceholderSvc(trackId);
 }

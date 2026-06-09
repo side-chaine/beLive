@@ -7,6 +7,16 @@
 import { loadTrack as orchestrateLoadTrack } from './track.orchestrator';
 
 export function loadTrack(index: number, options?: { autoplay?: boolean; openSyncEditor?: boolean }): void {
+  // MVSEP guard: block playback for tracks still being processed
+  const tracks = getTracksArray();
+  const track = tracks[index];
+  if (track?.mvsepStatus && track.mvsepStatus !== 'done') {
+    const w = window as any;
+    if (w.showAppNotification) {
+      w.showAppNotification('⏳ Трек ещё обрабатывается. Дождитесь завершения.', 'info');
+    }
+    return;
+  }
   orchestrateLoadTrack(index, options ?? { autoplay: true, openSyncEditor: false });
 }
 
