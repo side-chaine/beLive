@@ -16,7 +16,7 @@ import {
 // ─── Constants ───────────────────────────────────────────────
 
 // Phase 1.5: CF Worker proxy (primary) + direct fallback (user key)
-const MVSEP_WORKER_URL = import.meta.env.VITE_MVSEP_WORKER_URL || '';
+const MVSEP_WORKER_URL = import.meta.env.VITE_MVSEP_WORKER_URL || 'https://belive-mvsep.nikitosss007.workers.dev';
 const MVSEP_API_TOKEN = import.meta.env.VITE_MVSEP_API_KEY || '';  // direct fallback only
 
 const MVSEP_RENDER_ID = 63;         // BS Roformer SW (6 stems)
