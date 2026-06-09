@@ -1,0 +1,11 @@
+name = "belive-mvsep"
+main = "index.js"
+compatibility_date = "2024-12-01"
+
+[vars]
+ALLOWED_ORIGINS = "https://app.mybelive.com,http://localhost:5173"
+
+[[kv_namespaces]]
+binding = "MVSEP_RATES"
+id = ""
+preview_id = ""

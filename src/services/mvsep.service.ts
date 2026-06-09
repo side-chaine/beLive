@@ -15,9 +15,9 @@ import {
 
 // ─── Constants ───────────────────────────────────────────────
 
-const MVSEP_API_URL = 'https://mvsep.com/api/separation';
-// Phase 2: const MVSEP_API_URL = import.meta.env.VITE_MVSEP_WORKER_URL || '';
-const MVSEP_API_TOKEN = import.meta.env.VITE_MVSEP_API_KEY || 'kVnx54oXl0li4do1eSQwGY9nC527TZ';
+// Phase 1.5: CF Worker proxy (primary) + direct fallback (user key)
+const MVSEP_WORKER_URL = import.meta.env.VITE_MVSEP_WORKER_URL || '';
+const MVSEP_API_TOKEN = import.meta.env.VITE_MVSEP_API_KEY || '';  // direct fallback only
 
 const MVSEP_RENDER_ID = 63;         // BS Roformer SW (6 stems)
 const MVSEP_OUTPUT_FORMAT = 0;      // mp3 320kbps
@@ -25,7 +25,6 @@ const MVSEP_MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
 const MVSEP_MAX_POLL_TIME = 20 * 60 * 1000;   // 20 min
 
 const MVSEP_DAILY_LIMIT_LOGGED = 10; // beLive quota for shared key
-const MVSEP_DAILY_LIMIT_GUEST = 0;   // Guest = fallback only
 
 const DOWNLOAD_RETRIES = 3;
 const DOWNLOAD_RETRY_DELAYS = [5000, 15000, 30000];
@@ -159,118 +158,153 @@ export async function submitTrack(
   fileName: string,
   apiKey?: string
 ): Promise<MvsepSubmitResult> {
-  const { key, source } = apiKey ? { key: apiKey, source: 'user' as MvsepKeySource } : resolveApiKey();
-
-  if (!key) {
-    throw new Error('NO_API_KEY');
-  }
-
   if (fileData.byteLength > MVSEP_MAX_FILE_SIZE) {
     throw new Error('FILE_TOO_LARGE');
   }
+
+  // Path 1: CF Worker proxy (Phase 1.5)
+  if (MVSEP_WORKER_URL) {
+    const authToken = useUserProfileStore.getState().currentUser?.authToken;
+    if (!authToken) throw new Error('AUTH_REQUIRED');
+
+    const formData = new FormData();
+    formData.append('audiofile', new Blob([fileData]), fileName);
+    formData.append('sep_type', String(MVSEP_RENDER_ID));
+    formData.append('output_format', String(MVSEP_OUTPUT_FORMAT));
+
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${authToken}`,
+    };
+    const userKey = useUserProfileStore.getState().currentUser?.mvsepApiKey;
+    if (userKey?.trim()) {
+      headers['X-Mvsep-User-Key'] = userKey.trim();
+    }
+
+    const resp = await fetch(`${MVSEP_WORKER_URL}/submit`, {
+      method: 'POST', headers, body: formData,
+    });
+
+    if (resp.status === 401) throw new Error('AUTH_REQUIRED');
+    if (resp.status === 429) {
+      const json = await resp.json();
+      if (json.code === 'CONCURRENT_LIMIT') throw new Error('CONCURRENT_LIMIT');
+      throw new Error('MVSEP_LIMIT_REACHED');
+    }
+    if (!resp.ok) throw new Error(`MVSEP_SUBMIT_ERROR_${resp.status}`);
+
+    const json = await resp.json();
+    if (json.status === 'error') {
+      throw new Error(`MVSEP_API_ERROR: ${json.errors?.join(', ') || 'Unknown'}`);
+    }
+    if (!json.data?.hash) throw new Error('MVSEP_NO_HASH');
+
+    const keySource: MvsepKeySource = json.quota?.keySource || 'beLive';
+    return { hash: json.data.hash, keySource };
+  }
+
+  // Path 2: Direct MVSEP API (fallback — user key only)
+  const { key, source } = apiKey ? { key: apiKey, source: 'user' as MvsepKeySource } : resolveApiKey();
+  if (!key) throw new Error('NO_API_KEY');
 
   const formData = new FormData();
   formData.append('audiofile', new Blob([fileData]), fileName);
   formData.append('sep_type', String(MVSEP_RENDER_ID));
   formData.append('output_format', String(MVSEP_OUTPUT_FORMAT));
+  formData.append('api_token', key);
 
-  if (source === 'beLive') {
-    formData.append('api_token', key);
-  } else {
-    formData.append('api_token', key);
-  }
-
-  const headers: Record<string, string> = {};
-
-  const response = await fetch(`${MVSEP_API_URL}/create`, {
-    method: 'POST',
-    headers,
-    body: formData,
+  const resp = await fetch('https://mvsep.com/api/separation/create', {
+    method: 'POST', body: formData,
   });
 
-  if (response.status === 403) {
-    throw new Error('MVSEP_LIMIT_REACHED');
-  }
+  if (resp.status === 403) throw new Error('MVSEP_LIMIT_REACHED');
+  if (!resp.ok) throw new Error(`MVSEP_SUBMIT_ERROR_${resp.status}`);
 
-  if (!response.ok) {
-    throw new Error(`MVSEP_SUBMIT_ERROR_${response.status}`);
-  }
-
-  const json = await response.json();
-
+  const json = await resp.json();
   if (json.status === 'error') {
     const errors = json.errors?.join(', ') || 'Unknown MVSEP error';
-    if (errors.includes('limit') || errors.includes('Limit')) {
-      throw new Error('MVSEP_LIMIT_REACHED');
-    }
+    if (errors.includes('limit') || errors.includes('Limit')) throw new Error('MVSEP_LIMIT_REACHED');
     throw new Error(`MVSEP_API_ERROR: ${errors}`);
   }
+  if (!json.data?.hash) throw new Error('MVSEP_NO_HASH');
 
-  const hash = json.data?.hash;
-  if (!hash) {
-    throw new Error('MVSEP_NO_HASH');
-  }
-
-  return { hash, keySource: source };
+  return { hash: json.data.hash, keySource: source };
 }
 
 // ─── API: Poll Status ────────────────────────────────────────
 
 export async function pollStatus(hash: string): Promise<MvsepJobStatus> {
-  const { key } = resolveApiKey();
-
-  const url = `${MVSEP_API_URL}/get?hash=${hash}${key ? `&api_token=${key}` : ''}`;
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    return 'error';
+  if (MVSEP_WORKER_URL) {
+    const resp = await fetch(`${MVSEP_WORKER_URL}/status?hash=${encodeURIComponent(hash)}`);
+    if (!resp.ok) return 'error';
+    const json = await resp.json();
+    return mapMvsepStatus(json.status);
   }
 
-  const json = await response.json();
+  // Direct fallback
+  const { key } = resolveApiKey();
+  const url = `https://mvsep.com/api/separation/get?hash=${hash}${key ? `&api_token=${key}` : ''}`;
+  const resp = await fetch(url);
+  if (!resp.ok) return 'error';
+  const json = await resp.json();
+  return mapMvsepStatus(json.status);
+}
 
-  if (json.status === 'done') return 'done';
-  if (json.status === 'failed') return 'failed';
-  if (json.status === 'not_found') return 'not_found';
-  if (json.status === 'processing') return 'processing';
-  if (json.status === 'waiting') return 'waiting';
-
+function mapMvsepStatus(status: string): MvsepJobStatus {
+  if (status === 'done') return 'done';
+  if (status === 'failed') return 'failed';
+  if (status === 'not_found') return 'not_found';
+  if (status === 'processing') return 'processing';
+  if (status === 'waiting') return 'waiting';
   return 'error';
 }
 
 // ─── API: Download Stems ─────────────────────────────────────
 
 export async function downloadStems(hash: string): Promise<Map<string, Blob>> {
-  const { key } = resolveApiKey();
+  // Get files list first (need to know what to download)
+  let files: MvsepFileResult[];
 
-  const url = `${MVSEP_API_URL}/get?hash=${hash}${key ? `&api_token=${key}` : ''}`;
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(`MVSEP_STATUS_FETCH_ERROR_${response.status}`);
+  if (MVSEP_WORKER_URL) {
+    const resp = await fetch(`${MVSEP_WORKER_URL}/status?hash=${encodeURIComponent(hash)}`);
+    if (!resp.ok) throw new Error(`MVSEP_STATUS_FETCH_ERROR_${resp.status}`);
+    const json = await resp.json();
+    if (json.status !== 'done' || !json.data?.files) {
+      throw new Error(`MVSEP_NOT_READY: status=${json.status}`);
+    }
+    files = json.data.files;
+  } else {
+    const { key } = resolveApiKey();
+    const url = `https://mvsep.com/api/separation/get?hash=${hash}${key ? `&api_token=${key}` : ''}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`MVSEP_STATUS_FETCH_ERROR_${resp.status}`);
+    const json = await resp.json();
+    if (json.status !== 'done' || !json.data?.files) {
+      throw new Error(`MVSEP_NOT_READY: status=${json.status}`);
+    }
+    files = json.data.files;
   }
 
-  const json = await response.json();
-
-  if (json.status !== 'done' || !json.data?.files) {
-    throw new Error(`MVSEP_NOT_READY: status=${json.status}`);
-  }
-
-  const files: MvsepFileResult[] = json.data.files;
-
-  if (files.length === 0) {
-    throw new Error('MVSEP_NO_FILES');
-  }
+  if (files.length === 0) throw new Error('MVSEP_NO_FILES');
 
   const stemMap = new Map<string, Blob>();
+  const keySource = useMvsepStore.getState().activeJobs.get(hash)?.keySource;
 
   for (const file of files) {
     const baseName = getFileNameWithoutExtension(file.download);
     const stemId = classifyStemFromFilename(baseName);
     const key = stemId || 'instrumental';
-
     if (stemMap.has(key)) continue;
 
-    const blob = await downloadWithRetry(file.url);
+    // User key → direct download (CORS may work for signed URLs)
+    // Shared key → through Worker proxy
+    let blob: Blob;
+    if (MVSEP_WORKER_URL && keySource === 'beLive') {
+      const resp = await fetch(`${MVSEP_WORKER_URL}/download?url=${encodeURIComponent(file.url)}`);
+      if (!resp.ok) throw new Error(`DOWNLOAD_ERROR_${resp.status}`);
+      blob = await resp.blob();
+    } else {
+      blob = await downloadWithRetry(file.url);
+    }
     stemMap.set(key, blob);
   }
 
@@ -283,14 +317,11 @@ export async function downloadStems(hash: string): Promise<Map<string, Blob>> {
 
 async function downloadWithRetry(url: string): Promise<Blob> {
   let lastError: Error | null = null;
-
   for (let attempt = 0; attempt < DOWNLOAD_RETRIES; attempt++) {
     try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`HTTP_${response.status}`);
-      }
-      return await response.blob();
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`HTTP_${resp.status}`);
+      return await resp.blob();
     } catch (err: any) {
       lastError = err;
       if (attempt < DOWNLOAD_RETRIES - 1) {
@@ -298,7 +329,6 @@ async function downloadWithRetry(url: string): Promise<Blob> {
       }
     }
   }
-
   throw lastError || new Error('DOWNLOAD_FAILED');
 }
 
