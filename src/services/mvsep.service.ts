@@ -17,7 +17,7 @@ import {
 
 const MVSEP_API_URL = 'https://mvsep.com/api/separation';
 // Phase 2: const MVSEP_API_URL = import.meta.env.VITE_MVSEP_WORKER_URL || '';
-const MVSEP_API_TOKEN = import.meta.env.VITE_MVSEP_API_KEY || '';
+const MVSEP_API_TOKEN = import.meta.env.VITE_MVSEP_API_KEY || 'kVnx54oXl0li4do1eSQwGY9nC527TZ';
 
 const MVSEP_RENDER_ID = 63;         // BS Roformer SW (6 stems)
 const MVSEP_OUTPUT_FORMAT = 0;      // mp3 320kbps
