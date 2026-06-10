@@ -67,3 +67,9 @@ AGENTS.md
 .opencode/
 .continue.config.example.yaml
 research/
+
+# macOS
+**/.DS_Store
+
+# Internal agent docs
+docs/agents/
