@@ -58,3 +58,12 @@ docs/architecture/.DS_Store
 .env
 .env.production.local
 ~/
+
+# Internal docs — not for public
+docs/archive/
+docs/ARCH-BASE.md
+docs/protocol-v2.1.md
+AGENTS.md
+.opencode/
+.continue.config.example.yaml
+research/
