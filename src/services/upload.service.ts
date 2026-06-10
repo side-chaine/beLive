@@ -696,7 +696,10 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
     // W7: Capture ZIP filename for overrideTitle (mvsep bundles)
     const zipFileName = file.name;
     const JSZip = (await import('jszip')).default;
-    const zip = await JSZip.loadAsync(await readFileAsArrayBuffer(file, onProgress));
+    const zip = await JSZip.loadAsync(
+      await readFileAsArrayBuffer(file, (pct) => onProgress?.(Math.round(pct * 0.30)))
+    );
+    onProgress?.(33);
 
     let instrumentalFile: File | null = null;
     let vocalFile: File | null = null;
@@ -715,6 +718,8 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
 
     // W6.1: Two-pass audio classification — collect first, then classify with priorities
     const audioFiles: Array<{ file: File; baseNameNoExt: string }> = [];
+    let processedEntries = 0;
+    const totalEntries = entries.length || 1;
 
     for (const { name, zipEntry } of entries) {
       const ext = getFileExtension(name);
@@ -760,6 +765,9 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
           jsonFile = new File([text], getBaseNameFromPath(name), { type: 'application/json' });
         }
       }
+
+      processedEntries++;
+      onProgress?.(33 + Math.round((processedEntries / totalEntries) * 37));
     }
 
     // W6.2: Residual classification — file with NO stem keyword = instrumental
@@ -920,7 +928,9 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
     // TC-29-09: Capture scenes before detachUploadSession() inside saveTrack()
     const sessionScenes = uploadSession.jsonScenes;
 
+    onProgress?.(75);
     await saveTrack();
+    onProgress?.(85);
 
     // ── TC-29-09: Import block scenes from ZIP ──
     let importedCount = 0;
@@ -934,6 +944,8 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
         const newTrackId = savedTrack?.id;
 
         if (newTrackId) {
+          let importedScenes = 0;
+          const totalScenes = sessionScenes.length || 1;
           for (const sceneMeta of sessionScenes) {
             try {
               const sceneZipEntry = zip.file(sceneMeta.file);
@@ -963,9 +975,11 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
                 addedAt: new Date().toISOString(),
               });
               importedCount++;
+              importedScenes++;
             } catch (sceneErr) {
               console.warn(`[SceneImport] Failed: block=${sceneMeta.blockIndex} line=${sceneMeta.lineIndex}`, sceneErr);
             }
+            onProgress?.(85 + Math.round((importedScenes / totalScenes) * 14));
           }
           console.log(`[SceneImport] Imported ${importedCount}/${sessionScenes.length} scenes for trackId=${newTrackId}`);
 

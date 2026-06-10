@@ -162,7 +162,6 @@ export function CatalogLayout({ color, onClose }: Props) {
       console.log('[ZIP] finally called, timedOut=', safetyTimedOut.current);
       clearTimeout(safetyTimer);
       if (!safetyTimedOut.current) {
-        setZipProgress(100);
         setTimeout(() => {
           setZipBusy(false);
           setZipProgress(0);
