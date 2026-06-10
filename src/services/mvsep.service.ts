@@ -294,23 +294,26 @@ export async function downloadStems(hash: string): Promise<Map<string, Blob>> {
   const stemMap = new Map<string, Blob>();
   const keySource = useMvsepStore.getState().activeJobs.get(hash)?.keySource;
 
-  for (const file of files) {
+  const downloadTasks = files.map(async (file) => {
     const baseName = getFileNameWithoutExtension(file.download);
     const stemId = classifyStemFromFilename(baseName);
     const key = stemId || 'instrumental';
-    if (stemMap.has(key)) continue;
-
-    // User key → direct download (CORS may work for signed URLs)
-    // Shared key → through Worker proxy
     let blob: Blob;
     if (MVSEP_WORKER_URL && keySource === 'beLive') {
-      const resp = await fetch(`${MVSEP_WORKER_URL}/download?url=${encodeURIComponent(file.url)}`);
-      if (!resp.ok) throw new Error(`DOWNLOAD_ERROR_${resp.status}`);
+      const resp = await fetch(
+        `${MVSEP_WORKER_URL}/download?url=${encodeURIComponent(file.url)}`
+      );
+      if (!resp.ok) throw new Error(`DOWNLOAD_ERROR_${resp.status}: ${key}`);
       blob = await resp.blob();
     } else {
       blob = await downloadWithRetry(file.url);
     }
-    stemMap.set(key, blob);
+    return { key, blob };
+  });
+
+  const results = await Promise.all(downloadTasks);
+  for (const { key, blob } of results) {
+    if (!stemMap.has(key)) stemMap.set(key, blob);
   }
 
   if (!stemMap.has('instrumental')) {
