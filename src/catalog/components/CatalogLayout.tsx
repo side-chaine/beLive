@@ -162,7 +162,11 @@ export function CatalogLayout({ color, onClose }: Props) {
       console.log('[ZIP] finally called, timedOut=', safetyTimedOut.current);
       clearTimeout(safetyTimer);
       if (!safetyTimedOut.current) {
-        setZipBusy(false);
+        setZipProgress(100);
+        setTimeout(() => {
+          setZipBusy(false);
+          setZipProgress(0);
+        }, 800);
       }
     }
   }, [zipBusy]);
@@ -462,7 +466,7 @@ export function CatalogLayout({ color, onClose }: Props) {
                 {[
                   { label: 'Чтение архива', threshold: 10 },
                   { label: 'Импорт треков', threshold: 90 },
-                  { label: 'Финализация', threshold: 100 },
+                  { label: 'Финализация', threshold: 95 },
                 ].map((phase, i) => {
                   const done = zipProgress > phase.threshold;
                   const active =
