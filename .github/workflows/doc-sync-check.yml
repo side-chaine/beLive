@@ -1,0 +1,60 @@
+name: Doc Sync Check
+on: [pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check MASTER-SYNC-REGISTRY.yaml exists
+        run: |
+          if [ ! -f docs/sync/MASTER-SYNC-REGISTRY.yaml ]; then
+            echo "❌ MASTER-SYNC-REGISTRY.yaml not found!"
+            exit 1
+          fi
+          echo "✅ MASTER-SYNC-REGISTRY.yaml exists"
+      
+      - name: Check for OPEN DOC-TC with P0/P1 priority
+        run: |
+          P0_COUNT=$(grep -c "priority: P0" docs/sync/MASTER-SYNC-REGISTRY.yaml 2>/dev/null || echo "0")
+          P1_COUNT=$(grep -c "priority: P1" docs/sync/MASTER-SYNC-REGISTRY.yaml 2>/dev/null || echo "0")
+          
+          if [ "$P0_COUNT" -gt 0 ] || [ "$P1_COUNT" -gt 0 ]; then
+            echo "⚠️  WARNING: Open DOC-TC with P0/P1 priority found!"
+            echo "   P0: $P0_COUNT"
+            echo "   P1: $P1_COUNT"
+            echo "   Action required before merge."
+          else
+            echo "✅ No critical DOC-TC items open"
+          fi
+      
+      - name: Check for CONFLICT status in registry
+        run: |
+          if grep -q "status: conflict" docs/sync/MASTER-SYNC-REGISTRY.yaml 2>/dev/null; then
+            echo "❌ CONFLICT status found in registry!"
+            grep -B2 "status: conflict" docs/sync/MASTER-SYNC-REGISTRY.yaml
+            exit 1
+          fi
+          echo "✅ No conflicts in registry"
+      
+      - name: Smoke test — changed domain matches registry
+        run: |
+          # Get changed files in src/
+          CHANGED=$(git diff --name-only origin/main...HEAD -- src/ 2>/dev/null || echo "")
+          if [ -z "$CHANGED" ]; then
+            echo "✅ No code changes — skipping domain check"
+            exit 0
+          fi
+          
+          # For each changed file, check if its domain is synced
+          for file in $CHANGED; do
+            DOMAIN=$(echo "$file" | grep -oE "src/(audio|sync|billy|exercises|takes|stem|triggers|performance)" | head -1 || echo "")
+            if [ -n "$DOMAIN" ]; then
+              STATUS=$(grep -A5 "path:.*$DOMAIN" docs/sync/MASTER-SYNC-REGISTRY.yaml | grep "status:" | head -1 || echo "")
+              if echo "$STATUS" | grep -q "needs_update"; then
+                echo "⚠️  Warning: $file changed but $DOMAIN docs are needs_update"
+              fi
+            fi
+          done
+          echo "✅ Domain check passed"

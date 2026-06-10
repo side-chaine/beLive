@@ -15,7 +15,7 @@ beLive ZIP is the portable track format. A single ZIP file contains everything n
 
 - **Self-contained:** No network required after import
 - **Backward compatible:** Old ZIPs (without new fields) import gracefully
-- **Functional roundtrip:** Export → Import preserves audio, lyrics, sync markers, blocks, and cover art. Fields NOT preserved: `stemsMode`, `stemDisplayOrder`, `stemAutomation`, `trackMeta`, `transitionPreset`, `dataVersion`.
+- **Functional roundtrip:** Export → Import preserves audio, lyrics, sync markers, blocks, cover art, scenes, and backgrounds. Fields NOT preserved: `stemsMode`, `stemDisplayOrder`, `stemAutomation`, `trackMeta`, `transitionPreset`, `dataVersion`.
 - **Offline-first:** Cover art stored as binary, not URL reference
 
 ---
@@ -36,7 +36,13 @@ track-name.zip
 │
 ├── lyrics.txt                       # Clean lyrics text (no tags)
 ├── cover.jpg / cover.png           # Cover art binary (JPEG or PNG, detected by extension, STORE)
-├── export.json                      # Track metadata + sync data
+├── backgrounds/                     # Custom background image (optional, TC-CBG-07)
+│   └── bg_01.jpg / bg_01.png
+├── scenes/                          # Block scenes — per-block images (optional, TC-29-09)
+│   ├── 0.jpg                        # scene: blockIndex=0, lineIndex=null
+│   ├── 0_2.jpg                      # scene: blockIndex=0, lineIndex=2
+│   └── 1.jpg
+├── export.json                      # Track metadata + sync data + scenes/backgrounds metadata
 └── alignment.json                   # Word-sync alignment (optional)
 ```
 
@@ -66,7 +72,13 @@ track-name.zip
     "isDark": true,
     "text": "#ffffff"
   },
-  "lyricsOriginalContent": "[Verse 1]\nI'm waking up to ash and dust\n\n[Chorus]\nThis is how we rise..."
+  "lyricsOriginalContent": "[Verse 1]\nI'm waking up to ash and dust\n\n[Chorus]\nThis is how we rise...",
+  "backgrounds": [
+    { "file": "backgrounds/bg_01.jpg", "trackId": 1234567890 }
+  ],
+  "scenes": [
+    { "blockIndex": 0, "lineIndex": null, "file": "scenes/0.jpg", "theme": { "primary": "#1a1a2e", "secondary": "#16213e", "accent": "#e94560", "isDark": true } }
+  ]
 }
 ```
 
@@ -84,6 +96,8 @@ track-name.zip
 | `coverArtUrl` | string | ❌ | Original HTTP URL (fallback, NOT "cover.jpg") |
 | `coverTheme` | object | ❌ | Extracted dominant colors |
 | `lyricsOriginalContent` | string | ❌ | Original text with [Verse]/[Chorus] tags for LRC Picker |
+| `backgrounds` | array | ❌ | Custom background metadata — `[{file, trackId}]` (TC-CBG-07) |
+| `scenes` | array | ❌ | Block scenes metadata — `[{blockIndex, lineIndex, blockId?, file, theme}]` (TC-29-09) |
 
 ---
 
@@ -101,13 +115,23 @@ track-name.zip
    b. Else if coverArtUrl is HTTP → fetch → blob → zip.file('cover.jpg')
    c. Also save fetched blob to IDB for future exports
    d. export.json gets ORIGINAL HTTP URL (not "cover.jpg")
-6. Build exportData object:
+6. Add scenes (block-scene images):
+   a. Load blockScenes from IDB (getBlockScenes())
+   b. For each scene → zip.file(`scenes/${file}`, blob)
+   c. export.json.scenes[] = scene metadata
+7. Add backgrounds (custom background images):
+   a. Load custom background from IDB
+   b. If exists → zip.file(`backgrounds/${file}`, blob)
+   c. export.json.backgrounds[] = background metadata
+8. Build exportData object:
    - coverArtUrl = original HTTP URL (fallback)
    - lyricsOriginalContent = full text with structural tags
-7. Add export.json
-8. Add alignment.json (if available)
-9. Generate ZIP with streaming + progress
-10. Download
+   - scenes = blockScenes metadata array
+   - backgrounds = background metadata array
+9. Add export.json
+10. Add alignment.json (if available)
+11. Generate ZIP with streaming + progress
+12. Download
 ```
 
 ### Key Design Decisions
@@ -134,24 +158,34 @@ track-name.zip
    - 'instrumental' → uploadSession.instrumental
    - 'vocal' → uploadSession.vocal
    - 'lyrics' → uploadSession.lyrics
-   - 'json' → parse export.json:
-     • markers → uploadSession.jsonMarkers
-     • blocks → uploadSession.jsonTextBlocks
-     • lyricsHash → uploadSession.lyricsHash
-     • coverArtUrl → uploadSession.coverArtUrl
-     • coverTheme → uploadSession.coverTheme
-     • lyricsOriginalContent → uploadSession.lyricsOriginalContent
+    - 'json' → parse export.json:
+      • markers → uploadSession.jsonMarkers
+      • blocks → uploadSession.jsonTextBlocks
+      • lyricsHash → uploadSession.lyricsHash
+      • coverArtUrl → uploadSession.coverArtUrl
+      • coverTheme → uploadSession.coverTheme
+      • lyricsOriginalContent → uploadSession.lyricsOriginalContent
+      • scenes[] → uploadSession.jsonScenes (optional, TC-29-09)
+      • backgrounds[] → uploadSession.jsonBackgrounds (optional, TC-CBG-07)
 5. Extract cover.jpg/png from ZIP:
    - zip.file('cover.jpg') → arraybuffer → Blob with MIME type
    - uploadSession.coverArtBlob = Blob
-6. saveTrack():
+6. Extract scenes/ from ZIP (optional):
+   - zip.folder('scenes') → iterate files → Blob per scene
+   - uploadSession.sceneBlobs = Map<filename, Blob>
+7. Extract backgrounds/ from ZIP (optional):
+   - zip.folder('backgrounds') → iterate files → Blob per background
+   - uploadSession.backgroundBlobs = Map<filename, Blob>
+8. saveTrack():
    - All session data → trackData → IDB
    - Cover art: coverArtUrl + coverArtBlob + coverTheme
    - Lyrics: lyrics + lyricsOriginalContent
    - Sync: syncMarkers + blocksData + lineMap + alignmentData
-7. Skip API if coverArtBlob || coverArtUrl
-8. Apply theme synchronously
-9. loadTrackIntoApp()
+   - Scenes: jsonScenes + sceneBlobs → IDB blockScenes store
+   - Backgrounds: jsonBackgrounds + backgroundBlobs → IDB backgrounds store
+9. Skip API if coverArtBlob || coverArtUrl
+10. Apply theme synchronously
+11. loadTrackIntoApp()
 ```
 
 ### Cover Art Import Priority
@@ -251,11 +285,12 @@ Without `lyricsOriginalContent`, LRC Picker returns `blocks=[]` → existing blo
 
 ## 8. Backward Compatibility
 
-| ZIP Version | Has cover.jpg? | Has coverArtUrl? | Has lyricsOriginalContent? | Import Behavior |
-|-------------|---------------|-----------------|--------------------------|----------------|
-| Pre-W12 | ❌ | ❌ | ❌ | Fetch cover from API |
-| W12 early | ❌ | ✅ HTTP URL | ❌ | Use URL, fetch blob lazily |
-| Current | ✅ | ✅ HTTP URL | ✅ | Full offline, blocks preserved |
+| ZIP Version | Has cover.jpg? | Has coverArtUrl? | Has lyricsOriginalContent? | Has scenes/backgrounds? | Import Behavior |
+|-------------|---------------|-----------------|--------------------------|------------------------|----------------|
+| Pre-W12 | ❌ | ❌ | ❌ | ❌ | Fetch cover from API |
+| W12 early | ❌ | ✅ HTTP URL | ❌ | ❌ | Use URL, fetch blob lazily |
+| W12 current | ✅ | ✅ HTTP URL | ✅ | ❌ | Full offline, blocks preserved |
+| W13+ (current) | ✅ | ✅ HTTP URL | ✅ | ✅ | Full offline + scenes + backgrounds |
 
 ---
 
@@ -266,13 +301,14 @@ Without `lyricsOriginalContent`, LRC Picker returns `blocks=[]` → existing blo
 | `src/sync/components/SyncEditorPanel.tsx` | ZIP export + LRC Picker |
 | `src/services/upload.service.ts` | ZIP import |
 | `src/services/cover-art.service.ts` | Cover art fetch + blob save |
-| `src/services/idb.service.ts` | IDB schema (coverArtBlob field) |
+| `src/services/idb.service.ts` | IDB schema (coverArtBlob field, blockScenes store) |
+| `src/services/block-scene.service.ts` | Block scenes load/save from IDB |
 | `src/bridges/track.bridge.ts` | Blob → Object URL hydration |
 | `src/bridges/cover-theme.bridge.ts` | Theme hydration from IDB |
 | `src/components/CoverArt.tsx` | UI component (img + fallback) |
 
 ---
 
-**Last updated:** 2026-04-22
+**Last updated:** 2026-06-10
 **Status:** Production-ready
 **See also:** `block-first-lyrics-sync.md`, `architecture-map-2.1.md`

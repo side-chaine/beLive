@@ -222,7 +222,7 @@ When `hasBlockScenes = true`:
 .overlay (fixed, below header)
   └── .modal (98vw × calc(100vh - header - 16px))
        ├── .topBar
-       │    ├── .tabs [Scenes | Custom] + packProgress indicator
+        │    ├── .tabs [Scenes | Custom] + packProgress indicator ⚠️ PLANNED — Custom tab UI not yet implemented
        │    └── .topActions [Upload Pack btn] + [Done btn]
        ├── .trackMap (flex row, scroll, align-items: flex-start)
        │    ├── .blockColumn × N (flex: 1 1 auto, border-bottom colored)
@@ -436,7 +436,7 @@ When hasBlockScenes=true, pexels should only change on block change. Currently i
 ### 11.4 Mode switch loses scenes (pre-existing)
 Switching rehearsal → concert → rehearsal loses sceneMap because `stop()` clears it. No `block-scenes-loaded` fires on mode return.  
 **Workaround:** Manually trigger preload or switch tracks.  
-**Proper fix:** Export `triggerScenePreload(trackId)` from block-scene.service and call from useBackgroundManagers on mode→rehearsal.
+**Proper fix:** Export `triggerScenePreload(trackId)` from block-scene.service and call from useBackgroundManagers on mode→rehearsal. ⚠️ NOT IMPLEMENTED — function does not exist in current code
 
 ### 11.5 Unnecessary crossfade after softReload
 When softReload creates new Object URLs for identical visual content, fingerprint matches and unchanged path avoids crossfade. However, if fingerprint changes (CRUD on another block), the current block may crossfade to the same visual. This is documented as acceptable — content-hash comparison is overkill.

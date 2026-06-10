@@ -63,6 +63,7 @@ docs/architecture/.DS_Store
 docs/archive/
 docs/ARCH-BASE.md
 docs/protocol-v2.1.md
+docs/sync/
 AGENTS.md
 .opencode/
 .continue.config.example.yaml

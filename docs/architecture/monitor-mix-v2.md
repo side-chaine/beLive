@@ -61,11 +61,11 @@ Context varies (rehearsal room, stage, home). Workflow stays one.
 ### Ownership model
 
 ```
-React UI (MonitorMixPanel — dock panel, 327 lines TSX)
+React UI (MonitorMixPanel — dock panel, 919 lines TSX — includes inlined CalibrationDrum, DualAutoMixRow, ToggleSliderRow)
   ↓
-useMonitorStore (Zustand, 391 lines)
+useMonitorStore (Zustand, 474 lines)
   ↓
-monitor.bridge.ts (hydration + event sync, 142 lines)
+monitor.bridge.ts (hydration + event sync, 166 lines)
   ↓
 window.monitorMix (MonitorMix class, js/monitor-mix.js, ~420 lines)
   ↓
@@ -90,7 +90,7 @@ Physical audio outputs (headphones + speakers)
 
 - Dock tab ID: `'monitor'` (internal)
 - Dock tab label: `'Split'` (user-facing)
-- Panel: lazy-loaded, 4-column grid (Route | Line Up | Auto Mix)
+- Panel: lazy-loaded, 3-column grid (Route | Line Up | Auto Mix). Mix column was inlined into Route column — "Music with me" toggle lives inside Route.
 - No modal. No overlay. Dock-owned only.
 
 ---
@@ -312,7 +312,7 @@ if (type.includes('outro'))   → autoOutroLevel
 
 ## 9. Store / Bridge / Panel Contract
 
-### monitor.store.ts (391 lines)
+### monitor.store.ts (474 lines)
 
 **Engine-mirrored state (synced via bridge):**
 - `enabled`, `routeMainEnabled`, `includeMusic`, `musicLevel`
@@ -335,7 +335,7 @@ if (type.includes('outro'))   → autoOutroLevel
 - `setBackVocalMaster` — groups all BV blocks ON/OFF (UI-only)
 - `setBackVocalMasterLevel` — stores value only, delta applied in TSX
 
-### monitor.bridge.ts (142 lines)
+### monitor.bridge.ts (166 lines)
 
 **Bridge role:** hydration of legacy `window.monitorMix` with v2.0 state functions + event sync.
 
@@ -359,7 +359,7 @@ setDelayMs
 
 **Retry:** 30 attempts × 200ms = 6 seconds max.
 
-### MonitorMixPanel.tsx (327 lines)
+### MonitorMixPanel.tsx (919 lines — inlined CalibrationDrum, DualAutoMixRow, ToggleSliderRow)
 
 **Sub-components:**
 - `DualAutoMixRow` — dual-lane row per block (lines 245-299)
@@ -370,7 +370,7 @@ setDelayMs
 splitActive    = st.enabled && st.routeMainEnabled
 mixActive      = splitActive && st.includeMusic
 autoMixActive  = st.autoVerseOn || st.autoChorusOn || ... (any of 6)
-backVocalActive = st.backVocalMasterOn || any BV block On
+backVocalActive = any BV block On (individual backVocal block states; backVocalMasterOn sets all individual states, so functional behavior is equivalent)
 ```
 
 ---

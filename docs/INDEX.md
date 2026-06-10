@@ -1,31 +1,41 @@
 # 📚 beLive Documentation Index
 
-> Last updated: 2026-04-27
+> **Last updated:** 2026-06-10
+> ⚠️ **SOURCE OF TRUTH for doc sync status:** `docs/sync/MASTER-SYNC-REGISTRY.yaml`
+> **Human-readable registry:** `docs/sync/MASTER-SYNC-REGISTRY.md`
 
-## 🏛️ Architecture (frozen decisions)
+## 🏛️ Architecture (docs/architecture/)
 
 | Document | Description |
 |----------|-------------|
-| [architecture-map-2.1](architecture/architecture-map-2.1.md) | Master architecture map — ownership, invariants, seams |
-| [interaction-schema-2.1](architecture/interaction-schema-2.1.md) | Runtime interaction topology — who talks to whom |
-| [ARCH-BASE](architecture/ARCH-BASE.md) | Base architecture principles |
+| [architecture-map-2.1](architecture/architecture-map-2.1.md) | Master architecture map — ownership, invariants, seams ✅ v2.2 Complete |
 | [audio-engine](architecture/audio-engine.md) | AudioEngineV2 + transport + stem system |
+| [auth-system](architecture/auth-system.md) | Google OAuth, Guest Mode, JWT |
+| [billi-ai-expert-system](architecture/billi-ai-expert-system.md) | AI Expert System + Billy v2 FSM |
 | [block-first-lyrics-sync](architecture/block-first-lyrics-sync.md) | Block-first sync algorithm |
+| [block-scenes-editor](architecture/block-scenes-editor.md) | Block scenes editor |
 | [control-surface-semantics](architecture/control-surface-semantics.md) | Control surface contracts |
+| [dock-standard](architecture/dock-standard.md) | Dock/ControlDeck standard |
 | [exercises-system](architecture/exercises-system.md) | Exercise quest layer + recipes |
+| [interaction-schema-2.1](architecture/interaction-schema-2.1.md) | Runtime interaction topology ✅ v2.2 Complete |
 | [marker-system-spec](architecture/marker-system-spec.md) | M1/M2 marker system |
 | [monitor-mix-v2](architecture/monitor-mix-v2.md) | Monitor mix architecture |
 | [n-stem-architecture](architecture/n-stem-architecture.md) | N-stem loading + bus architecture |
 | [performance-quality-system](architecture/performance-quality-system.md) | Performance tiers + budgets |
 | [practice-experience-layer](architecture/practice-experience-layer.md) | Practice surface architecture |
 | [reactive-lyrics-foundation](architecture/reactive-lyrics-foundation.md) | Trigger/scheduler/word FX |
-| [recording-capture-system-research](architecture/recording-capture-system-research.md) | Recording system research |
-| [scenario-stage-state-model](architecture/scenario-stage-state-model.md) | Scenario state machine |
+| [scenario-stage-state-model](architecture/scenario-stage-state-model.md) | Scenario state machine 🗄️ STALE |
+| [show-architecture](architecture/show-architecture.md) | Show architecture ✅ v2.2 Sub-Slide |
+| [slot-matrix-system-v2.2](architecture/slot-matrix-system-v2.2.md) | Slot matrix system |
 | [styles-system](architecture/styles-system.md) | Style intent + recipes |
 | [sync-system](architecture/sync-system.md) | Two-layer sync architecture |
 | [takes-system](architecture/takes-system.md) | Takes recording + comparison |
+| [track-loading-pipeline](architecture/track-loading-pipeline.md) | Track loading pipeline |
+| [track-meta-pipeline](architecture/track-meta-pipeline.md) | Track metadata pipeline |
 | [w11-visual-boot-theming](architecture/w11-visual-boot-theming.md) | Visual boot + cover theming |
 | [zip-pipeline](architecture/zip-pipeline.md) | ZIP export/import roundtrip |
+
+> **Superseded:** `architecture-map-2.2.md` (merged) · `interaction-schema-2.2.md` (merged) | See `docs/architecture/`
 
 ## 📖 Guides
 
@@ -33,41 +43,28 @@
 |----------|-------------|
 | [Onboarding Route 2.1](guides/Onboarding%20Route%202.1.md) | New specialist entry path |
 
-## 🎯 Decisions (ADR)
+## 📊 Sync & Governance
 
 | Document | Description |
 |----------|-------------|
-| [track-load-optimization-dec-01-02](decisions/track-load-optimization-dec-01-02.md) | ADR: skipDecode + instrumentation fix |
+| [MASTER-SYNC-REGISTRY.yaml](sync/MASTER-SYNC-REGISTRY.yaml) | **SOURCE OF TRUTH** — doc sync status, 28 docs |
+| [MASTER-SYNC-REGISTRY.md](sync/MASTER-SYNC-REGISTRY.md) | Human-readable registry view |
+| [DOC-TC-BACKLOG.yaml](sync/DOC-TC-BACKLOG.yaml) | Open documentation tasks backlog |
+| [DOMAIN-OWNERSHIP.yaml](governance/DOMAIN-OWNERSHIP.yaml) | Domain owner/keeper table |
+| [DOC-SYNC-FINAL-REPORT.md](sync/DOC-SYNC-FINAL-REPORT.md) | Full transformation report |
+| [ARCH-BASE.md](ARCH-BASE.md) | Base architecture principles (agent context) |
+| [BILI-CONTEXT.md](BILI-CONTEXT.md) | Product Manager context |
+| [auth-system-freeze.md](auth-system-freeze.md) | Auth system snapshot (historical) |
+| [protocol-v2.1.md](protocol-v2.1.md) | Agent protocol (canonical in Belive-Agents/) |
 
-## 📚 Reference
+## 📋 Связанное (вне docs/)
 
-| Document | Description |
-|----------|-------------|
-| [BELIVE-HUB](reference/BELIVE-HUB.md) | Project overview hub |
-| [P0-RECORDING-CAPTURE](reference/P0-RECORDING-CAPTURE.md) | P0 ship blocker: recording capture |
-| [P0-TEMPO-RATE](reference/P0-TEMPO-RATE.md) | P0 ship blocker: tempo rate |
-| [SHIP-READINESS](reference/SHIP-READINESS.md) | Release readiness tracker |
-| [responsiveness-recovery](reference/responsiveness-recovery.md) | Recovery procedures |
-| [sync-accuracy-roadmap](reference/sync-accuracy-roadmap.md) | Sync accuracy improvement roadmap |
-| [tempo-scenario-current-truth](reference/tempo-scenario-current-truth.md) | Tempo system current state |
+| Ресурс | Путь | Описание |
+|--------|------|----------|
+| Agent charters | `~/Desktop/Belive-Agents/` | 007, 009, Operator, protocol, bootstrap |
+| Agent state | `~/Desktop/beLive_Context/` | 000-FULL-BASE.md, MACRO/MICRO packs |
+| Governance | `docs/governance/agent-governance-map.md` | Agent governance map |
 
-## 🗃️ Archive (historical)
+---
 
-| Document | Description |
-|----------|-------------|
-| [BILI-CONTEXT](archive/BILI-CONTEXT.md) | Context for Billi agent |
-| [Pitch-Integration-Report](archive/Pitch-Integration-Report.md) | Pitch integration (completed) |
-| [README (dock1.0)](archive/README.md) | Obsidian vault README (legacy) |
-| [audit-docs-vs-code](archive/audit-docs-vs-code.md) | One-time doc audit |
-| [checkpoint-reactive-lyrics-v1](archive/checkpoint-reactive-lyrics-v1.md) | Reactive lyrics checkpoint |
-| [optimization-wave-1](archive/optimization-wave-1.md) | Wave 1 optimization report |
-| [quest-authoring-flow](archive/quest-authoring-flow.md) | Quest authoring (concept freeze) |
-| [quest-entry-surface](archive/quest-entry-surface.md) | Quest entry (concept freeze) |
-| [quest-persistence-sharing-contract](archive/quest-persistence-sharing-contract.md) | Quest contract (concept freeze) |
-| [quest-scenario-roadmap](archive/quest-scenario-roadmap.md) | Quest roadmap (historical) |
-| [quest-scenario-system](archive/quest-scenario-system.md) | Quest system (concept freeze) |
-| [research-council-verdict](archive/research-council-verdict.md) | Research council verdict |
-| [scene-engine-vision](archive/scene-engine-vision.md) | Scene engine vision (future) |
-| [split-working-map](archive/split-working-map.md) | Working map (superseded by architecture-map) |
-| [W11-W12-CONTEXT-TRANSFER](archive/W11-W12-CONTEXT-TRANSFER.md) | W11-W12 migration context |
-| [W11-W12-FULL-CONTEXT](archive/W11-W12-FULL-CONTEXT.md) | W11-W12 full context |
+*INDEX — навигационный файл. Для статуса синхронизации см. MASTER-SYNC-REGISTRY.yaml.*

@@ -2,9 +2,9 @@
 
 > **⚠️ This document is a domain-specific reference. For the complete current architecture, see [Architecture Map 2.1](./architecture-map-2.1.md).**
 
-**Status:** Architecture freeze candidate  
+**Status:** As-Built (v1.0)  
 **Owner:** Center1.1 + Performance Architect  
-**Last updated:** 2026-03-13  
+**Last updated:** 2026-06-10  
 **Related:** `audio-engine.md`, `sync-system.md`, `reactive-lyrics-foundation.md`, `styles-system.md`
 
 ---
@@ -118,15 +118,19 @@ The strongest ownership root is:
 src/performance/
 ```
 
-### Proposed structure
+### Current structure
 ```text
 src/performance/
 ├── performance.types.ts
 ├── performance.store.ts
 ├── performance.presets.ts
+├── performance.detect.ts
 ├── performance.hooks.ts
 ├── performance.bridge.ts
-└── performance.detect.ts
+├── performance.clamp.ts
+├── performance.recording.ts
+├── performance.store.test.ts
+└── performance.clamp.test.ts
 ```
 
 ### Ownership split
@@ -194,6 +198,18 @@ Characteristics:
 - strongest reactive scene behavior
 
 Ultra should not be the default.
+
+### 6.5 Performance Hooks
+
+The following React hooks expose performance policy to consumers:
+
+| Hook | Returns | Purpose |
+|------|---------|---------|
+| `usePerformanceTier()` | `PerformanceTier` | Current active tier |
+| `useVisualBudget()` | `VisualBudget` | Visual richness budget for current tier |
+| `useRendererBudget()` | `RendererBudget` | Renderer-specific budget limits |
+| `useAudioBudget()` | `AudioBudget` | Audio-reactive visualization budget |
+| `usePerformanceEffect()` | `void` | Side-effect triggered on tier change |
 
 ---
 
@@ -326,7 +342,32 @@ This should be persisted as user preference.
 
 ---
 
-## 12. Rendering Strategy
+## 12. Playback Visual Scheduler
+
+Система `src/playback/` — общий rAF coordinator:
+
+- `playback-visual-scheduler.ts` — Shared rAF loop
+- `playback-visual-runtime.ts` — Runtime helpers
+- `playback-visual.types.ts` — Frame context types
+
+Участники scheduler (зарегистрированы):
+- trigger.bridge
+- performance.bridge
+- stem-reactive.bridge
+- billy.bridge
+
+---
+
+## 13. VisualMixer Pipeline
+
+CSS var-based reactive pipeline:
+
+- `stem-reactive.bridge.ts` — per-stem CSS vars
+- `audio-reactive.bridge.ts` — frequency analysis → CSS vars
+
+---
+
+## 14. Rendering Strategy
 
 The strongest rendering strategy is:
 
@@ -344,33 +385,33 @@ It:
 
 ---
 
-## 13. Anti-Patterns
+## 15. Anti-Patterns
 
 Do not do any of the following:
 
-### 13.1 Do not put performance tier inside `textStyle.store`
+### 15.1 Do not put performance tier inside `textStyle.store`
 That would mix creative intent with device/runtime policy.
 
-### 13.2 Do not put performance tier inside the theme system
+### 15.2 Do not put performance tier inside the theme system
 Theme = identity. Performance = budget.
 
-### 13.3 Do not let performance change timing truth
+### 15.3 Do not let performance change timing truth
 No transport changes.
 No trigger changes.
 No cue/fill semantic changes.
 
-### 13.4 Do not create a giant bag of booleans
+### 15.4 Do not create a giant bag of booleans
 Use coherent tier policies, not dozens of per-effect flags.
 
-### 13.5 Do not hide performance controls inside Styles Console
+### 15.5 Do not hide performance controls inside Styles Console
 Wrong user mental model.
 
-### 13.6 Do not make aggressive live auto-switching the first release
+### 15.6 Do not make aggressive live auto-switching the first release
 Stable user-selected tiers are stronger than unpredictable visual changes mid-song.
 
 ---
 
-## 14. Phased Rollout
+## 16. Phased Rollout
 
 ### Phase P0
 Document and freeze architecture
@@ -402,7 +443,7 @@ Expand into:
 
 ---
 
-## 15. Strategic Interpretation
+## 17. Strategic Interpretation
 
 The performance / quality system is not a small option menu.
 
@@ -417,6 +458,6 @@ This is a foundational architecture step.
 
 ---
 
-## 16. One-Line Summary
+## 18. One-Line Summary
 
 **beLive performance tiers must become a first-class runtime policy system that controls visual richness while leaving timing truth completely untouched.**

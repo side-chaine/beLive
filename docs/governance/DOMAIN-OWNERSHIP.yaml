@@ -1,0 +1,148 @@
+# ═══════════════════════════════════════════════
+# 🏷️ DOMAIN OWNERSHIP — beLive Architecture
+# ═══════════════════════════════════════════════
+# Owner — решает ЧТО должно быть в домене
+# Keeper — следит ЧТОБЫ документация = код
+# DOC-TC — кто инициирует задачу на обновление доки
+#
+# Generated: 2026-06-10
+
+domains:
+  # ── CORE ──
+  - domain: audio-engine
+    path: docs/architecture/audio-engine.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: sync-system
+    path: docs/architecture/sync-system.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: auth-system
+    path: docs/architecture/auth-system.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  # ── AI ──
+  - domain: billi-ai
+    path: docs/architecture/billi-ai-expert-system.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  # ── UX ──
+  - domain: show
+    path: docs/architecture/show-architecture.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: dock
+    path: docs/architecture/dock-standard.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: control-surface
+    path: docs/architecture/control-surface-semantics.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  # ── DOMAINS ──
+  - domain: takes
+    path: docs/architecture/takes-system.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: exercises
+    path: docs/architecture/exercises-system.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: markers
+    path: docs/architecture/marker-system-spec.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: practice
+    path: docs/architecture/practice-experience-layer.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: slot-matrix
+    path: docs/architecture/slot-matrix-system-v2.2.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: monitor
+    path: docs/architecture/monitor-mix-v2.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: stem
+    path: docs/architecture/n-stem-architecture.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: scenes
+    path: docs/architecture/block-scenes-editor.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  # ── PIPELINES ──
+  - domain: track-loading
+    path: docs/architecture/track-loading-pipeline.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: track-meta
+    path: docs/architecture/track-meta-pipeline.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: zip
+    path: docs/architecture/zip-pipeline.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: performance
+    path: docs/architecture/performance-quality-system.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  # ── THEME ──
+  - domain: theme
+    path: docs/architecture/w11-visual-boot-theming.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  # ── GOVERNANCE ──
+  - domain: governance
+    path: "~/Desktop/Belive-Agents/"
+    owner: "007"
+    keeper: "009"
+    doc_tc_initiator: "009"
+
+  - domain: registry
+    path: docs/sync/MASTER-SYNC-REGISTRY.yaml
+    owner: "007"
+    keeper: "009"
+    doc_tc_initiator: "009"

@@ -1,7 +1,8 @@
 # Scenario Stage-State Runtime Model
 
-**Status:** Concept Freeze + Partial Proof (Tempo Scenario working implementation)  
-**Last Updated:** 2026-04-06  
+**Status:** 🗄️ STALE / ARCHIVED CONCEPT  
+**Reason:** Code implemented action-based 3-phase model via `practice-session.store.ts`, not the StageState model described here. See `practice-experience-layer.md` for current implementation.  
+**Last Updated:** 2026-04-06 (archived 2026-06-10)  
 **Related Docs:** [quest-scenario-system.md](./quest-scenario-system.md), [practice-experience-layer.md](./practice-experience-layer.md), [takes-system.md](./takes-system.md), [tempo-scenario-current-truth.md](./tempo-scenario-current-truth.md)
 
 ---

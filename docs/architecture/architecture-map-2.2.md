@@ -1,11 +1,13 @@
-# Архитектурная Карта beLive 2.2 (Delta)
+# Архитектурная Карта beLive (Superseded)
 
-**Status:** Delta — дополнение к v2.1  
-**Version:** 2.2  
-**Date:** 2026-06-07  
-**Based on:** architecture-map-2.1.md + code recon of new auth/welcome/guest/AI systems
-
-> ⚠️ **Читать после architecture-map-2.1.md.** Этот документ описывает только то, что добавилось/изменилось в v2.2.
+> **⛔ SUPERSEDED**
+>
+> Этот документ был дельтой к architecture-map-2.1.md.
+> Содержимое мержнуто в единую architecture-map-2.1.md (теперь версия 2.2).
+>
+> **Актуальный файл:** `docs/architecture/architecture-map-2.1.md`
+>
+> Сохранён для истории изменений. Не читать как источник истины.
 
 ---
 
@@ -51,7 +53,7 @@ switch (surface) {
 | Файл | Назначение |
 |------|-----------|
 | `src/stores/app.store.ts` | Surface state + authChecked |
-| `src/components/app/App.tsx` | Surface switch gate |
+| `src/App.tsx` | Surface switch gate |
 | `src/components/welcome/WelcomePage.tsx` | Surface welcome |
 | `src/components/welcome/WelcomePage.css` | Стили welcome |
 | `src/components/welcome/LoadingSplash.tsx` | Сплаш для auth-check |
@@ -177,9 +179,7 @@ Guest-режим — архитектурный принцип. Пользова
 class BeliveProvider implements AIProvider {
   id = 'belive';
   models = [
-    { id: 'deepseek/deepseek-chat-v3-0324:free', ... },
-    { id: 'google/gemini-2.0-flash-001', ... },
-    { id: 'meta-llama/llama-4-maverick', ... },
+    { id: 'openrouter/free', ... },
   ];
 }
 ```
@@ -194,14 +194,25 @@ User message → AIHub.sendMessage()
 ```
 
 ### 24.3 Rate limit
-- KV store: `belive-ai-rates`
-- 20 запросов/день на пользователя
+- KV namespace: `RATE_LIMIT_KV` (в `wrangler.toml`), не `belive-ai-rates`
+- 20 запросов/МИН на IP (per-minute, per-IP)
 - HTTP 429 при превышении
 
 ### 24.4 Безопасность
 - JWT читается динамически из `userProfileStore.currentUser.authToken`
 - Guest → `AIError('AUTH_REQUIRED')`
 - Worker без авторизации → 401
+
+---
+
+### 24.5 Дополнительные AI провайдеры
+
+Помимо BeliveProvider, в системе есть два недокументированных провайдера:
+
+| Провайдер | Файл | Строк | Назначение |
+|-----------|------|-------|-----------|
+| `OpenRouterDirectProvider` | `src/js/ai/providers/openrouter-direct.provider.ts` | 233 | AI через API-ключ пользователя (OpenRouter) |
+| `GatewayProvider` | `src/js/ai/providers/gateway-provider.ts` | 223 | AI через локальный gateway с ephemeral-токенами |
 
 ---
 
@@ -229,8 +240,8 @@ VITE_GATEWAY_URL=http://localhost:8787
 
 | Worker | Endpoints | Secrets |
 |--------|-----------|---------|
-| `belive-auth` | `/auth/google`, `/auth/callback`, `/health` | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `JWT_SECRET`, `SESSION_SECRET` |
-| `belive-ai` | `/v1/chat/completions` (SSE) | `OPENROUTER_API_KEY`, KV: `belive-ai-rates` |
+| `belive-auth` | `/auth/google`, `/auth/callback`, `/health` | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `JWT_SECRET` |
+| `belive-gateway` | `/v1/chat/stream` (SSE), `/auth/ephemeral`, `/v1/align`, `/admin/operator-prompt` | `OPENROUTER_API_KEY`, KV: `RATE_LIMIT_KV`, `CACHE_KV`, `OPERATOR_PROMPT_KV`, `EPHEMERAL_KV` |
 
 ---
 
@@ -243,12 +254,12 @@ VITE_GATEWAY_URL=http://localhost:8787
 | `src/components/welcome/WelcomePage.tsx` | 40 | Стартовый экран |
 | `src/components/welcome/WelcomePage.css` | — | Стили welcome |
 | `src/components/welcome/LoadingSplash.tsx` | — | Сплаш загрузки |
-| `src/components/profile/UserRoom.tsx` | 93 | Профиль + Guest Upgrade |
+| `src/components/profile/UserRoom.tsx` | 192 | Профиль + Guest Upgrade |
 | `src/components/profile/UserRoom.css` | — | Стили UserRoom |
-| `src/services/auth.service.ts` | 126 | OAuth/Guest/JWT |
+| `src/services/auth.service.ts` | 132 | OAuth/Guest/JWT |
 | `src/stores/app.store.ts` | 17 | Surface gate |
-| `src/stores/user-profile.store.ts` | 204 | Профиль + persist |
-| `src/js/ai/providers/belive.provider.ts` | 176 | beLive AI |
+| `src/stores/user-profile.store.ts` | 219 | Профиль + persist |
+| `src/js/ai/providers/belive.provider.ts` | 163 | beLive AI |
 
 ---
 

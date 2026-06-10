@@ -1,10 +1,10 @@
-# Interaction Schema 2.1
+# Interaction Schema 2.2
 
-**Status:** Primary interaction handoff / onboarding schema  
+**Status:** Primary interaction handoff / onboarding schema — Complete (merged v2.1 + v2.2 delta)  
 **Owner:** Center1.3 / Agent 007  
-**Last updated:** 2026-03-19  
+**Last updated:** 2026-06-10  
 **Related:**  
-- `architecture-map-2.1.md`
+- `architecture-map-2.1.md` (now v2.2 Complete)
 - `audio-engine.md`
 - `sync-system.md`
 - `reactive-lyrics-foundation.md`
@@ -2536,6 +2536,259 @@ not achieved by resetting it.
 ## 25. Final System One-Liner
 
 **beLive is a mature hybrid runtime where preserved legacy globals provide identity and boundary compatibility, while React/TypeScript now owns the real product behavior through orchestrators, bridges, stores, trigger/scheduler publication, and durable synchronized track artifacts.**
+```
+
+---
+
+## §18. Delta v2.2 — Bridge layer expansion
+
+С момента публикации v2.1 bridge слой расширился. Ниже — полный актуальный список.
+
+### 18.1 Полный список bridge'ей (22 файла)
+
+| Bridge | Файл | Статус в v2.1 |
+|--------|------|--------------|
+| Audio | `src/bridges/audio.bridge.ts` | ✅ Был |
+| Lyrics | `src/bridges/lyrics.bridge.ts` | ✅ Был |
+| Markers | `src/bridges/markers.bridge.ts` | ✅ Был |
+| Loop | `src/bridges/loop.bridge.ts` | ✅ Был |
+| Track | `src/bridges/track.bridge.ts` | ✅ Был |
+| Monitor | `src/bridges/monitor.bridge.ts` | ✅ Был |
+| Sync | `src/sync/bridge/sync.bridge.ts` | ✅ Был |
+| Trigger | `src/triggers/trigger.bridge.ts` | ✅ Был |
+| Performance | `src/performance/performance.bridge.ts` | ✅ Был |
+| Takes | `src/takes/takes.bridge.ts` | ✅ Был |
+| **Mode Switch** | `src/bridges/mode-switch.bridge.ts` | 🆕 Не был |
+| **Mode Mirror** | `src/bridges/mode.bridge.ts` | 🆕 Не был |
+| **Blocks** | `src/bridges/blocks.bridge.ts` | 🆕 Не был |
+| **TextStyle** | `src/bridges/textStyle.bridge.ts` | 🆕 Не был |
+| **Cover Theme** | `src/bridges/cover-theme.bridge.ts` | 🆕 Не был |
+| **Plate** | `src/bridges/plate.bridge.ts` | 🆕 Не был |
+| **Stem Reactive** | `src/bridges/stem-reactive.bridge.ts` | 🆕 Не был |
+| **Audio Reactive** | `src/bridges/audio-reactive.bridge.ts` | 🆕 Не был |
+| **Billy** | `src/billy/billy.bridge.ts` | 🆕 Не был |
+| **Exercise** | `src/exercises/exercise.bridge.ts` | 🆕 Не был |
+| **Pitch Visual** | `src/audio/pitch/pitch-visual-bridge.ts` | 🆕 Не был |
+| **Block Editor** | `src/blocks/bridge/blockEditor.bridge.ts` | 🆕 Не был |
+
+### 18.2 Дополнительные события Event Matrix
+
+| Событие | Producer | Consumers |
+|---------|----------|-----------|
+| `lyrics-rendered` | lyrics.service.ts | blocks.bridge, lyrics.bridge |
+| `track-stem-ready` | AudioEngineV2 | audio.bridge |
+| `track-fully-loaded` | AudioEngineV2 | audio.bridge |
+| `catalog-cleared` | track.bridge | cover-theme.bridge |
+| `tracks-changed` | track.bridge | (listener) |
+| `monitor-state-changed` | monitor store | monitor.bridge |
+| `monitor-route-changed` | monitor store | monitor.bridge |
+
+### 18.3 Дополнительные App.tsx init вызовы
+
+Помимо документированных 10, App.tsx также инициализирует:
+- `coverTheme` bridge
+- `stemReactive` bridge
+- `plate` bridge
+- `billy` bridge
+- `takes` bridge
+- `exercise` bridge
+- `monitor` bridge
+
+---
+
+## §26. Auth Interaction Flow (v2.2 delta)
+
+### 26.1 Guest Skip Flow
+
+```
+WelcomePage
+  └─ click "Пропустить"
+       └─ authService.skipAuth()
+            ├─ useUserProfileStore.createProfile('Гость', '🎤', true)
+            │    ├─ set({ isGuest: true, isLoggedIn: true })
+            │    └─ localStorage persist (belive:user-profile v2)
+            └─ useAppStore.setSurface('app')
+                 └─ App.tsx switch(surface) → return <AppShell />
+```
+
+**Authority:** `authService` — entry point. `userProfileStore` — data authority.
+
+### 26.2 Google OAuth Flow
+
+```
+WelcomePage
+  └─ click "Войти через Google"
+       └─ authService.initiateGoogleOAuth()
+            ├─ VITE_USE_MOCK_AUTH=true → _mockAuth() (dev)
+            └─ window.location.href = CF_WORKER_URL/auth/google
+                 └─ Worker → Google Consent → callback
+                      └─ URL params: ?auth=JWT&name=...&email=...
+                           └─ App.tsx useEffect → handleCallback()
+                                ├─ validate JWT (exp check)
+                                ├─ createOAuthProfile({name, email, authToken, ...})
+                                │    ├─ set({ isGuest: false, isLoggedIn: true })
+                                │    └─ localStorage persist
+                                └─ setSurface('app')
+```
+
+### 26.3 Auth Check on Boot
+
+```
+App.tsx mount
+  └─ useEffect → authService.checkExistingAuth()
+       ├─ userProfileStore.currentUser exists?
+       │    ├─ NO → setSurface('welcome'), setAuthChecked(true)
+       │    └─ YES → isTokenValid(authToken)?
+       │         ├─ NO → logout() → setSurface('welcome')
+       │         └─ YES → setSurface('app'), setAuthChecked(true)
+       └─ Fallback: LoadingSplash поверхностью welcome до authChecked=true
+```
+
+---
+
+## §27. Surface Gate Interaction (v2.2 delta)
+
+### 27.1 Surface switch topology
+
+```
+useAppStore.surface
+  ├─ 'welcome' → <WelcomePage /> (Guest entry)
+  │    └─ on skip/OAuth → setSurface('app')
+  ├─ 'app' → <AppShell /> (main workspace)
+  │    └─ QuickActions → setSurface('profile')
+  └─ 'profile' → <UserRoom /> (profile/settings)
+       └─ back/Escape → setSurface('app')
+       └─ logout → setSurface('welcome')
+```
+
+### 27.2 Кто меняет surface
+
+| Действие | Кто вызывает | target surface |
+|----------|-------------|----------------|
+| Guest skip | `authService.skipAuth()` | `app` |
+| OAuth success | `authService.handleCallback()` | `app` |
+| Клик аватар | `QuickActions.tsx` | `profile` |
+| Escape в UserRoom | `UserRoom.tsx useEffect` | `app` |
+| Logout | `UserRoom.tsx handleLogout` | `welcome` |
+| Принудительно | `NikitaApi` (dev tool) | любая |
+
+---
+
+## §28. Guest / OAuth User Split (v2.2 delta)
+
+### 28.1 Влияние isGuest на поверхности
+
+```
+isGuest = true:
+  ├─ UserRoom → показывает блок апгрейда
+  │    ├─ "Зарегистрируйся!" + Google button
+  │    └─ скрывает профиль, email, аватар
+  ├─ Статистика → "Доступно после регистрации"
+  └─ AI → BeliveProvider отдаёт AUTH_REQUIRED
+
+isGuest = false:
+  ├─ UserRoom → показывает профиль (аватар, имя, email)
+  ├─ Статистика → "скоро..."
+  └─ AI → BeliveProvider шлёт запрос с JWT
+```
+
+### 28.2 Guest → OAuth upgrade path
+Прямой апгрейд не реализован (нет слияния гостевых данных с OAuth). При OAuth входе создаётся новый профиль.
+
+---
+
+## §29. beLive AI Provider Interaction (v2.2 delta)
+
+### 29.1 Поток запроса
+
+```
+AIHub.sendMessage(request)
+  └─ определил провайдер = 'belive'
+       └─ BeliveProvider.streamChat(request, callbacks)
+            ├─ Читает JWT: userProfileStore.currentUser.authToken
+            ├─ NO TOKEN → AIError('AUTH_REQUIRED')
+            ├─ Fetch POST {VITE_AI_WORKER_URL}
+            │    ├─ Headers: { Authorization: Bearer JWT }
+            │    └─ Body: { model, messages, stream: true, ... }
+            ├─ 401 → AIError('Сессия истекла')
+            ├─ 429 → AIError('Лимит 20 запросов/день')
+            └─ SSE stream:
+                 ├─ onToken(delta) → UI
+                 ├─ [DONE] → onDone(fullText)
+                 └─ AbortError → stop()
+```
+
+### 29.2 Выбор провайдера
+
+```
+AiSettingsModal
+  ├─ "beLive AI" → useAiSettingsStore.setProvider('belive')
+  └─ "OpenRouter" → useAiSettingsStore.setProvider('openrouter-direct')
+       └─ (требует API-ключ от пользователя)
+```
+
+---
+
+## §30. Event Surface Contract — New Events (v2.2 delta)
+
+События, добавленные в auth/welcome системе:
+
+| Event | Target | Producer | Consumer | Purpose |
+|-------|--------|----------|----------|---------|
+| `auth-checked` | `window` | `App.tsx` | — | Auth check complete (планируется) |
+| `guest-login` | `window` | `authService` | — | Guest вошёл (планируется) |
+| `oauth-login` | `window` | `authService` | — | OAuth пользователь вошёл (планируется) |
+
+> ⚠️ Эти события пока не реализованы — это architectural intent для будущих волн.
+
+---
+
+## §31. Persistence & Hydration — User Profile (v2.2 delta)
+
+### 31.1 User Profile
+
+| Артефакт | Хранилище | Ключ | Версия |
+|----------|-----------|------|--------|
+| Профиль + JWT | localStorage (zustand persist) | `belive:user-profile` | 2 |
+| Onboarding | localStorage (там же) | в составе профиля | — |
+
+### 31.2 Migration
+
+```
+Version 1 → Version 2:
+  Добавлены поля:
+    catalogOnboardingComplete: false
+    onboardingProgress: { step1Done: false, step2Done: false, activeStep: 1 }
+```
+
+---
+
+## §32. New File Interaction Map (v2.2 delta)
+
+```
+WelcomePage.tsx
+  └─ читает: nothing (stateless)
+  └─ вызывает: authService.initiateGoogleOAuth(), authService.skipAuth()
+
+UserRoom.tsx
+  └─ читает: useAppStore(surface), useUserProfileStore(currentUser, isGuest, ...)
+  └─ вызывает: authService.initiateGoogleOAuth(), logout(), setSurface()
+
+auth.service.ts
+  └─ читает: import.meta.env (VITE_*), URL params
+  └─ пишет: useUserProfileStore, useAppStore (setSurface)
+
+app.store.ts
+  └─ читается: App.tsx, UserRoom.tsx, QuickActions.tsx
+  └─ пишется: authService, QuickActions
+
+user-profile.store.ts
+  └─ читается: UserRoom.tsx, QuickActions.tsx, BeliveProvider
+  └─ пишется: authService, UserRoom (logout)
+
+belive.provider.ts
+  └─ читает: userProfileStore.currentUser.authToken
+  └─ вызывает: fetch(AI_WORKER_URL)
 ```
 
 ---

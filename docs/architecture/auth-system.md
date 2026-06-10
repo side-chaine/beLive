@@ -118,6 +118,7 @@ export interface UserProfile {
   createdAt: string;                   // ISO date
   lastSeenAt: string;                  // ISO date
   preferences?: UserProfilePreferences; // Тема, язык, BillyMood
+  mvsepApiKey?: string;                // MVSEP API key (UserRoom UI)
   
   // Идентификация
   isGuest: boolean;                    // Флаг гостя
@@ -298,7 +299,7 @@ useEffect(() => {
 | `/auth/google` | GET | Инициировать Google OAuth | — (редиректит на Google) |
 | `/auth/vk` | GET | Инициировать VK OAuth 🚧 | — (редиректит на VK) |
 | `/auth/callback` | GET | Принять callback от провайдера | `?code=...&state=...` |
-| `/auth/refresh` | POST | Обновить JWT | `{ refreshToken }` 🧭 |
+| `/auth/refresh` | POST | Обновить JWT | `{ refreshToken }` 🧭 ⚠️ NOT IMPLEMENTED — endpoint does not exist in belive-api worker |
 | `/health` | GET | Health check | — |
 
 ### 6.3 Secrets
@@ -309,7 +310,7 @@ GOOGLE_CLIENT_SECRET  — Secret Google Cloud
 VK_CLIENT_ID          — ID приложения VK Dev 🚧
 VK_CLIENT_SECRET      — Secret VK Dev 🚧
 JWT_SECRET            — Подпись JWT (HMAC-SHA256)
-SESSION_SECRET        — Шифрование сессионных данных
+SESSION_SECRET        — Шифрование сессионных данных ⚠️ NOT USED — not declared in wrangler.toml, not referenced in code
 ```
 
 ### 6.4 OAuth Flow (общий для всех провайдеров)

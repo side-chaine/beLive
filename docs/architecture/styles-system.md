@@ -19,7 +19,7 @@ It must support:
 - line behavior
 - style themes / presets
 - future recipe-driven randomization
-- future handoff behavior between Preview and Active lines
+- future handoff behavior between Next Line and Active lines
 
 This system must remain:
 - compact
@@ -97,7 +97,7 @@ Because of that, line behavior should evolve into:
 The Line section should become three compact lanes:
 
 - Active
-- Preview
+- Next Line
 - Others
 
 Each lane contains:
@@ -110,13 +110,15 @@ Each lane contains:
 ```text
 Line
 Active   ○──○──●──○──○   Focus Soft        [A]
-Preview  ○──●──○──○──○   Guide Green       [C]
+Next Line  ○──●──○──○──○   Guide Green       [C]
 Others   ○──○──○──●──○   Open Mist         [D]
 ```
 
 ### Important note
 In v1, bank badges are primarily structural / semantic.
 They do not need to be fully interactive until real family bundles exist.
+
+> **TC-022:** Bank badges `[A]`, `[C]`, `[D]` have been removed from the codebase. They remain in this document as architecture reference.
 
 ---
 
@@ -125,8 +127,8 @@ They do not need to be fully interactive until real family bundles exist.
 ### 6.1 Active
 Controls the current active lyric line.
 
-### 6.2 Preview
-Controls the preview line of the next block.
+### 6.2 Next Line
+Controls the Next Line of the next block.
 This is not the same as the next lyric line in continuous karaoke flow.
 
 ### 6.3 Others
@@ -171,6 +173,8 @@ A bank should eventually encode:
 
 In v1, banks may remain mostly semantic until family bundles are implemented.
 
+> **TC-022:** Bank badges `[A]`, `[C]`, `[D]` were removed from the codebase. They remain documented here as architecture reference for future family bundle implementation.
+
 ---
 
 ## 9. V1 Mapping Strategy
@@ -183,7 +187,7 @@ Current store values:
 - `soft`
 - `strong`
 
-### Preview lane
+### Next Line lane
 Current store values:
 - `off`
 - `hint`
@@ -217,7 +221,7 @@ A Random recipe should combine:
 - word mode
 - word focus
 - Active lane preset
-- Preview lane preset
+- Next Line lane preset
 - Others lane preset
 - optional style preset/theme shell state
 
@@ -229,9 +233,9 @@ This creates:
 
 ---
 
-## 11. Preview Handoff — Future Direction
+## 11. Next Line Handoff — Future Direction
 
-Preview should later support handoff behavior toward Active.
+Next Line should later support handoff behavior toward Active.
 
 Examples:
 - brighten near line end
@@ -261,7 +265,7 @@ Introduce bank family bundles
 Introduce recipe-based Random
 
 ### Phase LR5
-Introduce Preview handoff behavior
+Introduce Next Line handoff behavior
 
 ---
 
@@ -283,4 +287,4 @@ not like a set of raw sliders or modal pickers.
 
 ## 14. One-Line Summary
 
-**The beLive Line section should evolve into a compact preset-rail console where Active, Preview and Others are controlled as semantic visual lanes, not just raw brightness values.**
+**The beLive Line section should evolve into a compact preset-rail console where Active, Next Line and Others are controlled as semantic visual lanes, not just raw brightness values.**

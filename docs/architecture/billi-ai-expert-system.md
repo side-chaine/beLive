@@ -1,8 +1,8 @@
 # AI Expert System — Билли
 **Проект:** beLive — Browser Vocal Studio PWA
 **Компонент:** AI Expert System (Билли)
-**Статус:** Wave A+B ✅ завершены | Wave C ⏳ готов к реализации
-**Последнее обновление:** 2026-05-21
+**Статус:** Wave A+B+C+D ✅ завершены | Wave E-H в разработке
+**Последнее обновление:** 2026-06-10
 
 ---
 
@@ -43,9 +43,21 @@ AiExpertPanel.tsx
     ↓ формирует ChatRequest
 aiHub (registry.ts)
     ↓ routing по provider
-OpenRouterDirectProvider
-    ↓ SSE streaming
-OpenRouter API (api.openrouter.ai)
+     ├── BeliveProvider (built-in)
+     │     ↓ JWT из userProfileStore.currentUser.authToken
+     │     ↓ CF Worker belive-gateway /v1/chat/stream
+     │     ↓ SSE stream
+     │     ↓ Guest → AUTH_REQUIRED
+     │     ↓ Rate limit: 20 req/min/IP
+     │
+     ├── GatewayProvider
+     │     ↓ ephemeral-токен
+     │     ↓ localhost:8787 (dev)
+     │
+     └── OpenRouterDirectProvider
+           ↓ API ключ пользователя
+           ↓ SSE streaming
+           OpenRouter API (api.openrouter.ai)
     ↓ токены обратно
 appendAiToken() → Zustand store → React re-render
     ↓ стрим завершён
@@ -56,10 +68,11 @@ Wikipedia REST API → второй API запрос с контекстом
 
 ### 2.2 Провайдеры
 
-| Провайдер | Файл | Когда |
-|-----------|------|-------|
-| GatewayProvider | `src/js/ai/providers/gateway-provider.ts` | localhost:8787 (dev) |
-| OpenRouterDirectProvider | `src/js/ai/providers/openrouter-direct.provider.ts` | GitHub Pages (prod) |
+| Провайдер | API ключ | Аутентификация |
+|-----------|----------|---------------|
+| BeliveProvider | Не нужен | JWT (из профиля) |
+| GatewayProvider | Не нужен | Ephemeral-токен |
+| OpenRouterDirectProvider | API ключ пользователя | Самостоятельно |
 
 **Критическое архитектурное решение:** OpenRouterDirectProvider читает настройки из `localStorage` напрямую, НЕ импортирует из Zustand stores. Это сохраняет границу `js/` ↔ `stores/`.
 
@@ -75,6 +88,20 @@ private getApiKey(): string {
 
 ### 2.3 Доступные модели
 
+**GatewayProvider** (CF Worker belive-gateway):
+
+| Модель | ID |
+|--------|-----|
+| Gemini 2.5 Pro | `google/gemini-2.5-pro` |
+| Claude 4.5 Sonnet | `anthropic/claude-4.5-sonnet` |
+| GPT-5 High | `openai/gpt-5-high` |
+| GPT-4o Mini | `openai/gpt-4o-mini` |
+| Llama 3.1 8B | `meta-llama/llama-3.1-8b` |
+| Grok 4 Vision | `x-ai/grok-4-vision` |
+| DeepSeek-V3.1 | `deepseek/deepseek-v3.1` |
+
+**OpenRouter** (прямой доступ):
+
 | Модель | ID | Цена | Context |
 |--------|-----|------|---------|
 | DeepSeek V3 | `deepseek/deepseek-chat-v3-0324` | Free | 64K |
@@ -84,7 +111,7 @@ private getApiKey(): string {
 | GPT-4o Mini | `openai/gpt-4o-mini` | $0.15/M | 128K |
 | Claude 3.5 Haiku | `anthropic/claude-3.5-haiku` | $0.80/M | 200K |
 
-**Default:** DeepSeek V3 (free, function calling support)
+**Default:** `openrouter/free` (BeliveProvider fallback)
 
 ### 2.4 Store архитектура
 
@@ -235,6 +262,19 @@ User is currently viewing: Chorus
   - Active block (что смотрит пользователь)
 ```
 
+### Дополнительные секции промптов (Wave C+)
+
+Помимо 3 основных слоёв, система промптов содержит:
+
+| Секция | Назначение |
+|--------|-----------|
+| `BILLY_PERSONALITY` | Характер Билли, стиль общения |
+| `TECH_BILLY_PROMPT` | Режим tech-билли (для разработчиков) |
+| `Player Controls` | 6 инструментов: set_playback_rate, loop_section, set_stem_volume, switch_mode, toggle_vocal_mix, etc. |
+| `Practice Scenarios` | Сценарии практики: bpm-ramp, focus-mix, section-breakdown |
+| `Language Rules` | Правила языка: коротко, без маркдауна, без советов |
+| `Truth-First Runtime Rules` | Приоритет фактов над предположениями |
+
 ### NO VOCAL ADVICE — строгий запрет
 
 Запрещённые фразы: "попробуйте спеть", "спой более энергично", "используйте резонатор", "дышите глубже".
@@ -313,8 +353,8 @@ OpenRouterDirectProvider читает `localStorage` напрямую, НЕ им
 ### ❄️ renderMd() → React elements (INV-AI-04)
 `dangerouslySetInnerHTML` ЗАПРЕЩЁН. `renderMd()` возвращает React элементы. **Не менять.**
 
-### ❄️ clearAiMessages порядок (INV-AI-05)
-`clearAiMessages()` очищает ТОЛЬКО `aiMessages`. Порядок: `clearAiMessages()` → `setActiveExpert(expert)`. **Не объединять.**
+### ❄️ НЕ очищать aiMessages при смене эксперта (INV-AI-05)
+`clearAiMessages()` НЕ вызывается при `setActiveExpert(expert)`. История сообщений сохраняется при переключении экспертов. Комментарий в коде: *"НЕ очищаем сообщения при смене эксперта"*. **Не добавлять очистку.**
 
 ---
 
@@ -334,23 +374,66 @@ OpenRouterDirectProvider читает `localStorage` напрямую, НЕ им
 - ai-tools.ts: [SEEK] + [STRUCTURE] + [CATALOG]
 - Markdown → React elements (без dangerouslySetInnerHTML)
 
-### Wave C — Intelligence ⏳ (готов к реализации)
-- [ ] **C2:** ai-expert-prompts — NO VOCAL ADVICE + [ACTION] + [SEARCH]
-- [ ] **C1a:** ai-tools — fix seek (getBlockTimeRange) + QuickReply + Wikipedia
-- [ ] **C1b:** AiExpertPanel — QuickReply UI кнопки
-- [ ] **C1c:** CSS — QuickReply стили
-- [ ] **C1d:** ErrorBoundary
+### Wave C — Intelligence ✅ IMPLEMENTED
+- [x] **C2:** ai-expert-prompts — NO VOCAL ADVICE + [ACTION] + [SEARCH]
+- [x] **C1a:** ai-tools — fix seek (getBlockTimeRange) + QuickReply + Wikipedia
+- [x] **C1b:** AiExpertPanel — QuickReply UI кнопки
+- [x] **C1c:** CSS — QuickReply стили
+- [x] **C1d:** ErrorBoundary
+
+### Wave D — Dock Billy + Billy v2 ✅ IMPLEMENTED
+- BillyDock.tsx — thought cloud UI
+- `src/billy/` — Billy v2 FSM (см. §10)
+- `useBillyLocomotion.ts` — rAF-управление анимацией
 
 ### Future Waves
 | Wave | Описание |
 |------|----------|
-| D | Native Function Calling + Dock Billy (thought cloud) |
 | E | Catalog Expert + Structure Comparison |
 | F | Web Audio BPM/Energy → Neon activation |
+| G | Player Controls (6 tools в ai-tools.ts: set_playback_rate, loop_section, set_stem_volume, switch_mode, toggle_vocal_mix, etc.) |
+| H | Billy v2 FSM expansion (11 файлов в src/billy/) |
 
 ---
 
-## 10. Риски
+## 10. Billy v2 Character FSM (NEW)
+
+Добавлен модуль `src/billy/` — чистая FSM без side effects.
+
+### 10.1 Файлы модуля
+
+| Файл | Строк | Назначение |
+|------|-------|-----------|
+| `billy-controller.ts` | 282 | `stepBilly()` — чистая FSM, `resolveMode()`, `resolveTarget()`, `resolveLerpBase()`, `computeBpmSpeed()` |
+| `billy-runtime.ts` | 163 | `BillyHotState` singleton, `getBillyHotState()`, `computePixelPosition()`, `updateLineSlotCache()` |
+| `billy-runtime.store.ts` | 115 | Zustand store: `mode`, `zone`, `facing`, `retreatToCorner()`, `returnFromRetreat()` |
+| `billy.bridge.ts` | 76 | `initBillyBridge()` — CSS var writer для PlaybackVisualScheduler |
+| `billy.constants.ts` | 153 | `CORNER_POS`, `RESPONSIVENESS`, `BPM_BASE`, `SPEED_*`, `ZONE_Z_INDEX` |
+| `BillyMessageRenderer.tsx` | 189 | Рендер сообщений Билли с анимацией |
+| `BillyMessageRenderer.css` | 44 | Стили сообщений Билли |
+| `context-builder.ts` | 103 | `buildBillyContext()`, `resolveZone()` |
+| `skill-registry.ts` | 125 | `getActiveSkill()`, `buildSystemPrompt()` |
+| `types.ts` | 43 | `BillyZone`, `BillySkill`, `BillyContext` |
+| `skills/scout.skill.ts` | 97 | Scout skill implementation |
+
+### 10.2 Архитектура
+
+```
+BillyController (pure FSM) → BillyRuntime (singleton state)
+    ↓
+BillyRuntimeStore (Zustand mirror)
+    ↓
+BillyBridge (CSS var writer → scheduler)
+```
+
+- BillyController — чистая функция без side effects
+- BillyRuntime — модульный singleton с hot state
+- BillyRuntimeStore — Zustand mirror для React consumers
+- BillyBridge — публикует CSS vars через PlaybackVisualScheduler
+
+---
+
+## 11. Риски
 
 | Риск | Влияние | Митигация |
 |------|---------|-----------|

@@ -1,10 +1,10 @@
-# Архитектурная Карта beLive 2.1
+# Архитектурная Карта beLive 2.2
 
-**Status:** Master Architecture Map — Onboarding & Contract Reference
-**Version:** 2.1
-**Date:** 2025-07-14
+**Status:** Master Architecture Map — Complete (merged v2.1 + v2.2 delta)
+**Version:** 2.2
+**Date:** 2026-06-10
 **Authors:** Architecture Team (Centre 1.3 + Agent 007)
-**Based on:** Code-verified recon, live repo state, pipeline docs
+**Based on:** Code-verified recon, live repo state, pipeline docs, v2.2 delta merge
 
 ---
 
@@ -33,8 +33,8 @@
 
 ### Core truths
 
-- ✅ React/TS owns product runtime (170+ TS/TSX files, 17 Zustand stores)
-- ✅ Legacy JS remains as 6 compact boundary shells, not business logic centers
+- ✅ React/TS owns product runtime (190+ TS/TSX files, 27 Zustand stores)
+- ✅ Legacy JS remains as 5 compact boundary shells, not business logic centers
 - ❄️ Markers remain canonical line-sync backbone
 - ❄️ Word sync is additive overlay, never replaces line backbone
 - ✅ Trigger/reactive word layer already live in runtime (not future)
@@ -229,7 +229,7 @@ src/
 │   ├── upload.actions.ts       ← Upload UI actions
 │   └── cover-art.service.ts    ← Cover art fetch + blob persist + theme extraction
 │
-├── stores/                     ← 17 Zustand stores
+├── stores/                     ← 27 Zustand stores
 │   ├── audio.store.ts          ← Playback state mirror
 │   ├── lyrics.store.ts         ← Lines + activeLineIndex
 │   ├── markers.store.ts        ← Markers + sections
@@ -1591,7 +1591,256 @@ Save produces JSON file containing markers and structure. This JSON + audio + ly
 
 ---
 
-**beLive 2.1 is a mature hybrid architecture where React/TS owns the product runtime over preserved boundary shells. The system includes a complete offline batch pipeline for word-sync artifact production, a live reactive visual layer, a first-class performance policy domain, and a fully operational ZIP-based prepared catalog cycle (export → import → word-sync ready). Contract seams from Waves 1-3 have been resolved. 127 unit tests provide regression safety. Dock restructured: always-on volume/BPM/mic controls, Sync/Monitor/Pitch as toggle buttons, Tools tab eliminated. Next priorities: transport instrumentation (Wave 4) and documentation hardening (Wave 5).**
+**beLive 2.2 is a mature hybrid architecture where React/TS owns the product runtime over preserved boundary shells. The system includes a complete offline batch pipeline for word-sync artifact production, a live reactive visual layer, a first-class performance policy domain, a fully operational ZIP-based prepared catalog cycle (export → import → word-sync ready), a Surface Gate navigation system, OAuth/Guest auth flow, and beLive AI provider. Contract seams from Waves 1-3 have been resolved. Unit tests provide regression safety. Dock restructured: always-on volume/BPM/mic controls, Sync/Monitor/Pitch as toggle buttons, Tools tab eliminated. Next priorities: transport instrumentation (Wave 4) and documentation hardening (Wave 5).**
+
+---
+
+## §33. Surface Gate System (v2.2 delta)
+
+### 33.1 Назначение
+Единственный контроллер навигации. Заменяет URL-роутинг. Управляется через Zustand store.
+
+### 33.2 Surface Map
+
+| Surface | Компонент | Описание |
+|---------|-----------|----------|
+| `welcome` | `WelcomePage.tsx` | Стартовый экран: Google OAuth, VK (disabled), Skip |
+| `app` | `App.tsx` (AppShell) | Основное рабочее пространство (каталог, режимы, редактор) |
+| `profile` | `UserRoom.tsx` | Профиль, настройки, Guest Upgrade UI |
+
+### 33.3 Surface Gate реализация
+
+```ts
+// src/stores/app.store.ts
+type AppSurface = 'welcome' | 'app' | 'profile';
+
+interface AppState {
+  surface: AppSurface;
+  authChecked: boolean;
+  setSurface: (s: AppSurface) => void;
+  setAuthChecked: (v: boolean) => void;
+}
 ```
+
+App.tsx (Surface Gate switch):
+```tsx
+const surface = useAppStore(s => s.surface);
+switch (surface) {
+  case 'welcome': return <WelcomePage />;
+  case 'app': return <AppShell />;
+  case 'profile': return <UserRoom />;
+}
+```
+
+### 33.4 Файлы Surface Gate
+
+| Файл | Назначение |
+|------|-----------|
+| `src/stores/app.store.ts` | Surface state + authChecked |
+| `src/App.tsx` | Surface switch gate |
+| `src/components/welcome/WelcomePage.tsx` | Surface welcome |
+| `src/components/welcome/WelcomePage.css` | Стили welcome |
+| `src/components/welcome/LoadingSplash.tsx` | Сплаш для auth-check |
+| `src/components/profile/UserRoom.tsx` | Surface profile |
+| `src/components/profile/UserRoom.css` | Стили profile |
+
+---
+
+## §34. Auth Flow (v2.2 delta)
+
+### 34.1 Схема потоков
+
+```
+GOOGLE OAUTH:
+  WelcomePage "Войти через Google"
+    → authService.initiateGoogleOAuth()
+    → CF Worker /auth/google
+    → Google Consent Screen
+    → Worker callback → JWT
+    → URL params (?auth=...&name=...&email=...)
+    → handleCallback() → createOAuthProfile()
+    → setSurface('app')
+
+GUEST SKIP:
+  WelcomePage "Пропустить"
+    → authService.skipAuth()
+    → createProfile('Гость', '🎤', true)
+    → setSurface('app')
+
+MOCK AUTH (dev):
+  VITE_USE_MOCK_AUTH=true
+    → _mockAuth() → createOAuthProfile()
+    → setSurface('app')
+```
+
+### 34.2 Auth Service API
+
+```ts
+// src/services/auth.service.ts
+authService.skipAuth()            // Guest вход
+authService.initiateGoogleOAuth() // OAuth редирект
+authService.checkExistingAuth()   // Проверка при загрузке
+authService.handleCallback(params) // Обработка OAuth callback
+```
+
+### 34.3 User Profile Store (OAuth)
+
+```ts
+// src/stores/user-profile.store.ts
+interface UserProfileStoreState {
+  currentUser: UserProfile | null;
+  isLoggedIn: boolean;
+  isGuest: boolean;
+  isReturning: boolean;
+
+  createProfile(name, emoji, isGuest?)     // Создать профиль (гость/обычный)
+  createOAuthProfile({name, email, authToken, ...}) // OAuth профиль
+  updateProfile(updates)                    // Обновить
+  logout()                                   // Выйти
+  deleteProfile()                            // Удалить профиль
+}
+```
+
+### 34.4 Profile data model
+
+```ts
+interface UserProfile {
+  id: string;
+  name: string;
+  email?: string;
+  avatarUrl?: string;
+  emoji?: string;
+  isGuest: boolean;
+  authProvider?: 'google';
+  authToken?: string;
+  serverId?: string;
+  createdAt: string;
+  lastSeenAt: string;
+  preferences: Record<string, any>;
+}
+```
+
+### 34.5 Persistence & Migration
+
+- Store: `belive:user-profile` (localStorage via zustand/persist)
+- Version: 2
+- Migration v1→v2: adds `catalogOnboardingComplete`, `onboardingProgress`
+- Partialize: сохраняет только нужные поля (без функций)
+
+---
+
+## §35. Guest Mode (v2.2 delta)
+
+### 35.1 Принцип
+Guest-режим — архитектурный принцип. Пользователь начинает творить мгновенно, конвертация происходит через ценность, а не через забор.
+
+### 35.2 Guest flow
+1. `createProfile('Гость', '🎤', true)` → `isGuest: true`
+2. Поверхность: `welcome` → (skip) → `app`
+3. UserRoom показывает блок апгрейда
+4. AI Provider блокирует запросы (`AUTH_REQUIRED`)
+5. Статистика скрыта ("Доступно после регистрации")
+
+### 35.3 Guest restrictions
+
+| Фича | Guest | OAuth User |
+|------|-------|-----------|
+| Просмотр каталога | ✅ | ✅ |
+| Прослушивание треков | ✅ | ✅ |
+| Режимы (rehearsal/concert/etc) | ✅ | ✅ |
+| beLive AI | ❌ `AUTH_REQUIRED` | ✅ (20 req/day) |
+| Статистика | ❌ скрыта | ✅ |
+| UserRoom апгрейд | ✅ блок апгрейда | ✅ профиль |
+
+---
+
+## §36. beLive AI Provider (v2.2 delta)
+
+### 36.1 Регистрация провайдера
+
+```ts
+// src/js/ai/providers/belive.provider.ts
+class BeliveProvider implements AIProvider {
+  id = 'belive';
+  models = [
+    { id: 'openrouter/free', ... },
+  ];
+}
+```
+
+### 36.2 Поток запроса
+```
+User message → AIHub.sendMessage()
+  → BeliveProvider.streamChat()
+  → Fetch POST {CF_WORKER_URL} (Authorization: Bearer JWT)
+  → SSE stream (data: {...} events)
+  → onToken/delta → UI
+```
+
+### 36.3 Rate limit
+- KV namespace: `RATE_LIMIT_KV` (в `wrangler.toml`), не `belive-ai-rates`
+- 20 запросов/МИН на IP (per-minute, per-IP)
+- HTTP 429 при превышении
+
+### 36.4 Безопасность
+- JWT читается динамически из `userProfileStore.currentUser.authToken`
+- Guest → `AIError('AUTH_REQUIRED')`
+- Worker без авторизации → 401
+
+### 36.5 Дополнительные AI провайдеры
+
+Помимо BeliveProvider, в системе есть два недокументированных провайдера:
+
+| Провайдер | Файл | Строк | Назначение |
+|-----------|------|-------|-----------|
+| `OpenRouterDirectProvider` | `src/js/ai/providers/openrouter-direct.provider.ts` | 233 | AI через API-ключ пользователя (OpenRouter) |
+| `GatewayProvider` | `src/js/ai/providers/gateway-provider.ts` | 223 | AI через локальный gateway с ephemeral-токенами |
+
+---
+
+## §37. Env Vars & CF Workers (v2.2 delta)
+
+### 37.1 Production
+
+```env
+VITE_AUTH_WORKER_URL=https://belive-auth.nikitosss007.workers.dev
+VITE_AI_WORKER_URL=https://belive-ai.nikitosss007.workers.dev
+VITE_USE_MOCK_AUTH=false
+VITE_GETSONGBPM_KEY=***
+VITE_LASTFM_API_KEY=***
+VITE_BASE_PATH=/
+```
+
+### 37.2 Development
+
+```env
+VITE_USE_MOCK_AUTH=true
+VITE_GATEWAY_URL=http://localhost:8787
+```
+
+### 37.3 CF Workers Registry
+
+| Worker | Endpoints | Secrets |
+|--------|-----------|---------|
+| `belive-auth` | `/auth/google`, `/auth/callback`, `/health` | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `JWT_SECRET` |
+| `belive-gateway` | `/v1/chat/stream` (SSE), `/auth/ephemeral`, `/v1/align`, `/admin/operator-prompt` | `OPENROUTER_API_KEY`, KV: `RATE_LIMIT_KV`, `CACHE_KV`, `OPERATOR_PROMPT_KV`, `EPHEMERAL_KV` |
+
+---
+
+## §38. New File Reference (v2.2 delta — SCAN results)
+
+Все новые файлы проверены — `tsc --noEmit` не выдаёт ошибок в этих файлах.
+
+| Файл | Строк | Назначение |
+|------|-------|-----------|
+| `src/components/welcome/WelcomePage.tsx` | 40 | Стартовый экран |
+| `src/components/welcome/WelcomePage.css` | — | Стили welcome |
+| `src/components/welcome/LoadingSplash.tsx` | — | Сплаш загрузки |
+| `src/components/profile/UserRoom.tsx` | 192 | Профиль + Guest Upgrade |
+| `src/components/profile/UserRoom.css` | — | Стили UserRoom |
+| `src/services/auth.service.ts` | 132 | OAuth/Guest/JWT |
+| `src/stores/app.store.ts` | 17 | Surface gate |
+| `src/stores/user-profile.store.ts` | 219 | Профиль + persist |
+| `src/js/ai/providers/belive.provider.ts` | 163 | beLive AI |
 
 ---

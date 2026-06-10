@@ -1,8 +1,9 @@
 # 📄 SHOW — Архитектурный документ beLive
 
-**Версия:** 2.1  
+**Версия:** 2.2  
 **Дата:** 2026-06-03  
 **Статус:** ✅ MVP реализован  
+**Based on:** Sub-Slide model  
 **Архитекторы:** Центр_30.1, Центр_31, Центр_31.1, 007_32
 
 ---
@@ -100,7 +101,7 @@ Show расширяет beLive в сторону контента.
 
 ```typescript
 export type ShowMode = 'entry' | 'scenario';
-export type StepType = 'content' | 'feature';
+export type StepType = 'content' | 'feature' | 'html';
 
 export interface ShowScenario {
   title: string;
@@ -137,9 +138,35 @@ export interface FeatureAction {
 }
 
 export interface FeatureSnapshot {
-  activeTabId: string;   // из deck.store
-  expanded: boolean;     // из deck.store
+  activeTabId: string;   // from deck.store
+  expanded: boolean;     // from deck.store
 }
+
+// Sub-Slide модель (добавлено в v2.2)
+// Типы Sub-Slide из src/types/show.types.ts (v2.2)
+export interface ShowSubSlide {
+  imageId?: string;
+  title?: string;
+  titleColor?: SlideColor;
+  description?: string;
+  descriptionColor?: SlideColor;
+  bullets?: SubSlideBullet[];
+}
+
+export interface SubSlideBullet {
+  text: string;
+  color?: SlideColor;
+}
+
+export const SLIDE_COLORS = [
+  '#9b59b6', // фиолетовый (default)
+  '#e74c3c', // красный
+  '#3498db', // синий
+  '#2ecc71', // зелёный
+  '#f39c12', // оранжевый
+] as const;
+
+export type SlideColor = typeof SLIDE_COLORS[number];
 ```
 
 ---
@@ -161,6 +188,11 @@ interface ShowState {
   activeFeatureId: string | null;
   featureSourceStepId: string | null;
   _featureSnapshot: FeatureSnapshot | null;
+  // Sub-Slide
+  activeSubSlideIndex: number;
+  activeBulletIndex: number;
+  featureTransition: boolean;        // заглушка для Фазы 2
+  featureTransitionLabel: string | null;
   // Presentation
   isPresenting: boolean;
   showSlide: boolean;
@@ -177,7 +209,33 @@ interface ShowState {
   startPresentation / stopPresentation / toggleSlide
   setDockPosition
   save / load (persistence)
+  nextScreen / prevScreen
+  getCurrentScreenInfo
 }
+
+export type ScreenInfo =
+  | {
+      type: 'subslide';
+      subSlideIndex: number;
+      totalSubSlides: number;
+      bulletIndex: number;
+      totalBullets: number;
+      isFirst: boolean;
+      isLast: boolean;
+      screenNumber: number;
+      totalScreens: number;
+      stepIndex: number;
+      totalSteps: number;
+      pointIndex: number;
+      totalPoints: number;
+    }
+  | {
+      type: 'legacy';
+      stepIndex: number;
+      totalSteps: number;
+      pointIndex: number;
+      totalPoints: number;
+    };
 ```
 
 **Инварианты:**

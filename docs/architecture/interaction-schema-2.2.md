@@ -1,15 +1,13 @@
-# Interaction Schema 2.2
+# Interaction Schema (Superseded)
 
-**Status:** Delta к interaction-schema-2.1.md — новые взаимодействия
-**Version:** 2.2
-**Date:** 2026-06-07
-**Related:**
-- `architecture-map-2.1.md` + `architecture-map-2.2.md`
-- `protocol-v2.1.md`
-- `audio-engine.md`
-- `sync-system.md`
-
-> ⚠️ **Читать после interaction-schema-2.1.md.** Этот документ описывает ТОЛЬКО новые взаимодействия, добавленные в v2.2.
+> **⛔ SUPERSEDED**
+>
+> Этот документ был дельтой к interaction-schema-2.1.md.
+> Содержимое мержнуто в единую interaction-schema-2.1.md (теперь версия 2.2).
+>
+> **Актуальный файл:** `docs/architecture/interaction-schema-2.1.md`
+>
+> Сохранён для истории изменений. Не читать как источник истины.
 
 ---
 

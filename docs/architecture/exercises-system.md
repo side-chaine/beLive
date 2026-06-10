@@ -785,7 +785,7 @@ const visibleRecipeIds = [
 
 **Current Status:**
 - Code remains in `src/exercises/exercise.recipes.ts` (for reuse when ready)
-- Hidden from learner-facing Drill launcher via `visibleRecipeIds` allowlist
+- Hidden from learner-facing Drill launcher via `visibleRecipeIds` allowlist (evolved: now uses `surface` + `visibility` props instead)
 - Under active redesign as special alternation mode lane
 - No timeline for learner surface inclusion (depends on backing semantics re-lock)
 

@@ -98,7 +98,7 @@ ResizeObserver в ControlDeck.tsx обновляет `--bl-deck-height` на `<h
 |---------|---------|---------|--------|--------|
 | MixerPanel (Studio) | Резиновая | 0 | 100% | ✅ Visual sub-mode |
 | TakesPanel (Quest) | Резиновая (inline) | 0 | 100% | ✅ |
-| RecordingPanel | Резиновая | 0 | 100% | ✅ |
+| RecordingPanel | Резиновая | 0 | 100% | ✅ | ⚠️ DEAD CODE — not registered in modules.ts, not imported anywhere |
 | MonitorMixPanel (Split) | Резиновая | 0 | 100% | ✅ |
 | StylesDeck | Резиновая | 0 | 100% | ✅ |
 | PitchTab (Notes) | Резиновая | 0 | 100% | ✅ |

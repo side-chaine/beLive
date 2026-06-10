@@ -566,7 +566,7 @@ The canvas works as a layered visual surface:
 **Verified layers (in draw order):**
 
 1. Base context — I / V / M waveforms
-2. Reference layer — gold contour/skeleton (selected take in A-B mode)
+2. Reference layer — muted green contour/skeleton (selected take in A-B mode)
 3. Recorded compare overlay — orange solid fill (active compare target)
 4. Live orange trail — accumulated waveform during recording only
 5. Block boundaries
@@ -641,12 +641,12 @@ Current `viewMode`:
 
 **Compare layers:**
 
-- Gold/yellow (`rgba(247,201,72,0.85)`) — selected reference take (contour/skeleton style)
+- Muted green (`rgba(88,190,125,0.85)`) — selected reference take (contour/skeleton style). Note: bright green reserved for future scoring system
 - Orange (`rgba(255,165,0,0.60-0.85)`) — active compare target / recorded take (solid fill)
 
 **Future:**
 
-- Green reserved for match/proximity zones (scoring system)
+- Bright green reserved for match/proximity zones (scoring system). Reference layer uses muted green (`rgba(88,190,125,0.85)`)
 
 ### 9.4 Playhead
 
@@ -727,7 +727,7 @@ Takes has evolved into a canvas-first first-pass surface:
 
 V1 compare should pivot toward:
 
-- **Selected take = reference** (gold contour layer)
+- **Selected take = reference** (muted green contour layer)
 - **Clicked take = active compare target** (orange solid layer)
 - Take-to-take comparison within the same block
 - **Freedom-first + interruption model accepted** (exit/cancel/esc pathways documented)
@@ -786,7 +786,7 @@ Progressive accumulated timeline-bar live trail:
 
 **Technical approach:**
 
-- Fixed 96 bars for performance on target hardware
+- Frozen at 384 bars across all performance tiers (96 bars referenced in legacy comments; code uses 384)
 - Per-frame: compute min/max for entire analyser buffer (1024 samples)
 - Update only current bar based on progress
 - Preserve all previous bars (functional React setState)
@@ -1107,7 +1107,7 @@ const renderWaveform() {
 - Compare semantics clarity
 - Selected take as true A/B reference (direction accepted, implementation ongoing)
 - Clearer visual difference between:
-  - Reference layer (gold contour)
+  - Reference layer (muted green contour)
   - Active compare target (orange solid)
   - Recorded overlay
   - Live trail
