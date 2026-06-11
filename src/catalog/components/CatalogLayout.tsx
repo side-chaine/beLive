@@ -14,7 +14,7 @@ import { OnboardingAccordion } from '../../components/onboarding/OnboardingAccor
 import { CatalogBillyChat } from './CatalogBillyChat';
 import { useUserProfileStore } from '../../stores/user-profile.store';
 
-interface Props { color: string; onClose: () => void; }
+interface Props { color: string; onClose: () => void; } // deploy-force
 
 const T = {
   bg: 'rgba(8,8,14,0.98)',
@@ -514,7 +514,7 @@ export function CatalogLayout({ color, onClose }: Props) {
             background: showManual ? T.surfaceH : 'transparent',
           }}>{showManual ? '▲ Ручная загрузка' : '▶ Ручная загрузка'}</div>
           {showManual && <div style={{ marginBottom: 8 }}>
-            <UploadPanel onClose={() => { setShowManual(false); setPendingLyricsTrackId(null); setPendingLyricsTitle(''); }} onSaved={() => { setShowManual(false); setPendingLyricsTrackId(null); setPendingLyricsTitle(''); setTimeout(() => { document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'catalog' } })); onClose(); }, 500); }} autoOpenLyrics={pendingLyricsTrackId !== null} pendingTrackId={pendingLyricsTrackId} pendingTrackTitle={pendingLyricsTrackId ? pendingLyricsTitle : null} />
+            <UploadPanel onClose={() => { setShowManual(false); setPendingLyricsTrackId(null); setPendingLyricsTitle(''); }} onSaved={() => { setShowManual(false); setPendingLyricsTrackId(null); setPendingLyricsTitle(''); setTimeout(() => { document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'catalog' } })); }, 500); }} autoOpenLyrics={pendingLyricsTrackId !== null} pendingTrackId={pendingLyricsTrackId} pendingTrackTitle={pendingLyricsTrackId ? pendingLyricsTitle : null} />
 
           </div>}
 
