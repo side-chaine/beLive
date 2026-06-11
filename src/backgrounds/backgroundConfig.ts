@@ -41,7 +41,6 @@ export const BACKGROUND_CONFIG = {
     'Rehearsal/4b8023db-3000-4084-bef9-b7aec2a804da.jpg',
     'Rehearsal/soty_obem_zheleznyj_167098_2560x1440.jpg',
     'Rehearsal/dvoichnyj_kod_kod_tsifry_147523_2560x1440.jpg',
-    'Rehearsal/fotoapparat_obektiv_remeshok_145518_1600x900.jpg',
     'Rehearsal/vinilovaia_plastinka_tonarm_kartridzh_107810_2560x1440.jpg',
     'Rehearsal/didzhej_muzyka_diskoteka_160929_2560x1440.jpg',
     'Rehearsal/krolik_naushniki_muzyka_130283_2560x1440.jpg',
