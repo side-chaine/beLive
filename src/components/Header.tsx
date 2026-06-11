@@ -3,7 +3,7 @@ import { ModeButtons } from './ModeButtons';
 import { QuickActions } from './QuickActions';
 import { useModeStore } from '../stores/mode.store';
 import { CurrentTrackBadge } from './CurrentTrackBadge';
-import { ThemeSelector } from './ThemeSelector';
+
 
 const MODE_COLORS: Record<string, string> = {
   concert: '#3498db',
@@ -71,7 +71,6 @@ export function Header() {
 
       {/* RIGHT: QuickActions */}
       <div style={{ flex: '0 1 420px', minWidth: 0, display: 'flex', justifyContent: 'flex-end', gap: 8, alignItems: 'center' }}>
-        <ThemeSelector />
         <QuickActions />
       </div>
     </div>

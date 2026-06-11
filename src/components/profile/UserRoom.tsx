@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAppStore } from '../../stores/app.store';
 import { useUserProfileStore } from '../../stores/user-profile.store';
 import { authService } from '../../services/auth.service';
+import { useThemeStore } from '../../theme/store/theme-store';
+import { themeRegistry, getThemeById } from '../../theme/themes/index';
+import { applyTheme, applyMode } from '../../theme/engine/css-injector';
 import './UserRoom.css';
 
 export function UserRoom() {
@@ -14,6 +17,24 @@ export function UserRoom() {
   const [mvsepKeyInput, setMvsepKeyInput] = useState('');
   const [showMvsepKey, setShowMvsepKey] = useState(false);
   const mvsepKeyValue = useUserProfileStore(s => s.currentUser?.mvsepApiKey) || '';
+
+  // Theme selector state
+  const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
+  const activeThemeId = useThemeStore(s => s.activeThemeId);
+  const activeMode = useThemeStore(s => s.activeMode);
+  const themeDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close theme dropdown on outside click
+  useEffect(() => {
+    if (!themeDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(e.target as Node)) {
+        setThemeDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [themeDropdownOpen]);
 
   // Escape closes
   useEffect(() => {
@@ -165,9 +186,88 @@ export function UserRoom() {
           )}
         </div>
 
-        <div className="bl-userroom__section">
+        <div className="bl-userroom__section" ref={themeDropdownRef} style={{ position: 'relative' }}>
           <div className="bl-userroom__section-title">Тема</div>
-          <div className="bl-userroom__section-soon">скоро...</div>
+          <button
+            onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: 8,
+              padding: '6px 12px',
+              color: '#ccc',
+              fontSize: 13,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginTop: 4,
+              width: '100%',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{
+                width: 14, height: 14, borderRadius: '50%',
+                background: getThemeById(activeThemeId).semantic.accentPrimary,
+                border: '1.5px solid rgba(255,255,255,0.3)',
+                flexShrink: 0,
+              }} />
+              {getThemeById(activeThemeId).name}
+            </span>
+            <span style={{ fontSize: 10, color: '#666' }}>▼</span>
+          </button>
+          {themeDropdownOpen && (
+            <div style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: '100%',
+              background: '#252540',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: 8,
+              padding: 4,
+              zIndex: 10,
+              backdropFilter: 'blur(12px)',
+              marginTop: 4,
+            }}>
+              {Object.values(themeRegistry).map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    useThemeStore.setState({ activeThemeId: t.id });
+                    applyTheme(t);
+                    applyMode(t, activeMode);
+                    setThemeDropdownOpen(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '6px 10px',
+                    background: t.id === activeThemeId ? 'rgba(255,255,255,0.1)' : 'none',
+                    border: 'none',
+                    borderRadius: 4,
+                    color: t.id === activeThemeId ? '#fff' : '#ccc',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    textAlign: 'left' as const,
+                    fontWeight: t.id === activeThemeId ? 600 : 400,
+                  }}
+                >
+                  <span style={{
+                    width: 14, height: 14, borderRadius: '50%',
+                    background: t.semantic.accentPrimary,
+                    border: '1.5px solid rgba(255,255,255,0.3)',
+                    flexShrink: 0,
+                  }} />
+                  {t.name}
+                  {t.id === activeThemeId && <span style={{ marginLeft: 'auto', fontSize: 12, color: '#9b59b6' }}>✓</span>}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="bl-userroom__section">
