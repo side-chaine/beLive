@@ -146,20 +146,6 @@ export function initAudioBridge(): () => void {
     }
   };
 
-  const onAudioPositionChanged = (e: Event) => {
-    const d = (e as CustomEvent).detail;
-    if (d && typeof d.newTime === 'number') {
-      useAudioStore.setState({ currentTime: d.newTime });
-    }
-  };
-
-  const onTimeUpdate = (e: Event) => {
-    const d = (e as CustomEvent).detail;
-    if (d && typeof d.currentTime === 'number') {
-      useAudioStore.setState({ currentTime: d.currentTime });
-    }
-  };
-
   window.addEventListener('playback-state-changed', onPlaybackState);
   document.addEventListener('track-loaded', onTrackLoaded);
 
@@ -233,8 +219,6 @@ export function initAudioBridge(): () => void {
   document.addEventListener('playback-rate-changed', onRate);
   document.addEventListener('vocalmix-state-changed', onVocal);
   document.addEventListener('microphone-state-changed', onMic);
-  document.addEventListener('audio-position-changed', onAudioPositionChanged);
-  document.addEventListener('timeupdate', onTimeUpdate);
 
   let unpatch: null | (() => void) = null;
 
@@ -313,7 +297,5 @@ export function initAudioBridge(): () => void {
     document.removeEventListener('playback-rate-changed', onRate);
     document.removeEventListener('vocalmix-state-changed', onVocal);
     document.removeEventListener('microphone-state-changed', onMic);
-    document.removeEventListener('audio-position-changed', onAudioPositionChanged);
-    document.removeEventListener('timeupdate', onTimeUpdate);
   };
 }

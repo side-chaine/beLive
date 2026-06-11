@@ -990,9 +990,16 @@ export class AudioEngineV2 {
         // Hot-plug into audio graph
         this._hotPlugStem(id);
 
+        // ⚡ TC-AUDIO-P5: Dispatch track-stem-ready для инкрементального UI-обновления MixerPanel
+        document.dispatchEvent(new CustomEvent('track-stem-ready', {
+          detail: { stemId: id, role }
+        }));
+
         return { id, stem, role };
       })
     ).then((results) => {
+      // ⚡ TC-AUDIO-P2: Stale Phase 2 completion guard — prevents muting instrumental of new track
+      if (gen !== this._loadGeneration) return;
       const succeeded = results.filter(r => r.status === 'fulfilled');
       const failed = results.filter(r => r.status === 'rejected');
 
@@ -1017,7 +1024,11 @@ export class AudioEngineV2 {
           id => id !== 'instrumental' && id !== 'vocals'
         );
         if (hasMusicStems) {
-          this.setStemVolume('instrumental', 0);
+          // ⚡ TC-AUDIO-P1: Плавный ramp-down instrumental вместо instant mute (anti-click)
+          const ctx = getAudioContext();
+          if (this._masterVolumeGain) {
+            this._masterVolumeGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15);
+          }
           // Unmute stems (hot-plug мог замьютить их)
           for (const id of loadedStems) {
             if (id !== 'instrumental' && id !== 'vocals') {
@@ -2112,6 +2123,9 @@ export class AudioEngineV2 {
     this._micCaptureEnabled = false;
     this.vocalMix.dispose();
     this.microphone.dispose();
+    // ⚡ TC-AUDIO-P7: Clean up master volume gain (Web Audio dangling node leak)
+    this._masterVolumeGain?.disconnect();
+    this._masterVolumeGain = null;
     this._trackUrls = {};
     this._duration = 0;
     // W3: Clean up bus gain nodes
