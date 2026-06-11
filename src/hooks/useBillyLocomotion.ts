@@ -275,7 +275,7 @@ export function useBillyLocomotion(refs: LocomotionRefs) {
     }
     _loopRunning = true;
 
-    console.log('[Billy] rAF loop useEffect starting');
+    if (import.meta.env.DEV) console.log('[Billy] rAF loop useEffect starting');
     // W2: собственный rAF. W3: миграция в scheduler — одна строка
     const loop = () => {
       frameCountRef.current++;

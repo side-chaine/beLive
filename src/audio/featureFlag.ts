@@ -15,13 +15,13 @@ export function tryActivateV2(): boolean {
   }
 
   if (_v2) {
-    console.log('✅ v2 already active');
+    if (import.meta.env.DEV) console.log('✅ v2 already active');
     return true;
   }
 
   try {
     _v2 = patchV1WithV2(ae);
-    console.log('✅ AudioEngine v2 FULL PATCH active');
+    if (import.meta.env.DEV) console.log('✅ AudioEngine v2 FULL PATCH active');
     return true;
   } catch (err) {
     console.error('❌ v2 activation failed:', err);

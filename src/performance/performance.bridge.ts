@@ -172,7 +172,7 @@ export function initPerformanceBridge(): () => void {
   applyBudgetCSSVars(resolvedBudget);
 
   // eslint-disable-next-line no-console
-  console.log('[PerformanceBridge] initialized');
+  if (import.meta.env.DEV) console.log('[PerformanceBridge] initialized');
 
   // Subscribe to performance store changes
   const unsubscribePerf: Unsubscribe = usePerformanceStore.subscribe((state) => {
@@ -231,7 +231,7 @@ export function initPerformanceBridge(): () => void {
     removeBudgetCSSVars();
 
     // eslint-disable-next-line no-console
-    console.log('[PerformanceBridge] disposed');
+    if (import.meta.env.DEV) console.log('[PerformanceBridge] disposed');
   };
 }
 

@@ -200,11 +200,11 @@ export function initStemReactiveBridge(): () => void {
   const diagDetector = scheduler as any;
   if (diagDetector._detectors) {
     const registered = diagDetector._detectors.some((d: any) => d.id === 'stem-reactive-detector');
-    console.log('[StemReactiveBridge] detector registered:', registered);
+    if (import.meta.env.DEV) console.log('[StemReactiveBridge] detector registered:', registered);
   }
   if (diagDetector._writers) {
     const registered = diagDetector._writers.some((w: any) => w.id === 'stem-reactive-writer');
-    console.log('[StemReactiveBridge] writer registered:', registered);
+    if (import.meta.env.DEV) console.log('[StemReactiveBridge] writer registered:', registered);
   }
 
   // ═══ Start scheduler if not already running ═══
@@ -213,7 +213,7 @@ export function initStemReactiveBridge(): () => void {
   // This ensures CSS vars are published even when track is paused.
   if (!scheduler.isRunning()) {
     scheduler.start();
-    console.log('[StemReactiveBridge] scheduler started (independent of trigger.bridge)');
+    if (import.meta.env.DEV) console.log('[StemReactiveBridge] scheduler started (independent of trigger.bridge)');
   }
 
   // ═══ Track change cleanup ═══
@@ -238,7 +238,7 @@ export function initStemReactiveBridge(): () => void {
       // Playback resumed: ensure scheduler is running
       if (!scheduler.isRunning()) {
         scheduler.start();
-        console.log('[StemReactive] scheduler restarted on playback resume');
+        if (import.meta.env.DEV) console.log('[StemReactive] scheduler restarted on playback resume');
       }
     } else {
       // Playback paused: clear energies but DON'T stop scheduler
@@ -250,7 +250,7 @@ export function initStemReactiveBridge(): () => void {
   }
   window.addEventListener('playback-state-changed', onPlaybackState);
 
-  console.log('[StemReactiveBridge] initialized — detector + writer registered with scheduler');
+  if (import.meta.env.DEV) console.log('[StemReactiveBridge] initialized — detector + writer registered with scheduler');
 
   // ═══ Cleanup on unmount ═══
   return () => {

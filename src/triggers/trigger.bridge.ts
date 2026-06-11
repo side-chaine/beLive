@@ -182,7 +182,7 @@ export function initTriggerBridge(): () => void {
   document.addEventListener('before-track-change', onTrackChange);
   window.addEventListener('keydown', onKey);
 
-  console.log('[TriggerBridge] initialized');
+  if (import.meta.env.DEV) console.log('[TriggerBridge] initialized');
 
   return () => {
     stopLoop();
@@ -198,6 +198,6 @@ export function initTriggerBridge(): () => void {
     root.style.removeProperty(CSS_WORD_ACTIVE);
     root.style.removeProperty(CSS_WORD_PROGRESS);
     root.style.removeProperty(CSS_LINE_ACTIVE);
-    console.log('[TriggerBridge] disposed');
+    if (import.meta.env.DEV) console.log('[TriggerBridge] disposed');
   };
 }

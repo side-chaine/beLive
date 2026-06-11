@@ -157,6 +157,6 @@ export function patchV1WithV2(v1: any): AudioEngineV2 {
   // 13. Nullify v1-only nodes (force audio-reactive fallback)
   v1.stereoMerger = null;
 
-  console.log('✅ AudioEngine v1 fully patched → v2');
+  if (import.meta.env.DEV) console.log('✅ AudioEngine v1 fully patched → v2');
   return v2;
 }

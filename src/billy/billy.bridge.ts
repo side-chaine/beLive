@@ -60,7 +60,7 @@ export function initBillyBridge(): () => void {
   // 4. Initial publication
   writer.write();
 
-  console.log('[BillyBridge] initialized — writer registered');
+  if (import.meta.env.DEV) console.log('[BillyBridge] initialized — writer registered');
 
   // 5. Return dispose function
   return () => {
@@ -71,6 +71,6 @@ export function initBillyBridge(): () => void {
     root.style.removeProperty(CSS_VAR_POS_X);
     root.style.removeProperty(CSS_VAR_POS_Y);
     clearQueuedCssVars();
-    console.log('[BillyBridge] disposed');
+    if (import.meta.env.DEV) console.log('[BillyBridge] disposed');
   };
 }

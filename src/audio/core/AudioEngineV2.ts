@@ -143,7 +143,7 @@ export class AudioEngineV2 {
     const gen = this._loadGeneration;
     const signal = this._loadAbort?.signal ?? new AbortController().signal;
 
-    console.log(`🔄 [gen=${gen}] On-demand loading ${entries.length} stems`);
+    if (import.meta.env.DEV) console.log(`🔄 [gen=${gen}] On-demand loading ${entries.length} stems`);
 
     const results = await Promise.allSettled(
       entries.map(async ([id, entry]) => {
@@ -183,7 +183,7 @@ export class AudioEngineV2 {
     results.forEach((result, i) => {
       if (result.status === 'fulfilled') {
         loadedIds.push(result.value);
-        console.log(`✅ [gen=${gen}] On-demand: ${entries[i][0].toUpperCase()} loaded`);
+        if (import.meta.env.DEV) console.log(`✅ [gen=${gen}] On-demand: ${entries[i][0].toUpperCase()} loaded`);
       } else {
         console.warn(`⚠️ On-demand: Stem '${entries[i][0]}' failed:`, result.reason?.message ?? result.reason);
       }
@@ -205,7 +205,7 @@ export class AudioEngineV2 {
         detail: { duration: this._duration, loadedStems: allLoadedIds, hasVocals }
       }));
 
-      console.log(`🏁 [gen=${gen}] On-demand complete: ${loadedIds.length} stems loaded`);
+      if (import.meta.env.DEV) console.log(`🏁 [gen=${gen}] On-demand complete: ${loadedIds.length} stems loaded`);
     }
 
     return loadedIds;
@@ -214,7 +214,7 @@ export class AudioEngineV2 {
   constructor() {
     this.vocalMix = new VocalMix();
     this.microphone = new MicrophoneManager();
-    console.log('🚀 AudioEngine v2 (Hybrid) initialized');
+    if (import.meta.env.DEV) console.log('🚀 AudioEngine v2 (Hybrid) initialized');
   }
 
   // W9-DRIFT-001: Tier-based concurrent soft resync limit
@@ -342,7 +342,7 @@ export class AudioEngineV2 {
       // Rewire: sourceNode → gainNode (clock tap) → masterVolumeGain → bus
       instStem.gainNode.connect(this._masterVolumeGain);
 
-      console.log(`✅ [gen=${gen}] INSTRUMENTAL loaded: ${this._duration.toFixed(2)}s`);
+      if (import.meta.env.DEV) console.log(`✅ [gen=${gen}] INSTRUMENTAL loaded: ${this._duration.toFixed(2)}s`);
 
       // ═══════════════════════════════════════════════════════
       // NON-PROGRESSIVE PATH (backward compatible)
@@ -403,7 +403,7 @@ export class AudioEngineV2 {
 
             if (id === 'vocals') hasVocals = true;
 
-            console.log(`✅ [gen=${gen}] ${id.toUpperCase()} loaded: ${result.value.stem.duration.toFixed(2)}s`);
+            if (import.meta.env.DEV) console.log(`✅ [gen=${gen}] ${id.toUpperCase()} loaded: ${result.value.stem.duration.toFixed(2)}s`);
           } else {
             if (id === 'vocals') {
               console.warn(`⚠️ Vocals load failed, instrumental-only mode:`, result.reason?.message ?? result.reason);
@@ -441,7 +441,7 @@ export class AudioEngineV2 {
       const phase1Stems = ['instrumental'];
       this._notifyTrackLoaded(phase1Stems, false);
 
-      console.log(`🚀 [gen=${gen}] Phase 1 complete: instrumental only → playback ready`);
+      if (import.meta.env.DEV) console.log(`🚀 [gen=${gen}] Phase 1 complete: instrumental only → playback ready`);
 
       // ★2 Fire-and-forget Phase 2 with abort signal
       this._runPhase2(gen, this._phase2Abort!.signal, vocalsUrl, additionalStems);
@@ -956,7 +956,7 @@ export class AudioEngineV2 {
       return;
     }
 
-    console.log(`🔄 [gen=${gen}] Phase 2 starting: ${phase2Stems.length} stems to load`);
+    if (import.meta.env.DEV) console.log(`🔄 [gen=${gen}] Phase 2 starting: ${phase2Stems.length} stems to load`);
 
     // Fire-and-forget: load each stem, hot-plug on ready
     Promise.allSettled(
@@ -985,7 +985,7 @@ export class AudioEngineV2 {
         this._stemMutes[id] = false;
         this._stemSolos[id] = false;
 
-        console.log(`✅ [gen=${gen}] Phase 2: ${id.toUpperCase()} loaded`);
+        if (import.meta.env.DEV) console.log(`✅ [gen=${gen}] Phase 2: ${id.toUpperCase()} loaded`);
 
         // Hot-plug into audio graph
         this._hotPlugStem(id);
@@ -1039,7 +1039,7 @@ export class AudioEngineV2 {
         }
       }
 
-      console.log(`🏁 [gen=${gen}] Phase 2 complete: ${loadedStems.length} stems total`);
+      if (import.meta.env.DEV) console.log(`🏁 [gen=${gen}] Phase 2 complete: ${loadedStems.length} stems total`);
     });
   }
 
@@ -1438,7 +1438,7 @@ export class AudioEngineV2 {
 
       this._followersPreloaded = allReady;
       if (allReady && this._loopJumpCount === 0) {
-        console.log(`[LOOP] Followers preloaded + gain-muted at ${loopStart.toFixed(3)}s`);
+        if (import.meta.env.DEV) console.log(`[LOOP] Followers preloaded + gain-muted at ${loopStart.toFixed(3)}s`);
       }
     });
   }
@@ -1478,7 +1478,7 @@ export class AudioEngineV2 {
       });
 
       if (jumpNum === 1 || jumpNum % 10 === 0) {
-        console.log(`[LOOP] #${jumpNum} Atomic jump → ${target.toFixed(3)}s`);
+        if (import.meta.env.DEV) console.log(`[LOOP] #${jumpNum} Atomic jump → ${target.toFixed(3)}s`);
       }
     } else {
       // Fallback: lightweight loop seek — NO pause/resume cycle.
@@ -1495,7 +1495,7 @@ export class AudioEngineV2 {
       this._lastHardResyncTime = performance.now();
 
       if (jumpNum === 1 || jumpNum % 10 === 0) {
-        console.log(`[LOOP] #${jumpNum} Lightweight jump → ${target.toFixed(3)}s`);
+        if (import.meta.env.DEV) console.log(`[LOOP] #${jumpNum} Lightweight jump → ${target.toFixed(3)}s`);
       }
     }
 
