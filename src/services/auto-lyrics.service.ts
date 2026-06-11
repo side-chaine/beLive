@@ -324,6 +324,9 @@ export function blockFirstLineSync(
           `(best score: ${(bestScore * 100).toFixed(0)}%) → "${firstLine.substring(0, 40)}"`
         );
       }
+      // ⚡ TC-BUG-01: Продвигаем lastMatchedLrcIdx даже при NOT MAPPED,
+      // чтобы следующий блок не украл строки этого блока
+      lastMatchedLrcIdx = Math.min(lastMatchedLrcIdx + 1, displayLines.length - 1);
       return {
         id: `auto-block-${bi}`,
         name: block.label,

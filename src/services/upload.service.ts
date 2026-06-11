@@ -648,6 +648,9 @@ export async function saveTrack(): Promise<void> {
  */
 export async function handleZipFileSelect(file: File, onProgress?: (pct: number) => void): Promise<void> {
   try {
+    // ⚡ TC-BUG-02: Очищаем стемы перед каждым ZIP — предотвращает "stem slot already taken"
+    // при повторной загрузке до вызова saveTrack()
+    uploadSession.additionalStems = null;
     // W7: Capture ZIP filename for overrideTitle (mvsep bundles)
     const zipFileName = file.name;
     const JSZip = (await import('jszip')).default;
