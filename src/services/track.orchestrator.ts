@@ -413,7 +413,7 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
             }
           }
 
-          console.log(`[VOC] Async complete (playback=${playbackPosition.toFixed(1)}s, runtimeUpdate=${runtimeUpdate})`);
+          if (import.meta.env.DEV) console.log(`[VOC] Async complete (playback=${playbackPosition.toFixed(1)}s, runtimeUpdate=${runtimeUpdate})`);
         } catch (e) {
           console.warn('[VOC] Async vocal onset detection failed:', e);
         }

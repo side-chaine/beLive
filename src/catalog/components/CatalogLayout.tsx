@@ -159,7 +159,7 @@ export function CatalogLayout({ color, onClose }: Props) {
       clearTimeout(safetyTimer);
       alert('ZIP failed.');
     } finally {
-      console.log('[ZIP] finally called, timedOut=', safetyTimedOut.current);
+      if (import.meta.env.DEV) console.log('[ZIP] finally called, timedOut=', safetyTimedOut.current);
       clearTimeout(safetyTimer);
       if (!safetyTimedOut.current) {
         setTimeout(() => {

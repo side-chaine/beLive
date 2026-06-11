@@ -85,14 +85,14 @@ export async function fetchCoverArtAndUpdate(
   // Strategy 1: iTunes Search API (CORS-friendly, works from browser)
   coverUrl = await fetchCoverArtFromItunes(artist, title);
   if (coverUrl) {
-    console.log(`[CoverArt] Found via iTunes: ${coverUrl}`);
+    if (import.meta.env.DEV) console.log(`[CoverArt] Found via iTunes: ${coverUrl}`);
   }
 
   // Strategy 2: Title-only iTunes search (if artist was empty)
   if (!coverUrl && !artist) {
     coverUrl = await fetchCoverArtFromItunes('', title);
     if (coverUrl) {
-      console.log(`[CoverArt] Found via iTunes (title-only): ${coverUrl}`);
+      if (import.meta.env.DEV) console.log(`[CoverArt] Found via iTunes (title-only): ${coverUrl}`);
     }
   }
 
@@ -100,12 +100,12 @@ export async function fetchCoverArtAndUpdate(
   if (!coverUrl) {
     coverUrl = await fetchCoverArt(artist || ' ', title);
     if (coverUrl) {
-      console.log(`[CoverArt] Found via Last.fm: ${coverUrl}`);
+      if (import.meta.env.DEV) console.log(`[CoverArt] Found via Last.fm: ${coverUrl}`);
     }
   }
 
   if (!coverUrl) {
-    console.log(`[CoverArt] No cover found for: "${trackTitle}"`);
+    if (import.meta.env.DEV) console.log(`[CoverArt] No cover found for: "${trackTitle}"`);
     return;
   }
 
@@ -129,7 +129,7 @@ export async function fetchCoverArtAndUpdate(
     const theme = await extractDominantColors(coverUrl);
     if (theme) {
       await updateTrackField(trackId, { coverTheme: theme });
-      console.log(`[CoverArt] Theme extracted: primary=${theme.primary} accent=${theme.accent}`);
+      if (import.meta.env.DEV) console.log(`[CoverArt] Theme extracted: primary=${theme.primary} accent=${theme.accent}`);
 
       const currentTrack = useTrackStore.getState().currentTrack;
       if (currentTrack && Number(currentTrack.id) === trackId) {

@@ -12,7 +12,7 @@ import type { StemDataEntry } from './idb.service';
 import { fetchCoverArtAndUpdate } from './cover-art.service';
 import { parseLrcString, lrcToMarkers } from './auto-lyrics.service';
 import { useTrackStore } from '../stores/track.store';
-import { useMvsepStore } from '../stores/mvsep.store';
+import { loadTrack } from './track.actions';
 
 // W6.2: Stem classification keywords (filename substring → stem slot)
 // Instrumental is NEVER matched here — it's the file with NO stem keyword
@@ -292,7 +292,7 @@ export async function handleFileSelect(
           // Extract lyricsHash for roundtrip word-sync compatibility
           if (data.lyricsHash && typeof data.lyricsHash === 'string') {
             uploadSession.lyricsHash = data.lyricsHash;
-            console.log('[Upload] lyricsHash extracted from export.json:', data.lyricsHash.slice(0, 16) + '...');
+            if (import.meta.env.DEV) console.log('[Upload] lyricsHash extracted from export.json:', data.lyricsHash.slice(0, 16) + '...');
           }
           // TC-COVER-01: Extract cover art from ZIP metadata
           if (data.coverArtUrl && typeof data.coverArtUrl === 'string') {
@@ -364,72 +364,6 @@ export function getTrackTitle(): string | null {
   const instrumental = uploadSession.instrumental;
   if (!instrumental) return null;
   return getFileNameWithoutExtension(instrumental.name);
-}
-
-async function loadTrackIntoApp(track: any): Promise<number> {
-  const w = window as any;
-  const tc = w.trackCatalog;
-  if (!tc) throw new Error('TrackCatalog недоступен');
-
-  const idb = w.idbService;
-  const freshTracks = idb?.getAllTracks
-    ? await idb.getAllTracks()
-    : [];
-
-  // W5 debug: check if stemsData is present in fresh IDB read
-  const freshTrack = freshTracks.find((t: any) => t.id === track.id);
-  if (freshTrack?.stemsData) {
-    console.log(`[Upload] loadTrackIntoApp: stemsData found with ${Object.keys(freshTrack.stemsData).length} entries`);
-  } else {
-    console.log(`[Upload] loadTrackIntoApp: NO stemsData for track id=${track.id}`);
-  }
-
-  tc.tracks.length = 0;
-  tc.tracks.push(...freshTracks);
-
-  const trackIndex = tc.tracks.findIndex((t: any) => t.id === track.id);
-  if (trackIndex === -1) {
-    throw new Error('Трек не найден в основном каталоге после перезагрузки');
-  }
-
-  const orchestrator = (window as any).trackOrchestrator;
-  if (!orchestrator) {
-    throw new Error('trackOrchestrator недоступен');
-  }
-  await orchestrator(trackIndex, {});
-  return trackIndex;
-}
-
-export async function openBlockEditorForTrack(track: any): Promise<void> {
-  const w = window as any;
-  try {
-    await loadTrackIntoApp(track);
-
-    const startTs = performance.now();
-    const maxWaitMs = 5000;
-
-    const waitReady = () => {
-      const we = w.waveformEditor;
-      const ready = we
-        && typeof we._openNewBlockEditor === 'function'
-        && we.currentTrackId === track.id;
-      if (ready) {
-        we._openNewBlockEditor();
-        return;
-      }
-      if (performance.now() - startTs > maxWaitMs) {
-        console.warn('Block editor timeout');
-        w.showAppNotification?.('⚠️ Редактор блоков недоступен: таймаут ожидания', 'info');
-        return;
-      }
-      setTimeout(waitReady, 150);
-    };
-
-    waitReady();
-  } catch (error) {
-    console.error('❌ Ошибка при открытии редактора блоков:', error);
-    w.showAppNotification?.('❌ Ошибка открытия редактора блоков', 'error');
-  }
 }
 
 /**
@@ -591,7 +525,7 @@ export async function saveTrack(): Promise<void> {
       await w.idbService.updateTrackField(savedTrack.id, { stemsData });
       // Patch the in-memory savedTrack so trackCatalog gets stemsData too
       savedTrack.stemsData = stemsData;
-      console.log(`[Upload] W6: saved ${Object.keys(stemsData).length} additional stems to IDB`);
+      if (import.meta.env.DEV) console.log(`[Upload] W6: saved ${Object.keys(stemsData).length} additional stems to IDB`);
     }
 
     // Sync to trackCatalog.tracks
@@ -601,7 +535,7 @@ export async function saveTrack(): Promise<void> {
 
     // TC-COVER-01: Skip API if cover art restored from ZIP
     if (session.coverArtBlob || session.coverArtUrl) {
-      console.log('[CoverArt] Restored from ZIP (skip API)');
+      if (import.meta.env.DEV) console.log('[CoverArt] Restored from ZIP (skip API)');
       // Apply theme synchronously
       if (session.coverTheme) {
         useTrackStore.getState().setCurrentCoverTheme?.(session.coverTheme);
@@ -665,19 +599,40 @@ export async function saveTrack(): Promise<void> {
       }
     }));
     
-    // W9-UX-003: Only open Block Editor if lyrics present
-    // W11: пропускаем Block Editor если auto-sync применён для этого трека
-    if (hasLyrics) {
-      import('./auto-lyrics.service').then(({ shouldSkipEditorsForTrack }) => {
-        if (savedTrack.id && shouldSkipEditorsForTrack(savedTrack.id)) {
+    // ═══ TC-FLOW-01: lrclib-зависимая логика без автооткрытия редакторов ═══
+    if (hasLyrics && savedTrack.id) {
+      import('./auto-lyrics.service').then(async ({ shouldSkipEditorsForTrack, waitForCache }) => {
+        // Если auto-sync уже применился — ничего не делаем
+        if (shouldSkipEditorsForTrack(savedTrack.id)) {
           if (import.meta.env.DEV) {
             console.log('[AutoLyrics] Block Editor skipped in saveTrack — auto-sync applied for track', savedTrack.id);
           }
           return;
         }
-        setTimeout(() => openBlockEditorForTrack(savedTrack), 500);
+
+        // Ждём lrclib максимум 5 секунд
+        const title = savedTrack.title || '';
+        const lrcResult = title ? await waitForCache(title, 5000) : null;
+
+        if (lrcResult) {
+          // lrclib нашёл данные — трек уже получит auto-sync через UploadPanel
+          if (import.meta.env.DEV) {
+            console.log('[TC-FLOW] lrclib data cached for', title, '— no editor needed');
+          }
+          return;
+        }
+
+        // lrclib не нашёл — открываем sync editor
+        if (import.meta.env.DEV) {
+          console.log('[TC-FLOW] lrclib NOT found for', title, '— opening sync editor');
+        }
+        const trackIndex = useTrackStore.getState().tracksMeta
+          .findIndex(t => String(t.id) === String(savedTrack.id));
+        if (trackIndex >= 0) {
+          loadTrack(trackIndex, { autoplay: false, openSyncEditor: true });
+        }
       }).catch(() => {
-        setTimeout(() => openBlockEditorForTrack(savedTrack), 500);
+        // fallback — ничего не открываем, трек в каталоге
       });
     }
 
@@ -752,7 +707,7 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
             const parsed = JSON.parse(text);
             if (isValidAlignmentArtifact(parsed)) {
               alignmentArtifact = { name: getBaseNameFromPath(name), data: parsed };
-              console.log('[Upload] alignment artifact found:', name);
+              if (import.meta.env.DEV) console.log('[Upload] alignment artifact found:', name);
             } else {
               console.warn('[Upload] alignment file invalid shape:', name);
             }
@@ -781,12 +736,12 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
         // Lead vocal — primary slot
         if (!vocalFile) {
           vocalFile = file;
-          console.log(`[Upload] W6.2: classified as vocal ← ${file.name}`);
+          if (import.meta.env.DEV) console.log(`[Upload] W6.2: classified as vocal ← ${file.name}`);
         } else {
           if (!uploadSession.additionalStems) uploadSession.additionalStems = {};
           if (!uploadSession.additionalStems['backing']) {
             uploadSession.additionalStems['backing'] = file;
-            console.log(`[Upload] W6.2: vocal slot taken → backing ← ${file.name}`);
+            if (import.meta.env.DEV) console.log(`[Upload] W6.2: vocal slot taken → backing ← ${file.name}`);
           } else {
             console.warn(`[Upload] W6.2: vocal+backing taken, skipping: ${file.name}`);
           }
@@ -794,9 +749,9 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
       } else if (stemSlot) {
         // Stem slot (drums, bass, keys, guitar, backing)
         if (!uploadSession.additionalStems) uploadSession.additionalStems = {};
-        if (!uploadSession.additionalStems[stemSlot]) {
-          uploadSession.additionalStems[stemSlot] = file;
-          console.log(`[Upload] W6.2: classified stem: ${stemSlot} ← ${file.name}`);
+          if (!uploadSession.additionalStems[stemSlot]) {
+            uploadSession.additionalStems[stemSlot] = file;
+            if (import.meta.env.DEV) console.log(`[Upload] W6.2: classified stem: ${stemSlot} ← ${file.name}`);
         } else {
           console.warn(`[Upload] W6.2: stem slot '${stemSlot}' already taken, skipping: ${file.name}`);
         }
@@ -810,7 +765,7 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
               .replace(/\.zip$/i, '')
               .replace(/\.(flac|mp3|wav|aac|m4a|ogg)$/i, '')
               .trim();
-            console.log(`[Upload] W7.2: mvsep instrum detected, title="${uploadSession.overrideTitle}" ← ${file.name}`);
+            if (import.meta.env.DEV) console.log(`[Upload] W7.2: mvsep instrum detected, title="${uploadSession.overrideTitle}" ← ${file.name}`);
             // W11: fire-and-forget lrclib prefetch (параллельно с загрузкой аудио)
             // Захватываем title синхронно ДО async импорта — сессия может сброситься раньше
             const _prefetchTitle = uploadSession.overrideTitle;
@@ -848,13 +803,13 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
         } else if (!instrumentalFile) {
           // True instrumental (no stem keyword, no 'instrum' in name)
           instrumentalFile = file;
-          console.log(`[Upload] W6.2: classified as instrumental (no stem keyword) ← ${file.name}`);
+          if (import.meta.env.DEV) console.log(`[Upload] W6.2: classified as instrumental (no stem keyword) ← ${file.name}`);
         } else {
           // Second unclassified file → other stem
           if (!uploadSession.additionalStems) uploadSession.additionalStems = {};
           if (!uploadSession.additionalStems['other']) {
             uploadSession.additionalStems['other'] = file;
-            console.log(`[Upload] W6.2: unclassified → other ← ${file.name}`);
+            if (import.meta.env.DEV) console.log(`[Upload] W6.2: unclassified → other ← ${file.name}`);
           } else {
             console.warn(`[Upload] W6.2: 'other' slot already taken, skipping: ${file.name}`);
           }
@@ -897,7 +852,7 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
         const isPng = coverZipFile.name.toLowerCase().endsWith('.png');
         const coverBlob = new Blob([ab], { type: isPng ? 'image/png' : 'image/jpeg' });
         uploadSession.coverArtBlob = coverBlob;
-        console.log('[CoverArt] Extracted from ZIP:', coverBlob.type, Math.round(coverBlob.size / 1024) + 'KB');
+        if (import.meta.env.DEV) console.log('[CoverArt] Extracted from ZIP:', coverBlob.type, Math.round(coverBlob.size / 1024) + 'KB');
       } catch (e) {
         console.warn('[Upload] Failed to extract cover art from ZIP:', e);
       }
