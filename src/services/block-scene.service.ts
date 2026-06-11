@@ -124,7 +124,7 @@ export async function uploadBlockScene(
 
   await idbSaveScene(scene);
 
-  console.log(`[BlockScene] Saved: trackId=${trackId} block=${blockIndex} id=${id}`);
+  if (import.meta.env.DEV) console.log(`[BlockScene] Saved: trackId=${trackId} block=${blockIndex} id=${id}`);
 
   // Return metadata (without blob)
   const { blob: _, ...meta } = scene;
@@ -171,7 +171,7 @@ export async function deleteBlockScene(sceneId: string): Promise<void> {
     useTrackStore.getState().setHasBlockScenes(remaining > 0);
   }
 
-  console.log(`[BlockScene] Deleted: ${sceneId}`);
+  if (import.meta.env.DEV) console.log(`[BlockScene] Deleted: ${sceneId}`);
 }
 
 // ── Preload & Object URLs ────────────────────────────────
@@ -207,7 +207,7 @@ export async function preloadScenesForTrack(trackId: number): Promise<SceneMap> 
     }
   }
 
-  console.log(`[BlockScene] Preloaded ${blockScenes.size} block + ${lineScenes.size} line scenes for trackId=${trackId}`);
+  if (import.meta.env.DEV) console.log(`[BlockScene] Preloaded ${blockScenes.size} block + ${lineScenes.size} line scenes for trackId=${trackId}`);
   return { blockScenes, lineScenes };
 }
 
@@ -252,7 +252,7 @@ export async function softReloadScenesForTrack(
     }
   }
 
-  console.log(`[BlockScene] Soft reloaded ${blockScenes.size} block + ${lineScenes.size} line scenes for trackId=${trackId}`);
+  if (import.meta.env.DEV) console.log(`[BlockScene] Soft reloaded ${blockScenes.size} block + ${lineScenes.size} line scenes for trackId=${trackId}`);
   return { sceneMap: { blockScenes, lineScenes }, oldUrls };
 }
 

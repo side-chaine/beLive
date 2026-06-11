@@ -627,42 +627,52 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
 
                     // TC-008: Apply markers if confidence >= LOW_CONFIDENCE_ACCEPT (0.5)
                     if (matchResult && matchResult.confidence >= LOW_CONFIDENCE_ACCEPT) {
-                      const mm = (window as any).markerManager;
-                      const ld = (window as any).lyricsDisplay;
-                      if (mm && matchResult.markers.length > 0) {
-                        mm.setMarkers(matchResult.markers);
-                        mm.updateMarkerColors?.();
-                      }
-                      if (ld && matchResult.blocks.length > 0) {
-                        ld.textBlocks = matchResult.blocks;
-                        ld.activateRehearsalDisplay?.();
-                      }
                       const autoLyrics = await import('../services/auto-lyrics.service');
                       autoLyrics.markAutoSyncApplied(pendingTrackId);
+                      autoSyncApplied = true;
 
-                      if (matchResult.confidence >= HIGH_CONFIDENCE) {
-                        w.showNotification?.(
-                          'success',
-                          `✅ Синхронизация готова (${Math.round(matchResult.confidence * 100)}%)`,
-                        );
-                      } else {
+                      if (matchResult.confidence < HIGH_CONFIDENCE) {
+                        // LOW_CONFIDENCE (0.5-0.79) — применяем legacy для ревью
+                        const mm = (window as any).markerManager;
+                        const ld = (window as any).lyricsDisplay;
+                        if (mm && matchResult.markers.length > 0) {
+                          mm.setMarkers(matchResult.markers);
+                          mm.updateMarkerColors?.();
+                        }
+                        if (ld && matchResult.blocks.length > 0) {
+                          ld.textBlocks = matchResult.blocks;
+                          ld.activateRehearsalDisplay?.();
+                        }
                         w.showNotification?.(
                           'warning',
                           `⚠️ Синхронизация применена (${Math.round(matchResult.confidence * 100)}%). Проверьте маркеры в Sync Editor.`,
                         );
+                      } else {
+                        // HIGH_CONFIDENCE (>= 0.8) — IDB уже сохранён выше, legacy не трогаем
+                        // трек просто появляется в каталоге
+                        w.showNotification?.(
+                          'success',
+                          `✅ Синхронизация готова (${Math.round(matchResult.confidence * 100)}%)`,
+                        );
                       }
-                      autoSyncApplied = true;
                     }
 
-                    // Fallback: open Block Editor if auto-sync didn't work
+                    // ═══ TC-FLOW-02: fallback — открыть sync editor вместо Block Editor ═══
                     if (!autoSyncApplied) {
                       if (import.meta.env.DEV) {
-                        console.log('[AutoLyrics] auto-sync not applied, opening Block Editor');
+                        console.log('[AutoLyrics] auto-sync not applied, opening Sync Editor');
                       }
                       const track = await w.idbService?.getTrack(pendingTrackId);
                       if (track) {
-                        const { openBlockEditorForTrack } = await import('../services/upload.service');
-                        setTimeout(() => openBlockEditorForTrack(track), 300);
+                        const { loadTrack } = await import('../services/track.actions');
+                        const { useTrackStore } = await import('../stores/track.store');
+                        const trackIndex = useTrackStore.getState().tracksMeta
+                          .findIndex(t => String(t.id) === String(pendingTrackId));
+                        if (trackIndex >= 0) {
+                          setTimeout(() => {
+                            loadTrack(trackIndex, { autoplay: false, openSyncEditor: true });
+                          }, 300);
+                        }
                       }
                     }
                     onSaved?.();

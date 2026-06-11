@@ -188,7 +188,7 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
           const { updateTrackField } = await import('./idb.service');
           await updateTrackField(track.id, { lyrics: cleanLines.join('\n') });
 
-          console.log(
+          if (import.meta.env.DEV) console.log(
             `[TC-006] MIGRATED "${track.title}": ` +
             `${ld.lyrics.length} → ${cleanLines.length} lines ` +
             `(removed bracket tags)`
@@ -528,11 +528,11 @@ export async function loadStemsOnDemand(): Promise<void> {
   }
 
   if (Object.keys(additionalStems).length === 0) {
-    console.log('[loadStemsOnDemand] All stems already loaded');
+    if (import.meta.env.DEV) console.log('[loadStemsOnDemand] All stems already loaded');
     return;
   }
 
-  console.log(`[loadStemsOnDemand] Loading ${Object.keys(additionalStems).length} stems on-demand`);
+  if (import.meta.env.DEV) console.log(`[loadStemsOnDemand] Loading ${Object.keys(additionalStems).length} stems on-demand`);
 
   await ae.loadAdditionalStems(additionalStems);
 
