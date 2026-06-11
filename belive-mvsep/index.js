@@ -138,7 +138,9 @@ async function handleStatus(request, env, cors) {
     });
   }
 
-  const resp = await fetch(`${MVSEP_API_URL}/get?hash=${encodeURIComponent(hash)}&api_token=${env.MVSEP_API_KEY}`);
+  const resp = await fetch(`${MVSEP_API_URL}/get?hash=${encodeURIComponent(hash)}`, {
+    headers: { 'X-API-Key': env.MVSEP_API_KEY }
+  });
   const data = await resp.json();
 
   // Release concurrent lock if done/failed
