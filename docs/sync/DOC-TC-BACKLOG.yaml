@@ -1,0 +1,228 @@
+# ═══════════════════════════════════════════════════════════════
+# 📋 DOC-TC BACKLOG — Documentation Task Backlog
+# ═══════════════════════════════════════════════════════════════
+# Open documentation tasks that need to be resolved.
+# Priority: P0 (blocking) > P1 (critical) > P2 (important) > P3 (nice-to-have)
+# Lifecycle: open → in_progress → resolved → verified_by_009
+#
+# Generated: 2026-06-10
+
+backlog:
+  # ── P1 — Critical ──
+  - id: DOC-TC-006
+    domain: control-surface
+    description: "Redefine scope — doc describes lyrics control surface, not components"
+    priority: P1
+    status: open
+    created: 2026-06-10
+    created_by: "007"
+    expected_keeper: "007"
+    verified_by: null
+
+  - id: DOC-TC-010
+    domain: governance
+    description: "Update 009 role in agent-governance-map.md from reserve to active IVA"
+    priority: P1
+    status: open
+    created: 2026-06-10
+    created_by: "007"
+    expected_keeper: "007"
+    verified_by: null
+
+  # ── P2 — Important ──
+  - id: DOC-TC-003
+    domain: exercises
+    description: "Update generators path, visibleRecipeIds → surface/visibility"
+    priority: P2
+    status: open
+    created: 2026-06-10
+    created_by: "007"
+    expected_keeper: "007"
+    verified_by: null
+
+  - id: DOC-TC-004
+    domain: markers
+    description: "Fix isTrackEnd vs needsClosingMarker, note gap matrix as PLANNED"
+    priority: P2
+    status: open
+    created: 2026-06-10
+    created_by: "007"
+    expected_keeper: "007"
+    verified_by: null
+
+  - id: DOC-TC-005
+    domain: dock
+    description: "Mark RecordingPanel as dead code, note --bl-deck-tabs not applied"
+    priority: P2
+    status: open
+    created: 2026-06-10
+    created_by: "007"
+    expected_keeper: "007"
+    verified_by: null
+
+  - id: DOC-TC-007
+    domain: practice
+    description: "Add Wave G (Player Controls) to practice layer doc"
+    priority: P2
+    status: open
+    created: 2026-06-10
+    created_by: "007"
+    expected_keeper: "007"
+    verified_by: null
+
+  - id: DOC-TC-008
+    domain: slot-matrix
+    description: "Update TransitionPreset struct to v2, fix MAX_SUB_BLOCK_LINES to 6"
+    priority: P2
+    status: open
+    created: 2026-06-10
+    created_by: "007"
+    expected_keeper: "007"
+    verified_by: null
+
+  - id: DOC-TC-009
+    domain: track-meta
+    description: "Fix Essentia.js/libsonare reference, update line counts"
+    priority: P2
+    status: open
+    created: 2026-06-10
+    created_by: "007"
+    expected_keeper: "007"
+    verified_by: null
+
+  # ── P2 — DOC-HYGIENE findings ──
+  - id: DOC-TC-011
+    domain: governance
+    description: "ARCH-BASE.md — add deprecation notice pointing to Belive-Agents/ location"
+    priority: P2
+    status: open
+    created: 2026-06-10
+    created_by: "007"
+    expected_keeper: "007"
+    verified_by: null
+
+  - id: DOC-TC-012
+    domain: governance
+    description: "protocol-v2.1.md — add deprecation notice pointing to Belive-Agents/ location"
+    priority: P2
+    status: open
+    created: 2026-06-10
+    created_by: "007"
+    expected_keeper: "007"
+    verified_by: null
+
+  # ── P3 — Nice-to-have ──
+  - id: DOC-TC-013
+    domain: auth
+    description: "Archive auth-system-freeze.md → docs/archive/ (after verifying unique info)"
+    priority: P3
+    status: open
+    created: 2026-06-10
+    created_by: "007"
+    expected_keeper: "007"
+    verified_by: null
+
+  # ── Task 079 DOC-CHECK entries (Smart Cell ZIP-only redesign) ──
+  - id: DOC-TC-014
+    domain: track
+    description: "BeLive_CEO/zip-pipeline.md — UPDATE: draft→active, Smart Cell ZIP-only, реальный прогресс через 5 milestones"
+    priority: P2
+    status: resolved
+    created: 2026-06-11
+    resolved: 2026-06-11
+    created_by: "007"
+    expected_keeper: "007"
+    verified_by: "009"
+    notes: "Retroactive: doc was already updated 2026-06-10, but DOC-TC never formalised. Original: 14→75 строк. 009 verification: ✅ PASS."
+
+  - id: DOC-TC-015
+    domain: catalog
+    description: "BeLive_CEO/smart-cell-catalog.md — CREATE: новый документ для ZIP-only dropzone (3 состояния, прогресс-пайплайн, ключевые отличия от MVSEP)"
+    priority: P2
+    status: resolved
+    created: 2026-06-11
+    resolved: 2026-06-11
+    created_by: "007"
+    expected_keeper: "007"
+    verified_by: "009"
+    notes: "Retroactive: doc was already created 2026-06-10, but DOC-TC never formalised. 128 строк. 009 verification: ✅ PASS (⚠️ line 116 inaccuracy — см. DRIFT-A)."
+
+  - id: DOC-TC-016
+    domain: track
+    description: "BeLive_CEO/DEMO-TRACKS-GUIDE.md — UPDATE: MVSEP deprecation (стр. 26 Option B — mvsep.com, naming table)"
+    priority: P2
+    status: resolved
+    created: 2026-06-11
+    resolved: 2026-06-11
+    created_by: "007"
+    expected_keeper: "007"
+    verified_by: "009"
+    notes: "Retroactive: doc was already updated 2026-06-10. MVSEP references marked as deprecated. 009 verification: ✅ PASS."
+
+  - id: DOC-TC-017
+    domain: track
+    description: "BeLive_CEO/pipeline-demo-tracks.md — UPDATE: MVSEP bundles deprecation (стр. 67), статус 🟡 ready"
+    priority: P2
+    status: resolved
+    created: 2026-06-11
+    resolved: 2026-06-11
+    created_by: "007"
+    expected_keeper: "007"
+    verified_by: "009"
+    notes: "Retroactive: doc was already updated 2026-06-10. MVSEP notes marked as deprecated. 009 verification: ✅ PASS."
+
+  # ── MVSEP Integration — Infrastructure Documentation ──
+  - id: DOC-TC-MVSEP-001
+    domain: mvsep
+    description: "Document MVSEP full infrastructure: 6 new files, 15 modified files, CF Worker, 14 TC roadmap"
+    priority: P1
+    status: resolved
+    created: 2026-06-11
+    resolved: 2026-06-11
+    created_by: "007"
+    expected_keeper: "007"
+    notes: "Created 077-MVSEP-FULL-PACK.md with complete architecture, file map, event bus, state machines, ZIP pipeline parity"
+
+  - id: DOC-TC-MVSEP-002
+    domain: mvsep
+    description: "Document CF Worker belive-mvsep endpoints, KV namespaces, secrets, deploy instructions"
+    priority: P1
+    status: resolved
+    created: 2026-06-11
+    resolved: 2026-06-11
+    created_by: "007"
+    expected_keeper: "007"
+    notes: "Created belive-mvsep/DEPLOY.md with wrangler commands, secrets setup, KV namespace creation"
+
+  - id: DOC-TC-MVSEP-003
+    domain: mvsep
+    description: "Document PORT dropzone redesign (chevron pulse animation)"
+    priority: P3
+    status: resolved
+    created: 2026-06-11
+    resolved: 2026-06-11
+    created_by: "007"
+    expected_keeper: "007"
+    notes: "Smart Cell → PORT design with bl-chev-pull keyframe animation"
+
+  - id: DOC-TC-MVSEP-004
+    domain: mvsep
+    description: "Document parallel stem download fix (Promise.all vs sequential)"
+    priority: P2
+    status: resolved
+    created: 2026-06-11
+    resolved: 2026-06-11
+    created_by: "007"
+    expected_keeper: "007"
+    notes: "downloadStems refactored from for-await loop to Promise.all for CF Worker CPU timeout mitigation"
+
+  - id: DOC-TC-MVSEP-005
+    domain: mvsep
+    description: "Document submodule fix — belive-api removed from git tracking for CF Pages"
+    priority: P2
+    status: resolved
+    created: 2026-06-11
+    resolved: 2026-06-11
+    created_by: "007"
+    expected_keeper: "007"
+    notes: "belive-api was embedded git repo, CF Pages could not clone (private). Fixed: git rm --cached + .gitignore"
