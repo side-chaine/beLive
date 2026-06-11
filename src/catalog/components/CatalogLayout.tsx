@@ -452,11 +452,49 @@ export function CatalogLayout({ color, onClose }: Props) {
 
             {/* idle */}
             {!zipBusy && (
-              <>
-                <div style={{ fontSize: 22, color: T.dim }}>📦</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: T.text }}>Загрузить .zip</div>
-                <div style={{ fontSize: 11, color: T.dim }}>Перетащите архив или нажмите для выбора</div>
-              </>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                  <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                    {zipOver || zipHover ? (
+                      <>
+                        <span style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,140,0,0.9)', animation: 'bl-chev-pull 1.4s ease-in-out 0.36s infinite' }}>›</span>
+                        <span style={{ fontSize: 19, fontWeight: 700, color: 'rgba(255,140,0,0.9)', animation: 'bl-chev-pull 1.4s ease-in-out 0.18s infinite' }}>›</span>
+                        <span style={{ fontSize: 24, fontWeight: 700, color: 'rgba(255,140,0,0.9)', animation: 'bl-chev-pull 1.4s ease-in-out 0s infinite' }}>›</span>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ fontSize: 18, fontWeight: 700, color: 'rgba(255,140,0,0.18)' }}>›</span>
+                        <span style={{ fontSize: 18, fontWeight: 700, color: 'rgba(255,140,0,0.18)' }}>›</span>
+                      </>
+                    )}
+                  </div>
+                  <div style={{
+                    fontSize: 28, fontWeight: 800, letterSpacing: '0.22em',
+                    color: zipOver || zipHover ? '#FF8C00' : 'rgba(255,255,255,0.82)',
+                    transition: 'color 0.2s', lineHeight: 1,
+                  }}>ПОРТ</div>
+                  <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                    {zipOver || zipHover ? (
+                      <>
+                        <span style={{ fontSize: 24, fontWeight: 700, color: 'rgba(255,140,0,0.9)', animation: 'bl-chev-pull 1.4s ease-in-out 0s infinite' }}>‹</span>
+                        <span style={{ fontSize: 19, fontWeight: 700, color: 'rgba(255,140,0,0.9)', animation: 'bl-chev-pull 1.4s ease-in-out 0.18s infinite' }}>‹</span>
+                        <span style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,140,0,0.9)', animation: 'bl-chev-pull 1.4s ease-in-out 0.36s infinite' }}>‹</span>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ fontSize: 18, fontWeight: 700, color: 'rgba(255,140,0,0.18)' }}>‹</span>
+                        <span style={{ fontSize: 18, fontWeight: 700, color: 'rgba(255,140,0,0.18)' }}>‹</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div style={{
+                  fontSize: 11, color: zipOver || zipHover ? 'rgba(255,140,0,0.65)' : 'rgba(255,255,255,0.22)',
+                  letterSpacing: '0.05em', transition: 'color 0.2s',
+                }}>
+                  {zipOver || zipHover ? 'закинуть ZIP' : 'перетащите .zip или нажмите'}
+                </div>
+              </div>
             )}
 
             {/* busy — фазы */}

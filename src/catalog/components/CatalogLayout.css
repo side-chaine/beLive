@@ -8,3 +8,9 @@
   0% { transform: translateX(-200%); }
   100% { transform: translateX(350%); }
 }
+
+@keyframes bl-chev-pull {
+  0%   { color: rgba(255,140,0,0.12); }
+  40%  { color: rgba(255,140,0,0.95); }
+  100% { color: rgba(255,140,0,0.12); }
+}
