@@ -350,13 +350,13 @@ export function blockFirstLineSync(
   //    Block N owns lines from its startIdx to block N+1's startIdx
   for (let i = 0; i < blocks.length; i++) {
     const startIdx = (blocks[i] as any)._lrcStartIdx;
-    if (startIdx < 0) continue;
+    if (startIdx == null || startIdx < 0) continue;
     
     // Find next block's start
     let endIdx = displayLines.length;
     for (let j = i + 1; j < blocks.length; j++) {
       const nextStart = (blocks[j] as any)._lrcStartIdx;
-      if (nextStart >= 0) {
+      if (nextStart != null && nextStart >= 0) {
         endIdx = nextStart;
         break;
       }
