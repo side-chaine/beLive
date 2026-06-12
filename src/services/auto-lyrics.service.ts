@@ -332,6 +332,9 @@ export function blockFirstLineSync(
         name: block.label,
         lineIndices: [],
         type: block.type,
+        // ⚡ TC-BUG-03-A: Сохраняем contentLines из Genius даже при NOT MAPPED
+        // (без таймингов, но с текстом — для отображения в TrackMap)
+        contentLines: block.contentLines,
       };
     }
     
