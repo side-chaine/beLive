@@ -346,6 +346,7 @@ export function blockFirstLineSync(
       _lrcStartIdx: bestIdx,
       _matchScore: bestScore,
       type: block.type,
+      contentLines: block.contentLines,
     } as any;
   });
   
@@ -371,9 +372,13 @@ export function blockFirstLineSync(
     }
     
     // TC-010-FIX: Add contentLines for WagonTrain display
-    blocks[i].contentLines = blocks[i].lineIndices.map(
-      (idx: number) => displayLines[idx]
-    );
+    // Guard: не перезаписываем contentLines если lineIndices пуст
+    // (блок мог найти startIdx но не получить строк из-за коллизии)
+    if (blocks[i].lineIndices.length > 0) {
+      blocks[i].contentLines = blocks[i].lineIndices.map(
+        (idx: number) => displayLines[idx]
+      );
+    }
   }
 
   // ═══ TC-BUG-03-B: Пасс 2 — позиционный fallback для NOT MAPPED блоков ═══
