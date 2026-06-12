@@ -381,8 +381,8 @@ export function blockFirstLineSync(
   // назначаем lineIndices на основе позиции между соседними MAPPED блоками.
   for (let i = 0; i < blocks.length; i++) {
     const startIdx = (blocks[i] as any)._lrcStartIdx;
-    // Пропустить уже замапленные блоки (у них есть lineIndices)
-    if (startIdx != null && startIdx >= 0) continue;
+    // Пропустить уже замапленные блоки (есть startIdx И lineIndices реально заполнены)
+    if (startIdx != null && startIdx >= 0 && blocks[i].lineIndices.length > 0) continue;
     const blockContent = blocks[i].contentLines;
     if (!blockContent || blockContent.length === 0) continue;
 
