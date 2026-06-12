@@ -438,6 +438,18 @@ export function blockFirstLineSync(
     }
   }
 
+  // ═══ TC-BUG-03-B DIAG (убрать после верификации) ═══
+  if (import.meta.env.DEV) {
+    for (let di = 0; di < blocks.length; di++) {
+      const b = blocks[di];
+      const hasStart = (b as any)._lrcStartIdx;
+      console.log(
+        `[Pass2-DIAG] Block ${di} [${b.type}] "${b.name}": ` +
+        `startIdx=${hasStart ?? 'null'}, lineIndices=${JSON.stringify(b.lineIndices)}`
+      );
+    }
+  }
+
   // DEV diagnostics
   if (import.meta.env.DEV) {
     const found = blocks.filter(b => b.lineIndices.length > 0).length;
