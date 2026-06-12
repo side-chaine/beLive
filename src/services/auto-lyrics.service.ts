@@ -375,7 +375,69 @@ export function blockFirstLineSync(
       (idx: number) => displayLines[idx]
     );
   }
-  
+
+  // ═══ TC-BUG-03-B: Пасс 2 — позиционный fallback для NOT MAPPED блоков ═══
+  // Для блоков, которые не удалось замапить на LRC строки (score < 0.5),
+  // назначаем lineIndices на основе позиции между соседними MAPPED блоками.
+  for (let i = 0; i < blocks.length; i++) {
+    const startIdx = (blocks[i] as any)._lrcStartIdx;
+    // Пропустить уже замапленные блоки (у них есть lineIndices)
+    if (startIdx != null && startIdx >= 0) continue;
+    const blockContent = blocks[i].contentLines;
+    if (!blockContent || blockContent.length === 0) continue;
+
+    const neededLines = blockContent.length;
+
+    // Найти предыдущий блок с lineIndices
+    let prevEnd = -1;
+    for (let p = i - 1; p >= 0; p--) {
+      if (blocks[p].lineIndices.length > 0) {
+        prevEnd = Math.max(...blocks[p].lineIndices);
+        break;
+      }
+    }
+
+    // Найти следующий блок с lineIndices
+    let nextStart = displayLines.length;
+    let nextBlockIdx = -1;
+    for (let n = i + 1; n < blocks.length; n++) {
+      if (blocks[n].lineIndices.length > 0) {
+        nextStart = Math.min(...blocks[n].lineIndices);
+        nextBlockIdx = n;
+        break;
+      }
+    }
+
+    const availableGap = nextStart - (prevEnd + 1);
+    const takeFromGap = Math.min(neededLines, availableGap);
+
+    if (takeFromGap > 0) {
+      // Есть свободное окно между блоками — берём оттуда
+      blocks[i].lineIndices = Array.from(
+        { length: takeFromGap },
+        (_, k) => prevEnd + 1 + k
+      );
+    }
+
+    // Если всё ещё не хватает строк — отнимаем от следующего блока с капом 50%
+    const stillNeeded = neededLines - blocks[i].lineIndices.length;
+    if (stillNeeded > 0 && nextBlockIdx >= 0) {
+      const nextBlock = blocks[nextBlockIdx];
+      const cap = Math.floor(nextBlock.lineIndices.length * 0.5);
+      const shiftFromNext = Math.min(stillNeeded, cap);
+
+      if (shiftFromNext > 0) {
+        // Забираем первые N строк следующего блока
+        const stolen = nextBlock.lineIndices.splice(0, shiftFromNext);
+        blocks[i].lineIndices.push(...stolen);
+        // Обновляем contentLines следующего блока (без пересоздания)
+        nextBlock.contentLines = nextBlock.lineIndices.map(
+          (idx: number) => displayLines[idx]
+        );
+      }
+    }
+  }
+
   // DEV diagnostics
   if (import.meta.env.DEV) {
     const found = blocks.filter(b => b.lineIndices.length > 0).length;
