@@ -199,6 +199,16 @@ track-name.zip
 3. No cover art → fetchCoverArtAndUpdate() → iTunes/Last.fm API
 ```
 
+### Lyrics Paste Fallback (No LRC)
+
+When a ZIP is imported without lyrics, the app opens the lyrics paste modal. If the user pastes tagged lyrics (`[Verse]`, `[Chorus]`, etc.) but lrclib has no synced version:
+
+- `parseTaggedLyrics()` produces `DetectedBlock[]`.
+- `detectedBlocksToPersistedBlocks()` (in `src/services/auto-lyrics.service.ts`) converts `DetectedBlock[]` → `PersistedTextBlock[]` by mapping each block's `contentLines` to indices in the clean lyric lines.
+- The resulting `PersistedTextBlock[]` is saved to `track.blocksData` so `track.orchestrator.ts` loads it via `loadImportedBlocks()` and `sanitizeBlocks()` accepts it.
+
+This ensures TrackMap structure is preserved even without timing data. (TC-ZIP-03)
+
 ### MIME Type Handling
 
 JSZip `async('blob')` does NOT set MIME type. We use `async('arraybuffer')` + explicit Blob construction:
