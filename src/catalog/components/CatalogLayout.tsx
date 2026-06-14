@@ -80,6 +80,7 @@ export function CatalogLayout({ color, onClose }: Props) {
   const [tgTracks, setTgTracks] = useState<TgTrack[]>([]);
   const [tgError, setTgError] = useState(false);
   const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
+  const [tgDownloadingTitle, setTgDownloadingTitle] = useState('');
 
   // Fetch Telegram tracks on mount
   useEffect(() => {
@@ -197,6 +198,8 @@ export function CatalogLayout({ color, onClose }: Props) {
   const handleTgDownload = useCallback(async (track: TgTrack) => {
     const fileId = track.fileIds?.instrumental || track.fileIds?.full;
     if (!fileId) return;
+    setSearchQuery('');
+    setTgDownloadingTitle(track.title);
     // TC-TG-05: Show PORT progress bar immediately
     setZipBusy(true);
     setZipProgress(5);
@@ -229,7 +232,8 @@ export function CatalogLayout({ color, onClose }: Props) {
       alert('Download failed, try again');
     }
     setDownloadingIds(prev => { const next = new Set(prev); next.delete(track.id); return next; });
-  }, [handleZip]);
+    setTgDownloadingTitle('');
+  }, [handleZip, setSearchQuery]);
 
   // TC-TG-05: Main list = all IDB tracks. Search shows dropdown overlay.
   const filtered = tracks;
@@ -565,6 +569,14 @@ export function CatalogLayout({ color, onClose }: Props) {
             {/* busy — фазы */}
             {zipBusy && (
               <>
+                {tgDownloadingTitle && (
+                  <div style={{
+                    fontSize: 10, color: T.orange, marginBottom: 4,
+                    letterSpacing: '0.03em',
+                  }}>
+                    ☁ {tgDownloadingTitle}
+                  </div>
+                )}
                 {[
                   { label: 'Чтение архива', threshold: 10 },
                   { label: 'Импорт треков', threshold: 90 },
