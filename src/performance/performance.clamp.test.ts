@@ -47,6 +47,15 @@ describe('applyRecordingSafeClamp', () => {
       maxPulseIntensity: 'medium',
       allowScenarios: true,
     },
+    feed: {
+      allowHeroFade: true,
+      allowKenBurns: true,
+      allowHoverScale: true,
+      allowAutoPlay: true,
+      allowVinylAnimation: true,
+      heroFadeDuration: 500,
+      maxScrollSnapCards: 6,
+    },
   };
 
   it('clamps word properties correctly', () => {

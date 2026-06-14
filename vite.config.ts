@@ -1,7 +1,64 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { resolve } from 'path'
+
+/**
+ * @TC-088: Mock feed API for local dev
+ * Remove this plugin when deploying — production uses gateway Worker.
+ */
+function feedMockPlugin(): Plugin {
+  return {
+    name: 'feed-mock',
+    configureServer(server) {
+      // Intercept /api/feed before Vite static file handler
+      server.middlewares.use('/api/feed', (_req, res) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('X-Cache', 'MOCK');
+        res.end(JSON.stringify({
+          sections: [
+            {
+              id: 'featured', title: 'Избранное', type: 'hero-stack', sortOrder: 0,
+            },
+            {
+              id: 'events', title: 'Ближайшие мероприятия', type: 'list', sortOrder: 1,
+            },
+            {
+              id: 'tracks', title: 'Новинки', type: 'scroll', sortOrder: 2,
+            },
+          ],
+          items: [
+            {
+              id: 'f1', type: 'event', title: 'Мастер-класс: Джаз', subtitle: 'Анна К.',
+              description: 'Основы импровизации', priority: 10, status: 'published',
+              eventDate: '2026-07-01', price: '1500₽', sectionId: 'featured',
+            },
+            {
+              id: 'p1', type: 'poll', title: '🏆 Лучшее приложение для вокалистов 2026',
+              priority: 5, status: 'published', sectionId: 'featured',
+              data: { options: [{ id: 'opt1', title: 'Vocal Pitch Monitor', votes: 12 }, { id: 'opt2', title: 'SingTrue', votes: 8 }] },
+            },
+            {
+              id: 'e1', type: 'event', title: 'Вокальный вечер', subtitle: 'Студия beLive',
+              description: 'Онлайн стрим', priority: 0, status: 'published', sectionId: 'events',
+              eventDate: '2026-06-20', price: 'Бесплатно',
+              coverR2Key: null, // будет заполняться ботом через R2
+            },
+            {
+              id: 't1', type: 'track', title: 'Bohemian Rhapsody', subtitle: 'Queen',
+              priority: 0, status: 'published', sectionId: 'tracks',
+            },
+            {
+              id: 't2', type: 'track', title: 'Yesterday', subtitle: 'The Beatles',
+              priority: 0, status: 'published', sectionId: 'tracks',
+            },
+          ],
+          generatedAt: Date.now(),
+        }));
+      });
+    },
+  };
+}
 
 export default defineConfig({
   root: './',
@@ -21,6 +78,7 @@ export default defineConfig({
 
   plugins: [
     tsconfigPaths(),
+    feedMockPlugin(), // @TC-088: Remove for production
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
@@ -84,6 +142,19 @@ export default defineConfig({
             options: {
               cacheName: 'esm-cache',
               networkTimeoutSeconds: 10
+            }
+          },
+          // @TC-088: Aurora Stage feed API cache
+          {
+            urlPattern: /^https:\/\/app\.mybelive\.com\/api\/feed/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'feed-cache',
+              networkTimeoutSeconds: 5,
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60
+              }
             }
           }
         ],

@@ -9,6 +9,9 @@ interface Env {
   ADMIN_PASSWORD?: string; // Для защиты админских эндпойнтов
   OPENROUTER_TITLE?: string; // NEW: заголовок для OpenRouter
   OPENROUTER_REFERER?: string; // NEW: реферер для OpenRouter
+  // @TC-088: Aurora Stage Feed
+  FEED_KV: KVNamespace;
+  FEED_DB: D1Database;
 }
 
 // Unified SSE events
@@ -405,6 +408,55 @@ export default {
       }
       const prompt = await getOperatorPrompt(env.OPERATOR_PROMPT_KV);
       return jsonResponse({ prompt: prompt || '' }, 200, origin, allowedOrigins);
+    }
+
+    // --- Feed Endpoint (Aurora Stage) ---
+    if (request.method === 'GET' && url.pathname === '/api/feed') {
+      const KV_KEY = 'feed:main';
+      const cached = await env.FEED_KV.get(KV_KEY, { type: 'json' });
+      const headers: Record<string, string> = { ...corsHeaders(origin, allowedOrigins), ...secHeaders };
+
+      if (cached) {
+        headers['X-Cache'] = 'HIT';
+        return new Response(JSON.stringify(cached), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json; charset=utf-8', ...headers },
+        });
+      }
+
+      // D1.batch() — flat queries, no JOINs; 3rd query for M:N links
+      const [sectionsResult, itemsResult, linksResult] = await env.FEED_DB.batch([
+        env.FEED_DB.prepare('SELECT * FROM feed_sections WHERE tenant_id = ? ORDER BY sort_order').bind('main'),
+        env.FEED_DB.prepare('SELECT * FROM feed_items WHERE tenant_id = ? AND status = ? ORDER BY priority DESC, published_at DESC').bind('main', 'published'),
+        env.FEED_DB.prepare('SELECT * FROM feed_section_items'),
+      ]);
+
+      // Attach sectionId to items via feed_section_items links
+      const links = linksResult.results || [];
+      const items = (itemsResult.results || []).map((item: any) => {
+        const link = links.find((l: any) => l.item_id === item.id);
+        // Parse JSON data field for polls, Elo, etc.
+        let parsedData = item.data;
+        if (typeof parsedData === 'string') {
+          try { parsedData = JSON.parse(parsedData); } catch (_) { parsedData = null; }
+        }
+        return { ...item, data: parsedData, sectionId: link?.section_id || null };
+      });
+
+      const response = {
+        sections: sectionsResult.results || [],
+        items,
+        generatedAt: Date.now(),
+      };
+
+      // Short TTL 60s — no manual invalidation (rule 6.1)
+      await env.FEED_KV.put(KV_KEY, JSON.stringify(response), { expirationTtl: 60 });
+
+      headers['X-Cache'] = 'MISS';
+      return new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json; charset=utf-8', ...headers },
+      });
     }
 
     // Default 404

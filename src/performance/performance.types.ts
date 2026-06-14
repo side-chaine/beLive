@@ -144,6 +144,34 @@ export interface PerformanceVisualMixerBudget {
 }
 
 /**
+ * Feed visual budget (Aurora Stage)
+ * Controls Aurora Stage feed rendering richness
+ * @TC-088-001: Added per Центр_6.1 final spec
+ */
+export interface PerformanceFeedBudget {
+  /** Allow fade transitions in Hero Stack */
+  allowHeroFade: boolean;
+
+  /** Allow Ken Burns slow zoom in Hero Stack */
+  allowKenBurns: boolean;
+
+  /** Allow hover scale / glow effects on Event Cards */
+  allowHoverScale: boolean;
+
+  /** Allow auto-play rotation in Hero Stack */
+  allowAutoPlay: boolean;
+
+  /** Allow vinyl animation and hover slide-out in Track Scroll */
+  allowVinylAnimation: boolean;
+
+  /** Duration of hero fade transition in ms (0 = instant) */
+  heroFadeDuration: number;
+
+  /** Max items to render in Scroll Snap row */
+  maxScrollSnapCards: number;
+}
+
+/**
  * Complete visual budget for a performance tier
  * Aggregates all domain budgets into a single policy object
  */
@@ -168,4 +196,7 @@ export interface VisualBudget {
 
   /** Visual Mixer budget */
   visualMixer: PerformanceVisualMixerBudget;
+
+  /** Feed / Aurora Stage budget */
+  feed: PerformanceFeedBudget;
 }

@@ -20,3 +20,14 @@ id = "203a726f1ba54b23975b4b2355f9cd77"
 [[kv_namespaces]]
 binding = "EPHEMERAL_KV"
 id = "bd9b1fdbafd64d9d9018da2aa478d99c"
+
+# @TC-088: Aurora Stage Feed — KV edge cache
+[[kv_namespaces]]
+binding = "FEED_KV"
+id = "feed-kv-placeholder" # TODO: replace with actual KV ID after `npx wrangler kv:namespace create FEED_KV`
+
+# @TC-088: Aurora Stage Feed — D1 database
+[[d1_databases]]
+binding = "FEED_DB"
+database_name = "belive-feed"
+database_id = "feed-db-placeholder" # TODO: replace with actual D1 ID after `npx wrangler d1 create belive-feed`

@@ -25,6 +25,8 @@ export const DEFAULT_PERFORMANCE_TIER: PerformanceTier = 'balanced';
  * - background: ambient and reactive effects
  * - audioReactive: beat-synced visuals
  * - scene: 3D/avatar rendering (future)
+ * - visualMixer: instrument card visuals
+ * - feed: Aurora Stage animations (TC-088)
  */
 export const PERFORMANCE_PRESETS: Record<PerformanceTier, VisualBudget> = {
   /**
@@ -74,6 +76,15 @@ export const PERFORMANCE_PRESETS: Record<PerformanceTier, VisualBudget> = {
       allowWaveform: true,
       maxPulseIntensity: 'off',
       allowScenarios: false,
+    },
+    feed: {
+      allowHeroFade: false,
+      allowKenBurns: false,
+      allowHoverScale: false,
+      allowAutoPlay: false,
+      allowVinylAnimation: false,
+      heroFadeDuration: 0,
+      maxScrollSnapCards: 3,
     },
   },
 
@@ -125,6 +136,15 @@ export const PERFORMANCE_PRESETS: Record<PerformanceTier, VisualBudget> = {
       maxPulseIntensity: 'soft',
       allowScenarios: true,
     },
+    feed: {
+      allowHeroFade: true,
+      allowKenBurns: true,
+      allowHoverScale: true,
+      allowAutoPlay: true,
+      allowVinylAnimation: true,
+      heroFadeDuration: 500,
+      maxScrollSnapCards: 6,
+    },
   },
 
   /**
@@ -175,6 +195,15 @@ export const PERFORMANCE_PRESETS: Record<PerformanceTier, VisualBudget> = {
       maxPulseIntensity: 'medium',
       allowScenarios: true,
     },
+    feed: {
+      allowHeroFade: true,
+      allowKenBurns: true,
+      allowHoverScale: true,
+      allowAutoPlay: true,
+      allowVinylAnimation: true,
+      heroFadeDuration: 800,
+      maxScrollSnapCards: 10,
+    },
   },
 
   /**
@@ -224,6 +253,15 @@ export const PERFORMANCE_PRESETS: Record<PerformanceTier, VisualBudget> = {
       allowWaveform: true,
       maxPulseIntensity: 'strong',
       allowScenarios: true,
+    },
+    feed: {
+      allowHeroFade: true,
+      allowKenBurns: true,
+      allowHoverScale: true,
+      allowAutoPlay: true,
+      allowVinylAnimation: true,
+      heroFadeDuration: 1200,
+      maxScrollSnapCards: 15,
     },
   },
 };
