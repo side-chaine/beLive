@@ -4,6 +4,7 @@
  */
 
 import { parseTaggedLyrics } from '../blocks/parser/tagged-lyrics.parser';
+import type { DetectedBlock } from '../blocks/parser/tagged-lyrics.parser';
 import type { PersistedSyncMarker, PersistedTextBlock } from '../types/persistence.types';
 
 // ── Types ──────────────────────────────────────────────
@@ -1034,6 +1035,46 @@ export function extractCleanLyrics(geniusText: string): string[] {
     .split('\n')
     .map(l => l.trim())
     .filter(l => l.length > 0);
+}
+
+/**
+ * TC-ZIP-03: Convert DetectedBlock[] (from parseTaggedLyrics) into PersistedTextBlock[]
+ * without LRC timing. Used when user pastes tagged lyrics but lrclib has no match.
+ *
+ * Maps each block's contentLines to indices in cleanLyricLines by forward text search.
+ */
+export function detectedBlocksToPersistedBlocks(
+  detectedBlocks: DetectedBlock[],
+  cleanLyricLines: string[],
+): PersistedTextBlock[] {
+  const result: PersistedTextBlock[] = [];
+  let cursor = 0;
+
+  for (let i = 0; i < detectedBlocks.length; i++) {
+    const block = detectedBlocks[i];
+    const contentLines = block.contentLines.filter(l => l.trim());
+    const lineIndices: number[] = [];
+
+    for (const line of contentLines) {
+      const trimmed = line.trim();
+      // Search forward from cursor for robustness against duplicate lines
+      const idx = cleanLyricLines.indexOf(trimmed, cursor);
+      if (idx !== -1) {
+        lineIndices.push(idx);
+        cursor = idx + 1;
+      }
+    }
+
+    result.push({
+      id: `auto-block-${i}-${Date.now()}`,
+      name: block.label,
+      lineIndices,
+      type: block.type,
+      contentLines,
+    });
+  }
+
+  return result;
 }
 
 export function markAutoSyncApplied(trackId: number): void {

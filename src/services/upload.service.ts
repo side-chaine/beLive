@@ -522,9 +522,10 @@ export async function saveTrack(): Promise<void> {
         const fileBuffer = await readFileAsArrayBuffer(file);
         stemsData[stemId] = { data: fileBuffer, type: file.type };
       }
-      await w.idbService.updateTrackField(savedTrack.id, { stemsData });
+      await w.idbService.updateTrackField(savedTrack.id, { stemsData, stemsMode: true });
       // Patch the in-memory savedTrack so trackCatalog gets stemsData too
       savedTrack.stemsData = stemsData;
+      savedTrack.stemsMode = true;
       if (import.meta.env.DEV) console.log(`[Upload] W6: saved ${Object.keys(stemsData).length} additional stems to IDB`);
     }
 

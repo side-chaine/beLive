@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { resetUploadSession, handleFileSelect, clearFile as clearUploadFile, saveTrack, cancelUpload } from '../services/upload.actions';
-import { extractCleanLyrics } from '../services/auto-lyrics.service'; // TC-002: clean lyrics extraction
+import { extractCleanLyrics, detectedBlocksToPersistedBlocks } from '../services/auto-lyrics.service'; // TC-002: clean lyrics extraction // TC-ZIP-03: block converter
 
 /* ═══════════════════════════════════════════
    Upload Panel — Sprint 36
@@ -612,6 +612,9 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                           `Opening Sync Editor for review. Unmatched lines may need manual markers.`
                         );
                       }
+                    } else if (tagResult?.blocks?.length > 0) {
+                      // TC-ZIP-03: No LRC match, but tagged lyrics have structure — save blocks as PersistedTextBlock[]
+                      idbFields.blocksData = detectedBlocksToPersistedBlocks(tagResult.blocks, cleanLyricLines);
                     }
 
                     await w.idbService?.updateTrackField(pendingTrackId, idbFields);

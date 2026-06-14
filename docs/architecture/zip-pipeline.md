@@ -15,7 +15,8 @@ beLive ZIP is the portable track format. A single ZIP file contains everything n
 
 - **Self-contained:** No network required after import
 - **Backward compatible:** Old ZIPs (without new fields) import gracefully
-- **Functional roundtrip:** Export → Import preserves audio, lyrics, sync markers, blocks, cover art, scenes, and backgrounds. Fields NOT preserved: `stemsMode`, `stemDisplayOrder`, `stemAutomation`, `trackMeta`, `transitionPreset`, `dataVersion`.
+- **Functional roundtrip:** Export → Import preserves audio, lyrics, sync markers, blocks, cover art, scenes, backgrounds, and stem data. Fields NOT preserved: `stemDisplayOrder`, `stemAutomation`, `trackMeta`, `transitionPreset`, `dataVersion`.  
+  **TC-ZIP-02:** `stemsMode` now preserved — set `true` when additional stems are imported via `handleZipFileSelect()`.
 - **Offline-first:** Cover art stored as binary, not URL reference
 
 ---
@@ -176,14 +177,16 @@ track-name.zip
 7. Extract backgrounds/ from ZIP (optional):
    - zip.folder('backgrounds') → iterate files → Blob per background
    - uploadSession.backgroundBlobs = Map<filename, Blob>
-8. saveTrack():
-   - All session data → trackData → IDB
-   - Cover art: coverArtUrl + coverArtBlob + coverTheme
-   - Lyrics: lyrics + lyricsOriginalContent
-   - Sync: syncMarkers + blocksData + lineMap + alignmentData
-   - Scenes: jsonScenes + sceneBlobs → IDB blockScenes store
-   - Backgrounds: jsonBackgrounds + backgroundBlobs → IDB backgrounds store
-9. Skip API if coverArtBlob || coverArtUrl
+ 8. saveTrack():
+    - All session data → trackData → IDB
+    - Cover art: coverArtUrl + coverArtBlob + coverTheme
+    - Lyrics: lyrics + lyricsOriginalContent
+    - Sync: syncMarkers + blocksData + lineMap + alignmentData
+    - Stems: stemsData saved to IDB via updateTrackField (separate from initial save)
+    - Stems mode: stemsMode=true when additional stems present (TC-ZIP-02)
+    - Scenes: jsonScenes + sceneBlobs → IDB blockScenes store
+    - Backgrounds: jsonBackgrounds + backgroundBlobs → IDB backgrounds store
+ 9. Skip API if coverArtBlob || coverArtUrl
 10. Apply theme synchronously
 11. loadTrackIntoApp()
 ```
