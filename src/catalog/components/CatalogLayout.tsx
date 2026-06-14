@@ -602,9 +602,9 @@ export function CatalogLayout({ color, onClose }: Props) {
                     height: '100%', borderRadius: 2,
                     width: zipProgress > 0 ? `${zipProgress}%` : '40%',
                     transition: zipProgress > 0 ? 'width 0.4s ease' : undefined,
-                    background: zipProgress > 0 && zipProgress <= 35 ? 'linear-gradient(90deg, #FF8C00, #ffb347, #FF8C00)' : T.orange,
-                    backgroundSize: zipProgress > 0 && zipProgress <= 35 ? '200% 100%' : undefined,
-                    animation: zipProgress === 0 ? 'bl-zip-slide 1.4s ease-in-out infinite' : zipProgress <= 35 ? 'bl-tg-pulse 1.5s ease-in-out infinite' : undefined,
+                    background: zipProgress > 0 && zipProgress <= 35 ? 'linear-gradient(90deg, #FF8C00 0%, #fff5e6 50%, #FF8C00 100%)' : T.orange,
+                    backgroundSize: zipProgress > 0 && zipProgress <= 35 ? '400% 100%' : undefined,
+                    animation: zipProgress === 0 ? 'bl-zip-slide 1.4s ease-in-out infinite' : zipProgress <= 35 ? 'bl-tg-pulse 1.8s linear infinite' : undefined,
                   }} />
                 </div>
               </>
