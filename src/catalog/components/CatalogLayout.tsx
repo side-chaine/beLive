@@ -666,6 +666,21 @@ export function CatalogLayout({ color, onClose }: Props) {
                   <span onClick={() => play(t.index)} style={{ flex: 1, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: a ? T.orange : T.text, marginLeft: 8 }}>
                     {a && '▶ '}{label}
                   </span>
+                  {/* TC-BADGE-01: Stem badge */}
+                  {(() => {
+                    const tc = (window as any).trackCatalog;
+                    const ft = tc?.tracks?.find((tr: any) => String(tr.id) === String(t.id));
+                    const sc = ft?.stemsData ? Object.keys(ft.stemsData).length : 0;
+                    const hasFull = sc > 2;
+                    const has2Stem = ft?.vocalsData || sc === 2 || false;
+                    if (hasFull) return (
+                      <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3, border: '1px solid #4CAF5066', color: '#4CAF50', letterSpacing: '0.05em', flexShrink: 0, marginLeft: 6 }}>‹ FULL ›</span>
+                    );
+                    if (has2Stem) return (
+                      <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3, border: '1px solid #FF8C0066', color: '#FF8C00', letterSpacing: '0.05em', flexShrink: 0, marginLeft: 6 }}>‹ DUO ›</span>
+                    );
+                    return null;
+                  })()}
                   {/* MVSEP failed/timeout actions */}
                   {(t.mvsepStatus === 'failed' || t.mvsepStatus === 'timeout') && (
                     <div className="mvsep-card-actions" style={{ marginRight: 8 }}>
