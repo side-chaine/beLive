@@ -231,7 +231,7 @@ export async function cmdUploadDoc(ctx: CmdCtx): Promise<boolean> {
   // Спрашиваем тип
   const keyboard = {
     inline_keyboard: [[
-      { text: '‹ 2-STEM ›', callback_data: 'upload_2stem' },
+      { text: '‹ DUO ›', callback_data: 'upload_2stem' },
       { text: '‹ FULL ›', callback_data: 'upload_full' },
       { text: '❌ Отмена', callback_data: 'upload_cancel' },
     ]],
@@ -292,7 +292,7 @@ export async function cmdUploadType(ctx: CmdCtx): Promise<boolean> {
   await ctx.env.EPHEMERAL_KV.delete(`track_draft:${ctx.userId}`);
 
   await sendMessage(ctx.token, ctx.chatId,
-    `✅ ${escapeHtml(draft.title)} сохранён (${(draft.fileSize / 1024 / 1024).toFixed(1)} MB, ‹ ${trackType === '2stem' ? '2-STEM' : trackType.toUpperCase()} ›)`,
+    `✅ ${escapeHtml(draft.title)} сохранён (${(draft.fileSize / 1024 / 1024).toFixed(1)} MB, ‹ ${trackType === '2stem' ? 'DUO' : trackType.toUpperCase()} ›)`,
     { parse_mode: 'HTML' },
   );
 
