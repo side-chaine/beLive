@@ -808,8 +808,16 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
           // True instrumental (no stem keyword, no 'instrum' in name)
           instrumentalFile = file;
           if (import.meta.env.DEV) console.log(`[Upload] W6.2: classified as instrumental (no stem keyword) ← ${file.name}`);
+          // TC-ZIP-06: If instrumental filename has no artist separator, derive title from ZIP name
+          if (!uploadSession.overrideTitle) {
+            const titleFromFile = getFileNameWithoutExtension(file.name);
+            if (titleFromFile && !titleFromFile.includes(' - ') && !titleFromFile.includes(' – ')) {
+              uploadSession.overrideTitle = zipFileName.replace(/\.zip$/i, '').trim();
+              if (import.meta.env.DEV) console.log(`[Upload] TC-ZIP-06: overrideTitle from ZIP: "${uploadSession.overrideTitle}" ← "${titleFromFile}"`);
+            }
+          }
           // TC-ZIP-05: fire-and-forget lrclib prefetch for 2-stem ZIP (no 'instrum' in name)
-          const _pfTitle = getFileNameWithoutExtension(file.name);
+          const _pfTitle = uploadSession.overrideTitle || getFileNameWithoutExtension(file.name);
           if (_pfTitle) {
             import('./auto-lyrics.service').then(async ({ prefetch, prefetchWithDuration }) => {
               if (import.meta.env.DEV) console.log('[W11] prefetch called (2-stem), title:', _pfTitle);
