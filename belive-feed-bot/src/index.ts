@@ -59,6 +59,8 @@ export default {
           headers: {
             'Content-Disposition': 'attachment',
             'Content-Type': fileRes.headers.get('Content-Type') || 'application/octet-stream',
+            'Access-Control-Allow-Origin': 'https://app.mybelive.com',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
           }
         });
       }
