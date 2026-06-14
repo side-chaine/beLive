@@ -79,6 +79,7 @@ export function CatalogLayout({ color, onClose }: Props) {
 
   const [tgTracks, setTgTracks] = useState<TgTrack[]>([]);
   const [tgError, setTgError] = useState(false);
+  const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
 
   // Fetch Telegram tracks on mount
   useEffect(() => {
@@ -192,9 +193,35 @@ export function CatalogLayout({ color, onClose }: Props) {
     }
   }, [zipBusy]);
 
-  const filtered = searchQuery.trim()
-    ? tracks.filter(t => { const q = searchQuery.toLowerCase(); return t.title?.toLowerCase().includes(q) || t.artist?.toLowerCase().includes(q); })
+  // TC-TG-02: Download TG track ZIP → handleZip
+  const handleTgDownload = useCallback(async (track: TgTrack) => {
+    const fileId = track.fileIds?.instrumental || track.fileIds?.full;
+    if (!fileId) return;
+    setDownloadingIds(prev => new Set(prev).add(track.id));
+    try {
+      const res = await fetch(`${TG_API_URL.replace('/tracks', '')}/download/${fileId}`);
+      if (!res.ok) throw new Error('TG download failed');
+      const blob = await res.blob();
+      const fileName = track.artist ? `${track.artist} - ${track.title}.zip` : `${track.title}.zip`;
+      const file = new File([blob], fileName, { type: 'application/zip' });
+      await handleZip(file);
+    } catch (err) {
+      console.error('[TG] Download error:', err);
+      alert('Download failed');
+    } finally {
+      setDownloadingIds(prev => { const next = new Set(prev); next.delete(track.id); return next; });
+    }
+  }, [handleZip]);
+
+  // TC-TG-02: Unified search — IDB + TG
+  const q = searchQuery.toLowerCase().trim();
+  const showingTg = q.length >= 2;
+  const filtered = q
+    ? tracks.filter(t => t.title?.toLowerCase().includes(q) || t.artist?.toLowerCase().includes(q))
     : tracks;
+  const tgFiltered = showingTg
+    ? tgTracks.filter(t => t.title?.toLowerCase().includes(q) || t.artist?.toLowerCase().includes(q))
+    : [];
   const groups = getGroupedMyMusic();
 
   return (
@@ -584,43 +611,7 @@ export function CatalogLayout({ color, onClose }: Props) {
           <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Найти трек..."
             style={{ width: '100%', background: 'rgba(0,0,0,0.3)', color: '#fff', border: `1px solid ${T.border2}`, borderRadius: T.r, padding: '8px 12px', fontSize: 12, marginBottom: 8, boxSizing: 'border-box', outline: 'none' }} />
 
-          {/* ─── TG TRACKS: Telegram каталог ─── */}
-          {tgTracks.length > 0 && (
-            <div style={{ marginBottom: 8 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: T.dim, marginBottom: 4, letterSpacing: '0.05em' }}>
-                TELEGRAM ‹ 2-STEM › ({tgTracks.length})
-              </div>
-              {tgTracks.map(t => (
-                <div key={t.id} style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '4px 8px', borderRadius: T.r,
-                  background: T.surface, marginBottom: 2,
-                  border: `1px solid ${T.border}`,
-                }}>
-                  <div style={{
-                    width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-                    background: t.type === '2stem' ? T.green : T.purple,
-                  }} />
-                  <span style={{ flex: 1, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {t.title}
-                  </span>
-                  <span style={{ fontSize: 9, color: T.mute, whiteSpace: 'nowrap' }}>
-                    ‹ {t.type === '2stem' ? '2-STEM' : t.type.toUpperCase()} ›
-                  </span>
-                  {t.fileIds?.instrumental && (
-                    <a href={`/download/${t.fileIds.instrumental}`} target="_blank" rel="noopener"
-                      onClick={e => e.stopPropagation()}
-                      style={{
-                        background: T.greenD, color: T.green, border: 'none', borderRadius: 4,
-                        padding: '2px 8px', cursor: 'pointer', fontSize: 9, textDecoration: 'none',
-                      }}>
-                      ↓
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+          {/* TC-TG-02: TG секция удалена — TG треки интегрированы в поиск */}
           {tgError && (
             <div style={{ fontSize: 10, color: T.mute, marginBottom: 8, textAlign: 'center' }}>
               TG каталог недоступен
@@ -629,11 +620,11 @@ export function CatalogLayout({ color, onClose }: Props) {
 
           {/* 5. Track list */}
           <div style={{ height: 1, background: T.border2, margin: '4px 0 8px' }} />
-          <div style={{ fontSize: 10, fontWeight: 700, color: T.dim, marginBottom: 6, letterSpacing: '0.05em' }}>ВСЕ ТРЕКИ ({filtered.length})</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: T.dim, marginBottom: 6, letterSpacing: '0.05em' }}>ВСЕ ТРЕКИ ({filtered.length + tgFiltered.length})</div>
           <div ref={trackListRef} style={{ flex: 1, overflow: 'auto' }}>
-            {filtered.length === 0 ? (
+            {filtered.length === 0 && tgFiltered.length === 0 ? (
               <div style={{ color: T.mute, fontSize: 11, padding: 12 }}>{searchQuery ? 'Не найдено' : 'Нет треков'}</div>
-            ) : filtered.map((t, i) => {
+            ) : (<>{filtered.map((t, i) => {
               const a = t.index === currentIdx;
               const inMy = myMusicIds.includes(Number(t.id));
               const p = parseTrackName(t.title || '');
@@ -713,6 +704,33 @@ export function CatalogLayout({ color, onClose }: Props) {
                 </div>
               );
             })}
+            {/* TC-TG-02: TG tracks in search results */}
+            {tgFiltered.map(t => (
+              <div key={t.id} style={{
+                display: 'flex', alignItems: 'center', padding: '6px 10px', borderRadius: T.r,
+                marginBottom: 2, background: T.surface,
+                border: `1px solid ${T.border}`,
+              }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, marginRight: 8,
+                  background: t.type === '2stem' ? T.green : T.purple }} />
+                <span style={{ flex: 1, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: T.text }}>
+                  {t.artist ? `${t.artist} — ${t.title}` : t.title}
+                </span>
+                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3, border: '1px solid #FF8C0066', color: '#FF8C00', letterSpacing: '0.05em', flexShrink: 0, marginRight: 4 }}>
+                  ‹ DUO ›
+                </span>
+                <button onClick={(e) => { e.stopPropagation(); handleTgDownload(t); }}
+                  disabled={downloadingIds.has(t.id)}
+                  style={{
+                    background: T.orangeD, color: T.orange, border: 'none', borderRadius: 4,
+                    padding: '2px 8px', cursor: downloadingIds.has(t.id) ? 'default' : 'pointer',
+                    fontSize: 11, opacity: downloadingIds.has(t.id) ? 0.5 : 1,
+                  }}>
+                  {downloadingIds.has(t.id) ? '...' : '↓'}
+                </button>
+              </div>
+            ))}
+            </>)}
           </div>
         </div>
       </div>
