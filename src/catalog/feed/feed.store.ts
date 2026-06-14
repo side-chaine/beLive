@@ -1,4 +1,5 @@
 // @TC-088: Zustand feed store with SWR pattern
+// TC-FEED-01: Stub — returns empty data, no fetch (gateway not deployed)
 
 import { create } from 'zustand';
 import type { FeedItem, FeedSection } from './feed.types';
@@ -11,42 +12,14 @@ interface FeedState {
   _backgroundRefresh: () => Promise<void>;
 }
 
-const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || '';
-
-export const useFeedStore = create<FeedState>((set, get) => ({
+export const useFeedStore = create<FeedState>((set) => ({
   sections: [],
   items: [],
-  status: 'idle',
+  status: 'ready',
 
-  fetchFeed: async (force = false) => {
-    if (get().status === 'loading') return;
-
-    // SWR: if data exists, show immediately, refresh in background
-    if (!force && get().items.length > 0) {
-      get()._backgroundRefresh();
-      return;
-    }
-
-    set({ status: 'loading' });
-    try {
-      const res = await fetch(`${GATEWAY_URL}/api/feed`, { cache: force ? 'no-cache' : 'default' });
-      if (!res.ok) throw new Error('Network error');
-      const data = await res.json();
-      set({ sections: data.sections, items: data.items, status: 'ready' });
-    } catch (e) {
-      console.error('Feed fetch error', e);
-      set({ status: 'error' });
-    }
+  fetchFeed: async () => {
+    set({ status: 'ready', sections: [], items: [] });
   },
 
-  _backgroundRefresh: async () => {
-    try {
-      const res = await fetch(`${GATEWAY_URL}/api/feed`, { cache: 'no-cache' });
-      if (!res.ok) return;
-      const data = await res.json();
-      set({ sections: data.sections, items: data.items });
-    } catch (e) {
-      console.log('SWR background refresh failed', e);
-    }
-  },
+  _backgroundRefresh: async () => {},
 }));
