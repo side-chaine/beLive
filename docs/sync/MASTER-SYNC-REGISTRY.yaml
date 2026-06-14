@@ -1,0 +1,679 @@
+# ═══════════════════════════════════════════════════════════════
+# 🔷 MASTER-SYNC-REGISTRY v2 — SOURCE OF TRUTH
+# ═══════════════════════════════════════════════════════════════
+# beLive Documentation Sync Status
+# 
+# RULES:
+# 1. This YAML file is the SINGLE SOURCE OF TRUTH for doc sync status.
+# 2. MASTER-SYNC-REGISTRY.md is a human-readable VIEW only.
+# 3. All agents MUST read this file for current status.
+# 4. CI checks MUST validate against this file.
+# 5. Any update to doc status MUST go here first.
+#
+# Generated: 2026-06-10 | CI-ready | Machine-first
+
+version: 2
+last_updated: 2026-06-14T19:19
+
+# ── DOC HEALTH SCORE ──
+# Calculated: synced / total * 100
+# Updated: after each DOC-HYGIENE or major sync operation
+# Trend: each entry tracks score over time
+health:
+  current:
+    synced: 27
+    stale: 1
+    needs_update: 8
+    conflicts: 0
+    critical: 0
+    total: 36
+    score: 75  # 27/36 * 100
+    broken_links: 0  # INDEX.md — verified 2026-06-10
+    index_status: clean  # INDEX.md — all links verified
+  history:
+    - date: 2026-06-10
+      score: 82
+      event: "INDEX.md fixed (0 broken links). DOC-TC-BACKLOG created."
+    - date: 2026-06-10
+      score: 82
+      event: "TC-FLOW-01..05 + TC-CLEANUP-01: lrclib editor routing, no legacy apply on high confidence, catalog stays open after accept, dead code removed. DOC_OK — no doc changes needed."
+    - date: 2026-06-11
+      score: 82
+      event: "PROTOCOL-VALIDATION-01: DOC-CHECK for Task 079 (SC-01..SC-05) formalised. DOC-TC-014..017 created (retroactive). BeLive_CEO docs: zip-pipeline updated (14→75), smart-cell-catalog created (128), DEMO-TRACKS-GUIDE + pipeline-demo-tracks MVSEP deprecated. 009 handoff initiated."
+    - date: 2026-06-11
+      score: 82
+      event: "TC-087: ThemeSelector moved from Header to UserRoom (replaces 'Тема — скоро...' placeholder). No architecture changes — UI-only. DOC_OK."
+    - date: 2026-06-13
+      score: 79
+      event: "TC-089: Telegram bot catalog integration (/catalog, /track for 52 Linkin Park tracks). belive-feed-bot extended. DOC-TC-018 created for telegram bot documentation. DOC_CREATE_REQUIRED."
+    - date: 2026-06-14
+      score: 79
+      event: "TC-ZIP-01 + TC-ZIP-02: ZIP upload markers/TrackMap fix. UploadPanel saves blocksData even without lrclib match. upload.service.ts sets stemsMode=true on stem import. zip-pipeline.md updated — stemsMode preserved."
+    - date: 2026-06-14
+      score: 79
+      event: "TC-ZIP-03: DetectedBlock[] → PersistedTextBlock[] converter. UploadPanel now saves valid PersistedTextBlock[] blocks (with lineIndices) when lrclib has no match. auto-lyrics.service.ts extended with detectedBlocksToPersistedBlocks()."
+    - date: 2026-06-14
+      score: 79
+      event: "TC-TG-07: UX фикс дропдауна TG — setSearchQuery('') при клике ↓, имя трека в PORT. DOC_OK — минорный UI fix, без изменений архитектуры."
+    - date: 2026-06-14
+      score: 75
+      event: "DOC-SESSION: созданы docs/sessions/2026-06-14-evening.md, docs/telegram/bot-catalog-integration.md (DOC-TC-018 closed). Обновлены BeLive_CEO/zip-pipeline.md и smart-cell-catalog.md. Health score: 27/36 = 75 (8 needs_update)."
+
+# Status legend:
+#   synced        — doc matches code
+#   needs_update  — minor drift (line counts, naming)
+#   stale         — conceptually obsolete, code took different path
+
+documents:
+  # ── 1. CANONICAL MAPS ──
+  - id: arch-map-21
+    path: docs/architecture/architecture-map-2.1.md
+    domain: architecture
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: resolved (merged v2.2 delta)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+
+  - id: arch-map-22
+    path: docs/architecture/architecture-map-2.2.md
+    domain: architecture
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: superseded (merged into v2.1)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+    notes: "SUPERSEDED — content merged into architecture-map-2.1.md"
+
+  - id: interaction-21
+    path: docs/architecture/interaction-schema-2.1.md
+    domain: architecture
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: resolved (merged v2.2 delta + appendix)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+
+  - id: interaction-22
+    path: docs/architecture/interaction-schema-2.2.md
+    domain: architecture
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: superseded (merged into v2.1)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+    notes: "SUPERSEDED — content merged into interaction-schema-2.1.md"
+
+  # ── 2. CORE DOMAINS ──
+  - id: audio-engine
+    path: docs/architecture/audio-engine.md
+    domain: audio
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: none
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+
+  - id: sync-system
+    path: docs/architecture/sync-system.md
+    domain: sync
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: minor (2 inaccuracies)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+
+  - id: auth-system
+    path: docs/architecture/auth-system.md
+    domain: auth
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: resolved (/auth/refresh NOT IMPL, SESSION_SECRET unused, +mvsepApiKey)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+
+  - id: takes-system
+    path: docs/architecture/takes-system.md
+    domain: takes
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: resolved (color gold→green, 96→384 bars)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+
+  - id: exercises-system
+    path: docs/architecture/exercises-system.md
+    domain: exercises
+    owner: center
+    keeper: "007"
+    status: needs_update
+    drift: minor — generators renamed, visibleRecipeIds→surface/visibility
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc:
+      - id: DOC-TC-003
+        description: "Update generators path, visibleRecipeIds → surface/visibility"
+        priority: P2
+        status: open
+
+  - id: marker-system
+    path: docs/architecture/marker-system-spec.md
+    domain: markers
+    owner: center
+    keeper: "007"
+    status: needs_update
+    drift: minor — M2 sentinel, isTrackEnd, gap matrix PLANNED
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc:
+      - id: DOC-TC-004
+        description: "Fix isTrackEnd vs needsClosingMarker, note gap matrix as PLANNED"
+        priority: P2
+        status: open
+
+  # ── 3. AI & BILLY ──
+  - id: billi-ai
+    path: docs/architecture/billi-ai-expert-system.md
+    domain: ai
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: resolved (Billy v2, BeliveProvider, Wave C/D/G/H)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+
+  # ── 4. UX & SURFACES ──
+  - id: show-architecture
+    path: docs/architecture/show-architecture.md
+    domain: show
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: resolved (Sub-Slide v2.2)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+
+  - id: dock-standard
+    path: docs/architecture/dock-standard.md
+    domain: ui
+    owner: center
+    keeper: "007"
+    status: needs_update
+    drift: minor — CSS var not applied, RecordingPanel dead code
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc:
+      - id: DOC-TC-005
+        description: "Mark RecordingPanel as dead code, note --bl-deck-tars not applied"
+        priority: P2
+        status: open
+
+  - id: control-surface
+    path: docs/architecture/control-surface-semantics.md
+    domain: ui
+    owner: center
+    keeper: "007"
+    status: needs_update
+    drift: scope mismatch — doc describes lyrics surface, code implements audio/camera/pitch
+    last_audit: 2026-06-10
+    last_sync: never
+    verified_by: ["007"]
+    doc_tc:
+      - id: DOC-TC-006
+        description: "Redefine scope — document describes lyrics control surface, not components"
+        priority: P1
+        status: open
+
+  - id: styles-system
+    path: docs/architecture/styles-system.md
+    domain: ui
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: resolved (Preview→Next Line, bank badges)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+
+  # ── 5. DOMAINS ──
+  - id: scenario-stage
+    path: docs/architecture/scenario-stage-state-model.md
+    domain: state
+    owner: center
+    keeper: "007"
+    status: stale
+    drift: conceptual — code uses practice-session, not StageState
+    last_audit: 2026-06-10
+    last_sync: never
+    verified_by: ["007"]
+    doc_tc: []
+    notes: "STALE. Code path diverged to practice-session action model."
+
+  - id: practice-layer
+    path: docs/architecture/practice-experience-layer.md
+    domain: practice
+    owner: center
+    keeper: "007"
+    status: needs_update
+    drift: minor — Wave G code not reflected
+    last_audit: 2026-06-10
+    last_sync: never
+    verified_by: ["007"]
+    doc_tc:
+      - id: DOC-TC-007
+        description: "Add Wave G (Player Controls) to practice layer doc"
+        priority: P2
+        status: open
+
+  - id: slot-matrix
+    path: docs/architecture/slot-matrix-system-v2.2.md
+    domain: slot-matrix
+    owner: center
+    keeper: "007"
+    status: needs_update
+    drift: minor — TransitionPreset v1→v2, MAX_SUB_BLOCK_LINES 4 vs 6
+    last_audit: 2026-06-10
+    last_sync: never
+    verified_by: ["007"]
+    doc_tc:
+      - id: DOC-TC-008
+        description: "Update TransitionPreset struct to v2, fix MAX_SUB_BLOCK_LINES to 6"
+        priority: P2
+        status: open
+
+  - id: block-first-lyrics
+    path: docs/architecture/block-first-lyrics-sync.md
+    domain: lyrics
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: none
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+
+  - id: reactive-lyrics
+    path: docs/architecture/reactive-lyrics-foundation.md
+    domain: lyrics
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: minor (3 warning-level)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+
+  - id: block-scenes
+    path: docs/architecture/block-scenes-editor.md
+    domain: scenes
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: resolved (tabs PLANNED, triggerScenePreload NOT IMPL)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+
+  - id: monitor-mix
+    path: docs/architecture/monitor-mix-v2.md
+    domain: monitor
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: resolved (line counts, backVocalActive, Mix column)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+
+  - id: n-stem
+    path: docs/architecture/n-stem-architecture.md
+    domain: stem
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: minor (CSS var float nuance; W7 MVSEP reference historical — UI disabled, code still FROZEN)
+    last_audit: 2026-06-11
+    last_sync: 2026-06-10
+    verified_by: ["007", "009"]
+    doc_tc: []
+    notes: "009: W7 MVSEP ZIP upload fix (стр. 653) помечен FROZEN — историческая запись, MVSEP UI отключён, код жив."
+
+  # ── 6. PERFORMANCE & PIPELINES ──
+  - id: perf-quality
+    path: docs/architecture/performance-quality-system.md
+    domain: performance
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: resolved (Proposal→As-Built, +scheduler, +VisualMixer)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+
+  - id: track-loading
+    path: docs/architecture/track-loading-pipeline.md
+    domain: track
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: resolved (21→14 steps)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+
+  - id: track-meta
+    path: docs/architecture/track-meta-pipeline.md
+    domain: track
+    owner: center
+    keeper: "007"
+    status: needs_update
+    drift: minor — Essentia.js vs libsonare, line counts stale
+    last_audit: 2026-06-10
+    last_sync: never
+    verified_by: ["007"]
+    doc_tc:
+      - id: DOC-TC-009
+        description: "Fix Essentia.js/libsonare reference, update line counts"
+        priority: P2
+        status: open
+
+  - id: zip-pipeline
+    path: docs/architecture/zip-pipeline.md
+    domain: track
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: resolved (stemsMode preserved + DetectedBlock→PersistedTextBlock conversion in ZIP/lyrics paste flow)
+    last_audit: 2026-06-14
+    last_sync: 2026-06-14
+    verified_by: ["007"]
+    doc_tc:
+      - id: TC-ZIP-02
+        description: "stemsMode set true on ZIP import when additional stems present. Updated zip-pipeline.md — removed stemsMode from NOT preserved list."
+        status: resolved
+      - id: TC-ZIP-03
+        description: "detectedBlocksToPersistedBlocks() converter added in auto-lyrics.service.ts. UploadPanel saves PersistedTextBlock[] blocks even when lrclib has no match."
+        status: resolved
+
+  - id: w11-boot
+    path: docs/architecture/w11-visual-boot-theming.md
+    domain: theme
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: none
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["007"]
+    doc_tc: []
+
+  # ── 7. GOVERNANCE ──
+  - id: charter-007
+    path: ~/Desktop/Belive-Agents/007/charter-007.md
+    domain: governance
+    owner: "007"
+    keeper: "009"
+    status: synced
+    drift: resolved (v2.2, DOC-CHECK + 009 handoff)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["001"]
+    doc_tc: []
+
+  - id: charter-009
+    path: ~/Desktop/Belive-Agents/009/charter-009-diagnostik.md
+    domain: governance
+    owner: "007"
+    keeper: "009"
+    status: synced
+    drift: resolved (v3.0 Independent Verification Agent)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["001"]
+    doc_tc: []
+
+  - id: charter-operator
+    path: ~/Desktop/Belive-Agents/operator/charter-operator.md
+    domain: governance
+    owner: "007"
+    keeper: "009"
+    status: synced
+    drift: resolved (+009 handoff step)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["001"]
+    doc_tc: []
+
+  - id: protocol
+    path: ~/Desktop/Belive-Agents/system/protocol-v2.1.md
+    domain: governance
+    owner: "007"
+    keeper: "009"
+    status: synced
+    drift: resolved (v3.0, 3-phase, 009 role, VERDICT format)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["001"]
+    doc_tc: []
+
+  - id: bootstrap
+    path: ~/Desktop/Belive-Agents/packs/000-bootstrap.md
+    domain: governance
+    owner: "007"
+    keeper: "009"
+    status: synced
+    drift: resolved (v1.1, 009 in flow)
+    last_audit: 2026-06-10
+    last_sync: 2026-06-10
+    verified_by: ["001"]
+    doc_tc: []
+
+  - id: governance-map
+    path: docs/governance/agent-governance-map.md
+    domain: governance
+    owner: "007"
+    keeper: "009"
+    status: needs_update
+    drift: minor — 009 role needs update from reserve→active
+    last_audit: 2026-06-10
+    last_sync: never
+    verified_by: ["001"]
+    doc_tc:
+      - id: DOC-TC-010
+        description: "Update 009 role from reserve diagnostics to Independent Verification Agent"
+        priority: P1
+        status: open
+
+  # ── 8. SESSION DOCS ──
+  - id: session-2026-06-14
+    path: docs/sessions/2026-06-14-evening.md
+    domain: governance
+    owner: "007"
+    keeper: "007"
+    status: synced
+    drift: none (freshly created)
+    last_audit: 2026-06-14
+    last_sync: 2026-06-14
+    verified_by: ["007"]
+    doc_tc: []
+
+  # ── 9. TELEGRAM BOT ──
+  - id: telegram-bot
+    path: docs/telegram/bot-catalog-integration.md
+    domain: telegram
+    owner: center
+    keeper: "007"
+    status: synced
+    drift: resolved — bot-catalog-integration.md created with commands, API, deploy, CORS
+    last_audit: 2026-06-14
+    last_sync: 2026-06-14
+    verified_by: ["007"]
+    doc_tc:
+      - id: DOC-TC-018
+        description: "Create telegram bot documentation: commands, R2 integration, track catalog"
+        priority: P1
+        status: resolved
+
+# ── DOC-TC BACKLOG ──
+# Source of truth for DOC-TC: docs/sync/DOC-TC-BACKLOG.yaml
+# This section is a summary view; full backlog lives in the separate file.
+doc_tc_backlog:
+  - id: DOC-TC-003
+    document: exercises-system
+    description: "Update generators path, visibleRecipeIds → surface/visibility"
+    priority: P2
+    status: open
+    created: 2026-06-10
+    expected_keeper: "007"
+    verified_by: null
+
+  - id: DOC-TC-004
+    document: marker-system
+    description: "Fix isTrackEnd vs needsClosingMarker, note gap matrix as PLANNED"
+    priority: P2
+    status: open
+    created: 2026-06-10
+    expected_keeper: "007"
+    verified_by: null
+
+  - id: DOC-TC-005
+    document: dock-standard
+    description: "Mark RecordingPanel as dead code, note --bl-deck-tabs not applied"
+    priority: P2
+    status: open
+    created: 2026-06-10
+    expected_keeper: "007"
+    verified_by: null
+
+  - id: DOC-TC-006
+    document: control-surface
+    description: "Redefine scope — document describes lyrics control surface, not components"
+    priority: P1
+    status: open
+    created: 2026-06-10
+    expected_keeper: "007"
+    verified_by: null
+
+  - id: DOC-TC-007
+    document: practice-layer
+    description: "Add Wave G (Player Controls) to practice layer doc"
+    priority: P2
+    status: open
+    created: 2026-06-10
+    expected_keeper: "007"
+    verified_by: null
+
+  - id: DOC-TC-008
+    document: slot-matrix
+    description: "Update TransitionPreset struct to v2, fix MAX_SUB_BLOCK_LINES to 6"
+    priority: P2
+    status: open
+    created: 2026-06-10
+    expected_keeper: "007"
+    verified_by: null
+
+  - id: DOC-TC-009
+    document: track-meta
+    description: "Fix Essentia.js/libsonare reference, update line counts"
+    priority: P2
+    status: open
+    created: 2026-06-10
+    expected_keeper: "007"
+    verified_by: null
+
+  - id: DOC-TC-010
+    document: governance-map
+    description: "Update 009 role from reserve diagnostics to Independent Verification Agent"
+    priority: P1
+    status: open
+    created: 2026-06-10
+    expected_keeper: "007"
+    verified_by: null
+
+  - id: DOC-TC-014
+    document: zip-pipeline (BeLive_CEO)
+    description: "BeLive_CEO/zip-pipeline.md — UPDATE: draft→active, Smart Cell ZIP-only, реальный прогресс через 5 milestones"
+    priority: P2
+    status: resolved
+    created: 2026-06-11
+    expected_keeper: "007"
+    verified_by: null
+    notes: "Retroactive — doc updated 2026-06-10"
+
+  - id: DOC-TC-015
+    document: smart-cell-catalog (BeLive_CEO)
+    description: "BeLive_CEO/smart-cell-catalog.md — CREATE: новый документ для ZIP-only dropzone"
+    priority: P2
+    status: resolved
+    created: 2026-06-11
+    expected_keeper: "007"
+    verified_by: null
+    notes: "Retroactive — doc created 2026-06-10"
+
+  - id: DOC-TC-016
+    document: DEMO-TRACKS-GUIDE (BeLive_CEO)
+    description: "BeLive_CEO/DEMO-TRACKS-GUIDE.md — UPDATE: MVSEP deprecation"
+    priority: P2
+    status: resolved
+    created: 2026-06-11
+    expected_keeper: "007"
+    verified_by: null
+    notes: "Retroactive — doc updated 2026-06-10"
+
+  - id: DOC-TC-017
+    document: pipeline-demo-tracks (BeLive_CEO)
+    description: "BeLive_CEO/pipeline-demo-tracks.md — UPDATE: MVSEP bundles deprecation"
+    priority: P2
+    status: resolved
+    created: 2026-06-11
+    expected_keeper: "007"
+    verified_by: null
+    notes: "Retroactive — doc updated 2026-06-10"
+
+  - id: DOC-TC-018
+    document: telegram-bot
+    description: "docs/telegram/bot-catalog-integration.md — CREATE: команды, API, deploy, CORS"
+    priority: P1
+    status: resolved
+    created: 2026-06-13
+    expected_keeper: "007"
+    verified_by: null
+    notes: "Создан 2026-06-14. Ждёт 009 verification."

@@ -232,9 +232,10 @@ backlog:
     domain: telegram
     description: "Create telegram bot documentation: commands, R2 integration, track catalog (52 tracks Linkin Park)"
     priority: P1
-    status: open
+    status: resolved
     created: 2026-06-13
+    resolved: 2026-06-14
     created_by: "007"
     expected_keeper: "007"
     verified_by: null
-    notes: "belive-feed-bot extended with /catalog, /track commands. Needs: command reference, R2 upload guide, deployment notes"
+    notes: "docs/telegram/bot-catalog-integration.md created — commands, API endpoints, deploy, CORS, KV, secrets, file structure. Waiting 009 verification."
