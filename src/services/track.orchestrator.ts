@@ -103,6 +103,20 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
     _mark('Steps 6-7: RTF parse');
 
     // Step 8: load lyrics/blocks into LD
+    // ZIP-DIAG: Log what orchestrator sees before loading
+    if (import.meta.env.DEV) {
+      console.log('[ZIP-DIAG] orchestrator Step 8:', {
+        hasBlocksData: !!(track.blocksData as any[])?.length,
+        blocksDataLen: (track.blocksData as any[])?.length ?? 0,
+        firstBlockId: (track.blocksData as any[])?.[0]?.id ?? null,
+        firstBlockLines: (track.blocksData as any[])?.[0]?.lineIndices?.length ?? -1,
+        hasMarkers: !!(track.syncMarkers as any[])?.length,
+        markersLen: (track.syncMarkers as any[])?.length ?? 0,
+        hasLD: !!ld,
+        lyricsLen: lyrics?.length ?? 0,
+        loadPath: (track.blocksData as any[])?.length > 0 && ld ? 'loadImportedBlocks' : 'reloadLyrics',
+      });
+    }
     if (track.blocksData?.length > 0 && ld) {
       await ld.loadImportedBlocks(track.blocksData, lyrics, false);
     } else if (ld) {

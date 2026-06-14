@@ -1074,6 +1074,26 @@ export function detectedBlocksToPersistedBlocks(
     });
   }
 
+  // ZIP-DIAG: Log first 2 blocks for diagnostic verification
+  if (import.meta.env.DEV) {
+    console.log('[ZIP-DIAG] detectedBlocksToPersistedBlocks:', {
+      inputBlocks: detectedBlocks.length,
+      cleanLines: cleanLyricLines.length,
+      outputBlocks: result.length,
+      firstBlock: result[0] ? {
+        name: result[0].name,
+        lineIndices: result[0].lineIndices.slice(0, 5),
+        type: result[0].type,
+      } : null,
+      secondBlock: result[1] ? {
+        name: result[1].name,
+        lineIndices: result[1].lineIndices.slice(0, 5),
+        type: result[1].type,
+      } : null,
+      mismatches: result.filter(b => b.lineIndices.length === 0).length,
+    });
+  }
+
   return result;
 }
 

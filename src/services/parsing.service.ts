@@ -400,6 +400,14 @@ export interface ParsedBlock {
 }
 
 export function sanitizeBlocks(blocks: unknown[], lyricsLength: number): ParsedBlock[] {
+  // ZIP-DIAG: Log before/after sanitize
+  if (import.meta.env.DEV) {
+    const total = (blocks || []).length;
+    const withLines = (blocks || []).filter((b: any) => b && Array.isArray(b.lineIndices) && b.lineIndices.length > 0).length;
+    if (total > 0 && withLines === 0) {
+      console.warn('[ZIP-DIAG] sanitizeBlocks: ALL blocks will be filtered! Sample type:', (blocks as any[])?.[0]?.constructor?.name ?? typeof blocks?.[0], 'keys:', Object.keys((blocks as any)?.[0] ?? {}).join(','));
+    }
+  }
   const seen = new Set<string>();
   const result: ParsedBlock[] = [];
   const allowed = new Set(['verse','chorus','bridge','prechorus','interlude','intro','outro']);
@@ -421,6 +429,17 @@ export function sanitizeBlocks(blocks: unknown[], lyricsLength: number): ParsedB
       ...(type ? { type } : {})
     });
   });
+  // ZIP-DIAG: Log sanitize result
+  if (import.meta.env.DEV && (blocks || []).length > 0) {
+    const total = (blocks || []).length;
+    const filtered = total - result.length;
+    if (filtered > 0) {
+      console.warn(`[ZIP-DIAG] sanitizeBlocks: ${filtered}/${total} blocks filtered. ${result.length} remain. lyricsLength=${lyricsLength}`);
+      result.slice(0, 2).forEach((b, i) => {
+        console.log(`[ZIP-DIAG] sanitized block[${i}]:`, JSON.stringify({ id: b.id, name: b.name, lines: b.lineIndices.length, type: b.type }));
+      });
+    }
+  }
   return result;
 }
 

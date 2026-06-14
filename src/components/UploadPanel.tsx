@@ -618,7 +618,21 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                     }
 
                     await w.idbService?.updateTrackField(pendingTrackId, idbFields);
-                    if (import.meta.env.DEV) console.log(`[LyricsPaste] IDB save (single): ${(performance.now() - _t0).toFixed(1)}ms`);
+                    if (import.meta.env.DEV) {
+                      console.log(`[LyricsPaste] IDB save (single): ${(performance.now() - _t0).toFixed(1)}ms`);
+                      // ZIP-DIAG: Diagnostic log to verify what was saved to IDB
+                      const blocksArr = idbFields.blocksData;
+                      console.log('[ZIP-DIAG] idbFields saved:', JSON.stringify({
+                        hasBlocks: !!(blocksArr as any[])?.length,
+                        blockCount: (blocksArr as any[])?.length ?? 0,
+                        firstBlockLines: (blocksArr as any[])?.[0]?.lineIndices?.length ?? -1,
+                        firstBlockName: (blocksArr as any[])?.[0]?.name ?? 'none',
+                        hasMarkers: !!idbFields.syncMarkers?.length,
+                        markerCount: idbFields.syncMarkers?.length ?? 0,
+                        hasLyrics: !!idbFields.lyrics,
+                        lyricsLength: (idbFields.lyrics as string)?.length ?? 0,
+                      }));
+                    }
 
                     // Patch in-memory tc.tracks entry so orchestrator sees fresh data
                     // (orchestrator may skip IDB read if stemsData is already present)
