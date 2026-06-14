@@ -201,22 +201,34 @@ export function CatalogLayout({ color, onClose }: Props) {
     setZipBusy(true);
     setZipProgress(5);
     setDownloadingIds(prev => new Set(prev).add(track.id));
-    try {
-      const res = await fetch(`${TG_API_URL.replace('/tracks', '')}/download/${fileId}`);
-      if (!res.ok) throw new Error('TG download failed');
-      setZipProgress(35);
-      const blob = await res.blob();
-      setZipProgress(50);
-      const fileName = track.artist ? `${track.artist} - ${track.title}.zip` : `${track.title}.zip`;
-      const file = new File([blob], fileName, { type: 'application/zip' });
-      await handleZip(file);
-    } catch (err) {
-      console.error('[TG] Download error:', err);
-      setTimeout(() => { setZipBusy(false); setZipProgress(0); }, 800);
-      alert('Download failed');
-    } finally {
-      setDownloadingIds(prev => { const next = new Set(prev); next.delete(track.id); return next; });
+    // TC-TG-06: Retry once on failure
+    let lastErr: any = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (attempt === 1) {
+        setZipProgress(5); // reset to fetch phase
+        await new Promise(r => setTimeout(r, 1000)); // wait 1s before retry
+      }
+      try {
+        const res = await fetch(`${TG_API_URL.replace('/tracks', '')}/download/${fileId}`);
+        if (!res.ok) throw new Error('TG download failed');
+        setZipProgress(35);
+        const blob = await res.blob();
+        setZipProgress(50);
+        const fileName = track.artist ? `${track.artist} - ${track.title}.zip` : `${track.title}.zip`;
+        const file = new File([blob], fileName, { type: 'application/zip' });
+        await handleZip(file);
+        lastErr = null; // success
+        break;
+      } catch (err) {
+        lastErr = err;
+        console.error(`[TG] Download error (attempt ${attempt + 1}):`, err);
+      }
     }
+    if (lastErr) {
+      setTimeout(() => { setZipBusy(false); setZipProgress(0); }, 800);
+      alert('Download failed, try again');
+    }
+    setDownloadingIds(prev => { const next = new Set(prev); next.delete(track.id); return next; });
   }, [handleZip]);
 
   // TC-TG-05: Main list = all IDB tracks. Search shows dropdown overlay.
@@ -591,7 +603,7 @@ export function CatalogLayout({ color, onClose }: Props) {
                     background: T.orange,
                     width: zipProgress > 0 ? `${zipProgress}%` : '40%',
                     transition: zipProgress > 0 ? 'width 0.4s ease' : undefined,
-                    animation: zipProgress === 0 ? 'bl-zip-slide 1.4s ease-in-out infinite' : undefined,
+                    animation: zipProgress === 0 ? 'bl-zip-slide 1.4s ease-in-out infinite' : zipProgress <= 35 ? 'bl-tg-pulse 1.2s ease-in-out infinite' : undefined,
                   }} />
                 </div>
               </>
@@ -620,8 +632,11 @@ export function CatalogLayout({ color, onClose }: Props) {
             )}
             {/* TC-TG-05: Search dropdown overlay */}
             {showDropdown && (
-              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10, background: T.bg, border: `1px solid ${T.border2}`, borderRadius: T.rL, maxHeight: 300, overflow: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+              <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 10, background: T.bg, border: `1px solid ${T.border2}`, borderTop: '2px solid #FF8C00', borderRadius: T.rL, maxHeight: 300, overflow: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
                 {/* IDB matches */}
+                {idbMatches.length > 0 && (
+                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#4CAF50', padding: '6px 8px 2px', textTransform: 'uppercase' }}>В каталоге</div>
+                )}
                 {idbMatches.map(t => {
                   const p = parseTrackName(t.title || '');
                   const label = p.artist ? `${p.artist} — ${p.title}` : p.title || `Track ${t.index + 1}`;
@@ -636,6 +651,9 @@ export function CatalogLayout({ color, onClose }: Props) {
                   );
                 })}
                 {/* TG matches */}
+                {tgMatches.length > 0 && (
+                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: '#FF8C00', padding: '6px 8px 2px', textTransform: 'uppercase', borderTop: idbMatches.length > 0 ? `1px solid ${T.border}` : undefined }}>В Telegram</div>
+                )}
                 {tgMatches.map(t => (
                   <div key={t.id} onClick={() => handleTgDownload(t)} style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', cursor: 'pointer', borderBottom: `1px solid ${T.border}`, transition: 'background 0.1s' }}
                     onMouseEnter={e => (e.currentTarget.style.background = T.surfaceH)}

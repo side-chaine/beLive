@@ -14,3 +14,9 @@
   40%  { color: rgba(255,140,0,0.95); }
   100% { color: rgba(255,140,0,0.12); }
 }
+
+@keyframes bl-tg-pulse {
+  0%   { opacity: 0.4; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.4; }
+}
