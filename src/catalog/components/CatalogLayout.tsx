@@ -600,10 +600,11 @@ export function CatalogLayout({ color, onClose }: Props) {
                 }}>
                   <div style={{
                     height: '100%', borderRadius: 2,
-                    background: T.orange,
                     width: zipProgress > 0 ? `${zipProgress}%` : '40%',
                     transition: zipProgress > 0 ? 'width 0.4s ease' : undefined,
-                    animation: zipProgress === 0 ? 'bl-zip-slide 1.4s ease-in-out infinite' : zipProgress <= 35 ? 'bl-tg-pulse 1.2s ease-in-out infinite' : undefined,
+                    background: zipProgress > 0 && zipProgress <= 35 ? 'linear-gradient(90deg, #FF8C00, #ffb347, #FF8C00)' : T.orange,
+                    backgroundSize: zipProgress > 0 && zipProgress <= 35 ? '200% 100%' : undefined,
+                    animation: zipProgress === 0 ? 'bl-zip-slide 1.4s ease-in-out infinite' : zipProgress <= 35 ? 'bl-tg-pulse 1.5s ease-in-out infinite' : undefined,
                   }} />
                 </div>
               </>
