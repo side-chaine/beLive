@@ -226,3 +226,15 @@ backlog:
     created_by: "007"
     expected_keeper: "007"
     notes: "belive-api was embedded git repo, CF Pages could not clone (private). Fixed: git rm --cached + .gitignore"
+
+  # ── TC-089 Telegram Bot Catalog ──
+  - id: DOC-TC-018
+    domain: telegram
+    description: "Create telegram bot documentation: commands, R2 integration, track catalog (52 tracks Linkin Park)"
+    priority: P1
+    status: open
+    created: 2026-06-13
+    created_by: "007"
+    expected_keeper: "007"
+    verified_by: null
+    notes: "belive-feed-bot extended with /catalog, /track commands. Needs: command reference, R2 upload guide, deployment notes"

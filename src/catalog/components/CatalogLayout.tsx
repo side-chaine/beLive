@@ -9,9 +9,10 @@ import { useCatalogStore } from '../store/catalog.store';
 import { useDeckStore } from '../../stores/deck.store';
 import { useSyncStore } from '../../sync/store/sync.store';
 import { parseTrackName } from '../types';
-import type { ShowcaseSection } from '../types';
 import { OnboardingAccordion } from '../../components/onboarding/OnboardingAccordion';
 import { CatalogBillyChat } from './CatalogBillyChat';
+import { FeedErrorBoundary } from '../feed/FeedErrorBoundary';
+import { FeedLayout } from '../feed/FeedLayout';
 import { useUserProfileStore } from '../../stores/user-profile.store';
 
 interface Props { color: string; onClose: () => void; } // deploy-force
@@ -41,6 +42,14 @@ const colBase: React.CSSProperties = {
   display: 'flex', flexDirection: 'column', overflow: 'hidden',
 };
 
+const TG_API_URL = 'https://belive-feed-bot.nikitosss007.workers.dev/tracks';
+
+interface TgTrack {
+  id: string; title: string; artist: string; slug: string;
+  type: string; fileIds: { instrumental?: string; full?: string };
+  fileSize: number; fileName: string;
+}
+
 export function CatalogLayout({ color, onClose }: Props) {
   const tracks = useTrackStore(s => s.tracksMeta);
   const currentIdx = useTrackStore(s => s.currentTrackIndex);
@@ -52,7 +61,7 @@ export function CatalogLayout({ color, onClose }: Props) {
     startBuildingPlaylist, savePlaylist, deletePlaylist, loadPlaylist,
     cancelBuilding, isBuilding, buildingName, setBuildingName,
     addToBuildingPlaylist, buildingTracks,
-    showcaseSections, addRecentTrack,
+    addRecentTrack,
     toggleArtist, getGroupedMyMusic,
   } = store;
 
@@ -67,6 +76,19 @@ export function CatalogLayout({ color, onClose }: Props) {
   const [hovId, setHovId] = useState<number | null>(null);
   const trackListRef = useRef<HTMLDivElement>(null);
   const safetyTimedOut = useRef(false); // guard: safety timeout already reset UI
+
+  const [tgTracks, setTgTracks] = useState<TgTrack[]>([]);
+  const [tgError, setTgError] = useState(false);
+
+  // Fetch Telegram tracks on mount
+  useEffect(() => {
+    let cancelled = false;
+    fetch(TG_API_URL)
+      .then(r => r.json())
+      .then(data => { if (!cancelled && data?.tracks) setTgTracks(data.tracks); })
+      .catch(() => { if (!cancelled) setTgError(true); });
+    return () => { cancelled = true; };
+  }, []);
 
   const onboardingComplete = useUserProfileStore(s => s.catalogOnboardingComplete);
   const [, setOnboardingStep] = useState(1);
@@ -174,7 +196,6 @@ export function CatalogLayout({ color, onClose }: Props) {
     ? tracks.filter(t => { const q = searchQuery.toLowerCase(); return t.title?.toLowerCase().includes(q) || t.artist?.toLowerCase().includes(q); })
     : tracks;
   const groups = getGroupedMyMusic();
-  const sections = showcaseSections.filter(s => s.id !== 'welcome');
 
   return (
     <div onClick={e => e.stopPropagation()} style={{
@@ -362,9 +383,10 @@ export function CatalogLayout({ color, onClose }: Props) {
                   <span style={{ fontSize: 11 }}>▼</span>
                 </button>
                 <div style={{ flex: 1, overflow: 'auto', paddingRight: 6 }}>
-                  {sections.map(sec => (
-                    <Sec key={sec.id} s={sec} play={play} tracks={tracks} idx={currentIdx} rec={store.recentTrackIds} />
-                  ))}
+                  {/* @TC-088: Aurora Stage Feed */}
+                  <FeedErrorBoundary>
+                    <FeedLayout tracks={tracks} play={play} />
+                  </FeedErrorBoundary>
                 </div>
               </>
             )
@@ -562,6 +584,49 @@ export function CatalogLayout({ color, onClose }: Props) {
           <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Найти трек..."
             style={{ width: '100%', background: 'rgba(0,0,0,0.3)', color: '#fff', border: `1px solid ${T.border2}`, borderRadius: T.r, padding: '8px 12px', fontSize: 12, marginBottom: 8, boxSizing: 'border-box', outline: 'none' }} />
 
+          {/* ─── TG TRACKS: Telegram каталог ─── */}
+          {tgTracks.length > 0 && (
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: T.dim, marginBottom: 4, letterSpacing: '0.05em' }}>
+                TELEGRAM ‹ 2-STEM › ({tgTracks.length})
+              </div>
+              {tgTracks.map(t => (
+                <div key={t.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '4px 8px', borderRadius: T.r,
+                  background: T.surface, marginBottom: 2,
+                  border: `1px solid ${T.border}`,
+                }}>
+                  <div style={{
+                    width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                    background: t.type === '2stem' ? T.green : T.purple,
+                  }} />
+                  <span style={{ flex: 1, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {t.title}
+                  </span>
+                  <span style={{ fontSize: 9, color: T.mute, whiteSpace: 'nowrap' }}>
+                    ‹ {t.type === '2stem' ? '2-STEM' : t.type.toUpperCase()} ›
+                  </span>
+                  {t.fileIds?.instrumental && (
+                    <a href={`/download/${t.fileIds.instrumental}`} target="_blank" rel="noopener"
+                      onClick={e => e.stopPropagation()}
+                      style={{
+                        background: T.greenD, color: T.green, border: 'none', borderRadius: 4,
+                        padding: '2px 8px', cursor: 'pointer', fontSize: 9, textDecoration: 'none',
+                      }}>
+                      ↓
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {tgError && (
+            <div style={{ fontSize: 10, color: T.mute, marginBottom: 8, textAlign: 'center' }}>
+              TG каталог недоступен
+            </div>
+          )}
+
           {/* 5. Track list */}
           <div style={{ height: 1, background: T.border2, margin: '4px 0 8px' }} />
           <div style={{ fontSize: 10, fontWeight: 700, color: T.dim, marginBottom: 6, letterSpacing: '0.05em' }}>ВСЕ ТРЕКИ ({filtered.length})</div>
@@ -648,49 +713,8 @@ function NB({ children, onClick }: { children: React.ReactNode; onClick: () => v
   return <button onClick={onClick} style={{ background: 'rgba(255,255,255,0.05)', color: '#aaa', border: `1px solid rgba(255,255,255,0.08)`, borderRadius: 4, padding: '5px 16px', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>{children}</button>;
 }
 
-function Sec({ s, play, tracks, idx, rec }: { s: ShowcaseSection; play: (i: number) => void; tracks: any[]; idx: number; rec: number[] }) {
-  const items = s.id === 'recent'
-    ? rec.map(id => { const t = tracks.find((x: any) => Number(x.id) === id); if (!t) return null; const p = parseTrackName(t.title || ''); return { id: String(id), title: p.title, artist: p.artist, coverArtUrl: t.coverArtUrl, _index: t.index } as any; }).filter(Boolean)
-    : s.items;
-  if (s.id === 'recent' && items.length === 0) return null;
-
-  return (
-    <div style={{ marginBottom: 36 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: T.dim, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 16 }}>{s.title}</div>
-      {s.type === 'featured' ? s.items.map(item => (
-        <div key={item.id} style={{
-          background: s.id === 'coming-soon' ? `linear-gradient(135deg, ${T.purpleD} 0%, ${T.orangeD} 100%)` : T.purpleD,
-          border: `1px solid ${T.purple}22`, borderRadius: T.rL, padding: '28px 24px',
-        }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 10, lineHeight: 1.3 }}>{item.title}</div>
-          {item.description && <div style={{ fontSize: 13, color: '#aaa', lineHeight: 1.6 }}>{item.description}</div>}
-        </div>
-      )) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {(items as any[]).map((item: any) => {
-            const ex = s.type === 'exercises';
-            return (
-              <div key={item.id} onClick={() => item._index !== undefined && play(item._index)} style={{
-                padding: ex ? '16px 18px' : '10px 14px', borderRadius: ex ? T.rL : T.r,
-                background: item._index === idx ? T.purpleD : T.surface,
-                border: `1px solid ${item._index === idx ? T.purple + '33' : T.border}`,
-                cursor: item._index !== undefined ? 'pointer' : 'default',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <CoverArt url={item.coverArtUrl} title={item.title} size={32} borderRadius={6} />
-                  <div style={{ flex: 1, minWidth: 0, marginLeft: 8 }}>
-                    <div style={{ fontSize: ex ? 15 : 13, fontWeight: ex ? 600 : 500, color: item._index === idx ? T.purple : T.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item._index === idx && '▶ '}{item.artist && item.artist !== 'Разное' ? `${item.artist} — ` : ''}{item.title}
-                    </div>
-                    {item.description && <div style={{ fontSize: 11, color: T.dim, marginTop: 5, lineHeight: 1.5 }}>{item.description}</div>}
-                  </div>
-                  {item.sourceType === 'youtube' && <span style={{ fontSize: 9, color: T.purple, background: T.purpleD, padding: '2px 8px', borderRadius: 3, marginLeft: 10, fontWeight: 600 }}>video</span>}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
+// @TC-088: Sec replaced by FeedLayout — kept for potential rollback
+// function Sec(...) { ... }
+/* function Sec({ s, play, tracks, idx, rec }: { s: ShowcaseSection; play: (i: number) => void; tracks: any[]; idx: number; rec: number[] }) {
+  ...
+} */
