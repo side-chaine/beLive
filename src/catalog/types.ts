@@ -46,7 +46,7 @@ export interface ParsedTrackName {
 
 /** Parse track title into artist + title */
 export function parseTrackName(raw: string): ParsedTrackName {
-  if (!raw || !raw.trim()) return { artist: 'Разное', title: raw || '' };
+  if (!raw || !raw.trim()) return { artist: '', title: raw || '' };
 
   let s = raw.trim();
 
@@ -86,8 +86,8 @@ export function parseTrackName(raw: string): ParsedTrackName {
     }
   }
 
-  // No separator found → artist = "Разное"
-  return { artist: 'Разное', title: s };
+  // No separator found → artist unknown
+  return { artist: '', title: s };
 }
 
 /* ── Grouped Tracks ── */

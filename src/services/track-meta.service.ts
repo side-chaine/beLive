@@ -229,7 +229,7 @@ export async function fetchTrackMeta(
   trackTitle: string,
 ): Promise<TrackMeta | null> {
   const parsed = parseTrackName(trackTitle);
-  const artist = parsed.artist === 'Разное' ? '' : parsed.artist;
+  const artist = parsed.artist || '';
   const title = parsed.title;
 
   if (!title.trim() || title.trim().length < 2) return null;

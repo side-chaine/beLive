@@ -358,10 +358,10 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       });
     }
 
-    // Sort: artists with most tracks first, "Разное" last
+    // Sort: artists with most tracks first, unknown artist last
     return Object.values(groups).sort((a, b) => {
-      if (a.artist === 'Разное') return 1;
-      if (b.artist === 'Разное') return -1;
+      if (!a.artist) return 1;
+      if (!b.artist) return -1;
       return b.tracks.length - a.tracks.length;
     });
   },

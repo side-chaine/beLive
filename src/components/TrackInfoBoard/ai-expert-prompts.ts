@@ -434,7 +434,7 @@ export function buildTrackContext(params: {
   availableScenarios?: string[];
 }): string {
   const parts: string[] = [];
-  parts.push(`Трек: "${params.title}"${params.artist && params.artist !== 'Разное' ? `, ${params.artist}` : ''}`);
+  parts.push(`Трек: "${params.title}"${params.artist ? `, ${params.artist}` : ''}`);
 
   const formula = getRussianStructureFormula(params.blocks);
   if (formula) {

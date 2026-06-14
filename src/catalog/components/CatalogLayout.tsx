@@ -637,7 +637,7 @@ export function CatalogLayout({ color, onClose }: Props) {
               const a = t.index === currentIdx;
               const inMy = myMusicIds.includes(Number(t.id));
               const p = parseTrackName(t.title || '');
-              const label = p.artist !== 'Разное' ? `${p.artist} — ${p.title}` : p.title || `Track ${t.index + 1}`;
+              const label = p.artist ? `${p.artist} — ${p.title}` : p.title || `Track ${t.index + 1}`;
               return (
                 <div key={t.id ?? i}
                   className={`track-card${t.mvsepStatus === 'processing' ? ' track-card--mvsep-processing' : ''}${t.mvsepStatus === 'failed' || t.mvsepStatus === 'timeout' ? ' track-card--mvsep-failed' : ''}`}

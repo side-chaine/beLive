@@ -75,7 +75,7 @@ export async function fetchCoverArtAndUpdate(
   trackTitle: string
 ): Promise<void> {
   const parsed = parseTrackName(trackTitle);
-  const artist = parsed.artist === 'Разное' ? '' : parsed.artist;
+  const artist = parsed.artist || '';
   const title = parsed.title;
 
   if (!title.trim() || title.trim().length < 2) return;

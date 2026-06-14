@@ -133,7 +133,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
 
     // Build greeting
     const title = parsed.title || currentTrack?.title || 'Трек';
-    const artist = parsed.artist && parsed.artist !== 'Разное' ? ` — ${parsed.artist}` : '';
+    const artist = parsed.artist ? ` — ${parsed.artist}` : '';
     
     let greeting = `🎵 ${title}${artist}\n`;
     if (formula) {
@@ -242,7 +242,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
 
     return buildTrackContext({
       title: parsed.title || currentTrack?.title || 'Unknown',
-      artist: parsed.artist === 'Разное' ? '' : parsed.artist,
+      artist: parsed.artist || '',
       blocks: blocksList.length > 0 ? blocksList.map(b => ({ type: b.type })) : null,
       activeBlockType: effectiveBlock,
       genre: meta?.genre || null,
