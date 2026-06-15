@@ -135,6 +135,7 @@ export function monitorSetAutoOutroLevel(this: any, level: number) {
 }
 
 export function monitorSetDelayMs(this: any, ms: number) {
+  if (!this.delayNode) return;
   const v = Math.max(0, Math.min(1000, Number(ms) || 0));
   this.delayMs = v;
   if (this.compensateOn === 'main') {
@@ -145,4 +146,18 @@ export function monitorSetDelayMs(this: any, ms: number) {
     if (this.mainDelayNode) this.mainDelayNode.delayTime.value = 0;
   }
   this._persist();
+}
+
+export function monitorSetHallVolume(this: any, v: number) {
+  const vol = Math.max(0, Math.min(1, Number(v) || 0));
+  if (this.mainBranchGain?.gain) {
+    this.mainBranchGain.gain.linearRampToValueAtTime(vol, this.audioContext?.currentTime + 0.02 || 0);
+  }
+}
+
+export function monitorSetMonitorVolume(this: any, v: number) {
+  const vol = Math.max(0, Math.min(1, Number(v) || 0));
+  if (this.monitorGain?.gain) {
+    this.monitorGain.gain.linearRampToValueAtTime(vol, this.audioContext?.currentTime + 0.02 || 0);
+  }
 }

@@ -11,6 +11,7 @@ export interface MonitorState {
   /* UI */
   /** @deprecated Panel visibility owned by dock. Kept for compat. */
   open: boolean;
+  isEnabling: boolean;
 
   /* engine state (synced from legacy) */
   enabled: boolean;
@@ -63,8 +64,13 @@ export interface MonitorState {
   wasPlayingBeforeTest: boolean;
   calibrationMode: 'sound' | 'live' | null;
   preSessionDelayMs: number;
+  preSessionCompensateOn: 'monitor' | 'main' | null;
   preSessionWasPlaying: boolean;
   lineUpSource: 'pulse' | 'voc';  // UI-only source selector preference
+
+  /* nudge undo stack */
+  nudgeUndoStack: number[];
+  nudgeRedoStack: number[];
 
   /* tap session - UI only assist layer */
   tapSessionActive: boolean;
@@ -137,10 +143,15 @@ export interface MonitorActions {
   setWasPlayingBeforeTest: (wasPlaying: boolean) => void;
   setCalibrationMode: (mode: 'sound' | 'live' | null) => void;
   setPreSessionDelayMs: (ms: number) => void;
+  setPreSessionCompensateOn: (v: 'monitor' | 'main' | null) => void;
   setPreSessionWasPlaying: (playing: boolean) => void;
   setLineUpSource: (source: 'pulse' | 'voc') => void;
 
   /* tap session - UI only assist layer */
+  nudgePush: (prevDelayMs: number) => void;
+  nudgeUndo: () => void;
+  nudgeRedo: () => void;
+
   setTapSessionActive: (active: boolean) => void;
   setTapCount: (count: number) => void;
   setTapJitter: (jitter: number | null) => void;
@@ -149,6 +160,10 @@ export interface MonitorActions {
   resetTapSession: () => void;
   setHallVolume: (v: number) => void;
   setMonitorVolume: (v: number) => void;
+  previewDelayMs: (ms: number) => void;
+  beginPulseCalibration: (delayMs: number, intervalMs: number) => void;
+  endPulseCalibration: () => void;
+  stopSyncSequence: () => void;
   testPulse: () => Promise<void>;
   refreshDevices: () => Promise<void>;
 }
@@ -162,6 +177,7 @@ export const useMonitorStore = create<MonitorState & MonitorActions>(
   (set, get) => ({
     /* --- initial state --- */
     open: false,
+    isEnabling: false,
     enabled: false,
     routeMainEnabled: false,
     includeMusic: false,
@@ -213,8 +229,13 @@ export const useMonitorStore = create<MonitorState & MonitorActions>(
     wasPlayingBeforeTest: false,
     calibrationMode: null,
     preSessionDelayMs: 0,
+    preSessionCompensateOn: null,
     preSessionWasPlaying: false,
     lineUpSource: 'pulse',  // Default to pulse
+
+    /* nudge undo stack */
+    nudgeUndoStack: [],
+    nudgeRedoStack: [],
 
     /* tap session - UI only defaults */
     tapSessionActive: false,
@@ -252,11 +273,19 @@ export const useMonitorStore = create<MonitorState & MonitorActions>(
 
     /* --- actions → legacy --- */
     enable: async (opts?: { skipMic?: boolean }) => {
-      set({ enabled: true });
-      const mix = getMix();
-      if (mix) await mix.enable(opts);
+      const { isEnabling } = get();
+      if (isEnabling) return;
+      set({ isEnabling: true, enabled: true });
+      try {
+        const mix = getMix();
+        if (mix) await mix.enable(opts);
+      } finally {
+        set({ isEnabling: false });
+      }
     },
     disable: () => {
+      const { isEnabling } = get();
+      if (isEnabling) return;
       set({ enabled: false });
       const mix = getMix();
       if (mix) mix.disable();
@@ -408,8 +437,40 @@ export const useMonitorStore = create<MonitorState & MonitorActions>(
     setWasPlayingBeforeTest: (wasPlaying) => set({ wasPlayingBeforeTest: wasPlaying }),
     setCalibrationMode: (mode) => set({ calibrationMode: mode }),
     setPreSessionDelayMs: (ms) => set({ preSessionDelayMs: ms }),
+    setPreSessionCompensateOn: (v) => set({ preSessionCompensateOn: v }),
     setPreSessionWasPlaying: (playing) => set({ preSessionWasPlaying: playing }),
-    setLineUpSource: (source) => set({ lineUpSource: source }),
+    setLineUpSource: (source) => {
+      set({ lineUpSource: source });
+      const mix = getMix();
+      if (mix?.setLineUpSource) mix.setLineUpSource(source);
+    },
+
+    /* --- nudge undo/redo --- */
+    nudgePush: (prevDelayMs) => {
+      const { nudgeUndoStack } = get();
+      const stack = [...nudgeUndoStack, prevDelayMs].slice(-10);
+      set({ nudgeUndoStack: stack, nudgeRedoStack: [] });
+    },
+    nudgeUndo: () => {
+      const { nudgeUndoStack, nudgeRedoStack, delayMs } = get();
+      if (!nudgeUndoStack.length) return;
+      const prevDelay = nudgeUndoStack[nudgeUndoStack.length - 1];
+      const newUndo = nudgeUndoStack.slice(0, -1);
+      const newRedo = [...nudgeRedoStack, delayMs].slice(-10);
+      set({ nudgeUndoStack: newUndo, nudgeRedoStack: newRedo, delayMs: prevDelay, lineUpDelayMs: prevDelay });
+      const mix = getMix();
+      if (mix?.setDelayMs) mix.setDelayMs(prevDelay);
+    },
+    nudgeRedo: () => {
+      const { nudgeUndoStack, nudgeRedoStack } = get();
+      if (!nudgeRedoStack.length) return;
+      const nextDelay = nudgeRedoStack[nudgeRedoStack.length - 1];
+      const newRedo = nudgeRedoStack.slice(0, -1);
+      const newUndo = [...nudgeUndoStack, nextDelay].slice(-10);
+      set({ nudgeUndoStack: newUndo, nudgeRedoStack: newRedo, delayMs: nextDelay, lineUpDelayMs: nextDelay });
+      const mix = getMix();
+      if (mix?.setDelayMs) mix.setDelayMs(nextDelay);
+    },
 
     /* --- tap session actions (UI-only assist layer) --- */
     setTapSessionActive: (active) => set({ tapSessionActive: active }),
@@ -429,18 +490,28 @@ export const useMonitorStore = create<MonitorState & MonitorActions>(
     setHallVolume: (v) => {
       set({ hallVolume: v });
       const mix = getMix();
-      const node = mix?.mainBranchGain;
-      if (node?.gain) {
-        node.gain.linearRampToValueAtTime(v, mix.audioContext?.currentTime + 0.02 || 0);
-      }
+      if (mix?.setHallVolume) mix.setHallVolume(v);
     },
     setMonitorVolume: (v) => {
       set({ monitorVolume: v });
       const mix = getMix();
-      const node = mix?.monitorGain;
-      if (node?.gain) {
-        node.gain.linearRampToValueAtTime(v, mix.audioContext?.currentTime + 0.02 || 0);
-      }
+      if (mix?.setMonitorVolume) mix.setMonitorVolume(v);
+    },
+    previewDelayMs: (ms) => {
+      const mix = getMix();
+      if (mix?.previewDelayMs) mix.previewDelayMs(ms);
+    },
+    beginPulseCalibration: (delayMs, intervalMs) => {
+      const mix = getMix();
+      if (mix?.beginPulseCalibration) mix.beginPulseCalibration(delayMs, intervalMs);
+    },
+    endPulseCalibration: () => {
+      const mix = getMix();
+      if (mix?.endPulseCalibration) mix.endPulseCalibration();
+    },
+    stopSyncSequence: () => {
+      const mix = getMix();
+      if (mix?.stopSyncSequence) mix.stopSyncSequence();
     },
     testPulse: async () => {
       const mix = getMix();

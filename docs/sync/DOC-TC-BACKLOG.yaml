@@ -23,11 +23,13 @@ backlog:
     domain: governance
     description: "Update 009 role in agent-governance-map.md from reserve to active IVA"
     priority: P1
-    status: open
+    status: resolved
     created: 2026-06-10
+    resolved: 2026-06-15
     created_by: "007"
     expected_keeper: "007"
-    verified_by: null
+    verified_by: "001"
+    notes: "Resolved in GOVERNANCE-FINAL-FREEZE-01. agent-governance-map.md §4.6 updated to IVA v3.0."
 
   # ── P2 — Important ──
   - id: DOC-TC-003
@@ -95,21 +97,25 @@ backlog:
     domain: governance
     description: "ARCH-BASE.md — add deprecation notice pointing to Belive-Agents/ location"
     priority: P2
-    status: open
+    status: resolved
     created: 2026-06-10
+    resolved: 2026-06-15
     created_by: "007"
     expected_keeper: "007"
-    verified_by: null
+    verified_by: "007"
+    notes: "S-VC MAINTENANCE CYCLE 01: SUPERSEDED banner already present in ARCH-BASE.md."
 
   - id: DOC-TC-012
     domain: governance
     description: "protocol-v2.1.md — add deprecation notice pointing to Belive-Agents/ location"
     priority: P2
-    status: open
+    status: resolved
     created: 2026-06-10
+    resolved: 2026-06-15
     created_by: "007"
     expected_keeper: "007"
-    verified_by: null
+    verified_by: "007"
+    notes: "S-VC MAINTENANCE CYCLE 01: protocol-v2.1.md was split/removed. Deprecation notice not applicable."
 
   # ── P3 — Nice-to-have ──
   - id: DOC-TC-013
@@ -237,5 +243,155 @@ backlog:
     resolved: 2026-06-14
     created_by: "007"
     expected_keeper: "007"
+    verified_by: "009"
+    notes: "S-VC MAINTENANCE CYCLE 01: docs/telegram/bot-catalog-integration.md exists and is valid. Verified by 009 per convention."
+
+  # ── GOVERNANCE FINAL FREEZE ──
+  - id: DOC-TC-019
+    domain: governance
+    description: "GOVERNANCE-FINAL-FREEZE-01 — protocol rename, protocol-v2.1.md → protocol-v3.0.md (agent) + product-protocol-v2.1.md (auth/AI)"
+    priority: P1
+    status: resolved
+    created: 2026-06-15
+    resolved: 2026-06-15
+    created_by: "001"
+    expected_keeper: "007"
+    verified_by: "001"
+    notes: "Protocols separated. All references updated (charter-007.md, bootstrap.md, registry)."
+
+  - id: DOC-TC-020
+    domain: governance
+    description: "ARCH-BASE.md marked SUPERSEDED — ссылается на 000-FULL-BASE.md"
+    priority: P2
+    status: resolved
+    created: 2026-06-15
+    resolved: 2026-06-15
+    created_by: "001"
+    expected_keeper: "007"
+    verified_by: "001"
+    notes: "⚠️ SUPERSEDED marker added."
+
+  - id: DOC-TC-021
+    domain: governance
+    description: "001.md agent file created — CEO co-architect role"
+    priority: P2
+    status: resolved
+    created: 2026-06-15
+    resolved: 2026-06-15
+    created_by: "001"
+    expected_keeper: "007"
+    verified_by: "001"
+    notes: ".opencode/agent/001.md created with read-only governance permissions."
+
+  - id: DOC-TC-022
+    domain: governance
+    description: "GOVERNANCE-FINAL-FREEZE-01.md — master freeze document"
+    priority: P1
+    status: open
+    created: 2026-06-15
+    created_by: "001"
+    expected_keeper: "007"
     verified_by: null
-    notes: "docs/telegram/bot-catalog-integration.md created — commands, API endpoints, deploy, CORS, KV, secrets, file structure. Waiting 009 verification."
+    notes: "Wait 009 verification for PASS status."
+
+  # ── FULL-BASE-INTAKE-01 ──
+  - id: DOC-TC-023
+    domain: governance
+    description: "FULL-BASE mandatory read for 007 — updated AGENTS.md, charter-007.md, bootstrap.md, 007.md, belive-007-core skill, agent-governance-map.md"
+    priority: P1
+    status: resolved
+    created: 2026-06-15
+    resolved: 2026-06-15
+    created_by: "001"
+    expected_keeper: "007"
+    verified_by: "001"
+    notes: "000-FULL-BASE.md header updated. AGENTS.md: removed prohibition, added mandatory read. charter-007.md §10/§12/§14 updated. bootstrap.md §7 updated. Agent files updated."
+
+  # ── GOVERNANCE-PRINCIPLE-02 ──
+  - id: DOC-TC-024
+    domain: governance
+    description: "FULL-BASE adopted as Shared Context Layer. S-VC 1.2 declared. 000-FULL-BASE.md header rewritten (shared layer for all roles). agent-governance-map.md §9 added. 009.md agent file updated. GOVERNANCE-FINAL-FREEZE-01.md §0 + §14 added. bootstrap.md updated."
+    priority: P1
+    status: resolved
+    created: 2026-06-15
+    resolved: 2026-06-15
+    created_by: "001"
+    expected_keeper: "007"
+    verified_by: "001"
+    notes: "FULL-BASE is now formally Shared Context Layer. S-VC 1.2 declared as current system model. All roles now reference FULL-BASE."
+
+  # ── S-VC MAINTENANCE CYCLE ──
+  - id: DOC-TC-025
+    domain: governance
+    description: "S-VC MAINTENANCE CYCLE adopted — Self-Improving Governance. 5-phase cycle (A→B→C→D→E). agent-governance-map.md §12 (full spec), charter-007.md §15 (007 role), charter-009.md §8 (009 gatekeeper), 000-bootstrap.md §8 (overview), GOVERNANCE-FINAL-FREEZE-01.md §15 added."
+    priority: P1
+    status: resolved
+    created: 2026-06-15
+    resolved: 2026-06-15
+    created_by: "001"
+    expected_keeper: "007"
+    verified_by: "001"
+    notes: "S-VC MAINTENANCE CYCLE adopted. proof-based cleanup, 009-gated. No new files created."
+
+  # ── S-VC MAINTENANCE CYCLE — POST-REVIEW IMPROVEMENTS ──
+  - id: DOC-TC-026
+    domain: governance
+    description: "Усиления maintenance cycle по ревью GPT: (1) 001 — единственный инициатор, 007 только предлагает. (2) REQUEST MORE PROOF = явный стоп-сигнал. (3) Anti-Bloat Rule: цикл не создаёт новые документы. (4) Timebox: весь цикл макс 2 часа. agent-governance-map.md §12, charter-007.md §15.1, charter-009.md §8.3, GOVERNANCE-FINAL-FREEZE-01.md §15 обновлены."
+    priority: P1
+    status: resolved
+    created: 2026-06-15
+    resolved: 2026-06-15
+    created_by: "001"
+    expected_keeper: "007"
+    verified_by: "001"
+    notes: "4 improvements applied. Cycle now tighter, cleaner, and better guarded."
+
+  # ── S-VC MAINTENANCE CYCLE — AUTONOMOUS CONTINUATION ──
+  - id: DOC-TC-027
+    domain: governance
+    description: "Trigger Ownership Rule + Autonomous Continuation Rule: при '001, Optimization!' 007 не спрашивает 'что делать?' — автоматически запускает цикл, вызывает 001. После фазы — авто-переход к следующей. Fallback при недоступности 001. Updated: charter-007.md §15, agent-governance-map.md §12.6, charter-009.md §8.1, 000-bootstrap.md §8, GOVERNANCE-FINAL-FREEZE-01.md §15."
+    priority: P1
+    status: resolved
+    created: 2026-06-15
+    resolved: 2026-06-15
+    created_by: "001"
+    expected_keeper: "007"
+    verified_by: "001"
+    notes: "System now 100% autonomous on trigger. No more 'что делать?' — Trigger Ownership Rule + Autonomous Continuation Rule + Fallback."
+
+  # ── TRIGGER-IN-AGENTS-MD ──
+  - id: DOC-TC-028
+    domain: governance
+    description: "Триггер '001 — Оптимизация!' вынесен из charter-007.md §15 в AGENTS.md. Добавлен русский вариант. AGENTS.md: новый раздел 'ПРОВЕРЬ ТРИГГЕР' с приоритетом над обычным алгоритмом. Обновлены: charter-007.md §15.1, agent-governance-map.md §12.2, bootstrap.md §8, GOVERNANCE-FINAL-FREEZE-01.md §15.5."
+    priority: P1
+    status: resolved
+    created: 2026-06-15
+    resolved: 2026-06-15
+    created_by: "001"
+    expected_keeper: "007"
+    verified_by: "001"
+    notes: "Root cause: триггер был только в charter §15, но агент читает AGENTS.md первым и настраивается на 'жду задачу'. Fix: триггер вынесен в AGENTS.md с приоритетом. +Русский вариант '001 — Оптимизация!'."
+
+  # ── P2 — Important ──
+  - id: DOC-TC-019
+    domain: monitor
+    description: "Update monitor-mix-v2.md: bridge gateway methods (setHallVolume, setMonitorVolume, setLineUpSource), isEnabling race guard, extracted components (CalibrationDrum, DualAutoMixRow, ToggleSliderRow), panel no longer calls window.monitorMix directly. Line counts: Panel 919→733, Store 474→502, Bridge 166→172, +3 new component files."
+    priority: P2
+    status: open
+    created: 2026-06-15
+    created_by: "007"
+    expected_keeper: "007"
+    verified_by: null
+
+  # ── S-VC MAINTENANCE CYCLE 01 ──
+  - id: DOC-TC-029
+    domain: governance
+    description: "S-VC MAINTENANCE CYCLE 01 — первый реальный цикл. Code cleanup: -39 строк dead MVSEP JSX. Docs: 3 DOC-TC closed. Registry: verified_by convention fix + sync_health rename. ROI metrics added to maintenance report."
+    priority: P1
+    status: resolved
+    created: 2026-06-15
+    resolved: 2026-06-15
+    created_by: "001"
+    expected_keeper: "007"
+    verified_by: "009"
+    notes: "Первый реальный A→B→C→D→E цикл. 001↔007↔009 с реальными расхождениями (2 false positives 001 → correction). 009: APPROVED WITH CONDITIONS. Freeze zones untouched. MVSEP 775 строк — сознательно не тронуты (нет proof). Health → sync_health rename. ROI metrics added. Вердикт 009: ✅ PASS."

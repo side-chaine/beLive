@@ -2,6 +2,9 @@ import React from 'react';
 import { useMonitorStore } from '../stores/monitor.store';
 import { useAudioStore } from '../stores/audio.store';
 import { getCalibration, saveCalibration } from '../services/device-calibrations';
+import { CalibrationDrum } from './monitor/CalibrationDrum';
+import { DualAutoMixRow } from './monitor/DualAutoMixRow';
+import { ToggleSliderRow } from './monitor/ToggleSliderRow';
 import s from './MonitorMixPanel.module.css';
 
 export function MonitorMixPanel() {
@@ -32,8 +35,6 @@ export function MonitorMixPanel() {
   // Persist source preference when it changes
   React.useEffect(() => {
     localStorage.setItem('lineUp:source', st.lineUpSource);
-    // Mirror to engine runtime
-    (window as any).monitorMix?.setLineUpSource(st.lineUpSource);
   }, [st.lineUpSource]);
 
   // Load devices on mount
@@ -165,7 +166,7 @@ export function MonitorMixPanel() {
       // If session is active, cancel it on unmount
       if (st.testInProgress) {
         // Stop test sequence
-        (window as any).monitorMix?.stopSyncSequence();
+        st.stopSyncSequence();
         
         // Restore pre-session delay
         st.setDelayMs(st.preSessionDelayMs || st.delayMs);
@@ -189,20 +190,11 @@ export function MonitorMixPanel() {
     
     // Source is Pulse → ensure pulse sequence is running
     if (st.lineUpSource === 'pulse') {
-      const mix = (window as any).monitorMix;
-      const syncIntervalAliveBefore = !!mix?._syncInterval;
-      if (mix && !mix._syncInterval && !mix._pulseScheduleTimer && !mix._syncTestActive) {
-        // PART B: Use beginPulseCalibration instead of startTapSequence
-        const currentLineUpDelay = useMonitorStore.getState().lineUpDelayMs;
-        mix.beginPulseCalibration(currentLineUpDelay, 667);
-      } else {
-      }
+      const currentLineUpDelay = useMonitorStore.getState().lineUpDelayMs;
+      st.beginPulseCalibration(currentLineUpDelay, 667);
     } else {
       // Source is Voc → stop pulse sequence
-      const mix = (window as any).monitorMix;
-      const syncIntervalAliveBefore = !!mix?._syncInterval;
-      // PART B: Only stop sequence, do NOT end session
-      (window as any).monitorMix?.stopSyncSequence();
+      st.stopSyncSequence();
     }
   }, [st.lineUpSource, st.testInProgress, st.calibrationMode]);
 
@@ -233,6 +225,15 @@ export function MonitorMixPanel() {
     st.backVocalOutroOn;
 
   const clamp = (v: number) => Math.max(0, Math.min(1, v));
+
+  const handleNudge = (delta: number) => () => {
+    const liveDelay = useMonitorStore.getState().delayMs;
+    const newMs = Math.max(0, Math.min(1000, liveDelay + delta));
+    if (newMs === liveDelay) return;
+    useMonitorStore.getState().nudgePush(liveDelay);
+    useMonitorStore.getState().setDelayMs(newMs);
+    useMonitorStore.getState().setLineUpDelayMs(newMs);
+  };
 
   const handleMasterBvLevelChange = (newValue: number) => {
     const delta = newValue - prevMasterRef.current;
@@ -385,12 +386,8 @@ export function MonitorMixPanel() {
               <button
                 className={s.lockEditBtn}
                 onClick={() => {
-                  // ===== FORENSIC LOG: adjust-click =====
                   const ae = (window as any).audioEngine;
                   const isPlaying = ae?.isPlaying ?? false;
-                  const aeCurrentTime = ae?.getCurrentTime?.() ?? ae?.currentTime ?? null;
-                  
-                  // Capture current state for session
                   
                   // Save pre-unlock status immediately
                   previousStatusRef.current = st.lineUpStatus;
@@ -416,6 +413,7 @@ export function MonitorMixPanel() {
                                     
                   // Store session baseline in store
                   useMonitorStore.getState().setPreSessionDelayMs(st.delayMs);
+                  useMonitorStore.getState().setPreSessionCompensateOn(st.compensateOn);
                   useMonitorStore.getState().setPreSessionWasPlaying(isPlaying);
                   useMonitorStore.getState().setCalibrationMode(mode);
                           
@@ -446,10 +444,8 @@ export function MonitorMixPanel() {
                   useMonitorStore.getState().resetTapSession();
                   tapTimestampsRef.current = [];
                   
-                  // PART B: Use beginPulseCalibration instead of suspendForPulseLineUp + startTapSequence
                   if (mode === 'sound' && st.lineUpSource === 'pulse') {
-                    const mix = (window as any).monitorMix;
-                    mix?.beginPulseCalibration?.(initialDrumDelay, 667);
+                    st.beginPulseCalibration(initialDrumDelay, 667);
                   }
                 }}
                 disabled={st.lineUpStatus === 'idle'}>
@@ -484,7 +480,7 @@ export function MonitorMixPanel() {
                       onClick={() => {
                         const newMs = Math.max(0, st.lineUpDelayMs - 10);
                         useMonitorStore.getState().setLineUpDelayMs(newMs);
-                        (window as any).monitorMix?.previewDelayMs(newMs);
+                        st.previewDelayMs(newMs);
                       }}>
                       −10
                     </button>
@@ -493,7 +489,7 @@ export function MonitorMixPanel() {
                       onClick={() => {
                         const newMs = Math.max(0, st.lineUpDelayMs - 5);
                         useMonitorStore.getState().setLineUpDelayMs(newMs);
-                        (window as any).monitorMix?.previewDelayMs(newMs);
+                        st.previewDelayMs(newMs);
                       }}>
                       −5
                     </button>
@@ -502,7 +498,7 @@ export function MonitorMixPanel() {
                       onClick={() => {
                         const newMs = Math.min(500, st.lineUpDelayMs + 5);
                         useMonitorStore.getState().setLineUpDelayMs(newMs);
-                        (window as any).monitorMix?.previewDelayMs(newMs);
+                        st.previewDelayMs(newMs);
                       }}>
                       +5
                     </button>
@@ -511,7 +507,7 @@ export function MonitorMixPanel() {
                       onClick={() => {
                         const newMs = Math.min(500, st.lineUpDelayMs + 10);
                         useMonitorStore.getState().setLineUpDelayMs(newMs);
-                        (window as any).monitorMix?.previewDelayMs(newMs);
+                        st.previewDelayMs(newMs);
                       }}>
                       +10
                     </button>
@@ -522,7 +518,7 @@ export function MonitorMixPanel() {
                     value={st.lineUpDelayMs}
                     onChange={(newMs) => {
                       useMonitorStore.getState().setLineUpDelayMs(newMs);
-                      (window as any).monitorMix?.previewDelayMs(newMs);
+                      st.previewDelayMs(newMs);
                     }}
                   />
                 </div>
@@ -533,17 +529,18 @@ export function MonitorMixPanel() {
                     className={s.cancelInlineBtn}
                     onClick={() => {
                       // Stop test sequence
-                      // PART B: Use endPulseCalibration instead of stopSyncSequence + restoreAfterPulseLineUp
-                      (window as any).monitorMix?.endPulseCalibration?.();
+                      st.endPulseCalibration();
                       
                       // Restore previous delay from pre-session baseline
                       const revertMs = previousDelayRef.current;
-                      const ae = (window as any).audioEngine;
-                      const aeIsPlayingBeforeRestore = ae?.isPlaying ?? false;
                       
+                      // Restore pre-session compensateOn
+                      if (st.preSessionCompensateOn) {
+                        st.setCompensateTarget(st.preSessionCompensateOn);
+                      }
                       st.setDelayMs(revertMs);
                       useMonitorStore.getState().setLineUpDelayMs(revertMs);
-                              
+                               
                       // Restore previous line up state
                       const prevStatus = (previousStatusRef.current || 'synced') as any;
                       useMonitorStore.getState().setLineUpStatus(prevStatus);
@@ -577,8 +574,7 @@ export function MonitorMixPanel() {
                     className={s.confirmInlineBtn}
                     onClick={() => {
                       // Stop test sequence
-                      // PART B: Use endPulseCalibration instead of stopSyncSequence + restoreAfterPulseLineUp
-                      (window as any).monitorMix?.endPulseCalibration?.();
+                      st.endPulseCalibration();
                               
                       // Commit delay to audio engine and persist
                       const finalDelay = useMonitorStore.getState().lineUpDelayMs;
@@ -637,8 +633,12 @@ export function MonitorMixPanel() {
             {isLineUpLockedRef.current && st.lineUpStatus !== 'testing' && st.lineUpStatus !== 'idle' && (
               <div className={s.calibrationDrumWrapper}>
                 <div className={s.delayValueDisplay}>
-                  <span className={s.msValue}>{st.lineUpDelayMs}</span>
-                  <span className={s.msUnit}>ms</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button className={s.stepBtn} onClick={handleNudge(-10)} disabled={st.lineUpDelayMs <= 0} style={{ padding: '2px 8px', fontSize: 13 }}>−10</button>
+                    <span className={s.msValue}>{st.lineUpDelayMs}</span>
+                    <span className={s.msUnit}>ms</span>
+                    <button className={s.stepBtn} onClick={handleNudge(10)} disabled={st.lineUpDelayMs >= 1000} style={{ padding: '2px 8px', fontSize: 13 }}>+10</button>
+                  </div>
                 </div>
                         
                 {/* Drum control - disabled in locked state */}
@@ -647,6 +647,12 @@ export function MonitorMixPanel() {
                   onChange={() => {}}
                   disabled={true}
                 />
+                
+                {/* Undo/redo */}
+                <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginTop: 4 }}>
+                  <button className={s.stepBtn} onClick={st.nudgeUndo} disabled={!st.nudgeUndoStack.length} style={{ padding: '2px 10px', fontSize: 12, opacity: st.nudgeUndoStack.length ? 1 : 0.3 }}>↩ Undo</button>
+                  <button className={s.stepBtn} onClick={st.nudgeRedo} disabled={!st.nudgeRedoStack.length} style={{ padding: '2px 10px', fontSize: 12, opacity: st.nudgeRedoStack.length ? 1 : 0.3 }}>↪ Redo</button>
+                </div>
               </div>
             )}
           </div>
@@ -742,178 +748,4 @@ export function MonitorMixPanel() {
   );
 }
 
-/* ── CalibrationDrum: wide tactile calibration control with moving ticks ── */
-function CalibrationDrum({ value, onChange, disabled }: { value: number; onChange: (ms: number) => void; disabled?: boolean }) {
-  const drumRef = React.useRef<HTMLDivElement>(null);
-  const isDraggingRef = React.useRef(false);
-  const dragStartXRef = React.useRef(0);
-  const dragStartValueRef = React.useRef(0);
-  const onChangeRef = React.useRef(onChange);
 
-  // Keep onChange ref updated without causing listener re-registration
-  React.useEffect(() => {
-    onChangeRef.current = onChange;
-  }, [onChange]);
-
-  React.useEffect(() => {
-    const handlePointerMove = (e: PointerEvent) => {
-      if (!isDraggingRef.current || !drumRef.current) return;
-      
-      const deltaX = e.clientX - dragStartXRef.current;
-      const rect = drumRef.current.getBoundingClientRect();
-      const msPerPixel = 500 / rect.width;
-      const deltaMs = -deltaX * msPerPixel;  // Invert: drag right decreases value (strip moves left)
-      const rawValue = dragStartValueRef.current + deltaMs;
-      const snappedValue = Math.round(rawValue / 5) * 5; // Snap to 5ms
-      const clampedValue = Math.max(0, Math.min(500, snappedValue));
-      
-      onChangeRef.current(clampedValue);
-    };
-
-    const handlePointerUp = () => {
-      isDraggingRef.current = false;
-    };
-
-    document.addEventListener('pointermove', handlePointerMove);
-    document.addEventListener('pointerup', handlePointerUp);
-    
-    return () => {
-      document.removeEventListener('pointermove', handlePointerMove);
-      document.removeEventListener('pointerup', handlePointerUp);
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    isDraggingRef.current = true;
-    dragStartXRef.current = e.clientX;
-    dragStartValueRef.current = value;
-  };
-
-  // Generate tick marks
-  const ticks = [];
-  for (let ms = 0; ms <= 500; ms += 5) {
-    const isMajor = ms % 25 === 0;
-    const isLandmark = ms % 50 === 0;
-    ticks.push({ ms, isMajor, isLandmark });
-  }
-
-  // Calculate position of the tick strip
-  // Scale reads left-to-right: 0ms on left, 500ms on right
-  // Center marker stays fixed; strip moves to align current value under marker
-  const totalTicks = ticks.length;
-  const currentTickIndex = value / 5;
-  const tickSpacingPercentage = 100 / (totalTicks - 1);
-  const stripOffset = 50 - (currentTickIndex * tickSpacingPercentage);
-
-  return (
-    <div
-      ref={drumRef}
-      className={`${s.calibrationDrum} ${disabled ? s.calibrationDrumDisabled : ''}`}
-      onPointerDown={disabled ? undefined : handlePointerDown}
-    >
-      {/* Fixed center marker */}
-      <div className={s.centerMarker} />
-      
-      {/* Moving tick strip */}
-      <div
-        className={s.tickStrip}
-        style={{ transform: `translateX(${stripOffset}%)` }}
-      >
-        {ticks.map((tick) => (
-          <div
-            key={tick.ms}
-            className={`${s.tick} ${tick.isLandmark ? s.tickLandmark : tick.isMajor ? s.tickMajor : s.tickMinor}`}
-            style={{ left: `${(tick.ms / 500) * 100}%` }}
-          >
-            {tick.isLandmark && (
-              <span className={s.tickLabel}>{tick.ms}</span>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ── DualAutoMixRow: dual-lane control (main + Back Vocal) ── */
-function DualAutoMixRow({
-  label,
-  active,
-  onToggle,
-  value,
-  onValue,
-  bvActive,
-  onBvToggle,
-  bvValue,
-  onBvValue
-}: {
-  label: string;
-  active: boolean;
-  onToggle: () => void;
-  value: number;       /* 0-1 */
-  onValue: (v: number) => void;
-  bvActive: boolean;
-  onBvToggle: () => void;
-  bvValue: number;     /* 0-1 */
-  onBvValue: (v: number) => void;
-}) {
-  return (
-    <div className={s.dualAutoMixRow}>
-      {/* Left side: Main AutoMix */}
-      <div className={s.dualLeft}>
-        <button
-          className={`${s.dotToggle} ${active ? s.dotToggleActive : ''}`}
-          onClick={onToggle}
-          type="button"
-        />
-        <span className={s.toggleLabel}>{label}</span>
-        <input type="range" className={`${s.slider} ${!active ? s.sliderInactive : ''}`}
-          min={0} max={100} value={Math.round(value * 100)}
-          onChange={e => onValue(+e.target.value / 100)} />
-        <span className={s.val}>{Math.round(value * 100)}%</span>
-      </div>
-      {/* Divider */}
-      <div className={s.dualDivider} />
-      {/* Right side: Back Vocal */}
-      <div className={s.dualRight}>
-        <button
-          className={`${s.dotToggle} ${bvActive ? s.dotToggleActive : ''}`}
-          onClick={onBvToggle}
-          type="button"
-        />
-        <span className={s.bvLabel}>{label}</span>
-        <input type="range" className={`${s.bvSlider} ${bvActive ? s.bvSliderActive : ''}`}
-          min={0} max={100} value={Math.round(bvValue * 100)}
-          onChange={e => onBvValue(+e.target.value / 100)} />
-        <span className={s.val}>{Math.round(bvValue * 100)}%</span>
-      </div>
-    </div>
-  );
-}
-
-/* ── ToggleSliderRow: blue dot activator + slider + % ── */
-function ToggleSliderRow({ label, active, onToggle, value, onValue, hideToggle }: {
-  label: string;
-  active: boolean;
-  onToggle: () => void;
-  value: number;       /* 0-1 */
-  onValue: (v: number) => void;
-  hideToggle?: boolean;
-}) {
-  return (
-    <div className={s.toggleRow}>
-      {!hideToggle && (
-        <button
-          className={`${s.dotToggle} ${active ? s.dotToggleActive : ''}`}
-          onClick={onToggle}
-          type="button"
-        />
-      )}
-      <span className={s.toggleLabel}>{label}</span>
-      <input type="range" className={`${s.slider} ${!active ? s.sliderInactive : ''}`}
-        min={0} max={100} value={Math.round(value * 100)}
-        onChange={e => onValue(+e.target.value / 100)} />
-      <span className={s.val}>{Math.round(value * 100)}%</span>
-    </div>
-  );
-}

@@ -15,7 +15,9 @@ import {
   monitorSetAutoPreChorusLevel,
   monitorSetAutoOutro,
   monitorSetAutoOutroLevel,
-  monitorSetDelayMs
+  monitorSetDelayMs,
+  monitorSetHallVolume,
+  monitorSetMonitorVolume,
 } from '../services/monitor.state';
 
 /* -------- types -------- */
@@ -103,6 +105,8 @@ function tryHydrate() {
   mix.setAutoOutro = monitorSetAutoOutro;
   mix.setAutoOutroLevel = monitorSetAutoOutroLevel;
   mix.setDelayMs = monitorSetDelayMs;
+  mix.setHallVolume = monitorSetHallVolume;
+  mix.setMonitorVolume = monitorSetMonitorVolume;
 
   // Use ORIGINAL state for hydration, not patched state
   useMonitorStore.getState().syncFromLegacy(mapLegacyState(originalState));

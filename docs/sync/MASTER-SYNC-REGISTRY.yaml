@@ -13,21 +13,23 @@
 # Generated: 2026-06-10 | CI-ready | Machine-first
 
 version: 2
-last_updated: 2026-06-14T19:19
+last_updated: 2026-06-15T23:45
 
-# ── DOC HEALTH SCORE ──
+# ── SYNC HEALTH SCORE ──
 # Calculated: synced / total * 100
 # Updated: after each DOC-HYGIENE or major sync operation
 # Trend: each entry tracks score over time
-health:
+# ⚠️ This is doc sync health, NOT overall project health score.
+#    It measures: docs/architecture/*.md ↔ code alignment status.
+sync_health:
   current:
-    synced: 27
+    synced: 32  # -1: monitor-mix synced→needs_update
     stale: 1
-    needs_update: 8
+    needs_update: 7  # +1: monitor-mix DOC_UPDATE_REQUIRED
     conflicts: 0
     critical: 0
-    total: 36
-    score: 75  # 27/36 * 100
+    total: 40
+    score: 80  # 32/40 * 100. Storm Split System — monitor-mix needs doc update
     broken_links: 0  # INDEX.md — verified 2026-06-10
     index_status: clean  # INDEX.md — all links verified
   history:
@@ -58,6 +60,30 @@ health:
     - date: 2026-06-14
       score: 75
       event: "DOC-SESSION: созданы docs/sessions/2026-06-14-evening.md, docs/telegram/bot-catalog-integration.md (DOC-TC-018 closed). Обновлены BeLive_CEO/zip-pipeline.md и smart-cell-catalog.md. Health score: 27/36 = 75 (8 needs_update)."
+    - date: 2026-06-15
+      score: 78
+      event: "GOVERNANCE-FINAL-FREEZE-01: protocols separated (protocol-v3.0.md + product-protocol-v2.1.md), ARCH-BASE.md marked SUPERSEDED, 001.md agent created, agent-governance-map.md updated, DOC-TC-010 closed, freeze package created. Health score: 28/36 = 78 (+1 synced)."
+    - date: 2026-06-15
+      score: 82
+      event: "FULL-BASE-INTAKE-01: 000-FULL-BASE.md now mandatory read for 007. AGENTS.md updated (prohibition removed, mandatory read added). charter-007.md §10/§12/§14 updated (FULL-BASE maintenance). bootstrap.md §7 updated. 007.md agent file updated. belive-007-core skill updated. agent-governance-map.md updated. Risk: if FULL-BASE stale — 007 has wrong context. Health score: 33/40 = 82."
+    - date: 2026-06-15
+      score: 82
+      event: "GOVERNANCE-PRINCIPLE-02: FULL-BASE adopted as Shared Context Layer (S-VC 1.2). 000-FULL-BASE.md header rewritten — shared layer for all roles, not single-role doc. agent-governance-map.md §9 added (Shared Context Layer). 009.md agent file updated (v3.0 IVA + FULL-BASE read). GOVERNANCE-FINAL-FREEZE-01.md §0 + §14 added. bootstrap.md updated. S-VC 1.2 declared as current system model."
+    - date: 2026-06-15
+      score: 82
+      event: "S-VC MAINTENANCE CYCLE adopted. Self-improving governance: A→B→C→D→E (Detect→Propose→Approve→Execute→Writeback). proof-based, 009-gated. agent-governance-map.md §12 (full spec), charter-007.md §15 (007 role), charter-009.md §8 (009 gatekeeper), 000-bootstrap.md §8 (overview), GOVERNANCE-FINAL-FREEZE-01.md §15. Health score unchanged (governance improvement, no new docs)."
+    - date: 2026-06-15
+      score: 82
+      event: "S-VC MAINTENANCE CYCLE — post-test improvements: Trigger Ownership Rule (agents don't ask user upon trigger), Autonomous Continuation Rule (automatic phase handoff without user), Fallback if 001 unavailable. charter-007.md §15 rewritten. charter-009.md §8.1 updated. agent-governance-map.md §12.6 added. 000-bootstrap.md §8 updated. GOVERNANCE-FINAL-FREEZE-01.md §15 rewritten. Test verdict: 80/100 → targeting 100/100."
+    - date: 2026-06-15
+      score: 82
+      event: "TRIGGER-IN-AGENTS-MD: триггер '001 — Оптимизация!' / '001, Optimization!' вынесен из charter §15 в AGENTS.md (первый читаемый файл). Добавлен русский вариант. AGENTS.md: новый раздел '⚠️ ПРОВЕРЬ ТРИГГЕР' с приоритетом над обычным алгоритмом. charter-007.md §15.1: +русские варианты триггера. agent-governance-map.md §12.2, bootstrap.md §8, GOVERNANCE-FINAL-FREEZE-01.md §15.5: +русский триггер. Root cause fixed: триггер теперь виден до 'жду задачу'."
+    - date: 2026-06-15
+      score: 82
+      event: "S-VC MAINTENANCE CYCLE 01 — первый реальный цикл A→B→C→D→E. 001↔007↔009 реальные расхождения (2 false positives 001 скорректированы 007). 009: APPROVED WITH CONDITIONS. Clean: -39 строк dead MVSEP JSX, 3 DOC-TC closed, registry fix. Health score renamed → sync_health (честное имя). ROI metrics added to maintenance report."
+    - date: 2026-06-15
+      score: 82
+      event: "S-VC MAINTENANCE CYCLE 01: Phase A (001 detect) → B (007 propose) → C (009 approve) → D (execute). TC-OPT-01: dead MVSEP JSX removed (-39 строк). TC-OPT-02/03/04: 3 DOC-TC closed (011, 012, 018). TC-OPT-05: registry updated. Score unchanged (33/40 = 82). Open DOC-TC: 10 → 7."
 
 # Status legend:
 #   synced        — doc matches code
@@ -354,12 +380,12 @@ documents:
     domain: monitor
     owner: center
     keeper: "007"
-    status: synced
-    drift: resolved (line counts, backVocalActive, Mix column)
-    last_audit: 2026-06-10
+    status: needs_update
+    drift: bridge gateway methods (setHallVolume, setMonitorVolume, setLineUpSource), isEnabling race guard, extracted components (CalibrationDrum, DualAutoMixRow, ToggleSliderRow), panel no longer calls window.monitorMix directly
+    last_audit: 2026-06-15
     last_sync: 2026-06-10
-    verified_by: ["007"]
-    doc_tc: []
+    verified_by: ["007", "009"]
+    doc_tc: ["DOC-TC-019"]
 
   - id: n-stem
     path: docs/architecture/n-stem-architecture.md
@@ -483,7 +509,7 @@ documents:
     doc_tc: []
 
   - id: protocol
-    path: ~/Desktop/Belive-Agents/system/protocol-v2.1.md
+    path: ~/Desktop/Belive-Agents/system/protocol-v3.0.md
     domain: governance
     owner: "007"
     keeper: "009"
@@ -550,6 +576,40 @@ documents:
       - id: DOC-TC-018
         description: "Create telegram bot documentation: commands, R2 integration, track catalog"
         priority: P1
+        status: resolved
+
+  # ── 10. GOVERNANCE FINAL FREEZE ──
+  - id: freeze-01
+    path: docs/governance/GOVERNANCE-FINAL-FREEZE-01.md
+    domain: governance
+    owner: "001"
+    keeper: "007"
+    status: synced
+    drift: none (freshly created)
+    last_audit: 2026-06-15
+    last_sync: 2026-06-15
+    verified_by: ["001"]
+    doc_tc:
+      - id: DOC-TC-022
+        description: "GOVERNANCE-FINAL-FREEZE-01.md — master freeze document"
+        priority: P1
+        status: open
+        notes: "Wait 009 verification"
+
+  - id: agent-001
+    path: .opencode/agent/001.md
+    domain: governance
+    owner: "001"
+    keeper: "007"
+    status: synced
+    drift: none (freshly created)
+    last_audit: 2026-06-15
+    last_sync: 2026-06-15
+    verified_by: ["001"]
+    doc_tc:
+      - id: DOC-TC-021
+        description: "001.md agent file created"
+        priority: P2
         status: resolved
 
 # ── DOC-TC BACKLOG ──
@@ -623,10 +683,12 @@ doc_tc_backlog:
     document: governance-map
     description: "Update 009 role from reserve diagnostics to Independent Verification Agent"
     priority: P1
-    status: open
+    status: resolved
     created: 2026-06-10
+    resolved: 2026-06-15
     expected_keeper: "007"
-    verified_by: null
+    verified_by: "001"
+    notes: "Resolved in GOVERNANCE-FINAL-FREEZE-01"
 
   - id: DOC-TC-014
     document: zip-pipeline (BeLive_CEO)
@@ -675,5 +737,46 @@ doc_tc_backlog:
     status: resolved
     created: 2026-06-13
     expected_keeper: "007"
+    verified_by: "009"
+    notes: "S-VC MAINTENANCE CYCLE 01: doc exists and valid. Verified by 009 2026-06-15."
+
+  - id: DOC-TC-019
+    document: protocol-v3.0
+    description: "Protocol rename: protocol-v2.1.md → protocol-v3.0.md (agent governance) + product-protocol-v2.1.md (auth/AI/API)"
+    priority: P1
+    status: resolved
+    created: 2026-06-15
+    resolved: 2026-06-15
+    expected_keeper: "007"
+    verified_by: "001"
+    notes: "Protocols separated. All references updated."
+
+  - id: DOC-TC-020
+    document: ARCH-BASE
+    description: "ARCH-BASE.md marked SUPERSEDED — use 000-FULL-BASE.md instead"
+    priority: P2
+    status: resolved
+    created: 2026-06-15
+    resolved: 2026-06-15
+    expected_keeper: "007"
+    verified_by: "001"
+
+  - id: DOC-TC-021
+    document: agent-001
+    description: "001.md agent file created — CEO co-architect role"
+    priority: P2
+    status: resolved
+    created: 2026-06-15
+    resolved: 2026-06-15
+    expected_keeper: "007"
+    verified_by: "001"
+
+  - id: DOC-TC-022
+    document: freeze-01
+    description: "GOVERNANCE-FINAL-FREEZE-01.md — wait 009 verification"
+    priority: P1
+    status: open
+    created: 2026-06-15
+    expected_keeper: "007"
     verified_by: null
-    notes: "Создан 2026-06-14. Ждёт 009 verification."
+    notes: "Pending 009 verification"
