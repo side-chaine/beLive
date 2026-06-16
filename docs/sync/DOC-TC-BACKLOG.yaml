@@ -32,3 +32,23 @@ backlog:
     found_by: "007-DOC-CHECK"
     found_date: 2026-06-16
     blocked_by: null
+
+  - id: "DOC-TC-004"
+    type: UPDATE
+    target: "docs/telegram/bot-catalog-integration.md"
+    description: "Update TG download section: downloadTgTrack function, fetch+Stream API (replaces XHR), ghost error/done phases, HTTP status handling."
+    priority: MEDIUM
+    status: OPEN
+    found_by: "007-DOC-CHECK (ШТУРМ P-02)"
+    found_date: 2026-06-16
+    blocked_by: null
+
+  - id: "DOC-TC-005"
+    type: UPDATE
+    target: "docs/architecture/track-loading-pipeline.md"
+    description: "Update pipeline: add parallel FileReader (concurrency 2), dedup guard for trackCatalog.push, note on TG download HTTP handling improvements."
+    priority: LOW
+    status: OPEN
+    found_by: "007-DOC-CHECK (ШТУРМ P-02)"
+    found_date: 2026-06-16
+    blocked_by: null

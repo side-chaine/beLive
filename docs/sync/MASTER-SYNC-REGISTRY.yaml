@@ -26,24 +26,32 @@ docs:
 
   - path: "docs/architecture/track-loading-pipeline.md"
     description: Track loading pipeline
-    status: OK
+    status: STALE
     last_sync: 2026-04-22
-    health: 95
-    note: ""
+    health: 85
+    note: "Needs update: parallel FileReader, dedup guard, TG HTTP handling + queue."
+
+  - path: "docs/telegram/bot-catalog-integration.md"
+    description: TG Bot ↔ Catalog Integration
+    status: STALE
+    last_sync: 2026-06-10
+    health: 70
+    note: "Needs update: downloadTgTrack function, fetch+stream, ghost error/done phases."
 
   - path: "000-FULL-BASE.md"
     description: Shared Context Layer
     status: UPDATED
     last_sync: 2026-06-16
-    health: 92
-    note: "Updated for lrc-parser.service.ts, cover glob, Audio duration hack removal"
+    health: 95
+    note: "Updated with P-02 changes: downloadTgTrack, ghost error/done, parallel FileReader, dedup guard."
 
 services:
   - path: "src/services/upload.service.ts"
     description: ZIP pipeline, cover extraction, stem classification
     status: UPDATED
-    last_tc: "TC-001"
-    health: 90
+    last_tc: "TC-001/TC-003/TC-004"
+    health: 95
+    note: "Parallel FileReader (concurrency 2). Dedup guard for trackCatalog.push."
 
   - path: "src/services/cover-art.service.ts"
     description: Cover art fetch + theme extraction
@@ -71,11 +79,25 @@ services:
     health: 85
     note: "parseLrcFile @deprecated."
 
+  - path: "src/stores/ghost.store.ts"
+    description: Ghost tracks for TG download progress
+    status: UPDATED
+    last_tc: "TC-001"
+    health: 95
+    note: "Added 'error' phase, clearGhosts action."
+
+  - path: "src/catalog/components/CatalogLayout.tsx"
+    description: TG download, catalog UI, ZIP dropzone
+    status: UPDATED
+    last_tc: "TC-002"
+    health: 85
+    note: "downloadTgTrack extracted. XHR→fetch+stream. Ghost error/done phases."
+
 registry_meta:
-  version: "1.0"
+  version: "1.1"
   last_full_scan: 2026-06-16
-  total_docs: 5
-  ok: 2
-  updated: 2
-  stale: 2
+  total_docs: 8
+  ok: 1
+  updated: 3
+  stale: 4
   created: 1

@@ -51,6 +51,71 @@ interface TgTrack {
   fileSize: number; fileName: string;
 }
 
+async function downloadTgTrack(
+  t: TgTrack,
+  handleZip: (file: File) => Promise<void>,
+  setSearchQuery: (q: string) => void
+): Promise<void> {
+  const fileId = t.fileIds?.instrumental || t.fileIds?.full;
+  if (!fileId) return;
+  setSearchQuery('');
+  const gid = 'ghost_' + Date.now();
+  useGhostStore.getState().addGhost({
+    id: gid, title: t.title, artist: t.artist,
+    phase: 'download', progress: 0,
+  });
+
+  const baseUrl = TG_API_URL.replace('/tracks', '');
+  if (baseUrl === TG_API_URL) {
+    useGhostStore.getState().updateGhost(gid, { phase: 'error' });
+    return;
+  }
+
+  try {
+    const resp = await fetch(baseUrl + '/download/' + fileId);
+    if (!resp.ok) {
+      useGhostStore.getState().updateGhost(gid, { phase: 'error' });
+      return;
+    }
+
+    const contentLength = resp.headers.get('Content-Length');
+    const reader = resp.body?.getReader();
+    if (!reader) {
+      useGhostStore.getState().updateGhost(gid, { phase: 'error' });
+      return;
+    }
+
+    const chunks: Uint8Array[] = [];
+    let received = 0;
+    const total = contentLength ? parseInt(contentLength) : 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        chunks.push(value);
+        received += value.length;
+        if (total > 0) {
+          useGhostStore.getState().updateGhost(gid, {
+            progress: Math.round((received / total) * 100),
+          });
+        }
+      }
+    }
+
+    const blob = new Blob(chunks as BlobPart[], { type: resp.headers.get('Content-Type') || 'application/zip' });
+    useGhostStore.getState().updateGhost(gid, { phase: 'extract', progress: 0 });
+
+    const fn = t.artist ? `${t.artist} - ${t.title}.zip` : `${t.title}.zip`;
+    await handleZip(new File([blob], fn, { type: 'application/zip' }));
+    useGhostStore.getState().updateGhost(gid, { phase: 'done', progress: 100 });
+
+  } catch (err) {
+    console.error('[TG] Download failed:', err);
+    useGhostStore.getState().updateGhost(gid, { phase: 'error' });
+  }
+}
+
 export function CatalogLayout({ color, onClose }: Props) {
   const tracks = useTrackStore(s => s.tracksMeta);
   const currentIdx = useTrackStore(s => s.currentTrackIndex);
@@ -283,7 +348,7 @@ export function CatalogLayout({ color, onClose }: Props) {
                 {idbMatches.length>0&&<div style={{fontSize:9,fontWeight:700,letterSpacing:'0.08em',color:'#4CAF50',padding:'6px 8px 2px',textTransform:'uppercase'}}>В каталоге</div>}
                 {idbMatches.map(t=>{const p=parseTrackName(t.title||'');const lb=p.artist?`${p.artist} — ${p.title}`:p.title||`Track ${t.index+1}`;return(<div key={t.id} onClick={()=>play(t.index)} style={{display:'flex',alignItems:'center',padding:'8px 12px',cursor:'pointer',borderBottom:`1px solid ${T.border}`}}><CoverArt url={t.coverArtUrl} title={t.title} size={28} borderRadius={5}/><span style={{flex:1,fontSize:12,marginLeft:8,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:T.text}}>{lb}</span><span style={{fontSize:10,color:T.dim,flexShrink:0}}>▶</span></div>);})}
                 {tgMatches.length>0&&<div style={{fontSize:9,fontWeight:700,letterSpacing:'0.08em',color:'#FF8C00',padding:'6px 8px 2px',textTransform:'uppercase'}}>В Telegram</div>}
-                {tgMatches.map(t=>(<div key={t.id} onClick={()=>{const fileId=t.fileIds?.instrumental||t.fileIds?.full;if(!fileId)return;setSearchQuery('');const gid='ghost_'+Date.now();useGhostStore.getState().addGhost({id:gid,title:t.title,artist:t.artist,phase:'download',progress:0});const xhr=new XMLHttpRequest();xhr.responseType='blob';xhr.onprogress=(e)=>{if(e.lengthComputable){useGhostStore.getState().updateGhost(gid,{progress:Math.round(e.loaded/e.total*100)});}};xhr.onload=()=>{if(xhr.status===200){useGhostStore.getState().updateGhost(gid,{phase:'extract',progress:0});const blob=xhr.response;const fn=t.artist?`${t.artist} - ${t.title}.zip`:`${t.title}.zip`;handleZip(new File([blob],fn,{type:'application/zip'}));}};xhr.onerror=()=>{useGhostStore.getState().removeGhost(gid);alert('Download failed');};xhr.open('GET',TG_API_URL.replace('/tracks','')+'/download/'+fileId);xhr.send();}} style={{display:'flex',alignItems:'center',padding:'8px 12px',cursor:'pointer',borderBottom:`1px solid ${T.border}`}}><div style={{width:28,height:28,borderRadius:5,background:`${T.orange}22`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:T.orange,flexShrink:0}}>☁</div><span style={{flex:1,fontSize:12,marginLeft:8,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:T.text}}>{t.title}</span></div>))}
+                {tgMatches.map(t=>(<div key={t.id} onClick={() => downloadTgTrack(t, handleZip, setSearchQuery)} style={{display:'flex',alignItems:'center',padding:'8px 12px',cursor:'pointer',borderBottom:`1px solid ${T.border}`}}><div style={{width:28,height:28,borderRadius:5,background:`${T.orange}22`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:T.orange,flexShrink:0}}>☁</div><span style={{flex:1,fontSize:12,marginLeft:8,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:T.text}}>{t.title}</span></div>))}
               </div>)}
             </div>
             {tgError&&<div style={{fontSize:10,color:T.mute,marginBottom:8,textAlign:'center',flexShrink:0}}>TG каталог недоступен</div>}

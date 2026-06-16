@@ -385,20 +385,18 @@ export async function saveTrack(): Promise<void> {
 
 
   try {
-    // Read instrumental
-    const instrumentalData = await readFileAsArrayBuffer(session.instrumental!);
+    // Read instrumental + vocals — parallel (TC-003)
+    const [instrumentalData, vocalsResult] = await Promise.all([
+      readFileAsArrayBuffer(session.instrumental!),
+      session.vocal
+        ? readFileAsArrayBuffer(session.vocal).then(d => ({ data: d, type: session.vocal!.type }))
+        : Promise.resolve(null),
+    ]);
     const instrumentalType = session.instrumental!.type;
-    // W7: Use overrideTitle from ZIP filename if available (mvsep bundles)
     const trackTitle = session.overrideTitle?.trim()
       || getFileNameWithoutExtension(session.instrumental!.name);
-
-    // Read vocals
-    let vocalsData: ArrayBuffer | null = null;
-    let vocalsType: string | null = null;
-    if (session.vocal) {
-      vocalsData = await readFileAsArrayBuffer(session.vocal);
-      vocalsType = session.vocal.type;
-    }
+    let vocalsData: ArrayBuffer | null = vocalsResult?.data ?? null;
+    let vocalsType: string | null = vocalsResult?.type ?? null;
 
     // Read lyrics — exact null defaults
     let lyricsOriginalContent: string | null = null;
@@ -515,12 +513,22 @@ export async function saveTrack(): Promise<void> {
     // Save to IDB
     const savedTrack = await w.idbService.saveTrack(trackData);
 
-    // W6: Save additional stems to IDB stemsData (separate update to avoid bloating trackData)
+    // W6: Save additional stems to IDB — parallel with concurrency 2 (TC-003)
     if (session.additionalStems && Object.keys(session.additionalStems).length > 0) {
       const stemsData: Record<string, StemDataEntry> = {};
-      for (const [stemId, file] of Object.entries(session.additionalStems)) {
-        const fileBuffer = await readFileAsArrayBuffer(file);
-        stemsData[stemId] = { data: fileBuffer, type: file.type };
+      const stemEntries = Object.entries(session.additionalStems);
+      // Batch in chunks of 2 to avoid OOM on MBP 2013
+      for (let i = 0; i < stemEntries.length; i += 2) {
+        const batch = stemEntries.slice(i, i + 2);
+        const results = await Promise.all(
+          batch.map(async ([stemId, file]) => {
+            const data = await readFileAsArrayBuffer(file);
+            return { stemId, data, type: file.type };
+          })
+        );
+        for (const r of results) {
+          stemsData[r.stemId] = { data: r.data, type: r.type };
+        }
       }
       await w.idbService.updateTrackField(savedTrack.id, { stemsData, stemsMode: true });
       // Patch the in-memory savedTrack so trackCatalog gets stemsData too
@@ -529,9 +537,11 @@ export async function saveTrack(): Promise<void> {
       if (import.meta.env.DEV) console.log(`[Upload] W6: saved ${Object.keys(stemsData).length} additional stems to IDB`);
     }
 
-    // Sync to trackCatalog.tracks
+    // Sync to trackCatalog.tracks — dedup guard (TC-004)
     if (w.trackCatalog?.tracks) {
-      w.trackCatalog.tracks.push(savedTrack);
+      if (!w.trackCatalog.tracks.find((t: any) => t.id === savedTrack.id)) {
+        w.trackCatalog.tracks.push(savedTrack);
+      }
     }
 
     // TC-COVER-01: Skip API if cover art restored from ZIP
