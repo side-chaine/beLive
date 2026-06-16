@@ -19,3 +19,24 @@
   0%   { background-position: 200% 0%; }
   100% { background-position: -200% 0%; }
 }
+
+.bl-catalog-grid {
+  display: grid;
+  grid-template-columns: 20% 1fr 25%;
+  gap: 12px;
+}
+
+@media (max-width: 1024px) {
+  .bl-catalog-grid { grid-template-columns: 0 1fr 30%; }
+}
+
+@media (max-width: 767px) {
+  .bl-catalog-grid {
+    grid-template-columns: 1fr;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .bl-catalog-grid::-webkit-scrollbar { display: none; }
+  .bl-catalog-col { min-width: 100vw; scroll-snap-align: center; }
+}

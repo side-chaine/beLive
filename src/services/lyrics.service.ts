@@ -175,9 +175,7 @@ export class LyricsService {
   }
 
   activateRehearsalDisplay(): void {
-    if (this.currentStyle && this.currentStyle.id === 'rehearsal') {
-      this._renderLyrics();
-    }
+    this._renderLyrics();
   }
 
   deactivateRehearsalDisplay(): void {

@@ -10,6 +10,7 @@ export function basicTextCleanup(text: string): string {
   return cleaned;
 }
 
+/** @deprecated Import from lrc-parser.service instead */
 export function parseLrcFile(lrcText: string): string {
   if (!lrcText) return '';
   const lines = lrcText.split(/\r?\n/);

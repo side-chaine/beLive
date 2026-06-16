@@ -36,7 +36,7 @@ track-name.zip
 │   └── other.mp3
 │
 ├── lyrics.txt                       # Clean lyrics text (no tags)
-├── cover.jpg / cover.png           # Cover art binary (JPEG or PNG, detected by extension, STORE)
+├── cover.jpg|jpeg|png / folder.jpg|png / artwork.jpg|png / front.jpg|png  # Cover art binary (glob-search, case-insensitive, STORE)
 ├── backgrounds/                     # Custom background image (optional, TC-CBG-07)
 │   └── bg_01.jpg / bg_01.png
 ├── scenes/                          # Block scenes — per-block images (optional, TC-29-09)
@@ -168,8 +168,9 @@ track-name.zip
       • lyricsOriginalContent → uploadSession.lyricsOriginalContent
       • scenes[] → uploadSession.jsonScenes (optional, TC-29-09)
       • backgrounds[] → uploadSession.jsonBackgrounds (optional, TC-CBG-07)
-5. Extract cover.jpg/png from ZIP:
-   - zip.file('cover.jpg') → arraybuffer → Blob with MIME type
+5. Extract cover art from ZIP:
+   - Glob search: cover, folder, artwork, front + .jpg, .jpeg, .png (case-insensitive, any depth)
+   - Found entry → arraybuffer → Blob with MIME type
    - uploadSession.coverArtBlob = Blob
 6. Extract scenes/ from ZIP (optional):
    - zip.folder('scenes') → iterate files → Blob per scene
@@ -194,7 +195,7 @@ track-name.zip
 ### Cover Art Import Priority
 
 ```
-1. cover.jpg/png in ZIP → Blob → IDB coverArtBlob → OFFLINE ✅
+1. cover.*|folder.*|artwork.*|front.* in ZIP (glob) → Blob → IDB coverArtBlob → OFFLINE ✅
 2. coverArtUrl in export.json (HTTP) → IDB coverArtUrl → FALLBACK
 3. No cover art → fetchCoverArtAndUpdate() → iTunes/Last.fm API
 ```

@@ -9,12 +9,12 @@ import type { PersistedSyncMarker, PersistedTextBlock } from '../types/persisten
 
 // ── Types ──────────────────────────────────────────────
 
-interface LrcLine {
+export interface LrcLine {
   time: number; // seconds
   text: string;
 }
 
-interface LrcResult {
+export interface LrcResult {
   lines: LrcLine[];
   rawSynced: string;
   fetchedAt: number;
@@ -149,6 +149,7 @@ export async function waitForCache(
  * Wrapper around private _parseLrc for use in upload.service.ts
  * and migration flows.
  */
+/** @deprecated Import from lrc-parser.service instead */
 export function parseLrcString(rawLrc: string): LrcResult {
   const lines = _parseLrc(rawLrc);
   return {

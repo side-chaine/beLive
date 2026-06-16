@@ -674,6 +674,14 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                       }
                     }
 
+                    // Force runtime sync for all confidence paths
+                    const ld = (window as any).lyricsDisplay;
+                    if (ld) {
+                      ld.textBlocks = (idbFields as any).blocksData || ld.textBlocks;
+                      ld.activateRehearsalDisplay?.();
+                    }
+                    document.dispatchEvent(new CustomEvent('blocks-applied'));
+
                     // ═══ TC-FLOW-02: fallback — открыть sync editor вместо Block Editor ═══
                     if (!autoSyncApplied) {
                       if (import.meta.env.DEV) {

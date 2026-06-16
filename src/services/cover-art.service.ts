@@ -70,6 +70,38 @@ async function fetchCoverArtFromItunes(
 
 // ─── Main Fetch + Update ───
 
+async function fetchCoverOnce(
+  artist: string,
+  title: string,
+): Promise<string | null> {
+  let coverUrl: string | null = null;
+
+  // Strategy 1: iTunes Search API (CORS-friendly, works from browser)
+  coverUrl = await fetchCoverArtFromItunes(artist, title);
+  if (coverUrl) {
+    if (import.meta.env.DEV) console.log(`[CoverArt] Found via iTunes: ${coverUrl}`);
+    return coverUrl;
+  }
+
+  // Strategy 2: Title-only iTunes search (if artist was empty)
+  if (!artist) {
+    coverUrl = await fetchCoverArtFromItunes('', title);
+    if (coverUrl) {
+      if (import.meta.env.DEV) console.log(`[CoverArt] Found via iTunes (title-only): ${coverUrl}`);
+      return coverUrl;
+    }
+  }
+
+  // Strategy 3: Last.fm fallback (may work with future proxy)
+  coverUrl = await fetchCoverArt(artist || ' ', title);
+  if (coverUrl) {
+    if (import.meta.env.DEV) console.log(`[CoverArt] Found via Last.fm: ${coverUrl}`);
+    return coverUrl;
+  }
+
+  return null;
+}
+
 export async function fetchCoverArtAndUpdate(
   trackId: number,
   trackTitle: string
@@ -81,31 +113,31 @@ export async function fetchCoverArtAndUpdate(
   if (!title.trim() || title.trim().length < 2) return;
 
   let coverUrl: string | null = null;
+  let lastError: Error | null = null;
+  const maxRetries = 2;
+  const baseDelay = 1000;
 
-  // Strategy 1: iTunes Search API (CORS-friendly, works from browser)
-  coverUrl = await fetchCoverArtFromItunes(artist, title);
-  if (coverUrl) {
-    if (import.meta.env.DEV) console.log(`[CoverArt] Found via iTunes: ${coverUrl}`);
-  }
-
-  // Strategy 2: Title-only iTunes search (if artist was empty)
-  if (!coverUrl && !artist) {
-    coverUrl = await fetchCoverArtFromItunes('', title);
-    if (coverUrl) {
-      if (import.meta.env.DEV) console.log(`[CoverArt] Found via iTunes (title-only): ${coverUrl}`);
-    }
-  }
-
-  // Strategy 3: Last.fm fallback (may work with future proxy)
-  if (!coverUrl) {
-    coverUrl = await fetchCoverArt(artist || ' ', title);
-    if (coverUrl) {
-      if (import.meta.env.DEV) console.log(`[CoverArt] Found via Last.fm: ${coverUrl}`);
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        const delay = baseDelay * Math.pow(2, attempt - 1);
+        if (import.meta.env.DEV) console.log(`[CoverArt] Retry ${attempt}/${maxRetries} after ${delay}ms`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+      coverUrl = await fetchCoverOnce(artist, title);
+      if (coverUrl) break;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (import.meta.env.DEV) console.warn(`[CoverArt] Attempt ${attempt + 1} failed:`, err);
     }
   }
 
   if (!coverUrl) {
-    if (import.meta.env.DEV) console.log(`[CoverArt] No cover found for: "${trackTitle}"`);
+    if (import.meta.env.DEV) {
+      const msg = `[CoverArt] No cover found for: "${trackTitle}"`;
+      if (lastError) console.warn(msg, lastError);
+      else console.log(msg);
+    }
     return;
   }
 

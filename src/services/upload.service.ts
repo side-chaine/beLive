@@ -585,6 +585,10 @@ export async function saveTrack(): Promise<void> {
       } catch (e) {
         console.warn('Ошибка при применении JSON маркеров:', e);
       }
+      // Dispatch track-saved so CatalogLayout can open lyrics modal if needed
+      document.dispatchEvent(new CustomEvent('track-saved', {
+        detail: { trackId: savedTrack.id, title: savedTrack.title, hasJson: true }
+      }));
       return;
     }
 
@@ -683,7 +687,7 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
     for (const { name, zipEntry } of entries) {
       const ext = getFileExtension(name);
       const isAudio = ['mp3','wav','ogg','flac','aac','m4a'].includes(ext);
-      const isLyrics = ['txt','lrc','rtf'].includes(ext);
+      const isLyrics = ['lrc','rtf'].includes(ext) || (ext === 'txt' && !name.match(/readme|info|about|notes?|help/i));
       const isJson = ext === 'json';
 
       if (isAudio) {
@@ -772,35 +776,15 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
             if (import.meta.env.DEV) console.log(`[Upload] W7.2: mvsep instrum detected, title="${uploadSession.overrideTitle}" ← ${file.name}`);
             // W11: fire-and-forget lrclib prefetch (параллельно с загрузкой аудио)
             // Захватываем title синхронно ДО async импорта — сессия может сброситься раньше
+            // Используем prefetch без duration — Audio duration hack удалён
+            // (new Audio() + URL.createObjectURL создавал лишнюю память на MBP 2013)
             const _prefetchTitle = uploadSession.overrideTitle;
-            const _prefetchFile = file; // instrumental File для чтения duration
             if (_prefetchTitle) {
-              import('./auto-lyrics.service').then(async ({ prefetch, prefetchWithDuration }) => {
+              import('./auto-lyrics.service').then(({ prefetch }) => {
                 if (import.meta.env.DEV) {
                   console.log('[W11] prefetch called, title:', _prefetchTitle);
                 }
-                // Попытка получить duration из instrumental файла через Audio element
-                try {
-                  const audio = new Audio();
-                  audio.src = URL.createObjectURL(_prefetchFile);
-                  await new Promise<void>((resolve) => {
-                    audio.onloadedmetadata = () => resolve();
-                    audio.onerror = () => resolve();
-                    setTimeout(() => resolve(), 3000); // safety timeout
-                  });
-                  const dur = audio.duration;
-                  URL.revokeObjectURL(audio.src);
-                  if (dur && dur > 0 && isFinite(dur)) {
-                    if (import.meta.env.DEV) {
-                      console.log(`[W11] prefetchWithDuration: ${_prefetchTitle}, duration=${Math.round(dur)}s`);
-                    }
-                    prefetchWithDuration(_prefetchTitle, dur);
-                  } else {
-                    prefetch(_prefetchTitle);
-                  }
-                } catch {
-                  prefetch(_prefetchTitle);
-                }
+                prefetch(_prefetchTitle);
               }).catch(() => {});
             }
           }
@@ -819,27 +803,9 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
           // TC-ZIP-05: fire-and-forget lrclib prefetch for 2-stem ZIP (no 'instrum' in name)
           const _pfTitle = uploadSession.overrideTitle || getFileNameWithoutExtension(file.name);
           if (_pfTitle) {
-            import('./auto-lyrics.service').then(async ({ prefetch, prefetchWithDuration }) => {
+            import('./auto-lyrics.service').then(({ prefetch }) => {
               if (import.meta.env.DEV) console.log('[W11] prefetch called (2-stem), title:', _pfTitle);
-              try {
-                const audio = new Audio();
-                audio.src = URL.createObjectURL(file);
-                await new Promise<void>((resolve) => {
-                  audio.onloadedmetadata = () => resolve();
-                  audio.onerror = () => resolve();
-                  setTimeout(() => resolve(), 3000);
-                });
-                const dur = audio.duration;
-                URL.revokeObjectURL(audio.src);
-                if (dur && dur > 0 && isFinite(dur)) {
-                  if (import.meta.env.DEV) console.log(`[W11] prefetchWithDuration (2-stem): ${_pfTitle}, duration=${Math.round(dur)}s`);
-                  prefetchWithDuration(_pfTitle, dur);
-                } else {
-                  prefetch(_pfTitle);
-                }
-              } catch {
-                prefetch(_pfTitle);
-              }
+              prefetch(_pfTitle);
             }).catch(() => {});
           }
         } else {
@@ -883,11 +849,23 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
 
     // TC-COVER-06-FIX: Extract cover art file from ZIP (offline-ready)
     // Must be here — zip object is only available in handleZipFileSelect scope
-    const coverZipFile = zip.file('cover.jpg') || zip.file('cover.png');
-    if (coverZipFile) {
+    // V-1: glob search — case-insensitive, multiple common names
+    const COVER_NAMES = ['cover', 'folder', 'artwork', 'front'];
+    const COVER_EXTS = ['.jpg', '.jpeg', '.png'];
+    const coverEntry = Object.values(zip.files).find((entry: any) => {
+      if (entry.dir) return false;
+      const name = entry.name.toLowerCase().replace(/.*\//, '');
+      const dot = name.lastIndexOf('.');
+      if (dot === -1) return false;
+      const base = name.slice(0, dot);
+      const ext = name.slice(dot);
+      return COVER_NAMES.some(cn => base === cn) && COVER_EXTS.some(ce => ext === ce);
+    });
+    if (coverEntry) {
       try {
-        const ab = await coverZipFile.async('arraybuffer');
-        const isPng = coverZipFile.name.toLowerCase().endsWith('.png');
+        const ab = await coverEntry.async('arraybuffer');
+        const name = (coverEntry as any).name?.toLowerCase() || '';
+        const isPng = name.endsWith('.png');
         const coverBlob = new Blob([ab], { type: isPng ? 'image/png' : 'image/jpeg' });
         uploadSession.coverArtBlob = coverBlob;
         if (import.meta.env.DEV) console.log('[CoverArt] Extracted from ZIP:', coverBlob.type, Math.round(coverBlob.size / 1024) + 'KB');
