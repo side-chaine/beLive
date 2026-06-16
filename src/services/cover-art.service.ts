@@ -144,6 +144,15 @@ export async function fetchCoverArtAndUpdate(
   // Persist URL to IDB
   await updateTrackField(trackId, { coverArtUrl: coverUrl });
 
+  // Immediately update store so UI shows cover without waiting for syncAll
+  const { tracksMeta } = useTrackStore.getState();
+  const idx = tracksMeta.findIndex(t => String(t.id) === String(trackId));
+  if (idx !== -1) {
+    const updated = [...tracksMeta];
+    updated[idx] = { ...updated[idx], coverArtUrl: coverUrl };
+    useTrackStore.setState({ tracksMeta: updated });
+  }
+
   // TC-COVER-03: Save image blob for offline use
   try {
     const imgResp = await fetch(coverUrl);
@@ -166,6 +175,14 @@ export async function fetchCoverArtAndUpdate(
       const currentTrack = useTrackStore.getState().currentTrack;
       if (currentTrack && Number(currentTrack.id) === trackId) {
         useTrackStore.getState().setCurrentCoverTheme(theme);
+      }
+      // Also update cover theme in tracksMeta for list
+      const meta = useTrackStore.getState().tracksMeta;
+      const mi = meta.findIndex(t => String(t.id) === String(trackId));
+      if (mi !== -1) {
+        const upd = [...meta];
+        upd[mi] = { ...upd[mi], coverTheme: theme };
+        useTrackStore.setState({ tracksMeta: upd });
       }
     }
   } catch (err) {
