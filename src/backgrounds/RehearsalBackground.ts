@@ -25,6 +25,7 @@ export class RehearsalBackgroundManager {
   private _crossfadeTimer: ReturnType<typeof setTimeout> | null = null;
   private _lastSceneFingerprint: string = '';
   private _lastAppliedSceneUrl: string | null = null;
+  private _pendingTransitionEnd: (() => void) | null = null;
 
   private _createSceneDiv(id: string): HTMLDivElement {
     const div = document.createElement('div');
@@ -36,7 +37,8 @@ export class RehearsalBackgroundManager {
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       opacity: '0',
-      transition: 'opacity 0.3s ease',
+      transition: 'opacity 0.15s ease',
+      willChange: 'opacity',
       pointerEvents: 'none',
     });
     return div;
@@ -52,10 +54,21 @@ export class RehearsalBackgroundManager {
     this._sceneLayerB = this._createSceneDiv('bg-scene-b');
   }
 
+  private _evictCacheIfNeeded(): void {
+    if (this._cache.size >= 20) {
+      const firstKey = this._cache.keys().next().value;
+      if (firstKey !== undefined) {
+        this._cache.delete(firstKey);
+        this._decoded.delete(firstKey);
+      }
+    }
+  }
+
   private _preloadAll(): void {
     if (!Array.isArray(this.imagePaths)) return;
     this.imagePaths.forEach(src => {
       if (this._cache.has(src)) return;
+      this._evictCacheIfNeeded();
       const img = new Image();
       img.decoding = 'async';
       img.loading = 'eager';
@@ -139,6 +152,7 @@ export class RehearsalBackgroundManager {
     const imagePath = this.imagePaths[nextIndex];
     let img = this._cache.get(imagePath);
     if (!img) {
+      this._evictCacheIfNeeded();
       img = new Image();
       img.decoding = 'async';
       img.loading = 'eager';
@@ -306,6 +320,9 @@ export class RehearsalBackgroundManager {
     this._lastSceneFingerprint = '';
     this._lastAppliedSceneUrl = null;
     this._currentBlockIndex = null;
+    if (this._crossfadeTimer) { clearTimeout(this._crossfadeTimer); this._crossfadeTimer = null; }
+    if (this._pendingTransitionEnd) { this._pendingTransitionEnd(); this._pendingTransitionEnd = null; }
+    this._lastSceneSwitch = 0;
   }
 
   /**
@@ -323,49 +340,83 @@ export class RehearsalBackgroundManager {
         clearTimeout(this._crossfadeTimer);
         this._crossfadeTimer = null;
       }
+      if (this._pendingTransitionEnd) {
+        this._pendingTransitionEnd();
+        this._pendingTransitionEnd = null;
+      }
       this._lastAppliedSceneUrl = null;
       this._sceneLayerA.style.opacity = '0';
       this._sceneLayerB.style.opacity = '0';
+      // Restore body bg if no custom bg is active
+      if (!this._customBgUrl) {
+        this.lastImageIndex = -1;
+        this._setBackground();
+        if (this.interval && this.interval > 0 && this.imagePaths.length > 1) {
+          this.timerId = setInterval(this._setBackground.bind(this), this.interval);
+        }
+      }
       return;
     }
 
     this._lastAppliedSceneUrl = url;
 
-    const img = new Image();
-    img.src = url;
+    const nextLayer = this._activeSceneLayer === 'A' ? this._sceneLayerB : this._sceneLayerA;
+    const currentLayer = this._activeSceneLayer === 'A' ? this._sceneLayerA : this._sceneLayerB;
+    let started = false;
 
     const doCrossfade = () => {
-      const nextLayer = this._activeSceneLayer === 'A' ? this._sceneLayerB : this._sceneLayerA;
-      const currentLayer = this._activeSceneLayer === 'A' ? this._sceneLayerA : this._sceneLayerB;
+      if (started) return;
+      started = true;
 
-      nextLayer.style.backgroundImage = `url('${url}')`;
+      if (this._pendingTransitionEnd) {
+        this._pendingTransitionEnd();
+        this._pendingTransitionEnd = null;
+      }
+
+      // Suppress body bg NOW — image is decoded and pre-rendered on hidden layer
+      if (!this._customBgUrl) {
+        if (this.timerId) { clearInterval(this.timerId); this.timerId = null; }
+        this._clearBodyBg();
+      }
+
+      // Crossfade — nextLayer already has backgroundImage from onload
       nextLayer.style.opacity = '1';
       currentLayer.style.opacity = '0';
 
       if (this._crossfadeTimer) clearTimeout(this._crossfadeTimer);
       this._crossfadeTimer = setTimeout(() => this._swapLayers(), 700);
 
-      nextLayer.addEventListener('transitionend', () => {
+      const onEnd = () => {
+        this._pendingTransitionEnd = null;
         if (this._crossfadeTimer) {
           clearTimeout(this._crossfadeTimer);
           this._crossfadeTimer = null;
         }
         this._swapLayers();
-      }, { once: true });
+      };
+      nextLayer.addEventListener('transitionend', onEnd, { once: true });
+      this._pendingTransitionEnd = () => nextLayer.removeEventListener('transitionend', onEnd);
 
       this._activeSceneLayer = this._activeSceneLayer === 'A' ? 'B' : 'A';
     };
 
-    if (img.complete && img.naturalWidth > 0) {
+    // Pre-render on hidden (inactive, opacity 0) layer — zero visual impact
+    const handleLoad = () => {
+      if (started) return;
+      nextLayer.style.backgroundImage = `url('${url}')`;
       doCrossfade();
-    } else {
-      img.onload = () => doCrossfade();
-      img.onerror = () => {
-        console.warn('[RehearsalBg] Scene image failed to load:', url);
-        doCrossfade();
-      };
-      setTimeout(() => doCrossfade(), 500);
-    }
+    };
+    const handleError = () => {
+      if (started) return;
+      console.warn('[RehearsalBg] Scene image failed to load:', url);
+      doCrossfade();
+    };
+    const img = new Image();
+    img.onload = handleLoad;
+    img.onerror = handleError;
+    img.src = url;
+    // Fallback for synchronously cached images where onload may not fire
+    if (img.complete && img.naturalWidth > 0) handleLoad();
   }
 
   private _swapLayers(): void {
@@ -373,6 +424,14 @@ export class RehearsalBackgroundManager {
     const prevLayer = this._activeSceneLayer === 'A' ? this._sceneLayerB : this._sceneLayerA;
     prevLayer.style.opacity = '0';
     prevLayer.style.backgroundImage = '';
+  }
+
+  private _clearBodyBg(): void {
+    this.body.style.removeProperty('background-image');
+    this.body.style.removeProperty('background');
+    this.body.style.removeProperty('background-size');
+    this.body.style.removeProperty('background-position');
+    this.body.style.removeProperty('background-repeat');
   }
 
   private _computeSceneFingerprint(sceneMap: SceneMap): string {
@@ -446,14 +505,14 @@ export class RehearsalBackgroundManager {
 
         this._currentBlockIndex = newBlockIndex;
 
-        // Pexels slideshow (block-based cycling)
-        if (blockChanged) {
+        // Scene transition
+        this.setBlockScene(sceneEntry?.url || null);
+
+        // Pexels slideshow (block-based cycling) — only when no scene for this position
+        if (blockChanged && !sceneEntry?.url) {
           const imgIndex = newBlockIndex % this.imagePaths.length;
           this._setBackground(imgIndex);
         }
-
-        // Scene transition
-        this.setBlockScene(sceneEntry?.url || null);
 
         // Lookahead: prefetch next line
         this._prefetchNextLine(newBlockIndex, lineIdxInBlock, processedBlocks);

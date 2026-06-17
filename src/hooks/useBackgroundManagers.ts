@@ -245,13 +245,14 @@ export function useBackgroundManagers(): void {
             }
           }
 
-          // NOTE: Multiple rapid CRUD operations create multiple pending revoke timers.
-          // This is acceptable — each timer revokes URLs already off-screen.
-          // We do NOT cancel previous timers to prevent URL memory leaks.
+          // Cancel previous pending revoke — old URLs from prior reload
+          // are already off-screen after crossfade completed (~1000ms total).
+          // 2000ms provides safe buffer even with slow image decode.
+          if (revokeTimerId) clearTimeout(revokeTimerId);
           revokeTimerId = setTimeout(() => {
             revokeTimerId = null;
             oldUrls.forEach(url => { try { URL.revokeObjectURL(url); } catch {} });
-          }, 1000);
+          }, 2000);
         } catch (e) {
           console.warn('[BgManagers] tracks-changed reload failed:', e);
         }

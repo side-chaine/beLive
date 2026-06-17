@@ -19,7 +19,6 @@ body.rehearsal-active {
 	background-size: cover !important;
 	background-position: center center !important;
 	background-repeat: no-repeat !important;
-	transition: background-image 0.8s ease-in-out;
 }
 
 /* слой для плавной смены фона */
