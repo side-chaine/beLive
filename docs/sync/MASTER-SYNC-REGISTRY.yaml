@@ -41,9 +41,16 @@ docs:
   - path: "000-FULL-BASE.md"
     description: Shared Context Layer
     status: UPDATED
-    last_sync: 2026-06-16
+    last_sync: 2026-06-17
     health: 95
     note: "Updated with P-02 changes: downloadTgTrack, ghost error/done, parallel FileReader, dedup guard."
+
+  - path: "docs/architecture/block-scenes-editor.md"
+    description: Block Scenes Editor — layer model, crossfade, preload
+    status: UPDATED
+    last_sync: 2026-06-17
+    health: 90
+    note: "Layer 1 updated: body bg is scene-aware (suppressed when scene active). Crossfade: 0.15s + will-change, pre-render on hidden layer, double-fire guard."
 
 services:
   - path: "src/services/upload.service.ts"
@@ -95,9 +102,9 @@ services:
 
 registry_meta:
   version: "1.1"
-  last_full_scan: 2026-06-16
-  total_docs: 8
+  last_full_scan: 2026-06-17
+  total_docs: 9
   ok: 1
-  updated: 3
-  stale: 4
+  updated: 5
+  stale: 3
   created: 1

@@ -149,10 +149,10 @@ Fallback to store if trackCatalog unavailable.
 ## 4. RUNTIME BACKGROUND SYSTEM (5 Layers)
 
 ```
-Layer 1: body.backgroundImage
-  ├── Scene divs #bg-scene-a / #bg-scene-b — A/B crossfade
-  ├── customBgUrl → setCustomBg()
-  └── Pexels slideshow — base layer (block-change triggers new pexels image)
+Layer 1: body.backgroundImage (SUPPRESSED when scene layers active)
+  ├── Scene divs #bg-scene-a / #bg-scene-b — A/B crossfade — SINGLE SOURCE when shown
+  ├── customBgUrl → setCustomBg() — suppressed when scene layer shows
+  └── Pexels slideshow — base layer — STOPPED when scene layer shows
 
 Layer 2: :root CSS vars (--bl-cover-*)
   └── cover-theme-applicator → applyCoverTheme()
@@ -164,21 +164,24 @@ Layer 4: .activeBlock — backdrop-filter blur
 Layer 5: WagonTrain — solid bg
 ```
 
+Note: Layer 1 body bg is now SCENE-AWARE. When `setBlockScene(url !== null)` fires, body bg (Pexels/custom/dimming) is cleared immediately before crossfade starts — only scene layers render. When `setBlockScene(null)` fires, body bg is restored from Pexels slideshow. This eliminates dual rendering and saves GPU memory.
+
 ### 4.1 Crossfade + Dedup Mechanism
 
 ```
 RehearsalBackground.setBlockScene(url)
   ├─ Dedup guard: skip if url === _lastAppliedSceneUrl
   ├─ Update _lastAppliedSceneUrl = url
-  ├─ new Image() → img.src = url  (preload first)
-  ├─ img.onload → doCrossfade()
-  │    ├─ nextLayer = (activeLayer === 'A') ? B : A
-  │    ├─ nextLayer.style.backgroundImage = url
+  ├─ Pre-render on HIDDEN (inactive, opacity 0) layer — zero visual impact
+  │    └─ nextLayer.style.backgroundImage = url  (invisible at this point)
+  ├─ img.onload → doCrossfade()  (guarded by `started` flag — prevents double-fire)
+  │    ├─ Clear pending transitionend listener
+  │    ├─ Stop Pexels interval + clear body bg — NOW, image ready
   │    ├─ nextLayer.style.opacity = '1'
-  │    ├─ currentLayer.style.opacity = '0'
-  │    ├─ transition: opacity 0.3s ease
-  │    └─ After 700ms: _swapLayers() — clean old layer
-  └─ Fallback: setTimeout(500ms) if img.onload doesn't fire
+  │    └─ currentLayer.style.opacity = '0'
+  │         ├─ transition: opacity 0.15s ease + will-change: opacity (GPU)
+  │         └─ After 700ms: _swapLayers() — clean old layer
+  └─ img.onerror → doCrossfade() (no flash — shows current layer until error)
 ```
 
 ### 4.2 Fingerprint + Unchanged Path
