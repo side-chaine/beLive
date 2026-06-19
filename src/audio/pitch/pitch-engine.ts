@@ -1,5 +1,4 @@
 import type { WorkletMessage } from './types';
-import { midiToCents } from './types';
 import { PitchRingBuffer } from './ring-buffer';
 import { YinDetector } from './yin-detect';
 
@@ -240,6 +239,42 @@ export class PitchEngine {
 
     this.ring.clear();
     this._status = 'idle';
+  }
+
+  /* ── Retarget: hot-swap source node ── */
+
+  async retarget(newSource: AudioNode): Promise<void> {
+    if (this._status !== 'running') return;
+    if (this._timer !== null) {
+      clearInterval(this._timer);
+      this._timer = null;
+    }
+    this._analyser?.disconnect();
+    this._source = newSource;
+    this._analyser = this._ctx!.createAnalyser();
+    this._analyser.fftSize = 2048;
+    this._analyser.smoothingTimeConstant = 0;
+    this._source.connect(this._analyser);
+    this._timer = window.setInterval(() => {
+      this._passiveTick(this._ctx!);
+    }, 46);
+  }
+
+  /* ── Pause/resume (tab visibility) ── */
+
+  pause(): void {
+    if (this._timer !== null && this._status === 'running') {
+      clearInterval(this._timer);
+      this._timer = null;
+    }
+  }
+
+  resume(): void {
+    if (this._timer === null && this._analyser && this._ctx && this._status === 'running') {
+      this._timer = window.setInterval(() => {
+        this._passiveTick(this._ctx!);
+      }, 46);
+    }
   }
 
   /* ── Subscriber API ── */

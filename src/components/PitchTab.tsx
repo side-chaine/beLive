@@ -223,35 +223,71 @@ export function PitchTab() {
   const micActive = usePianoStore(s => s.micActive);
   const setMicActive = usePianoStore(s => s.setMicActive);
 
-  console.log('[PitchTab] Component rendered');
-
   const vocalEngineRef = useRef<PitchEngine | null>(null);
   const [vocalEngine, setVocalEngine] = useState<PitchEngine | null>(null);
   const micEngineRef = useRef<PitchEngine | null>(null);
   const [micEngine, setMicEngine] = useState<PitchEngine | null>(null);
+  const genRef = useRef(0);
+  const [hasVocals, setHasVocals] = useState<boolean | null>(null);
 
-  /* ── Vocal engine ── */
+  /* ── Vocal engine — eager init + event-driven ── */
   useEffect(() => {
-    console.log('[PitchTab] Vocal engine init...');
     const ae = (window as any).audioEngine;
-    const vocalsGain = ae?.vocalsGain as AudioNode | undefined;
-    console.log('[PitchTab] vocalsGain:', vocalsGain ? 'EXISTS' : 'NULL');
-    if (!vocalsGain) return;
+    const gen = ++genRef.current;
+    let destroyed = false;
 
-    const eng = new PitchEngine();
-    vocalEngineRef.current = eng;
-    eng.initFromNode(vocalsGain).then(() => {
-      console.log('[PitchTab] Vocal engine initialized');
-      setVocalEngine(eng);
-    }).catch(err => {
-      console.warn('[PitchTab] vocal engine failed:', err);
-    });
+    const tryInit = (): boolean => {
+      if (destroyed) return false;
+      const vocalsGain = ae?.vocalsGain as AudioNode | undefined;
+      const aeHasVocals = ae?.stems?.has('vocals') ?? false;
+      setHasVocals(aeHasVocals);
+
+      if (!vocalsGain || !aeHasVocals) return false;
+
+      if (vocalEngineRef.current) {
+        vocalEngineRef.current.retarget(vocalsGain);
+        return true;
+      }
+
+      const eng = new PitchEngine();
+      vocalEngineRef.current = eng;
+      eng.initFromNode(vocalsGain).then(() => {
+        if (genRef.current !== gen || destroyed) {
+          eng.destroy();
+          return;
+        }
+        setVocalEngine(eng);
+        if (!ae?.isPlaying) eng.pause();
+      }).catch(err => {
+        console.warn('[PitchTab] vocal engine failed:', err);
+      });
+      return true;
+    };
+
+    tryInit();
+
+    const onTrackLoaded = () => tryInit();
+    document.addEventListener('track-fully-loaded', onTrackLoaded);
+
+    const onPlaybackState = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.isPlaying) vocalEngineRef.current?.resume();
+      else vocalEngineRef.current?.pause();
+    };
+    window.addEventListener('playback-state-changed', onPlaybackState);
+
+    const timeoutId = setTimeout(tryInit, 3000);
 
     return () => {
-      console.log('[PitchTab] Vocal engine cleanup');
-      eng.destroy();
-      vocalEngineRef.current = null;
-      setVocalEngine(null);
+      destroyed = true;
+      document.removeEventListener('track-fully-loaded', onTrackLoaded);
+      window.removeEventListener('playback-state-changed', onPlaybackState);
+      clearTimeout(timeoutId);
+      if (vocalEngineRef.current) {
+        vocalEngineRef.current.destroy();
+        vocalEngineRef.current = null;
+        setVocalEngine(null);
+      }
     };
   }, []);
 
@@ -286,11 +322,32 @@ export function PitchTab() {
     };
   }, [micActive, setMicActive]);
 
+  /* ── Tab visibility — pause/resume engine ── */
+  useEffect(() => {
+    const el = document.getElementById('belive-react');
+    if (!el) return;
+    const obs = new IntersectionObserver((entries) => {
+      const visible = entries[0]?.isIntersecting ?? true;
+      if (visible) vocalEngineRef.current?.resume();
+      else vocalEngineRef.current?.pause();
+    }, { threshold: 0 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
   /* ── Fast snap notes ── */
   const vocal = useStableVocalData(vocalEngine);
   const micNote = useStableNote(micEngine);
 
-  console.log('[PitchTab] Render - vocal.note:', vocal.note, 'micNote:', micNote);
+  const vocalDisplay = (() => {
+    if (hasVocals === false) return '\u2014\u2014';
+    if (hasVocals === null && !vocalEngine) return '\u2026';
+    if (!vocal.note && vocalEngine) {
+      const ae = (window as any).audioEngine;
+      if (ae && !ae.isPlaying) return '\u23F8';
+    }
+    return vocal.note ?? '\u2014';
+  })();
 
   const isMatch = !!(vocal.note && micNote && vocal.note === micNote);
 
@@ -322,7 +379,7 @@ export function PitchTab() {
               return `0 0 ${4 + Math.round(d * 12)}px ${c}${0.6 + d * 0.4})`;
             })(),
           }}>
-            {vocal.note ?? '\u2014'}
+            {vocalDisplay}
           </span>
           <div style={{
             ...S.wingRight,
