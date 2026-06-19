@@ -5,6 +5,8 @@
  */
 
 import { loadTrack as orchestrateLoadTrack } from './track.orchestrator';
+import { parseTrackName } from '../catalog/types';
+import { useTrackStore } from '../stores/track.store';
 
 export function loadTrack(index: number, options?: { autoplay?: boolean; openSyncEditor?: boolean }): void {
   // MVSEP guard: block playback for tracks still being processed
@@ -16,6 +18,23 @@ export function loadTrack(index: number, options?: { autoplay?: boolean; openSyn
       w.showAppNotification('⏳ Трек ещё обрабатывается. Дождитесь завершения.', 'info');
     }
     return;
+  }
+
+  // TC-099-01: Optimistic track name — visible immediately, bridge confirms via IDB later
+  if (track) {
+    const parsed = parseTrackName(track.title || '');
+    useTrackStore.setState({
+      currentTrack: {
+        id: String(track.id ?? ''),
+        title: track.title,
+        artist: parsed.artist,
+        coverArtUrl: track.coverArtUrl?.startsWith('http') ? track.coverArtUrl : null,
+        coverTheme: track.coverTheme || null,
+        index,
+        mvsepStatus: track.mvsepStatus || null,
+      },
+      currentTrackIndex: index,
+    });
   }
   orchestrateLoadTrack(index, options ?? { autoplay: true, openSyncEditor: false });
 }

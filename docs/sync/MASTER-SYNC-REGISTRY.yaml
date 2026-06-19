@@ -41,9 +41,9 @@ docs:
   - path: "000-FULL-BASE.md"
     description: Shared Context Layer
     status: UPDATED
-    last_sync: 2026-06-17
+    last_sync: 2026-06-20
     health: 95
-    note: "Updated with P-02 changes: downloadTgTrack, ghost error/done, parallel FileReader, dedup guard."
+    note: "Updated with Storm-TrackName (#099): optimistic update in track.actions.ts. Architecture unchanged."
 
   - path: "docs/architecture/block-scenes-editor.md"
     description: Block Scenes Editor — layer model, crossfade, preload
