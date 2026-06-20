@@ -1,21 +1,10 @@
-// @TC-098-01: Feed & Battle Engine — Wave 1 store
-// ULID-like ID + MERGE fetch + _mocked flag + 4 mock-poста
+// @TC-101-02: Feed store — real API (belive-gateway) + optimistic updates
 
 import { create } from 'zustand';
 import type { FeedPost } from './feed.types';
 import { loadLikes, saveLike } from './feed.persistence';
 
-// ─── ULID-like ID generation ───
-function generateId(): string {
-  const now = Date.now();
-  const time = now.toString(36).toUpperCase().padStart(10, '0');
-  const rand = Array.from(crypto.getRandomValues(new Uint8Array(4)))
-    .map(b => b.toString(36))
-    .join('')
-    .toUpperCase()
-    .slice(0, 6);
-  return `${time}${rand}`;
-}
+const FEED_API = 'https://belive-gateway.nikitosss007.workers.dev';
 
 // ─── Store ───
 interface FeedState {
@@ -23,9 +12,10 @@ interface FeedState {
   status: 'idle' | 'loading' | 'ready' | 'error';
   activePostId: string | null;
   composerOpen: boolean;
+  _mocked: boolean;
 
   fetchFeed: () => Promise<void>;
-  createPost: (data: Omit<FeedPost, 'id' | 'createdAt' | 'likesCount' | 'commentsCount' | 'isLikedByUser'>) => void;
+  createPost: (data: Omit<FeedPost, 'id' | 'createdAt' | 'likesCount' | 'commentsCount' | 'isLikedByUser'>) => Promise<void>;
   toggleLike: (postId: string) => void;
   setActivePost: (postId: string | null) => void;
   setComposerOpen: (open: boolean) => void;
@@ -33,37 +23,115 @@ interface FeedState {
   closeBattle: (postId: string) => void;
 }
 
+function mapPost(p: any): FeedPost {
+  return {
+    id: p.id,
+    type: p.type,
+    authorId: p.author_id,
+    authorName: p.author_name,
+    authorAvatarUrl: p.author_avatar || '',
+    title: p.title,
+    text: p.body,
+    coverUrl: undefined,
+    tags: p.tags || [],
+    trackId: p.track_id,
+    blocksData: p.blocks_data || [],
+    baseTrackId: p.base_track_id,
+    battleBlockId: p.battle_block_id,
+    battleStatus: p.battle_status,
+    maxSubmissions: p.max_submissions,
+    submissions: [],
+    eventDate: p.event_date,
+    eventPrice: p.event_price,
+    eventLocation: p.event_location,
+    likesCount: p.likes_count || 0,
+    commentsCount: p.comments_count || 0,
+    isLikedByUser: false,
+    createdAt: new Date(p.created_at).getTime(),
+    sourceType: p.source_type,
+  };
+}
+
 export const useFeedStore = create<FeedState>((set, get) => ({
   posts: [],
   status: 'idle',
   activePostId: null,
   composerOpen: false,
+  _mocked: false,
 
   fetchFeed: async () => {
     if (get().status === 'loading') return;
     set({ status: 'loading' });
     try {
+      const res = await fetch(`${FEED_API}/api/feed/posts`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const posts = data.posts.map(mapPost);
       const savedLikes = loadLikes();
-      const userPosts = get().posts.map(p => ({
+      const withLikes = posts.map(p => ({
         ...p,
         isLikedByUser: savedLikes[p.id] ?? p.isLikedByUser,
       }));
-      set({ posts: userPosts, status: 'ready' });
-    } catch {
+      set({ posts: withLikes, status: 'ready', _mocked: false });
+    } catch (err) {
+      console.error('[feed.store] fetchFeed error:', err);
       set({ status: 'error' });
     }
   },
 
-  createPost: (data) => {
-    const post: FeedPost = {
+  createPost: async (data) => {
+    // Optimistic: сразу показываем в UI
+    const tempId = `temp-${Date.now()}`;
+    const tempPost: FeedPost = {
       ...data,
-      id: generateId(),
-      createdAt: Date.now(),
+      id: tempId,
       likesCount: 0,
       commentsCount: 0,
       isLikedByUser: false,
+      createdAt: Date.now(),
     };
-    set(s => ({ posts: [post, ...s.posts] }));
+    set(s => ({ posts: [tempPost, ...s.posts] }));
+
+    try {
+      const res = await fetch(`${FEED_API}/api/feed/posts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: data.type,
+          title: data.title,
+          text: data.text,
+          authorId: data.authorId,
+          authorName: data.authorName,
+          authorAvatarUrl: data.authorAvatarUrl,
+          tags: data.tags,
+          trackId: data.trackId,
+          blocksData: data.blocksData,
+          sourceType: 'manual',
+        }),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const created = await res.json();
+
+      // Заменить temp пост на реальный с server ID
+      const serverPost = mapPost(created);
+      set(s => ({
+        posts: s.posts.map(p =>
+          p.id === tempId ? { ...serverPost, isLikedByUser: false } : p
+        ),
+      }));
+
+      // Обновить ленту (fetch свежих постов)
+      get().fetchFeed();
+    } catch (err) {
+      console.error('[feed.store] createPost error:', err);
+      // Пометить как failed
+      set(s => ({
+        posts: s.posts.map(p =>
+          p.id === tempId ? { ...p, syncStatus: 'failed' as any } : p
+        ),
+      }));
+    }
   },
 
   toggleLike: (postId) => {
