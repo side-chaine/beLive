@@ -471,8 +471,12 @@
 .fpc-closed-badge { width: 100%; text-align: center; padding: 8px; font-size: 12px; color: var(--bl-text-muted, rgba(255,255,255,0.4)); border-radius: 8px; background: rgba(255,255,255,0.03); }
 
 /* ─── PostComposer ─── */
-.pc-trigger { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px dashed var(--bl-border-default, rgba(255,255,255,0.12)); background: var(--bl-surface-raised, rgba(255,255,255,0.04)); color: var(--bl-text-muted, rgba(255,255,255,0.35)); font-size: 13px; cursor: pointer; text-align: left; margin-bottom: 12px; transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease; }
+.pc-trigger { width: 100%; padding: 8px 16px; border-radius: 12px; border: 1px dashed var(--bl-border-default, rgba(255,255,255,0.12)); background: var(--bl-surface-raised, rgba(255,255,255,0.04)); color: var(--bl-text-muted, rgba(255,255,255,0.35)); font-size: 13px; cursor: pointer; text-align: left; margin-bottom: 12px; transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease; display: flex; align-items: center; }
 .pc-trigger:hover { border-color: #FF8C00; background: rgba(255,140,0,0.05); color: var(--bl-text-secondary, rgba(255,255,255,0.65)); }
+.pc-trigger-left { display: flex; align-items: center; gap: 10px; }
+.pc-trigger-left span { font-size: 13px; }
+.pc-trigger-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.pc-trigger-avatar--fallback { display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #a78bfa, #7c3aed); color: #fff; font-size: 14px; font-weight: 700; }
 @supports (color: color-mix(in srgb, red 50%, blue)) { .pc-trigger:hover { background: color-mix(in srgb, #FF8C00 5%, transparent); } }
 .pc-types-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: var(--bl-surface-raised, rgba(255,255,255,0.04)); border: 1px solid var(--bl-border-default, rgba(255,255,255,0.08)); border-radius: 12px; padding: 16px; margin-bottom: 12px; position: relative; }
 .pc-type-tile { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 16px 8px; border-radius: 10px; cursor: pointer; background: var(--bl-surface-base, rgba(255,255,255,0.06)); border: 1px solid var(--bl-border-default, rgba(255,255,255,0.08)); transition: border-color 0.2s ease, background 0.2s ease; }

@@ -75,9 +75,20 @@ export function PostComposer() {
   };
 
   if (step === 'trigger') {
+    const avatarInitial = user?.name?.charAt(0)?.toUpperCase() || '?';
+    const avatarUrl = user?.avatarUrl;
     return (
       <button className="pc-trigger" onClick={() => setStep('pick-type')}>
-        ✏️ Что нового?
+        <div className="pc-trigger-left">
+          {avatarUrl ? (
+            <img className="pc-trigger-avatar" src={avatarUrl} alt="" />
+          ) : (
+            <div className="pc-trigger-avatar pc-trigger-avatar--fallback">
+              {avatarInitial}
+            </div>
+          )}
+          <span>✏️ Что нового?</span>
+        </div>
       </button>
     );
   }
