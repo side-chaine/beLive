@@ -12,6 +12,10 @@
   position: relative;           /* for DragHandle absolute overlay */
   --col0-w: 280px;
   --col2-w: 380px;
+  /* локальные токены handle — НЕ cover-accent, гарантия "не оранжевый" */
+  --feed-handle:        #a78bfa;
+  --feed-handle-bright: #c4b5fd;
+  --feed-handle-deep:   #7c3aed;
   display: grid;
   grid-template-columns: var(--col0-w) 1fr var(--col2-w);
   height: calc(100vh - 64px);
@@ -42,37 +46,112 @@
 }
 
 /* ─── DragHandle — absolute overlay, not grid child ─── */
+/* Статика: невидимая 1px фиолетовая нить с gradient fade */
+/* Hover: 2px многослойный Aurora Glow с переливом */
+/* Active: 3px стабильный glow без shimmer */
+
 .drag-handle {
   position: absolute;
   top: 0; bottom: 0;
-  width: 6px;
+  width: 6px;                    /* хит-зона, НЕ визуальная ширина */
   cursor: col-resize;
   touch-action: none;
   z-index: 100;
-  background: rgba(255,255,255,0.06);
-  transition: background 0.15s ease;
+  background: transparent;       /* не заливаем — не выпирает */
   outline: none;
+  transition: background 0.2s ease;
 }
+
+/* 12px hit-zone — удобный touch/click */
 .drag-handle::before {
   content: '';
   position: absolute;
-  inset: 0 -6px;              /* 12px hit zone */
+  inset: 0 -6px;
 }
-.drag-handle--0 { 
-  left: var(--col0-w); 
-  margin-left: -3px; 
+
+/* Тонкая визуальная полоска 1px с gradient fade по краям */
+.drag-handle::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  border-radius: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--feed-handle) 35%, transparent) 15%,
+    color-mix(in srgb, var(--feed-handle) 55%, transparent) 50%,
+    color-mix(in srgb, var(--feed-handle) 35%, transparent) 85%,
+    transparent 100%
+  );
+  transition:
+    width 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.25s ease,
+    box-shadow 0.3s ease;
+  pointer-events: none;          /* клик проходит в ::before hit-zone */
 }
-.drag-handle--1 { 
-  right: var(--col2-w); 
-  margin-right: -3px; 
+
+.drag-handle--0 { left: var(--col0-w); margin-left: -3px; }
+.drag-handle--1 { right: var(--col2-w); margin-right: -3px; }
+
+/* Hover / Focus — Aurora Glow */
+.drag-handle:hover::after,
+.drag-handle:focus-visible::after,
+.drag-handle[data-active="true"]::after {
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--feed-handle) 12%,
+    var(--feed-handle-bright) 50%,
+    var(--feed-handle) 88%,
+    transparent 100%
+  );
+  background-size: 100% 220%;
+  background-position: 50% 0%;
+  box-shadow:
+    0 0 4px  rgba(167, 139, 250, 0.65),
+    0 0 10px rgba(124,  58, 237, 0.45),
+    0 0 22px rgba(124,  58, 237, 0.22);
+  animation: feed-handle-shimmer 2.4s ease-in-out infinite;
 }
-.drag-handle:hover,
-.drag-handle:focus-visible,
-.drag-handle[data-active="true"] {
-  background: #FF8C00;
+
+/* Focus ring — интегрирован в glow, не отдельное кольцо */
+.drag-handle:focus-visible::after {
+  box-shadow:
+    0 0 0 1.5px rgba(196, 181, 253, 0.55),
+    0 0 6px  rgba(167, 139, 250, 0.70),
+    0 0 14px rgba(124,  58, 237, 0.45),
+    0 0 28px rgba(124,  58, 237, 0.20);
 }
-.drag-handle:focus-visible {
-  box-shadow: 0 0 0 2px rgba(255,140,0,0.4);
+
+/* Активный drag — мощнее, без shimmer (стабильно при движении) */
+.drag-handle[data-active="true"]::after {
+  width: 3px;
+  animation: none;
+  background-position: 50% 50%;
+  box-shadow:
+    0 0 6px  rgba(196, 181, 253, 0.80),
+    0 0 14px rgba(167, 139, 250, 0.55),
+    0 0 30px rgba(124,  58, 237, 0.30);
+}
+
+/* Перелив: вертикальный ход gradient */
+@keyframes feed-handle-shimmer {
+  0%, 100% { background-position: 50% 0%; }
+  50%      { background-position: 50% 100%; }
+}
+
+/* Accessibility: shimmer OFF */
+@media (prefers-reduced-motion: reduce) {
+  .drag-handle:hover::after,
+  .drag-handle:focus-visible::after,
+  .drag-handle[data-active="true"]::after {
+    animation: none;
+    background-position: 50% 50%;
+  }
 }
 
 /* ─── ColHeader ─── */
