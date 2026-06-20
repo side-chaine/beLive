@@ -134,20 +134,38 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     }
   },
 
-  toggleLike: (postId) => {
-    set(s => {
-      const post = s.posts.find(p => p.id === postId);
-      if (!post) return s;
-      const newLiked = !post.isLikedByUser;
-      saveLike(postId, newLiked);
-      return {
-        posts: s.posts.map(p =>
-          p.id === postId
-            ? { ...p, isLikedByUser: newLiked, likesCount: newLiked ? p.likesCount + 1 : p.likesCount - 1 }
-            : p
-        ),
-      };
-    });
+  toggleLike: async (postId) => {
+    const post = get().posts.find(p => p.id === postId);
+    if (!post) return;
+    const newLiked = !post.isLikedByUser;
+    // Optimistic
+    set(s => ({
+      posts: s.posts.map(p =>
+        p.id === postId
+          ? { ...p, isLikedByUser: newLiked, likesCount: newLiked ? p.likesCount + 1 : p.likesCount - 1 }
+          : p
+      ),
+    }));
+    saveLike(postId, newLiked);
+    // Sync to server
+    try {
+      const res = await fetch(`${FEED_API}/api/feed/likes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId, userId: 'user-local' }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Update likes_count from server response
+        set(s => ({
+          posts: s.posts.map(p =>
+            p.id === postId ? { ...p, likesCount: data.likes_count } : p
+          ),
+        }));
+      }
+    } catch (err) {
+      console.error('[feed.store] toggleLike error:', err);
+    }
   },
 
   voteSubmission: (postId, submissionId) => {
