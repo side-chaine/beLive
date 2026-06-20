@@ -1,4 +1,4 @@
-/* @TC-101-FF: FeedScreen — grid + presets + ColHeader + EdgeTab + 280/1fr/380 */
+/* @TC-102: FeedScreen — resizable columns + presets (CSS vars driven) */
 
 .feed-screen {
   position: fixed;
@@ -7,17 +7,23 @@
   z-index: 999990;
 }
 
-/* ─── Grid presets — 280/1fr/380 ─── */
+/* ─── Grid: CSS vars as source of truth for px ─── */
 .feed-grid {
+  position: relative;           /* for DragHandle absolute overlay */
+  --col0-w: 280px;
+  --col2-w: 380px;
   display: grid;
+  grid-template-columns: var(--col0-w) 1fr var(--col2-w);
   height: calc(100vh - 64px);
   overflow: hidden;
   transition: grid-template-columns 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.feed-grid[data-preset="hub"]          { grid-template-columns: 280px 1fr 380px; }
-.feed-grid[data-preset="studio-left"]  { grid-template-columns: 280px 1fr 0px; }
-.feed-grid[data-preset="studio-right"] { grid-template-columns: 0px 1fr 380px; }
+
+/* Presets: visibility only (px via CSS vars) */
+.feed-grid[data-preset="studio-left"]  { grid-template-columns: var(--col0-w) 1fr 0px; }
+.feed-grid[data-preset="studio-right"] { grid-template-columns: 0px 1fr var(--col2-w); }
 .feed-grid[data-preset="focus"]        { grid-template-columns: 0px 1fr 0px; }
+/* "hub" = default base rule, no selector needed */
 
 .feed-col {
   overflow: hidden;
@@ -28,18 +34,45 @@
 .feed-col--0 { border-right: 1px solid rgba(255,255,255,0.08); }
 .feed-col--1 { border-right: 1px solid rgba(255,255,255,0.08); }
 
-/* Планшет 768-1200px */
-@media (min-width: 768px) and (max-width: 1200px) {
-  .feed-grid[data-preset="hub"] {
-    grid-template-columns: 220px 1fr 300px;
-  }
+/* ─── Drag state: kill transition, cursor ─── */
+.feed-grid[data-dragging="true"] {
+  transition: none;
+  cursor: col-resize;
+  user-select: none;
 }
 
-/* Широкий экран > 1600px */
-@media (min-width: 1600px) {
-  .feed-grid[data-preset="hub"] {
-    grid-template-columns: 320px 1fr 420px;
-  }
+/* ─── DragHandle — absolute overlay, not grid child ─── */
+.drag-handle {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 100;
+  background: rgba(255,255,255,0.06);
+  transition: background 0.15s ease;
+  outline: none;
+}
+.drag-handle::before {
+  content: '';
+  position: absolute;
+  inset: 0 -6px;              /* 12px hit zone */
+}
+.drag-handle--0 { 
+  left: var(--col0-w); 
+  margin-left: -3px; 
+}
+.drag-handle--1 { 
+  right: var(--col2-w); 
+  margin-right: -3px; 
+}
+.drag-handle:hover,
+.drag-handle:focus-visible,
+.drag-handle[data-active="true"] {
+  background: #FF8C00;
+}
+.drag-handle:focus-visible {
+  box-shadow: 0 0 0 2px rgba(255,140,0,0.4);
 }
 
 /* ─── ColHeader ─── */
