@@ -1,3 +1,5 @@
+import { handleGetFeedPosts, handleCreateFeedPost, handleToggleLike } from './handlers/feed';
+
 interface Env {
   OPENROUTER_API_KEY: string;
   ALLOWED_ORIGIN: string;
@@ -150,8 +152,12 @@ async function maybeInjectOperatorPrompt(env: Env, body: any) {
   }
 }
 
-// --- Basic Auth Helper for Admin Endpoints ---
+// --- Basic Auth Helper for Admin Endpoints (will be replaced by JWT in TC-103-11) ---
 function isAuthenticated(request: Request, env: Env): boolean {
+  if (!env.ADMIN_PASSWORD) {
+    console.error('[auth] ADMIN_PASSWORD not set — admin endpoints disabled');
+    return false;
+  }
   const authHeader = request.headers.get('Authorization');
   if (!authHeader) return false;
 
@@ -161,7 +167,7 @@ function isAuthenticated(request: Request, env: Env): boolean {
   const decoded = atob(credentials);
   const [username, password] = decoded.split(':');
 
-  return username === 'admin' && password === (env.ADMIN_PASSWORD || 'changeme');
+  return username === 'admin' && password === env.ADMIN_PASSWORD;
 }
 
 
@@ -457,6 +463,18 @@ export default {
         status: 200,
         headers: { 'Content-Type': 'application/json; charset=utf-8', ...headers },
       });
+    }
+
+    // ─── Social Feed Endpoints (TC-101) — AFTER /api/feed (curated) ───
+    const feedHeaders = corsHeaders(origin, allowedOrigins);
+    if (request.method === 'GET' && url.pathname === '/api/feed/posts') {
+      return handleGetFeedPosts(request, env, feedHeaders);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/feed/posts') {
+      return handleCreateFeedPost(request, env, feedHeaders);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/feed/likes') {
+      return handleToggleLike(request, env, feedHeaders);
     }
 
     // Default 404
