@@ -1,56 +1,40 @@
-// @TC-088: Aurora Stage Feed Layout — main wrapper
+// @TC-098-05: Feed Layout — pure, no external props
 
 import { useEffect } from 'react';
 import { useFeedStore } from './feed.store';
 import { usePerformanceTier } from '../../performance/performance.hooks';
-import { HeroStack } from './HeroStack';
-import { EventList } from './EventList';
-import { TrackScroll } from './TrackScroll';
+import { FeedPostCard } from './FeedPostCard';
+import { PostComposer } from './PostComposer';
 import { FeedCover } from './FeedCover';
 import './FeedLayout.css';
 
-interface Props {
-  tracks: any[];
-  play: (index: number) => void;
-}
-
-export function FeedLayout({ tracks, play }: Props) {
-  const { sections, items, status, fetchFeed } = useFeedStore();
+export function FeedLayout() {
+  const { posts, status, fetchFeed } = useFeedStore();
   const tier = usePerformanceTier();
 
   useEffect(() => {
     fetchFeed();
   }, [fetchFeed]);
 
-  if (status === 'loading' && items.length === 0) {
+  if (status === 'loading' && posts.length === 0) {
     return <FeedCover />;
   }
 
-  if (status === 'error' && items.length === 0) {
+  if (status === 'error' && posts.length === 0) {
     return (
       <div className="feed-error">
         <p>⚠️ Не удалось загрузить ленту</p>
-        <button onClick={() => fetchFeed(true)}>Повторить</button>
+        <button onClick={fetchFeed}>Повторить</button>
       </div>
     );
   }
 
   return (
     <div className="aurora-stage" data-tier={tier}>
-      {sections.map(section => {
-        const sectionItems = items.filter(i => i.sectionId === section.id);
-
-        switch (section.type) {
-          case 'hero-stack':
-            return <HeroStack key={section.id} section={section} items={sectionItems} />;
-          case 'list':
-            return <EventList key={section.id} section={section} items={sectionItems} />;
-          case 'scroll':
-            return <TrackScroll key={section.id} section={section} items={sectionItems} tracks={tracks} play={play} />;
-          default:
-            return null;
-        }
-      })}
+      <PostComposer />
+      {posts.map(post => (
+        <FeedPostCard key={post.id} post={post} />
+      ))}
     </div>
   );
 }

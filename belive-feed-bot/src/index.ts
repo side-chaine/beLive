@@ -15,6 +15,7 @@ interface Env {
   WEBHOOK_SECRET: string;
   ALLOWED_TG_IDS: string;
   EPHEMERAL_KV: KVNamespace;
+  UPLOAD_CHAT_ID: string;
 }
 
 export default {
@@ -24,7 +25,8 @@ export default {
       return new Response(null, {
         headers: {
           'Access-Control-Allow-Origin': 'https://app.mybelive.com',
-          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
         }
       });
     }
@@ -66,6 +68,51 @@ export default {
       }
 
       return new Response('OK', { status: 200 });
+    }
+
+    // ── POST /upload (from beLive client — battle vocals ZIP) ──
+    const requestUrl = new URL(request.url);
+    if (requestUrl.pathname === '/upload') {
+      const origin = request.headers.get('Origin') || '';
+      if (!origin.includes('app.mybelive.com') && !origin.includes('localhost')) {
+        return new Response('Forbidden', { status: 403 });
+      }
+
+      const formData = await request.formData();
+      const file = formData.get('file');
+      if (!file || !(file instanceof File)) {
+        return new Response('Missing file', { status: 400 });
+      }
+
+      const tgForm = new FormData();
+      tgForm.append('chat_id', env.UPLOAD_CHAT_ID);
+      tgForm.append('document', file, file.name);
+
+      const tgRes = await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/sendDocument`, {
+        method: 'POST',
+        body: tgForm,
+      });
+
+      if (!tgRes.ok) {
+        const errText = await tgRes.text();
+        console.error('[upload] TG error:', errText);
+        return new Response('Upload failed', { status: 502 });
+      }
+
+      const tgData: any = await tgRes.json();
+      const fileId = tgData?.result?.document?.file_id;
+
+      if (!fileId) {
+        return new Response('No file_id returned', { status: 502 });
+      }
+
+      return new Response(JSON.stringify({ fileId }), {
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': 'https://app.mybelive.com',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        },
+      });
     }
 
     if (request.method !== 'POST') {

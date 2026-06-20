@@ -2,7 +2,7 @@
 
 .overlay {
   position: fixed;
-  top: var(--react-header-height, 48px);
+  top: var(--react-header-height, 64px);
   left: 0;
   right: 0;
   bottom: 0;
@@ -21,7 +21,7 @@
   border-radius: 12px;
   padding: 12px 20px 12px;
   width: 98vw;
-  height: calc(100vh - var(--react-header-height, 48px) - 16px);
+  height: calc(100vh - var(--react-header-height, 64px) - 16px);
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(255, 255, 255, 0.05);

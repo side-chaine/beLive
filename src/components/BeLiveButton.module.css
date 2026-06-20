@@ -1,0 +1,133 @@
+/* ─── beLive Button v4 (converted from HTML) ─── */
+
+.bl-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.bl-border {
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #FF8C00 0deg,
+    #c44dff 120deg,
+    #4d8fff 200deg,
+    #c44dff 280deg,
+    #FF8C00 360deg
+  );
+  z-index: 0;
+  transition: border-radius 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bl-inner {
+  position: relative;
+  z-index: 1;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #0e0e18;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    width         0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-radius 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.bl-glow {
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(180, 80, 255, 0.12) 0%,
+    rgba(255, 140, 0, 0.08) 50%,
+    transparent 70%
+  );
+  z-index: -1;
+  opacity: 0.5;
+  transition: opacity 0.4s ease, border-radius 0.5s ease;
+}
+
+.bl-reflection {
+  position: absolute;
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 8px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 140, 0, 0.5) 0%,
+    rgba(180, 80, 255, 0.3) 50%,
+    transparent 70%
+  );
+  filter: blur(3px);
+  border-radius: 50%;
+  z-index: -1;
+  transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Буквы ── */
+.letter {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.letter-b   { color: #FF8C00; }
+.letter-L   { color: #c44dff; }
+
+.letter-e {
+  color: #FF8C00;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  display: inline-block;
+  transition:
+    max-width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.05s,
+    opacity   0.3s ease 0.05s;
+}
+
+.letter-ive {
+  color: #c44dff;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  display: inline-block;
+  transition:
+    max-width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s,
+    opacity   0.3s ease 0.08s;
+}
+
+/* ══ OPEN ══ */
+.open .bl-inner        { width: 118px; border-radius: 26px; }
+.open .bl-border       { border-radius: 28px; }
+.open .letter-e        { max-width: 18px; opacity: 1; }
+.open .letter-ive      { max-width: 46px; opacity: 1; }
+.open .bl-glow         { opacity: 1; border-radius: 28px; }
+.open .bl-reflection   { width: 120px; }
+
+/* ── Анимации вращения (уникальные имена — без коллизий) ── */
+@keyframes bl-spin-fwd {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes bl-spin-bwd {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+.bl-spin-open  { animation: bl-spin-fwd 0.55s cubic-bezier(0.4,0,0.2,1) forwards; }
+.bl-spin-close { animation: bl-spin-bwd 0.55s cubic-bezier(0.4,0,0.2,1) forwards; }

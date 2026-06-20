@@ -31,7 +31,7 @@ export function TrackInfo() {
   return (
     <div style={{
       position: 'fixed',
-      top: 'calc(var(--react-header-height, 48px) + 8px)',
+      top: 'calc(var(--react-header-height, 64px) + 8px)',
       right: 8,
       background: 'rgba(0,0,0,0.9)',
       color: '#fff',

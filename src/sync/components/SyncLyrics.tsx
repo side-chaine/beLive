@@ -67,7 +67,7 @@ export function SyncLyrics() {
       className="sync-lyrics"
       style={{
         position: 'fixed',
-        top: 'var(--react-header-height, 56px)',
+        top: 'var(--react-header-height, 64px)',
         left: 0,
         right: 0,
         bottom: 'var(--bl-deck-height, 240px)',
@@ -84,7 +84,7 @@ export function SyncLyrics() {
         <div
           style={{
             position: 'fixed',
-            top: 'calc(var(--react-header-height, 56px) + 8px)',
+            top: 'calc(var(--react-header-height, 64px) + 8px)',
             right: '12px',
             zIndex: 60,
             pointerEvents: 'none',

@@ -59,6 +59,7 @@ import { UserRoom } from './components/profile/UserRoom';
 import { useUIStore } from './stores/ui.store';
 import { useUserProfileStore } from './stores/user-profile.store';
 import { mvsepPollingService } from './services/mvsep-polling.service';
+import { FeedScreen } from './feed/FeedScreen';
 export default function App() {
   const mode = useModeStore((s) => s.mode);
   const syncOpen = useSyncStore((s) => s.open);
@@ -72,6 +73,7 @@ export default function App() {
 
   const surface = useAppStore(s => s.surface);
   const authChecked = useAppStore(s => s.authChecked);
+  const appMode = useUIStore(s => s.appMode);
 
   useEffect(() => {
     if (surface !== 'app') return;
@@ -174,11 +176,12 @@ export default function App() {
   if (surface === 'welcome') return <WelcomePage />;
 
   return (
-    <div id="belive-react" data-track-info={trackInfoOpen ? 'active' : 'inactive'}>
+    <>
+      <Header />
+      {appMode === 'feed' ? <FeedScreen /> : (
+      <div id="belive-react" data-track-info={trackInfoOpen ? 'active' : 'inactive'}>
       <BlockEditorModal />
       <BlockScenesModal />
-
-      <Header />
       <CatalogPanel />
       {mode === 'rehearsal' && !syncOpen && !showActive && !featureActive && (
         <>
@@ -209,6 +212,8 @@ export default function App() {
       {aiSettingsOpen && <AiSettingsModal onClose={() => useAiSettingsStore.getState().setShowSettings(false)} />}
       {surface === 'profile' && <UserRoom />}
     </div>
+      )}
+    </>
   );
 }
 

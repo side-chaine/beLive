@@ -20,7 +20,7 @@ export function useBillyZoneCache() {
       if (vh === 0 || vw === 0) return;
 
       // ── Layout heights из CSS vars ──
-      const headerH = parseFloat(cs.getPropertyValue('--react-header-height')) || 48;
+      const headerH = parseFloat(cs.getPropertyValue('--react-header-height')) || 64;
       const wagonH = parseFloat(cs.getPropertyValue('--wagon-train-height')) || 40;
       const deckH = parseFloat(cs.getPropertyValue('--bl-deck-height')) || 80;
 

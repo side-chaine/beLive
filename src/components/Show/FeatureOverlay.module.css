@@ -1,6 +1,6 @@
 .overlay {
   position: fixed;
-  top: 56px;  /* header + 8px */
+  top: 64px;  /* header + 8px */
   right: 8px;
   z-index: 999996;  /* поверх ControlDeck (999995) */
   display: flex;

@@ -22,7 +22,7 @@ function readCssVarPx(varName: string, fallback: number): number {
 
 /** Вычисляет доступную высоту viewport (header → dock) */
 function computeAvailableHeight(): number {
-  const headerH = readCssVarPx(HEADER_HEIGHT_VAR, 48);
+  const headerH = readCssVarPx(HEADER_HEIGHT_VAR, 64);
   const wagonH = readCssVarPx(WAGON_TRAIN_HEIGHT_VAR, 0);
   const dockH = readCssVarPx(DECK_HEIGHT_VAR, 76);
   return window.innerHeight - headerH - wagonH - dockH;

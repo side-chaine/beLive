@@ -1,6 +1,6 @@
 .root {
   position: fixed;
-  top: var(--react-header-height, 48px);
+  top: var(--react-header-height, 64px);
   left: 0;
   z-index: 10;
   display: flex;

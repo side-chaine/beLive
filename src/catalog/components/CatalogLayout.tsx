@@ -9,8 +9,6 @@ import { useCatalogStore } from '../store/catalog.store';
 import { useDeckStore } from '../../stores/deck.store';
 import { useSyncStore } from '../../sync/store/sync.store';
 import { parseTrackName } from '../types';
-import { FeedErrorBoundary } from '../feed/FeedErrorBoundary';
-import { FeedLayout } from '../feed/FeedLayout';
 import { useUIStore } from '../../stores/ui.store';
 import { useSwipe } from '../hooks/useSwipe';
 import { useGhostStore } from '../../stores/ghost.store';
@@ -179,8 +177,8 @@ export function CatalogLayout({ color, onClose }: Props) {
     if (activeFeedColumn === 0 || !window.history) return;
     window.history.replaceState({ catalog: true, column: activeFeedColumn }, '');
     const onPop = () => {
-      const col = useUIStore.getState().activeFeedColumn;
-      if (col > 0) { setActiveFeedColumn(0); window.history.replaceState({ catalog: true, column: 0 }, ''); }
+      setActiveFeedColumn(0);
+      window.history.replaceState({ catalog: true, column: 0 }, '');
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
@@ -203,8 +201,7 @@ export function CatalogLayout({ color, onClose }: Props) {
 
   // Remove ghost on track-saved
   useEffect(() => {
-    const handler = (e: Event) => {
-      const d = (e as CustomEvent).detail;
+    const handler = (_e: Event) => {
       const gs = useGhostStore.getState().ghosts;
       if (gs.length > 0) {
         // Remove the oldest ghost (first in, first processed)
@@ -326,12 +323,8 @@ export function CatalogLayout({ color, onClose }: Props) {
           </div>
         </div>
 
-        {/* ═══ COL 1: FEED ═══ */}
-        <div className="bl-catalog-col" style={{ ...colBase, padding:20 }}>
-          <FeedErrorBoundary>
-            <FeedLayout tracks={tracks} play={play} />
-          </FeedErrorBoundary>
-        </div>
+        {/* ═══ COL 1: EMPTY (reserved) ═══ */}
+        <div className="bl-catalog-col" style={colBase} />
 
         {/* ═══ COL 2: CATALOG ═══ */}
         <div className="bl-catalog-col" style={colBase}>
@@ -449,7 +442,6 @@ export function CatalogLayout({ color, onClose }: Props) {
           </div>
         </div>
       </div>
-      {/* 3 dots */}
       <div style={{ display:'flex', justifyContent:'center', gap:8, padding:'8px 0', flexShrink:0 }}>
         {[0,1,2].map(i=>(<div key={i} style={{ width:6, height:6, borderRadius:'50%', background:i===activeFeedColumn?'#FF8C00':'rgba(255,255,255,0.2)', transition:'background 0.2s' }} />))}
       </div>

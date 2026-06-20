@@ -4,7 +4,7 @@
 
 .container {
   position: fixed;
-  top: calc(var(--react-header-height, 48px) + 10px);
+  top: calc(var(--react-header-height, 64px) + 10px);
   left: 0;
   right: 0;
   bottom: 80px;

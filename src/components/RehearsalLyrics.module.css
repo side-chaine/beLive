@@ -1,6 +1,6 @@
 .root {
   position: fixed;
-  top: calc(var(--react-header-height, 48px) + var(--wagon-train-height, 0px));
+  top: calc(var(--react-header-height, 64px) + var(--wagon-train-height, 0px));
   left: 0;
   right: 0;
   bottom: var(--bl-deck-height, 76px);

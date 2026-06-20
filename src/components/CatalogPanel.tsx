@@ -56,7 +56,7 @@ export function CatalogPanel() {
       onClick={close}
       style={{
         position: 'fixed',
-        top: 'var(--react-header-height, 48px)',
+        top: 'var(--react-header-height, 64px)',
         left: 0,
         right: 0,
         bottom: 'var(--bl-deck-height, 76px)',
