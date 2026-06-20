@@ -178,11 +178,11 @@ export default function App() {
   return (
     <>
       <Header />
+      <CatalogPanel />
       {appMode === 'feed' ? <FeedScreen /> : (
       <div id="belive-react" data-track-info={trackInfoOpen ? 'active' : 'inactive'}>
       <BlockEditorModal />
       <BlockScenesModal />
-      <CatalogPanel />
       {mode === 'rehearsal' && !syncOpen && !showActive && !featureActive && (
         <>
           <div data-wagon-train-wrapper>
