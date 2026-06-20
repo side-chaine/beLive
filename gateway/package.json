@@ -5,7 +5,9 @@
   "scripts": {
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
-    "start": "wrangler dev"
+    "start": "wrangler dev",
+    "db:apply": "wrangler d1 migrations apply belive-feed",
+    "db:create": "wrangler d1 migrations create belive-feed"
   },
   "dependencies": {
     "itty-router": "^2.6.6"
