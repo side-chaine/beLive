@@ -10,6 +10,13 @@
   overflow-y: auto;
 }
 
+/* Карточки и композер не растягиваются на всю ширину */
+.aurora-stage > * {
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* ─── Hero Stack ─── */
 .feed-hero-stack {
   display: flex;

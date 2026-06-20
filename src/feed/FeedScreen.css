@@ -1,4 +1,4 @@
-/* @TC-FEED-REARCH: FeedScreen — grid + presets + ColHeader + EdgeTab */
+/* @TC-101-FF: FeedScreen — grid + presets + ColHeader + EdgeTab + 280/1fr/380 */
 
 .feed-screen {
   position: fixed;
@@ -7,16 +7,16 @@
   z-index: 999990;
 }
 
-/* ─── Grid presets ─── */
+/* ─── Grid presets — 280/1fr/380 ─── */
 .feed-grid {
   display: grid;
-  height: 100%;
+  height: calc(100vh - 64px);
   overflow: hidden;
   transition: grid-template-columns 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.feed-grid[data-preset="hub"]          { grid-template-columns: 220px 1fr 300px; }
-.feed-grid[data-preset="studio-left"]  { grid-template-columns: 220px 1fr 0px; }
-.feed-grid[data-preset="studio-right"] { grid-template-columns: 0px 1fr 300px; }
+.feed-grid[data-preset="hub"]          { grid-template-columns: 280px 1fr 380px; }
+.feed-grid[data-preset="studio-left"]  { grid-template-columns: 280px 1fr 0px; }
+.feed-grid[data-preset="studio-right"] { grid-template-columns: 0px 1fr 380px; }
 .feed-grid[data-preset="focus"]        { grid-template-columns: 0px 1fr 0px; }
 
 .feed-col {
@@ -27,6 +27,20 @@
 }
 .feed-col--0 { border-right: 1px solid rgba(255,255,255,0.08); }
 .feed-col--1 { border-right: 1px solid rgba(255,255,255,0.08); }
+
+/* Планшет 768-1200px */
+@media (min-width: 768px) and (max-width: 1200px) {
+  .feed-grid[data-preset="hub"] {
+    grid-template-columns: 220px 1fr 300px;
+  }
+}
+
+/* Широкий экран > 1600px */
+@media (min-width: 1600px) {
+  .feed-grid[data-preset="hub"] {
+    grid-template-columns: 320px 1fr 420px;
+  }
+}
 
 /* ─── ColHeader ─── */
 .col-hdr {
