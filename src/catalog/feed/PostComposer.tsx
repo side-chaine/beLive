@@ -5,6 +5,7 @@ import type { FeedPostType } from './feed.types';
 import { POST_TYPE_CONFIG } from './feed.types';
 import { useFeedStore } from './feed.store';
 import { useTrackStore } from '../../stores/track.store';
+import { useUserProfileStore } from '../../stores/user-profile.store';
 
 export function PostComposer() {
   const [step, setStep] = useState<'trigger' | 'pick-type' | 'form'>('trigger');
@@ -23,6 +24,7 @@ export function PostComposer() {
 
   const createPost = useFeedStore(s => s.createPost);
   const tracksMeta = useTrackStore(s => s.tracksMeta);
+  const user = useUserProfileStore(s => s.currentUser);
 
   const reset = () => {
     setStep('trigger');
@@ -44,9 +46,9 @@ export function PostComposer() {
 
     createPost({
       type,
-      authorId: 'user-local',
-      authorName: 'You',
-      authorAvatarUrl: '',
+      authorId: user?.id || user?.serverId || 'guest-anon',
+      authorName: user?.name || 'Гость',
+      authorAvatarUrl: user?.avatarUrl || '',
       title: title.trim(),
       text: text.trim() || undefined,
       tags: tagsArr.length > 0 ? tagsArr : undefined,
