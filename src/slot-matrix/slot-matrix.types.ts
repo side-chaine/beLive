@@ -17,9 +17,13 @@ export interface SlotPart {
   colorOverride?: string;
 }
 
-/** Состояние слота для квестовой системы.
- *  Default в рантайме: 'visible' (explicit в computeSlotMatrix не ставится).
- *  Quest engine управляет переходами между состояниями. */
+/**
+ * Состояние слота для квестовой системы.
+ * @architectural Reservation for Quest System (Phase 4, not yet implemented).
+ *    See docs/architecture/slot-matrix-system-v2.2.md §11.
+ *    Do NOT remove — part of frozen Slot contract (slot-matrix v2.2).
+ *    Not yet read/written at runtime; will be activated by quest engine.
+ */
 export type QuestSlotState = 
   | 'visible'     // обычное отображение
   | 'hidden'      // скрыт (квест "исчезающие строки")
@@ -100,7 +104,8 @@ export interface SlotCanvas {
   layoutMode: LayoutMode;
 }
 
-/** Метаданные квеста для слота */
+/** Метаданные квеста для слота.
+ * @architectural Phase 4 reservation. See slot-matrix-system-v2.2.md §11. */
 export interface QuestSlotMeta {
   /** Порядок скрытия в квесте (1=первый скрыть) */
   hideOrder?: number;
@@ -154,13 +159,13 @@ export interface Slot {
   previewBlockType?: string;
   /** HEX цвет следующего блока (для ПС) */
   previewBlockColor?: string;
-  /** Состояние для квестов */
+  /** @architectural Phase 4 reservation. See QuestSlotState. */
   questState?: QuestSlotState;
   /** Граница loop — начало */
   isLoopStart?: boolean;
   /** Граница loop — конец */
   isLoopEnd?: boolean;
-  /** Метаданные квеста (заполняется quest engine) */
+  /** @architectural Phase 4 reservation. See QuestSlotMeta. */
   questMeta?: QuestSlotMeta;
   /** Точки разрыва для умного переноса (заполняется computeBreakPoints) */
   wordBreakPoints?: WordBreakPoint[];

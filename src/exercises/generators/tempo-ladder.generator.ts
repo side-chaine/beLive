@@ -13,16 +13,9 @@
  * - No slowed recording support yet; tempo awareness is listen-only
  */
 
-import type { Exercise } from '../exercise.types';
+import type { Exercise, ExerciseStep } from '../exercise.types';
 import type { GeneratorDef, GeneratorParams } from './generator.types';
-
-/**
- * Generate unique exercise id
- * Matches current stable behavior
- */
-function genExerciseId(prefix: string, blockId: string): string {
-  return `ex-${prefix}-${blockId}-${Date.now()}`;
-}
+import { genExerciseId } from './gen-id.util';
 
 /**
  * Tempo Ladder Generator — Explicit Ladder Progression
@@ -92,7 +85,7 @@ export const tempoLadderGenerator: GeneratorDef = {
     }
 
     // Build steps: listen + record + optional previous-take preview for each stage
-    const steps: any[] = [];
+    const steps: ExerciseStep[] = [];
     for (let i = 0; i < stages.length; i++) {
       const tempo = stages[i];
       const isFinalStage = i === stages.length - 1;

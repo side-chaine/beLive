@@ -94,14 +94,6 @@ export interface ExerciseResult {
   completedAt: number | null;
 }
 
-export interface QuestProgress {
-  questId: string;
-  exerciseResults: ExerciseResult[];
-  currentExerciseIndex: number;
-  startedAt: number;
-  completedAt: number | null;
-}
-
 export interface SessionProgress {
   startedAt: number;
   exercisesCompleted: number;

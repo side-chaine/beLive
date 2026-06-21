@@ -2,6 +2,8 @@ import React from 'react';
 import { useExerciseStore } from '../exercise.store';
 import { EXERCISE_RECIPES } from '../exercise.recipes';
 import { useBlocksStore } from '../../stores/blocks.store';
+import { useAudioStore } from '../../stores/audio.store';
+import { TempoSetupModal } from './TempoSetupModal';
 
 export interface QuestEntrySurfaceProps {
   blockId: string;
@@ -40,26 +42,20 @@ export const QuestEntrySurface: React.FC<QuestEntrySurfaceProps> = ({
   const startRecipe = useExerciseStore((s) => s.startRecipe);
   const blocks = useBlocksStore((s) => s.blocks);
 
-  // Tempo setup state
   const [tempoSetupOpen, setTempoSetupOpen] = React.useState(false);
-  const [selectedTempo, setSelectedTempo] = React.useState<number>(100);
-  const [previewBetweenRounds, setPreviewBetweenRounds] = React.useState<boolean>(false);
 
   // Compute line count for active block
   const activeBlock = blocks.find((b) => b.id === blockId);
   const lineCount = activeBlock?.lineIndices?.length ?? 2;
 
-  // Check vocal stem availability
-  const hasVocalStem = React.useMemo(() => {
-    const ae = (window as any).audioEngine;
-    return !!ae?.stems?.has?.('vocals');
-  }, []);
+  // Check vocal stem availability via audio store (reactive, fixes race with useMemo)
+  const hasVocalStem = useAudioStore((s) => s.hasVocals);
 
   // Filter recipes by visibility policy
   const stableRecipes = EXERCISE_RECIPES.filter((recipe) => recipe.surface === 'stable');
   
   const experimentalRecipes = EXERCISE_RECIPES.filter(
-    (recipe) => recipe.surface === 'smoke' && recipe.id !== 'backing-only' && recipe.id !== 'call-response'
+    (recipe) => recipe.surface === 'smoke' && !recipe.hidden
   );
   
   // Unified visible recipes: stable + experimental (including smoke labs)
@@ -94,8 +90,6 @@ export const QuestEntrySurface: React.FC<QuestEntrySurfaceProps> = ({
     // For Tempo Ladder, open setup modal instead of launching immediately
     if (recipe.id === 'tempo-ladder') {
       setTempoSetupOpen(true);
-      setSelectedTempo(100);
-      setPreviewBetweenRounds(false);
       return;
     }
 
@@ -111,230 +105,18 @@ export const QuestEntrySurface: React.FC<QuestEntrySurfaceProps> = ({
     onClose();
   };
 
-  const handleTempoConfirm = () => {
-    if (selectedTempo === null) return;
-    startRecipe('tempo-ladder', blockId, { 
-      tempoRate: selectedTempo / 100,
-      previewBetweenRounds,
-    });
-    setTempoSetupOpen(false);
-    onClose();
-  };
-
   return (
     <>
-      {/* Tempo Setup Modal */}
+      {/* Tempo Setup Modal — extracted component */}
       {tempoSetupOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.85)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 101,
-            pointerEvents: 'auto',
+        <TempoSetupModal
+          onConfirm={(tempoRate, previewBetweenRounds) => {
+            startRecipe('tempo-ladder', blockId, { tempoRate, previewBetweenRounds });
+            setTempoSetupOpen(false);
+            onClose();
           }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setTempoSetupOpen(false);
-            }
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              maxWidth: 400,
-              width: '90%',
-              background: 'rgba(20,20,20,0.95)',
-              borderRadius: 12,
-              border: '1px solid rgba(255,255,255,0.08)',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.60)',
-              overflow: 'hidden',
-              pointerEvents: 'auto',
-              padding: '32px 24px',
-              gap: 24,
-            }}
-          >
-            <div>
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: 18,
-                  fontWeight: 700,
-                  color: 'rgba(255,255,255,0.95)',
-                  marginBottom: 8,
-                }}
-              >
-                Choose starting tempo
-              </h2>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 12,
-                  color: 'rgba(255,255,255,0.65)',
-                  lineHeight: 1.4,
-                }}
-              >
-                Select the slowdown rate for the listen step
-              </p>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 16,
-              }}
-            >
-              {/* Slider */}
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 12,
-                }}
-              >
-                <input
-                  type="range"
-                  min="50"
-                  max="150"
-                  step="5"
-                  value={selectedTempo}
-                  onChange={(e) => setSelectedTempo(Number(e.target.value))}
-                  style={{
-                    width: '100%',
-                    height: 6,
-                    borderRadius: 3,
-                    background: 'rgba(255,255,255,0.10)',
-                    outline: 'none',
-                    WebkitAppearance: 'none',
-                    appearance: 'none',
-                  } as React.CSSProperties}
-                />
-              </div>
-
-              {/* Display current value and helper text */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 28,
-                    fontWeight: 700,
-                    color: 'rgba(100,200,255,0.95)',
-                  }}
-                >
-                  {selectedTempo}%
-                </div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: 'rgba(255,255,255,0.55)',
-                    textAlign: 'right',
-                  }}
-                >
-                  100% = original
-                </div>
-              </div>
-            </div>
-
-            {/* Preview between rounds toggle */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '12px 0',
-              }}
-            >
-              <input
-                type="checkbox"
-                id="preview-toggle"
-                checked={previewBetweenRounds}
-                onChange={(e) => setPreviewBetweenRounds(e.target.checked)}
-                style={{
-                  width: 18,
-                  height: 18,
-                  cursor: 'pointer',
-                  accentColor: 'rgba(100,200,255,0.95)',
-                }}
-              />
-              <label
-                htmlFor="preview-toggle"
-                style={{
-                  fontSize: 13,
-                  color: 'rgba(255,255,255,0.80)',
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                }}
-              >
-                Preview previous take between rounds
-              </label>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                gap: 12,
-              }}
-            >
-              <button
-                onClick={() => setTempoSetupOpen(false)}
-                style={{
-                  flex: 1,
-                  padding: '10px 16px',
-                  borderRadius: 8,
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  background: 'rgba(255,255,255,0.05)',
-                  color: 'rgba(255,255,255,0.70)',
-                  fontSize: 13,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.10)';
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)';
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleTempoConfirm}
-                style={{
-                  flex: 1,
-                  padding: '10px 16px',
-                  borderRadius: 8,
-                  border: '1px solid rgba(100,200,255,0.40)',
-                  background: 'rgba(100,200,255,0.20)',
-                  color: 'rgba(100,200,255,0.95)',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(100,200,255,0.30)';
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(100,200,255,0.20)';
-                }}
-              >
-                Start
-              </button>
-            </div>
-          </div>
-        </div>
+          onCancel={() => setTempoSetupOpen(false)}
+        />
       )}
 
       {/* Main Quest Room */}

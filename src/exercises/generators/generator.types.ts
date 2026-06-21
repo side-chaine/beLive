@@ -76,6 +76,9 @@ export interface GeneratorMetadata {
 
   // Optional: capability metadata for scenario gating
   capabilities?: CapabilityMetadata;
+
+  // Optional: hide from all learner surfaces (smoke-but-not-ready)
+  hidden?: boolean;
 }
 
 /**

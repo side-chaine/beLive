@@ -13,13 +13,7 @@
 
 import type { Exercise, ExerciseStep, BackingMode } from '../exercise.types';
 import type { GeneratorDef, GeneratorParams } from './generator.types';
-
-/**
- * Generate unique exercise id
- */
-function genExerciseId(prefix: string, blockId: string): string {
-  return `ex-${prefix}-${blockId}-${Date.now()}`;
-}
+import { genExerciseId } from './gen-id.util';
 
 /**
  * Trade Generator Definition v2

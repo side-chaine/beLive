@@ -331,7 +331,7 @@ export const useExerciseStore = create<ExerciseState>((set, get) => ({
           name: exercise.name,
           icon: exercise.icon,
           blockId: exercise.scope.blockId,
-          roundsCompleted: state.currentExerciseResult.roundsTotal,
+          roundsCompleted: state.currentExerciseResult.roundsCompleted,
           roundsTotal: state.currentExerciseResult.roundsTotal,
           completedAt,
         };
@@ -351,7 +351,7 @@ export const useExerciseStore = create<ExerciseState>((set, get) => ({
           ? {
               ...state.currentExerciseResult,
               completedAt,
-              roundsCompleted: state.currentExerciseResult.roundsTotal,
+              roundsCompleted: state.currentExerciseResult.roundsCompleted,
             }
           : null,
         sessionProgress: {

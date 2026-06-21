@@ -10,14 +10,7 @@
 
 import type { Exercise, BackingMode } from '../exercise.types';
 import type { GeneratorDef, GeneratorParams } from './generator.types';
-
-/**
- * Generate unique exercise id
- * Matches current stable behavior
- */
-function genExerciseId(prefix: string, blockId: string): string {
-  return `ex-${prefix}-${blockId}-${Date.now()}`;
-}
+import { genExerciseId } from './gen-id.util';
 
 /**
  * Backing Ladder Generator — No Training Wheels Preset
@@ -52,6 +45,9 @@ export const backingOnlyGenerator: GeneratorDef = {
 
     // Capability metadata
     capabilities: {},
+
+    // Optional: hide from all learner surfaces (smoke-but-not-ready)
+    hidden: true,
   },
 
   generate: (blockId: string, params?: GeneratorParams): Exercise => ({

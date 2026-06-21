@@ -14,15 +14,9 @@ export type {
   GeneratorRegistry,
 } from './generator.types';
 
-export {
-  createGeneratorRegistry,
-  generatorRegistry,
-  registerGenerator,
-  clearGeneratorRegistry,
-} from './generator.registry';
-
 export { echoGenerator } from './echo.generator';
 export { fillSelectGenerator } from './fill-select.generator';
 export { backingOnlyGenerator, acappellaBossGenerator } from './backing-ladder.generator';
 export { tempoLadderGenerator } from './tempo-ladder.generator';
 export { tradeGenerator } from './trade.generator';
+export { callResponseGenerator } from './call-response.generator';

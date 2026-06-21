@@ -10,14 +10,7 @@
 
 import type { Exercise, BackingMode } from '../exercise.types';
 import type { GeneratorDef, GeneratorParams } from './generator.types';
-
-/**
- * Generate unique exercise id
- * Matches current stable behavior
- */
-function genExerciseId(prefix: string, blockId: string): string {
-  return `ex-${prefix}-${blockId}-${Date.now()}`;
-}
+import { genExerciseId } from './gen-id.util';
 
 /**
  * Fill & Select Generator Definition
@@ -66,7 +59,7 @@ export const fillSelectGenerator: GeneratorDef = {
         instruction: 'Record your take',
       },
     ],
-    repeat: { count: 3, mode: 'until-filled', filledTarget: 3 },
+    repeat: { count: params?.rounds ?? 3, mode: 'until-filled', filledTarget: 3 },
     goal: { type: 'filled', slotCount: 3 },
     defaultBacking: (params?.backing as BackingMode) ?? 'instrumental',
   }),
