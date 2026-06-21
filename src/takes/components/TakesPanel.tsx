@@ -6,7 +6,7 @@ import { useBlocksStore } from '../../stores/blocks.store';
 import { useMarkersStore } from '../../stores/markers.store';
 import { useAudioStore } from '../../stores/audio.store';
 import { useStemStore } from '../../stem/stem.store';
-import { getBlockTimeRange } from '../../utils/block-time-range';
+import { getBlockTimeRange, selectBlockByTime } from '../../utils/block-time-range';
 import { takeAssets } from '../takes.assets';
 import { generatePeaks } from '../../sync/canvas/peaks';
 import { LiveTrailController } from '../waveform/live-trail-controller';
@@ -574,14 +574,20 @@ export const TakesPanel: React.FC = () => {
   }, [compareTakeTarget, timeRange, assetRevision]);
   
   // Memoized block time ranges for auto-follow
+  // TC-DS-09: filter out blocks without id (block.id undefined guard)
   const blockRanges = React.useMemo(() => {
     if (!blocks.length || !markers.length) return [];
-    
-    return blocks.map(block => {
-      const range = getBlockTimeRange(block, markers, duration);
-      if (!range) return null;
-      return { blockId: block.id, startTime: range.startTime, endTime: range.endTime };
-    }).filter(Boolean) as Array<{ blockId: string; startTime: number; endTime: number }>;
+
+    return blocks
+      .map(block => {
+        if (!block.id) return null;                    // skip idless blocks
+        const range = getBlockTimeRange(block, markers, duration);
+        if (!range) return null;
+        return { blockId: block.id, startTime: range.startTime, endTime: range.endTime };
+      })
+      .filter(
+        (r): r is { blockId: string; startTime: number; endTime: number } => r !== null,
+      );
   }, [blocks, markers, duration]);
   
   // Block ranges ref for rAF access
@@ -589,6 +595,57 @@ export const TakesPanel: React.FC = () => {
   React.useEffect(() => {
     blockRangesRef.current = blockRanges;
   }, [blockRanges]);
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // TC-DS-09: Quest Auto-Select — pick best block from playhead when
+  // recipes opens with no active block. One-shot with self-disable guard.
+  // rAF auto-follow takes over for continuous tracking.
+  // ═══════════════════════════════════════════════════════════════════════
+  React.useEffect(() => {
+    // ── 1. Gate guards ──
+    if (!recipesOpen) return;
+    if (activeBlockId) return;
+    if (isRecording || activeExercise || completionMoment) return;
+    if (!blocks.length || !markers.length) return;
+
+    // ── 2. Audio engine guard (cold start race — t=0) ──
+    const ae = (window as any).audioEngine;
+    if (!ae?.getCurrentTime) return;
+
+    // ── 3. Build ranges inline with id filter (defense in depth) ──
+    const ranges = blocks
+      .map(block => {
+        if (!block.id) return null;
+        const range = getBlockTimeRange(block, markers, duration);
+        if (!range) return null;
+        return { blockId: block.id, startTime: range.startTime, endTime: range.endTime };
+      })
+      .filter(
+        (r): r is { blockId: string; startTime: number; endTime: number } => r !== null,
+      );
+
+    // ── 4. Ultimate fallback: first valid block ──
+    if (!ranges.length) {
+      const firstValid = blocks.find(b => b.id);
+      if (firstValid) setActiveBlock(firstValid.id);
+      return;
+    }
+
+    // ── 5. Select block by playhead position ──
+    const t: number = ae.getCurrentTime();
+    const selected = selectBlockByTime(ranges, t);
+    if (selected) setActiveBlock(selected);
+  }, [
+    recipesOpen,
+    activeBlockId,
+    isRecording,
+    activeExercise,
+    completionMoment,
+    blocks,
+    markers,
+    duration,
+    setActiveBlock,
+  ]);
 
   // One-time confirmation log for buffer availability
   React.useEffect(() => {
