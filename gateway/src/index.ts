@@ -180,7 +180,24 @@ export default {
 
     // Health check
     if (url.pathname === '/health') {
-      return jsonResponse({ ok: true, edge: true, ts: Date.now() }, 200, origin, allowedOrigins);
+      return jsonResponse({ ok: true, edge: true, ts: Date.now(), v: 'TC-103' }, 200, origin, allowedOrigins);
+    }
+
+    // Debug: HMAC diagnostic (compare keys between workers)
+    if (url.pathname === '/auth/debug-hmac') {
+      const hmac = await crypto.subtle.sign(
+        'HMAC',
+        await crypto.subtle.importKey('raw', new TextEncoder().encode(env.JWT_SECRET || ''),
+          { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']),
+        new TextEncoder().encode('diagnostic-test')
+      );
+      const bytes = Array.from(new Uint8Array(hmac));
+      const secretBytes = Array.from(new TextEncoder().encode(env.JWT_SECRET || ''));
+      return jsonResponse({
+        hmac: bytes.map(b => b.toString(16).padStart(2,'0')).join(''),
+        secretLength: (env.JWT_SECRET || '').length,
+        secretBytes: secretBytes,
+      }, 200, origin, allowedOrigins);
     }
 
     // --- Ephemeral Token Endpoint ---
@@ -458,21 +475,21 @@ export default {
     }
 
     // ─── Founder Bootstrap (TC-103-10) — one-time ───
+    // Fallback bootstrap (X-Bootstrap-Key) — удалён после использования (2026-06-21)
+    // Только JWT-защищённый bootstrap. Founder уже существует → 409.
     if (request.method === 'POST' && url.pathname === '/api/auth/bootstrap-founder') {
       const auth = await getAuthCtx(request, env);
       if (!auth) {
         return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
       }
-      // Guard 1: FOUNDER_SUB match
-      if (!env.FOUNDER_SUB || auth.providerSub !== env.FOUNDER_SUB) {
-        return jsonResponse({ error: 'Not authorized for bootstrap' }, 403, origin, allowedOrigins);
-      }
-      // Guard 2: One-time (no existing founder)
+      // Founder already exists → 409
       const existing = await hasExistingFounder(env.FEED_DB);
       if (existing) {
         return jsonResponse({ error: 'Founder already exists' }, 409, origin, allowedOrigins);
       }
-      // Guard 3: UNIQUE constraint on DB level
+      if (!env.FOUNDER_SUB || auth.providerSub !== env.FOUNDER_SUB) {
+        return jsonResponse({ error: 'Not authorized for bootstrap' }, 403, origin, allowedOrigins);
+      }
       await assignRole(env.FEED_DB, {
         userId: auth.sub,
         provider: auth.provider,
