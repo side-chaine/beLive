@@ -537,5 +537,69 @@ wrangler deploy
 
 ---
 
-*Auth System v1.0 — живой документ. Обновляется при добавлении каждого нового провайдера.*
+## 11. JWT & Role System (TC-103, 2026-06-21)
+
+### Архитектура
+
+Система аутентификации разделена на два Worker'а:
+
+```
+belive-auth (отдельный Worker)        belive-gateway (основной Worker)
+    │                                       │
+    │  Google OAuth                         │  Feed API
+    │  JWT signing (HS256)                  │  JWT verification
+    │  Выпуск токенов                       │  Admin endpoints
+    └─────── SHARED JWT_SECRET ──────────────┘
+              (Cloudflare Secrets)
+```
+
+### JWT токен
+
+JWT payload содержит:
+- `sub` — Google user ID (уникальный, не подделывается)
+- `iss: "belive-auth"` — издатель токена
+- `role: "user" | "admin" | "founder"` — роль (определяется на сервере)
+- `exp` — TTL 15 минут (не 30 дней как было)
+- `name`, `email`, `picture`, `provider` — данные пользователя
+
+### Роли
+
+| Роль | Кто | Права |
+|------|-----|-------|
+| **founder** | Владелец проекта | Удалить любой пост, назначать admin, полный доступ |
+| **admin** | Назначен founder'ом | Модерация, удаление любых постов |
+| **user** | Обычный OAuth пользователь | Удалить только свой пост, постить, лайкать |
+| **guest** | Без регистрации | Постить с ограничениями, не может удалять |
+
+**Важно:** Founder идентифицируется по уникальному Google ID (`sub`), который защищён Google OAuth. Подделать нельзя — для этого нужно взломать Google-аккаунт владельца.
+
+### JWT_SECRET
+
+- Общий секрет для обоих Worker'ов
+- Хранится в Cloudflare Secrets (не в коде, не в git)
+- Назначается через `wrangler secret put`
+- При компрометации — ротация с zero-downtime через PRIMARY + FALLBACK
+
+### Gateway middleware
+
+`gateway/src/handlers/auth.ts` — функция `getAuthCtx()`:
+1. Читает `Authorization: Bearer <token>`
+2. Верифицирует HS256 подпись через Web Crypto API
+3. Проверяет `exp` (не просрочен)
+4. Проверяет `iss === 'belive-auth'`
+5. Возвращает контекст с role/sub/email
+
+Все защищённые endpoint'ы gateway используют `getAuthCtx()` для авторизации.
+
+### Связанные файлы
+
+- `gateway/src/handlers/auth.ts` — JWT verification
+- `gateway/src/handlers/roles.ts` — D1 user_roles read/write
+- `gateway/src/index.ts` — Env interface + middleware integration
+- `belive-api/src/auth/jwt.ts` — JWT signing
+- `gateway/migrations/0002_user_roles_moderation.sql` — D1 роли
+
+---
+
+*Auth System v1.1 — добавлен JWT & Role System (TC-103). 2026-06-21.*
 *Создан: 2026-06-07 | Автор: Agent 007*
