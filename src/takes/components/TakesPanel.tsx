@@ -590,6 +590,17 @@ export const TakesPanel: React.FC = () => {
     blockRangesRef.current = blockRanges;
   }, [blockRanges]);
 
+  // Auto-init / self-heal active block (defense-in-depth):
+  // Fires when (a) no active block yet (null), or (b) active block ID is stale
+  // (track switched / block deleted / ID mutated). The UI must NOT depend
+  // on the store always resetting activeBlockId on track change.
+  React.useEffect(() => {
+    if (blockRanges.length === 0) return;
+    if (!activeBlockId || !blocks.some((b) => b.id === activeBlockId)) {
+      setActiveBlock(blockRanges[0].blockId);
+    }
+  }, [blockRanges, blocks, activeBlockId, setActiveBlock]);
+
   // One-time confirmation log for buffer availability
   React.useEffect(() => {
     if (instrumentalBuffer) {
