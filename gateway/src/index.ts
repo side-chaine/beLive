@@ -457,6 +457,37 @@ export default {
       return handleToggleLike(request, env, feedHeaders);
     }
 
+    // ─── Founder Bootstrap (TC-103-10) — one-time ───
+    if (request.method === 'POST' && url.pathname === '/api/auth/bootstrap-founder') {
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      // Guard 1: FOUNDER_SUB match
+      if (!env.FOUNDER_SUB || auth.providerSub !== env.FOUNDER_SUB) {
+        return jsonResponse({ error: 'Not authorized for bootstrap' }, 403, origin, allowedOrigins);
+      }
+      // Guard 2: One-time (no existing founder)
+      const existing = await hasExistingFounder(env.FEED_DB);
+      if (existing) {
+        return jsonResponse({ error: 'Founder already exists' }, 409, origin, allowedOrigins);
+      }
+      // Guard 3: UNIQUE constraint on DB level
+      await assignRole(env.FEED_DB, {
+        userId: auth.sub,
+        provider: auth.provider,
+        providerSub: auth.providerSub,
+        role: 'founder',
+        email: auth.email,
+        assignedBy: 'system:bootstrap',
+      });
+      return jsonResponse({
+        success: true,
+        message: 'Founder bootstrap complete. Founder is now in D1.',
+        role: 'founder',
+      }, 201, origin, allowedOrigins);
+    }
+
     // Default 404
     return jsonResponse({ error: { code: 'NOT_FOUND', message: 'Endpoint not found' } }, 404, origin, allowedOrigins);
   },
