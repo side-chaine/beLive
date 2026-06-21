@@ -1,19 +1,23 @@
 import { handleGetFeedPosts, handleCreateFeedPost, handleToggleLike } from './handlers/feed';
+import { getAuthCtx } from './handlers/auth';
+import { getUserRole, assignRole, hasExistingFounder } from './handlers/roles';
 
 interface Env {
   OPENROUTER_API_KEY: string;
   ALLOWED_ORIGIN: string;
   RATE_LIMIT_KV: KVNamespace;
-  CACHE: KVNamespace; // Для будущего использования, если понадобится кэширование ответов
+  CACHE: KVNamespace;
   OPERATOR_PROMPT_KV: KVNamespace;
   EPHEMERAL_KV: KVNamespace;
   EPHEMERAL_TTL?: string;
-  ADMIN_PASSWORD?: string; // Для защиты админских эндпойнтов
-  OPENROUTER_TITLE?: string; // NEW: заголовок для OpenRouter
-  OPENROUTER_REFERER?: string; // NEW: реферер для OpenRouter
+  OPENROUTER_TITLE?: string;
+  OPENROUTER_REFERER?: string;
   // @TC-088: Aurora Stage Feed
   FEED_KV: KVNamespace;
   FEED_DB: D1Database;
+  // @TC-103: JWT auth
+  JWT_SECRET: string;
+  FOUNDER_SUB?: string;
 }
 
 // Unified SSE events
@@ -152,23 +156,7 @@ async function maybeInjectOperatorPrompt(env: Env, body: any) {
   }
 }
 
-// --- Basic Auth Helper for Admin Endpoints (will be replaced by JWT in TC-103-11) ---
-function isAuthenticated(request: Request, env: Env): boolean {
-  if (!env.ADMIN_PASSWORD) {
-    console.error('[auth] ADMIN_PASSWORD not set — admin endpoints disabled');
-    return false;
-  }
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader) return false;
-
-  const [scheme, credentials] = authHeader.split(' ');
-  if (scheme !== 'Basic') return false;
-
-  const decoded = atob(credentials);
-  const [username, password] = decoded.split(':');
-
-  return username === 'admin' && password === env.ADMIN_PASSWORD;
-}
+// @TC-103-01: replaced by JWT-based getAuthCtx()
 
 
 export default {
@@ -384,15 +372,11 @@ export default {
       );
     }
 
-    // --- Admin Endpoint: Update Operator Prompt ---
+    // --- Admin Endpoint: Update Operator Prompt (JWT-protected) ---
     if (request.method === 'POST' && url.pathname === '/admin/operator-prompt') {
-      if (!isAuthenticated(request, env)) {
-        return jsonResponse(
-          { error: 'Unauthorized' },
-          401,
-          env.ALLOWED_ORIGIN,
-          allowedOrigins
-        );
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
       }
       const { prompt } = await request.json() as { prompt: string };
       if (!prompt || typeof prompt !== 'string') {
@@ -402,15 +386,11 @@ export default {
       return jsonResponse({ success: true, message: 'Operator prompt updated' }, 200, origin, allowedOrigins);
     }
 
-    // --- Admin Endpoint: Get Operator Prompt ---
+    // --- Admin Endpoint: Get Operator Prompt (JWT-protected) ---
     if (request.method === 'GET' && url.pathname === '/admin/operator-prompt') {
-      if (!isAuthenticated(request, env)) {
-        return jsonResponse(
-          { error: 'Unauthorized' },
-          401,
-          env.ALLOWED_ORIGIN,
-          allowedOrigins
-        );
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
       }
       const prompt = await getOperatorPrompt(env.OPERATOR_PROMPT_KV);
       return jsonResponse({ prompt: prompt || '' }, 200, origin, allowedOrigins);
