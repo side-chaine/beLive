@@ -1,7 +1,7 @@
 // @TC-101-02: Feed store — real API (belive-gateway) + optimistic updates
 
 import { create } from 'zustand';
-import type { FeedPost } from './feed.types';
+import type { FeedPost, FeedComment } from './feed.types';
 import { loadLikes, saveLike } from './feed.persistence';
 import { useUserProfileStore } from '../../stores/user-profile.store';
 
@@ -36,6 +36,12 @@ interface FeedState {
   setComposerOpen: (open: boolean) => void;
   voteSubmission: (postId: string, submissionId: string) => void;
   closeBattle: (postId: string) => void;
+  // TC-108-04: Comments
+  comments: Record<string, FeedComment[]>;
+  commentsStatus: Record<string, 'idle' | 'loading' | 'ready' | 'error'>;
+  fetchComments: (postId: string) => Promise<void>;
+  createComment: (postId: string, text: string) => Promise<void>;
+  deleteComment: (postId: string, commentId: string) => Promise<void>;
 }
 
 function mapPost(p: any): FeedPost {
@@ -74,6 +80,8 @@ export const useFeedStore = create<FeedState>((set, get) => ({
   activePostId: null,
   composerOpen: false,
   _mocked: false,
+  comments: {},
+  commentsStatus: {},
   editingPost: null,
 
   fetchFeed: async () => {
@@ -272,6 +280,125 @@ export const useFeedStore = create<FeedState>((set, get) => ({
   setComposerOpen: (open) => set({ composerOpen: open }),
 
   setEditingPost: (post) => set({ editingPost: post }),
+
+  // ─── TC-108-04: Comments actions ───
+
+  fetchComments: async (postId) => {
+    if (get().commentsStatus[postId] === 'loading') return;
+    set(s => ({ commentsStatus: { ...s.commentsStatus, [postId]: 'loading' } }));
+    try {
+      const res = await fetch(`${FEED_API}/api/feed/posts/${postId}/comments`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const comments = (data.comments || []).slice().reverse();
+      set(s => ({
+        comments: { ...s.comments, [postId]: comments },
+        commentsStatus: { ...s.commentsStatus, [postId]: 'ready' },
+      }));
+    } catch (err) {
+      console.error('[feed.store] fetchComments error:', err);
+      set(s => ({ commentsStatus: { ...s.commentsStatus, [postId]: 'error' } }));
+    }
+  },
+
+  createComment: async (postId, text) => {
+    const token = useUserProfileStore.getState().currentUser?.authToken;
+    if (!token) {
+      console.warn('[feed.store] createComment: no authToken');
+      return;
+    }
+
+    const user = useUserProfileStore.getState().currentUser;
+    const tempId = `temp-${Date.now()}`;
+    const now = new Date().toISOString();
+
+    const tempComment: FeedComment = {
+      id: tempId, postId,
+      authorId: user?.id || '',
+      authorName: user?.name || 'Пользователь',
+      authorAvatarUrl: user?.avatarUrl || '',
+      text, createdAt: now,
+    };
+
+    set(s => ({
+      comments: {
+        ...s.comments,
+        [postId]: [...(s.comments[postId] || []), tempComment],
+      },
+      posts: s.posts.map(p =>
+        p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p
+      ),
+    }));
+
+    try {
+      const res = await fetch(`${FEED_API}/api/feed/posts/${postId}/comments`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const created = await res.json();
+      set(s => ({
+        comments: {
+          ...s.comments,
+          [postId]: (s.comments[postId] || []).map(c =>
+            c.id === tempId ? created : c
+          ),
+        },
+      }));
+    } catch (err) {
+      console.error('[feed.store] createComment error:', err);
+      set(s => ({
+        comments: {
+          ...s.comments,
+          [postId]: (s.comments[postId] || []).filter(c => c.id !== tempId),
+        },
+        posts: s.posts.map(p =>
+          p.id === postId ? { ...p, commentsCount: Math.max(0, p.commentsCount - 1) } : p
+        ),
+      }));
+    }
+  },
+
+  deleteComment: async (postId, commentId) => {
+    const token = useUserProfileStore.getState().currentUser?.authToken;
+    if (!token) {
+      console.warn('[feed.store] deleteComment: no authToken');
+      return;
+    }
+
+    const deletedComment = get().comments[postId]?.find(c => c.id === commentId);
+    if (!deletedComment) return;
+
+    set(s => ({
+      comments: {
+        ...s.comments,
+        [postId]: (s.comments[postId] || []).filter(c => c.id !== commentId),
+      },
+      posts: s.posts.map(p =>
+        p.id === postId ? { ...p, commentsCount: Math.max(0, p.commentsCount - 1) } : p
+      ),
+    }));
+
+    try {
+      const res = await fetch(`${FEED_API}/api/feed/posts/${postId}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      console.error('[feed.store] deleteComment error:', err);
+      set(s => ({
+        comments: {
+          ...s.comments,
+          [postId]: [...(s.comments[postId] || []), deletedComment],
+        },
+        posts: s.posts.map(p =>
+          p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p
+        ),
+      }));
+    }
+  },
 
   editPost: async (postId, patch) => {
     const token = useUserProfileStore.getState().currentUser?.authToken;

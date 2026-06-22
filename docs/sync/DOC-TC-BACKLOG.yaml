@@ -43,6 +43,28 @@ backlog:
     found_date: 2026-06-16
     blocked_by: null
 
+  - id: "DOC-TC-006"
+    type: CREATE
+    target: "docs/domain/feed.md"
+    description: "Create domain documentation for social feed: posts, likes, comments, moderation, D1 schema, API, auth, security."
+    priority: HIGH
+    status: DONE
+    found_by: "009-VERDICT (108-Comments FAIL)"
+    found_date: 2026-06-22
+    blocked_by: null
+    completed_by: "TC-108-DOC-01"
+
+  - id: "DOC-TC-007"
+    type: UPDATE
+    target: "000-FULL-BASE.md"
+    description: "Update lines 199, 927: feed.store.ts is no longer a stub — real gateway-backed store with posts/likes/comments."
+    priority: HIGH
+    status: DONE
+    found_by: "009-VERDICT (108-Comments FAIL)"
+    found_date: 2026-06-22
+    blocked_by: null
+    completed_by: "TC-108-DOC-02"
+
   - id: "DOC-TC-005"
     type: UPDATE
     target: "docs/architecture/track-loading-pipeline.md"

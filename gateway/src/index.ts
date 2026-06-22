@@ -1,4 +1,4 @@
-import { handleGetFeedPosts, handleCreateFeedPost, handleToggleLike, handleDeleteFeedPost, handleRestoreFeedPost, handleUpdateFeedPost } from './handlers/feed';
+import { handleGetFeedPosts, handleCreateFeedPost, handleToggleLike, handleDeleteFeedPost, handleRestoreFeedPost, handleUpdateFeedPost, handleGetComments, handleCreateComment, handleDeleteComment } from './handlers/feed';
 import { getAuthCtx } from './handlers/auth';
 import { getUserRole, assignRole, hasExistingFounder } from './handlers/roles';
 
@@ -463,6 +463,40 @@ export default {
         return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
       }
       return handleToggleLike(request, env, auth, feedHeaders);
+    }
+
+    // ─── GET /api/feed/posts/:postId/comments (TC-108-03) ───
+    if (request.method === 'GET' && /^\/api\/feed\/posts\/[^/]+\/comments$/.test(url.pathname)) {
+      const postId = url.pathname.split('/')[4];
+      return handleGetComments(request, env, postId, feedHeaders);
+    }
+
+    // ─── POST /api/feed/posts/:postId/comments (TC-108-03) ───
+    // JWT + rate limit (5 req/min/IP)
+    if (request.method === 'POST' && /^\/api\/feed\/posts\/[^/]+\/comments$/.test(url.pathname)) {
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      // Rate limit: 5 req/min/IP — protects D1 write quota (002 attack #4)
+      const allowed = await checkRateLimit(env.RATE_LIMIT_KV, ip, 5);
+      if (!allowed) {
+        return jsonResponse({ error: 'Too many requests' }, 429, origin, allowedOrigins);
+      }
+      const postId = url.pathname.split('/')[4];
+      return handleCreateComment(request, env, auth, postId, feedHeaders);
+    }
+
+    // ─── DELETE /api/feed/posts/:postId/comments/:commentId (TC-108-03) ───
+    if (request.method === 'DELETE' && /^\/api\/feed\/posts\/[^/]+\/comments\/[^/]+$/.test(url.pathname)) {
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      const parts = url.pathname.split('/');
+      const postId = parts[4];
+      const commentId = parts[6];
+      return handleDeleteComment(env, auth, postId, commentId, feedHeaders);
     }
 
     // ─── DELETE /api/feed/posts/:postId (TC-107-03) ───

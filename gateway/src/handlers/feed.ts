@@ -101,16 +101,25 @@ export async function handleCreateFeedPost(
   corsHeaders: Record<string, string>
 ): Promise<Response> {
   try {
-    // Body size check (002 attack #4)
-    const contentLength = parseInt(request.headers.get('Content-Length') || '0');
-    if (contentLength > 1_000_000) {
+    // Body size check (TC-108-07: chunked-safe via request.text(), not Content-Length)
+    // Content-Length header absent with Transfer-Encoding: chunked → bypass fix
+    const rawText = await request.text();
+    if (rawText.length > 1_000_000) {
       return new Response(
         JSON.stringify({ error: 'Request too large (max 1MB)' }),
         { status: 413, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
-    const body = await request.json() as any;
+    let body: any;
+    try {
+      body = JSON.parse(rawText);
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
 
     // Type validation (002 attack #9)
     if (!body.type || !VALID_TYPES.includes(body.type)) {
@@ -463,15 +472,23 @@ export async function handleUpdateFeedPost(
   corsHeaders: Record<string, string>
 ): Promise<Response> {
   try {
-    // 1. Parse body + content-length check
-    const contentLength = parseInt(request.headers.get('Content-Length') || '0');
-    if (contentLength > 1_000_000) {
+    // 1. Parse body + size check (TC-108-07: chunked-safe via request.text())
+    const rawText = await request.text();
+    if (rawText.length > 1_000_000) {
       return new Response(
         JSON.stringify({ error: 'Request too large (max 1MB)' }),
         { status: 413, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
-    const body = await request.json() as Record<string, unknown>;
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(rawText) as Record<string, unknown>;
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
 
     // 2. Whitelist: ТОЛЬКО эти поля разрешены (C1 009)
     const ALLOWED_FIELDS = ['title', 'text', 'tags', 'event_date', 'event_price', 'event_location'] as const;
@@ -612,6 +629,230 @@ export async function handleUpdateFeedPost(
     console.error('[feed] PATCH /api/feed/posts/:id error:', err);
     return new Response(
       JSON.stringify({ error: 'Failed to update post' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  }
+}
+
+// ─── GET /api/feed/posts/:postId/comments (TC-108-02) ───
+// Public read. Cursor-based DESC (newest first), same pattern as posts.
+export async function handleGetComments(
+  request: Request,
+  env: Env,
+  postId: string,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  try {
+    const url = new URL(request.url);
+    const limit = Math.min(
+      Math.max(parseInt(url.searchParams.get('limit') || '50'), 1),
+      100
+    );
+    const cursor_ts = url.searchParams.get('cursor_ts');
+    const cursor_id = url.searchParams.get('cursor_id');
+
+    let query: string;
+    let params: unknown[];
+
+    if (cursor_ts && cursor_id) {
+      query = `
+        SELECT id, post_id, author_id, author_name, author_avatar, text, created_at
+        FROM feed_comments
+        WHERE post_id = ?
+          AND (created_at < ? OR (created_at = ? AND id < ?))
+        ORDER BY created_at DESC, id DESC
+        LIMIT ?
+      `;
+      params = [postId, cursor_ts, cursor_ts, cursor_id, limit + 1];
+    } else {
+      query = `
+        SELECT id, post_id, author_id, author_name, author_avatar, text, created_at
+        FROM feed_comments
+        WHERE post_id = ?
+        ORDER BY created_at DESC, id DESC
+        LIMIT ?
+      `;
+      params = [postId, limit + 1];
+    }
+
+    const { results } = await (env.FEED_DB.prepare(query) as any)
+      .bind(...params)
+      .all();
+
+    const hasMore = results.length > limit;
+    const comments = hasMore ? results.slice(0, limit) : results;
+
+    const parsed = comments.map((c: any) => ({
+      id: c.id,
+      postId: c.post_id,
+      authorId: c.author_id,
+      authorName: c.author_name,
+      authorAvatarUrl: c.author_avatar || '',
+      text: c.text,
+      createdAt: c.created_at,
+    }));
+
+    const last = parsed[parsed.length - 1];
+    const nextCursor = hasMore && last
+      ? { cursor_ts: last.createdAt, cursor_id: last.id }
+      : null;
+
+    return new Response(
+      JSON.stringify({ comments: parsed, nextCursor, hasMore }),
+      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  } catch (err: any) {
+    console.error('[feed] GET comments error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Failed to fetch comments' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  }
+}
+
+// ─── POST /api/feed/posts/:postId/comments (TC-108-02) ───
+// JWT required. Atomic batch: INSERT...WHERE EXISTS + UPDATE...AND status='published'.
+export async function handleCreateComment(
+  request: Request,
+  env: Env,
+  auth: AuthCtx,
+  postId: string,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  try {
+    const rawText = await request.text();
+    if (rawText.length > 10_000) {
+      return new Response(
+        JSON.stringify({ error: 'Request too large (max 10000 characters)' }),
+        { status: 413, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    let body: any;
+    try {
+      body = JSON.parse(rawText);
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    if (!body.text || typeof body.text !== 'string' || !body.text.trim()) {
+      return new Response(
+        JSON.stringify({ error: 'text is required' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+    if (body.text.length > 2000) {
+      return new Response(
+        JSON.stringify({ error: 'text max 2000 characters' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    const commentId = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const insertComment = env.FEED_DB.prepare(
+      `INSERT INTO feed_comments (id, post_id, author_id, author_name, author_avatar, text, created_at)
+       SELECT ?, ?, ?, ?, ?, ?, ?
+       WHERE EXISTS (SELECT 1 FROM feed_posts WHERE id = ? AND status = 'published')`
+    ).bind(
+      commentId, postId,
+      auth.sub, auth.name || 'Пользователь', auth.picture || '',
+      body.text.slice(0, 2000), now, postId
+    );
+
+    const updateCounter = env.FEED_DB.prepare(
+      `UPDATE feed_posts SET comments_count = comments_count + 1 WHERE id = ? AND status = 'published'`
+    ).bind(postId);
+
+    const batch = await env.FEED_DB.batch([insertComment, updateCounter]);
+
+    // 009 FIX: if no rows inserted → post not found or deleted
+    if (batch[0].meta.changes === 0) {
+      const post = await (env.FEED_DB.prepare(
+        'SELECT status FROM feed_posts WHERE id = ?'
+      ) as any).bind(postId).first<{ status: string }>();
+
+      if (!post) {
+        return new Response(
+          JSON.stringify({ error: 'Post not found' }),
+          { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+      return new Response(
+        JSON.stringify({ error: 'Post is not available' }),
+        { status: 410, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({
+        id: commentId, postId,
+        authorId: auth.sub, authorName: auth.name || 'Пользователь',
+        authorAvatarUrl: auth.picture || '', text: body.text.slice(0, 2000), createdAt: now,
+      }),
+      { status: 201, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  } catch (err: any) {
+    console.error('[feed] POST comment error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Failed to create comment' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  }
+}
+
+// ─── DELETE /api/feed/posts/:postId/comments/:commentId (TC-108-02) ───
+export async function handleDeleteComment(
+  env: Env,
+  auth: AuthCtx,
+  postId: string,
+  commentId: string,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  try {
+    const comment = await (env.FEED_DB.prepare(
+      'SELECT id, author_id FROM feed_comments WHERE id = ? AND post_id = ?'
+    ) as any).bind(commentId, postId).first<{ id: string; author_id: string }>();
+
+    if (!comment) {
+      return new Response(
+        JSON.stringify({ error: 'Comment not found' }),
+        { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    if (comment.author_id !== auth.sub) {
+      const role = await getUserRole(env.FEED_DB, auth.provider, auth.providerSub);
+      if (role !== 'founder') {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden' }),
+          { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+    }
+
+    const deleteComment = env.FEED_DB.prepare(
+      'DELETE FROM feed_comments WHERE id = ? AND post_id = ?'
+    ).bind(commentId, postId);
+
+    const updateCounter = env.FEED_DB.prepare(
+      `UPDATE feed_posts SET comments_count = MAX(0, comments_count - 1) WHERE id = ? AND status = 'published'`
+    ).bind(postId);
+
+    await env.FEED_DB.batch([deleteComment, updateCounter]);
+
+    return new Response(
+      JSON.stringify({ success: true }),
+      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  } catch (err: any) {
+    console.error('[feed] DELETE comment error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Failed to delete comment' }),
       { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }

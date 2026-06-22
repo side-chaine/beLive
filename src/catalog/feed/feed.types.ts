@@ -98,6 +98,17 @@ export interface FeedPost {
   sourceType?: 'manual' | 'agent' | 'tg-bot';
 }
 
+// ─── FeedComment (TC-108-01) ───
+export interface FeedComment {
+  id: string;
+  postId: string;
+  authorId: string;
+  authorName: string;
+  authorAvatarUrl: string;
+  text: string;
+  createdAt: string;  // ISO string from D1
+}
+
 // ─── Helpers ───
 export function getFeedCoverUrl(r2Key?: string | null): string | undefined {
   if (!r2Key) return undefined;

@@ -34,6 +34,7 @@
 | [track-meta-pipeline](architecture/track-meta-pipeline.md) | Track metadata pipeline |
 | [w11-visual-boot-theming](architecture/w11-visual-boot-theming.md) | Visual boot + cover theming |
 | [zip-pipeline](architecture/zip-pipeline.md) | ZIP export/import roundtrip |
+| [feed](domain/feed.md) | Social Feed — posts, likes, comments, moderation | TC-108 |
 
 > **Superseded:** `architecture-map-2.2.md` (merged) · `interaction-schema-2.2.md` (merged) | See `docs/architecture/`
 

@@ -100,11 +100,60 @@ services:
     health: 85
     note: "downloadTgTrack extracted. XHR→fetch+stream. Ghost error/done phases."
 
+  - path: "docs/domain/feed.md"
+    description: Social Feed domain documentation (posts, likes, comments, moderation)
+    status: CREATED
+    last_sync: 2026-06-22
+    health: 95
+    note: "Created TC-108. Covers D1 schema, API endpoints, auth model, security measures, frontend architecture."
+
+  - path: "gateway/src/handlers/feed.ts"
+    description: Social feed handlers (posts, likes, comments, moderation)
+    status: UPDATED
+    last_tc: "TC-108-02/TC-108-07"
+    health: 95
+    note: "Added 3 comment handlers (atomic batch, status check, double-key). Fixed Content-Length bypass (chunked-safe)."
+
+  - path: "gateway/src/index.ts"
+    description: Gateway router — feed + comments routes
+    status: UPDATED
+    last_tc: "TC-108-03"
+    health: 95
+    note: "Added 3 comment routes (GET/POST/DELETE) with rate limit (5/min). Route order: comments before post DELETE."
+
+  - path: "src/catalog/feed/feed.store.ts"
+    description: Feed Zustand store — posts + comments
+    status: UPDATED
+    last_tc: "TC-108-04"
+    health: 95
+    note: "Added comments state + 3 actions (fetchComments, createComment, deleteComment) with optimistic updates."
+
+  - path: "src/catalog/feed/CommentsPanel.tsx"
+    description: Comments panel — full implementation (was stub)
+    status: UPDATED
+    last_tc: "TC-108-05"
+    health: 95
+    note: "Rewritten from stub to full comments UI. XSS guard: {comment.text} only."
+
+  - path: "src/catalog/feed/feed.types.ts"
+    description: Feed types (FeedPost, FeedComment)
+    status: UPDATED
+    last_tc: "TC-108-01"
+    health: 95
+    note: "Added FeedComment interface."
+
+  - path: "src/catalog/feed/FeedLayout.css"
+    description: Feed layout styles
+    status: UPDATED
+    last_tc: "TC-108-06"
+    health: 95
+    note: "Added .cp-list/.cp-item/.cp-form styles for comments panel."
+
 registry_meta:
-  version: "1.1"
-  last_full_scan: 2026-06-17
-  total_docs: 9
+  version: "1.2"
+  last_full_scan: 2026-06-22
+  total_docs: 10
   ok: 1
-  updated: 5
+  updated: 11
   stale: 3
-  created: 1
+  created: 2
