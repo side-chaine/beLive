@@ -1,6 +1,7 @@
 import { handleGetFeedPosts, handleCreateFeedPost, handleToggleLike, handleDeleteFeedPost, handleRestoreFeedPost, handleUpdateFeedPost, handleGetComments, handleCreateComment, handleDeleteComment } from './handlers/feed';
 import { getAuthCtx } from './handlers/auth';
 import { getUserRole, assignRole, hasExistingFounder } from './handlers/roles';
+import { runMigrations } from '../migrations/_runner';
 
 interface Env {
   OPENROUTER_API_KEY: string;
@@ -159,8 +160,19 @@ async function maybeInjectOperatorPrompt(env: Env, body: any) {
 // @TC-103-01: replaced by JWT-based getAuthCtx()
 
 
+// TC-109-01: Lazy migration runner — runs once per cold start
+let _migrationsRan = false;
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    // Run pending migrations on first request (cold start)
+    if (!_migrationsRan) {
+      _migrationsRan = true;
+      ctx.waitUntil(runMigrations(env.FEED_DB).catch(err => {
+        console.error('[migrations] Failed to run migrations:', err);
+      }));
+    }
+
     const url = new URL(request.url);
     const origin = request.headers.get('Origin') || '';
     // IP fallback for dev
