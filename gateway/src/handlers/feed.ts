@@ -656,9 +656,9 @@ export async function handleGetComments(
 
     if (cursor_ts && cursor_id) {
       query = `
-        SELECT id, post_id, author_id, author_name, author_avatar, text, created_at
+        SELECT id, post_id, author_id, author_name, author_avatar, text, parent_id, timecode_pin, feedback_tag, created_at
         FROM feed_comments
-        WHERE post_id = ?
+        WHERE post_id = ? AND parent_id IS NULL
           AND (created_at < ? OR (created_at = ? AND id < ?))
         ORDER BY created_at DESC, id DESC
         LIMIT ?
@@ -666,9 +666,9 @@ export async function handleGetComments(
       params = [postId, cursor_ts, cursor_ts, cursor_id, limit + 1];
     } else {
       query = `
-        SELECT id, post_id, author_id, author_name, author_avatar, text, created_at
+        SELECT id, post_id, author_id, author_name, author_avatar, text, parent_id, timecode_pin, feedback_tag, created_at
         FROM feed_comments
-        WHERE post_id = ?
+        WHERE post_id = ? AND parent_id IS NULL
         ORDER BY created_at DESC, id DESC
         LIMIT ?
       `;
@@ -689,6 +689,9 @@ export async function handleGetComments(
       authorName: c.author_name,
       authorAvatarUrl: c.author_avatar || '',
       text: c.text,
+      parentId: c.parent_id || null,
+      timecodePin: c.timecode_pin || null,
+      feedbackTag: c.feedback_tag || null,
       createdAt: c.created_at,
     }));
 
@@ -710,7 +713,80 @@ export async function handleGetComments(
   }
 }
 
-// ─── POST /api/feed/posts/:postId/comments (TC-108-02) ───
+// ─── GET /api/feed/posts/:postId/comments/:commentId/replies (TC-109-07) ───
+// Returns replies to a specific comment. `?newer_than=<ts>` for polling.
+export async function handleListReplies(
+  request: Request,
+  env: Env,
+  postId: string,
+  commentId: string,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  try {
+    const url = new URL(request.url);
+    const limit = Math.min(
+      Math.max(parseInt(url.searchParams.get('limit') || '50'), 1),
+      100
+    );
+    const newer_than = url.searchParams.get('newer_than');
+
+    let query: string;
+    let params: unknown[];
+
+    if (newer_than) {
+      query = `
+        SELECT id, post_id, author_id, author_name, author_avatar, text, parent_id, timecode_pin, feedback_tag, created_at
+        FROM feed_comments
+        WHERE post_id = ? AND parent_id = ? AND created_at > ?
+        ORDER BY created_at ASC, id ASC
+        LIMIT ?
+      `;
+      params = [postId, commentId, newer_than, limit + 1];
+    } else {
+      query = `
+        SELECT id, post_id, author_id, author_name, author_avatar, text, parent_id, timecode_pin, feedback_tag, created_at
+        FROM feed_comments
+        WHERE post_id = ? AND parent_id = ?
+        ORDER BY created_at ASC, id ASC
+        LIMIT ?
+      `;
+      params = [postId, commentId, limit + 1];
+    }
+
+    const { results } = await (env.FEED_DB.prepare(query) as any)
+      .bind(...params)
+      .all();
+
+    const hasMore = results.length > limit;
+    const replies = hasMore ? results.slice(0, limit) : results;
+
+    const parsed = replies.map((c: any) => ({
+      id: c.id,
+      postId: c.post_id,
+      authorId: c.author_id,
+      authorName: c.author_name,
+      authorAvatarUrl: c.author_avatar || '',
+      text: c.text,
+      parentId: c.parent_id,
+      timecodePin: c.timecode_pin || null,
+      feedbackTag: c.feedback_tag || null,
+      createdAt: c.created_at,
+    }));
+
+    return new Response(
+      JSON.stringify({ replies: parsed, hasMore }),
+      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  } catch (err: any) {
+    console.error('[feed] GET replies error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Failed to fetch replies' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  }
+}
+
+// ─── POST /api/feed/posts/:postId/comments (TC-108-02 / TC-109-08) ───
 // JWT required. Atomic batch: INSERT...WHERE EXISTS + UPDATE...AND status='published'.
 export async function handleCreateComment(
   request: Request,
@@ -751,17 +827,44 @@ export async function handleCreateComment(
       );
     }
 
+    // Parse optional Wave 2 fields
+    const parent_id = body.parentId || body.parent_id || null;
+    const timecode_pin = body.timecodePin || body.timecode_pin || null;
+    const feedback_tag = body.feedbackTag || body.feedback_tag || null;
+
+    // Validate parent_id exists and belongs to this post
+    if (parent_id) {
+      const parentExists = await (env.FEED_DB.prepare(
+        'SELECT 1 FROM feed_comments WHERE id = ? AND post_id = ? AND parent_id IS NULL'
+      ) as any).bind(parent_id, postId).first();
+      if (!parentExists) {
+        return new Response(
+          JSON.stringify({ error: 'parent comment not found or not a top-level comment' }),
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+    }
+
+    // Validate feedback_tag
+    const VALID_TAGS = ['vocals', 'mix', 'lyrics', 'arrangement', 'vibe'] as const;
+    if (feedback_tag && !VALID_TAGS.includes(feedback_tag as any)) {
+      return new Response(
+        JSON.stringify({ error: `feedback_tag must be one of: ${VALID_TAGS.join(', ')}` }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
     const commentId = crypto.randomUUID();
     const now = new Date().toISOString();
 
     const insertComment = env.FEED_DB.prepare(
-      `INSERT INTO feed_comments (id, post_id, author_id, author_name, author_avatar, text, created_at)
-       SELECT ?, ?, ?, ?, ?, ?, ?
+      `INSERT INTO feed_comments (id, post_id, author_id, author_name, author_avatar, text, parent_id, timecode_pin, feedback_tag, created_at)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
        WHERE EXISTS (SELECT 1 FROM feed_posts WHERE id = ? AND status = 'published')`
     ).bind(
       commentId, postId,
       auth.sub, auth.name || 'Пользователь', auth.picture || '',
-      body.text.slice(0, 2000), now, postId
+      body.text.slice(0, 2000), parent_id, timecode_pin, feedback_tag, now, postId
     );
 
     const updateCounter = env.FEED_DB.prepare(
@@ -792,7 +895,9 @@ export async function handleCreateComment(
       JSON.stringify({
         id: commentId, postId,
         authorId: auth.sub, authorName: auth.name || 'Пользователь',
-        authorAvatarUrl: auth.picture || '', text: body.text.slice(0, 2000), createdAt: now,
+        authorAvatarUrl: auth.picture || '', text: body.text.slice(0, 2000),
+        parentId: parent_id, timecodePin: timecode_pin, feedbackTag: feedback_tag,
+        createdAt: now,
       }),
       { status: 201, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );

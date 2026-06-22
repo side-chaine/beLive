@@ -1,7 +1,9 @@
-import { handleGetFeedPosts, handleCreateFeedPost, handleToggleLike, handleDeleteFeedPost, handleRestoreFeedPost, handleUpdateFeedPost, handleGetComments, handleCreateComment, handleDeleteComment } from './handlers/feed';
+import { handleGetFeedPosts, handleCreateFeedPost, handleToggleLike, handleDeleteFeedPost, handleRestoreFeedPost, handleUpdateFeedPost, handleGetComments, handleCreateComment, handleDeleteComment, handleListReplies } from './handlers/feed';
 import { getAuthCtx } from './handlers/auth';
 import { getUserRole, assignRole, hasExistingFounder } from './handlers/roles';
 import { runMigrations } from '../migrations/_runner';
+import { handleToggleReaction, handleGetReactions } from './handlers/reactions';
+import { handleListNotifications, handleMarkNotificationRead } from './handlers/notifications';
 
 interface Env {
   OPENROUTER_API_KEY: string;
@@ -509,6 +511,46 @@ export default {
       const postId = parts[4];
       const commentId = parts[6];
       return handleDeleteComment(env, auth, postId, commentId, feedHeaders);
+    }
+
+    // ─── GET /api/feed/posts/:postId/comments/:commentId/replies (TC-109-07) ───
+    if (request.method === 'GET' && /^\/api\/feed\/posts\/[^/]+\/comments\/[^/]+\/replies$/.test(url.pathname)) {
+      const parts = url.pathname.split('/');
+      const postId = parts[4];
+      const commentId = parts[6];
+      return handleListReplies(request, env, postId, commentId, feedHeaders);
+    }
+
+    // ─── POST /api/feed/reactions (TC-109-09) ───
+    if (request.method === 'POST' && url.pathname === '/api/feed/reactions') {
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      return handleToggleReaction(request, env, auth, feedHeaders);
+    }
+
+    // ─── GET /api/feed/reactions (TC-109-09) ───
+    if (request.method === 'GET' && url.pathname === '/api/feed/reactions') {
+      return handleGetReactions(request, env, feedHeaders);
+    }
+
+    // ─── GET /api/feed/notifications (TC-109-10) ───
+    if (request.method === 'GET' && url.pathname === '/api/feed/notifications') {
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      return handleListNotifications(request, env, auth, feedHeaders);
+    }
+
+    // ─── POST /api/feed/notifications/read (TC-109-10) ───
+    if (request.method === 'POST' && url.pathname === '/api/feed/notifications/read') {
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      return handleMarkNotificationRead(request, env, auth, feedHeaders);
     }
 
     // ─── DELETE /api/feed/posts/:postId (TC-107-03) ───
