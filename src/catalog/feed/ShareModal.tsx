@@ -32,17 +32,6 @@ export function ShareModal({ post, onClose }: ShareModalProps) {
     copyToClipboard('Ссылка скопирована — вставь в Instagram');
   }, [copyToClipboard]);
 
-  const handleNativeShare = useCallback(async () => {
-    try {
-      await navigator.share({ title, url });
-      onClose();
-    } catch (e: any) {
-      if (e.name !== 'AbortError') {
-        showToast('Ошибка при открытии', 'error');
-      }
-    }
-  }, [title, url, onClose, showToast]);
-
   const handleSocial = (socialUrl: string) => {
     window.open(socialUrl, '_blank', 'noopener,noreferrer');
   };
@@ -100,12 +89,6 @@ export function ShareModal({ post, onClose }: ShareModalProps) {
         <button className="share-copy-btn" onClick={() => copyToClipboard('Ссылка скопирована')}>
           Копировать ссылку
         </button>
-
-        {typeof navigator.share !== 'undefined' && (
-          <button className="share-more-btn" onClick={handleNativeShare}>
-            Ещё...
-          </button>
-        )}
 
         {toast && (
           <div className={`share-toast share-toast--${toast.type}`}>
