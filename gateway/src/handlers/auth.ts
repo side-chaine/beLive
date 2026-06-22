@@ -71,7 +71,7 @@ export async function verifyJWT(token: string, secret: string): Promise<AuthCtx 
       roleHint,
       email: payload.email,
       name: payload.name,
-      picture: payload.picture,
+      picture: payload.picture || payload.avatar,
       exp: payload.exp,
     };
   } catch {
