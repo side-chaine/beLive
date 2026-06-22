@@ -728,3 +728,72 @@
 .feed-confirm-danger:hover {
   background: rgba(239, 68, 68, 0.25);
 }
+
+/* ─── Inline Share Circles (TC-27) ─── */
+.fpc--share-open:hover { transform: none !important; }
+
+.share-circles {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 12px 4px 4px;
+  animation: shareIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  margin: 0 -2px;
+}
+
+@keyframes shareIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.share-circle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  animation: shareIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+.share-circle-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1),
+              background 0.2s, border-color 0.2s;
+}
+
+.share-circle:hover .share-circle-icon {
+  transform: scale(1.14);
+}
+
+.share-circle:nth-child(1):hover .share-circle-icon { background: rgba(34,158,217,0.35); border-color: rgba(34,158,217,0.4); }
+.share-circle:nth-child(2):hover .share-circle-icon { background: rgba(0,119,255,0.35);  border-color: rgba(0,119,255,0.4); }
+.share-circle:nth-child(3):hover .share-circle-icon { background: rgba(37,211,102,0.35); border-color: rgba(37,211,102,0.4); }
+.share-circle:nth-child(4):hover .share-circle-icon { background: rgba(255,255,255,0.12);border-color: rgba(255,255,255,0.2); }
+.share-circle:nth-child(5):hover .share-circle-icon { background: rgba(193,53,132,0.35); border-color: rgba(193,53,132,0.4); }
+.share-circle:nth-child(6):hover .share-circle-icon { background: rgba(255,140,0,0.25);  border-color: rgba(255,140,0,0.4); }
+
+.share-circle-label {
+  font-size: 10px;
+  color: rgba(255,255,255,0.45);
+  font-weight: 500;
+  white-space: nowrap;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.share-circle-icon svg {
+  width: 20px;
+  height: 20px;
+}
