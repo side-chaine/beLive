@@ -60,6 +60,7 @@ import { useUIStore } from './stores/ui.store';
 import { useUserProfileStore } from './stores/user-profile.store';
 import { mvsepPollingService } from './services/mvsep-polling.service';
 import { FeedScreen } from './feed/FeedScreen';
+import { useFeedStore } from './catalog/feed/feed.store';
 export default function App() {
   const mode = useModeStore((s) => s.mode);
   const syncOpen = useSyncStore((s) => s.open);
@@ -170,6 +171,34 @@ export default function App() {
       }
       openedCatalogRef.current = true;
     }
+  }, [surface]);
+
+  // TC-107-14: Deep-link ?post= — scroll to post on feed
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const postId = params.get('post');
+    if (!postId || surface !== 'app') return;
+
+    const timer = setTimeout(() => {
+      const { posts, fetchFeed } = useFeedStore.getState();
+      if (posts.length === 0) {
+        fetchFeed().then(() => {
+          const found = useFeedStore.getState().posts.find(p => p.id === postId);
+          if (!found) {
+            console.warn(`[deep-link] Post ${postId} not found`);
+          }
+        });
+      } else {
+        const found = posts.find(p => p.id === postId);
+        if (!found) {
+          console.warn(`[deep-link] Post ${postId} not found or deleted`);
+        }
+      }
+      const feedEl = document.querySelector('.aurora-stage');
+      feedEl?.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [surface]);
 
   if (!authChecked) return <LoadingSplash />;

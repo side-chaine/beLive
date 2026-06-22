@@ -146,7 +146,7 @@ export default defineConfig({
           },
           // @TC-088: Aurora Stage feed API cache
           {
-            urlPattern: /^https:\/\/app\.mybelive\.com\/api\/feed/i,
+            urlPattern: /^https:\/\/belive-gateway\.nikitosss007\.workers\.dev\/api\/feed/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'feed-cache',

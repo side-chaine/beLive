@@ -183,23 +183,6 @@ export default {
       return jsonResponse({ ok: true, edge: true, ts: Date.now(), v: 'TC-103' }, 200, origin, allowedOrigins);
     }
 
-    // Debug: HMAC diagnostic (compare keys between workers)
-    if (url.pathname === '/auth/debug-hmac') {
-      const hmac = await crypto.subtle.sign(
-        'HMAC',
-        await crypto.subtle.importKey('raw', new TextEncoder().encode(env.JWT_SECRET || ''),
-          { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']),
-        new TextEncoder().encode('diagnostic-test')
-      );
-      const bytes = Array.from(new Uint8Array(hmac));
-      const secretBytes = Array.from(new TextEncoder().encode(env.JWT_SECRET || ''));
-      return jsonResponse({
-        hmac: bytes.map(b => b.toString(16).padStart(2,'0')).join(''),
-        secretLength: (env.JWT_SECRET || '').length,
-        secretBytes: secretBytes,
-      }, 200, origin, allowedOrigins);
-    }
-
     // --- Ephemeral Token Endpoint ---
     if (request.method === 'POST' && url.pathname === '/auth/ephemeral') {
       const token = await issueEphemeral(env, ip);

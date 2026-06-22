@@ -6,6 +6,7 @@ import type { FeedPost } from './feed.types';
 import { POST_TYPE_CONFIG } from './feed.types';
 import { useFeedStore } from './feed.store';
 import { useUserProfileStore } from '../../stores/user-profile.store';
+import { ShareModal } from './ShareModal';
 
 interface Props {
   post: FeedPost;
@@ -45,11 +46,10 @@ export function FeedPostCard({ post }: Props) {
     setMenuOpen(false);
   };
 
+  const [shareOpen, setShareOpen] = useState(false);
+
   const handleShare = () => {
-    const url = `${window.location.origin}/feed?post=${post.id}`;
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(url);
-    }
+    setShareOpen(true);
     setMenuOpen(false);
   };
 
@@ -216,6 +216,12 @@ export function FeedPostCard({ post }: Props) {
           </span>
         )}
       </div>
+      {shareOpen && (
+        <ShareModal
+          post={{ id: post.id, title: post.title }}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
     </article>
   );
 }

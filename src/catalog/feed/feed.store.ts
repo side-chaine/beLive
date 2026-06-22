@@ -5,7 +5,7 @@ import type { FeedPost } from './feed.types';
 import { loadLikes, saveLike } from './feed.persistence';
 import { useUserProfileStore } from '../../stores/user-profile.store';
 
-const FEED_API = 'https://belive-gateway.nikitosss007.workers.dev';
+const FEED_API = import.meta.env.VITE_GATEWAY_URL || 'https://belive-gateway.nikitosss007.workers.dev';
 
 // ─── Auth headers helper (TC-107-04) ───
 function getAuthHeaders(): Record<string, string> {
