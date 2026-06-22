@@ -6,7 +6,6 @@ import type { FeedPost } from './feed.types';
 import { POST_TYPE_CONFIG } from './feed.types';
 import { useFeedStore } from './feed.store';
 import { useUserProfileStore } from '../../stores/user-profile.store';
-import { ShareModal } from './ShareModal';
 
 interface Props {
   post: FeedPost;
@@ -46,10 +45,25 @@ export function FeedPostCard({ post }: Props) {
     setMenuOpen(false);
   };
 
-  const [shareOpen, setShareOpen] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
-  const handleShare = () => {
-    setShareOpen(true);
+  const handleShare = async () => {
+    if (isSharing) return;
+    const shareUrl = `${window.location.origin}${import.meta.env.BASE_URL || '/'}?post=${encodeURIComponent(post.id)}`;
+    if (typeof navigator.share !== 'undefined') {
+      setIsSharing(true);
+      try {
+        await navigator.share({ title: post.title || 'beLive', url: shareUrl });
+      } catch (e: any) {
+        if (e.name !== 'AbortError') {
+          await navigator.clipboard?.writeText(shareUrl).catch(() => {});
+        }
+      } finally {
+        setIsSharing(false);
+      }
+    } else {
+      await navigator.clipboard?.writeText(shareUrl).catch(() => {});
+    }
     setMenuOpen(false);
   };
 
@@ -216,12 +230,6 @@ export function FeedPostCard({ post }: Props) {
           </span>
         )}
       </div>
-      {shareOpen && (
-        <ShareModal
-          post={{ id: post.id, title: post.title }}
-          onClose={() => setShareOpen(false)}
-        />
-      )}
     </article>
   );
 }
