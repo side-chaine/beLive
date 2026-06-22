@@ -2,12 +2,11 @@
 // + Mini-TrackMap + battle submissions + type badge + Safari 15 fallback
 
 import { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import type { FeedPost } from './feed.types';
+import { ShareModal } from './ShareModal';
 import { POST_TYPE_CONFIG } from './feed.types';
 import { useFeedStore } from './feed.store';
 import { useUserProfileStore } from '../../stores/user-profile.store';
-import { showAppNotification } from '../../utils/notification';
 
 interface Props {
   post: FeedPost;
@@ -25,32 +24,18 @@ export function FeedPostCard({ post }: Props) {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const [sharePos, setSharePos] = useState({ top: 0, left: 0 });
   const menuRef = useRef<HTMLDivElement>(null);
-  const shareBtnRef = useRef<HTMLButtonElement>(null);
-  const shareRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!menuOpen && !shareOpen) return;
+    if (!menuOpen) return;
     const handler = (e: MouseEvent) => {
-      if (menuOpen && menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
-      }
-      if (shareOpen && shareRef.current && !shareRef.current.contains(e.target as Node)
-          && shareBtnRef.current && !shareBtnRef.current.contains(e.target as Node)) {
-        setShareOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [menuOpen, shareOpen]);
-
-  useEffect(() => {
-    if (!shareOpen) return;
-    const onScroll = () => setShareOpen(false);
-    window.addEventListener('scroll', onScroll, { once: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [shareOpen]);
+  }, [menuOpen]);
 
   const isOwner = !!(currentUser?.authToken && post.authorId === currentUser.id);
   const canEdit = isOwner;
@@ -62,15 +47,8 @@ export function FeedPostCard({ post }: Props) {
     setMenuOpen(false);
   };
 
-  const handleShareToggle = () => {
-    if (shareBtnRef.current) {
-      const rect = shareBtnRef.current.getBoundingClientRect();
-      const panelWidth = Math.min(360, window.innerWidth - 32);
-      let left = rect.right - panelWidth;
-      if (left < 16) left = 16;
-      setSharePos({ top: rect.bottom + 8, left });
-    }
-    setShareOpen(s => !s);
+  const handleShare = () => {
+    setShareOpen(true);
     setMenuOpen(false);
   };
 
@@ -109,44 +87,36 @@ export function FeedPostCard({ post }: Props) {
         >
           {cfg.emoji} {cfg.label}
         </span>
-        <div className="fpc-header-right">
+        <div className="fpc-menu-container" ref={menuRef}>
           <button
-            ref={shareBtnRef}
-            className={`fpc-share-btn${shareOpen ? ' fpc-share-btn--spinning' : ''}`}
-            onClick={handleShareToggle}
-            aria-haspopup="dialog"
-            aria-expanded={shareOpen}
-            aria-label="Поделиться"
+            className="fpc-menu-btn"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            aria-label="Меню поста"
           >
-            ↗
+            ⋮
           </button>
-          <div className="fpc-menu-container" ref={menuRef}>
-            <button
-              className="fpc-menu-btn"
-              onClick={() => { setMenuOpen(o => !o); setShareOpen(false); }}
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              aria-label="Меню поста"
-            >
-              ⋮
-            </button>
-            {menuOpen && (
-              <div className="fpc-menu-dropdown" role="menu">
-                {canEdit && (
-                  <button className="fpc-menu-item" role="menuitem" onClick={handleEdit}>
-                    <span className="fpc-menu-icon">✎</span>
-                    Редактировать
-                  </button>
-                )}
-                {canDeletePost && (
-                  <button className="fpc-menu-item fpc-menu-item--danger" role="menuitem" onClick={handleDelete}>
-                    <span className="fpc-menu-icon">✕</span>
-                    Удалить
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+          {menuOpen && (
+            <div className="fpc-menu-dropdown" role="menu">
+              {canEdit && (
+                <button className="fpc-menu-item" role="menuitem" onClick={handleEdit}>
+                  <span className="fpc-menu-icon">✎</span>
+                  Редактировать
+                </button>
+              )}
+              <button className="fpc-menu-item" role="menuitem" onClick={handleShare}>
+                <span className="fpc-menu-icon">⇱</span>
+                Поделиться
+              </button>
+              {canDeletePost && (
+                <button className="fpc-menu-item fpc-menu-item--danger" role="menuitem" onClick={handleDelete}>
+                  <span className="fpc-menu-icon">✕</span>
+                  Удалить
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -253,66 +223,11 @@ export function FeedPostCard({ post }: Props) {
         )}
       </div>
 
-      {shareOpen && createPortal(
-        <div className="fpc-share-popover" ref={shareRef}
-             style={{ top: sharePos.top, left: sharePos.left }}>
-          <div className="fpc-share-panel">
-            <div className="fpc-share-circles">
-              {/* Telegram */}
-              <a className="fpc-share-circle fpc-share-circle--tg"
-                 href={`https://t.me/share/url?url=${enc(shareUrl(post.id))}&text=${enc(post.title)}`}
-                 target="_blank" rel="noopener noreferrer"
-                 aria-label="Поделиться в Telegram">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="white"><path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-                <span className="fpc-share-circle-label">Telegram</span>
-              </a>
-              {/* VK */}
-              <a className="fpc-share-circle fpc-share-circle--vk"
-                 href={`https://vk.com/share.php?url=${enc(shareUrl(post.id))}&title=${enc(post.title)}`}
-                 target="_blank" rel="noopener noreferrer"
-                 aria-label="Поделиться во VK">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="white"><path d="M11.592 0C5.185 0 0 5.185 0 11.592c0 6.406 5.185 11.591 11.592 11.591 6.406 0 11.591-5.185 11.591-11.591C23.183 5.185 17.998 0 11.592 0zm6.842 16.908h-1.878c-.705 0-.93-.54-2.443-2.07-.694-.665-1.003-.757-1.18-.757-.246 0-.317.07-.317.74v1.815c0 .44-.127.663-1.098.663a6.811 6.811 0 01-4.287-2.64c-.899-1.25-1.599-2.555-1.868-3.308-.105-.298-.02-.47.363-.47h1.878c.415 0 .585.2.735.663.726 2.002 1.645 3.562 2.716 3.562.136 0 .212-.068.212-.55v-2.074c-.043-.937-.548-1.017-.548-1.355a.394.394 0 01.395-.375h2.617c.35 0 .47.176.47.583v3.09c0 .375.16.5.258.5.21 0 .385-.125.767-.5 1.036-1.144 1.633-2.672 1.633-2.672.098-.216.287-.374.665-.374h1.878c.476 0 .577.25.476.585-.39 1.211-2.352 3.693-2.352 3.693-.272.372-.204.56 0 .88.167.267.998 1.041 1.438 1.483.482.513.791.938.886 1.207.182.563-.137.827-.716.827z"/></svg>
-                <span className="fpc-share-circle-label">VK</span>
-              </a>
-              {/* Max */}
-              <button className="fpc-share-circle fpc-share-circle--max"
-                      onClick={() => { navigator.clipboard.writeText(shareUrl(post.id))
-                        .then(() => showAppNotification('Ссылка скопирована — вставь в Max', 'success'))
-                        .catch(() => showAppNotification('Не удалось скопировать', 'error')); }}
-                      aria-label="Поделиться в Max">
-                <span className="fpc-share-circle-symbol">M</span>
-                <span className="fpc-share-circle-label">Max</span>
-              </button>
-              {/* X */}
-              <a className="fpc-share-circle fpc-share-circle--x"
-                 href={`https://twitter.com/intent/tweet?url=${enc(shareUrl(post.id))}&text=${enc(post.title)}`}
-                 target="_blank" rel="noopener noreferrer"
-                 aria-label="Поделиться в X">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                <span className="fpc-share-circle-label">X</span>
-              </a>
-              {/* Instagram */}
-              <button className="fpc-share-circle fpc-share-circle--ig"
-                      onClick={() => { navigator.clipboard.writeText(shareUrl(post.id))
-                        .then(() => showAppNotification('Ссылка скопирована — вставь в Instagram', 'success'))
-                        .catch(() => showAppNotification('Не удалось скопировать', 'error')); }}
-                      aria-label="Поделиться в Instagram">
-                <span className="fpc-share-circle-symbol">IG</span>
-                <span className="fpc-share-circle-label">Instagram</span>
-              </button>
-              {/* Копировать */}
-              <button className="fpc-share-circle fpc-share-circle--copy"
-                      onClick={() => { navigator.clipboard.writeText(shareUrl(post.id))
-                        .then(() => showAppNotification('Ссылка скопирована', 'success'))
-                        .catch(() => showAppNotification('Не удалось скопировать', 'error')); }}
-                      aria-label="Копировать ссылку">
-                <span className="fpc-share-circle-symbol">🔗</span>
-                <span className="fpc-share-circle-label">Копировать</span>
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
+      {shareOpen && (
+        <ShareModal
+          post={{ id: post.id, title: post.title }}
+          onClose={() => setShareOpen(false)}
+        />
       )}
 
       {confirmDelete && (
@@ -347,8 +262,3 @@ function fmtEventDate(s: string): string {
     });
   } catch { return s; }
 }
-
-const shareUrl = (postId: string) =>
-  `${window.location.origin}${import.meta.env.BASE_URL || '/'}?post=${encodeURIComponent(postId)}`;
-
-const enc = (s: string) => encodeURIComponent(s);
