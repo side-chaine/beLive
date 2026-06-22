@@ -67,9 +67,16 @@ export function FeedPostCard({ post }: Props) {
     setMenuOpen(false);
   };
 
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
   const handleDelete = () => {
-    if (confirm('Удалить пост?')) deletePost(post.id);
+    setConfirmDelete(true);
     setMenuOpen(false);
+  };
+
+  const handleConfirmDelete = async () => {
+    setConfirmDelete(false);
+    await deletePost(post.id);
   };
 
   const cfg = POST_TYPE_CONFIG[post.type];
@@ -230,6 +237,18 @@ export function FeedPostCard({ post }: Props) {
           </span>
         )}
       </div>
+
+      {confirmDelete && (
+        <div className="feed-confirm-overlay" onClick={() => setConfirmDelete(false)}>
+          <div className="feed-confirm-dialog" onClick={e => e.stopPropagation()}>
+            <p>Удалить пост?</p>
+            <div className="feed-confirm-actions">
+              <button onClick={() => setConfirmDelete(false)}>Отмена</button>
+              <button className="feed-confirm-danger" onClick={handleConfirmDelete}>Удалить</button>
+            </div>
+          </div>
+        </div>
+      )}
     </article>
   );
 }
