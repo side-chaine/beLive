@@ -5,7 +5,7 @@ export interface AuthCtx {
   sub: string;           // "google:<provider_sub>"
   provider: string;      // "google"
   providerSub: string;   // raw Google sub
-  role: string;          // "founder" | "admin" | "user"
+  roleHint: string;      // ⚠️ NOT FOR AUTHORIZATION — use getUserRole(db, provider, providerSub)
   email?: string;
   name?: string;
   picture?: string;
@@ -61,14 +61,14 @@ export async function verifyJWT(token: string, secret: string): Promise<AuthCtx 
     // 4. Check issuer (must be our auth worker)
     if (payload.iss !== 'belive-auth') return null;
 
-    // 5. Resolve role
-    const role = payload.role || 'user';
+    // 5. Resolve role hint (⚠️ NOT FOR AUTHORIZATION — use getUserRole for authz)
+    const roleHint = payload.role || 'user';
 
     return {
       sub: payload.sub,
       provider: payload.provider || 'google',
       providerSub: payload.sub?.replace(/^google:/, '') || payload.sub || '',
-      role,
+      roleHint,
       email: payload.email,
       name: payload.name,
       picture: payload.picture,

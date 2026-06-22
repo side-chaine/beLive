@@ -470,6 +470,22 @@
 .fpc-close-btn:hover { background: rgba(255,107,0,0.18); }
 .fpc-closed-badge { width: 100%; text-align: center; padding: 8px; font-size: 12px; color: var(--bl-text-muted, rgba(255,255,255,0.4)); border-radius: 8px; background: rgba(255,255,255,0.03); }
 
+.fpc-delete-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  opacity: 0.6;
+  transition: opacity 0.15s, background 0.15s;
+}
+.fpc-delete-btn:hover {
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.15);
+}
+
 /* ─── PostComposer ─── */
 .pc-trigger { width: 100%; padding: 8px 16px; border-radius: 12px; border: 1px dashed var(--bl-border-default, rgba(255,255,255,0.12)); background: var(--bl-surface-raised, rgba(255,255,255,0.04)); color: var(--bl-text-muted, rgba(255,255,255,0.35)); font-size: 13px; cursor: pointer; text-align: left; margin-bottom: 12px; transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease; display: flex; align-items: center; }
 .pc-trigger:hover { border-color: #FF8C00; background: rgba(255,140,0,0.05); color: var(--bl-text-secondary, rgba(255,255,255,0.65)); }
@@ -548,3 +564,105 @@
 .feed-cover-ln--short { width: 50%; }
 .feed-cover-ln--tiny { width: 30%; height: 8px; }
 .feed-cover-ln--med { width: 65%; }
+
+/* ─── FeedPost Menu (⋮) — TC-107-11 ─── */
+.fpc-menu-container {
+  position: relative;
+  margin-left: auto;
+}
+
+.fpc-menu-btn {
+  background: none;
+  border: none;
+  color: var(--bl-text-muted, rgba(255,255,255,0.35));
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+  letter-spacing: 2px;
+}
+
+.fpc-menu-btn:hover {
+  color: var(--bl-text-secondary, rgba(255,255,255,0.65));
+  background: rgba(255,255,255,0.06);
+}
+
+.fpc-menu-btn[aria-expanded="true"] {
+  color: var(--bl-text-primary, #fff);
+  background: rgba(255,255,255,0.1);
+}
+
+.fpc-menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  min-width: 180px;
+  background: var(--bl-surface-elevated, #1a1a2e);
+  border: 1px solid var(--bl-border-default, rgba(255,255,255,0.12));
+  border-radius: 8px;
+  padding: 4px;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  animation: fpc-menu-fade 0.12s ease-out;
+}
+
+@keyframes fpc-menu-fade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fpc-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--bl-text-secondary, rgba(255,255,255,0.65));
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s, color 0.1s;
+}
+
+.fpc-menu-item:hover {
+  background: rgba(255,255,255,0.06);
+  color: var(--bl-text-primary, #fff);
+}
+
+.fpc-menu-item--danger {
+  color: var(--bl-danger, #ef4444);
+}
+
+.fpc-menu-item--danger:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.fpc-menu-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+/* ─── Edited badge ─── */
+.fpc-edited-badge {
+  display: inline;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--bl-text-muted, rgba(255,255,255,0.35));
+  margin-left: 6px;
+  font-style: italic;
+}
+
+/* ─── Hide old delete button ─── */
+.fpc-delete-btn {
+  display: none;
+}

@@ -1,9 +1,11 @@
 // @TC-098-02: FeedPostCard — универсальная карточка для 4 типов постов
 // + Mini-TrackMap + battle submissions + type badge + Safari 15 fallback
 
+import { useState, useRef, useEffect } from 'react';
 import type { FeedPost } from './feed.types';
 import { POST_TYPE_CONFIG } from './feed.types';
 import { useFeedStore } from './feed.store';
+import { useUserProfileStore } from '../../stores/user-profile.store';
 
 interface Props {
   post: FeedPost;
@@ -14,9 +16,51 @@ export function FeedPostCard({ post }: Props) {
   const voteSubmission = useFeedStore(s => s.voteSubmission);
   const closeBattle = useFeedStore(s => s.closeBattle);
   const setActivePost = useFeedStore(s => s.setActivePost);
+  const deletePost = useFeedStore(s => s.deletePost);
+  const setEditingPost = useFeedStore(s => s.setEditingPost);
+  const setComposerOpen = useFeedStore(s => s.setComposerOpen);
+  const currentUser = useUserProfileStore(s => s.currentUser);
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
+
+  const isOwner = !!(currentUser?.authToken && post.authorId === currentUser.id);
+  const canEdit = isOwner;
+  const canDeletePost = isOwner;
+
+  const handleEdit = () => {
+    setEditingPost(post);
+    setComposerOpen(true);
+    setMenuOpen(false);
+  };
+
+  const handleShare = () => {
+    const url = `${window.location.origin}/feed?post=${post.id}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url);
+    }
+    setMenuOpen(false);
+  };
+
+  const handleDelete = () => {
+    if (confirm('Удалить пост?')) deletePost(post.id);
+    setMenuOpen(false);
+  };
 
   const cfg = POST_TYPE_CONFIG[post.type];
   const timeAgo = fmtTimeAgo(post.createdAt);
+  const isEdited = !!(post.updatedAt && post.updatedAt > post.createdAt);
 
   return (
     <article className="fpc" data-type={post.type}>
@@ -37,10 +81,44 @@ export function FeedPostCard({ post }: Props) {
         >
           {cfg.emoji} {cfg.label}
         </span>
+        <div className="fpc-menu-container" ref={menuRef}>
+          <button
+            className="fpc-menu-btn"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            aria-label="Меню поста"
+          >
+            ⋮
+          </button>
+          {menuOpen && (
+            <div className="fpc-menu-dropdown" role="menu">
+              {canEdit && (
+                <button className="fpc-menu-item" role="menuitem" onClick={handleEdit}>
+                  <span className="fpc-menu-icon">✎</span>
+                  Редактировать
+                </button>
+              )}
+              <button className="fpc-menu-item" role="menuitem" onClick={handleShare}>
+                <span className="fpc-menu-icon">⇱</span>
+                Поделиться
+              </button>
+              {canDeletePost && (
+                <button className="fpc-menu-item fpc-menu-item--danger" role="menuitem" onClick={handleDelete}>
+                  <span className="fpc-menu-icon">✕</span>
+                  Удалить
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="fpc-body">
-        <h3 className="fpc-title">{post.title}</h3>
+        <h3 className="fpc-title">
+          {post.title}
+          {isEdited && <span className="fpc-edited-badge">ред.</span>}
+        </h3>
         {post.text && <p className="fpc-text">{post.text}</p>}
 
         {post.blocksData && post.blocksData.length > 0 && (

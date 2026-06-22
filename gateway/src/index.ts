@@ -1,4 +1,4 @@
-import { handleGetFeedPosts, handleCreateFeedPost, handleToggleLike } from './handlers/feed';
+import { handleGetFeedPosts, handleCreateFeedPost, handleToggleLike, handleDeleteFeedPost, handleRestoreFeedPost, handleUpdateFeedPost } from './handlers/feed';
 import { getAuthCtx } from './handlers/auth';
 import { getUserRole, assignRole, hasExistingFounder } from './handlers/roles';
 
@@ -31,7 +31,7 @@ const corsHeaders = (requestOrigin: string | null, allowedOrigins: string[]) => 
   const origin = requestOrigin && allowedOrigins.includes(requestOrigin) ? requestOrigin : allowedOrigins[0];
   return {
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, PUT, DELETE',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, PUT, PATCH, DELETE',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
 };
@@ -468,10 +468,52 @@ export default {
       return handleGetFeedPosts(request, env, feedHeaders);
     }
     if (request.method === 'POST' && url.pathname === '/api/feed/posts') {
-      return handleCreateFeedPost(request, env, feedHeaders);
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      return handleCreateFeedPost(request, env, auth, feedHeaders);
     }
     if (request.method === 'POST' && url.pathname === '/api/feed/likes') {
-      return handleToggleLike(request, env, feedHeaders);
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      return handleToggleLike(request, env, auth, feedHeaders);
+    }
+
+    // ─── DELETE /api/feed/posts/:postId (TC-107-03) ───
+    if (request.method === 'DELETE' && url.pathname.startsWith('/api/feed/posts/')) {
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      const postId = url.pathname.split('/').pop()!;
+      let body: any = null;
+      try { body = await request.json(); } catch { body = null; }
+      return handleDeleteFeedPost(env, auth, postId, feedHeaders, body);
+    }
+
+    // ─── PATCH /api/feed/posts/:postId/restore (TC-107-06) ───
+    if (request.method === 'PATCH' && /^\/api\/feed\/posts\/[^/]+\/restore$/.test(url.pathname)) {
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      const parts = url.pathname.split('/');
+      const postId = parts[4];
+      return handleRestoreFeedPost(env, auth, postId, feedHeaders);
+    }
+
+    // ─── PATCH /api/feed/posts/:postId (TC-107-08) — owner-only edit ───
+    // M2: strict regex /^\/api\/feed\/posts\/[^/]+$/ — НЕ совпадает с /restore
+    if (request.method === 'PATCH' && /^\/api\/feed\/posts\/[^/]+$/.test(url.pathname)) {
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      const postId = url.pathname.split('/').pop()!;
+      return handleUpdateFeedPost(env, auth, postId, request, feedHeaders);
     }
 
     // ─── Founder Bootstrap (TC-103-10) — one-time ───

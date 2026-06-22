@@ -94,6 +94,7 @@ export interface FeedPost {
   reactions?: { emoji: string; count: number }[];
 
   createdAt: number;
+  updatedAt?: number | null;  // TC-107-09: edit timestamp
   sourceType?: 'manual' | 'agent' | 'tg-bot';
 }
 

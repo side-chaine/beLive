@@ -1,0 +1,618 @@
+// @TC-101-01c: Feed social endpoints — handler functions
+// NOT tied to any router (itty-router or if/else). Pure (request, env, corsHeaders) => Response.
+// TC-101-01a will connect these to itty-router without rewriting.
+
+interface Env {
+  FEED_DB: D1Database;
+}
+
+import type { AuthCtx } from './auth';
+import { getUserRole } from './roles';
+
+const VALID_TYPES = ['post', 'track', 'battle', 'event'] as const;
+
+// ─── GET /api/feed/posts ───
+export async function handleGetFeedPosts(
+  request: Request,
+  env: Env,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  try {
+    const url = new URL(request.url);
+    const limit = Math.min(
+      Math.max(parseInt(url.searchParams.get('limit') || '50'), 1),
+      100
+    );
+    const cursor_ts = url.searchParams.get('cursor_ts');
+    const cursor_id = url.searchParams.get('cursor_id');
+
+    // blocks_data excluded from list for perf + security (002 attack #8)
+    const selectFields = `
+      id, author_id, author_name, author_avatar, author_type,
+      type, title, body, tags, cover_r2_key,
+      track_id, base_track_id, battle_block_id,
+      battle_status, max_submissions,
+      event_date, event_price, event_location,
+      likes_count, comments_count, source_type, created_at, updated_at
+    `;
+
+    let query: string;
+    let params: unknown[];
+
+    if (cursor_ts && cursor_id) {
+      // Composite cursor (created_at DESC, id DESC) — 001 FIX #2
+      // Fixes duplicate timestamp pagination bug (009 C-1 blocker)
+      query = `
+        SELECT ${selectFields}
+        FROM feed_posts
+        WHERE status = 'published'
+          AND (created_at < ? OR (created_at = ? AND id < ?))
+        ORDER BY created_at DESC, id DESC
+        LIMIT ?
+      `;
+      params = [cursor_ts, cursor_ts, cursor_id, limit + 1];
+    } else {
+      query = `
+        SELECT ${selectFields}
+        FROM feed_posts
+        WHERE status = 'published'
+        ORDER BY created_at DESC, id DESC
+        LIMIT ?
+      `;
+      params = [limit + 1];
+    }
+
+    const { results } = await (env.FEED_DB.prepare(query) as any)
+      .bind(...params)
+      .all();
+
+    const hasMore = results.length > limit;
+    const posts = hasMore ? results.slice(0, limit) : results;
+
+    // Parse JSON fields
+    const parsed = posts.map((p: any) => ({
+      ...p,
+      tags: p.tags ? JSON.parse(p.tags) : [],
+    }));
+
+    const last = parsed[parsed.length - 1];
+    const nextCursor = hasMore && last
+      ? { cursor_ts: last.created_at, cursor_id: last.id }
+      : null;
+
+    return new Response(
+      JSON.stringify({ posts: parsed, nextCursor, hasMore }),
+      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  } catch (err: any) {
+    console.error('[feed] GET /api/feed/posts error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Failed to fetch posts' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  }
+}
+
+// ─── POST /api/feed/posts ───
+export async function handleCreateFeedPost(
+  request: Request,
+  env: Env,
+  auth: AuthCtx,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  try {
+    // Body size check (002 attack #4)
+    const contentLength = parseInt(request.headers.get('Content-Length') || '0');
+    if (contentLength > 1_000_000) {
+      return new Response(
+        JSON.stringify({ error: 'Request too large (max 1MB)' }),
+        { status: 413, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    const body = await request.json() as any;
+
+    // Type validation (002 attack #9)
+    if (!body.type || !VALID_TYPES.includes(body.type)) {
+      return new Response(
+        JSON.stringify({ error: `type must be one of: ${VALID_TYPES.join(', ')}` }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    // Title validation
+    if (!body.title || typeof body.title !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'title is required' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+    if (body.title.length > 500) {
+      return new Response(
+        JSON.stringify({ error: 'title max 500 characters' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    // Text validation
+    if (body.text && body.text.length > 10_000) {
+      return new Response(
+        JSON.stringify({ error: 'text max 10000 characters' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    // blocks_data size validation (002 attack #4)
+    if (body.blocksData && JSON.stringify(body.blocksData).length > 50_000) {
+      return new Response(
+        JSON.stringify({ error: 'blocksData too large (max 50KB)' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    // author_type — stub: guest for all until TC-101-03 (001 FIX #4)
+    // TC-101-03 will replace with real JWT auth + server-defined author_type
+    const author_type = 'user';
+
+    await (env.FEED_DB.prepare(`
+      INSERT INTO feed_posts (
+        id, author_id, author_name, author_avatar, author_type,
+        type, title, body, tags, track_id, blocks_data,
+        base_track_id, battle_block_id, max_submissions, battle_status,
+        event_date, event_price, event_location,
+        source_type, status, created_at
+      ) VALUES (
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, ?, ?,
+        ?, 'published', ?
+      )
+    `) as any).bind(
+      id,
+      auth.sub,                          // author_id из JWT (IDOR fix)
+      auth.name || 'Пользователь',       // author_name из JWT
+      auth.picture || '',                // author_avatar из JWT
+      author_type,
+      body.type,
+      body.title.slice(0, 500),
+      body.text ? body.text.slice(0, 10_000) : null,
+      body.tags ? JSON.stringify(body.tags) : null,
+      body.trackId || null,
+      body.blocksData ? JSON.stringify(body.blocksData) : null,
+      body.baseTrackId || null,
+      body.battleBlockId || null,
+      body.maxSubmissions || 5,
+      body.battleStatus || 'open',
+      body.eventDate || null,
+      body.eventPrice || null,
+      body.eventLocation || null,
+      body.sourceType || 'manual',
+      now
+    ).run();
+
+    // Return created post
+    const created = await (env.FEED_DB.prepare(
+      'SELECT * FROM feed_posts WHERE id = ?'
+    ) as any).bind(id).first();
+
+    return new Response(
+      JSON.stringify({
+        ...created,
+        blocks_data: created?.blocks_data
+          ? JSON.parse(created.blocks_data as string)
+          : [],
+        tags: created?.tags ? JSON.parse(created.tags as string) : [],
+      }),
+      { status: 201, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  } catch (err: any) {
+    console.error('[feed] POST /api/feed/posts error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Failed to create post' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  }
+}
+
+// ─── POST /api/feed/likes ───
+export async function handleToggleLike(
+  request: Request,
+  env: Env,
+  auth: AuthCtx,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  try {
+    const { postId } = await request.json() as any;
+    const userId = auth.sub;  // из JWT, НЕ из body
+
+    if (!postId) {
+      return new Response(
+        JSON.stringify({ error: 'postId is required' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    // Status-check: нельзя лайкать удалённый пост
+    const postStatus = await (env.FEED_DB.prepare(
+      'SELECT status FROM feed_posts WHERE id = ?'
+    ) as any).bind(postId).first();
+    if (!postStatus) {
+      return new Response(
+        JSON.stringify({ error: 'Post not found' }),
+        { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+    if (postStatus.status !== 'published') {
+      return new Response(
+        JSON.stringify({ error: 'Post is not available' }),
+        { status: 410, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    // Check existing like
+    const existing = await (env.FEED_DB.prepare(
+      'SELECT 1 FROM feed_likes WHERE post_id = ? AND user_id = ?'
+    ) as any).bind(postId, userId).first();
+
+    if (existing) {
+      // Unlike
+      await (env.FEED_DB.prepare(
+        'DELETE FROM feed_likes WHERE post_id = ? AND user_id = ?'
+      ) as any).bind(postId, userId).run();
+
+      // MAX(0, ...) — protects from negative likes_count (002 attack #5)
+      await (env.FEED_DB.prepare(
+        'UPDATE feed_posts SET likes_count = MAX(0, likes_count - 1) WHERE id = ?'
+      ) as any).bind(postId).run();
+    } else {
+      // Like
+      await (env.FEED_DB.prepare(
+        'INSERT INTO feed_likes (post_id, user_id, created_at) VALUES (?, ?, ?)'
+      ) as any).bind(postId, userId, new Date().toISOString()).run();
+
+      await (env.FEED_DB.prepare(
+        'UPDATE feed_posts SET likes_count = likes_count + 1 WHERE id = ?'
+      ) as any).bind(postId).run();
+    }
+
+    const post = await (env.FEED_DB.prepare(
+      'SELECT likes_count FROM feed_posts WHERE id = ?'
+    ) as any).bind(postId).first();
+
+    return new Response(
+      JSON.stringify({
+        liked: !existing,
+        likes_count: post?.likes_count || 0,
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  } catch (err: any) {
+    console.error('[feed] POST /api/feed/likes error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Failed to toggle like' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  }
+}
+
+// ─── DELETE /api/feed/posts/:postId ───
+// TC-107-03: Soft-delete with authorization matrix (self / founder)
+export async function handleDeleteFeedPost(
+  env: Env,
+  auth: AuthCtx,
+  postId: string,
+  corsHeaders: Record<string, string>,
+  body?: any
+): Promise<Response> {
+  try {
+    // 1. SELECT post
+    const post = await (env.FEED_DB.prepare(
+      'SELECT id, author_id, status FROM feed_posts WHERE id = ?'
+    ) as any).bind(postId).first<{ id: string; author_id: string; status: string }>();
+
+    if (!post) {
+      return new Response(
+        JSON.stringify({ error: 'Post not found' }),
+        { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+    if (post.status === 'deleted') {
+      return new Response(
+        JSON.stringify({ error: 'Post already deleted' }),
+        { status: 410, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    const now = new Date().toISOString();
+
+    // 2. Self-delete? (author_id === authCtx.sub)
+    if (post.author_id === auth.sub) {
+      await (env.FEED_DB.prepare(
+        "UPDATE feed_posts SET status = 'deleted', deleted_at = ? WHERE id = ?"
+      ) as any).bind(now, postId).run();
+
+      return new Response(
+        JSON.stringify({ success: true, action: 'self_delete' }),
+        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    // 3. Founder check — D1 lookup, NOT authCtx.roleHint (002 N6)
+    const role = await getUserRole(env.FEED_DB, auth.provider, auth.providerSub);
+    if (role === 'founder') {
+      // ATOMIC: db.batch() гарантирует atomic rollback (VERDICT 009 R1)
+      const insertModLog = env.FEED_DB.prepare(
+        `INSERT INTO feed_moderation_log (id, post_id, actor_id, actor_role, action, reason, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      ).bind(
+        crypto.randomUUID(),
+        postId,
+        auth.sub,           // actor_id = authCtx.sub
+        'founder',          // actor_role from D1
+        'admin_delete',
+        body?.reason || null,
+        now
+      );
+
+      const updatePost = env.FEED_DB.prepare(
+        "UPDATE feed_posts SET status = 'deleted', deleted_at = ? WHERE id = ?"
+      ).bind(now, postId);
+
+      await env.FEED_DB.batch([insertModLog, updatePost]);
+
+      return new Response(
+        JSON.stringify({ success: true, action: 'admin_delete' }),
+        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    // 4. Not owner, not founder
+    return new Response(
+      JSON.stringify({ error: 'Forbidden' }),
+      { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+
+  } catch (err: any) {
+    console.error('[feed] DELETE /api/feed/posts/:id error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Failed to delete post' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  }
+}
+
+// ─── PATCH /api/feed/posts/:postId/restore (TC-107-06) ───
+// Founder-only UNDELETE. batch() atomic: INSERT mod_log FIRST, UPDATE SECOND.
+export async function handleRestoreFeedPost(
+  env: Env,
+  auth: AuthCtx,
+  postId: string,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  try {
+    const post = await (env.FEED_DB.prepare(
+      'SELECT id, status FROM feed_posts WHERE id = ?'
+    ) as any).bind(postId).first<{ id: string; status: string }>();
+
+    if (!post) {
+      return new Response(
+        JSON.stringify({ error: 'Post not found' }),
+        { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+    if (post.status === 'published') {
+      return new Response(
+        JSON.stringify({ error: 'Post already published' }),
+        { status: 410, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    const role = await getUserRole(env.FEED_DB, auth.provider, auth.providerSub);
+    if (role !== 'founder') {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden' }),
+        { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    const now = new Date().toISOString();
+
+    const insertModLog = env.FEED_DB.prepare(
+      `INSERT INTO feed_moderation_log (id, post_id, actor_id, actor_role, action, created_at)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    ).bind(
+      crypto.randomUUID(),
+      postId,
+      auth.sub,
+      'founder',
+      'restore',
+      now
+    );
+
+    const updatePost = env.FEED_DB.prepare(
+      "UPDATE feed_posts SET status = 'published', deleted_at = NULL WHERE id = ?"
+    ).bind(postId);
+
+    await env.FEED_DB.batch([insertModLog, updatePost]);
+
+    return new Response(
+      JSON.stringify({ success: true, action: 'restore' }),
+      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+
+  } catch (err: any) {
+    console.error('[feed] PATCH restore error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Failed to restore post' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  }
+}
+
+// ─── PATCH /api/feed/posts/:postId (TC-107-08) ───
+// Owner-only edit. Whitelist fields. Validation same as POST.
+export async function handleUpdateFeedPost(
+  env: Env,
+  auth: AuthCtx,
+  postId: string,
+  request: Request,  // ← обязательно!
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  try {
+    // 1. Parse body + content-length check
+    const contentLength = parseInt(request.headers.get('Content-Length') || '0');
+    if (contentLength > 1_000_000) {
+      return new Response(
+        JSON.stringify({ error: 'Request too large (max 1MB)' }),
+        { status: 413, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+    const body = await request.json() as Record<string, unknown>;
+
+    // 2. Whitelist: ТОЛЬКО эти поля разрешены (C1 009)
+    const ALLOWED_FIELDS = ['title', 'text', 'tags', 'event_date', 'event_price', 'event_location'] as const;
+    const patchFields: Record<string, unknown> = {};
+
+    for (const key of Object.keys(body)) {
+      if (!ALLOWED_FIELDS.includes(key as any)) {
+        return new Response(
+          JSON.stringify({ error: `Unknown field: ${key}. Allowed: ${ALLOWED_FIELDS.join(', ')}` }),
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+      patchFields[key] = body[key];
+    }
+
+    // 3. Пустой body → 400 (C1 009)
+    if (Object.keys(patchFields).length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'No editable fields provided' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    // 4. Validation (same as POST)
+    if ('title' in patchFields) {
+      if (typeof patchFields.title !== 'string' || !patchFields.title.trim()) {
+        return new Response(
+          JSON.stringify({ error: 'title must be a non-empty string' }),
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+      if (patchFields.title.length > 500) {
+        return new Response(
+          JSON.stringify({ error: 'title max 500 characters' }),
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+    }
+    if ('text' in patchFields && patchFields.text !== null) {
+      if (typeof patchFields.text !== 'string' || patchFields.text.length > 10_000) {
+        return new Response(
+          JSON.stringify({ error: 'text max 10000 characters' }),
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+    }
+    if ('tags' in patchFields && patchFields.tags !== null) {
+      if (!Array.isArray(patchFields.tags)) {
+        return new Response(
+          JSON.stringify({ error: 'tags must be an array' }),
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+    }
+
+    // 5. SELECT post — check owner, battle lock, status
+    const post = await (env.FEED_DB.prepare(
+      'SELECT id, author_id, type, status FROM feed_posts WHERE id = ?'
+    ) as any).bind(postId).first<{ id: string; author_id: string; type: string; status: string }>();
+
+    if (!post) {
+      return new Response(
+        JSON.stringify({ error: 'Post not found' }),
+        { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+    if (post.status === 'deleted') {
+      return new Response(
+        JSON.stringify({ error: 'Post is deleted' }),
+        { status: 410, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+    // Owner check
+    if (post.author_id !== auth.sub) {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden' }),
+        { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+    // M1: battle lock
+    if (post.type === 'battle') {
+      return new Response(
+        JSON.stringify({ error: 'Battle posts cannot be edited' }),
+        { status: 409, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    // 6. Build UPDATE query
+    const setClauses: string[] = ['updated_at = ?'];
+    const now = new Date().toISOString();
+    const params: unknown[] = [now];
+
+    if ('title' in patchFields) {
+      setClauses.push('title = ?');
+      params.push((patchFields.title as string).slice(0, 500));
+    }
+    if ('text' in patchFields) {
+      setClauses.push('body = ?');
+      params.push(patchFields.text !== null ? (patchFields.text as string).slice(0, 10_000) : null);
+    }
+    if ('tags' in patchFields) {
+      setClauses.push('tags = ?');
+      params.push(patchFields.tags !== null ? JSON.stringify(patchFields.tags) : null);
+    }
+    if ('event_date' in patchFields) {
+      setClauses.push('event_date = ?');
+      params.push(patchFields.event_date as string);
+    }
+    if ('event_price' in patchFields) {
+      setClauses.push('event_price = ?');
+      params.push(patchFields.event_price as string);
+    }
+    if ('event_location' in patchFields) {
+      setClauses.push('event_location = ?');
+      params.push(patchFields.event_location as string);
+    }
+
+    params.push(postId);
+    await (env.FEED_DB.prepare(
+      `UPDATE feed_posts SET ${setClauses.join(', ')} WHERE id = ?`
+    ) as any).bind(...params).run();
+
+    // 7. Return updated post
+    const updated = await (env.FEED_DB.prepare(
+      'SELECT * FROM feed_posts WHERE id = ?'
+    ) as any).bind(postId).first();
+
+    return new Response(
+      JSON.stringify({
+        ...updated,
+        blocks_data: updated?.blocks_data ? JSON.parse(updated.blocks_data as string) : [],
+        tags: updated?.tags ? JSON.parse(updated.tags as string) : [],
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+
+  } catch (err: any) {
+    console.error('[feed] PATCH /api/feed/posts/:id error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Failed to update post' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  }
+}

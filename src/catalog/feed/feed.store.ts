@@ -3,8 +3,19 @@
 import { create } from 'zustand';
 import type { FeedPost } from './feed.types';
 import { loadLikes, saveLike } from './feed.persistence';
+import { useUserProfileStore } from '../../stores/user-profile.store';
 
 const FEED_API = 'https://belive-gateway.nikitosss007.workers.dev';
+
+// ─── Auth headers helper (TC-107-04) ───
+function getAuthHeaders(): Record<string, string> {
+  const token = useUserProfileStore.getState().currentUser?.authToken;
+  if (!token) throw new Error('AUTH_REQUIRED');
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  };
+}
 
 // ─── Store ───
 interface FeedState {
@@ -17,6 +28,10 @@ interface FeedState {
   fetchFeed: () => Promise<void>;
   createPost: (data: Omit<FeedPost, 'id' | 'createdAt' | 'likesCount' | 'commentsCount' | 'isLikedByUser'>) => Promise<void>;
   toggleLike: (postId: string) => void;
+  deletePost: (postId: string) => Promise<void>;
+  editingPost: FeedPost | null;
+  setEditingPost: (post: FeedPost | null) => void;
+  editPost: (postId: string, patch: { title?: string; text?: string; tags?: string[] }) => Promise<void>;
   setActivePost: (postId: string | null) => void;
   setComposerOpen: (open: boolean) => void;
   voteSubmission: (postId: string, submissionId: string) => void;
@@ -48,6 +63,7 @@ function mapPost(p: any): FeedPost {
     commentsCount: p.comments_count || 0,
     isLikedByUser: false,
     createdAt: new Date(p.created_at).getTime(),
+    updatedAt: p.updated_at ? new Date(p.updated_at).getTime() : null,
     sourceType: p.source_type,
   };
 }
@@ -58,6 +74,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
   activePostId: null,
   composerOpen: false,
   _mocked: false,
+  editingPost: null,
 
   fetchFeed: async () => {
     if (get().status === 'loading') return;
@@ -80,6 +97,14 @@ export const useFeedStore = create<FeedState>((set, get) => ({
   },
 
   createPost: async (data) => {
+    // Legacy guard (002 N4): пользователи без authToken — toast + no request
+    const token = useUserProfileStore.getState().currentUser?.authToken;
+    if (!token) {
+      console.warn('[feed.store] createPost: no authToken — legacy user');
+      // UI toast handled by component layer; here we just abort
+      return;
+    }
+
     // Optimistic: сразу показываем в UI
     const tempId = `temp-${Date.now()}`;
     const tempPost: FeedPost = {
@@ -95,7 +120,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     try {
       const res = await fetch(`${FEED_API}/api/feed/posts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           type: data.type,
           title: data.title,
@@ -137,6 +162,14 @@ export const useFeedStore = create<FeedState>((set, get) => ({
   toggleLike: async (postId) => {
     const post = get().posts.find(p => p.id === postId);
     if (!post) return;
+
+    // Legacy guard (002 N4): без authToken — не отправляем
+    const token = useUserProfileStore.getState().currentUser?.authToken;
+    if (!token) {
+      console.warn('[feed.store] toggleLike: no authToken — legacy user');
+      return;
+    }
+
     const newLiked = !post.isLikedByUser;
     // Optimistic
     set(s => ({
@@ -151,8 +184,8 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     try {
       const res = await fetch(`${FEED_API}/api/feed/likes`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId, userId: 'user-local' }),
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ postId }),  // userId убран — сервер берёт из JWT
       });
       if (res.ok) {
         const data = await res.json();
@@ -165,6 +198,43 @@ export const useFeedStore = create<FeedState>((set, get) => ({
       }
     } catch (err) {
       console.error('[feed.store] toggleLike error:', err);
+    }
+  },
+
+  deletePost: async (postId) => {
+    // Legacy guard: без authToken — abort
+    const token = useUserProfileStore.getState().currentUser?.authToken;
+    if (!token) {
+      console.warn('[feed.store] deletePost: no authToken');
+      return;
+    }
+
+    // VERDICT 009 R2: сохранить deletedPost ДО optimistic removal
+    // Нужно для partial-merge rollback (не затирает concurrent fetchFeed)
+    const deletedPost = get().posts.find(p => p.id === postId);
+    if (!deletedPost) return;
+
+    // Optimistic removal
+    set(s => ({ posts: s.posts.filter(p => p.id !== postId) }));
+
+    try {
+      const res = await fetch(`${FEED_API}/api/feed/posts/${postId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      // Success — пост уже удалён из state, ничего не делаем
+    } catch (err) {
+      console.error('[feed.store] deletePost error:', err);
+
+      // VERDICT 009 R2: partial-merge rollback — НЕ затираем concurrent fetchFeed
+      set(s => {
+        const exists = s.posts.some(p => p.id === postId);
+        if (exists) return s; // fetchFeed уже обновил — не затираем свежие данные
+        return { posts: [deletedPost, ...s.posts] };
+      });
     }
   },
 
@@ -200,4 +270,43 @@ export const useFeedStore = create<FeedState>((set, get) => ({
 
   setActivePost: (postId) => set({ activePostId: postId }),
   setComposerOpen: (open) => set({ composerOpen: open }),
+
+  setEditingPost: (post) => set({ editingPost: post }),
+
+  editPost: async (postId, patch) => {
+    const token = useUserProfileStore.getState().currentUser?.authToken;
+    if (!token) {
+      console.warn('[feed.store] editPost: no authToken');
+      return;
+    }
+
+    // Optimistic: обновить в локальном state
+    const prev = get().posts;
+    set(s => ({
+      posts: s.posts.map(p =>
+        p.id === postId ? { ...p, ...patch } : p
+      ),
+    }));
+
+    try {
+      const res = await fetch(`${FEED_API}/api/feed/posts/${postId}`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      // Заменить optimistic на ответ сервера
+      const updated = await res.json();
+      set(s => ({
+        posts: s.posts.map(p =>
+          p.id === postId ? { ...mapPost(updated), isLikedByUser: p.isLikedByUser } : p
+        ),
+      }));
+    } catch (err) {
+      // Rollback
+      set({ posts: prev });
+      console.error('[feed.store] editPost error:', err);
+    }
+  },
 }));

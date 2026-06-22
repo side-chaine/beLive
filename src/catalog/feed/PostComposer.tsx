@@ -1,6 +1,6 @@
 // @TC-098-03: PostComposer — создание постов с 4 типами
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { FeedPostType } from './feed.types';
 import { POST_TYPE_CONFIG } from './feed.types';
 import { useFeedStore } from './feed.store';
@@ -23,6 +23,9 @@ export function PostComposer() {
   const [eventLocation, setEventLocation] = useState('');
 
   const createPost = useFeedStore(s => s.createPost);
+  const editPost = useFeedStore(s => s.editPost);
+  const editingPost = useFeedStore(s => s.editingPost);
+  const setEditingPost = useFeedStore(s => s.setEditingPost);
   const tracksMeta = useTrackStore(s => s.tracksMeta);
   const user = useUserProfileStore(s => s.currentUser);
 
@@ -40,9 +43,31 @@ export function PostComposer() {
     setEventLocation('');
   };
 
+  // Edit mode: prefill from editingPost
+  useEffect(() => {
+    if (editingPost) {
+      setType(editingPost.type);
+      setTitle(editingPost.title);
+      setText(editingPost.text || '');
+      setTags((editingPost.tags || []).join(','));
+      setStep('form');
+    }
+  }, [editingPost]);
+
   const handleSubmit = () => {
     if (!title.trim()) return;
     const tagsArr = tags.split(',').map(t => t.trim()).filter(Boolean);
+
+    if (editingPost) {
+      editPost(editingPost.id, {
+        title: title.trim(),
+        text: text.trim() || undefined,
+        tags: tagsArr.length > 0 ? tagsArr : undefined,
+      });
+      setEditingPost(null);
+      reset();
+      return;
+    }
 
     createPost({
       type,
