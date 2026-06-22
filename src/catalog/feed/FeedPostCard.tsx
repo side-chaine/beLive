@@ -3,6 +3,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import type { FeedPost } from './feed.types';
+import { ShareModal } from './ShareModal';
 import { POST_TYPE_CONFIG } from './feed.types';
 import { useFeedStore } from './feed.store';
 import { useUserProfileStore } from '../../stores/user-profile.store';
@@ -22,6 +23,7 @@ export function FeedPostCard({ post }: Props) {
   const currentUser = useUserProfileStore(s => s.currentUser);
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -45,25 +47,8 @@ export function FeedPostCard({ post }: Props) {
     setMenuOpen(false);
   };
 
-  const [isSharing, setIsSharing] = useState(false);
-
-  const handleShare = async () => {
-    if (isSharing) return;
-    const shareUrl = `${window.location.origin}${import.meta.env.BASE_URL || '/'}?post=${encodeURIComponent(post.id)}`;
-    if (typeof navigator.share !== 'undefined') {
-      setIsSharing(true);
-      try {
-        await navigator.share({ title: post.title || 'beLive', url: shareUrl });
-      } catch (e: any) {
-        if (e.name !== 'AbortError') {
-          await navigator.clipboard?.writeText(shareUrl).catch(() => {});
-        }
-      } finally {
-        setIsSharing(false);
-      }
-    } else {
-      await navigator.clipboard?.writeText(shareUrl).catch(() => {});
-    }
+  const handleShare = () => {
+    setShareOpen(true);
     setMenuOpen(false);
   };
 
@@ -237,6 +222,13 @@ export function FeedPostCard({ post }: Props) {
           </span>
         )}
       </div>
+
+      {shareOpen && (
+        <ShareModal
+          post={{ id: post.id, title: post.title }}
+          onClose={() => setShareOpen(false)}
+        />
+      )}
 
       {confirmDelete && (
         <div className="feed-confirm-overlay" onClick={() => setConfirmDelete(false)}>
