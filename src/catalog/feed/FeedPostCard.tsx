@@ -29,7 +29,6 @@ export function FeedPostCard({ post }: Props) {
   const menuRef = useRef<HTMLDivElement>(null);
   const shareBtnRef = useRef<HTMLButtonElement>(null);
   const shareRef = useRef<HTMLDivElement>(null);
-  const firstCircleRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     if (!menuOpen && !shareOpen) return;
@@ -48,33 +47,9 @@ export function FeedPostCard({ post }: Props) {
 
   useEffect(() => {
     if (!shareOpen) return;
-    const lastY = window.scrollY;
-    const onScroll = () => {
-      if (Math.abs(window.scrollY - lastY) > 8) {
-        setShareOpen(false);
-        shareBtnRef.current?.focus();
-      }
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
+    const onScroll = () => setShareOpen(false);
+    window.addEventListener('scroll', onScroll, { once: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, [shareOpen]);
-
-  useEffect(() => {
-    if (shareOpen && firstCircleRef.current) {
-      firstCircleRef.current.focus();
-    }
-  }, [shareOpen]);
-
-  useEffect(() => {
-    if (!shareOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setShareOpen(false);
-        shareBtnRef.current?.focus();
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
   }, [shareOpen]);
 
   const isOwner = !!(currentUser?.authToken && post.authorId === currentUser.id);
@@ -142,13 +117,8 @@ export function FeedPostCard({ post }: Props) {
             aria-haspopup="dialog"
             aria-expanded={shareOpen}
             aria-label="Поделиться"
-            aria-controls="fpc-share-popover"
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true" width="14" height="14">
-              <path d="M12 2v13M12 2L7 7M12 2l5 5M5 12v8a2 2 0 002 2h10a2 2 0 002-2v-8"
-                    stroke="currentColor" stroke-width="2" fill="none"
-                    stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            ↗
           </button>
           <div className="fpc-menu-container" ref={menuRef}>
             <button
@@ -285,13 +255,11 @@ export function FeedPostCard({ post }: Props) {
 
       {shareOpen && createPortal(
         <div className="fpc-share-popover" ref={shareRef}
-             id="fpc-share-popover" role="dialog" aria-label="Поделиться"
              style={{ top: sharePos.top, left: sharePos.left }}>
           <div className="fpc-share-panel">
             <div className="fpc-share-circles">
               {/* Telegram */}
               <a className="fpc-share-circle fpc-share-circle--tg"
-                 ref={firstCircleRef}
                  href={`https://t.me/share/url?url=${enc(shareUrl(post.id))}&text=${enc(post.title)}`}
                  target="_blank" rel="noopener noreferrer"
                  aria-label="Поделиться в Telegram">
