@@ -45,6 +45,10 @@ interface FeedState {
   fetchReactions: (postId: string) => Promise<void>;
   toggleReaction: (postId: string, emoji: string) => Promise<void>;
   fetchComments: (postId: string) => Promise<void>;
+  /** Fetch top-level comments + replies for each */
+  fetchCommentsWithReplies: (postId: string) => Promise<void>;
+  /** Fetch replies for a specific top-level comment */
+  fetchReplies: (postId: string, commentId: string) => Promise<void>;
   /** Set comments from external source (e.g. polling store) */
   setCommentsForPost: (postId: string, comments: FeedComment[]) => void;
   /** Create comment with optional parentId for replies */
@@ -318,6 +322,66 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     }));
   },
 
+  fetchCommentsWithReplies: async (postId) => {
+    if (get().commentsStatus[postId] === 'loading') return;
+    set(s => ({ commentsStatus: { ...s.commentsStatus, [postId]: 'loading' } }));
+    try {
+      // 1. Fetch top-level comments
+      const res = await fetch(`${FEED_API}/api/feed/posts/${postId}/comments`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const comments = (data.comments || []).slice().reverse();
+
+      // 2. Fetch replies for each top-level comment in parallel
+      const replyPromises = comments.map(c =>
+        fetch(`${FEED_API}/api/feed/posts/${postId}/comments/${c.id}/replies`)
+          .then(r => r.ok ? r.json() : { replies: [] })
+          .then(d => ({ parentId: c.id, replies: d.replies || [] }))
+          .catch(() => ({ parentId: c.id, replies: [] }))
+      );
+      const replyResults = await Promise.all(replyPromises);
+
+      // 3. Merge replies into comments array
+      const allComments = [...comments];
+      for (const r of replyResults) {
+        for (const reply of r.replies) {
+          allComments.push(reply);
+        }
+      }
+
+      set(s => ({
+        comments: { ...s.comments, [postId]: allComments },
+        commentsStatus: { ...s.commentsStatus, [postId]: 'ready' },
+      }));
+    } catch (err) {
+      console.error('[feed.store] fetchCommentsWithReplies error:', err);
+      set(s => ({ commentsStatus: { ...s.commentsStatus, [postId]: 'error' } }));
+    }
+  },
+
+  fetchReplies: async (postId, commentId) => {
+    try {
+      const res = await fetch(`${FEED_API}/api/feed/posts/${postId}/comments/${commentId}/replies`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      // Merge replies into existing comments (replace old ones if any)
+      set(s => {
+        const existing = s.comments[postId] || [];
+        // Remove old replies for this parent
+        const withoutOldReplies = existing.filter(c => c.parentId !== commentId);
+        return {
+          comments: {
+            ...s.comments,
+            [postId]: [...withoutOldReplies, ...(data.replies || [])],
+          },
+        };
+      });
+    } catch (err) {
+      console.warn('[feed.store] fetchReplies error:', err);
+    }
+  },
+
   createComment: async (postId, text, parentId?) => {
     // Legacy guard
     const token = useUserProfileStore.getState().currentUser?.authToken;
@@ -458,7 +522,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
         ...s.reactionCounts,
         [postId]: {
           ...(s.reactionCounts[postId] || {}),
-          [emoji]: ((s.reactionCounts[postId] || {})[emoji] || 0) + (wasActive ? -1 : 1),
+          [emoji]: Math.max(0, ((s.reactionCounts[postId] || {})[emoji] || 0) + (wasActive ? -1 : 1)),
         },
       },
     }));
@@ -473,17 +537,32 @@ export const useFeedStore = create<FeedState>((set, get) => ({
         body: JSON.stringify({ targetType: 'post', targetId: postId, emoji }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      // Server confirmed — fetch fresh counts
-      get().fetchReactions(postId);
+
+      // Use server response to set definitive state
+      const result = await res.json();
+      const serverReacted = result.reacted === true;
+
+      // Server-confirmed state overrides optimistic
+      set(s => {
+        const current = s.postReactions[postId] || {};
+        const serverReactions = { ...current, [emoji]: serverReacted };
+        return {
+          postReactions: { ...s.postReactions, [postId]: serverReactions },
+        };
+      });
     } catch (err) {
-      // Rollback
+      // Rollback to pre-optimistic state
+      const rollbackReactions = { ...prevReactions };
+      delete rollbackReactions[emoji]; // if wasActive, it stays gone; if not, it stays gone
+      if (wasActive) rollbackReactions[emoji] = true; // restore
+
       set(s => ({
         postReactions: { ...s.postReactions, [postId]: prevReactions },
         reactionCounts: {
           ...s.reactionCounts,
           [postId]: {
             ...(s.reactionCounts[postId] || {}),
-            [emoji]: Math.max(0, ((s.reactionCounts[postId] || {})[emoji] || 0)),
+            [emoji]: ((s.reactionCounts[postId] || {})[emoji] || 0),
           },
         },
       }));

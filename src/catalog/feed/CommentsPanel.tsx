@@ -45,11 +45,10 @@ export function CommentsPanel({ onClose }: Props) {
   const commentsStatus = useFeedStore(s => s.commentsStatus);
   const postReactions = useFeedStore(s => s.postReactions);
   const reactionCounts = useFeedStore(s => s.reactionCounts);
-  const fetchComments = useFeedStore(s => s.fetchComments);
+  const fetchComments = useFeedStore(s => s.fetchCommentsWithReplies);
   const createComment = useFeedStore(s => s.createComment);
   const deleteComment = useFeedStore(s => s.deleteComment);
   const toggleReaction = useFeedStore(s => s.toggleReaction);
-  const fetchReactions = useFeedStore(s => s.fetchReactions);
   const setActivePost = useFeedStore(s => s.setActivePost);
 
   const currentUser = useUserProfileStore(s => s.currentUser);
@@ -77,13 +76,6 @@ export function CommentsPanel({ onClose }: Props) {
       fetchComments(activePostId);
     }
   }, [activePostId, status, fetchComments]);
-
-  // Fetch reactions when post opens
-  useEffect(() => {
-    if (activePostId) {
-      fetchReactions(activePostId);
-    }
-  }, [activePostId, fetchReactions]);
 
   useEffect(() => {
     if (listRef.current) {
