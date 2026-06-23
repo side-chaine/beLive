@@ -516,20 +516,15 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     const token = useUserProfileStore.getState().currentUser?.authToken;
     if (!token) return;
 
-    // Optimistic update
+    // Optimistic: one reaction per user. Only selected emoji active.
     const prevReactions = get().postReactions[postId] || {};
     const wasActive = !!prevReactions[emoji];
-    const newReactions = { ...prevReactions, [emoji]: !wasActive };
+
+    // Build new state: only the clicked emoji, or empty if toggling off
+    const newReactions = wasActive ? {} : { [emoji]: true };
 
     set(s => ({
       postReactions: { ...s.postReactions, [postId]: newReactions },
-      reactionCounts: {
-        ...s.reactionCounts,
-        [postId]: {
-          ...(s.reactionCounts[postId] || {}),
-          [emoji]: Math.max(0, ((s.reactionCounts[postId] || {})[emoji] || 0) + (wasActive ? -1 : 1)),
-        },
-      },
     }));
 
     try {
@@ -543,45 +538,12 @@ export const useFeedStore = create<FeedState>((set, get) => ({
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      // Use server response to set definitive state
-      const result = await res.json();
-      const serverReacted = result.reacted === true;
-
-      // FIX: correct reactionCounts when server disagrees with optimistic
-      const expectedReacted = !wasActive;
-      const countCorrection = serverReacted === expectedReacted
-        ? 0
-        : (serverReacted ? 2 : -2);
-
-      set(s => {
-        const current = s.postReactions[postId] || {};
-        const serverReactions = { ...current, [emoji]: serverReacted };
-        return {
-          postReactions: { ...s.postReactions, [postId]: serverReactions },
-          reactionCounts: {
-            ...s.reactionCounts,
-            [postId]: {
-              ...(s.reactionCounts[postId] || {}),
-              [emoji]: Math.max(0, ((s.reactionCounts[postId] || {})[emoji] || 0) + countCorrection),
-            },
-          },
-        };
-      });
+      // Refresh counts from server (one reaction per user logic)
+      get().fetchReactions(postId);
     } catch (err) {
-      // Rollback to pre-optimistic state
-      const rollbackReactions = { ...prevReactions };
-      delete rollbackReactions[emoji]; // if wasActive, it stays gone; if not, it stays gone
-      if (wasActive) rollbackReactions[emoji] = true; // restore
-
+      // Rollback to previous state
       set(s => ({
         postReactions: { ...s.postReactions, [postId]: prevReactions },
-        reactionCounts: {
-          ...s.reactionCounts,
-          [postId]: {
-            ...(s.reactionCounts[postId] || {}),
-            [emoji]: ((s.reactionCounts[postId] || {})[emoji] || 0),
-          },
-        },
       }));
       console.warn('[feed.store] toggleReaction error:', err);
     }

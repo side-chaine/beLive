@@ -66,35 +66,33 @@ export async function handleToggleReaction(
 
     const userId = auth.sub;
 
-    // Atomic batch: check existing → toggle
-    const existing = await (env.FEED_DB.prepare(
-      'SELECT 1 FROM feed_reactions WHERE target_type = ? AND target_id = ? AND user_id = ? AND emoji = ?'
-    ) as any).bind(targetType, targetId, userId, emoji).first();
+    // One reaction per user per target: find current active emoji
+    const current = await (env.FEED_DB.prepare(
+      'SELECT emoji FROM feed_reactions WHERE target_type = ? AND target_id = ? AND user_id = ?'
+    ) as any).bind(targetType, targetId, userId).first() as { emoji: string } | null;
 
-    if (existing) {
-      // Remove reaction
+    const wasActive = current?.emoji === emoji;
+
+    // Delete ALL existing reactions for this user on this target
+    await (env.FEED_DB.prepare(
+      'DELETE FROM feed_reactions WHERE target_type = ? AND target_id = ? AND user_id = ?'
+    ) as any).bind(targetType, targetId, userId).run();
+
+    let reacted = false;
+
+    if (!wasActive) {
+      // Insert new reaction (old ones already deleted)
       await (env.FEED_DB.prepare(
-        'DELETE FROM feed_reactions WHERE target_type = ? AND target_id = ? AND user_id = ? AND emoji = ?'
+        'INSERT INTO feed_reactions (target_type, target_id, user_id, emoji) VALUES (?, ?, ?, ?)'
       ) as any).bind(targetType, targetId, userId, emoji).run();
-
-      return new Response(
-        JSON.stringify({ reacted: false, emoji, targetType, targetId }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
-    } else {
-      // Add reaction
-      const insertResult = await (env.FEED_DB.prepare(
-        'INSERT OR IGNORE INTO feed_reactions (target_type, target_id, user_id, emoji) VALUES (?, ?, ?, ?)'
-      ) as any).bind(targetType, targetId, userId, emoji).run();
-
-      // If INSERT OR IGNORE skipped (row already exists), reaction was already active
-      const actuallyInserted = insertResult?.meta?.changes > 0;
-
-      return new Response(
-        JSON.stringify({ reacted: actuallyInserted, emoji, targetType, targetId }),
-        { status: actuallyInserted ? 201 : 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      reacted = true;
     }
+    // If wasActive → toggle off (only DELETE, no INSERT)
+
+    return new Response(
+      JSON.stringify({ reacted, emoji, targetType, targetId }),
+      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
   } catch (err: any) {
     console.error('[reactions] POST /api/feed/reactions error:', err);
     return new Response(
