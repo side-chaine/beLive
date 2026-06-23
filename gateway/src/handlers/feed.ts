@@ -4,10 +4,12 @@
 
 interface Env {
   FEED_DB: D1Database;
+  FEED_KV?: KVNamespace;
 }
 
 import type { AuthCtx } from './auth';
 import { getUserRole } from './roles';
+import { bumpCommentVersion } from '../helpers';
 
 const VALID_TYPES = ['post', 'track', 'battle', 'event'] as const;
 
@@ -143,6 +145,9 @@ export async function handleCreateFeedPost(
     } catch (_) {
       // mentions are best-effort
     }
+
+    // TC-109-15: KV version bump for conditional GET
+    bumpCommentVersion(env, postId).catch(() => {});
 
     return new Response(
       JSON.stringify({
@@ -579,8 +584,8 @@ export async function handleUpdateFeedPost(
   }
 }
 
-// ─── GET /api/feed/posts/:postId/comments (TC-108-02) ───
-// Public read. Cursor-based DESC (newest first), same pattern as posts.
+// ─── GET /api/feed/posts/:postId/comments (TC-108-02 / TC-109-16) ───
+// Public read. Cursor-based DESC (newest first). Supports ETag for conditional GET.
 export async function handleGetComments(
   request: Request,
   env: Env,
@@ -588,6 +593,15 @@ export async function handleGetComments(
   corsHeaders: Record<string, string>
 ): Promise<Response> {
   try {
+    // TC-109-16: Conditional GET via ETag
+    const { checkCommentETag } = await import('../middleware');
+    const etagResult = await checkCommentETag(request, env as any, postId);
+    if (etagResult.match) {
+      return new Response(null, {
+        status: 304,
+        headers: { ...corsHeaders },
+      });
+    }
     const url = new URL(request.url);
     const limit = Math.min(
       Math.max(parseInt(url.searchParams.get('limit') || '50'), 1),
@@ -647,7 +661,14 @@ export async function handleGetComments(
 
     return new Response(
       JSON.stringify({ comments: parsed, nextCursor, hasMore }),
-      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(etagResult.etag ? { 'ETag': etagResult.etag } : {}),
+          ...corsHeaders,
+        },
+      }
     );
   } catch (err: any) {
     console.error('[feed] GET comments error:', err);
@@ -894,6 +915,9 @@ export async function handleDeleteComment(
     ).bind(postId);
 
     await env.FEED_DB.batch([deleteComment, updateCounter]);
+
+    // TC-109-15: KV version bump for conditional GET
+    bumpCommentVersion(env, postId).catch(() => {});
 
     return new Response(
       JSON.stringify({ success: true }),

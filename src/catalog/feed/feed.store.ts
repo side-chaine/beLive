@@ -40,6 +40,8 @@ interface FeedState {
   comments: Record<string, FeedComment[]>;
   commentsStatus: Record<string, 'idle' | 'loading' | 'ready' | 'error'>;
   fetchComments: (postId: string) => Promise<void>;
+  /** Set comments from external source (e.g. polling store) */
+  setCommentsForPost: (postId: string, comments: FeedComment[]) => void;
   createComment: (postId: string, text: string) => Promise<void>;
   deleteComment: (postId: string, commentId: string) => Promise<void>;
 }
@@ -299,6 +301,13 @@ export const useFeedStore = create<FeedState>((set, get) => ({
       console.error('[feed.store] fetchComments error:', err);
       set(s => ({ commentsStatus: { ...s.commentsStatus, [postId]: 'error' } }));
     }
+  },
+
+  setCommentsForPost: (postId, comments) => {
+    set(s => ({
+      comments: { ...s.comments, [postId]: comments },
+      commentsStatus: { ...s.commentsStatus, [postId]: 'ready' },
+    }));
   },
 
   createComment: async (postId, text) => {
