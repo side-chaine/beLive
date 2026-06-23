@@ -139,16 +139,6 @@ export async function handleCreateFeedPost(
       );
     }
 
-    // TC-109-12: Mention extraction (best-effort, non-blocking)
-    try {
-      extractMentions(body.text, commentId, postId, auth, env).catch(() => {});
-    } catch (_) {
-      // mentions are best-effort
-    }
-
-    // TC-109-15: KV version bump for conditional GET
-    bumpCommentVersion(env, postId).catch(() => {});
-
     return new Response(
       JSON.stringify({
         ...created,
@@ -856,6 +846,12 @@ export async function handleCreateComment(
         { status: 410, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
+
+    // TC-109-12: Mention extraction (best-effort, non-blocking)
+    extractMentions(body.text, commentId, postId, auth, env).catch(() => {});
+
+    // TC-109-15: KV version bump for conditional GET
+    bumpCommentVersion(env, postId).catch(() => {});
 
     return new Response(
       JSON.stringify({

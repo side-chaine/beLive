@@ -49,6 +49,7 @@ export function CommentsPanel({ onClose }: Props) {
   const createComment = useFeedStore(s => s.createComment);
   const deleteComment = useFeedStore(s => s.deleteComment);
   const toggleReaction = useFeedStore(s => s.toggleReaction);
+  const fetchReactions = useFeedStore(s => s.fetchReactions);
   const setActivePost = useFeedStore(s => s.setActivePost);
 
   const currentUser = useUserProfileStore(s => s.currentUser);
@@ -74,8 +75,9 @@ export function CommentsPanel({ onClose }: Props) {
   useEffect(() => {
     if (activePostId && status === 'idle') {
       fetchComments(activePostId);
+      fetchReactions(activePostId);
     }
-  }, [activePostId, status, fetchComments]);
+  }, [activePostId, status, fetchComments, fetchReactions]);
 
   useEffect(() => {
     if (listRef.current) {
