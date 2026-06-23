@@ -120,7 +120,59 @@ export async function handleMarkNotificationRead(
   }
 }
 
-// ─── POST /api/feed/notifications/create (internal — for creating from handlers) ───
+// ─── POST /api/feed/notifications/:id/read — mark single notification as read by URL ───
+export async function handleMarkNotificationReadById(
+  request: Request,
+  env: Env,
+  auth: AuthCtx,
+  notificationId: string,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  try {
+    await (env.FEED_DB.prepare(
+      'UPDATE feed_notifications SET is_read = 1 WHERE id = ? AND user_id = ?'
+    ) as any).bind(notificationId, auth.sub).run();
+
+    return new Response(
+      JSON.stringify({ success: true }),
+      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  } catch (err: any) {
+    console.error('[notifications] POST read error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Failed to mark notification as read' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  }
+}
+
+// ─── DELETE /api/feed/notifications/:id — delete notification (owner-only) ───
+export async function handleDeleteNotification(
+  request: Request,
+  env: Env,
+  auth: AuthCtx,
+  notificationId: string,
+  corsHeaders: Record<string, string>
+): Promise<Response> {
+  try {
+    await (env.FEED_DB.prepare(
+      'DELETE FROM feed_notifications WHERE id = ? AND user_id = ?'
+    ) as any).bind(notificationId, auth.sub).run();
+
+    return new Response(
+      JSON.stringify({ success: true }),
+      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  } catch (err: any) {
+    console.error('[notifications] DELETE error:', err);
+    return new Response(
+      JSON.stringify({ error: 'Failed to delete notification' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  }
+}
+
+// ─── Internal: createNotification ───
 export async function createNotification(
   db: D1Database,
   params: {

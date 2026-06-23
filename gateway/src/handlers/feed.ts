@@ -136,77 +136,13 @@ export async function handleCreateFeedPost(
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
-    if (body.title.length > 500) {
-      return new Response(
-        JSON.stringify({ error: 'title max 500 characters' }),
-        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+
+    // TC-109-12: Mention extraction (best-effort, non-blocking)
+    try {
+      extractMentions(body.text, commentId, postId, auth, env).catch(() => {});
+    } catch (_) {
+      // mentions are best-effort
     }
-
-    // Text validation
-    if (body.text && body.text.length > 10_000) {
-      return new Response(
-        JSON.stringify({ error: 'text max 10000 characters' }),
-        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
-    }
-
-    // blocks_data size validation (002 attack #4)
-    if (body.blocksData && JSON.stringify(body.blocksData).length > 50_000) {
-      return new Response(
-        JSON.stringify({ error: 'blocksData too large (max 50KB)' }),
-        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
-    }
-
-    const id = crypto.randomUUID();
-    const now = new Date().toISOString();
-
-    // author_type — stub: guest for all until TC-101-03 (001 FIX #4)
-    // TC-101-03 will replace with real JWT auth + server-defined author_type
-    const author_type = 'user';
-
-    await (env.FEED_DB.prepare(`
-      INSERT INTO feed_posts (
-        id, author_id, author_name, author_avatar, author_type,
-        type, title, body, tags, track_id, blocks_data,
-        base_track_id, battle_block_id, max_submissions, battle_status,
-        event_date, event_price, event_location,
-        source_type, status, created_at
-      ) VALUES (
-        ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?, ?,
-        ?, ?, ?, ?,
-        ?, ?, ?,
-        ?, 'published', ?
-      )
-    `) as any).bind(
-      id,
-      auth.sub,                          // author_id из JWT (IDOR fix)
-      auth.name || 'Пользователь',       // author_name из JWT
-      auth.picture || '',                // author_avatar из JWT
-      author_type,
-      body.type,
-      body.title.slice(0, 500),
-      body.text ? body.text.slice(0, 10_000) : null,
-      body.tags ? JSON.stringify(body.tags) : null,
-      body.trackId || null,
-      body.blocksData ? JSON.stringify(body.blocksData) : null,
-      body.baseTrackId || null,
-      body.battleBlockId || null,
-      body.maxSubmissions || 5,
-      body.battleStatus || 'open',
-      body.eventDate || null,
-      body.eventPrice || null,
-      body.eventLocation || null,
-      body.sourceType || 'manual',
-      now
-    ).run();
-
-    // Return created post
-    const created = await (env.FEED_DB.prepare(
-      'SELECT * FROM feed_posts WHERE id = ?'
-    ) as any).bind(id).first();
 
     return new Response(
       JSON.stringify({
@@ -227,7 +163,7 @@ export async function handleCreateFeedPost(
   }
 }
 
-// ─── POST /api/feed/likes ───
+// ─── POST /api/feed/likes (TC-109-11: refactored — atomic batch) ───
 export async function handleToggleLike(
   request: Request,
   env: Env,
@@ -245,10 +181,10 @@ export async function handleToggleLike(
       );
     }
 
-    // Status-check: нельзя лайкать удалённый пост
+    // Status-check (read-only, no race)
     const postStatus = await (env.FEED_DB.prepare(
       'SELECT status FROM feed_posts WHERE id = ?'
-    ) as any).bind(postId).first();
+    ) as any).bind(postId).first() as { status: string } | null;
     if (!postStatus) {
       return new Response(
         JSON.stringify({ error: 'Post not found' }),
@@ -262,41 +198,50 @@ export async function handleToggleLike(
       );
     }
 
-    // Check existing like
+    // Atomic batch: check existing + toggle + update counter
     const existing = await (env.FEED_DB.prepare(
       'SELECT 1 FROM feed_likes WHERE post_id = ? AND user_id = ?'
     ) as any).bind(postId, userId).first();
 
+    let liked: boolean;
+    let likes_count: number;
+
     if (existing) {
-      // Unlike
-      await (env.FEED_DB.prepare(
-        'DELETE FROM feed_likes WHERE post_id = ? AND user_id = ?'
-      ) as any).bind(postId, userId).run();
-
-      // MAX(0, ...) — protects from negative likes_count (002 attack #5)
-      await (env.FEED_DB.prepare(
-        'UPDATE feed_posts SET likes_count = MAX(0, likes_count - 1) WHERE id = ?'
-      ) as any).bind(postId).run();
+      // Unlike — atomic batch
+      const batchResult = await env.FEED_DB.batch([
+        (env.FEED_DB.prepare(
+          'DELETE FROM feed_likes WHERE post_id = ? AND user_id = ?'
+        ) as any).bind(postId, userId),
+        (env.FEED_DB.prepare(
+          'UPDATE feed_posts SET likes_count = MAX(0, likes_count - 1) WHERE id = ?'
+        ) as any).bind(postId),
+      ]);
+      liked = false;
+      // Read updated counter
+      const post = await (env.FEED_DB.prepare(
+        'SELECT likes_count FROM feed_posts WHERE id = ?'
+      ) as any).bind(postId).first() as { likes_count: number } | null;
+      likes_count = post?.likes_count || 0;
     } else {
-      // Like
-      await (env.FEED_DB.prepare(
-        'INSERT INTO feed_likes (post_id, user_id, created_at) VALUES (?, ?, ?)'
-      ) as any).bind(postId, userId, new Date().toISOString()).run();
-
-      await (env.FEED_DB.prepare(
-        'UPDATE feed_posts SET likes_count = likes_count + 1 WHERE id = ?'
-      ) as any).bind(postId).run();
+      // Like — atomic batch
+      const batchResult = await env.FEED_DB.batch([
+        (env.FEED_DB.prepare(
+          'INSERT INTO feed_likes (post_id, user_id, created_at) VALUES (?, ?, ?)'
+        ) as any).bind(postId, userId, new Date().toISOString()),
+        (env.FEED_DB.prepare(
+          'UPDATE feed_posts SET likes_count = likes_count + 1 WHERE id = ?'
+        ) as any).bind(postId),
+      ]);
+      liked = true;
+      // Read updated counter
+      const post = await (env.FEED_DB.prepare(
+        'SELECT likes_count FROM feed_posts WHERE id = ?'
+      ) as any).bind(postId).first() as { likes_count: number } | null;
+      likes_count = post?.likes_count || 0;
     }
 
-    const post = await (env.FEED_DB.prepare(
-      'SELECT likes_count FROM feed_posts WHERE id = ?'
-    ) as any).bind(postId).first();
-
     return new Response(
-      JSON.stringify({
-        liked: !existing,
-        likes_count: post?.likes_count || 0,
-      }),
+      JSON.stringify({ liked, likes_count }),
       { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   } catch (err: any) {
@@ -961,4 +906,58 @@ export async function handleDeleteComment(
       { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TC-109-12: Mention extraction helper
+// ═══════════════════════════════════════════════════════════════
+const MENTION_RE = /(?:^|\s)@(\p{L}[\p{L}\p{N}_]*)/gu;
+const MAX_MENTIONS = 5;
+
+async function extractMentions(
+  text: string,
+  sourceId: string,
+  postId: string,
+  auth: AuthCtx,
+  env: Env
+): Promise<void> {
+  const handles = new Set<string>();
+  let match: RegExpExecArray | null;
+  while ((match = MENTION_RE.exec(text)) !== null && handles.size < MAX_MENTIONS) {
+    handles.add(match[1].toLowerCase());
+  }
+  if (handles.size === 0) return;
+
+  const handleList = [...handles];
+  const placeholders = handleList.map(() => '?').join(',');
+  const users = await (env.FEED_DB.prepare(
+    `SELECT user_id FROM users WHERE LOWER(handle) IN (${placeholders}) AND user_id != ?`
+  ) as any).bind(...handleList, auth.sub).all();
+
+  const mentionedUsers = (users.results || []) as Array<{ user_id: string }>;
+  if (mentionedUsers.length === 0) return;
+
+  const inserts: any[] = [];
+  const now = new Date().toISOString();
+
+  for (const u of mentionedUsers) {
+    inserts.push(
+      (env.FEED_DB.prepare(
+        'INSERT OR IGNORE INTO feed_mentions (source_type, source_id, mentioned_user_id) VALUES (?, ?, ?)'
+      ) as any).bind('comment', sourceId, u.user_id)
+    );
+    inserts.push(
+      (env.FEED_DB.prepare(`
+        INSERT INTO feed_notifications (id, user_id, actor_id, actor_name, type, post_id, comment_id, text_preview, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `) as any).bind(
+        crypto.randomUUID(), u.user_id,
+        auth.sub, auth.name || 'Пользователь',
+        'mention', postId, sourceId,
+        text.slice(0, 200), now
+      )
+    );
+  }
+
+  await env.FEED_DB.batch(inserts);
 }

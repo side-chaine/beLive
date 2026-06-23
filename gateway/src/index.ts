@@ -3,7 +3,8 @@ import { getAuthCtx } from './handlers/auth';
 import { getUserRole, assignRole, hasExistingFounder } from './handlers/roles';
 import { runMigrations } from '../migrations/_runner';
 import { handleToggleReaction, handleGetReactions } from './handlers/reactions';
-import { handleListNotifications, handleMarkNotificationRead } from './handlers/notifications';
+import { handleListNotifications, handleMarkNotificationRead, handleMarkNotificationReadById, handleDeleteNotification } from './handlers/notifications';
+import { handleUpsertUser, handleGetUserByHandle } from './handlers/users';
 
 interface Env {
   OPENROUTER_API_KEY: string;
@@ -551,6 +552,43 @@ export default {
         return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
       }
       return handleMarkNotificationRead(request, env, auth, feedHeaders);
+    }
+
+    // ─── POST /api/feed/notifications/:id/read (TC-109-14) ───
+    if (request.method === 'POST' && /^\/api\/feed\/notifications\/[^/]+\/read$/.test(url.pathname)) {
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      const notificationId = url.pathname.split('/')[4];
+      return handleMarkNotificationReadById(request, env, auth, notificationId, feedHeaders);
+    }
+
+    // ─── DELETE /api/feed/notifications/:id (TC-109-14) ───
+    if (request.method === 'DELETE' && /^\/api\/feed\/notifications\/[^/]+$/.test(url.pathname)) {
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      const notificationId = url.pathname.split('/').pop()!;
+      return handleDeleteNotification(request, env, auth, notificationId, feedHeaders);
+    }
+
+    // ─── POST /api/users/upsert (TC-109-13) ───
+    if (request.method === 'POST' && url.pathname === '/api/users/upsert') {
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      return handleUpsertUser(request, env, auth, feedHeaders);
+    }
+
+    // ─── GET /api/users/:handle (TC-109-13) ───
+    if (request.method === 'GET' && url.pathname.startsWith('/api/users/')) {
+      const handle = url.pathname.split('/').pop()!;
+      if (handle && handle !== 'api') {
+        return handleGetUserByHandle(request, env, feedHeaders);
+      }
     }
 
     // ─── DELETE /api/feed/posts/:postId (TC-107-03) ───
