@@ -596,8 +596,9 @@ export async function saveTrack(): Promise<void> {
         console.warn('Ошибка при применении JSON маркеров:', e);
       }
       // Dispatch track-saved so CatalogLayout can open lyrics modal if needed
+      const hasLyrics = !!(savedTrack.lyrics);
       document.dispatchEvent(new CustomEvent('track-saved', {
-        detail: { trackId: savedTrack.id, title: savedTrack.title, hasJson: true }
+        detail: { trackId: savedTrack.id, title: savedTrack.title, hasJson: true, hasLyrics }
       }));
       return;
     }

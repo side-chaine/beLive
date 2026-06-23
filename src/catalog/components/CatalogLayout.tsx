@@ -8,120 +8,25 @@ import { handleZipFileSelect } from '../../services/upload.actions';
 import { useCatalogStore } from '../store/catalog.store';
 import { useDeckStore } from '../../stores/deck.store';
 import { useSyncStore } from '../../sync/store/sync.store';
-import { parseTrackName } from '../types';
 import { useUIStore } from '../../stores/ui.store';
 import { useSwipe } from '../hooks/useSwipe';
-import { useGhostStore } from '../../stores/ghost.store';
-import { GhostTrackCard } from './GhostTrackCard';
+import { CatalogContent } from './CatalogContent';
+import { T, colBase, IB, NB } from '../theme';
 
 interface Props { color: string; onClose: () => void; } // deploy-force
 
-const T = {
-  bg: 'rgba(8,8,14,0.98)',
-  surface: 'rgba(255,255,255,0.035)',
-  surfaceH: 'rgba(255,255,255,0.06)',
-  border: 'rgba(255,255,255,0.07)',
-  border2: 'rgba(255,255,255,0.12)',
-  text: '#e2e2e2',
-  dim: '#888',
-  mute: '#555',
-  green: '#4CAF50',
-  greenD: 'rgba(76,175,80,0.10)',
-  purple: '#9b59b6',
-  purpleD: 'rgba(155,89,182,0.08)',
-  orange: '#FF8C00',
-  orangeD: 'rgba(255,140,0,0.07)',
-  red: '#e74c3c',
-  r: 6, rL: 10,
-};
 
-const colBase: React.CSSProperties = {
-  background: T.surface, border: `1px solid ${T.border}`,
-  borderRadius: T.rL, padding: 14,
-  display: 'flex', flexDirection: 'column', overflow: 'hidden',
-};
 
-const TG_API_URL = 'https://belive-feed-bot.nikitosss007.workers.dev/tracks';
 
-interface TgTrack {
-  id: string; title: string; artist: string; slug: string;
-  type: string; fileIds: { instrumental?: string; full?: string };
-  fileSize: number; fileName: string;
-}
-
-async function downloadTgTrack(
-  t: TgTrack,
-  handleZip: (file: File) => Promise<void>,
-  setSearchQuery: (q: string) => void
-): Promise<void> {
-  const fileId = t.fileIds?.instrumental || t.fileIds?.full;
-  if (!fileId) return;
-  setSearchQuery('');
-  const gid = 'ghost_' + Date.now();
-  useGhostStore.getState().addGhost({
-    id: gid, title: t.title, artist: t.artist,
-    phase: 'download', progress: 0,
-  });
-
-  const baseUrl = TG_API_URL.replace('/tracks', '');
-  if (baseUrl === TG_API_URL) {
-    useGhostStore.getState().updateGhost(gid, { phase: 'error' });
-    return;
-  }
-
-  try {
-    const resp = await fetch(baseUrl + '/download/' + fileId);
-    if (!resp.ok) {
-      useGhostStore.getState().updateGhost(gid, { phase: 'error' });
-      return;
-    }
-
-    const contentLength = resp.headers.get('Content-Length');
-    const reader = resp.body?.getReader();
-    if (!reader) {
-      useGhostStore.getState().updateGhost(gid, { phase: 'error' });
-      return;
-    }
-
-    const chunks: Uint8Array[] = [];
-    let received = 0;
-    const total = contentLength ? parseInt(contentLength) : 0;
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (value) {
-        chunks.push(value);
-        received += value.length;
-        if (total > 0) {
-          useGhostStore.getState().updateGhost(gid, {
-            progress: Math.round((received / total) * 100),
-          });
-        }
-      }
-    }
-
-    const blob = new Blob(chunks as BlobPart[], { type: resp.headers.get('Content-Type') || 'application/zip' });
-    useGhostStore.getState().updateGhost(gid, { phase: 'extract', progress: 0 });
-
-    const fn = t.artist ? `${t.artist} - ${t.title}.zip` : `${t.title}.zip`;
-    await handleZip(new File([blob], fn, { type: 'application/zip' }));
-    useGhostStore.getState().updateGhost(gid, { phase: 'done', progress: 100 });
-
-  } catch (err) {
-    console.error('[TG] Download failed:', err);
-    useGhostStore.getState().updateGhost(gid, { phase: 'error' });
-  }
-}
 
 export function CatalogLayout({ color, onClose }: Props) {
   const tracks = useTrackStore(s => s.tracksMeta);
   const currentIdx = useTrackStore(s => s.currentTrackIndex);
   const store = useCatalogStore();
   const {
-    myMusicIds, playlists, searchQuery,
+    playlists,
     syncMyMusicFromLegacy, syncPlaylistsFromLegacy,
-    addToMyMusic, removeFromMyMusic, setSearchQuery,
+    removeFromMyMusic,
     startBuildingPlaylist, savePlaylist, deletePlaylist, loadPlaylist,
     cancelBuilding, isBuilding, buildingName, setBuildingName,
     addToBuildingPlaylist, buildingTracks,
@@ -133,32 +38,23 @@ export function CatalogLayout({ color, onClose }: Props) {
   const [hovId, setHovId] = useState<number | null>(null);
   const [zipBusy, setZipBusy] = useState(false);
   const [zipProgress, setZipProgress] = useState(0);
+  const zipBusyRef = useRef(false);
   const [zipOver, setZipOver] = useState(false);
   const [zipHover, setZipHover] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const [pendingLyricsTrackId, setPendingLyricsTrackId] = useState<number|null>(null);
   const [pendingLyricsTitle, setPendingLyricsTitle] = useState('');
-  const trackListRef = useRef<HTMLDivElement>(null);
   const safetyTimedOut = useRef(false); // guard: safety timeout already reset UI
-
-  const [tgTracks, setTgTracks] = useState<TgTrack[]>([]);
-  const [tgError, setTgError] = useState(false);
-
-  // Fetch Telegram tracks on mount
-  useEffect(() => {
-    let cancelled = false;
-    fetch(TG_API_URL)
-      .then(r => r.json())
-      .then(data => { if (!cancelled && data?.tracks) setTgTracks(data.tracks); })
-      .catch(() => { if (!cancelled) setTgError(true); });
-    return () => { cancelled = true; };
-  }, []);
 
   const gridRef = useRef<HTMLDivElement>(null);
   const activeFeedColumn = useUIStore(s => s.activeFeedColumn);
   const setActiveFeedColumn = useUIStore(s => s.setActiveFeedColumn);
   const catalogTab = useUIStore(s => s.catalogTab);
   const setCatalogTab = useUIStore(s => s.setCatalogTab);
+  const goToUpload = useCallback(() => {
+    setCatalogTab('upload');
+    setActiveFeedColumn(2);
+  }, [setCatalogTab, setActiveFeedColumn]);
 
   useEffect(() => {
     const el = gridRef.current;
@@ -184,34 +80,6 @@ export function CatalogLayout({ color, onClose }: Props) {
     return () => window.removeEventListener('popstate', onPop);
   }, [activeFeedColumn, setActiveFeedColumn]);
 
-  // Auto-scroll to bottom when new tracks added
-  useEffect(() => {
-    if (trackListRef.current) {
-      trackListRef.current.scrollTo({ top: trackListRef.current.scrollHeight, behavior: 'smooth' });
-    }
-  }, [tracks.length]);
-
-  // Auto-scroll when ghost added
-  const ghosts = useGhostStore(s => s.ghosts);
-  useEffect(() => {
-    if (ghosts.length > 0 && trackListRef.current) {
-      setTimeout(() => trackListRef.current?.scrollTo({ top: trackListRef.current.scrollHeight, behavior: 'smooth' }), 100);
-    }
-  }, [ghosts.length]);
-
-  // Remove ghost on track-saved
-  useEffect(() => {
-    const handler = (_e: Event) => {
-      const gs = useGhostStore.getState().ghosts;
-      if (gs.length > 0) {
-        // Remove the oldest ghost (first in, first processed)
-        useGhostStore.getState().removeGhost(gs[0].id);
-      }
-    };
-    document.addEventListener('track-saved', handler);
-    return () => document.removeEventListener('track-saved', handler);
-  }, []);
-
   useEffect(() => {
     const dh = (e: Event) => { const d = (e as CustomEvent).detail; if (d?.tab) useDeckStore.setState({ activeTabId: d.tab, expanded: d.expanded ?? true }); };
     const ch = () => onClose();
@@ -222,7 +90,8 @@ export function CatalogLayout({ color, onClose }: Props) {
 
   useEffect(() => { syncMyMusicFromLegacy(); syncPlaylistsFromLegacy(); }, []);
 
-  // Listen for track-saved event to open upload tab
+  // Listen for track-saved event to open upload tab (Listener #2 of 2)
+  // Listener #1 (ghost cleanup) lives in CatalogContent.tsx. НЕ объединять.
   useEffect(() => {
     const handler = (e: Event) => {
       const d = (e as CustomEvent).detail;
@@ -230,14 +99,14 @@ export function CatalogLayout({ color, onClose }: Props) {
         setPendingLyricsTrackId(d.trackId);
         setPendingLyricsTitle(d.title || '');
         setShowManual(true);
-        setCatalogTab('upload');
+        goToUpload();
       } else {
-        setCatalogTab('catalog');
+        setActiveFeedColumn(1);
       }
     };
     document.addEventListener('track-saved', handler);
     return () => document.removeEventListener('track-saved', handler);
-  }, []);
+  }, [goToUpload]);
 
   const play = useCallback((index: number) => {
     loadTrack(index, { autoplay: true, openSyncEditor: false });
@@ -254,7 +123,9 @@ export function CatalogLayout({ color, onClose }: Props) {
     useTrackStore.getState().removeTrack(String(id));
   }, []);
 
-  const handleZip = useCallback(async (file: File) => {
+  const handleZip = useCallback(async (file: File, onProgress?: (pct: number) => void) => {
+    if (zipBusyRef.current) return;
+    zipBusyRef.current = true;
     // Guard: skip if already processing (dropzone blocks via zipBusy check separately)
     setZipBusy(true);
     setZipProgress(0);
@@ -264,11 +135,12 @@ export function CatalogLayout({ color, onClose }: Props) {
     const safetyTimer = setTimeout(() => {
       console.warn('[ZIP] safety timeout — forcing zipBusy=false');
       safetyTimedOut.current = true;
+      zipBusyRef.current = false;
       setZipBusy(false);
     }, 60000);
 
     try {
-      await handleZipFileSelect(file, (pct) => setZipProgress(pct));
+      await handleZipFileSelect(file, (pct) => { setZipProgress(pct); onProgress?.(pct); });
       clearTimeout(safetyTimer);
       setTimeout(() => document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'catalog' } })), 2000)
     } catch (err) {
@@ -277,6 +149,7 @@ export function CatalogLayout({ color, onClose }: Props) {
       alert('ZIP failed.');
     } finally {
       if (import.meta.env.DEV) console.log('[ZIP] finally called, timedOut=', safetyTimedOut.current);
+      zipBusyRef.current = false;
       clearTimeout(safetyTimer);
       if (!safetyTimedOut.current) {
         setTimeout(() => {
@@ -289,13 +162,6 @@ export function CatalogLayout({ color, onClose }: Props) {
 
   // TG download — не используется в текущей версии (будет восстановлен позже)
 
-  // TC-TG-05: Main list = all IDB tracks. Search shows dropdown overlay.
-  const filtered = tracks;
-  const q = searchQuery.toLowerCase().trim();
-  const showingTg = q.length >= 2;
-  const idbMatches = q ? tracks.filter(t => t.title?.toLowerCase().includes(q) || t.artist?.toLowerCase().includes(q)) : [];
-  const tgMatches = showingTg ? tgTracks.filter(t => t.title?.toLowerCase().includes(q) || t.artist?.toLowerCase().includes(q)) : [];
-  const showDropdown = showingTg && (idbMatches.length > 0 || tgMatches.length > 0);
   const groups = getGroupedMyMusic();
 
   return (
@@ -314,53 +180,32 @@ export function CatalogLayout({ color, onClose }: Props) {
       {/* Grid — fills remaining space */}
       <div ref={gridRef} className="bl-catalog-grid" style={{ flex: 1, minHeight: 0, padding: '12px 16px 16px' }}>
 
-        {/* ═══ COL 0: AI PLACEHOLDER ═══ */}
+        {/* ═══ COL 0: AVATAR PLACEHOLDER (future) ═══ */}
         <div className="bl-catalog-col" style={colBase}>
           <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12, padding:20, textAlign:'center' }}>
-            <div style={{ fontSize:24 }}>🤖</div>
-            <div style={{ fontSize:13, fontWeight:600, color:T.dim }}>AI Assistant</div>
-            <div style={{ fontSize:11, color:T.mute, lineHeight:1.5 }}>Скоро здесь появится умный помощник для работы с треками</div>
+            <div style={{ fontSize:24 }}>👤</div>
+            <div style={{ fontSize:13, fontWeight:600, color:T.dim }}>Профиль</div>
+            <div style={{ fontSize:11, color:T.mute, lineHeight:1.5 }}>Информация об аватаре появится в следующих обновлениях</div>
           </div>
         </div>
 
-        {/* ═══ COL 1: EMPTY (reserved) ═══ */}
-        <div className="bl-catalog-col" style={colBase} />
+        {/* ═══ COL 1: CATALOG CENTER (search + tracks + TG) ═══ */}
+        <div className="bl-catalog-col" style={{ ...colBase, overflow: 'visible' }}>
+          <CatalogContent
+            color={color}
+            handleZip={handleZip}
+            play={play}
+            del={del}
+          />
+        </div>
 
         {/* ═══ COL 2: CATALOG ═══ */}
         <div className="bl-catalog-col" style={colBase}>
           <div style={{ display:'flex', gap:4, marginBottom:8, flexShrink:0 }}>
-            <button onClick={()=>setCatalogTab('catalog')} style={{ flex:1, padding:'6px 0', fontSize:11, fontWeight:700, cursor:'pointer', color:catalogTab==='catalog'?T.orange:T.dim, borderBottom:catalogTab==='catalog'?`2px solid ${T.orange}`:'2px solid transparent', background:'none', border:'none', letterSpacing:'0.05em' }}>КАТАЛОГ</button>
             <button onClick={()=>setCatalogTab('my-music')} style={{ flex:1, padding:'6px 0', fontSize:11, fontWeight:700, cursor:'pointer', color:catalogTab==='my-music'?T.green:T.dim, borderBottom:catalogTab==='my-music'?`2px solid ${T.green}`:'2px solid transparent', background:'none', border:'none', letterSpacing:'0.05em' }}>МОЯ МУЗЫКА</button>
-            <button onClick={()=>setCatalogTab('upload')} style={{ flex:1, padding:'6px 0', fontSize:11, fontWeight:700, cursor:'pointer', color:catalogTab==='upload'?T.orange:T.dim, borderBottom:catalogTab==='upload'?`2px solid ${T.orange}`:'2px solid transparent', background:'none', border:'none', letterSpacing:'0.05em' }}>ЗАГРУЗКА</button>
+            <button onClick={goToUpload} style={{ flex:1, padding:'6px 0', fontSize:11, fontWeight:700, cursor:'pointer', color:catalogTab==='upload'?T.orange:T.dim, borderBottom:catalogTab==='upload'?`2px solid ${T.orange}`:'2px solid transparent', background:'none', border:'none', letterSpacing:'0.05em' }}>ЗАГРУЗКА</button>
           </div>
-          <div style={{ display:catalogTab==='catalog'?'flex':'none', flexDirection:'column', flex:1, minHeight:0 }}>
-            <div style={{ position:'relative', flexShrink:0, marginBottom:8 }}>
-              <input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Найти трек..." style={{ width:'100%', background:'rgba(0,0,0,0.3)', color:'#fff', border:`1px solid ${T.border2}`, borderRadius:T.r, padding:'8px 12px', fontSize:12, boxSizing:'border-box', outline:'none' }} />
-              {searchQuery&&<span onClick={()=>setSearchQuery('')} style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',cursor:'pointer',color:T.dim,fontSize:14,zIndex:1,lineHeight:1}}>✕</span>}
-              {showDropdown&&(<div style={{position:'absolute',top:'calc(100%+4px)',left:0,right:0,zIndex:10,background:T.bg,border:`1px solid ${T.border2}`,borderTop:'2px solid #FF8C00',borderRadius:T.rL,maxHeight:300,overflow:'auto',boxShadow:'0 8px 32px rgba(0,0,0,0.5)'}}>
-                {idbMatches.length>0&&<div style={{fontSize:9,fontWeight:700,letterSpacing:'0.08em',color:'#4CAF50',padding:'6px 8px 2px',textTransform:'uppercase'}}>В каталоге</div>}
-                {idbMatches.map(t=>{const p=parseTrackName(t.title||'');const lb=p.artist?`${p.artist} — ${p.title}`:p.title||`Track ${t.index+1}`;return(<div key={t.id} onClick={()=>play(t.index)} style={{display:'flex',alignItems:'center',padding:'8px 12px',cursor:'pointer',borderBottom:`1px solid ${T.border}`}}><CoverArt url={t.coverArtUrl} title={t.title} size={28} borderRadius={5}/><span style={{flex:1,fontSize:12,marginLeft:8,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:T.text}}>{lb}</span><span style={{fontSize:10,color:T.dim,flexShrink:0}}>▶</span></div>);})}
-                {tgMatches.length>0&&<div style={{fontSize:9,fontWeight:700,letterSpacing:'0.08em',color:'#FF8C00',padding:'6px 8px 2px',textTransform:'uppercase'}}>В Telegram</div>}
-                {tgMatches.map(t=>(<div key={t.id} onClick={() => downloadTgTrack(t, handleZip, setSearchQuery)} style={{display:'flex',alignItems:'center',padding:'8px 12px',cursor:'pointer',borderBottom:`1px solid ${T.border}`}}><div style={{width:28,height:28,borderRadius:5,background:`${T.orange}22`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:T.orange,flexShrink:0}}>☁</div><span style={{flex:1,fontSize:12,marginLeft:8,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:T.text}}>{t.title}</span></div>))}
-              </div>)}
-            </div>
-            {tgError&&<div style={{fontSize:10,color:T.mute,marginBottom:8,textAlign:'center',flexShrink:0}}>TG каталог недоступен</div>}
-            <div style={{ fontSize:10, fontWeight:700, color:T.dim, marginBottom:6, letterSpacing:'0.05em', flexShrink:0 }}>ВСЕ ТРЕКИ ({tracks.length})</div>
-            <div ref={trackListRef} style={{ flex:1, overflow:'auto' }}>
-              {filtered.length===0?<div style={{ color:T.mute, fontSize:11, padding:12 }}>Нет треков</div>
-              :filtered.map((t,i)=>{const a=t.index===currentIdx; const inMy=myMusicIds.includes(Number(t.id)); const p=parseTrackName(t.title||''); const lb=p.artist?`${p.artist} — ${p.title}`:p.title||`Track ${t.index+1}`; return(
-                <div key={t.id??i} style={{ display:'flex', alignItems:'center', padding:'6px 10px', borderRadius:T.r, marginBottom:2, background:a?T.orangeD:T.surface, border:`1px solid ${a?T.orange+'22':T.border}`, cursor:'pointer' }}>
-                  <CoverArt url={t.coverArtUrl} title={t.title} size={32} borderRadius={6} />
-                  <span onClick={()=>play(t.index)} style={{ flex:1, fontSize:12, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', color:a?T.orange:T.text, marginLeft:8 }}>{a&&'▶ '}{lb}</span>
-                  {(()=>{const tc=(window as any).trackCatalog;const ft=tc?.tracks?.find((tr:any)=>String(tr.id)===String(t.id));const sc=ft?.stemsData?Object.keys(ft.stemsData).length:0;if(sc>2)return<span style={{fontSize:9,fontWeight:700,padding:'2px 5px',borderRadius:3,border:'1px solid #4CAF5066',color:'#4CAF50',letterSpacing:'0.05em',flexShrink:0,marginLeft:6}}>‹ FULL ›</span>;if(ft?.vocalsData||sc===2)return<span style={{fontSize:9,fontWeight:700,padding:'2px 5px',borderRadius:3,border:'1px solid #FF8C0066',color:'#FF8C00',letterSpacing:'0.05em',flexShrink:0,marginLeft:6}}>‹ DUO ›</span>;return null;})()}
-                  <div style={{ display:'flex', gap:1, flexShrink:0 }}>
-                    {!inMy&&<IB c={T.green} onClick={()=>addToMyMusic(Number(t.id))}>+</IB>}
-                    <IB c={T.red} onClick={()=>del(t.id,lb)}>✕</IB>
-                  </div>
-                </div>);})}
-              {ghosts.map(g=><GhostTrackCard key={g.id} ghost={g} />)}
-            </div>
-          </div>
+
           <div style={{ display:catalogTab==='my-music'?'flex':'none', flexDirection:'column', flex:1, minHeight:0 }}>
             <div style={{ flex:1, overflow:'auto', paddingRight:2 }}>
               {groups.length===0&&<div style={{ color:T.mute, fontSize:11, padding:'16px 4px', lineHeight:1.6 }}>Нажмите + на треке в каталоге</div>}
@@ -403,7 +248,7 @@ export function CatalogLayout({ color, onClose }: Props) {
             </div>
           </div>
           {/* ── Upload tab: PORT + Manual upload ── */}
-          <div style={{ display:catalogTab==='upload'?'flex':'none', flexDirection:'column', flex:1, minHeight:0 }}>
+          <div style={{ display:catalogTab==='upload'?'flex':'none', flexDirection:'column', flex:1, minHeight:0, overflow:'auto', gap:8 }}>
             {/* PORT dropzone */}
             <div onClick={()=>{if(zipBusy)return;const input=document.getElementById('bl-smart-file-input') as HTMLInputElement;input?.click();}} onMouseEnter={()=>setZipHover(true)} onMouseLeave={()=>setZipHover(false)} onDragOver={e=>{e.preventDefault();e.stopPropagation();setZipOver(true);}} onDragLeave={()=>setZipOver(false)} onDrop={e=>{e.preventDefault();setZipOver(false);const files=e.dataTransfer?.files;if(files&&files.length>0)handleZip(files[0]);}} style={{ border:zipOver?`2px dashed ${T.orange}`:`1.5px dashed ${zipHover?T.orange:T.border2}`, borderRadius:T.rL, padding:'20px 16px', textAlign:'center', cursor:zipBusy?'default':'pointer', background:zipOver?'rgba(255,140,0,0.07)':zipHover?'rgba(255,140,0,0.03)':'transparent', transition:'all 0.2s', overflow:'hidden', minHeight:88, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:6 }}>
               <input id="bl-smart-file-input" type="file" accept=".zip" style={{ display:'none' }} onChange={e=>{const file=e.target.files?.[0];if(file)handleZip(file);e.target.value='';}} />
@@ -437,7 +282,7 @@ export function CatalogLayout({ color, onClose }: Props) {
               {showManual?'▲ Ручная загрузка':'▶ Ручная загрузка'}
             </div>
             {showManual&&<div style={{ marginTop:8 }}>
-              <UploadPanel autoOpenLyrics={pendingLyricsTrackId!==null} pendingTrackId={pendingLyricsTrackId} pendingTrackTitle={pendingLyricsTrackId?pendingLyricsTitle:null} onClose={()=>{setPendingLyricsTrackId(null);setPendingLyricsTitle('');setShowManual(false);setCatalogTab('catalog');}} onSaved={()=>{setPendingLyricsTrackId(null);setPendingLyricsTitle('');setShowManual(false);setCatalogTab('catalog');}} />
+              <UploadPanel autoOpenLyrics={pendingLyricsTrackId!==null} pendingTrackId={pendingLyricsTrackId} pendingTrackTitle={pendingLyricsTrackId?pendingLyricsTitle:null} onClose={()=>{setPendingLyricsTrackId(null);setPendingLyricsTitle('');setShowManual(false);setActiveFeedColumn(1);}} onSaved={()=>{setPendingLyricsTrackId(null);setPendingLyricsTitle('');setShowManual(false);setActiveFeedColumn(1);}} />
             </div>}
           </div>
         </div>
@@ -449,13 +294,7 @@ export function CatalogLayout({ color, onClose }: Props) {
   );
 }
 
-function IB({ c, children, onClick, o }: { c: string; children: React.ReactNode; onClick: (e: React.MouseEvent) => void; o?: number }) {
-  return <button onClick={onClick} style={{ background: 'none', border: 'none', cursor: 'pointer', color: c, fontSize: 13, padding: '2px 4px', lineHeight: 1, opacity: o ?? 1, transition: 'opacity 0.15s' }}>{children}</button>;
-}
 
-function NB({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
-  return <button onClick={onClick} style={{ background: 'rgba(255,255,255,0.05)', color: '#aaa', border: `1px solid rgba(255,255,255,0.08)`, borderRadius: 4, padding: '5px 16px', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>{children}</button>;
-}
 
 // @TC-088: Sec replaced by FeedLayout — kept for potential rollback
 // function Sec(...) { ... }

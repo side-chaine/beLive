@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware';
 // ─── FEED-REARCH: App mode + feed panel state ───
 
 export type AppMode = 'studio' | 'feed';
-export type CatalogTab = 'catalog' | 'my-music' | 'upload';
+export type CatalogTab = 'my-music' | 'upload';
 
 export interface FeedColWidths {
   col0: number | null;  // null = default (viewport-based), number = custom px
@@ -40,7 +40,7 @@ export const useUIStore = create<UIState>()(
       karaokeLinesCount: 2,
       karaokeLyricsScale: 120,
       activeFeedColumn: 1,
-      catalogTab: 'catalog',
+      catalogTab: 'my-music',
       appMode: 'studio',
       feedCol0Visible: true,
       feedCol2Visible: true,

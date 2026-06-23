@@ -33,12 +33,12 @@
 
 .bl-catalog-grid {
   display: grid;
-  grid-template-columns: 20% 1fr 25%;
+  grid-template-columns: 22% 1fr 28%;
   gap: 12px;
 }
 
 @media (max-width: 1024px) {
-  .bl-catalog-grid { grid-template-columns: 0 1fr 30%; }
+  .bl-catalog-grid { grid-template-columns: 0 1fr 32%; }
 }
 
 @media (max-width: 767px) {
