@@ -105,6 +105,7 @@ export async function handleToggleReaction(
 }
 
 // ─── GET /api/feed/reactions?target_type=post&target_ids=id1,id2,id3 ───
+// Returns aggregate counts + authenticated user's reactions (if JWT provided).
 export async function handleGetReactions(
   request: Request,
   env: Env,
@@ -117,7 +118,7 @@ export async function handleGetReactions(
 
     if (!targetIds.length) {
       return new Response(
-        JSON.stringify({ reactions: {} }),
+        JSON.stringify({ reactions: {}, userReactions: {} }),
         { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
@@ -137,8 +138,28 @@ export async function handleGetReactions(
       grouped[row.target_id][row.emoji] = row.count;
     }
 
+    // User-specific reactions (authenticated)
+    const authHeader = request.headers.get('Authorization');
+    let userReactions: Record<string, string[]> = {};
+
+    if (authHeader?.startsWith('Bearer ')) {
+      const { getAuthCtx } = await import('./auth');
+      const auth = await getAuthCtx(request, env);
+      if (auth) {
+        const { results: userRows } = await (env.FEED_DB.prepare(
+          `SELECT target_id, emoji FROM feed_reactions
+           WHERE target_type = ? AND target_id IN (${placeholders}) AND user_id = ?`
+        ) as any).bind(targetType, ...targetIds, auth.sub).all();
+
+        for (const row of (userRows || []) as any[]) {
+          if (!userReactions[row.target_id]) userReactions[row.target_id] = [];
+          userReactions[row.target_id].push(row.emoji);
+        }
+      }
+    }
+
     return new Response(
-      JSON.stringify({ reactions: grouped }),
+      JSON.stringify({ reactions: grouped, userReactions }),
       { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   } catch (err: any) {

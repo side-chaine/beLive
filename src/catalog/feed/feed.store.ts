@@ -486,18 +486,23 @@ export const useFeedStore = create<FeedState>((set, get) => ({
   // ─── TC-109-18: Reactions ───
   fetchReactions: async (postId) => {
     try {
-      const res = await fetch(`${FEED_API}/api/feed/reactions?target_type=post&target_ids=${postId}`);
+      const token = useUserProfileStore.getState().currentUser?.authToken;
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const res = await fetch(`${FEED_API}/api/feed/reactions?target_type=post&target_ids=${postId}`, { headers });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const postReactionsData = data.reactions?.[postId] || {};
-      // Get user's active reactions
-      const token = useUserProfileStore.getState().currentUser?.authToken;
-      let myReactions: Record<string, boolean> = {};
-      if (token) {
-        // For now, optimistic — no server returns per-user state
-        const current = get().postReactions[postId] || {};
-        myReactions = { ...current };
+
+      // User's reactions from server (authenticated)
+      const userEmojis: string[] = data.userReactions?.[postId] || [];
+      const myReactions: Record<string, boolean> = {};
+      for (const emoji of userEmojis) {
+        myReactions[emoji] = true;
       }
+
       set(s => ({
         reactionCounts: { ...s.reactionCounts, [postId]: postReactionsData },
         postReactions: { ...s.postReactions, [postId]: myReactions },
