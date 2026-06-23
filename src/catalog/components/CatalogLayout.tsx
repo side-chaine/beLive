@@ -190,7 +190,7 @@ export function CatalogLayout({ color, onClose }: Props) {
         </div>
 
         {/* ═══ COL 1: CATALOG CENTER (search + tracks + TG) ═══ */}
-        <div className="bl-catalog-col" style={{ ...colBase, overflow: 'visible' }}>
+        <div className="bl-catalog-col" style={colBase}>
           <CatalogContent
             color={color}
             handleZip={handleZip}

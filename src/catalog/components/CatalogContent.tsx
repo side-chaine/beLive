@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { CoverArt } from '../../components/CoverArt';
 import { useTrackStore } from '../../stores/track.store';
 import { useCatalogStore } from '../store/catalog.store';
@@ -100,6 +101,7 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
   const [tgTracks, setTgTracks] = useState<TgTrack[]>([]);
   const [tgError, setTgError] = useState(false);
   const trackListRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   // Fetch Telegram tracks on mount
   useEffect(() => {
@@ -146,9 +148,9 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
   const showDropdown = showingTg && (idbMatches.length > 0 || tgMatches.length > 0);
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'visible' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
       {/* Search input — always visible */}
-      <div style={{ position: 'relative', flexShrink: 0, marginBottom: 8 }}>
+      <div ref={searchRef} style={{ position: 'relative', flexShrink: 0, marginBottom: 8 }}>
         <input
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
@@ -170,13 +172,17 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
             ✕
           </span>
         )}
-        {showDropdown && (
+        {showDropdown && searchRef.current && createPortal(
           <div
             style={{
-              position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 10,
+              position: 'fixed',
+              left: searchRef.current.getBoundingClientRect().left,
+              top: searchRef.current.getBoundingClientRect().bottom + 4,
+              width: searchRef.current.getBoundingClientRect().width,
+              maxHeight: '50vh', overflow: 'auto',
+              zIndex: 999999,
               background: T.bg, border: `1px solid ${T.border2}`,
               borderTop: '2px solid #FF8C00', borderRadius: T.rL,
-              maxHeight: '50vh', overflow: 'auto',
               boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
             }}
           >
@@ -215,7 +221,8 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
                 <span style={{ flex: 1, fontSize: 12, marginLeft: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: T.text }}>{t.title}</span>
               </div>
             ))}
-          </div>
+          </div>,
+          document.body
         )}
       </div>
       {tgError && <div style={{ fontSize: 10, color: T.mute, marginBottom: 8, textAlign: 'center', flexShrink: 0 }}>TG каталог недоступен</div>}
