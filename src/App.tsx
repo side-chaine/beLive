@@ -36,9 +36,6 @@ import { TriggerDebugOverlay } from './triggers/TriggerDebugOverlay';
 import { PlaybackPerfOverlay } from './components/PlaybackPerfOverlay';
 import { TrackInfoBoard } from './components/TrackInfoBoard/TrackInfoBoard';
 import { useTrackInfoStore } from './stores/trackInfo.store';
-import { useAudioStore } from './stores/audio.store';
-import { useLyricsStore } from './stores/lyrics.store';
-import { useMarkersStore } from './stores/markers.store';
 import { useModeStore } from './stores/mode.store';
 import { useBackgroundManagers } from './hooks/useBackgroundManagers';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -246,11 +243,3 @@ export default function App() {
   );
 }
 
-function DevPanel() {
-  const { isPlaying, currentTime, duration } = useAudioStore();
-  const { lines, activeLineIndex } = useLyricsStore();
-  const markers = useMarkersStore((s) => s.markers);
-  const mode = useModeStore((s) => s.mode);
-
-  return null;
-}

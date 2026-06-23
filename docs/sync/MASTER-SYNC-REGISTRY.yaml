@@ -149,11 +149,25 @@ services:
     health: 95
     note: "Added .cp-list/.cp-item/.cp-form styles for comments panel."
 
+  # S-VC MAINTENANCE CYCLE (2026-06-23)
+  # Phase A: 001 — Detect (8 candidates found)
+  # Phase B: 007 — Propose (6 TC approved)
+  # Phase C: 009 — Approve (PARTIAL → REVISED → ALL APPROVED)
+  # Phase D: 007+Operator — Execute (6/6 TC completed)
+  # Phase E: 007 — Writeback + 009 — Final Verify
+  - path: "S-VC-MAINTENANCE-2026-06-23"
+    description: "S-VC Maintenance Cycle — code/docs cleanup"
+    status: COMPLETED
+    last_sync: 2026-06-23
+    health: 100
+    note: "6 TC. Removed: DevPanel dead code (-11 lines), PianoOverlay orphan (-339 lines), duplicate test merge (-88 lines). Archived: architecture-map-2.2.md, interaction-schema-2.2.md. Deleted: SYNC-REGISTRY.md. Total: ~1,006 lines, 5 files, 0 frozen zone touches."
+
 registry_meta:
   version: "1.2"
-  last_full_scan: 2026-06-22
-  total_docs: 10
+  last_full_scan: 2026-06-23
+  total_docs: 11
   ok: 1
   updated: 11
   stale: 3
   created: 2
+  maintenance: 1

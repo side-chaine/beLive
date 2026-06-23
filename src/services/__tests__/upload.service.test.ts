@@ -65,6 +65,18 @@ describe('upload.service — чистые функции', () => {
     it('без расширения возвращает как есть', () => {
       expect(getFileNameWithoutExtension('track')).toBe('track');
     });
+
+    it('handles full path', () => {
+      expect(getFileNameWithoutExtension('/path/to/file.mp3')).toBe('file');
+    });
+
+    it('handles empty string', () => {
+      expect(getFileNameWithoutExtension('')).toBe('');
+    });
+
+    it('handles hidden files (starting with dot)', () => {
+      expect(getFileNameWithoutExtension('.gitignore')).toBe('');
+    });
   });
 
   describe('getFileExtension', () => {
@@ -75,6 +87,27 @@ describe('upload.service — чистые функции', () => {
     it('без расширения — пустая строка', () => {
       expect(getFileExtension('track')).toBe('');
     });
+
+    it('handles filenames with multiple dots', () => {
+      expect(getFileExtension('my.file.name.mp3')).toBe('mp3');
+    });
+
+    it('handles full path', () => {
+      expect(getFileExtension('/path/to/file.mp3')).toBe('mp3');
+    });
+
+    it('handles empty string', () => {
+      expect(getFileExtension('')).toBe('');
+    });
+
+    it('handles uppercase extensions', () => {
+      expect(getFileExtension('file.MP3')).toBe('MP3');
+    });
+
+    it('handles alignment.json pattern', () => {
+      expect(getFileExtension('track-alignment.json')).toBe('json');
+      expect(getFileExtension('alignment.json')).toBe('json');
+    });
   });
 
   describe('getBaseNameFromPath', () => {
@@ -84,6 +117,19 @@ describe('upload.service — чистые функции', () => {
 
     it('без пути — возвращает как есть', () => {
       expect(getBaseNameFromPath('track.mp3')).toBe('track.mp3');
+    });
+
+    it('handles empty string', () => {
+      expect(getBaseNameFromPath('')).toBe('');
+    });
+
+    it('handles null/undefined gracefully', () => {
+      expect(getBaseNameFromPath(null as any)).toBe('');
+      expect(getBaseNameFromPath(undefined as any)).toBe('');
+    });
+
+    it('handles paths with multiple slashes', () => {
+      expect(getBaseNameFromPath('/a/b/c/d/e/file.mp3')).toBe('file.mp3');
     });
   });
 });

@@ -74,3 +74,34 @@ backlog:
     found_by: "007-DOC-CHECK (ШТУРМ P-02)"
     found_date: 2026-06-16
     blocked_by: null
+
+  # S-VC MAINTENANCE CYCLE (2026-06-23)
+  - id: "DOC-TC-OPT-04"
+    type: ARCHIVE
+    target: "docs/architecture/architecture-map-2.2.md"
+    description: "Superseded — moved to docs/archive/superseded/. Governance §11.5."
+    priority: LOW
+    status: DONE
+    found_by: "001-AUDIT (S-VC MAINTENANCE)"
+    found_date: 2026-06-23
+    completed_by: "TC-OPT-04"
+
+  - id: "DOC-TC-OPT-05"
+    type: ARCHIVE
+    target: "docs/architecture/interaction-schema-2.2.md"
+    description: "Superseded — moved to docs/archive/superseded/. Governance §11.5."
+    priority: LOW
+    status: DONE
+    found_by: "001-AUDIT (S-VC MAINTENANCE)"
+    found_date: 2026-06-23
+    completed_by: "TC-OPT-05"
+
+  - id: "DOC-TC-OPT-07"
+    type: DELETE
+    target: "docs/sync/SYNC-REGISTRY.md"
+    description: "Stale — replaced by MASTER-SYNC-REGISTRY.yaml. 0 referents."
+    priority: LOW
+    status: DONE
+    found_by: "001-AUDIT (S-VC MAINTENANCE)"
+    found_date: 2026-06-23
+    completed_by: "TC-OPT-07"
