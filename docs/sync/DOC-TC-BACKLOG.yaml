@@ -71,9 +71,20 @@ backlog:
     description: "Update pipeline: add parallel FileReader (concurrency 2), dedup guard for trackCatalog.push, note on TG download HTTP handling improvements."
     priority: LOW
     status: OPEN
-    found_by: "007-DOC-CHECK (ШТУРМ P-02)"
+    found_by: "007-DOC-CHECK"
     found_date: 2026-06-16
     blocked_by: null
+
+  - id: "DOC-TC-008"
+    type: CREATE
+    target: "docs/architecture/feed-social-v2.md"
+    description: "Create Wave 2 architecture documentation — conditional GET cascade, reactions (one per user), threading, notifications, mentions, D1 schema, API endpoints, budget."
+    priority: HIGH
+    status: DONE
+    found_by: "109-REPORT"
+    found_date: 2026-06-22
+    blocked_by: null
+    completed_by: "TC-109-DOC-MANUAL"
 
   # S-VC MAINTENANCE CYCLE (2026-06-23)
   - id: "DOC-TC-OPT-04"

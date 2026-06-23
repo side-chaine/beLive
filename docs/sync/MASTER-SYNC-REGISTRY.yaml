@@ -160,14 +160,78 @@ services:
     status: COMPLETED
     last_sync: 2026-06-23
     health: 100
-    note: "6 TC. Removed: DevPanel dead code (-11 lines), PianoOverlay orphan (-339 lines), duplicate test merge (-88 lines). Archived: architecture-map-2.2.md, interaction-schema-2.2.md. Deleted: SYNC-REGISTRY.md. Total: ~1,006 lines, 5 files, 0 frozen zone touches."
+    note: "6 TC. Removed: DevPanel dead code (-11 lines), PianoOverlay orphan (-339 lines), duplicate test merge (-88 lines). Archived: architecture-map-2.2.md, interaction-schema-2.2.md, scenario-stage-state-model.md. Deleted: SYNC-REGISTRY.md. Total: ~1,889 lines, 6 files, 0 frozen zone touches."
+
+  - path: "S-VC-MAINTENANCE-2026-06-23-v2"
+    description: "S-VC Maintenance Cycle — дожим C-06 + C-08"
+    status: COMPLETED
+    last_sync: 2026-06-23
+    health: 100
+    note: "C-06: archived scenario-stage-state-model.md (-873 lines). C-08: removed dead rightPanelMode/rightSlot from ui.store.ts (-10 lines)."
+
+  - path: "docs/architecture/feed-social-v2.md"
+    description: Social Layer v2 — Wave 2 architecture documentation (reactions, threads, notifications, mentions)
+    status: CREATED
+    last_sync: 2026-06-22
+    health: 95
+    note: "Created TC-109. Covers conditional GET cascade, one-reaction-per-user, threading model, D1 schema, API, budget."
+
+  # ═══ Wave 2 Services (TC-109) ═══
+  - path: "gateway/src/helpers.ts"
+    description: KV version bump helpers for conditional GET
+    status: CREATED
+    last_tc: "TC-109-15"
+    health: 95
+    note: "bumpCommentVersion, getCommentVersion, ETag generation/parsing."
+
+  - path: "gateway/src/middleware.ts"
+    description: Conditional GET middleware — ETag check → 304
+    status: CREATED
+    last_tc: "TC-109-16"
+    health: 95
+    note: "checkCommentETag — If-None-Match against KV version key."
+
+  - path: "gateway/src/handlers/reactions.ts"
+    description: Reactions handler — toggle + get reactions
+    status: CREATED
+    last_tc: "TC-109-09"
+    health: 95
+    note: "One reaction per user. Music emoji: 🔥🎵🎤. GET returns userReactions."
+
+  - path: "gateway/src/handlers/notifications.ts"
+    description: Notifications handler — list, mark-read, delete
+    status: CREATED
+    last_tc: "TC-109-10/14"
+    health: 95
+    note: "D1-backed. Conditional GET polling."
+
+  - path: "gateway/src/handlers/users.ts"
+    description: Users CRUD — upsert on auth, lookup by handle
+    status: CREATED
+    last_tc: "TC-109-13"
+    health: 95
+    note: "ON CONFLICT DO UPDATE upsert. Unique handle."
+
+  - path: "gateway/migrations/_runner.ts"
+    description: Schema migrations runner — idempotent, PRAGMA-guarded
+    status: CREATED
+    last_tc: "TC-109-01"
+    health: 95
+    note: "schema_migrations tracker. Sequential apply. ALTER TABLE guarded."
+
+  - path: "src/stores/commentPolling.store.ts"
+    description: Comment polling store — 30s, visibility pause, ETag
+    status: CREATED
+    last_tc: "TC-109-17"
+    health: 95
+    note: "Zustand. Conditional GET. feed.store integration."
 
 registry_meta:
-  version: "1.2"
-  last_full_scan: 2026-06-23
-  total_docs: 11
+  version: "1.3"
+  last_full_scan: 2026-06-22
+  total_docs: 12
   ok: 1
   updated: 11
   stale: 3
-  created: 2
+  created: 8
   maintenance: 1
