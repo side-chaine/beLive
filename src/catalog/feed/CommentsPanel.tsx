@@ -2,7 +2,7 @@
 // @TC-109-18: + replies, reactions, timecode
 // XSS GUARD: text rendered via {comment.text} only — NEVER dangerouslySetInnerHTML
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useFeedStore } from './feed.store';
 import { useUserProfileStore } from '../../stores/user-profile.store';
 
@@ -106,16 +106,7 @@ export function CommentsPanel({ onClose }: Props) {
     const text = inputText.trim();
     setInputText('');
     try {
-      // create comment with parent_id via API
-      const token = currentUser?.authToken;
-      if (!token) return;
-      await fetch(`${FEED_API}/api/feed/posts/${activePostId}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ text, parentId: replyTo }),
-      });
-      // Refresh comments to show the reply
-      fetchComments(activePostId);
+      await createComment(activePostId, text, replyTo);
     } finally {
       setSending(false);
       setReplyTo(null);
@@ -135,7 +126,7 @@ export function CommentsPanel({ onClose }: Props) {
     await deleteComment(activePostId, commentId);
   };
 
-  const handleReaction = useCallback(async (emoji: string) => {
+  const handleReaction = async (emoji: string) => {
     if (!activePostId || !currentUser?.authToken) return;
     try {
       await fetch(`${FEED_API}/api/feed/reactions`, {
@@ -149,7 +140,7 @@ export function CommentsPanel({ onClose }: Props) {
     } catch (err) {
       console.warn('[CommentsPanel] reaction error:', err);
     }
-  }, [activePostId, currentUser]);
+  };
 
   const renderComment = (comment: any, isReply = false) => {
     const isOwn = comment.authorId === currentUser?.id;

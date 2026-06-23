@@ -42,7 +42,8 @@ interface FeedState {
   fetchComments: (postId: string) => Promise<void>;
   /** Set comments from external source (e.g. polling store) */
   setCommentsForPost: (postId: string, comments: FeedComment[]) => void;
-  createComment: (postId: string, text: string) => Promise<void>;
+  /** Create comment with optional parentId for replies */
+  createComment: (postId: string, text: string, parentId?: string) => Promise<void>;
   deleteComment: (postId: string, commentId: string) => Promise<void>;
 }
 
@@ -310,7 +311,8 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     }));
   },
 
-  createComment: async (postId, text) => {
+  createComment: async (postId, text, parentId?) => {
+    // Legacy guard
     const token = useUserProfileStore.getState().currentUser?.authToken;
     if (!token) {
       console.warn('[feed.store] createComment: no authToken');
@@ -327,6 +329,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
       authorName: user?.name || 'Пользователь',
       authorAvatarUrl: user?.avatarUrl || '',
       text, createdAt: now,
+      parentId: parentId || null,
     };
 
     set(s => ({
@@ -343,7 +346,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
       const res = await fetch(`${FEED_API}/api/feed/posts/${postId}/comments`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, parentId: parentId || undefined }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const created = await res.json();

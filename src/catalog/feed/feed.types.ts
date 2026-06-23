@@ -106,6 +106,9 @@ export interface FeedComment {
   authorName: string;
   authorAvatarUrl: string;
   text: string;
+  parentId?: string | null;
+  timecodePin?: number | null;
+  feedbackTag?: string | null;
   createdAt: string;  // ISO string from D1
 }
 
