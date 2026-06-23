@@ -922,6 +922,15 @@
   background: var(--bl-surface-base, rgba(255,255,255,0.06));
   transform: scale(1.1);
 }
+.cp-reaction-btn.is-active {
+  background: rgba(255, 140, 0, 0.2);
+  border-color: #FF8C00;
+  transform: scale(1.05);
+}
+.cp-reaction-count {
+  font-size: 11px; font-weight: 600; margin-left: 2px;
+  color: var(--bl-text-secondary, rgba(255,255,255,0.65));
+}
 
 .cp-feedback-tag {
   display: inline-block; font-size: 10px; font-weight: 600;

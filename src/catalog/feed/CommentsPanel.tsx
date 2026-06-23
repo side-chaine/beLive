@@ -7,7 +7,6 @@ import { useFeedStore } from './feed.store';
 import { useUserProfileStore } from '../../stores/user-profile.store';
 
 const MUSIC_REACTIONS = ['🔥', '🎵', '🎤'] as const;
-const FEED_API = import.meta.env.VITE_GATEWAY_URL || 'https://belive-gateway.nikitosss007.workers.dev';
 
 interface Props {
   onClose?: () => void;
@@ -44,9 +43,13 @@ export function CommentsPanel({ onClose }: Props) {
   const posts = useFeedStore(s => s.posts);
   const comments = useFeedStore(s => s.comments);
   const commentsStatus = useFeedStore(s => s.commentsStatus);
+  const postReactions = useFeedStore(s => s.postReactions);
+  const reactionCounts = useFeedStore(s => s.reactionCounts);
   const fetchComments = useFeedStore(s => s.fetchComments);
   const createComment = useFeedStore(s => s.createComment);
   const deleteComment = useFeedStore(s => s.deleteComment);
+  const toggleReaction = useFeedStore(s => s.toggleReaction);
+  const fetchReactions = useFeedStore(s => s.fetchReactions);
   const setActivePost = useFeedStore(s => s.setActivePost);
 
   const currentUser = useUserProfileStore(s => s.currentUser);
@@ -74,6 +77,13 @@ export function CommentsPanel({ onClose }: Props) {
       fetchComments(activePostId);
     }
   }, [activePostId, status, fetchComments]);
+
+  // Fetch reactions when post opens
+  useEffect(() => {
+    if (activePostId) {
+      fetchReactions(activePostId);
+    }
+  }, [activePostId, fetchReactions]);
 
   useEffect(() => {
     if (listRef.current) {
@@ -127,19 +137,8 @@ export function CommentsPanel({ onClose }: Props) {
   };
 
   const handleReaction = async (emoji: string) => {
-    if (!activePostId || !currentUser?.authToken) return;
-    try {
-      await fetch(`${FEED_API}/api/feed/reactions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.authToken}`,
-        },
-        body: JSON.stringify({ targetType: 'post', targetId: activePostId, emoji }),
-      });
-    } catch (err) {
-      console.warn('[CommentsPanel] reaction error:', err);
-    }
+    if (!activePostId) return;
+    await toggleReaction(activePostId, emoji);
   };
 
   const renderComment = (comment: any, isReply = false) => {
@@ -217,11 +216,23 @@ export function CommentsPanel({ onClose }: Props) {
       {/* Reactions Bar */}
       {currentUser?.authToken && (
         <div className="cp-reactions-bar">
-          {MUSIC_REACTIONS.map(emoji => (
-            <button key={emoji} className="cp-reaction-btn" onClick={() => handleReaction(emoji)}>
-              {emoji}
-            </button>
-          ))}
+          {MUSIC_REACTIONS.map(emoji => {
+            const postId = activePostId!;
+            const myReactions = postReactions[postId] || {};
+            const counts = reactionCounts[postId] || {};
+            const isActive = !!myReactions[emoji];
+            const count = counts[emoji] || 0;
+            return (
+              <button
+                key={emoji}
+                className={`cp-reaction-btn${isActive ? ' is-active' : ''}`}
+                onClick={() => handleReaction(emoji)}
+                title={isActive ? `Убрать ${emoji}` : `${emoji}`}
+              >
+                {emoji} {count > 0 && <span className="cp-reaction-count">{count}</span>}
+              </button>
+            );
+          })}
         </div>
       )}
 

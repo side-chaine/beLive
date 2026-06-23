@@ -39,6 +39,11 @@ interface FeedState {
   // TC-108-04: Comments
   comments: Record<string, FeedComment[]>;
   commentsStatus: Record<string, 'idle' | 'loading' | 'ready' | 'error'>;
+  // TC-109-18: Reactions
+  postReactions: Record<string, Record<string, boolean>>;  // postId → { emoji: active }
+  reactionCounts: Record<string, Record<string, number>>;  // postId → { emoji: count }
+  fetchReactions: (postId: string) => Promise<void>;
+  toggleReaction: (postId: string, emoji: string) => Promise<void>;
   fetchComments: (postId: string) => Promise<void>;
   /** Set comments from external source (e.g. polling store) */
   setCommentsForPost: (postId: string, comments: FeedComment[]) => void;
@@ -85,6 +90,8 @@ export const useFeedStore = create<FeedState>((set, get) => ({
   _mocked: false,
   comments: {},
   commentsStatus: {},
+  postReactions: {},
+  reactionCounts: {},
   editingPost: null,
 
   fetchFeed: async () => {
@@ -409,6 +416,78 @@ export const useFeedStore = create<FeedState>((set, get) => ({
           p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p
         ),
       }));
+    }
+  },
+
+  // ─── TC-109-18: Reactions ───
+  fetchReactions: async (postId) => {
+    try {
+      const res = await fetch(`${FEED_API}/api/feed/reactions?target_type=post&target_ids=${postId}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const postReactionsData = data.reactions?.[postId] || {};
+      // Get user's active reactions
+      const token = useUserProfileStore.getState().currentUser?.authToken;
+      let myReactions: Record<string, boolean> = {};
+      if (token) {
+        // For now, optimistic — no server returns per-user state
+        const current = get().postReactions[postId] || {};
+        myReactions = { ...current };
+      }
+      set(s => ({
+        reactionCounts: { ...s.reactionCounts, [postId]: postReactionsData },
+        postReactions: { ...s.postReactions, [postId]: myReactions },
+      }));
+    } catch (err) {
+      console.warn('[feed.store] fetchReactions error:', err);
+    }
+  },
+
+  toggleReaction: async (postId, emoji) => {
+    const token = useUserProfileStore.getState().currentUser?.authToken;
+    if (!token) return;
+
+    // Optimistic update
+    const prevReactions = get().postReactions[postId] || {};
+    const wasActive = !!prevReactions[emoji];
+    const newReactions = { ...prevReactions, [emoji]: !wasActive };
+
+    set(s => ({
+      postReactions: { ...s.postReactions, [postId]: newReactions },
+      reactionCounts: {
+        ...s.reactionCounts,
+        [postId]: {
+          ...(s.reactionCounts[postId] || {}),
+          [emoji]: ((s.reactionCounts[postId] || {})[emoji] || 0) + (wasActive ? -1 : 1),
+        },
+      },
+    }));
+
+    try {
+      const res = await fetch(`${FEED_API}/api/feed/reactions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ targetType: 'post', targetId: postId, emoji }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // Server confirmed — fetch fresh counts
+      get().fetchReactions(postId);
+    } catch (err) {
+      // Rollback
+      set(s => ({
+        postReactions: { ...s.postReactions, [postId]: prevReactions },
+        reactionCounts: {
+          ...s.reactionCounts,
+          [postId]: {
+            ...(s.reactionCounts[postId] || {}),
+            [emoji]: Math.max(0, ((s.reactionCounts[postId] || {})[emoji] || 0)),
+          },
+        },
+      }));
+      console.warn('[feed.store] toggleReaction error:', err);
     }
   },
 
