@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { resetUploadSession, handleFileSelect, clearFile as clearUploadFile, saveTrack, cancelUpload } from '../services/upload.actions';
+import { sanitizeTrackTitleForSearch } from '../catalog/types';
 import { extractCleanLyrics, detectedBlocksToPersistedBlocks } from '../services/auto-lyrics.service'; // TC-002: clean lyrics extraction // TC-ZIP-03: block converter
 
 /* ═══════════════════════════════════════════
@@ -366,7 +367,7 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
             }}>
               <span>Найди текст на</span>
               <a
-                href={`https://genius.com/search?q=${encodeURIComponent(pendingTrackTitle || '')}`}
+                href={`https://genius.com/search?q=${encodeURIComponent(sanitizeTrackTitleForSearch(pendingTrackTitle || ''))}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{

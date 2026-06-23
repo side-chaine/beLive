@@ -90,6 +90,20 @@ export function parseTrackName(raw: string): ParsedTrackName {
   return { artist: '', title: s };
 }
 
+/**
+ * Strip square-bracket meta tags from a track title for search queries.
+ * Removes "[bonus track]", "[remastered]", "[explicit]", etc.
+ * Does NOT mutate source title; returns a cleaned copy.
+ * Falls back to trimmed raw title if sanitization yields empty string.
+ */
+export function sanitizeTrackTitleForSearch(raw: string): string {
+  const cleaned = raw
+    .replace(/\s*\[[^\]]*\]\s*/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return cleaned || raw.trim();
+}
+
 /* ── Grouped Tracks ── */
 
 export interface ArtistGroup {
