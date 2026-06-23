@@ -83,13 +83,16 @@ export async function handleToggleReaction(
       );
     } else {
       // Add reaction
-      await (env.FEED_DB.prepare(
+      const insertResult = await (env.FEED_DB.prepare(
         'INSERT OR IGNORE INTO feed_reactions (target_type, target_id, user_id, emoji) VALUES (?, ?, ?, ?)'
       ) as any).bind(targetType, targetId, userId, emoji).run();
 
+      // If INSERT OR IGNORE skipped (row already exists), reaction was already active
+      const actuallyInserted = insertResult?.meta?.changes > 0;
+
       return new Response(
-        JSON.stringify({ reacted: true, emoji, targetType, targetId }),
-        { status: 201, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        JSON.stringify({ reacted: actuallyInserted, emoji, targetType, targetId }),
+        { status: actuallyInserted ? 201 : 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
   } catch (err: any) {

@@ -542,12 +542,24 @@ export const useFeedStore = create<FeedState>((set, get) => ({
       const result = await res.json();
       const serverReacted = result.reacted === true;
 
-      // Server-confirmed state overrides optimistic
+      // FIX: correct reactionCounts when server disagrees with optimistic
+      const expectedReacted = !wasActive;
+      const countCorrection = serverReacted === expectedReacted
+        ? 0
+        : (serverReacted ? 2 : -2);
+
       set(s => {
         const current = s.postReactions[postId] || {};
         const serverReactions = { ...current, [emoji]: serverReacted };
         return {
           postReactions: { ...s.postReactions, [postId]: serverReactions },
+          reactionCounts: {
+            ...s.reactionCounts,
+            [postId]: {
+              ...(s.reactionCounts[postId] || {}),
+              [emoji]: Math.max(0, ((s.reactionCounts[postId] || {})[emoji] || 0) + countCorrection),
+            },
+          },
         };
       });
     } catch (err) {
