@@ -84,8 +84,16 @@ export function initMetricsBridge(): () => void {
     }
   };
   document.addEventListener('tracks-changed', onTracksChanged);
-  // Initial aggregation + backfill on boot
-  onTracksChanged();
+
+  // Boot aggregation: subscribe to track.store, fire when tracksMeta is populated.
+  // Resolves boot race: track.bridge.syncAll is async, so sync call sees empty store.
+  let _didInitAggregate = false;
+  const unsubTracks = useTrackStore.subscribe((state) => {
+    if (state.tracksMeta.length > 0 && !_didInitAggregate) {
+      _didInitAggregate = true;
+      onTracksChanged();
+    }
+  });
 
   // ─── Cleanup ───
   _cleanup = () => {
@@ -96,6 +104,7 @@ export function initMetricsBridge(): () => void {
     document.removeEventListener('practice:completed-kept', onPracticeCompleted);
     document.removeEventListener('tracks-changed', onTracksChanged);
     unsubExercise();
+    unsubTracks();
     _cleanup = null;
   };
 
