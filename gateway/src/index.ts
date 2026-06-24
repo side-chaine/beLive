@@ -5,6 +5,7 @@ import { runMigrations } from '../migrations/_runner';
 import { handleToggleReaction, handleGetReactions } from './handlers/reactions';
 import { handleListNotifications, handleMarkNotificationRead, handleMarkNotificationReadById, handleDeleteNotification } from './handlers/notifications';
 import { handleUpsertUser, handleGetUserByHandle } from './handlers/users';
+import { handleSyncMetrics, handleGetMyMetrics } from './handlers/metrics';
 
 interface Env {
   OPENROUTER_API_KEY: string;
@@ -22,6 +23,8 @@ interface Env {
   // @TC-103: JWT auth
   JWT_SECRET: string;
   FOUNDER_SUB?: string;
+  // @TC-MET-05: Metrics System D1
+  METRICS_DB: D1Database;
 }
 
 // Unified SSE events
@@ -654,6 +657,24 @@ export default {
         message: 'Founder bootstrap complete. Founder is now in D1.',
         role: 'founder',
       }, 201, origin, allowedOrigins);
+    }
+
+    // ─── POST /api/metrics/sync (TC-MET-05) ───
+    if (request.method === 'POST' && url.pathname === '/api/metrics/sync') {
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      return handleSyncMetrics(request, env, feedHeaders, auth.sub);
+    }
+
+    // ─── GET /api/metrics/me (TC-MET-05) ───
+    if (request.method === 'GET' && url.pathname === '/api/metrics/me') {
+      const auth = await getAuthCtx(request, env);
+      if (!auth) {
+        return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      return handleGetMyMetrics(request, env, feedHeaders, auth.sub);
     }
 
     // Default 404

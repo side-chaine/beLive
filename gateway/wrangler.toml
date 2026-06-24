@@ -34,3 +34,9 @@ id = "545ffb8c4c3e438bbece6449fa79563f"
 binding = "FEED_DB"
 database_name = "belive-feed"
 database_id = "a826002d-31c9-42c9-b2e3-056d376caaf9"
+
+# @TC-MET-05: Metrics System — D1 database
+[[d1_databases]]
+binding = "METRICS_DB"
+database_name = "belive-metrics"
+database_id = ""
