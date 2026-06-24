@@ -18,12 +18,20 @@ function getAuthHeaders(): Record<string, string> {
 }
 
 // ─── Store ───
+interface FeedEvent {
+  type: 'like' | 'comment' | 'react' | 'neutral';
+  postId: string;
+  timestamp: number;
+}
+
 interface FeedState {
   posts: FeedPost[];
   status: 'idle' | 'loading' | 'ready' | 'error';
   activePostId: string | null;
   composerOpen: boolean;
   _mocked: boolean;
+  /** Last user-facing event for avatar state trigger (TC-AVATAR) */
+  lastEvent: FeedEvent | null;
 
   fetchFeed: () => Promise<void>;
   createPost: (data: Omit<FeedPost, 'id' | 'createdAt' | 'likesCount' | 'commentsCount' | 'isLikedByUser'>) => Promise<void>;
@@ -97,6 +105,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
   postReactions: {},
   reactionCounts: {},
   editingPost: null,
+  lastEvent: null,
 
   fetchFeed: async () => {
     if (get().status === 'loading') return;
@@ -216,10 +225,14 @@ export const useFeedStore = create<FeedState>((set, get) => ({
           posts: s.posts.map(p =>
             p.id === postId ? { ...p, likesCount: data.likes_count } : p
           ),
+          lastEvent: { type: newLiked ? 'like' : 'neutral', postId, timestamp: Date.now() },
         }));
+      } else {
+        set(s => ({ lastEvent: { type: 'neutral', postId, timestamp: Date.now() } }));
       }
     } catch (err) {
       console.error('[feed.store] toggleLike error:', err);
+      set(s => ({ lastEvent: { type: 'neutral', postId, timestamp: Date.now() } }));
     }
   },
 
@@ -428,6 +441,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
             c.id === tempId ? created : c
           ),
         },
+        lastEvent: { type: 'comment', postId, timestamp: Date.now() },
       }));
     } catch (err) {
       console.error('[feed.store] createComment error:', err);
@@ -540,6 +554,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
 
       // Refresh counts from server (one reaction per user logic)
       get().fetchReactions(postId);
+      set(s => ({ lastEvent: { type: 'react', postId, timestamp: Date.now() } }));
     } catch (err) {
       // Rollback to previous state
       set(s => ({

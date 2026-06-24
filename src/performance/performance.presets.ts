@@ -28,7 +28,15 @@ export const DEFAULT_PERFORMANCE_TIER: PerformanceTier = 'balanced';
  * - visualMixer: instrument card visuals
  * - feed: Aurora Stage animations (TC-088)
  */
-export const PERFORMANCE_PRESETS: Record<PerformanceTier, VisualBudget> = {
+function deepFreeze<T>(obj: T): T {
+  if (obj && typeof obj === 'object' && !Object.isFrozen(obj)) {
+    Object.values(obj as Record<string, unknown>).forEach(v => deepFreeze(v));
+    Object.freeze(obj);
+  }
+  return obj;
+}
+
+export const PERFORMANCE_PRESETS = deepFreeze({
   /**
    * Lite tier: minimal visuals, maximum compatibility
    * Use for: weak devices, battery-sensitive sessions, stability-first
@@ -264,4 +272,4 @@ export const PERFORMANCE_PRESETS: Record<PerformanceTier, VisualBudget> = {
       maxScrollSnapCards: 15,
     },
   },
-};
+} as const satisfies Record<PerformanceTier, VisualBudget>);

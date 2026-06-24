@@ -12,6 +12,7 @@ import { useUIStore } from '../../stores/ui.store';
 import { useSwipe } from '../hooks/useSwipe';
 import { CatalogContent } from './CatalogContent';
 import { T, colBase, IB, NB } from '../theme';
+import { AvatarEngine } from '../../avatar/AvatarEngine';
 
 interface Props { color: string; onClose: () => void; } // deploy-force
 
@@ -180,13 +181,9 @@ export function CatalogLayout({ color, onClose }: Props) {
       {/* Grid — fills remaining space */}
       <div ref={gridRef} className="bl-catalog-grid" style={{ flex: 1, minHeight: 0, padding: '12px 16px 16px' }}>
 
-        {/* ═══ COL 0: AVATAR PLACEHOLDER (future) ═══ */}
-        <div className="bl-catalog-col" style={colBase}>
-          <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12, padding:20, textAlign:'center' }}>
-            <div style={{ fontSize:24 }}>👤</div>
-            <div style={{ fontSize:13, fontWeight:600, color:T.dim }}>Профиль</div>
-            <div style={{ fontSize:11, color:T.mute, lineHeight:1.5 }}>Информация об аватаре появится в следующих обновлениях</div>
-          </div>
+        {/* ═══ COL 0: AVATAR ═══ */}
+        <div className="bl-catalog-col" style={{ ...colBase, alignItems: 'center', justifyContent: 'center' }}>
+          <AvatarEngine mode="compact" />
         </div>
 
         {/* ═══ COL 1: CATALOG CENTER (search + tracks + TG) ═══ */}

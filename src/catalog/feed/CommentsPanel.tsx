@@ -61,6 +61,11 @@ export function CommentsPanel({ onClose }: Props) {
   const post = posts.find(p => p.id === activePostId);
   const postComments = activePostId ? comments[activePostId] || [] : [];
   const status = activePostId ? commentsStatus[activePostId] || 'idle' : 'idle';
+  // Guard: if no post found (not loaded yet or stale id), show minimal fallback
+  if (activePostId && !post) {
+    if (status === 'loading') return <div className="cp"><div className="cp-loading">Загрузка…</div></div>;
+    return null;
+  }
 
   // Separate top-level comments from replies
   const topLevelComments = postComments.filter(c => !c.parentId);

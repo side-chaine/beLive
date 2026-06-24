@@ -1,0 +1,140 @@
+/* @TC-AVATAR: Avatar Visual Engine — CSS states + keyframes + audio-reactive */
+
+/* ─── Root Variables ─── */
+.av-container {
+  --rx-scale: 1;
+  --eye-blink: 0;
+  --body-sway: 0deg;
+  --body-bounce: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── SVG Container ─── */
+.av-container .av-svg {
+  width: 100%;
+  height: auto;
+  max-width: 120px;
+  max-height: 180px;
+}
+
+/* ─── State: Idle (default) ─── */
+.av-container[data-state="idle"] {
+  --rx-scale: 0.3;
+}
+.av-container[data-state="idle"] .av-body {
+  animation: idle-sway 4s ease-in-out infinite;
+}
+.av-container[data-state="idle"] .av-eyes {
+  animation: idle-blink 3s ease-in-out infinite;
+}
+
+/* ─── State: Happy ─── */
+.av-container[data-state="happy"] {
+  --rx-scale: 1.5;
+}
+.av-container[data-state="happy"] .av-body {
+  animation: happy-bounce 0.4s ease 3;
+}
+.av-container[data-state="happy"] .av-mouth-path {
+  d: path("M48,44 Q60,54 72,44");
+}
+
+/* ─── State: Listening (AI streaming) ─── */
+.av-container[data-state="listening"] {
+  --rx-scale: 1;
+}
+.av-container[data-state="listening"] .av-body {
+  animation: listening-tilt 3s ease-in-out infinite;
+}
+.av-container[data-state="listening"] .av-eyes {
+  animation: listening-focus 2s ease-in-out infinite;
+}
+
+/* ─── State: Sing (audio-reactive) — Full Avatar only ─── */
+.av-container[data-state="sing"] {
+  --rx-scale: 1;
+}
+.av-container[data-state="sing"] .av-body {
+  animation: idle-sway 2s ease-in-out infinite;
+}
+/* Audio-reactive mouth — driven by global CSS vars from audio-reactive.bridge.ts */
+.av-container[data-state="sing"] .av-mouth-path {
+  transform: scaleY(calc(var(--bl-audio-bass, 0.1) * var(--rx-scale) * 1.5 + 0.3));
+  transform-origin: center 44px;
+  transition: transform 0.08s ease;
+}
+
+/* ─── State: Error ─── */
+.av-container[data-state="error"] {
+  --rx-scale: 0.5;
+}
+.av-container[data-state="error"] .av-body {
+  animation: error-shake 0.2s ease 3;
+}
+.av-container[data-state="error"] .av-mouth-path {
+  transform: scaleY(0.1);
+  d: path("M50,46 Q60,42 70,46");
+}
+
+/* ─── State: Reactive (audio beat pulse — additional to any state) ─── */
+.av-container[data-reactive="beat"] .av-body {
+  animation: reactive-pulse 0.15s ease;
+}
+
+/* ─── Keyframes ─── */
+
+@keyframes idle-sway {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(1.5deg); }
+  75% { transform: rotate(-1.5deg); }
+}
+
+@keyframes idle-blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  96% { transform: scaleY(0.1); }
+}
+
+@keyframes happy-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes listening-tilt {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(2deg); }
+  70% { transform: rotate(-1deg); }
+}
+
+@keyframes listening-focus {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.2); }
+}
+
+@keyframes error-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+@keyframes reactive-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* ─── Mode: Compact (Catalog) ─── */
+.av-container[data-mode="compact"] .av-svg {
+  max-width: 88px;
+  max-height: 132px;
+}
+.av-container[data-mode="compact"] .av-overlay-name {
+  font-size: 11px;
+}
+
+/* ─── Mode: Micro (Billy Chat — deferred to V1) ─── */
+.av-container[data-mode="micro"] .av-svg {
+  max-width: 64px;
+  max-height: 96px;
+}

@@ -33,24 +33,39 @@ export class PlaybackVisualScheduler {
 
   /** Register a reader for the 'read' phase */
   registerReader(reader: PlaybackVisualFrameReader): void {
+    if (this._readers.some(r => r.id === reader.id)) {
+      if (import.meta.env.DEV) console.warn(`[PVS] reader "${reader.id}" already registered — skip`);
+      return;
+    }
     this._readers.push(reader);
   }
 
   /** Register a detector for the 'detect' phase */
   registerDetector(detector: PlaybackVisualFrameDetector): void {
+    if (this._detectors.some(d => d.id === detector.id)) {
+      if (import.meta.env.DEV) console.warn(`[PVS] detector "${detector.id}" already registered — skip`);
+      return;
+    }
     this._detectors.push(detector);
   }
 
   /** Register a writer for the 'write' phase */
   registerWriter(writer: PlaybackVisualFrameWriter): void {
+    if (this._writers.some(w => w.id === writer.id)) {
+      if (import.meta.env.DEV) console.warn(`[PVS] writer "${writer.id}" already registered — skip`);
+      return;
+    }
     this._writers.push(writer);
   }
 
   /** Unregister any reader, detector, or writer by id */
   unregister(id: string): void {
-    this._readers = this._readers.filter((r) => r.id !== id);
-    this._detectors = this._detectors.filter((d) => d.id !== id);
-    this._writers = this._writers.filter((w) => w.id !== id);
+    const rIdx = this._readers.findIndex((r) => r.id === id);
+    if (rIdx !== -1) this._readers.splice(rIdx, 1);
+    const dIdx = this._detectors.findIndex((d) => d.id === id);
+    if (dIdx !== -1) this._detectors.splice(dIdx, 1);
+    const wIdx = this._writers.findIndex((w) => w.id === id);
+    if (wIdx !== -1) this._writers.splice(wIdx, 1);
   }
 
   /** Start the scheduler loop */

@@ -3,6 +3,7 @@ import { aiHub } from '../../js/ai/registry';
 import type { Message } from '../../js/ai/types';
 import { getActiveSkill, buildSystemPrompt } from '../../billy/skill-registry';
 import { BillyMessageRenderer } from '../../billy/BillyMessageRenderer';
+import { useAiStore } from '../../stores/ai.store';
 
 const QUICK_QUESTIONS = [
   "Как загрузить трек?",
@@ -30,6 +31,7 @@ export function CatalogBillyChat() {
     setMessages(newMessages);
     setInput('');
     setIsStreaming(true);
+    useAiStore.getState().setStreaming(true);
 
     const assistantMessage: ChatMessage = { role: 'assistant', text: '' };
     setMessages([...newMessages, assistantMessage]);
@@ -54,11 +56,13 @@ export function CatalogBillyChat() {
         },
         onDone: () => {
           setIsStreaming(false);
+          useAiStore.getState().setStreaming(false);
         },
         onError: (err) => {
           assistantMessage.text = `Ошибка: ${err.message}`;
           setMessages([...newMessages, { ...assistantMessage }]);
           setIsStreaming(false);
+          useAiStore.getState().setStreaming(false);
         }
       }
     );

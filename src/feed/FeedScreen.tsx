@@ -1,13 +1,16 @@
 // @TC-102: FeedScreen — Resizable Columns + presets
 
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useUIStore } from '../stores/ui.store';
-import { AvatarPanel } from '../catalog/feed/AvatarPanel';
+import { AvatarEngine } from '../avatar/AvatarEngine';
 import { FeedLayout } from '../catalog/feed/FeedLayout';
 import { CommentsPanel } from '../catalog/feed/CommentsPanel';
 import { ColHeader } from './ColHeader';
 import { EdgeTab } from './EdgeTab';
 import { useResizeColumns } from './useResizeColumns';
+import { ProfileStats } from './ProfileStats';
+import { TrackCard } from './TrackCard';
+import { useFeedStore } from '../catalog/feed/feed.store';
 import './FeedScreen.css';
 
 export function FeedScreen() {
@@ -15,6 +18,12 @@ export function FeedScreen() {
   const col2Visible = useUIStore(s => s.feedCol2Visible);
   const setCol0Visible = useUIStore(s => s.setFeedCol0Visible);
   const setCol2Visible = useUIStore(s => s.setFeedCol2Visible);
+  const setActivePost = useFeedStore(s => s.setActivePost);
+
+  // Cleanup activePostId when col0 is hidden (prevents stale TrackCard)
+  useEffect(() => {
+    if (!col0Visible) setActivePost(null);
+  }, [col0Visible, setActivePost]);
 
   const gridRef = useRef<HTMLDivElement>(null);
   const { displayWidths, isDragging, isMobile, onPointerDown, onDoubleClick, onKeyDown } = useResizeColumns(gridRef);
@@ -39,7 +48,13 @@ export function FeedScreen() {
         {/* Col 0: Profile */}
         <div className="feed-col feed-col--0">
           <ColHeader icon="🎤" title="Профиль" collapsible isVisible={col0Visible} onToggle={() => setCol0Visible(!col0Visible)} />
-          <AvatarPanel />
+          <div className="av-frame">
+            <div className="av-frame-inner">
+              <AvatarEngine mode="full" />
+            </div>
+          </div>
+          <ProfileStats />
+          <TrackCard />
         </div>
 
         {/* DragHandle 0 — between col0 and col1 */}
