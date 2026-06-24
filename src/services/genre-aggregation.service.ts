@@ -6,6 +6,26 @@ import { loadCachedTrackMeta } from './track-meta.service';
 import type { GenreAggregation } from '../types/metrics.types';
 
 const GENRE_CANONICAL: Record<string, string> = {
+  // Base genres (direct match)
+  'rock': 'Rock',
+  'metal': 'Metal',
+  'punk': 'Punk',
+  'electronic': 'Electronic',
+  'pop': 'Pop',
+  'jazz': 'Jazz',
+  'blues': 'Blues',
+  'country': 'Country',
+  'reggae': 'Reggae',
+  'classical': 'Classical',
+  'folk': 'Folk',
+  'indie': 'Indie',
+  'soul': 'Soul',
+  'funk': 'Funk',
+  'rap': 'Rap',
+  'hip-hop': 'Hip-Hop',
+  'hip hop': 'Hip-Hop',
+
+  // Subgenres → canonical
   'nu metal': 'Metal',
   'alternative metal': 'Metal',
   'heavy metal': 'Metal',
@@ -13,6 +33,9 @@ const GENRE_CANONICAL: Record<string, string> = {
   'death metal': 'Metal',
   'thrash metal': 'Metal',
   'symphonic metal': 'Metal',
+  'metalcore': 'Metal',
+  'deathcore': 'Metal',
+
   'alternative rock': 'Rock',
   'alternative': 'Rock',
   'hard rock': 'Rock',
@@ -22,9 +45,8 @@ const GENRE_CANONICAL: Record<string, string> = {
   'psychedelic rock': 'Rock',
   'punk rock': 'Rock',
   'garage rock': 'Rock',
-  'hip-hop': 'Hip-Hop',
-  'hip hop': 'Hip-Hop',
-  'electronic': 'Electronic',
+  'pop rock': 'Rock',
+
   'electronica': 'Electronic',
   'edm': 'Electronic',
   'dance': 'Electronic',
@@ -32,6 +54,13 @@ const GENRE_CANONICAL: Record<string, string> = {
   'techno': 'Electronic',
   'trance': 'Electronic',
   'dubstep': 'Electronic',
+  'ambient': 'Electronic',
+  'industrial': 'Electronic',
+  'synthwave': 'Electronic',
+
+  'r&b': 'R&B',
+  'rnb': 'R&B',
+  'neo soul': 'Soul',
 };
 
 /** Normalize and canonicalize a genre tag to its primary form */
