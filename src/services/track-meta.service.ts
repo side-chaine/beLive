@@ -10,6 +10,9 @@ import type { TrackMeta, TrackMetaPartial } from '../types/track-meta.types';
 import { updateTrackField, getTrack } from './idb.service';
 import { parseTrackName } from '../catalog/types';
 
+// Concurrency guard: tracks currently being fetched (prevents duplicate API calls)
+export const _inFlight = new Set<number>();
+
 // ─── MusicBrainz API (CORS-friendly, free, rate-limit: 1 req/sec) ───
 const MB_USER_AGENT = 'beLive/1.0 (https://belive.app)';
 

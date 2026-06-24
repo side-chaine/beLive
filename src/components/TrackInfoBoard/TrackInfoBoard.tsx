@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useTrackInfoStore } from '../../stores/trackInfo.store';
 import { useTrackStore } from '../../stores/track.store';
-import { fetchTrackMeta, loadCachedTrackMeta } from '../../services/track-meta.service';
+import { fetchTrackMeta, loadCachedTrackMeta, _inFlight } from '../../services/track-meta.service';
 import { StructureDiagram } from './StructureDiagram';
 import { AiExpertPanel } from './AiExpertPanel';
 import styles from './TrackInfoBoard.module.css';
@@ -139,9 +139,23 @@ export function TrackInfoBoard() {
       if (cached) {
         setMeta(cached);
       }
-      // Fetch fresh from API
+      // Fetch fresh from API (skip if backfill is already fetching this track)
       setFetchingApi(true);
-      const fresh = await fetchTrackMeta(trackId, currentTrack?.title || '');
+      let fresh: null | any = null;
+      if (!_inFlight.has(trackId)) {
+        _inFlight.add(trackId);
+        fresh = await fetchTrackMeta(trackId, currentTrack?.title || '');
+        _inFlight.delete(trackId);
+      } else {
+        // Backfill is already fetching — wait for it via cache re-read
+        fresh = await loadCachedTrackMeta(trackId);
+        if (cancelled) return;
+        if (fresh) {
+          setMeta(fresh);
+        }
+        setFetchingApi(false);
+        return;
+      }
       if (cancelled) return;
       if (fresh) {
         setMeta(fresh);

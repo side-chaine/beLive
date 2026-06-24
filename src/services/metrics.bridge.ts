@@ -4,6 +4,8 @@
 import { useMetricsStore } from '../stores/metrics.store';
 import { useExerciseStore } from '../exercises/exercise.store';
 import { aggregateGenres } from './genre-aggregation.service';
+import { backfillMissingMeta } from './metadata-backfill.service';
+import { useTrackStore } from '../stores/track.store';
 
 let _cleanup: (() => void) | null = null;
 
@@ -64,14 +66,25 @@ export function initMetricsBridge(): () => void {
     prevExercises = current;
   });
 
-  // ─── 5. Genre aggregation on tracks change ───
+  // ─── 5. Genre aggregation + backfill on tracks change ───
   const onTracksChanged = () => {
+    // Immediate: aggregate from cache (if metadata already in IDB)
     aggregateGenres().then((genres) => {
       store.getState().recomputeGenres(genres);
     });
+
+    // Background: backfill missing metadata, then re-aggregate
+    const tracks = useTrackStore.getState().tracksMeta;
+    if (tracks.length > 0) {
+      backfillMissingMeta(tracks).then(() => {
+        aggregateGenres().then((genres) => {
+          store.getState().recomputeGenres(genres);
+        });
+      });
+    }
   };
   document.addEventListener('tracks-changed', onTracksChanged);
-  // Initial aggregation
+  // Initial aggregation + backfill on boot
   onTracksChanged();
 
   // ─── Cleanup ───
