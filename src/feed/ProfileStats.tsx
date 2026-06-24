@@ -1,8 +1,9 @@
-// @TC-PROF-0: ProfileStats — Phase 0, only earned data
-// Principle: no mock data except ELO 1500 (universal starting rating)
-// Cells appear only when real data exists
+// @TC-PROF-1: ProfileStats — Phase 1, conditional earned data cells
+// Principle: no mock data. Cells visible only when counter > 0.
+// ELO 1500 and Треков are always visible (universal defaults).
 
 import { useTrackStore } from '../stores/track.store';
+import { useMetricsStore } from '../stores/metrics.store';
 
 const styles: Record<string, React.CSSProperties> = {
   grid: {
@@ -24,6 +25,12 @@ const styles: Record<string, React.CSSProperties> = {
     borderRight: '0.5px solid rgba(255,255,255,0.06)',
     borderBottom: '0.5px solid rgba(255,255,255,0.06)',
   },
+  value: {
+    fontSize: 20,
+    fontWeight: 500,
+    color: '#fff',
+    lineHeight: 1.2,
+  },
   label: {
     fontSize: 10,
     color: 'rgba(255,255,255,0.35)',
@@ -38,31 +45,49 @@ const styles: Record<string, React.CSSProperties> = {
 
 export function ProfileStats() {
   const tracksCount = useTrackStore(s => s.tracksMeta.length);
+  const rehearsals = useMetricsStore(s => s.rehearsals);
+  const exercisesCompleted = useMetricsStore(s => s.exercisesCompleted);
+  const topGenre = useMetricsStore(s => s.topGenre);
 
-  // ELO 1500 — единственное исключение манифеста (стартовый рейтинг)
+  // ELO 1500 — единственное исключение манифеста
   // TODO: read from D1 users.elo when ranked system exists (Phase 3)
   const elo = 1500;
 
-  // Phase 1+: добавятся:
-  // - Репетиции (из rehearsal-actions subscriber → profileStats.store)
-  // - Квесты (из exercise.store + persist)
-  // - Жанр (из track-meta.service агрегации → profileStats.genre store)
+  // Build cells: always-visible + conditional earned
+  const cells: { value: string | number; label: string }[] = [
+    { value: elo, label: 'ELO' },
+    { value: tracksCount, label: 'Треков' },
+  ];
+
+  if (rehearsals > 0) cells.push({ value: rehearsals, label: 'Репетиций' });
+  if (exercisesCompleted > 0) cells.push({ value: exercisesCompleted, label: 'Упражнений' });
+  if (topGenre) cells.push({ value: topGenre, label: 'Жанр' });
+
+  // Ensure even grid: pad to even count with hidden cells
+  while (cells.length % 2 !== 0) {
+    cells.push({ value: '', label: '' });
+  }
 
   return (
     <div style={styles.grid}>
-      {/* Cell 1: ELO — always visible (allowed default) */}
-      <div style={styles.cell}>
-        <span style={{ fontSize: 20, fontWeight: 500, color: '#fff', lineHeight: 1.2 }}>{elo}</span>
-        <span style={styles.label}>ELO</span>
-      </div>
-
-      {/* Cell 2: Треков — always visible (0 is valid data) */}
-      <div style={{ ...styles.cell, borderRight: 'none' }}>
-        <span style={{ fontSize: 20, fontWeight: 500, color: '#fff', lineHeight: 1.2 }}>{tracksCount}</span>
-        <span style={styles.label}>Треков</span>
-      </div>
-
-      {/* PHASE 1+: Репетиции, Квесты, Жанр появятся здесь когда будут реальные данные */}
+      {cells.map((c, i) => (
+        <div
+          key={c.label || i}
+          style={{
+            ...styles.cell,
+            borderRight: i % 2 === 0 ? '0.5px solid rgba(255,255,255,0.06)' : 'none',
+            borderBottom: 'none',
+            visibility: c.value === '' ? 'hidden' : 'visible',
+          }}
+        >
+          {c.value !== '' && (
+            <>
+              <span style={styles.value}>{c.value}</span>
+              <span style={styles.label}>{c.label}</span>
+            </>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

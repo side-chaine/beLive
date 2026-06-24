@@ -52,10 +52,9 @@ export function TrackCard() {
   // Use post.title as primary source (works for ALL posts, not just current user)
   const title = post.title || 'Неизвестный трек';
 
-  // Resolve progress from tracksMeta if it's the current user's track
-  const track = trackId => tracksMeta.find(t => String(t.id) === String(trackId));
-  const trackMeta = track(post.trackId);
-  const progress = tracksMeta.length > 0 ? Math.round((tracksMeta.findIndex(t => String(t.id) === String(post.trackId)) / Math.max(tracksMeta.length, 1)) * 15) : 0;
+  const progress = tracksMeta.length > 0
+    ? Math.round((tracksMeta.findIndex(t => String(t.id) === String(post.trackId)) / Math.max(tracksMeta.length, 1)) * 15)
+    : 0;
   const filledDots = Number.isFinite(progress) ? Math.min(Math.max(progress, 0), 15) : 0;
 
   return (

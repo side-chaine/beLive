@@ -1,0 +1,78 @@
+// @TC-MET-02: Metrics Bridge — event subscriber, writes to metrics.store
+// NO frozen zones touched. NO dispatchEvent. Subscriber-only.
+
+import { useMetricsStore } from '../stores/metrics.store';
+import { useExerciseStore } from '../exercises/exercise.store';
+
+let _cleanup: (() => void) | null = null;
+
+/**
+ * Init metrics bridge — subscribe to events and external store changes.
+ * Call once on app boot (from App.tsx useEffect).
+ * Returns cleanup function for unmount.
+ */
+export function initMetricsBridge(): () => void {
+  if (_cleanup) {
+    if (import.meta.env.DEV) console.warn('[metrics] bridge already initialized — skip');
+    return _cleanup;
+  }
+
+  const store = useMetricsStore;
+
+  // ─── 1. track-fully-loaded → rehearsals ───
+  const onTrackLoaded = () => {
+    store.getState().incrementRehearsal();
+  };
+  document.addEventListener('track-fully-loaded', onTrackLoaded);
+
+  // ─── 2. before-track-change → stop play time timer ───
+  let sessionStart: number | null = null;
+  let _isTiming = false;
+
+  const onTrackStart = () => {
+    if (_isTiming) return;
+    sessionStart = Date.now();
+    _isTiming = true;
+  };
+
+  const onTrackStop = () => {
+    if (!_isTiming || sessionStart === null) return;
+    const elapsed = Date.now() - sessionStart;
+    store.getState().addPlayTimeMs(elapsed);
+    sessionStart = null;
+    _isTiming = false;
+  };
+
+  document.addEventListener('track-fully-loaded', onTrackStart);
+  document.addEventListener('before-track-change', onTrackStop);
+
+  // ─── 3. practice:completed + practice:completed-kept → practiceSessions ───
+  const onPracticeCompleted = () => {
+    store.getState().incrementPractice();
+  };
+  document.addEventListener('practice:completed', onPracticeCompleted);
+  document.addEventListener('practice:completed-kept', onPracticeCompleted);
+
+  // ─── 4. exercise.store → exercisesCompleted (external subscription) ───
+  let prevExercises = 0;
+  const unsubExercise = useExerciseStore.subscribe((state) => {
+    const current = state.sessionProgress?.exercisesCompleted ?? 0;
+    if (current > prevExercises) {
+      store.getState().setExercisesCompleted(current);
+    }
+    prevExercises = current;
+  });
+
+  // ─── Cleanup ───
+  _cleanup = () => {
+    document.removeEventListener('track-fully-loaded', onTrackLoaded);
+    document.removeEventListener('track-fully-loaded', onTrackStart);
+    document.removeEventListener('before-track-change', onTrackStop);
+    document.removeEventListener('practice:completed', onPracticeCompleted);
+    document.removeEventListener('practice:completed-kept', onPracticeCompleted);
+    unsubExercise();
+    _cleanup = null;
+  };
+
+  return _cleanup;
+}
