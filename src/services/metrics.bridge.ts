@@ -83,10 +83,10 @@ export function initMetricsBridge(): () => void {
       });
     }
   };
-  document.addEventListener('tracks-changed', onTracksChanged);
-
   // Boot aggregation: subscribe to track.store, fire when tracksMeta is populated.
-  // Resolves boot race: track.bridge.syncAll is async, so sync call sees empty store.
+  // Single trigger: covers boot, ZIP import, delete — all paths update the store.
+  // NOTE: Event listener for 'tracks-changed' is NOT needed — store subscription
+  // captures every track lifecycle change (syncAll runs after import/delete).
   let _didInitAggregate = false;
   const unsubTracks = useTrackStore.subscribe((state) => {
     if (state.tracksMeta.length > 0 && !_didInitAggregate) {
@@ -94,6 +94,23 @@ export function initMetricsBridge(): () => void {
       onTracksChanged();
     }
   });
+  // Sync check: store may already be populated (StrictMode remount, late init)
+  if (useTrackStore.getState().tracksMeta.length > 0 && !_didInitAggregate) {
+    _didInitAggregate = true;
+    onTracksChanged();
+  }
+
+  // ─── Cleanup ───
+  _cleanup = () => {
+    document.removeEventListener('track-fully-loaded', onTrackLoaded);
+    document.removeEventListener('track-fully-loaded', onTrackStart);
+    document.removeEventListener('before-track-change', onTrackStop);
+    document.removeEventListener('practice:completed', onPracticeCompleted);
+    document.removeEventListener('practice:completed-kept', onPracticeCompleted);
+    unsubExercise();
+    unsubTracks();
+    _cleanup = null;
+  };
 
   // ─── Cleanup ───
   _cleanup = () => {
