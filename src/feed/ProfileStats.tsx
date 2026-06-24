@@ -48,10 +48,7 @@ export function ProfileStats() {
   const rehearsals = useMetricsStore(s => s.rehearsals);
   const exercisesCompleted = useMetricsStore(s => s.exercisesCompleted);
   const topGenre = useMetricsStore(s => s.topGenre);
-
-  // ELO 1500 — единственное исключение манифеста
-  // TODO: read from D1 users.elo when ranked system exists (Phase 3)
-  const elo = 1500;
+  const elo = useMetricsStore(s => s.elo);
 
   // Build cells: always-visible + conditional earned
   const cells: { value: string | number; label: string }[] = [

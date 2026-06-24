@@ -3,6 +3,7 @@
 
 import { useMetricsStore } from '../stores/metrics.store';
 import { useExerciseStore } from '../exercises/exercise.store';
+import { aggregateGenres } from './genre-aggregation.service';
 
 let _cleanup: (() => void) | null = null;
 
@@ -63,6 +64,16 @@ export function initMetricsBridge(): () => void {
     prevExercises = current;
   });
 
+  // ─── 5. Genre aggregation on tracks change ───
+  const onTracksChanged = () => {
+    aggregateGenres().then((genres) => {
+      store.getState().recomputeGenres(genres);
+    });
+  };
+  document.addEventListener('tracks-changed', onTracksChanged);
+  // Initial aggregation
+  onTracksChanged();
+
   // ─── Cleanup ───
   _cleanup = () => {
     document.removeEventListener('track-fully-loaded', onTrackLoaded);
@@ -70,6 +81,7 @@ export function initMetricsBridge(): () => void {
     document.removeEventListener('before-track-change', onTrackStop);
     document.removeEventListener('practice:completed', onPracticeCompleted);
     document.removeEventListener('practice:completed-kept', onPracticeCompleted);
+    document.removeEventListener('tracks-changed', onTracksChanged);
     unsubExercise();
     _cleanup = null;
   };

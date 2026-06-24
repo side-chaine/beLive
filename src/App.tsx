@@ -58,6 +58,8 @@ import { useUserProfileStore } from './stores/user-profile.store';
 import { mvsepPollingService } from './services/mvsep-polling.service';
 import { FeedScreen } from './feed/FeedScreen';
 import { useFeedStore } from './catalog/feed/feed.store';
+import { initMetricsBridge } from './services/metrics.bridge';
+import { initSyncLifecycle } from './services/metrics-sync.service';
 export default function App() {
   const mode = useModeStore((s) => s.mode);
   const syncOpen = useSyncStore((s) => s.open);
@@ -94,6 +96,8 @@ export default function App() {
     const cleanupTakes = initTakesBridge();
     const cleanupExercise = initExerciseBridge();
     const cleanupMonitor = initMonitorBridge();
+    const cleanupMetrics = initMetricsBridge();
+    const cleanupMetricsSync = initSyncLifecycle();
 
     // MVSEP: Resume orphaned stem separation jobs after tab close
     setTimeout(() => {
@@ -120,6 +124,8 @@ export default function App() {
       cleanupTakes();
       cleanupExercise();
       destroyMonitorBridge();
+      cleanupMetrics();
+      cleanupMetricsSync();
     };
   }, [surface]);
 
