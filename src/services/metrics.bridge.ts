@@ -6,6 +6,7 @@ import { useExerciseStore } from '../exercises/exercise.store';
 import { aggregateGenres } from './genre-aggregation.service';
 import { backfillMissingMeta } from './metadata-backfill.service';
 import { useTrackStore } from '../stores/track.store';
+import { useAudioStore } from '../stores/audio.store';
 
 let _cleanup: (() => void) | null = null;
 
@@ -22,13 +23,16 @@ export function initMetricsBridge(): () => void {
 
   const store = useMetricsStore;
 
-  // ─── 1. track-fully-loaded → rehearsals ───
-  const onTrackLoaded = () => {
-    store.getState().incrementRehearsal();
-  };
-  document.addEventListener('track-fully-loaded', onTrackLoaded);
+  // ─── 1. audio.store.isPlaying → rehearsals (catches both fresh load and replay) ───
+  let wasPlaying = false;
+  const unsubAudio = useAudioStore.subscribe((state) => {
+    if (state.isPlaying && !wasPlaying) {
+      store.getState().incrementRehearsal();
+    }
+    wasPlaying = state.isPlaying;
+  });
 
-  // ─── 2. before-track-change → stop play time timer ───
+  // ─── 2. track-fully-loaded → play time timer start ───
   let sessionStart: number | null = null;
   let _isTiming = false;
 
@@ -102,19 +106,18 @@ export function initMetricsBridge(): () => void {
 
   // ─── Cleanup ───
   _cleanup = () => {
-    document.removeEventListener('track-fully-loaded', onTrackLoaded);
     document.removeEventListener('track-fully-loaded', onTrackStart);
     document.removeEventListener('before-track-change', onTrackStop);
     document.removeEventListener('practice:completed', onPracticeCompleted);
     document.removeEventListener('practice:completed-kept', onPracticeCompleted);
     unsubExercise();
     unsubTracks();
+    unsubAudio();
     _cleanup = null;
   };
 
   // ─── Cleanup ───
   _cleanup = () => {
-    document.removeEventListener('track-fully-loaded', onTrackLoaded);
     document.removeEventListener('track-fully-loaded', onTrackStart);
     document.removeEventListener('before-track-change', onTrackStop);
     document.removeEventListener('practice:completed', onPracticeCompleted);
