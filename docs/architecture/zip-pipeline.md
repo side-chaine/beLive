@@ -1,9 +1,9 @@
 # ZIP Pipeline — Export & Import
 
 **Status:** Production-ready
-**Version:** 1.0
-**Date:** 2026-04-22
-**Authors:** Centre6
+**Version:** 2.0
+**Date:** 2026-06-26
+**Authors:** Centre6, Центр_30, 001, 002, 007, 009, Operator
 
 ---
 
@@ -18,6 +18,7 @@ beLive ZIP is the portable track format. A single ZIP file contains everything n
 - **Functional roundtrip:** Export → Import preserves audio, lyrics, sync markers, blocks, cover art, scenes, backgrounds, and stem data. Fields NOT preserved: `stemDisplayOrder`, `stemAutomation`, `trackMeta`, `transitionPreset`, `dataVersion`.  
   **TC-ZIP-02:** `stemsMode` now preserved — set `true` when additional stems are imported via `handleZipFileSelect()`.
 - **Offline-first:** Cover art stored as binary, not URL reference
+- **TG limit compliant:** ZIP ≤ 50MB (Telegram upload limit). Non-vocal stems transcoded as needed via «Sample & Tighten» (v2.0)
 
 ---
 
@@ -109,30 +110,41 @@ track-name.zip
 ```
 1. Load fullTrack from IDB
 2. Create JSZip instance
-3. Add audio files (instrumental, vocals, stems) — STORE compression
-4. Add lyrics.txt from ld.lyrics (clean lines, not raw text)
-5. Add cover art:
+3. Pre-flight: calculate total size of ALL components
+   a. Measure stems + instrumental + vocals + cover + bg + scenes
+   b. If predicted ≥ 49MB → enters transcode path (see §10)
+   c. If predicted < 49MB → fast path (add audio with STORE compression)
+4. Transcode path (if needed):
+   a. Build rawStemsData snapshot (for potential tightening re-encode)
+   b. Run pipeline: encode stems in priority order (other → keys → guitar)
+      at 128kbps until running budget < 50MB
+   c. After encode: wouldFitZip() check — if passes, proceed to ZIP assembly
+   d. If wouldFitZip fails: tighten 1 largest encoded stem → 64kbps, recheck
+   e. If still over 50MB: ABORT with user-facing message
+5. Add lyrics.txt from ld.lyrics (clean lines, not raw text)
+6. Add cover art:
    a. If coverArtBlob exists → zip.file('cover.jpg', blob)
    b. Else if coverArtUrl is HTTP → fetch → blob → zip.file('cover.jpg')
    c. Also save fetched blob to IDB for future exports
    d. export.json gets ORIGINAL HTTP URL (not "cover.jpg")
-6. Add scenes (block-scene images):
+7. Add scenes (block-scene images):
    a. Load blockScenes from IDB (getBlockScenes())
    b. For each scene → zip.file(`scenes/${file}`, blob)
    c. export.json.scenes[] = scene metadata
-7. Add backgrounds (custom background images):
+8. Add backgrounds (custom background images):
    a. Load custom background from IDB
    b. If exists → zip.file(`backgrounds/${file}`, blob)
    c. export.json.backgrounds[] = background metadata
-8. Build exportData object:
+9. Build exportData object:
    - coverArtUrl = original HTTP URL (fallback)
    - lyricsOriginalContent = full text with structural tags
    - scenes = blockScenes metadata array
    - backgrounds = background metadata array
-9. Add export.json
-10. Add alignment.json (if available)
-11. Generate ZIP with streaming + progress
-12. Download
+10. Add export.json
+11. Add alignment.json (if available)
+12. Generate ZIP with streaming + progress
+13. assertZipSize() — defense-in-depth check after generation
+14. Download
 ```
 
 ### Key Design Decisions
@@ -308,11 +320,126 @@ Without `lyricsOriginalContent`, LRC Picker returns `blocks=[]` → existing blo
 
 ---
 
+## 10. Stem Transcode System — «Sample & Tighten»
+
+**Версия:** 2.0 (2026-06-26)  
+**Проблема:** ZIP с 6 стэмами (drums, bass, keys, guitar, other) выходит 53-55MB, превышая лимит Telegram 50MB.  
+**Решение:** Клиентское пережатие не-vocal стемов при ZIP-экспорте через lamejs в Web Worker.
+
+### 10.1 Priority Chain
+
+Стемы сжимаются строго в порядке приоритета. Как только бюджет закрыт (< 50MB), pipeline останавливается.
+
+| # | Стем | Битрейт T0 | Зачем |
+|---|------|-----------|-------|
+| 1 | `other` | 128kbps | Первый кандидат — остаточный шум, наименее критичен |
+| 2 | `keys` | 128kbps | Второй кандидат — клавиши, приемлемая потеря качества |
+| 3 | `guitar` | 128kbps | Третий кандидат — гитара, сжимается только если other+keys не хватило |
+
+### 10.2 Protected Stems (оригинальное качество)
+
+| Стем | Причина |
+|------|---------|
+| `drums` | Ритм-секция — потеря качества заметна |
+| `bass` | Ритм-секция — потеря качества заметна |
+| `vocals` | Критический стем (падение → ABORT) |
+| `instrumental` | Master clock, не в stemsData |
+
+### 10.3 Architecture
+
+```
+Pre-flight (calcPreFlight):
+  ├─ threshold = zipSizeLimit - zipOverheadSlack = 49MB
+  ├─ deficit от zipSizeLimit (50MB), не от threshold
+  └─ stemsToTranscode в порядке priorityChain
+       └─ ['other', 'keys', 'guitar'] — только существующие в stemsData
+
+Pipeline (runTranscodePipeline):
+  ├─ Single T0 pass — 128kbps для всех
+  ├─ Overlap: decode следующего стема WHILE текущий encode в worker (-50% time)
+  ├─ Progressive budget: runningTotal -= savings; if < 50MB → break
+  ├─ terminateWorker() на каждый вход (FM-6: не sticky __aborted)
+  └─ Return: compressed + skipped
+
+Budget gate (в caller, handleExportZip):
+  ├─ wouldFitZip(finalBytes) — проверка ДО генерации ZIP
+  ├─ Если не влезло → tightening pass:
+  │   ├─ largest encoded stem → re-encode 64kbps из rawStemsData snapshot
+  │   └─ re-check wouldFitZip
+  └─ Если всё ещё > 50MB → user-facing ABORT
+
+Defense-in-depth:
+  └─ assertZipSize(blob) — после generateInternalStream
+```
+
+### 10.4 Performance
+
+| Метрика | Значение |
+|---------|----------|
+| Время (слабый ПК, 2 stems) | ~4 мин (было 7-8, overlap -50%) |
+| Экономия на стем | ~60% (8.3MB → 3.3MB на 209s треке) |
+| Доп. память | rawStemsData snapshot ~48MB временно |
+| Рабочее окружение | Web Worker (`@breezystack/lamejs`, lazy import) |
+
+### 10.5 Key Files (transcode)
+
+| File | Role |
+|------|------|
+| `src/config/stem-transcode.config.ts` | Priority chain, bitrates, protected types, slack |
+| `src/utils/zip-preflight.ts` | calcPreFlight, wouldFitZip, assertZipSize |
+| `src/utils/zip-transcode-pipeline.ts` | Pipeline with overlap + progressive budget |
+| `src/utils/mp3-transcoder.ts` | decodeStem (main thread), encodeDecoded (worker) |
+| `src/utils/mp3-transcoder.worker.ts` | LAME mp3 encoding in Web Worker |
+| `src/utils/zip-logger.ts` | Structured logging (15 events) |
+| `src/utils/audio-context-manager.ts` | Singleton AudioContext for exports |
+
+### 10.6 Configuration
+
+```typescript
+// stem-transcode.config.ts
+{
+  priorityChain:      ['other', 'keys', 'guitar'],
+  compressibleTypes:  ['other', 'keys', 'guitar'],
+  protectedTypes:     ['drums', 'bass', 'vocals', 'instrumental'],
+  criticalTypes:      ['vocals'],
+  defaultBitrate:     128,      // T0
+  fallbackBitrate:    64,       // tightening
+  zipOverheadSlack:   1 * 1024 * 1024, // 1MB
+  maxDurationSec:     240,
+  zipSizeLimit:       50 * 1024 * 1024, // 50MB
+}
+```
+
+### 10.7 Observability
+
+Логи с префиксом `[zip-enc]`:
+- `PREFLIGHT` — predicted размер, deficit
+- `START` — сколько стемов кодировать
+- `DECODE_START` — декодирование стема
+- `ENCODE_PROGRESS` — прогресс кодирования (только при смене %)
+- `OK` / `SKIP` — результат стема (tier, savings, runningTotal)
+- `BUDGET_MET` — бюджет закрыт, pipeline остановлен
+- `BUDGET_GATE` / `BUDGET_EXCEEDED` — результат проверки wouldFitZip
+- `TIGHTENING_START/DONE/FAILED` — tightening pass
+- `ABORT_USER` — экспорт невозможен
+- `FINAL` — итог pipeline
+
+### 10.8 Fallback Chain
+
+```
+T0 (128kbps):   try encode → success → check budget → next stem
+                ↓ fail → skip stem, continue to next
+Tightening:     if budget not met → pick largest encoded → 64kbps → recheck
+                ↓ still > 50MB → ABORT with user-facing message
+```
+
+---
+
 ## 9. Key Files
 
 | File | Role |
 |------|------|
-| `src/sync/components/SyncEditorPanel.tsx` | ZIP export + LRC Picker |
+| `src/sync/components/SyncEditorPanel.tsx` | ZIP export + LRC Picker + budget gate |
 | `src/services/upload.service.ts` | ZIP import |
 | `src/services/cover-art.service.ts` | Cover art fetch + blob save |
 | `src/services/idb.service.ts` | IDB schema (coverArtBlob field, blockScenes store) |
@@ -320,9 +447,16 @@ Without `lyricsOriginalContent`, LRC Picker returns `blocks=[]` → existing blo
 | `src/bridges/track.bridge.ts` | Blob → Object URL hydration |
 | `src/bridges/cover-theme.bridge.ts` | Theme hydration from IDB |
 | `src/components/CoverArt.tsx` | UI component (img + fallback) |
+| `src/config/stem-transcode.config.ts` | Transcode config (v2.0) |
+| `src/utils/zip-preflight.ts` | Pre-flight + budget gate |
+| `src/utils/zip-transcode-pipeline.ts` | Transcode pipeline |
+| `src/utils/mp3-transcoder.ts` | Decode/encode bridge |
+| `src/utils/mp3-transcoder.worker.ts` | LAME worker |
+| `src/utils/zip-logger.ts` | Structured logs |
+| `src/utils/audio-context-manager.ts` | AudioContext singleton |
 
 ---
 
-**Last updated:** 2026-06-10
-**Status:** Production-ready
-**See also:** `block-first-lyrics-sync.md`, `architecture-map-2.1.md`
+**Last updated:** 2026-06-26
+**Status:** Production-ready (v2.0 — «Sample & Tighten»)
+**See also:** `stem-transcode.config.ts`, `block-first-lyrics-sync.md`, `architecture-map-2.1.md`
