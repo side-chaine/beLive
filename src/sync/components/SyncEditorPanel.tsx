@@ -80,6 +80,10 @@ export default function SyncEditorPanel() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const exportInFlightRef = useRef(false);
+  const exportBlobRef = useRef<Blob | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const uploadXhrRef = useRef<XMLHttpRequest | null>(null);
 
   // TC-LRCPICKER-02: LRC Version Picker state
   const [lrcVersions, setLrcVersions] = useState<LrcVersion[]>([]);
@@ -527,6 +531,8 @@ export default function SyncEditorPanel() {
         throw err;
       }
 
+      exportBlobRef.current = blob;
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -534,7 +540,8 @@ export default function SyncEditorPanel() {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // НЕ ревокаем URL сразу — может понадобиться для повторного download
+      // URL будет отозван при следующем export или unmount
 
       console.log('[Sync] ZIP exported:', `${safeName}.zip`);
       markClean();
@@ -546,6 +553,68 @@ export default function SyncEditorPanel() {
       setExportProgress(0);
     }
   }, [isExporting, markClean]);
+
+  const TG_UPLOAD_URL = 'https://belive-feed-bot.nikitosss007.workers.dev/upload';
+
+  const uploadToTelegram = useCallback(async () => {
+    const blob = exportBlobRef.current;
+    if (!blob || isUploading) return;
+
+    const meta = useTrackStore.getState().currentTrack;
+    if (!meta) return;
+    const artist = meta.artist || 'Unknown Artist';
+    const title = meta.title || 'Unknown Track';
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    const formData = new FormData();
+    formData.append('file', blob, `${artist} - ${title}.zip`);
+    formData.append('artist', artist);
+    formData.append('title', title);
+    formData.append('type', 'full');
+
+    const xhr = new XMLHttpRequest();
+    uploadXhrRef.current = xhr;
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        setUploadProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      uploadXhrRef.current = null;
+      setIsUploading(false);
+      if (xhr.status === 200) {
+        setUploadProgress(100);
+        console.log('[Sync] ZIP uploaded to TG');
+        document.dispatchEvent(new CustomEvent('tg-upload-complete', {
+          detail: { title, artist }
+        }));
+      } else {
+        console.error('[Sync] TG upload failed:', xhr.status, xhr.statusText);
+        setUploadProgress(0);
+      }
+    };
+
+    xhr.onerror = () => {
+      uploadXhrRef.current = null;
+      setIsUploading(false);
+      setUploadProgress(0);
+      console.error('[Sync] TG upload network error');
+    };
+
+    xhr.onabort = () => {
+      uploadXhrRef.current = null;
+      setIsUploading(false);
+      setUploadProgress(0);
+      console.log('[Sync] TG upload cancelled');
+    };
+
+    xhr.open('POST', TG_UPLOAD_URL);
+    xhr.send(formData);
+  }, [isUploading]);
 
   const handleCancel = useCallback(() => {
     // Revert to state when editor was opened (first snapshot)
@@ -1427,6 +1496,34 @@ export default function SyncEditorPanel() {
           )}
           <span style={{ position: 'relative', zIndex: 1 }}>
             {isExporting ? 'Packing...' : 'ZIP'}
+          </span>
+        </button>
+
+        {/* TG upload — отправка ZIP в Telegram каталог */}
+        <button onClick={uploadToTelegram} disabled={!exportBlobRef.current || isUploading} style={{
+          ...btn, height: '28px', fontWeight: 500,
+          position: 'relative',
+          overflow: 'hidden',
+          background: isUploading ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 197, 94, 0.08)',
+          borderColor: isUploading ? 'rgba(34, 197, 94, 0.4)' : 'rgba(34, 197, 94, 0.2)',
+          color: isUploading ? 'rgba(34, 197, 94, 0.9)' : 'rgba(74, 222, 128, 0.7)',
+          opacity: exportBlobRef.current ? 1 : 0.4,
+          cursor: !exportBlobRef.current || isUploading ? 'wait' : 'pointer',
+        }} title="Upload track to Telegram catalog">
+          {isUploading && uploadProgress > 0 && (
+            <div style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: `${uploadProgress}%`,
+              background: 'rgba(34, 197, 94, 0.2)',
+              transition: 'width 0.5s ease-out',
+              pointerEvents: 'none',
+            }} />
+          )}
+          <span style={{ position: 'relative', zIndex: 1 }}>
+            {isUploading ? `${uploadProgress}%` : '📤 TG'}
           </span>
         </button>
 

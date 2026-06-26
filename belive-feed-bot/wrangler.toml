@@ -3,14 +3,21 @@ main = "src/index.ts"
 compatibility_date = "2024-01-10"
 workers_dev = true
 
+[limits]
+cpu_ms = 30000
+
+[vars]
+ALLOWED_ORIGIN = "https://app.mybelive.com"
+
 # Секреты (wrangler secret put):
 # BOT_TOKEN — токен @BeLiveCommunity_bot
 # WEBHOOK_SECRET — секрет для вебхука
 # ALLOWED_TG_IDS — Telegram ID администратора (через запятую)
+# UPLOAD_API_KEY_SECRET — API key для /upload
 
 [[kv_namespaces]]
 binding = "EPHEMERAL_KV"
 id = "bd9b1fdbafd64d9d9018da2aa478d99c"
 
 # D1 и R2 — убраны для MVP
-# Phase 2: добавить [[d1_databases]] и [[r2_buckets]]
+# D1 и R2 не используются в Phase 1

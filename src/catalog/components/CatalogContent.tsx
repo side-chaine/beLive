@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { CoverArt } from '../../components/CoverArt';
 import { useTrackStore } from '../../stores/track.store';
@@ -103,8 +103,8 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
   const trackListRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  // Fetch Telegram tracks on mount
-  useEffect(() => {
+  // Fetch Telegram tracks — вынесено для переиспользования
+  const fetchTgTracks = useCallback(() => {
     let cancelled = false;
     fetch(TG_API_URL)
       .then(r => r.json())
@@ -112,6 +112,21 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
       .catch(() => { if (!cancelled) setTgError(true); });
     return () => { cancelled = true; };
   }, []);
+
+  // Fetch Telegram tracks on mount
+  useEffect(() => {
+    const cancel = fetchTgTracks();
+    return cancel;
+  }, [fetchTgTracks]);
+
+  // Listen for tg-upload-complete → refresh catalog
+  useEffect(() => {
+    const handler = () => {
+      fetchTgTracks();
+    };
+    document.addEventListener('tg-upload-complete', handler);
+    return () => document.removeEventListener('tg-upload-complete', handler);
+  }, [fetchTgTracks]);
 
   // Auto-scroll to bottom when new tracks added
   useEffect(() => {
@@ -126,6 +141,24 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
       setTimeout(() => trackListRef.current?.scrollTo({ top: trackListRef.current.scrollHeight, behavior: 'smooth' }), 100);
     }
   }, [ghosts.length]);
+
+  // Polling fallback: после tg-upload-complete, 3 попытки с 5с интервалом
+  // (митигация KV eventual consistency — трек может появиться не сразу)
+  useEffect(() => {
+    let attempts = 0;
+    const handler = () => {
+      const poll = setInterval(() => {
+        attempts++;
+        if (attempts >= 3) {
+          clearInterval(poll);
+          return;
+        }
+        fetchTgTracks();
+      }, 5000);
+    };
+    document.addEventListener('tg-upload-complete', handler);
+    return () => document.removeEventListener('tg-upload-complete', handler);
+  }, [fetchTgTracks]);
 
   // Listener #1 of 2: ghost cleanup. Сопряжённый listener в CatalogLayout управляет навигацией. НЕ объединять.
   useEffect(() => {

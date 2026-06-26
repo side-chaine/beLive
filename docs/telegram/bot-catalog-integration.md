@@ -117,8 +117,67 @@ Access-Control-Allow-Methods: GET, OPTIONS
 Access-Control-Allow-Headers: Content-Type
 ```
 
+## TG Upload Flow (Phase 1 — 2026-06-26)
+
+### Суть
+Пользователь может отправить ZIP-архив трека из SyncEditorPanel напрямую в Telegram каталог. ZIP не скачивается локально — отправляется через Worker в TG и сохраняется в KV каталог.
+
+### Поток
+```
+SyncEditorPanel.tsx
+  → handleExportZip() генерирует Blob (JSZip, transcode, budget gate)
+  → Blob сохраняется в exportBlobRef
+  → Кнопка «📤 TG» становится активной
+  → uploadToTelegram() — XHR POST /upload
+    → FormData: file, artist, title, type
+    → XHR.upload.onprogress — UI прогресс
+  → belive-feed-bot POST /upload
+    → strict origin check (===)
+    → Content-Length guard (>1MB → 413)
+    → X-API-Key timingSafeEqual
+    → ZIP magic bytes validation (PK\x03\x04)
+    → Filename sanitize (/[a-zA-Z0-9._-]/g, ≤64)
+    → sendDocument → TG API
+    → retry-on-429 (Retry-After)
+    → KV catalog write (optimistic lock)
+    → orphan protection (если KV fail → deleteMessage)
+    → Response: { success, fileId, slug, id }
+  → CatalogContent.tsx слушает 'tg-upload-complete'
+    → re-fetch /tracks
+    → polling fallback (3×5s для KV eventual consistency)
+```
+
+### POST /upload hardening
+| Слой | Проверка | Статус |
+|------|---------|--------|
+| CORS | Access-Control-Allow-Origin: app.mybelive.com | ✅ |
+| Origin | strict === (не includes) | ✅ |
+| Size | Content-Length > 1MB → 413 | ✅ |
+| Auth | X-API-Key → timingSafeEqual | ✅ |
+| File type | ZIP magic bytes (первые 4 байта) | ✅ |
+| Filename | sanitize: /[a-zA-Z0-9._-]/g, ≤64 chars | ✅ |
+| Timeout | AbortSignal.timeout(8000) | ✅ |
+| Retry | 429 → Retry-After → 1 retry | ✅ |
+| Catalog | KV optimistic lock + duplicate slug guard | ✅ |
+| Orphan | KV fail → deleteMessage | ✅ |
+
+### API
+- `POST /upload` — FormData: file, artist, title, type
+- Headers: `X-API-Key` (required), `Origin: https://app.mybelive.com`
+- Response: `{ success, fileId, slug, id }`
+- Limit: 1MB (Content-Length), только ZIP
+
+### Client-side
+- Кнопка «📤 TG» в SyncEditorPanel (рядом с «ZIP»)
+- XHR с upload.onprogress
+- Blob в useRef (не ревокается пока upload активен)
+- Событие `tg-upload-complete` для CatalogContent
+
 ## Known Limitations
 - **TG file_path TTL:** ~1 час — после этого ссылка умирает, retry бесполезен
 - **No webhook retry:** бот не переотправляет webhook при падении Worker
 - **Manual deploy:** только через CF Dashboard (wrangler падает на macOS 12.6)
 - **6 треков >50MB:** ждут ffmpeg сжатия перед bulk upload
+- **KV eventual consistency:** трек может появиться в каталоге через 30-60с (polling fallback 3×5s)
+- **Phase 1 KV RMW race:** известен, зафиксирован. Phase 2 → DO migration
+- **Phase 1 без JWT:** X-API-Key shared secret, не user-bound. Phase 2 → JWT

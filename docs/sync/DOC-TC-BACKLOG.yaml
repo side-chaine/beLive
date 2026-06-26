@@ -116,3 +116,44 @@ backlog:
     found_by: "001-AUDIT (S-VC MAINTENANCE)"
     found_date: 2026-06-23
     completed_by: "TC-OPT-07"
+
+  # ═══ Session 112 — DOC-SYNC: Avatar Engine + Metrics System ═══
+  - id: "DOC-TC-113-01"
+    type: CREATE
+    target: "docs/architecture/avatar-visual-engine.md"
+    description: "Create architecture doc for Avatar Engine v3 — Living Proxy State Machine, tier gate, 6 states, SVG/CSS render, performance budget 16.6ms."
+    priority: HIGH
+    status: DONE
+    found_by: "007-DOC-CHECK (Session 112 handoff)"
+    found_date: 2026-06-25
+    completed_by: "TC-113-01"
+
+  - id: "DOC-TC-113-02"
+    type: CREATE
+    target: "docs/architecture/metrics-system.md"
+    description: "Create architecture doc for Metrics System — MetricsCube, event flow, ELO server-authoritative, D1 schema (3 tables, 3 SQL), merge strategy, guest data path, ProfileStats."
+    priority: HIGH
+    status: DONE
+    found_by: "007-DOC-CHECK (Session 112 handoff)"
+    found_date: 2026-06-25
+    completed_by: "TC-113-02"
+
+  - id: "DOC-TC-113-03"
+    type: UPDATE
+    target: "docs/sync/MASTER-SYNC-REGISTRY.yaml"
+    description: "Add entries for Avatar Engine (8 files) + Metrics System (8 files) + DOC-SYNC session entry. Total 17 new entries. Update registry_meta."
+    priority: HIGH
+    status: DONE
+    found_by: "007-DOC-CHECK (Session 112 handoff)"
+    found_date: 2026-06-25
+    completed_by: "TC-113-03"
+
+  - id: "DOC-TC-113-04"
+    type: UPDATE
+    target: "docs/sync/DOC-TC-BACKLOG.yaml"
+    description: "Add backlog entries for DOC-TC-113-01 through DOC-TC-113-04. All status DONE."
+    priority: HIGH
+    status: DONE
+    found_by: "007-DOC-CHECK (Session 112 handoff)"
+    found_date: 2026-06-25
+    completed_by: "TC-113-04"

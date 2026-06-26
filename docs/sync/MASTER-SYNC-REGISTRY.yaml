@@ -32,11 +32,11 @@ docs:
     note: "Needs update: parallel FileReader, dedup guard, TG HTTP handling + queue."
 
   - path: "docs/telegram/bot-catalog-integration.md"
-    description: TG Bot ↔ Catalog Integration
-    status: STALE
-    last_sync: 2026-06-10
-    health: 70
-    note: "Needs update: downloadTgTrack function, fetch+stream, ghost error/done phases."
+    description: TG Bot ↔ Catalog Integration (upload + download)
+    status: UPDATED
+    last_sync: 2026-06-26
+    health: 90
+    note: "Added TG upload flow: POST /upload hardening, X-API-Key auth, optimistic KV lock, orphan protection."
 
   - path: "000-FULL-BASE.md"
     description: Shared Context Layer
@@ -350,12 +350,40 @@ services:
     health: 100
     note: "2 новых doc (avatar-visual-engine.md, metrics-system.md), 4 registry entries, 2 DOC-TC backlog entries. 0 frozen zone touches. 0 code changes."
 
+  - path: "docs/architecture/zip-pipeline.md"
+    description: ZIP Export & Import pipeline v2.0 — §11 TG Upload Flow
+    status: UPDATED
+    last_sync: 2026-06-26
+    health: 92
+    note: "Added §11 TG Upload Flow: uploadToTelegram, POST /upload, KV catalog write, hardening layers."
+
+  - path: "belive-feed-bot/src/index.ts"
+    description: TG Bot Worker — POST /upload hardening (Phase 1)
+    status: UPDATED
+    last_tc: "TC-TG-110"
+    health: 90
+    note: "Added: strict origin, X-API-Key, Content-Length guard, ZIP magic bytes, filename sanitize, CORS on all responses, KV optimistic lock, orphan protection, retry-on-429."
+
+  - path: "src/sync/components/SyncEditorPanel.tsx"
+    description: ZIP export + TG upload button
+    status: UPDATED
+    last_tc: "TC-TG-110-B"
+    health: 90
+    note: "Added uploadToTelegram() with XHR progress, 📤 TG button, blobRef for shared blob."
+
+  - path: "src/catalog/components/CatalogContent.tsx"
+    description: TG catalog search + auto-refresh after upload
+    status: UPDATED
+    last_tc: "TC-TG-110-C"
+    health: 90
+    note: "Added tg-upload-complete listener, polling fallback (3×5s), refactored fetchTgTracks to useCallback."
+
 registry_meta:
-  version: "1.4"
-  last_full_scan: 2026-06-25
-  total_docs: 24
+  version: "1.5"
+  last_full_scan: 2026-06-26
+  total_docs: 28
   ok: 1
-  updated: 15
+  updated: 19
   stale: 3
   created: 12
   maintenance: 2
