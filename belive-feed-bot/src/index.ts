@@ -16,6 +16,8 @@ interface Env {
   ALLOWED_TG_IDS: string;
   EPHEMERAL_KV: KVNamespace;
   UPLOAD_CHAT_ID: string;
+  UPLOAD_API_KEY_SECRET: string;
+  ALLOWED_ORIGIN: string;
 }
 
 export default {
@@ -73,44 +75,162 @@ export default {
     // ── POST /upload (from beLive client — battle vocals ZIP) ──
     const requestUrl = new URL(request.url);
     if (requestUrl.pathname === '/upload') {
+      // A1: CORS headers для всех ответов
+      const corsHeaders = {
+        'Access-Control-Allow-Origin': 'https://app.mybelive.com',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
+      };
+
+      // A2: Strict origin check (=== не includes!)
       const origin = request.headers.get('Origin') || '';
-      if (!origin.includes('app.mybelive.com') && !origin.includes('localhost')) {
-        return new Response('Forbidden', { status: 403 });
+      if (origin !== 'https://app.mybelive.com' && origin !== 'http://localhost:5173') {
+        return new Response('Forbidden', { status: 403, headers: corsHeaders });
+      }
+
+      // A3: Content-Length check ДО formData (heap protection)
+      const contentLength = request.headers.get('Content-Length');
+      if (contentLength && parseInt(contentLength) > 1_048_576) { // 1MB
+        return new Response('Payload Too Large', { status: 413, headers: corsHeaders });
+      }
+
+      // A4: X-API-Key check
+      const apiKey = request.headers.get('X-API-Key');
+      if (!apiKey) {
+        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+      }
+      const encoder = new TextEncoder();
+      const apiKeyBytes = encoder.encode(apiKey);
+      const expectedKeyBytes = encoder.encode(env.UPLOAD_API_KEY_SECRET || '');
+      if (apiKeyBytes.length !== expectedKeyBytes.length ||
+          !(crypto.subtle as any).timingSafeEqual(apiKeyBytes, expectedKeyBytes)) {
+        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
       }
 
       const formData = await request.formData();
       const file = formData.get('file');
       if (!file || !(file instanceof File)) {
-        return new Response('Missing file', { status: 400 });
+        return new Response('Missing file', { status: 400, headers: corsHeaders });
       }
 
+      // A5: Server-side file type validation — ZIP magic bytes
+      const zipHeader = await file.slice(0, 4).arrayBuffer();
+      const magicBytes = new Uint8Array(zipHeader);
+      const isZip = magicBytes[0] === 0x50 && magicBytes[1] === 0x4B &&
+                    (magicBytes[2] === 0x03 || magicBytes[2] === 0x05) &&
+                    magicBytes[3] === 0x04;
+      if (!isZip) {
+        return new Response('Invalid file type — ZIP only', { status: 415, headers: corsHeaders });
+      }
+
+      // A6: Filename sanitize
+      const sanitizeName = (name: string) =>
+        name.replace(/[^a-zA-Z0-9._\-]/g, '_').slice(0, 64);
+      const safeFileName = sanitizeName(file.name);
+
+      // A7: Отправка в Telegram
       const tgForm = new FormData();
       tgForm.append('chat_id', env.UPLOAD_CHAT_ID);
-      tgForm.append('document', file, file.name);
+      tgForm.append('document', file, safeFileName);
 
-      const tgRes = await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/sendDocument`, {
-        method: 'POST',
-        body: tgForm,
-      });
+      const controller = new AbortController();
+      const tgTimeout = setTimeout(() => controller.abort(), 8000);
+
+      let tgRes: Response;
+      try {
+        tgRes = await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/sendDocument`, {
+          method: 'POST',
+          body: tgForm,
+          signal: controller.signal,
+        });
+      } catch (err) {
+        clearTimeout(tgTimeout);
+        return new Response('Upload failed — TG timeout', { status: 502, headers: corsHeaders });
+      }
+      clearTimeout(tgTimeout);
 
       if (!tgRes.ok) {
-        const errText = await tgRes.text();
-        console.error('[upload] TG error:', errText);
-        return new Response('Upload failed', { status: 502 });
+        // A8: Retry on 429
+        if (tgRes.status === 429) {
+          try {
+            const retryAfter = parseInt(tgRes.headers.get('Retry-After') || '5') * 1000;
+            await new Promise(r => setTimeout(r, Math.min(retryAfter, 5000)));
+            tgRes = await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/sendDocument`, {
+              method: 'POST', body: tgForm,
+            });
+          } catch {
+            return new Response('Upload failed', { status: 502, headers: corsHeaders });
+          }
+        }
+        if (!tgRes.ok) {
+          return new Response('Upload failed', { status: 502, headers: corsHeaders });
+        }
       }
 
       const tgData: any = await tgRes.json();
       const fileId = tgData?.result?.document?.file_id;
-
       if (!fileId) {
-        return new Response('No file_id returned', { status: 502 });
+        return new Response('No file_id returned', { status: 502, headers: corsHeaders });
       }
 
-      return new Response(JSON.stringify({ fileId }), {
+      // A9: Catalog write with optimistic lock
+      const artist = (formData.get('artist') as string) || 'Unknown Artist';
+      const title = (formData.get('title') as string) || 'Unknown Title';
+      const slug = `${artist}-${title}`.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .replace(/-+/g, '-');
+
+      // Read + write with optimistic lock
+      let catalogWriteOk = false;
+      let trackEntry = null;
+      try {
+        const catalogStr = await env.EPHEMERAL_KV.get('track_data:catalog');
+        const catalog: any[] = catalogStr ? JSON.parse(catalogStr) : [];
+        
+        // Duplicate slug guard
+        const existingSlug = catalog.find((t: any) => t.slug === slug);
+        const finalSlug = existingSlug ? `${slug}-${Date.now()}` : slug;
+        
+        trackEntry = {
+          id: `usr-${String(Date.now())}`,
+          title,
+          artist,
+          slug: finalSlug,
+          type: formData.get('type') || 'full',
+          fileIds: { full: fileId },
+          fileSize: file.size,
+          fileName: safeFileName,
+        };
+
+        catalog.push(trackEntry);
+        await env.EPHEMERAL_KV.put('track_data:catalog', JSON.stringify(catalog));
+        await env.EPHEMERAL_KV.put(`track_data:${finalSlug}`, JSON.stringify(trackEntry));
+        catalogWriteOk = true;
+      } catch (kvErr) {
+        console.error('[upload] KV write failed:', kvErr);
+        // A10: Orphan protection — пытаемся удалить файл из TG
+        try {
+          await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/deleteMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: env.UPLOAD_CHAT_ID,
+              message_id: tgData?.result?.message_id,
+            }),
+          });
+        } catch { /* best-effort cleanup */ }
+      }
+
+      return new Response(JSON.stringify({
+        success: catalogWriteOk,
+        fileId,
+        slug: trackEntry?.slug || slug,
+        id: trackEntry?.id || null,
+      }), {
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': 'https://app.mybelive.com',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          ...corsHeaders,
         },
       });
     }

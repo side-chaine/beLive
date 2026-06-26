@@ -457,6 +457,83 @@ Tightening:     if budget not met → pick largest encoded → 64kbps → rechec
 
 ---
 
+## 11. TG Upload Flow
+
+**Версия:** 1.0 (Phase 1 — Hardened MVP)  
+**Дата:** 2026-06-26  
+**Статус:** ✅ Production-ready
+
+### 11.1 Назначение
+
+Отправка ZIP-архива трека из SyncEditorPanel напрямую в Telegram каталог (belive-feed-bot).  
+Пользователь НЕ скачивает ZIP локально — трек сразу попадает в общий каталог.
+
+### 11.2 Поток
+
+```
+1. handleExportZip() генерирует Blob (JSZip + transcode + budget gate)
+2. exportBlobRef.current = blob (сохраняется в ref)
+3. Пользователь жмёт «📤 TG»
+4. uploadToTelegram():
+   a. XHR.open('POST', /upload)
+   b. FormData: file, artist, title, type='full'
+   c. xhr.upload.onprogress → UI fill
+   d. Отправка на belive-feed-bot
+5. Worker POST /upload:
+   a. Strict origin check (===)
+   b. Content-Length guard (>1MB → 413)
+   c. X-API-Key → timingSafeEqual
+   d. ZIP magic bytes: PK\x03\x04
+   e. Filename sanitize
+   f. sendDocument → TG API (AbortSignal.timeout 8s)
+   g. 429 retry (Retry-After)
+   h. KV catalog write (optimistic lock + duplicate slug guard)
+   i. Если KV fail → deleteMessage (orphan protection)
+   j. Response: { success, fileId, slug, id }
+6. CatalogContent слушает 'tg-upload-complete':
+   a. re-fetch /tracks
+   b. Polling 3×5s (KV eventual consistency)
+```
+
+### 11.3 Key Files
+
+| File | Role |
+|------|------|
+| `src/sync/components/SyncEditorPanel.tsx` | uploadToTelegram() + TG кнопка |
+| `belive-feed-bot/src/index.ts` | POST /upload hardening |
+| `src/catalog/components/CatalogContent.tsx` | auto-refresh after upload |
+| `belive-feed-bot/wrangler.toml` | Rate limiting binding, secrets |
+
+### 11.4 Security Layers
+
+| Layer | Mechanism |
+|-------|-----------|
+| CORS | Strict origin (===), не includes |
+| Size | Content-Length > 1MB → 413 |
+| Auth | X-API-Key, timingSafeEqual |
+| File type | ZIP magic bytes PK\x03\x04 |
+| Filename | Whitelist: /[a-zA-Z0-9._-]/g, ≤64 chars |
+| Timeout | AbortSignal.timeout(8000) |
+| Retry | 429 → Retry-After capped 5s |
+| Catalog | KV optimistic lock, duplicate slug guard |
+| Orphan | KV fail → deleteMessage rollback |
+
+### 11.5 Known Limitations (Phase 1)
+
+- KV read-modify-write race condition (будет исправлено в Phase 2 → Durable Object)
+- Shared secret (X-API-Key), не user-bound JWT
+- KV eventual consistency: до 60s задержка появления трека
+- Лимит 1MB на запрос (Content-Length guard)
+
+### 11.6 Future (Phase 2/3)
+
+- Durable Object CatalogDO с SQLite (атомарные INSERT)
+- JWT authentication вместо shared secret
+- Cron cleanup для orphaned TG files
+- Streaming upload для файлов > 1MB
+
+---
+
 **Last updated:** 2026-06-26
-**Status:** Production-ready (v2.0 — «Sample & Tighten»)
-**See also:** `stem-transcode.config.ts`, `block-first-lyrics-sync.md`, `architecture-map-2.1.md`
+**Status:** Production-ready (v2.0 — «Sample & Tighten» + §11 TG Upload)
+**See also:** `stem-transcode.config.ts`, `block-first-lyrics-sync.md`, `architecture-map-2.1.md`, `bot-catalog-integration.md`
