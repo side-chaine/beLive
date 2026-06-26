@@ -90,7 +90,7 @@ export default {
 
       // A3: Content-Length check ДО formData (heap protection)
       const contentLength = request.headers.get('Content-Length');
-      if (contentLength && parseInt(contentLength) > 1_048_576) { // 1MB
+      if (contentLength && parseInt(contentLength) > 52_428_800) { // 50MB (TG limit)
         return new Response('Payload Too Large', { status: 413, headers: corsHeaders });
       }
 
