@@ -71,9 +71,16 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html')
-      }
+      },
+      output: {
+        format: 'es',
+      },
     },
-    copyPublicDir: true
+    copyPublicDir: true,
+  },
+
+  worker: {
+    format: 'es',
   },
 
   plugins: [

@@ -14,6 +14,13 @@ import { lyricsAlignService } from '../word-sync/services/lyrics-align.service';
 import { buildAlignmentJobRequest } from '../word-sync/services/alignment-request.builder';
 import { fetchLrcVersions, parseLrcVersion } from '../../services/auto-lyrics.service';
 import type { LrcVersion } from '../../services/auto-lyrics.service';
+import { wouldFitZip } from '../../utils/zip-preflight';
+import { terminateWorker, transcodeStem } from '../../utils/mp3-transcoder';
+import { STEM_TRANSCODE_CONFIG } from '../../config/stem-transcode.config';
+import { calcPreFlight, assertZipSize } from '../../utils/zip-preflight';
+import { runTranscodePipeline } from '../../utils/zip-transcode-pipeline';
+import { closeZipAudioContext, hasZipAudioContext } from '../../utils/audio-context-manager';
+import { logZipEvent } from '../../utils/zip-logger';
 
 function formatTime(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -216,6 +223,17 @@ export default function SyncEditorPanel() {
       }
       setExportProgress(5);
 
+      // TC-S&T-04: замер сцен ДО preflight (FM-3)
+      let scenesBytes = 0;
+      try {
+        const { getBlockScenes, getBlockSceneBlob } = await import('../../services/block-scene.service');
+        const sceneMetas = await getBlockScenes(Number(meta.id));
+        for (const scene of sceneMetas) {
+          const blob = await getBlockSceneBlob(scene.id);
+          if (blob) scenesBytes += blob.size;
+        }
+      } catch { /* scenes optional — non-critical */ }
+
       const zip = new JSZip();
 
       // Build safe track name for files
@@ -231,12 +249,139 @@ export default function SyncEditorPanel() {
         const ext = mimeToExt(fullTrack.vocalsType);
         zip.file(`${safeName}_vocals.${ext}`, fullTrack.vocalsData, { compression: 'STORE' });
       }
-      // W9-UX-004: Include additional stems in ZIP export
-      if (fullTrack.stemsData) {
-        for (const [stemId, entry] of Object.entries(fullTrack.stemsData)) {
-          if (entry?.data) {
-            const ext = mimeToExt(entry.type);
-            zip.file(`stems/${stemId}.${ext}`, entry.data, { compression: 'STORE' });
+      // W9-UX-004 + Variant A v2: Include additional stems + transcode non-vocal
+      if (fullTrack.stemsData && Object.keys(fullTrack.stemsData).length > 0) {
+        // Pre-flight: считаем сумму ВСЕХ компонентов ZIP
+        const preFlight = calcPreFlight(
+          {
+            stemsData: fullTrack.stemsData,
+            instrumentalByteLength: fullTrack.instrumentalData?.byteLength,
+            vocalsByteLength: fullTrack.vocalsData?.byteLength,
+            coverByteLength: fullTrack.coverArtBlob?.size,
+            bgByteLength: fullTrack.customBgBlob?.size,
+            scenesByteLength: scenesBytes || undefined,
+          },
+          STEM_TRANSCODE_CONFIG.compressibleTypes
+        );
+        logZipEvent('preflight', { predictedMB: Math.round(preFlight.predictedTotal / 1024 / 1024), needsTranscode: preFlight.needsTranscode, deficitMB: preFlight.deficitMB });
+        
+        if (preFlight.needsTranscode) {
+          // Transcode path
+          setExportProgress(6);
+
+          // rawStemsData snapshot для tightening pass (FM-2)
+          const rawStemsData: Record<string, { data: ArrayBuffer; type: string }> = {};
+          for (const [stemId, entry] of Object.entries(fullTrack.stemsData)) {
+            if (entry?.data) {
+              rawStemsData[stemId] = { data: entry.data.slice(0), type: entry.type };
+            }
+          }
+          
+          const result = await runTranscodePipeline({
+            stemsData: fullTrack.stemsData,
+            stemsToTranscode: preFlight.stemsToTranscode,
+            predictedTotal: preFlight.predictedTotal,
+            onProgress: (stemId, percent) => {
+              logZipEvent('stem-encode-progress', { stemId, progress: percent });
+            },
+          });
+
+          // Budget gate ДО сборки ZIP (FM-7)
+          // Суммируем все компоненты после транскодинга
+          let finalBytes = 0;
+          finalBytes += fullTrack.instrumentalData?.byteLength ?? 0;
+          finalBytes += fullTrack.vocalsData?.byteLength ?? 0;
+          finalBytes += fullTrack.coverArtBlob?.size ?? 0;
+          finalBytes += fullTrack.customBgBlob?.size ?? 0;
+          finalBytes += scenesBytes;
+
+          for (const [stemId, entry] of Object.entries(fullTrack.stemsData)) {
+            if (!entry?.data) continue;
+            const comp = result.compressed[stemId];
+            if (comp) {
+              finalBytes += comp.byteLength;
+            } else if (!result.skipped.includes(stemId)) {
+              finalBytes += entry.data.byteLength;
+            }
+          }
+
+          // Логируем предварительный итог
+          const budgetMB = Math.round(finalBytes / 1024 / 1024);
+          logZipEvent('budget-gate', { finalBytes, budgetMB, limit: STEM_TRANSCODE_CONFIG.zipSizeLimit });
+          
+          if (!wouldFitZip(finalBytes)) {
+            // ── Tightening pass (max 1 стэм, 64kbps) ──
+            logZipEvent('budget-exceeded', { finalBytes, limit: STEM_TRANSCODE_CONFIG.zipSizeLimit });
+            logZipEvent('tightening-start', {});
+
+            // Найти largest encoded стэм
+            let largestStem = '';
+            let largestSize = 0;
+            for (const [stemId, data] of Object.entries(result.compressed)) {
+              if (data.byteLength > largestSize) {
+                largestSize = data.byteLength;
+                largestStem = stemId;
+              }
+            }
+
+            if (largestStem && rawStemsData[largestStem]) {
+              terminateWorker();
+              try {
+                const tightened = await transcodeStem(
+                  largestStem,
+                  rawStemsData[largestStem].data,
+                  STEM_TRANSCODE_CONFIG.fallbackBitrate,
+                );
+                const oldSize = result.compressed[largestStem].byteLength;
+                result.compressed[largestStem] = tightened.data;
+                finalBytes += tightened.data.byteLength - oldSize;
+
+                logZipEvent('tightening-done', { stemId: largestStem, oldSize, newSize: tightened.data.byteLength, finalBytes });
+              } catch (err) {
+                logZipEvent('tightening-failed', { stemId: largestStem, error: String(err) });
+              }
+              terminateWorker();
+            }
+
+            // Re-check budget после tightening
+            if (!wouldFitZip(finalBytes)) {
+              logZipEvent('abort-user', { finalBytes, limit: STEM_TRANSCODE_CONFIG.zipSizeLimit });
+              throw new Error(
+                'Экспорт невозможен: размер трека превышает 50MB даже после сжатия. ' +
+                'Уменьшите длительность трека или количество стемов.'
+              );
+            } else {
+              logZipEvent('budget-gate', { finalBytes, status: 'TIGHTENING_PASS' });
+            }
+          }
+
+          // Складываем в ZIP: vocal — оригинал, compressed — результат транскодинга
+          for (const [stemId, entry] of Object.entries(fullTrack.stemsData)) {
+            if (!entry?.data) continue;
+            
+            const comp = result.compressed[stemId];
+            if (comp) {
+              // Транскодированный стем
+              zip.file(`stems/${stemId}.mp3`, comp, { compression: 'STORE' });
+            } else if (!result.skipped.includes(stemId)) {
+              // Оригинал (vocal или не-whitelist)
+              const ext = mimeToExt(entry.type);
+              zip.file(`stems/${stemId}.${ext}`, entry.data, { compression: 'STORE' });
+            }
+            // skipped — не добавляем в ZIP
+          }
+
+          // Cleanup
+          terminateWorker();
+          if (hasZipAudioContext()) closeZipAudioContext();
+        } else {
+          // Fast path: сумма < лимита, пакуем как есть
+          logZipEvent('fast-path', { predictedMB: Math.round(preFlight.predictedTotal / 1024 / 1024) });
+          for (const [stemId, entry] of Object.entries(fullTrack.stemsData)) {
+            if (entry?.data) {
+              const ext = mimeToExt(entry.type);
+              zip.file(`stems/${stemId}.${ext}`, entry.data, { compression: 'STORE' });
+            }
           }
         }
       }
@@ -372,6 +517,16 @@ export default function SyncEditorPanel() {
       });
 
       setExportProgress(100);
+
+      // Variant A v2: финальная проверка < 50MB
+      try {
+        assertZipSize(blob);
+      } catch (err) {
+        // T3 critical: abort export
+        console.error('[zip-enc] ABORT — zip превышает 50MB');
+        throw err;
+      }
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
