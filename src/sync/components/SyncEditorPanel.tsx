@@ -613,6 +613,7 @@ export default function SyncEditorPanel() {
     };
 
     xhr.open('POST', TG_UPLOAD_URL);
+    xhr.setRequestHeader('X-API-Key', 'tg-upload-secret-2026');
     xhr.send(formData);
   }, [isUploading]);
 
