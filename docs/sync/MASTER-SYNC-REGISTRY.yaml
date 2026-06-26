@@ -4,11 +4,11 @@
 
 docs:
   - path: "docs/architecture/zip-pipeline.md"
-    description: ZIP Export & Import pipeline
+    description: ZIP Export & Import pipeline + stem transcode «Sample & Tighten»
     status: UPDATED
-    last_sync: 2026-06-16
-    health: 90
-    note: "Updated for V-1 cover glob search (cover/folder/artwork/front + .jpg/.jpeg/.png)"
+    last_sync: 2026-06-26
+    health: 95
+    note: "v2.0 — Added §10 stem transcode system (priority chain, budget gate, overlap pipeline, protected stems)"
 
   - path: "docs/architecture/block-first-lyrics-sync.md"
     description: Block-First Line Sync (TC-010)
@@ -226,12 +226,136 @@ services:
     health: 95
     note: "Zustand. Conditional GET. feed.store integration."
 
+  # ═══ Avatar Engine v3 (Task 111 + Session 112) ═══
+  - path: "docs/architecture/avatar-visual-engine.md"
+    description: Avatar Visual Engine v3 — Living Proxy State Machine
+    status: CREATED
+    last_sync: 2026-06-25
+    health: 95
+    note: "Created TC-113-01. Covers tier gate (Fallback/Full), 6 states, SVG body, Performance budget 16.6ms, all 20 AC verified PASS by 009."
+
+  - path: "src/avatar/AvatarEngine.tsx"
+    description: Avatar tier gate — FallbackAvatar vs FullAvatar
+    status: CREATED
+    last_tc: "TC-AVATAR"
+    health: 95
+
+  - path: "src/avatar/FallbackAvatar.tsx"
+    description: CSS-animated SVG avatar (lite/balanced tiers)
+    status: CREATED
+    last_tc: "TC-AVATAR"
+    health: 95
+
+  - path: "src/avatar/FullAvatar.tsx"
+    description: Half-frequency audio-reactive avatar (max/ultra tiers)
+    status: CREATED
+    last_tc: "TC-AVATAR"
+    health: 95
+
+  - path: "src/avatar/avatar.css"
+    description: 6 state keyframes, audio-reactive CSS transforms
+    status: CREATED
+    last_tc: "TC-AVATAR"
+    health: 95
+
+  - path: "src/avatar/avatar.store.ts"
+    description: Avatar Zustand store (state, mode, preset)
+    status: CREATED
+    last_tc: "TC-AVATAR"
+    health: 95
+
+  - path: "src/avatar/avatar.assets.ts"
+    description: Inline SVG presets for avatar body
+    status: CREATED
+    last_tc: "TC-AVATAR"
+    health: 95
+
+  - path: "src/feed/ProfileStats.tsx"
+    description: Conditional cells — ELO, tracks, rehearsals, genres, quests
+    status: UPDATED
+    last_tc: "TC-PROF"
+    health: 95
+    note: "Phase 0: zero mock. Phase 1: metrics selectors connected."
+
+  - path: "src/performance/performance.presets.ts"
+    description: Performance presets with allowAvatar, deepFrozen
+    status: UPDATED
+    last_tc: "TC-0"
+    health: 95
+    note: "deepFreeze + as const satisfies. Dedup guard in scheduler."
+
+  # ═══ Metrics System (Session 112) ═══
+  - path: "docs/architecture/metrics-system.md"
+    description: Metrics System — MetricsCube, store, bridge, sync, D1
+    status: CREATED
+    last_sync: 2026-06-25
+    health: 95
+    note: "Created TC-113-02. Covers MetricsCube, event flow, ELO server-authoritative, 3 SQL queries, Merge strategy, Guest data path."
+
+  - path: "src/types/metrics.types.ts"
+    description: MetricsCube interface
+    status: CREATED
+    last_tc: "TC-METRICS"
+    health: 95
+
+  - path: "src/stores/metrics.store.ts"
+    description: Metrics Zustand store — persist → localStorage
+    status: CREATED
+    last_tc: "TC-METRICS"
+    health: 95
+
+  - path: "src/services/metrics.bridge.ts"
+    description: Metrics event subscriber
+    status: CREATED
+    last_tc: "TC-METRICS"
+    health: 95
+
+  - path: "src/services/genre-aggregation.service.ts"
+    description: IDB genre aggregation, canonical map, artist exclusion
+    status: CREATED
+    last_tc: "TC-METRICS"
+    health: 95
+
+  - path: "src/services/metrics-sync.service.ts"
+    description: Client sync with retry + coalescing
+    status: CREATED
+    last_tc: "TC-METRICS"
+    health: 95
+
+  - path: "gateway/src/handlers/metrics.ts"
+    description: Sync + get metrics endpoints
+    status: CREATED
+    last_tc: "TC-METRICS"
+    health: 90
+    note: "Код готов. ⏳ Ждёт деплой (wrangler issues on macOS 12.6, нужен CF Dashboard manual deploy)."
+
+  - path: "gateway/migrations/0005_metrics.sql"
+    description: D1 schema — user_metrics, daily_plays, sync_rate_limit
+    status: CREATED
+    last_tc: "TC-METRICS"
+    health: 95
+
+  - path: "gateway/wrangler.toml"
+    description: Gateway config — METRICS_DB binding
+    status: UPDATED
+    last_tc: "TC-METRICS"
+    health: 85
+    note: "METRICS_DB binding прописан. database_id пустой — нужно создать DB через CF Dashboard."
+
+  # ═══ Session 112 — DOC-SYNC ═══
+  - path: "S-VC-DOC-SYNC-2026-06-25"
+    description: "DOC-SYNC — создана документация для Avatar Engine + Metrics System"
+    status: COMPLETED
+    last_sync: 2026-06-25
+    health: 100
+    note: "2 новых doc (avatar-visual-engine.md, metrics-system.md), 4 registry entries, 2 DOC-TC backlog entries. 0 frozen zone touches. 0 code changes."
+
 registry_meta:
-  version: "1.3"
-  last_full_scan: 2026-06-22
-  total_docs: 12
+  version: "1.4"
+  last_full_scan: 2026-06-25
+  total_docs: 24
   ok: 1
-  updated: 11
+  updated: 15
   stale: 3
-  created: 8
-  maintenance: 1
+  created: 12
+  maintenance: 2
