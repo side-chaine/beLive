@@ -21,6 +21,7 @@ import { calcPreFlight, assertZipSize } from '../../utils/zip-preflight';
 import { runTranscodePipeline } from '../../utils/zip-transcode-pipeline';
 import { closeZipAudioContext, hasZipAudioContext } from '../../utils/audio-context-manager';
 import { logZipEvent } from '../../utils/zip-logger';
+import { uploadBlobToTelegram } from '../../services/tg-upload.service';
 
 function formatTime(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -666,8 +667,6 @@ export default function SyncEditorPanel() {
     };
   }, []);
 
-  const TG_UPLOAD_URL = 'https://belive-feed-bot.nikitosss007.workers.dev/upload';
-
   const uploadToTelegram = useCallback(async () => {
     const blob = exportBlobRef.current;
     if (!blob || isUploading) return;
@@ -680,53 +679,28 @@ export default function SyncEditorPanel() {
     setIsUploading(true);
     setUploadProgress(0);
 
-    const formData = new FormData();
-    formData.append('file', blob, `${artist} - ${title}.zip`);
-    formData.append('artist', artist);
-    formData.append('title', title);
-    formData.append('type', 'full');
+    const result = await uploadBlobToTelegram(
+      blob, artist, title,
+      {
+        onProgress: (pct) => setUploadProgress(pct),
+        onDone: () => {
+          console.log('[Sync] ZIP uploaded to TG');
+          document.dispatchEvent(new CustomEvent('tg-upload-complete', {
+            detail: { title, artist }
+          }));
+        },
+        onError: (status) => {
+          console.error('[Sync] TG upload failed:', status);
+        },
+      },
+    );
 
-    const xhr = new XMLHttpRequest();
-    uploadXhrRef.current = xhr;
-
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        setUploadProgress(Math.round((e.loaded / e.total) * 100));
-      }
-    };
-
-    xhr.onload = () => {
-      uploadXhrRef.current = null;
-      setIsUploading(false);
-      if (xhr.status === 200) {
-        setUploadProgress(100);
-        console.log('[Sync] ZIP uploaded to TG');
-        document.dispatchEvent(new CustomEvent('tg-upload-complete', {
-          detail: { title, artist }
-        }));
-      } else {
-        console.error('[Sync] TG upload failed:', xhr.status, xhr.statusText);
-        setUploadProgress(0);
-      }
-    };
-
-    xhr.onerror = () => {
-      uploadXhrRef.current = null;
-      setIsUploading(false);
+    setIsUploading(false);
+    if (result.success) {
+      setUploadProgress(100);
+    } else {
       setUploadProgress(0);
-      console.error('[Sync] TG upload network error');
-    };
-
-    xhr.onabort = () => {
-      uploadXhrRef.current = null;
-      setIsUploading(false);
-      setUploadProgress(0);
-      console.log('[Sync] TG upload cancelled');
-    };
-
-    xhr.open('POST', TG_UPLOAD_URL);
-    xhr.setRequestHeader('X-API-Key', 'belive2026');
-    xhr.send(formData);
+    }
   }, [isUploading]);
 
   const handlePublishToBeLive = useCallback(() => {
