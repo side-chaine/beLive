@@ -216,7 +216,6 @@ export default function SyncEditorPanel() {
         return;
       }
 
-      // First save markers to track
       mm.saveMarkersToTrack?.();
       setExportProgress(3);
 
@@ -226,342 +225,47 @@ export default function SyncEditorPanel() {
         return;
       }
 
-      const fullTrack = await getTrack(Number(meta.id));
-      if (!fullTrack) {
-        console.warn('[Sync] track not found in IDB');
-        return;
-      }
+      const liveMarkers = mm.getMarkers?.() || [];
+      const liveTextBlocks = ld.textBlocks || [];
+
+      // Generate ZIP via extracted service
       setExportProgress(5);
+      const blob = await generateTrackZip(
+        { trackId: Number(meta.id), liveMarkers, liveTextBlocks },
+        { onProgress: (pct) => setExportProgress(pct) },
+      );
 
-      // TC-S&T-04: замер сцен ДО preflight (FM-3)
-      let scenesBytes = 0;
-      try {
-        const { getBlockScenes, getBlockSceneBlob } = await import('../../services/block-scene.service');
-        const sceneMetas = await getBlockScenes(Number(meta.id));
-        for (const scene of sceneMetas) {
-          const blob = await getBlockSceneBlob(scene.id);
-          if (blob) scenesBytes += blob.size;
-        }
-      } catch { /* scenes optional — non-critical */ }
-
-      const zip = new JSZip();
-
-      // Build safe track name for files
-      const trackName = meta.title || 'track';
-      const safeName = trackName.replace(/[<>:"/\\|?*]/g, '_');
-
-      // Audio files (STORE = no compression, audio already compressed)
-      if (fullTrack.instrumentalData) {
-        const ext = mimeToExt(fullTrack.instrumentalType);
-        zip.file(`${safeName}.${ext}`, fullTrack.instrumentalData, { compression: 'STORE' });
-      }
-      if (fullTrack.vocalsData) {
-        const ext = mimeToExt(fullTrack.vocalsType);
-        zip.file(`${safeName}_vocals.${ext}`, fullTrack.vocalsData, { compression: 'STORE' });
-      }
-      // W9-UX-004 + Variant A v2: Include additional stems + transcode non-vocal
-      if (fullTrack.stemsData && Object.keys(fullTrack.stemsData).length > 0) {
-        // Pre-flight: считаем сумму ВСЕХ компонентов ZIP
-        const preFlight = calcPreFlight(
-          {
-            stemsData: fullTrack.stemsData,
-            instrumentalByteLength: fullTrack.instrumentalData?.byteLength,
-            vocalsByteLength: fullTrack.vocalsData?.byteLength,
-            coverByteLength: fullTrack.coverArtBlob?.size,
-            bgByteLength: fullTrack.customBgBlob?.size,
-            scenesByteLength: scenesBytes || undefined,
-          },
-          STEM_TRANSCODE_CONFIG.compressibleTypes
-        );
-        logZipEvent('preflight', { predictedMB: Math.round(preFlight.predictedTotal / 1024 / 1024), needsTranscode: preFlight.needsTranscode, deficitMB: preFlight.deficitMB });
-        
-        if (preFlight.needsTranscode) {
-          // Transcode path
-          setExportProgress(6);
-
-          // rawStemsData snapshot для tightening pass (FM-2)
-          const rawStemsData: Record<string, { data: ArrayBuffer; type: string }> = {};
-          for (const [stemId, entry] of Object.entries(fullTrack.stemsData)) {
-            if (entry?.data) {
-              rawStemsData[stemId] = { data: entry.data.slice(0), type: entry.type };
-            }
-          }
-          
-          const result = await runTranscodePipeline({
-            stemsData: fullTrack.stemsData,
-            stemsToTranscode: preFlight.stemsToTranscode,
-            predictedTotal: preFlight.predictedTotal,
-            onProgress: (stemId, percent) => {
-              logZipEvent('stem-encode-progress', { stemId, progress: percent });
-            },
-          });
-
-          // Budget gate ДО сборки ZIP (FM-7)
-          // Суммируем все компоненты после транскодинга
-          let finalBytes = 0;
-          finalBytes += fullTrack.instrumentalData?.byteLength ?? 0;
-          finalBytes += fullTrack.vocalsData?.byteLength ?? 0;
-          finalBytes += fullTrack.coverArtBlob?.size ?? 0;
-          finalBytes += fullTrack.customBgBlob?.size ?? 0;
-          finalBytes += scenesBytes;
-
-          for (const [stemId, entry] of Object.entries(fullTrack.stemsData)) {
-            if (!entry?.data) continue;
-            const comp = result.compressed[stemId];
-            if (comp) {
-              finalBytes += comp.byteLength;
-            } else if (!result.skipped.includes(stemId)) {
-              finalBytes += entry.data.byteLength;
-            }
-          }
-
-          // Логируем предварительный итог
-          const budgetMB = Math.round(finalBytes / 1024 / 1024);
-          logZipEvent('budget-gate', { finalBytes, budgetMB, limit: STEM_TRANSCODE_CONFIG.zipSizeLimit });
-          
-          if (!wouldFitZip(finalBytes)) {
-            // ── Tightening pass (max 1 стэм, 64kbps) ──
-            logZipEvent('budget-exceeded', { finalBytes, limit: STEM_TRANSCODE_CONFIG.zipSizeLimit });
-            logZipEvent('tightening-start', {});
-
-            // Найти largest encoded стэм
-            let largestStem = '';
-            let largestSize = 0;
-            for (const [stemId, data] of Object.entries(result.compressed)) {
-              if (data.byteLength > largestSize) {
-                largestSize = data.byteLength;
-                largestStem = stemId;
-              }
-            }
-
-            if (largestStem && rawStemsData[largestStem]) {
-              terminateWorker();
-              try {
-                const tightened = await transcodeStem(
-                  largestStem,
-                  rawStemsData[largestStem].data,
-                  STEM_TRANSCODE_CONFIG.fallbackBitrate,
-                );
-                const oldSize = result.compressed[largestStem].byteLength;
-                result.compressed[largestStem] = tightened.data;
-                finalBytes += tightened.data.byteLength - oldSize;
-
-                logZipEvent('tightening-done', { stemId: largestStem, oldSize, newSize: tightened.data.byteLength, finalBytes });
-              } catch (err) {
-                logZipEvent('tightening-failed', { stemId: largestStem, error: String(err) });
-              }
-              terminateWorker();
-            }
-
-            // Re-check budget после tightening
-            if (!wouldFitZip(finalBytes)) {
-              logZipEvent('abort-user', { finalBytes, limit: STEM_TRANSCODE_CONFIG.zipSizeLimit });
-              throw new Error(
-                'Экспорт невозможен: размер трека превышает 50MB даже после сжатия. ' +
-                'Уменьшите длительность трека или количество стемов.'
-              );
-            } else {
-              logZipEvent('budget-gate', { finalBytes, status: 'TIGHTENING_PASS' });
-            }
-          }
-
-          // Складываем в ZIP: vocal — оригинал, compressed — результат транскодинга
-          for (const [stemId, entry] of Object.entries(fullTrack.stemsData)) {
-            if (!entry?.data) continue;
-            
-            const comp = result.compressed[stemId];
-            if (comp) {
-              // Транскодированный стем
-              zip.file(`stems/${stemId}.mp3`, comp, { compression: 'STORE' });
-            } else if (!result.skipped.includes(stemId)) {
-              // Оригинал (vocal или не-whitelist)
-              const ext = mimeToExt(entry.type);
-              zip.file(`stems/${stemId}.${ext}`, entry.data, { compression: 'STORE' });
-            }
-            // skipped — не добавляем в ZIP
-          }
-
-          // Cleanup
-          terminateWorker();
-          if (hasZipAudioContext()) closeZipAudioContext();
-        } else {
-          // Fast path: сумма < лимита, пакуем как есть
-          logZipEvent('fast-path', { predictedMB: Math.round(preFlight.predictedTotal / 1024 / 1024) });
-          for (const [stemId, entry] of Object.entries(fullTrack.stemsData)) {
-            if (entry?.data) {
-              const ext = mimeToExt(entry.type);
-              zip.file(`stems/${stemId}.${ext}`, entry.data, { compression: 'STORE' });
-            }
-          }
-        }
-      }
-      setExportProgress(8);
-
-      // Lyrics
-      const lyrics = fullTrack.lyrics || fullTrack.lyricsOriginalContent || '';
-      if (lyrics) {
-        zip.file('lyrics.txt', lyrics);
-      }
-
-      // TC-COVER-05: Add cover art file to ZIP for offline import
-      if (fullTrack.coverArtBlob) {
-        const ext = fullTrack.coverArtBlob.type?.includes('png') ? 'png' : 'jpg';
-        zip.file(`cover.${ext}`, fullTrack.coverArtBlob, { compression: 'STORE' });
-      } else if (fullTrack.coverArtUrl?.startsWith('http')) {
-        // No blob — try to fetch for portable ZIP
-        try {
-          const resp = await fetch(fullTrack.coverArtUrl);
-          if (resp.ok) {
-            const blob = await resp.blob();
-            const ext = blob.type?.includes('png') ? 'png' : 'jpg';
-            zip.file(`cover.${ext}`, blob, { compression: 'STORE' });
-            // Also save blob to IDB for future exports
-            if (meta) {
-              updateTrackField(Number(meta.id), { coverArtBlob: blob }).catch(e => {
-                console.warn('[Export] Failed to save cover blob to IDB:', e);
-              });
-            }
-          }
-        } catch (e) {
-          console.warn('[Export] Failed to fetch cover art for ZIP:', e);
-          // Keep external URL as fallback
-        }
-      }
-
-      // TC-CBG-07: Custom background file
-      if (fullTrack.customBgBlob) {
-        const bgExt = fullTrack.customBgBlob.type?.includes('png') ? 'png' : 'jpg';
-        zip.file(`backgrounds/bg_01.${bgExt}`, fullTrack.customBgBlob, { compression: 'STORE' });
-        console.log('[Export] Custom background added to ZIP:', bgExt, Math.round(fullTrack.customBgBlob.size / 1024) + 'KB');
-      }
-
-      // ── 4b. Block Scenes (beLive_scenes → ZIP) ──
-      let scenesExportData: Array<{
-        blockIndex: number;
-        lineIndex: number | null;
-        blockId?: string;
-        file: string;
-        theme: any;
-      }> = [];
-
-      try {
-        const { getBlockScenes, getBlockSceneBlob } = await import('../../services/block-scene.service');
-        const sceneMetas = await getBlockScenes(Number(meta.id));
-        if (sceneMetas.length > 0) {
-          for (const scene of sceneMetas) {
-            const blob = await getBlockSceneBlob(scene.id);
-            if (!blob) continue;
-            const ext = blob.type?.includes('png') ? 'png' : 'jpg';
-            const linePart = scene.lineIndex != null ? `_${scene.lineIndex}` : '';
-            const fileName = `scenes/${scene.blockIndex}${linePart}.${ext}`;
-            zip.file(fileName, blob, { compression: 'STORE' });
-            scenesExportData.push({
-              blockIndex: scene.blockIndex,
-              lineIndex: scene.lineIndex ?? null,
-              blockId: scene.blockId || undefined,
-              file: fileName,
-              theme: { ...scene.theme, coverUrl: '' },  // Zero out dead blob URLs
-            });
-          }
-          console.log(`[Sync] Exported ${scenesExportData.length} scenes to ZIP`);
-        }
-      } catch (sceneErr) {
-        console.warn('[Sync] Scene export failed (non-critical):', sceneErr);
-      }
-
-      // Markers + blocks (export.json)
-      const markers = mm.getMarkers?.() || [];
-      const textBlocks = ld.textBlocks || [];
-      const wordSyncState = useWordSyncStore.getState();
-      const exportData = {
-        id: meta.id,
-        title: meta.title || 'Untitled',
-        savedAt: new Date().toISOString(),
-        markers,
-        lyrics,
-        textBlocks,
-        lyricsHash: wordSyncState.lyricsHash || undefined,
-        // TC-COVER-07: Preserve original http URL as fallback (cover.jpg is separate file in ZIP)
-        coverArtUrl: fullTrack.coverArtUrl || undefined,
-        coverTheme: fullTrack.coverTheme || undefined,
-        // TC-LRC-04: Preserve original lyrics with structural tags for LRC Picker reimport
-        lyricsOriginalContent: fullTrack.lyricsOriginalContent || undefined,
-        // TC-CBG-07: backgrounds metadata
-        ...(fullTrack.customBgBlob ? {
-          backgrounds: [{
-            file: `backgrounds/bg_01.${fullTrack.customBgBlob.type?.includes('png') ? 'png' : 'jpg'}`,
-            trackId: Number(meta.id),
-          }],
-        } : {}),
-        ...(scenesExportData.length > 0 ? { scenes: scenesExportData } : {}),
-      };
-      zip.file('export.json', JSON.stringify(exportData, null, 2));
-
-      // Word-sync artifact (if available)
-      if (fullTrack.alignmentData) {
-        zip.file('alignment.json', JSON.stringify(fullTrack.alignmentData, null, 2));
-      }
-      setExportProgress(10);
-
-      // Generate and download using stream for more frequent progress updates
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        const chunks: Uint8Array[] = [];
-        let lastProgress = 10;
-
-        zip.generateInternalStream({ type: 'uint8array', streamFiles: true })
-          .on('data', (data: Uint8Array, metadata: { percent: number }) => {
-            chunks.push(data);
-            const p = 10 + Math.round(metadata.percent * 0.88);
-            // Throttle updates to avoid excessive DOM churn
-            if (p > lastProgress + 2) {
-              lastProgress = p;
-              setExportProgress(p);
-            }
-          })
-          .on('end', () => {
-            setExportProgress(98);
-            resolve(new Blob(chunks as BlobPart[], { type: 'application/zip' }));
-          })
-          .on('error', (err: Error) => reject(err))
-          .resume();
-      });
-
-      setExportProgress(100);
-
-      // Variant A v2: финальная проверка < 50MB
-      try {
-        assertZipSize(blob);
-      } catch (err) {
-        // T3 critical: abort export
-        console.error('[zip-enc] ABORT — zip превышает 50MB');
-        throw err;
-      }
-
+      setExportProgress(98);
       exportBlobRef.current = blob;
 
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${safeName}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      // НЕ ревокаем URL сразу — может понадобиться для повторного download
-      // URL будет отозван при следующем export или unmount
+      // Download (only if not publish mode)
+      if (!publishInFlightRef.current) {
+        const trackName = meta.title || 'track';
+        const safeName = trackName.replace(/[<>:"/\\|?*]/g, '_');
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${safeName}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        console.log('[Sync] ZIP exported:', `${safeName}.zip`);
+      }
 
-      console.log('[Sync] ZIP exported:', `${safeName}.zip`);
+      setExportProgress(100);
       markClean();
-      // Если publish режим — запускаем upload вместо/после download
+
+      // Publish mode — upload after generation
       if (publishInFlightRef.current && publishTokenRef.current) {
-        const meta = useTrackStore.getState().currentTrack;
-        if (meta && Number(meta.id) === publishTrackIdRef.current) {
+        const publishMeta = useTrackStore.getState().currentTrack;
+        if (publishMeta && Number(publishMeta.id) === publishTrackIdRef.current) {
           setIsUploading(true);
           setPublishStatus('uploading');
           setUploadProgress(0);
 
           const publishBlob = exportBlobRef.current!;
-          const artist = meta.artist || 'Unknown Artist';
-          const title = meta.title || 'Unknown Track';
+          const artist = publishMeta.artist || 'Unknown Artist';
+          const title = publishMeta.title || 'Unknown Track';
 
           const formData = new FormData();
           formData.append('file', publishBlob, `${artist} - ${title}.zip`);
@@ -593,11 +297,10 @@ export default function SyncEditorPanel() {
             } else {
               setPublishStatus('error');
               setUploadProgress(0);
-              // Fallback: если upload упал — предлагаем скачать ZIP
               const fallbackUrl = URL.createObjectURL(publishBlob);
               const fallbackA = document.createElement('a');
               fallbackA.href = fallbackUrl;
-              fallbackA.download = `${safeName}.zip`;
+              fallbackA.download = `${title.replace(/[<>:"/\\|?*]/g, '_')}.zip`;
               document.body.appendChild(fallbackA);
               fallbackA.click();
               document.body.removeChild(fallbackA);
@@ -629,7 +332,6 @@ export default function SyncEditorPanel() {
           xhr.setRequestHeader('X-API-Key', 'belive2026');
           xhr.send(formData);
         } else {
-          // Track ID mismatch — stale blob guard
           publishInFlightRef.current = false;
           publishTokenRef.current = null;
           publishTrackIdRef.current = null;
@@ -645,7 +347,6 @@ export default function SyncEditorPanel() {
       exportInFlightRef.current = false;
       setIsExporting(false);
       setExportProgress(0);
-      // Если publish режим но upload не запущен (ошибка экспорта) — очищаем статус
       if (publishInFlightRef.current) {
         if (!exportBlobRef.current) {
           setPublishStatus('error');
