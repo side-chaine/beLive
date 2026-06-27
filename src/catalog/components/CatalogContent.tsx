@@ -7,6 +7,8 @@ import { useGhostStore } from '../../stores/ghost.store';
 import { parseTrackName } from '../types';
 import { T, IB } from '../theme';
 import { GhostTrackCard } from './GhostTrackCard';
+import { batchPublishTracks } from '../../sync/services/batch-publish.service';
+import type { BatchTrackProgress, TrackPublishMeta } from '../../sync/services/batch-publish.service';
 
 const TG_API_URL = 'https://belive-feed-bot.nikitosss007.workers.dev/tracks';
 
@@ -102,6 +104,11 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
   const [tgError, setTgError] = useState(false);
   const trackListRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+  const [batchProgress, setBatchProgress] = useState<BatchTrackProgress | null>(null);
+  const [batchRunning, setBatchRunning] = useState(false);
+  const [batchDone, setBatchDone] = useState(0);
+  const [batchTotal, setBatchTotal] = useState(0);
+  const [batchErrors, setBatchErrors] = useState(0);
 
   // Fetch Telegram tracks — вынесено для переиспользования
   const fetchTgTracks = useCallback(() => {
@@ -127,6 +134,60 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
     document.addEventListener('tg-upload-complete', handler);
     return () => document.removeEventListener('tg-upload-complete', handler);
   }, [fetchTgTracks]);
+
+  // Publish all ready tracks to Telegram
+  const handleBatchPublish = useCallback(() => {
+    if (batchRunning) return;
+
+    const readyTracks: TrackPublishMeta[] = [];
+    const tgSlugs = new Set(tgTracks.map(t => t.slug));
+
+    tracks.forEach(t => {
+      const tc = (window as any).trackCatalog;
+      const ft = tc?.tracks?.find((tr: any) => String(tr.id) === String(t.id));
+      if (!ft) return;
+      const hasStems = ft?.stemsData && Object.keys(ft.stemsData).length > 0;
+      if (!hasStems && !ft.vocalsData) return;
+      const slug = (t.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      if (tgSlugs.has(slug)) return;
+      const p = parseTrackName(t.title || '');
+      readyTracks.push({
+        trackId: Number(t.id),
+        title: p.title || t.title || 'Unknown',
+        artist: p.artist || 'Unknown Artist',
+      });
+    });
+
+    if (readyTracks.length === 0) return;
+
+    setBatchRunning(true);
+    setBatchDone(0);
+    setBatchTotal(readyTracks.length);
+    setBatchErrors(0);
+    setBatchProgress(null);
+
+    batchPublishTracks(readyTracks, {
+      onTrackStart: (p) => setBatchProgress(p),
+      onTrackProgress: (p) => setBatchProgress(p),
+      onTrackDone: (p) => {
+        setBatchDone(d => d + 1);
+        setBatchProgress(p);
+      },
+      onTrackError: (p) => {
+        setBatchErrors(e => e + 1);
+        setBatchProgress(p);
+      },
+      onOverallProgress: (done, total, errors) => {
+        setBatchDone(done);
+        setBatchTotal(total);
+        setBatchErrors(errors);
+        if (done + errors >= total) {
+          setBatchRunning(false);
+          fetchTgTracks();
+        }
+      },
+    });
+  }, [tracks, tgTracks, batchRunning, fetchTgTracks]);
 
   // Auto-scroll to bottom when new tracks added
   useEffect(() => {
@@ -260,9 +321,24 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
       </div>
       {tgError && <div style={{ fontSize: 10, color: T.mute, marginBottom: 8, textAlign: 'center', flexShrink: 0 }}>TG каталог недоступен</div>}
 
-      {/* All tracks header */}
-      <div style={{ fontSize: 10, fontWeight: 700, color: T.dim, marginBottom: 6, letterSpacing: '0.05em', flexShrink: 0 }}>
-        ВСЕ ТРЕКИ ({tracks.length})
+      {/* Batch publish header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexShrink: 0 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: T.dim, letterSpacing: '0.05em', flex: 1 }}>
+          ВСЕ ТРЕКИ ({tracks.length})
+        </div>
+        <span
+          onClick={handleBatchPublish}
+          style={{
+            fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4,
+            background: batchRunning ? 'rgba(168, 85, 247, 0.15)' : 'rgba(168, 85, 247, 0.1)',
+            border: `1px solid ${batchRunning ? 'rgba(168, 85, 247, 0.4)' : 'rgba(168, 85, 247, 0.25)'}`,
+            color: batchRunning ? 'rgba(168, 85, 247, 0.9)' : 'rgba(192, 132, 252, 0.8)',
+            cursor: batchRunning ? 'wait' : 'pointer',
+            opacity: batchRunning ? 0.7 : 1,
+          }}
+        >
+          {batchRunning ? `Publish ${batchDone + batchErrors}/${batchTotal}` : 'Publish'}
+        </span>
       </div>
 
       {/* Track list */}
@@ -299,6 +375,9 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
                   const tc = (window as any).trackCatalog;
                   const ft = tc?.tracks?.find((tr: any) => String(tr.id) === String(t.id));
                   const sc = ft?.stemsData ? Object.keys(ft.stemsData).length : 0;
+                  const slug = (t.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                  const inTg = tgTracks.some(tg => tg.slug === slug);
+                  if (inTg) return <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3, border: '1px solid #A855F766', color: '#A855F7', letterSpacing: '0.05em', flexShrink: 0, marginLeft: 6 }}>☁</span>;
                   if (sc > 2) return <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3, border: '1px solid #4CAF5066', color: '#4CAF50', letterSpacing: '0.05em', flexShrink: 0, marginLeft: 6 }}>‹ FULL ›</span>;
                   if (ft?.vocalsData || sc === 2) return <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3, border: '1px solid #FF8C0066', color: '#FF8C00', letterSpacing: '0.05em', flexShrink: 0, marginLeft: 6 }}>‹ DUO ›</span>;
                   return null;
