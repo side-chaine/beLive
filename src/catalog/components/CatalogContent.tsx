@@ -337,7 +337,7 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
             opacity: batchRunning ? 0.7 : 1,
           }}
         >
-          {batchRunning ? `Publish ${batchDone + batchErrors}/${batchTotal}` : 'Publish'}
+          {batchRunning ? `${batchProgress?.title || ''} ${batchDone + batchErrors}/${batchTotal}` : 'Publish'}
         </span>
       </div>
 
