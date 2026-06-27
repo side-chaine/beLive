@@ -84,6 +84,8 @@ export default function SyncEditorPanel() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const uploadXhrRef = useRef<XMLHttpRequest | null>(null);
+  const publishTokenRef = useRef<symbol | null>(null);
+  const publishTrackIdRef = useRef<string | number | null>(null);
   const publishInFlightRef = useRef(false);
   const [publishStatus, setPublishStatus] = useState<'idle' | 'packing' | 'uploading' | 'done' | 'error'>('idle');
 
@@ -547,26 +549,20 @@ export default function SyncEditorPanel() {
 
       console.log('[Sync] ZIP exported:', `${safeName}.zip`);
       markClean();
-    } catch (e) {
-      console.error('[Sync] ZIP export error:', e);
-    } finally {
-      exportInFlightRef.current = false;
-      setIsExporting(false);
-      setExportProgress(0);
-      // Если запущено через Publish — авто-запускаем upload
-      if (publishInFlightRef.current && exportBlobRef.current) {
+      // Если publish режим — запускаем upload вместо/после download
+      if (publishInFlightRef.current && publishTokenRef.current) {
         const meta = useTrackStore.getState().currentTrack;
-        if (meta) {
+        if (meta && Number(meta.id) === publishTrackIdRef.current) {
           setIsUploading(true);
           setPublishStatus('uploading');
           setUploadProgress(0);
 
-          const blob = exportBlobRef.current;
+          const publishBlob = exportBlobRef.current!;
           const artist = meta.artist || 'Unknown Artist';
           const title = meta.title || 'Unknown Track';
 
           const formData = new FormData();
-          formData.append('file', blob, `${artist} - ${title}.zip`);
+          formData.append('file', publishBlob, `${artist} - ${title}.zip`);
           formData.append('artist', artist);
           formData.append('title', title);
           formData.append('type', 'full');
@@ -584,6 +580,8 @@ export default function SyncEditorPanel() {
             uploadXhrRef.current = null;
             setIsUploading(false);
             publishInFlightRef.current = false;
+            publishTokenRef.current = null;
+            publishTrackIdRef.current = null;
             if (xhr.status === 200) {
               setPublishStatus('done');
               setUploadProgress(100);
@@ -593,6 +591,15 @@ export default function SyncEditorPanel() {
             } else {
               setPublishStatus('error');
               setUploadProgress(0);
+              // Fallback: если upload упал — предлагаем скачать ZIP
+              const fallbackUrl = URL.createObjectURL(publishBlob);
+              const fallbackA = document.createElement('a');
+              fallbackA.href = fallbackUrl;
+              fallbackA.download = `${safeName}.zip`;
+              document.body.appendChild(fallbackA);
+              fallbackA.click();
+              document.body.removeChild(fallbackA);
+              URL.revokeObjectURL(fallbackUrl);
             }
           };
 
@@ -600,6 +607,8 @@ export default function SyncEditorPanel() {
             uploadXhrRef.current = null;
             setIsUploading(false);
             publishInFlightRef.current = false;
+            publishTokenRef.current = null;
+            publishTrackIdRef.current = null;
             setPublishStatus('error');
             setUploadProgress(0);
           };
@@ -608,6 +617,8 @@ export default function SyncEditorPanel() {
             uploadXhrRef.current = null;
             setIsUploading(false);
             publishInFlightRef.current = false;
+            publishTokenRef.current = null;
+            publishTrackIdRef.current = null;
             setPublishStatus('error');
             setUploadProgress(0);
           };
@@ -616,11 +627,30 @@ export default function SyncEditorPanel() {
           xhr.setRequestHeader('X-API-Key', 'belive2026');
           xhr.send(formData);
         } else {
+          // Track ID mismatch — stale blob guard
           publishInFlightRef.current = false;
+          publishTokenRef.current = null;
+          publishTrackIdRef.current = null;
           setPublishStatus('error');
         }
-      } else {
+      }
+    } catch (e) {
+      console.error('[Sync] ZIP export error:', e);
+      if (publishInFlightRef.current) {
+        setPublishStatus('error');
+      }
+    } finally {
+      exportInFlightRef.current = false;
+      setIsExporting(false);
+      setExportProgress(0);
+      // Если publish режим но upload не запущен (ошибка экспорта) — очищаем статус
+      if (publishInFlightRef.current) {
+        if (!exportBlobRef.current) {
+          setPublishStatus('error');
+        }
         publishInFlightRef.current = false;
+        publishTokenRef.current = null;
+        publishTrackIdRef.current = null;
       }
     }
   }, [isExporting, markClean]);
@@ -701,7 +731,11 @@ export default function SyncEditorPanel() {
 
   const handlePublishToBeLive = useCallback(() => {
     if (isExporting || publishInFlightRef.current) return;
+    const meta = useTrackStore.getState().currentTrack;
+    if (!meta) return;
     publishInFlightRef.current = true;
+    publishTokenRef.current = Symbol('publish');
+    publishTrackIdRef.current = Number(meta.id);
     setPublishStatus('packing');
     handleExportZip();
   }, [isExporting, handleExportZip]);
