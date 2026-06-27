@@ -22,6 +22,7 @@ import { runTranscodePipeline } from '../../utils/zip-transcode-pipeline';
 import { closeZipAudioContext, hasZipAudioContext } from '../../utils/audio-context-manager';
 import { logZipEvent } from '../../utils/zip-logger';
 import { uploadBlobToTelegram } from '../../services/tg-upload.service';
+import { generateTrackZip } from '../../sync/services/zip-export.service';
 
 function formatTime(sec: number): string {
   const m = Math.floor(sec / 60);
