@@ -241,70 +241,38 @@ export default function SyncEditorPanel() {
           const artist = publishMeta.artist || 'Unknown Artist';
           const title = publishMeta.title || 'Unknown Track';
 
-          const formData = new FormData();
-          formData.append('file', publishBlob, `${artist} - ${title}.zip`);
-          formData.append('artist', artist);
-          formData.append('title', title);
-          formData.append('type', 'full');
+          const result = await uploadBlobToTelegram(
+            publishBlob, artist, title,
+            {
+              onProgress: (pct) => setUploadProgress(pct),
+              onDone: () => {
+                document.dispatchEvent(new CustomEvent('tg-upload-complete', {
+                  detail: { title, artist }
+                }));
+              },
+            },
+          );
 
-          const xhr = new XMLHttpRequest();
-          uploadXhrRef.current = xhr;
+          setIsUploading(false);
+          publishInFlightRef.current = false;
+          publishTokenRef.current = null;
+          publishTrackIdRef.current = null;
 
-          xhr.upload.onprogress = (e) => {
-            if (e.lengthComputable) {
-              setUploadProgress(Math.round((e.loaded / e.total) * 100));
-            }
-          };
-
-          xhr.onload = () => {
-            uploadXhrRef.current = null;
-            setIsUploading(false);
-            publishInFlightRef.current = false;
-            publishTokenRef.current = null;
-            publishTrackIdRef.current = null;
-            if (xhr.status === 200) {
-              setPublishStatus('done');
-              setUploadProgress(100);
-              document.dispatchEvent(new CustomEvent('tg-upload-complete', {
-                detail: { title, artist }
-              }));
-            } else {
-              setPublishStatus('error');
-              setUploadProgress(0);
-              const fallbackUrl = URL.createObjectURL(publishBlob);
-              const fallbackA = document.createElement('a');
-              fallbackA.href = fallbackUrl;
-              fallbackA.download = `${title.replace(/[<>:"/\\|?*]/g, '_')}.zip`;
-              document.body.appendChild(fallbackA);
-              fallbackA.click();
-              document.body.removeChild(fallbackA);
-              URL.revokeObjectURL(fallbackUrl);
-            }
-          };
-
-          xhr.onerror = () => {
-            uploadXhrRef.current = null;
-            setIsUploading(false);
-            publishInFlightRef.current = false;
-            publishTokenRef.current = null;
-            publishTrackIdRef.current = null;
+          if (result.success) {
+            setPublishStatus('done');
+            setUploadProgress(100);
+          } else {
             setPublishStatus('error');
             setUploadProgress(0);
-          };
-
-          xhr.onabort = () => {
-            uploadXhrRef.current = null;
-            setIsUploading(false);
-            publishInFlightRef.current = false;
-            publishTokenRef.current = null;
-            publishTrackIdRef.current = null;
-            setPublishStatus('error');
-            setUploadProgress(0);
-          };
-
-          xhr.open('POST', 'https://belive-feed-bot.nikitosss007.workers.dev/upload');
-          xhr.setRequestHeader('X-API-Key', 'belive2026');
-          xhr.send(formData);
+            const fallbackUrl = URL.createObjectURL(publishBlob);
+            const fallbackA = document.createElement('a');
+            fallbackA.href = fallbackUrl;
+            fallbackA.download = `${title.replace(/[<>:"/\\|?*]/g, '_')}.zip`;
+            document.body.appendChild(fallbackA);
+            fallbackA.click();
+            document.body.removeChild(fallbackA);
+            URL.revokeObjectURL(fallbackUrl);
+          }
         } else {
           publishInFlightRef.current = false;
           publishTokenRef.current = null;
