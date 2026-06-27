@@ -84,6 +84,8 @@ export default function SyncEditorPanel() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const uploadXhrRef = useRef<XMLHttpRequest | null>(null);
+  const publishInFlightRef = useRef(false);
+  const [publishStatus, setPublishStatus] = useState<'idle' | 'packing' | 'uploading' | 'done' | 'error'>('idle');
 
   // TC-LRCPICKER-02: LRC Version Picker state
   const [lrcVersions, setLrcVersions] = useState<LrcVersion[]>([]);
@@ -551,8 +553,88 @@ export default function SyncEditorPanel() {
       exportInFlightRef.current = false;
       setIsExporting(false);
       setExportProgress(0);
+      // Если запущено через Publish — авто-запускаем upload
+      if (publishInFlightRef.current && exportBlobRef.current) {
+        const meta = useTrackStore.getState().currentTrack;
+        if (meta) {
+          setIsUploading(true);
+          setPublishStatus('uploading');
+          setUploadProgress(0);
+
+          const blob = exportBlobRef.current;
+          const artist = meta.artist || 'Unknown Artist';
+          const title = meta.title || 'Unknown Track';
+
+          const formData = new FormData();
+          formData.append('file', blob, `${artist} - ${title}.zip`);
+          formData.append('artist', artist);
+          formData.append('title', title);
+          formData.append('type', 'full');
+
+          const xhr = new XMLHttpRequest();
+          uploadXhrRef.current = xhr;
+
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              setUploadProgress(Math.round((e.loaded / e.total) * 100));
+            }
+          };
+
+          xhr.onload = () => {
+            uploadXhrRef.current = null;
+            setIsUploading(false);
+            publishInFlightRef.current = false;
+            if (xhr.status === 200) {
+              setPublishStatus('done');
+              setUploadProgress(100);
+              document.dispatchEvent(new CustomEvent('tg-upload-complete', {
+                detail: { title, artist }
+              }));
+            } else {
+              setPublishStatus('error');
+              setUploadProgress(0);
+            }
+          };
+
+          xhr.onerror = () => {
+            uploadXhrRef.current = null;
+            setIsUploading(false);
+            publishInFlightRef.current = false;
+            setPublishStatus('error');
+            setUploadProgress(0);
+          };
+
+          xhr.onabort = () => {
+            uploadXhrRef.current = null;
+            setIsUploading(false);
+            publishInFlightRef.current = false;
+            setPublishStatus('error');
+            setUploadProgress(0);
+          };
+
+          xhr.open('POST', 'https://belive-feed-bot.nikitosss007.workers.dev/upload');
+          xhr.setRequestHeader('X-API-Key', 'belive2026');
+          xhr.send(formData);
+        } else {
+          publishInFlightRef.current = false;
+          setPublishStatus('error');
+        }
+      } else {
+        publishInFlightRef.current = false;
+      }
     }
   }, [isExporting, markClean]);
+
+  // Cleanup при unmount — предотвращает утечку blob и прерывает upload
+  useEffect(() => {
+    return () => {
+      exportBlobRef.current = null;
+      if (uploadXhrRef.current) {
+        uploadXhrRef.current.abort();
+        uploadXhrRef.current = null;
+      }
+    };
+  }, []);
 
   const TG_UPLOAD_URL = 'https://belive-feed-bot.nikitosss007.workers.dev/upload';
 
@@ -616,6 +698,13 @@ export default function SyncEditorPanel() {
     xhr.setRequestHeader('X-API-Key', 'belive2026');
     xhr.send(formData);
   }, [isUploading]);
+
+  const handlePublishToBeLive = useCallback(() => {
+    if (isExporting || publishInFlightRef.current) return;
+    publishInFlightRef.current = true;
+    setPublishStatus('packing');
+    handleExportZip();
+  }, [isExporting, handleExportZip]);
 
   const handleCancel = useCallback(() => {
     // Revert to state when editor was opened (first snapshot)
@@ -1525,6 +1614,61 @@ export default function SyncEditorPanel() {
           )}
           <span style={{ position: 'relative', zIndex: 1 }}>
             {isUploading ? `${uploadProgress}%` : '📤 TG'}
+          </span>
+        </button>
+
+        {/* Publish — generate ZIP + auto-upload to TG */}
+        <button
+          onClick={handlePublishToBeLive}
+          disabled={isExporting || publishInFlightRef.current}
+          style={{
+            ...btn, height: '28px', fontWeight: 500,
+            position: 'relative',
+            overflow: 'hidden',
+            background: publishStatus === 'done'
+              ? 'rgba(34, 197, 94, 0.2)'
+              : publishStatus === 'error'
+                ? 'rgba(239, 68, 68, 0.15)'
+                : publishInFlightRef.current
+                  ? 'rgba(168, 85, 247, 0.2)'
+                  : 'rgba(168, 85, 247, 0.1)',
+            borderColor: publishStatus === 'done'
+              ? 'rgba(34, 197, 94, 0.5)'
+              : publishStatus === 'error'
+                ? 'rgba(239, 68, 68, 0.4)'
+                : publishInFlightRef.current
+                  ? 'rgba(168, 85, 247, 0.4)'
+                  : 'rgba(168, 85, 247, 0.25)',
+            color: publishStatus === 'done'
+              ? '#22c55e'
+              : publishStatus === 'error'
+                ? 'rgba(239, 68, 68, 0.9)'
+                : publishInFlightRef.current
+                  ? 'rgba(168, 85, 247, 0.9)'
+                  : 'rgba(192, 132, 252, 0.7)',
+            cursor: publishInFlightRef.current ? 'wait' : 'pointer',
+          }}
+          title="Generate ZIP and publish to beLive catalog"
+        >
+          {publishInFlightRef.current && publishStatus === 'packing' && (
+            <div style={{
+              position: 'absolute', left: 0, top: 0, bottom: 0,
+              width: '100%',
+              background: 'linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.2), transparent)',
+              animation: 'pulse 1.5s ease-in-out infinite',
+              pointerEvents: 'none',
+            }} />
+          )}
+          <span style={{ position: 'relative', zIndex: 1 }}>
+            {publishStatus === 'done'
+              ? 'Published'
+              : publishStatus === 'error'
+                ? 'Failed'
+                : publishInFlightRef.current && publishStatus === 'uploading'
+                  ? `Publish ${uploadProgress}%`
+                  : publishInFlightRef.current
+                    ? 'Packing...'
+                    : 'Publish'}
           </span>
         </button>
 
