@@ -1,5 +1,4 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
-import JSZip from 'jszip';
 import { useSyncStore } from '../store/sync.store';
 import { useAudioStore } from '../../stores/audio.store';
 import { useStemStore } from '../../stem/stem.store';
@@ -14,13 +13,6 @@ import { lyricsAlignService } from '../word-sync/services/lyrics-align.service';
 import { buildAlignmentJobRequest } from '../word-sync/services/alignment-request.builder';
 import { fetchLrcVersions, parseLrcVersion } from '../../services/auto-lyrics.service';
 import type { LrcVersion } from '../../services/auto-lyrics.service';
-import { wouldFitZip } from '../../utils/zip-preflight';
-import { terminateWorker, transcodeStem } from '../../utils/mp3-transcoder';
-import { STEM_TRANSCODE_CONFIG } from '../../config/stem-transcode.config';
-import { calcPreFlight, assertZipSize } from '../../utils/zip-preflight';
-import { runTranscodePipeline } from '../../utils/zip-transcode-pipeline';
-import { closeZipAudioContext, hasZipAudioContext } from '../../utils/audio-context-manager';
-import { logZipEvent } from '../../utils/zip-logger';
 import { uploadBlobToTelegram } from '../../services/tg-upload.service';
 import { generateTrackZip } from '../../sync/services/zip-export.service';
 
@@ -28,24 +20,6 @@ function formatTime(sec: number): string {
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60);
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-}
-
-function mimeToExt(mimeType?: string | null): string {
-  if (!mimeType) return 'mp3';
-  const map: Record<string, string> = {
-    'audio/mpeg': 'mp3',
-    'audio/mp3': 'mp3',
-    'audio/mp4': 'm4a',
-    'audio/x-m4a': 'm4a',
-    'audio/aac': 'aac',
-    'audio/ogg': 'ogg',
-    'audio/wav': 'wav',
-    'audio/x-wav': 'wav',
-    'audio/wave': 'wav',
-    'audio/flac': 'flac',
-    'audio/x-flac': 'flac',
-  };
-  return map[mimeType.toLowerCase()] || 'mp3';
 }
 
 const SOURCE_CYCLE = ['mix', 'instrumental', 'vocal'] as const;
