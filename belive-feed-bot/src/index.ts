@@ -179,7 +179,7 @@ export default {
       const slug = `${artist}-${title}`.toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '')
-        .replace(/-+/g, '-');
+        .replace(/-+/g, '-') || `t-${Date.now()}`;
 
       // Read + write with optimistic lock
       let catalogWriteOk = false;

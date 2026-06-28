@@ -9,6 +9,7 @@ import { T, IB } from '../theme';
 import { GhostTrackCard } from './GhostTrackCard';
 import { batchPublishTracks } from '../../sync/services/batch-publish.service';
 import type { BatchTrackProgress, TrackPublishMeta } from '../../sync/services/batch-publish.service';
+import { slugify } from '../../utils/slugify';
 
 const TG_API_URL = 'https://belive-feed-bot.nikitosss007.workers.dev/tracks';
 
@@ -148,7 +149,7 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
       if (!ft) return;
       const hasStems = ft?.stemsData && Object.keys(ft.stemsData).length > 0;
       if (!hasStems && !ft.vocalsData) return;
-      const slug = (t.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const slug = slugify(t.title || '');
       if (tgSlugs.has(slug)) return;
       const p = parseTrackName(t.title || '');
       readyTracks.push({
@@ -375,7 +376,7 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
                   const tc = (window as any).trackCatalog;
                   const ft = tc?.tracks?.find((tr: any) => String(tr.id) === String(t.id));
                   const sc = ft?.stemsData ? Object.keys(ft.stemsData).length : 0;
-                  const slug = (t.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                  const slug = slugify(t.title || '');
                   const inTg = tgTracks.some(tg => tg.slug === slug);
                   if (inTg) return <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3, border: '1px solid #A855F766', color: '#A855F7', letterSpacing: '0.05em', flexShrink: 0, marginLeft: 6 }}>☁</span>;
                   if (sc > 2) return <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3, border: '1px solid #4CAF5066', color: '#4CAF50', letterSpacing: '0.05em', flexShrink: 0, marginLeft: 6 }}>‹ FULL ›</span>;
