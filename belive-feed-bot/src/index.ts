@@ -182,33 +182,62 @@ export default {
         return new Response('No file_id returned', { status: 502, headers: corsHeaders });
       }
 
-      // A9: Catalog write with optimistic lock
+      // A9: Catalog write with dedup by slug+contentHash
       const artist = (formData.get('artist') as string) || 'Unknown Artist';
       const title = (formData.get('title') as string) || 'Unknown Title';
-      const slug = `${artist}-${title}`.toLowerCase()
+      const stemType = (formData.get('stemType') as string) || 'full';
+      const contentHash = (formData.get('contentHash') as string) || '';
+      
+      // Build slug with stemType (dedup unit)
+      const rawSlug = `${artist}-${title}-${stemType}`;
+      const slug = rawSlug.toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '')
         .replace(/-+/g, '-') || `t-${Date.now()}`;
 
-      // Append-only catalog write (race-free per-key)
       let catalogWriteOk = false;
       let trackEntry = null;
       try {
-        const trackId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
-        
-        trackEntry = {
-          id: `usr-${trackId}`,
-          title,
-          artist,
-          slug,
-          type: formData.get('type') || 'full',
-          fileIds: { full: fileId },
-          fileSize: file.size,
-          fileName: safeFileName,
-          createdAt: Date.now(),
-        };
+        // Find existing entry by slug
+        const trackList = await env.EPHEMERAL_KV.list({ prefix: 'track_data:t:', limit: 200 });
+        let existingKey = '';
+        for (const key of trackList.keys) {
+          const entry: any = await env.EPHEMERAL_KV.get(key.name, { type: 'json' });
+          if (entry?.slug === slug) { existingKey = key.name; break; }
+        }
 
-        await env.EPHEMERAL_KV.put(`track_data:t:${trackId}`, JSON.stringify(trackEntry));
+        // If found with same contentHash → skip (already published)
+        if (existingKey && contentHash) {
+          const existing: any = await env.EPHEMERAL_KV.get(existingKey, { type: 'json' });
+          if (existing?.contentHash === contentHash) {
+            return new Response(JSON.stringify({
+              success: true, duplicate: true, slug,
+              fileId, id: existing.id,
+            }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
+          }
+          // Content changed — overwrite existing entry
+          trackEntry = {
+            ...existing,
+            fileIds: { ...existing.fileIds, [stemType]: fileId },
+            contentHash,
+            updatedAt: Date.now(),
+          };
+          await env.EPHEMERAL_KV.put(existingKey, JSON.stringify(trackEntry));
+        } else {
+          // New entry
+          const trackId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+          trackEntry = {
+            id: `usr-${trackId}`,
+            title, artist, slug,
+            type: stemType,
+            fileIds: { [stemType]: fileId },
+            fileSize: file.size,
+            fileName: safeFileName,
+            contentHash: contentHash || undefined,
+            createdAt: Date.now(),
+          };
+          await env.EPHEMERAL_KV.put(`track_data:t:${trackId}`, JSON.stringify(trackEntry));
+        }
         catalogWriteOk = true;
       } catch (kvErr) {
         console.error('[upload] KV write failed:', kvErr);

@@ -22,13 +22,17 @@ export function uploadBlobToTelegram(
   artist: string,
   title: string,
   callbacks?: TgUploadCallbacks,
+  contentHash?: string,
+  stemType?: string,
 ): Promise<TgUploadResult> {
   return new Promise((resolve) => {
     const formData = new FormData();
     formData.append('file', blob, `${artist} - ${title}.zip`);
     formData.append('artist', artist);
     formData.append('title', title);
-    formData.append('type', 'full');
+    formData.append('type', stemType || 'full');
+    if (contentHash) formData.append('contentHash', contentHash);
+    if (stemType) formData.append('stemType', stemType);
 
     const xhr = new XMLHttpRequest();
 
