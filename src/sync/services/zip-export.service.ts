@@ -5,7 +5,7 @@
 import JSZip from 'jszip';
 import { getTrack } from '../../services/idb.service';
 import { useTrackStore } from '../../stores/track.store';
-import { useWordSyncStore } from '../../stores/wordSync.store';
+import { computeLyricsHash } from '../../sync/word-sync/hash';
 import { calcPreFlight, assertZipSize, wouldFitZip } from '../../utils/zip-preflight';
 import { runTranscodePipeline } from '../../utils/zip-transcode-pipeline';
 import { terminateWorker, transcodeStem } from '../../utils/mp3-transcoder';
@@ -164,14 +164,12 @@ export async function generateTrackZip(
 
   const markers = liveMarkers || fullTrack.syncMarkers || [];
   const textBlocks = liveTextBlocks || fullTrack.blocksData || [];
-  const wordSyncState = useWordSyncStore.getState();
-
   const exportData: Record<string, any> = {
     id: trackId,
     title: meta?.title || 'Untitled',
     savedAt: new Date().toISOString(),
     markers, lyrics, textBlocks,
-    lyricsHash: wordSyncState.lyricsHash || undefined,
+    lyricsHash: lyrics ? computeLyricsHash(lyrics) : undefined,
     coverArtUrl: fullTrack.coverArtUrl || undefined,
     coverTheme: fullTrack.coverTheme || undefined,
     lyricsOriginalContent: fullTrack.lyricsOriginalContent || undefined,
