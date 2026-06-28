@@ -32,8 +32,12 @@ export function uploadBlobToTelegram(
 
     const xhr = new XMLHttpRequest();
 
+    let lastProgressUpdate = 0;
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && callbacks?.onProgress) {
+        const now = Date.now();
+        if (now - lastProgressUpdate < 100) return; // throttle: max 10 updates/sec
+        lastProgressUpdate = now;
         callbacks.onProgress(Math.round((e.loaded / e.total) * 100));
       }
     };

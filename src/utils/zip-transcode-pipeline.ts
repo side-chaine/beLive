@@ -68,7 +68,8 @@ export async function runTranscodePipeline(
     }
 
     // Progressive budget check
-    if (runningTotal < STEM_TRANSCODE_CONFIG.zipSizeLimit) {
+    const threshold = STEM_TRANSCODE_CONFIG.zipSizeLimit - STEM_TRANSCODE_CONFIG.zipOverheadSlack;
+    if (runningTotal < threshold) {
       logZipEvent('budget-met', { runningTotal, stoppedAt: stemId });
       break;
     }

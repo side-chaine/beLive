@@ -315,6 +315,13 @@ export default function SyncEditorPanel() {
     const blob = exportBlobRef.current;
     if (!blob || isUploading) return;
 
+    // Stale blob guard: если трек был изменён после генерации ZIP
+    const syncStore = useSyncStore.getState();
+    if (syncStore.isDirty) {
+      console.warn('[Sync] Track has unsaved changes — regenerate ZIP first');
+      return;
+    }
+
     const meta = useTrackStore.getState().currentTrack;
     if (!meta) return;
     const artist = meta.artist || 'Unknown Artist';
