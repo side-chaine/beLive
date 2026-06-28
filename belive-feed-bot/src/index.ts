@@ -38,7 +38,12 @@ export default {
       const url = new URL(request.url);
 
       if (url.pathname === '/tracks') {
-        const catalog: any[] = (await env.EPHEMERAL_KV.get('track_data:catalog', { type: 'json' }) as any) || [];
+        // Build catalog from per-track records (race-free append-only)
+        const trackList = await env.EPHEMERAL_KV.list({ prefix: 'track_data:t:', limit: 200 });
+        const entries = await Promise.all(
+          trackList.keys.map(k => env.EPHEMERAL_KV.get(k.name, { type: 'json' }))
+        );
+        const catalog = entries.filter(Boolean).sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0));
         return new Response(JSON.stringify({
           updatedAt: Date.now(),
           total: catalog.length,
@@ -181,35 +186,28 @@ export default {
         .replace(/^-|-$/g, '')
         .replace(/-+/g, '-') || `t-${Date.now()}`;
 
-      // Read + write with optimistic lock
+      // Append-only catalog write (race-free per-key)
       let catalogWriteOk = false;
       let trackEntry = null;
       try {
-        const catalogStr = await env.EPHEMERAL_KV.get('track_data:catalog');
-        const catalog: any[] = catalogStr ? JSON.parse(catalogStr) : [];
-        
-        // Duplicate slug guard
-        const existingSlug = catalog.find((t: any) => t.slug === slug);
-        const finalSlug = existingSlug ? `${slug}-${Date.now()}` : slug;
+        const trackId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
         
         trackEntry = {
-          id: `usr-${String(Date.now())}`,
+          id: `usr-${trackId}`,
           title,
           artist,
-          slug: finalSlug,
+          slug,
           type: formData.get('type') || 'full',
           fileIds: { full: fileId },
           fileSize: file.size,
           fileName: safeFileName,
+          createdAt: Date.now(),
         };
 
-        catalog.push(trackEntry);
-        await env.EPHEMERAL_KV.put('track_data:catalog', JSON.stringify(catalog));
-        await env.EPHEMERAL_KV.put(`track_data:${finalSlug}`, JSON.stringify(trackEntry));
+        await env.EPHEMERAL_KV.put(`track_data:t:${trackId}`, JSON.stringify(trackEntry));
         catalogWriteOk = true;
       } catch (kvErr) {
         console.error('[upload] KV write failed:', kvErr);
-        // A10: Orphan protection — пытаемся удалить файл из TG
         try {
           await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/deleteMessage`, {
             method: 'POST',
