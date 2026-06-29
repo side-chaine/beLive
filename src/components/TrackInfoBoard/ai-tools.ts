@@ -212,6 +212,10 @@ async function executeSeekToSection(args: Record<string, unknown>): Promise<Tool
 
     const matchingBlocks = blocks.filter(b => b.type === sectionType);
     if (matchingBlocks.length === 0) {
+      // TC-7: fail-soft guard — dispatch event for UI to reload blocks
+      document.dispatchEvent(new CustomEvent('taxonomy-seek-mismatch', {
+        detail: { sectionType, tool: 'seek_to_section', occurrence },
+      }));
       return {
         tool: 'seek_to_section',
         success: false,
@@ -484,11 +488,39 @@ export function normalizeSectionType(raw: string): string {
     .trim();
 
   const map: Record<string, string> = {
+    // Canonical types (pass-through)
+    'intro': 'intro',
+    'verse': 'verse',
     'pre-chorus': 'prechorus',
+    'prechorus': 'prechorus',
     'pre chorus': 'prechorus',
-    'post-chorus': 'chorus',
-    'post chorus': 'chorus',
-    'postchorus': 'chorus',
+    'chorus': 'chorus',
+    'post-chorus': 'postchorus',
+    'postchorus': 'postchorus',
+    'post chorus': 'postchorus',
+    'bridge': 'bridge',
+    'interlude': 'interlude',
+    'outro': 'outro',
+    'hook': 'hook',
+    // Solo variants → solo
+    'solo': 'solo',
+    'guitar solo': 'solo',
+    'piano solo': 'solo',
+    'drum solo': 'solo',
+    'bass solo': 'solo',
+    // Instrumental
+    'instrumental': 'instrumental',
+    'instrumental break': 'instrumental',
+    // EDM
+    'build': 'build',
+    'drop': 'drop',
+    'breakdown': 'breakdown',
+    'break down': 'breakdown',
+    // Speech
+    'spoken': 'spoken',
+    'spoken word': 'spoken',
+    'rap': 'rap',
+    'rap verse': 'rap',
   };
 
   return map[normalized] ?? normalized;
@@ -576,6 +608,10 @@ async function executeLoopSection(
   const matching = blocks.filter(b => b.type === sectionType);
   const target = matching[occurrence - 1];
   if (!target) {
+    // TC-7: fail-soft guard — dispatch event for UI to reload blocks
+    document.dispatchEvent(new CustomEvent('taxonomy-seek-mismatch', {
+      detail: { sectionType, tool: 'loop_section', occurrence },
+    }));
     const ruNames: Record<string, string> = {
       intro: 'Вступление', verse: 'Куплет', prechorus: 'Пре-хорус',
       chorus: 'Припев', bridge: 'Бридж', interlude: 'Интерлюдия', outro: 'Заключение',

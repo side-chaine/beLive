@@ -69,7 +69,7 @@ describe('parseTaggedLyrics', () => {
 
   it('marks soft aliases as reviewRequired', () => {
     const result = parseTaggedLyrics('[Hook]\nCatchy part');
-    expect(result.blocks[0].type).toBe('chorus');
+    expect(result.blocks[0].type).toBe('hook');
     expect(result.blocks[0].reviewRequired).toBe(true);
   });
 
@@ -129,10 +129,10 @@ describe('parseTaggedLyrics', () => {
     expect(result.blocks[0].contentLines).toContain('Dear Mom: I miss you');
   });
 
-  it('handles instrumental as bridge alias', () => {
+  it('handles instrumental as instrumental type', () => {
     const result = parseTaggedLyrics('[Instrumental]\n');
-    expect(result.blocks[0].type).toBe('bridge');
-    expect(result.blocks[0].reviewRequired).toBe(true);
+    expect(result.blocks[0].type).toBe('instrumental');
+    expect(result.blocks[0].reviewRequired).toBe(false);
   });
 
   it('handles Genius format with featured artist', () => {

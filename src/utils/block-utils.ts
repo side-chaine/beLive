@@ -98,7 +98,7 @@ function normalizeText(text: string): string {
  * Локальный стоп-лист: слова, которые встречаются в >40% строк блока.
  * Защищает от ложных срабатываний на припевах типа "Love, love, love..."
  */
-function computeLocalStopWords(
+export function computeLocalStopWords(
   lineIndices: number[],
   lines: string[]
 ): Set<string> {
@@ -130,7 +130,7 @@ function computeLocalStopWords(
  * "I don't know what's worth fighting for" → ["dont", "know"]
  * "Мама, я сходил с ума" → ["мама", "сходил"]
  */
-function extractFingerprint(
+export function extractFingerprint(
   text: string,
   localStopWords: Set<string>
 ): string[] {

@@ -127,6 +127,69 @@
     linear-gradient(180deg, transparent 55%, var(--bl-block-outro, #00BCD4) 100%);
 }
 
+.wagon[data-block-type="postchorus"]::before {
+  background:
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-postchorus, #FF8A65) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-postchorus, #FF8A65) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-postchorus, #FF8A65) 100%);
+}
+
+.wagon[data-block-type="hook"]::before {
+  background:
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-hook, #FFB300) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-hook, #FFB300) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-hook, #FFB300) 100%);
+}
+
+.wagon[data-block-type="solo"]::before {
+  background:
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-solo, #FB8C00) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-solo, #FB8C00) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-solo, #FB8C00) 100%);
+}
+
+.wagon[data-block-type="instrumental"]::before {
+  background:
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-instrumental, #78909C) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-instrumental, #78909C) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-instrumental, #78909C) 100%);
+}
+
+.wagon[data-block-type="build"]::before {
+  background:
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-build, #9CCC65) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-build, #9CCC65) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-build, #9CCC65) 100%);
+}
+
+.wagon[data-block-type="drop"]::before {
+  background:
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-drop, #FF1744) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-drop, #FF1744) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-drop, #FF1744) 100%);
+}
+
+.wagon[data-block-type="breakdown"]::before {
+  background:
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-breakdown, #455A64) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-breakdown, #455A64) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-breakdown, #455A64) 100%);
+}
+
+.wagon[data-block-type="spoken"]::before {
+  background:
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-spoken, #CFD8DC) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-spoken, #CFD8DC) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-spoken, #CFD8DC) 100%);
+}
+
+.wagon[data-block-type="rap"]::before {
+  background:
+    radial-gradient(70% 130% at 0% 50%, var(--bl-block-rap, #64DD17) 0%, transparent 68%),
+    radial-gradient(70% 130% at 100% 50%, var(--bl-block-rap, #64DD17) 0%, transparent 68%),
+    linear-gradient(180deg, transparent 55%, var(--bl-block-rap, #64DD17) 100%);
+}
+
 .wagon:hover::before,
 .wagon:focus-within::before {
   opacity: 0.42;

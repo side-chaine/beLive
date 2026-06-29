@@ -5,9 +5,9 @@
 export type AppMode = 'concert' | 'karaoke' | 'rehearsal' | 'live'
 
 // ─── Block Types ──────────────────────────────────────────────
-export type BlockType =
-  | 'verse' | 'prechorus' | 'chorus'
-  | 'bridge' | 'intro' | 'outro' | 'unknown'
+// Импортируется из SSOT (block-taxonomy.ts)
+import type { BlockType } from '../blocks/parser/block-taxonomy';
+export { BlockType };
 
 // ─── Primitive Tokens ─────────────────────────────────────────
 export interface PrimitiveTokens {

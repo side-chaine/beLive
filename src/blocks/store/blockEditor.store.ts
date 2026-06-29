@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { BlockType, EditingBlock, SavedBlock } from '../types';
 import { BLOCK_TYPE_CONFIG } from '../types';
 import { parseTaggedLyrics } from '../parser/tagged-lyrics.parser';
+import { resolveBlockAlias } from '../../blocks/parser/block-taxonomy';
 
 /* ═══════════════════════════════════════════
    Block Editor Store — Sprint 36
@@ -16,12 +17,16 @@ function uid(): string {
 }
 
 function detectType(content: string): BlockType {
+  // Используем resolveBlockAlias из SSOT вместо substring matching
+  const alias = resolveBlockAlias(content);
+  if (alias) return alias.type;
+  // Fallback: поиск по ключевым словам для untagged текста
   const l = content.toLowerCase();
-  if (l.includes('chorus') || l.includes('припев') || l.includes('refrain')) return 'chorus';
-  if (l.includes('prechorus') || l.includes('предприпев') || l.includes('pre-chorus')) return 'prechorus';
-  if (l.includes('bridge') || l.includes('бридж')) return 'bridge';
-  if (l.includes('intro') || l.includes('интро')) return 'intro';
-  if (l.includes('outro') || l.includes('аутро')) return 'outro';
+  if (l.includes('припев') || l.includes('refrain')) return 'chorus';
+  if (l.includes('предприпев')) return 'prechorus';
+  if (l.includes('бридж')) return 'bridge';
+  if (l.includes('интро')) return 'intro';
+  if (l.includes('аутро')) return 'outro';
   return 'verse';
 }
 

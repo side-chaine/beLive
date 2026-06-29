@@ -25,7 +25,8 @@ describe('resolveBlockAlias', () => {
   it('marks soft aliases as reviewRequired', () => {
     expect(resolveBlockAlias('hook')?.reviewRequired).toBe(true);
     expect(resolveBlockAlias('interlude')?.reviewRequired).toBe(false);
-    expect(resolveBlockAlias('проигрыш')?.reviewRequired).toBe(true);
+    expect(resolveBlockAlias('проигрыш')?.type).toBe('instrumental');
+    expect(resolveBlockAlias('проигрыш')?.reviewRequired).toBe(false);
   });
 
   it('marks exact aliases as not reviewRequired', () => {
@@ -50,7 +51,7 @@ describe('resolveBlockAlias', () => {
   });
 
   it('all aliases resolve to valid types', () => {
-    const validTypes = new Set(['intro', 'verse', 'prechorus', 'chorus', 'bridge', 'interlude', 'outro']);
+    const validTypes = new Set(['intro','verse','prechorus','chorus','postchorus','bridge','interlude','outro','hook','solo','instrumental','build','drop','breakdown','spoken','rap']);
     for (const [alias, entry] of Object.entries(BLOCK_ALIAS_MAP)) {
       expect(validTypes.has(entry.type)).toBe(true);
     }

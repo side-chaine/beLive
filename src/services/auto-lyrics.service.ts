@@ -6,6 +6,7 @@
 import { parseTaggedLyrics } from '../blocks/parser/tagged-lyrics.parser';
 import type { DetectedBlock } from '../blocks/parser/tagged-lyrics.parser';
 import type { PersistedSyncMarker, PersistedTextBlock } from '../types/persistence.types';
+import { computeLocalStopWords } from '../utils/block-utils';
 
 // ── Types ──────────────────────────────────────────────
 
@@ -252,6 +253,21 @@ export function blockFirstLineSync(
   //    Find first content line of each block in LRC
   const normalizedDisplay = displayLines.map(l => _normalizeText(l));
   let lastMatchedLrcIdx = -1;
+  const usedLrcIndices = new Set<number>();  // TC-6A: track assigned LRC indices
+  
+  // TC-6D: Compute global stop words from ALL LRC lines using shared utility.
+  // Words appearing in >40% of lines (FREQ_THRESHOLD in block-utils.ts) are
+  // filtered from fingerprints to prevent Chorus↔Post-Chorus false matches.
+  // computeLocalStopWords normalizes internally — pass raw displayLines.
+  const _globalStopWords = computeLocalStopWords(
+    displayLines.map((_, i) => i),
+    displayLines
+  );
+  
+  // TC-6E: Pre-compute LRC word Sets to avoid GC pressure from 792+ Set constructions
+  const _lrcWordSets: Set<string>[] = normalizedDisplay.map(
+    (line: string) => new Set(line.split(/\s+/))
+  );
   
   const blocks: PersistedTextBlock[] = tagResult.blocks.map((block, bi) => {
     const contentLines = block.contentLines.filter(l => l.trim());
@@ -262,15 +278,26 @@ export function blockFirstLineSync(
         name: block.label,
         lineIndices: [],
         type: block.type,
-      };
+        contentLines: block.contentLines,  // TC-6A: preserve for gap calculations
+        _expectedLines: contentLines.length,  // TC-6A: for cursor advance
+      } as any;
     }
     
     // Find this Genius first line in LRC display
     const firstNorm = _normalizeText(firstLine.trim());
-    let firstWords = firstNorm.split(/\s+/).filter(w => w.length > 2).slice(0, 4);
-    // Fallback: short words like "yo", "oh", "we" are valid for matching.
+    // TC-6D: Filter out global stop words from fingerprint
+    // Prevents common words ("you", "not", "with", "the") from causing false matches
+    // between sections that share vocabulary (e.g., Chorus ↔ Post-Chorus)
+    let firstWords = firstNorm.split(/\s+/)
+      .filter((w: string) => w.length > 2 && !_globalStopWords.has(w))
+      .slice(0, 4);
+    // Fallback 1: if all words filtered out, use length-based filter
     if (firstWords.length === 0) {
-      firstWords = firstNorm.split(/\s+/).filter(w => w.length >= 2).slice(0, 4);
+      firstWords = firstNorm.split(/\s+/).filter((w: string) => w.length > 2).slice(0, 4);
+    }
+    // Fallback 2: short words like "yo", "oh", "we" are valid for matching.
+    if (firstWords.length === 0) {
+      firstWords = firstNorm.split(/\s+/).filter((w: string) => w.length >= 2).slice(0, 4);
     }
     
     // Deduplicate: "All, all, all" → ["all"] — prevents score inflation
@@ -283,12 +310,17 @@ export function blockFirstLineSync(
     // A single word "all" matching "All caught up in the eye of the storm" 
     // is a false positive. Adding "wanna","trade","this" from line 2 makes 
     // the match specific: only "All I wanna do is trade this life..." scores high.
+    // TC-6D: Supplement lines also filtered through global stop words
     if (firstWords.length < 2 && contentLines.length > 1) {
       for (let v = 1; v < contentLines.length && firstWords.length < 3; v++) {
         const vNorm = _normalizeText(contentLines[v].trim());
-        let vWords = vNorm.split(/\s+/).filter(w => w.length > 2);
+        let vWords = vNorm.split(/\s+/)
+          .filter((w: string) => w.length > 2 && !_globalStopWords.has(w));
         if (vWords.length === 0) {
-          vWords = vNorm.split(/\s+/).filter(w => w.length >= 2);
+          vWords = vNorm.split(/\s+/).filter((w: string) => w.length > 2);
+        }
+        if (vWords.length === 0) {
+          vWords = vNorm.split(/\s+/).filter((w: string) => w.length >= 2);
         }
         for (const w of vWords) {
           if (!firstWords.includes(w)) {
@@ -306,16 +338,68 @@ export function blockFirstLineSync(
     // Search FORWARD from last matched position (occurrence-aware)
     const searchStart = Math.max(0, lastMatchedLrcIdx);
     for (let i = searchStart; i < normalizedDisplay.length; i++) {
-      const lrcNorm = normalizedDisplay[i];
-      
-      // TC-010-FIX2: Word-boundary match instead of substring includes
-      // Prevents "you" matching "youre" — uses exact word matching
-      const lrcWords = new Set(lrcNorm.split(/\s+/));
+      // TC-6A: Skip already-assigned LRC indices
+      if (usedLrcIndices.has(i)) continue;
+
+      // TC-6E: Use pre-computed Set cache
+      const lrcWords = _lrcWordSets[i];
       const matchCount = firstWords.filter(w => lrcWords.has(w)).length;
       const score = firstWords.length > 0 ? matchCount / firstWords.length : 0;
       if (score > bestScore) {
         bestScore = score;
         bestIdx = i;
+      }
+    }
+    
+    // TC-6A: Extended forward search — try wider range if not found
+    // Some blocks (Post-Chorus, Verse 4/5) may be further ahead than expected
+    if (bestScore < 0.5 && contentLines.length > 0) {
+      const extendedEnd = Math.min(
+        normalizedDisplay.length,
+        searchStart + Math.ceil(contentLines.length * 2) + 20
+      );
+      for (let i = searchStart; i < extendedEnd; i++) {
+        if (usedLrcIndices.has(i)) continue;
+        // TC-6E: Use pre-computed Set cache
+        const lrcWords = _lrcWordSets[i];
+        const matchCount = firstWords.filter(w => lrcWords.has(w)).length;
+        const score = firstWords.length > 0 ? matchCount / firstWords.length : 0;
+        if (score > bestScore) {
+          bestScore = score;
+          bestIdx = i;
+        }
+      }
+    }
+    
+    // TC-6A: FULL global fallback — search entire LRC for occurrence-aware matching
+    // Handles cases where cursor drifted past the target (Post-Chorus, repeated Verse 4/5)
+    if (bestScore < 0.5) {
+      // Phase 1: search AFTER cursor (forward from lastMatchedLrcIdx to end)
+      for (let i = searchStart; i < normalizedDisplay.length; i++) {
+        if (usedLrcIndices.has(i)) continue;
+        if (i >= searchStart && i <= bestIdx) continue;  // already searched
+        // TC-6E: Use pre-computed Set cache
+        const lrcWords = _lrcWordSets[i];
+        const matchCount = firstWords.filter(w => lrcWords.has(w)).length;
+        const score = firstWords.length > 0 ? matchCount / firstWords.length : 0;
+        if (score > bestScore) {
+          bestScore = score;
+          bestIdx = i;
+        }
+      }
+      // Phase 2: search BEFORE cursor (from 0 to searchStart) — skipping used
+      if (bestScore < 0.5) {
+        for (let i = 0; i < searchStart; i++) {
+          if (usedLrcIndices.has(i)) continue;
+          // TC-6E: Use pre-computed Set cache
+          const lrcWords = _lrcWordSets[i];
+          const matchCount = firstWords.filter(w => lrcWords.has(w)).length;
+          const score = firstWords.length > 0 ? matchCount / firstWords.length : 0;
+          if (score > bestScore) {
+            bestScore = score;
+            bestIdx = i;
+          }
+        }
       }
     }
     
@@ -328,7 +412,9 @@ export function blockFirstLineSync(
       }
       // ⚡ TC-BUG-01: Продвигаем lastMatchedLrcIdx даже при NOT MAPPED,
       // чтобы следующий блок не украл строки этого блока
-      lastMatchedLrcIdx = Math.min(lastMatchedLrcIdx + 1, displayLines.length - 1);
+      // TC-6A: advance by expected content length, not just +1
+      const advanceBy = Math.max(1, Math.floor(contentLines.length * 0.3));
+      lastMatchedLrcIdx = Math.min(lastMatchedLrcIdx + advanceBy, displayLines.length - 1);
       return {
         id: `auto-block-${bi}`,
         name: block.label,
@@ -337,16 +423,20 @@ export function blockFirstLineSync(
         // ⚡ TC-BUG-03-A: Сохраняем contentLines из Genius даже при NOT MAPPED
         // (без таймингов, но с текстом — для отображения в TrackMap)
         contentLines: block.contentLines,
-      };
+        _expectedLines: contentLines.length,  // TC-6A: for gap protection
+      } as any;
     }
     
-    lastMatchedLrcIdx = bestIdx;
+    // TC-6A: Advance cursor by half expected block length + mark used
+    lastMatchedLrcIdx = bestIdx + Math.max(1, Math.floor(contentLines.length * 0.5));
+    usedLrcIndices.add(bestIdx);
     
     return {
       id: `auto-block-${bi}`,
       name: block.label,
       _lrcStartIdx: bestIdx,
       _matchScore: bestScore,
+      _expectedLines: contentLines.length,  // TC-6A: gap protection
       type: block.type,
       contentLines: block.contentLines,
     } as any;
@@ -383,6 +473,16 @@ export function blockFirstLineSync(
     }
   }
 
+  // TC-6B: _oversized diagnostic flag (NOT a trim — nextStart logic is authoritative)
+  // If a block got significantly more LRC lines than expected, mark it for diagnostics.
+  for (let i = 0; i < blocks.length; i++) {
+    const cl = blocks[i].contentLines;
+    if (!cl || cl.length === 0) continue;
+    if (blocks[i].lineIndices.length > Math.ceil(cl.length * 1.5)) {
+      (blocks[i] as any)._oversized = true;
+    }
+  }
+
   // ═══ TC-BUG-03-B: Пасс 2 — позиционный fallback для NOT MAPPED блоков ═══
   // Для блоков, которые не удалось замапить на LRC строки (score < 0.5),
   // назначаем lineIndices на основе позиции между соседними MAPPED блоками.
@@ -391,9 +491,19 @@ export function blockFirstLineSync(
     // Пропустить уже замапленные блоки (есть startIdx И lineIndices реально заполнены)
     if (startIdx != null && startIdx >= 0 && blocks[i].lineIndices.length > 0) continue;
     const blockContent = blocks[i].contentLines;
-    if (!blockContent || blockContent.length === 0) continue;
+    // TC-6C: Don't skip Solo/Instrumental with empty content — they can take gap lines
+    const isEmptySolo = blocks[i].type === 'solo' || blocks[i].type === 'instrumental';
+    if (!blockContent || blockContent.length === 0) {
+      if (!isEmptySolo) continue;
+    }
 
-    const neededLines = blockContent.length;
+    let neededLines: number;
+    // TC-6C: Solo/Instrumental with no content take full gap
+    if (isEmptySolo && (!blockContent || blockContent.length === 0)) {
+      neededLines = 0;  // calculated after availableGap
+    } else {
+      neededLines = blockContent?.length ?? 0;
+    }
 
     // Найти предыдущий блок с lineIndices
     let prevEnd = -1;
@@ -416,7 +526,10 @@ export function blockFirstLineSync(
     }
 
     const availableGap = nextStart - (prevEnd + 1);
-    const takeFromGap = Math.min(neededLines, availableGap);
+    // TC-6C: Empty Solo/Instrumental takes full available gap
+    const isGapTakeAll = isEmptySolo && neededLines === 0;
+    const effectiveNeeded = isGapTakeAll ? availableGap : neededLines;
+    const takeFromGap = Math.min(effectiveNeeded, availableGap);
 
     if (takeFromGap > 0) {
       // Есть свободное окно между блоками — берём оттуда
@@ -424,10 +537,14 @@ export function blockFirstLineSync(
         { length: takeFromGap },
         (_, k) => prevEnd + 1 + k
       );
+      // TC-6C: Mark gap-assigned Solo/Instrumental
+      if (isEmptySolo) {
+        (blocks[i] as any)._instrumentalGap = true;
+      }
     }
 
     // Если всё ещё не хватает строк — отнимаем от следующего блока с капом 50%
-    const stillNeeded = neededLines - blocks[i].lineIndices.length;
+    const stillNeeded = isGapTakeAll ? 0 : neededLines - blocks[i].lineIndices.length;
     if (stillNeeded > 0 && nextBlockIdx >= 0) {
       const nextBlock = blocks[nextBlockIdx];
       const cap = Math.floor(nextBlock.lineIndices.length * 0.5);
@@ -489,6 +606,10 @@ export function blockFirstLineSync(
   for (let i = 0; i < blocks.length; i++) {
     delete (blocks[i] as any)._lrcStartIdx;
     delete (blocks[i] as any)._matchScore;
+    delete (blocks[i] as any)._expectedLines;  // TC-6A
+    delete (blocks[i] as any)._isEmpty;         // TC-6A
+    delete (blocks[i] as any)._oversized;        // TC-6B
+    delete (blocks[i] as any)._instrumentalGap;   // TC-6C
   }
   
   return {

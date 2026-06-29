@@ -1,4 +1,8 @@
-import { resolveBlockAlias, type BlockType } from './block-taxonomy';
+import { resolveBlockAlias, extractInstrument, type BlockType } from './block-taxonomy';
+
+function capitalizeFirst(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 
 export interface DetectedBlock {
   type: BlockType;
@@ -6,6 +10,7 @@ export interface DetectedBlock {
   originalTag: string;
   number?: number;
   artist?: string;
+  instrument?: string;  // NEW
   startLineIndex: number;
   endLineIndex: number;
   contentLines: string[];
@@ -101,6 +106,7 @@ function extractTagInfo(
     raw,
     confidence,
     reviewRequired: alias.reviewRequired,
+    instrument: extractInstrument(tag) ?? undefined,
   };
 }
 
@@ -109,13 +115,22 @@ function detectTagLine(line: string) {
 }
 
 const TYPE_LABELS: Record<BlockType, string> = {
+  intro: 'Intro',
   verse: 'Verse',
-  chorus: 'Chorus',
   prechorus: 'Pre-Chorus',
+  chorus: 'Chorus',
+  postchorus: 'Post-Chorus',
   bridge: 'Bridge',
   interlude: 'Interlude',
-  intro: 'Intro',
   outro: 'Outro',
+  hook: 'Hook',
+  solo: 'Solo',
+  instrumental: 'Instrumental',
+  build: 'Build',
+  drop: 'Drop',
+  breakdown: 'Breakdown',
+  spoken: 'Spoken',
+  rap: 'Rap',
 };
 
 /** Pre-filter to remove Genius.com noise patterns */
@@ -179,6 +194,7 @@ export function parseTaggedLyrics(text: string): ParseResult {
     raw: string;
     number?: number;
     artist?: string;
+    instrument?: string;
     confidence: number;
     reviewRequired: boolean;
     contentLines: string[];
@@ -199,6 +215,7 @@ export function parseTaggedLyrics(text: string): ParseResult {
         raw: detection.raw,
         number: detection.number,
         artist: detection.artist,
+        instrument: detection.instrument,
         confidence: detection.confidence,
         reviewRequired: detection.reviewRequired,
         contentLines: [],
@@ -220,35 +237,74 @@ export function parseTaggedLyrics(text: string): ParseResult {
     blocks.push(finalizeBlock(current, lines.length - 1));
   }
 
-  // Filter: Interlude blocks with < 3 content lines are ignored
-  const filteredBlocks = blocks.filter(b => {
-    if (b.type === 'interlude') {
-      const nonEmptyLines = b.contentLines.filter(l => l.trim()).length;
-      return nonEmptyLines >= 3;
+  // Composite tag semantic split
+  // Если composite тег (содержит '/') — обрабатываем по позиции
+  const closingTypes = ['outro', 'coda', 'finale', 'end'];
+  const processedBlocksRaw = blocks.map(block => {
+    const originalTag = block.originalTag;
+    const slashIdx = originalTag.indexOf('/');
+    if (slashIdx > 0) {
+      const secondType = originalTag.substring(slashIdx + 1).trim();
+
+      // Если это последний блок и второй тип — "закрывающий" → second-wins
+      const isLastBlock = blocks.indexOf(block) === blocks.length - 1;
+      if (isLastBlock && closingTypes.some(t => secondType.toLowerCase().includes(t))) {
+        // Замена типа на второй компонент
+        const alias = resolveBlockAlias(secondType);
+        if (alias) {
+          return { ...block, type: alias.type, label: buildLabel(alias.type, block.number) };
+        }
+      }
     }
-    return true;
+    return block;
   });
+
+  // Use composite-processed blocks downstream
+  const compositeBlocks = processedBlocksRaw;
 
   const totalContent = lines.filter(l =>
     l.trim() && !detectTagLine(l) && !BRACKET_RE.test(l)
   ).length;
-  const covered = filteredBlocks.reduce(
+  const covered = compositeBlocks.reduce(
     (s, b) => s + b.contentLines.filter(l => l.trim()).length, 0
   );
 
   // ── Auto-number repeated verse/chorus blocks ──
-  const typesToNumber = new Set(['verse', 'chorus']);
+  // Типы с отдельными счётчиками нумерации
+  const typesToNumber = new Set(['verse', 'chorus', 'postchorus', 'hook', 'rap', 'bridge', 'solo', 'build', 'drop', 'breakdown']);
+  // Типы которые нумеруются ТОЛЬКО если ≥2 в треке
+  const typesNumberIfMultiple = new Set(['prechorus']);
+  // Solo нумерация per-subType (guitar, piano...)
+  const soloSubCounts: Record<string, number> = {};
   const typeCounts: Record<string, number> = {};
-  for (const block of filteredBlocks) {
+  for (const block of compositeBlocks) {
     typeCounts[block.type] = (typeCounts[block.type] || 0) + 1;
   }
 
   const typeOccurrences: Record<string, number> = {};
-  const processedBlocks = filteredBlocks.map(block => {
+  const processedBlocks = compositeBlocks.map(block => {
     if (!typesToNumber.has(block.type)) return block;
     if (typeCounts[block.type] <= 1) return block;
 
     typeOccurrences[block.type] = (typeOccurrences[block.type] || 0) + 1;
+
+      // Специальная нумерация для Solo per-subType
+      if (block.type === 'solo' && block.instrument) {
+        const subKey = block.instrument;
+        soloSubCounts[subKey] = (soloSubCounts[subKey] || 0) + 1;
+        const subNum = soloSubCounts[subKey];
+        if (subNum > 1) {
+          return {
+            ...block,
+            number: subNum,
+            label: `${capitalizeFirst(block.instrument)} Solo ${subNum}`,
+          };
+        }
+        return {
+          ...block,
+          label: `${capitalizeFirst(block.instrument)} Solo`,
+        };
+      }
 
     if (block.number !== undefined) return block; // respect explicit author number
 
@@ -264,7 +320,7 @@ export function parseTaggedLyrics(text: string): ParseResult {
     unmatchedTags,
     totalLines: lines.length,
     coverage: totalContent > 0 ? covered / totalContent : 0,
-    hasStructure: filteredBlocks.length > 0,
+    hasStructure: compositeBlocks.length > 0,
   };
 }
 
@@ -274,6 +330,7 @@ interface CurrentBlock {
   raw: string;
   number?: number;
   artist?: string;
+  instrument?: string;
   confidence: number;
   reviewRequired: boolean;
   contentLines: string[];
@@ -296,6 +353,7 @@ function finalizeBlock(
     originalTag: current.raw,
     number: current.number,
     artist: current.artist,
+    instrument: current.instrument,
     startLineIndex: current.startLine + startOffset,
     endLineIndex: trimmed.length > 0
       ? current.startLine + startOffset + trimmed.length - 1

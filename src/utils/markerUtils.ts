@@ -31,7 +31,11 @@ export function computeSections(markers: Marker[], trackDuration: number = 0): S
   const sorted = [...markers].sort((a, b) => a.time - b.time);
   const idxByType: Record<string, number> = {};
   const prefixMap: Record<string, string> = {
-    verse:'V', chorus:'C', bridge:'B', prechorus:'PC', interlude:'INT', intro:'I', outro:'O', blank:'BL'
+    verse:'V', chorus:'C', bridge:'B', prechorus:'PC', postchorus:'b',
+    interlude:'INT', intro:'I', outro:'O', blank:'BL',
+    hook:'H', solo:'S', instrumental:'N',
+    build:'U', drop:'D', breakdown:'K',
+    spoken:'W', rap:'R',
   };
   // allowed types = keys of prefixMap
   let i = 0;
@@ -84,7 +88,7 @@ export function getBlockTypeForLine(
   textBlocks: Array<{ lineIndices?: number[]; type?: string }>
 ): string {
   if (!textBlocks || textBlocks.length === 0) return 'unknown';
-  const allowed = new Set(['verse','chorus','bridge','prechorus','interlude','intro','outro','blank']);
+  const allowed = new Set(['verse','chorus','bridge','prechorus','postchorus','interlude','intro','outro','blank','hook','solo','instrumental','build','drop','breakdown','spoken','rap']);
   for (const block of textBlocks) {
     if (block.lineIndices && block.lineIndices.includes(lineIndex)) {
       if (block.type && allowed.has(block.type)) return block.type;

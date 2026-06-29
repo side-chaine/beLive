@@ -1,6 +1,8 @@
 // F38: Parsing functions extracted from lyrics-display.js
 // Pure functions — zero DOM deps, zero this.* deps
 
+import type { BlockType } from '../blocks/parser/block-taxonomy';
+
 export function basicTextCleanup(text: string): string {
   if (!text) return '';
   let cleaned = text.replace(/[^\x20-\x7E\nа-яА-ЯёЁ]/g, '');
@@ -411,7 +413,8 @@ export function sanitizeBlocks(blocks: unknown[], lyricsLength: number): ParsedB
   }
   const seen = new Set<string>();
   const result: ParsedBlock[] = [];
-  const allowed = new Set(['verse','chorus','bridge','prechorus','interlude','intro','outro']);
+  const ALL_BLOCK_TYPES: BlockType[] = ['intro','verse','prechorus','chorus','postchorus','bridge','interlude','outro','hook','solo','instrumental','build','drop','breakdown','spoken','rap'];
+  const allowed = new Set<string>(ALL_BLOCK_TYPES);
   (blocks || []).forEach((blk: any, idx: number) => {
     if (!blk || !Array.isArray(blk.lineIndices) || !blk.lineIndices.length) return;
     const sorted = [...blk.lineIndices].sort((a: number, b: number) => a - b)
