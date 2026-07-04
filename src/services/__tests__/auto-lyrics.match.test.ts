@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { blockFirstLineSync } from '../auto-lyrics.service';
+import { blockFirstLineSync, computeCoverage } from '../auto-lyrics.service';
 import type { LrcResult } from '../auto-lyrics.service';
 
 // ── Helper: Build LRC from text lines with incremental timestamps ──
@@ -1858,5 +1858,83 @@ describe('CGP — Runaway regression (TC-155)', () => {
     // Допускаем 28 (если CGP не тронул) или 29 (если Pass 3 сдвинул)
     expect(chorus2First).toBeGreaterThanOrEqual(28);
     expect(chorus2First).toBeLessThanOrEqual(30);
+  });
+});
+
+// ── TC-096-04: computeCoverage ─────────────────────────────────
+
+describe('computeCoverage — TC-096-04', () => {
+  it('returns 1.0 when all first CHECK_BLOCKS blocks are mapped', () => {
+    const blocks = [
+      { lineIndices: [0, 1, 2, 3] },
+      { lineIndices: [4, 5, 6, 7] },
+      { lineIndices: [8, 9, 10, 11] },
+    ];
+    expect(computeCoverage(blocks, 3)).toBe(1.0);
+  });
+
+  it('returns 0.67 when 1 of 3 first blocks is NOT MAPPED', () => {
+    const blocks = [
+      { lineIndices: [] },
+      { lineIndices: [4, 5, 6, 7] },
+      { lineIndices: [8, 9, 10, 11] },
+    ];
+    expect(computeCoverage(blocks, 3)).toBeCloseTo(0.667, 2);
+  });
+
+  it('returns 0.33 when 2 of 3 first blocks are NOT MAPPED', () => {
+    const blocks = [
+      { lineIndices: [] },
+      { lineIndices: [] },
+      { lineIndices: [8, 9, 10, 11] },
+    ];
+    expect(computeCoverage(blocks, 3)).toBeCloseTo(0.333, 2);
+  });
+
+  it('returns 0 when all first blocks are NOT MAPPED', () => {
+    const blocks = [
+      { lineIndices: [] },
+      { lineIndices: [] },
+      { lineIndices: [] },
+    ];
+    expect(computeCoverage(blocks, 3)).toBe(0);
+  });
+
+  it('handles empty blocks array', () => {
+    expect(computeCoverage([], 3)).toBe(0);
+  });
+
+  it('handles blocks shorter than CHECK_BLOCKS', () => {
+    const blocks = [
+      { lineIndices: [0, 1] },
+    ];
+    expect(computeCoverage(blocks, 3)).toBeCloseTo(0.333, 2);
+  });
+
+  it('handles blocks with null/undefined lineIndices', () => {
+    const blocks = [
+      { lineIndices: undefined as any },
+      { lineIndices: [1, 2, 3] },
+      { lineIndices: [4, 5] },
+    ];
+    expect(computeCoverage(blocks, 3)).toBeCloseTo(0.667, 2);
+  });
+
+  it('triggers retry: 1/3 mapped (0.33) < 0.75 — should retry', () => {
+    const blocks = [
+      { lineIndices: [] },
+      { lineIndices: [4, 5, 6, 7] },
+      { lineIndices: [8, 9, 10, 11] },
+    ];
+    expect(computeCoverage(blocks, 3)).toBeLessThan(0.75);
+  });
+
+  it('does NOT trigger retry: 3/3 mapped (1.0) >= 0.75 — no retry', () => {
+    const blocks = [
+      { lineIndices: [0, 1, 2] },
+      { lineIndices: [3, 4, 5] },
+      { lineIndices: [6, 7, 8] },
+    ];
+    expect(computeCoverage(blocks, 3)).toBeGreaterThanOrEqual(0.75);
   });
 });

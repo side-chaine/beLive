@@ -561,6 +561,31 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                           console.log(`[TC-010] confidence=${(matchResult.confidence * 100).toFixed(1)}%`);
                           console.log(`[LyricsPaste] blockFirstLineSync: ${(performance.now() - _t0).toFixed(1)}ms`);
                         }
+
+                        // ═══ TC-096-01: Variant B — retry with next-best LRC if coverage low ═══
+                        // Coverage считаем по первым 3 блокам (Intro, Verse1, Chorus1).
+                        // Если < 75% — авто-выбор взял неправильную LRC версию.
+                        if (matchResult && matchResult.blocks.length >= 1 && pendingTrackTitle) {
+                          const { artist, track } = autoLyrics.parseTitleToArtistTrack(pendingTrackTitle);
+                          if (artist && track) {
+                            const better = await autoLyrics.tryBetterLrcVersion(
+                              pastedText.trim(),
+                              lrcResult,
+                              matchResult,
+                              artist,
+                              track,
+                            );
+                            if (better) {
+                              matchResult = better.matchResult;
+                              if (import.meta.env.DEV) {
+                                console.log(
+                                  `[TC-096] Version switch → id=${better.version.id} `
+                                  + `(${better.version.lineCount} lines, score=${better.version.score})`
+                                );
+                              }
+                            }
+                          }
+                        }
                       }
                     } catch (err) {
                       console.warn('[AutoLyrics] Auto-sync failed, falling back to manual:', err);

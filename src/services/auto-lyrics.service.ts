@@ -21,6 +21,8 @@ export interface LrcResult {
   rawSynced: string;
   fetchedAt: number;
   confidence?: number; // от последнего match
+  sourceId?: number;   // TC-096: lrclib version ID — для точного сравнения "та же версия?"
+  duration?: number;   // TC-096: track duration (requested), для fetchLrcVersions scoring
 }
 
 interface MatchResult {
@@ -1739,6 +1741,8 @@ async function _fetchLrclib(
       lines,
       rawSynced: best.syncedLyrics,
       fetchedAt: Date.now(),
+      sourceId: best.id,
+      duration: duration || undefined,
     });
 
     if (import.meta.env.DEV) {
@@ -1856,6 +1860,88 @@ export function parseLrcVersion(
 
   _parseLrcCache.set(cacheKey, result);
   return result;
+}
+
+/**
+ * TC-096-02: Compute coverage of first N structural blocks.
+ * Coverage = mapped blocks / CHECK_BLOCKS (default 3: Intro + Verse 1 + Chorus 1).
+ * Если Intro не маппится, coverage падает ниже порога → триггер re-selection.
+ */
+export function computeCoverage(
+  blocks: { lineIndices: number[] }[],
+  checkBlocks: number = 3,
+): number {
+  if (!blocks || blocks.length === 0) return 0;
+  const head = blocks.slice(0, checkBlocks);
+  const mapped = head.filter(b => b.lineIndices && b.lineIndices.length > 0).length;
+  return mapped / checkBlocks;
+}
+
+/**
+ * TC-096-02: Try next-best LRC version when coverage of first N blocks is low.
+ *
+ * MAX 1 RETRY. Сравнение версий по sourceId, не по сырому тексту.
+ * Длительность трека из кэша (реальная), fallback на LRC timestamp.
+ */
+export async function tryBetterLrcVersion(
+  geniusText: string,
+  currentLrc: {
+    rawSynced: string;
+    lines: { time: number }[];
+    sourceId?: number;
+    duration?: number;
+  },
+  currentMatchResult: { blocks: { lineIndices: number[] }[]; confidence: number },
+  artist: string,
+  track: string,
+): Promise<{ version: LrcVersion; matchResult: MatchResult } | null> {
+  const CHECK_BLOCKS = 3;
+  const COVERAGE_THRESHOLD = 0.75;
+  const MIN_CONFIDENCE = 0.5;
+
+  // 1. Если coverage уже хороший — retry не нужен
+  if (computeCoverage(currentMatchResult.blocks, CHECK_BLOCKS) >= COVERAGE_THRESHOLD) return null;
+
+  // 2. Guard: низкий confidence = плохой Genius, не LRC проблема
+  if (currentMatchResult.confidence < MIN_CONFIDENCE) return null;
+
+  // 3. Реальная длительность из кэша, fallback LRC timestamp
+  const trackDuration = currentLrc.duration
+    ?? (currentLrc.lines.length > 0 ? currentLrc.lines[currentLrc.lines.length - 1].time : 0);
+  const allVersions = await fetchLrcVersions(artist, track, trackDuration);
+  if (allVersions.length <= 1) return null;
+
+  // 4. Исключаем текущую версию по sourceId (не по сырому тексту)
+  // Если sourceId нет — трек загружен через fallback-путь (_fetchLrclibFallback),
+  // у нас нет ID для сравнения. Retry невозможен — не рискуем перевыбрать ту же версию.
+  if (!currentLrc.sourceId) {
+    if (import.meta.env.DEV) {
+      console.warn(
+        `[TC-096] LRC retry skipped: sourceId missing (fallback path). ` +
+        `Track "${artist} — ${track}" loaded via old API without version tracking.`
+      );
+    }
+    return null;
+  }
+  const nextBest = allVersions.find(v => v.id !== currentLrc.sourceId);
+  if (!nextBest) return null;
+
+  // 5. Пробуем следующую
+  const newResult = parseLrcVersion(nextBest, geniusText);
+  const newCoverage = computeCoverage(newResult.blocks, CHECK_BLOCKS);
+  const currentCoverage = computeCoverage(currentMatchResult.blocks, CHECK_BLOCKS);
+
+  // 6. Только если coverage реально улучшился
+  if (newCoverage <= currentCoverage) return null;
+
+  if (import.meta.env.DEV) {
+    console.log(
+      `[TC-096] Switched LRC: version #${currentLrc.sourceId} → #${nextBest.id} ` +
+      `(coverage: ${(currentCoverage * 100).toFixed(0)}% → ${(newCoverage * 100).toFixed(0)}%)`
+    );
+  }
+
+  return { version: nextBest, matchResult: newResult };
 }
 
 /** Fallback to old /api/get endpoint if search fails */
