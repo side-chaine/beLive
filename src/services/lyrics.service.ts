@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { migratePersistedBlock } from '../utils/block-migration';
+
 export class LyricsService {
   lyricsContainer: HTMLElement | null;
   containerElement: HTMLElement | null;
@@ -276,10 +278,13 @@ export class LyricsService {
         resolve();
         return;
       }
-      this.textBlocks = blocksData.map((block: any) => ({
-        ...block,
-        originalLineIndices: block.lineIndices ? [...block.lineIndices] : [],
-      }));
+      this.textBlocks = blocksData.map((block: any) => {
+        const migrated = migratePersistedBlock(block);
+        return {
+          ...migrated,
+          originalLineIndices: block.lineIndices ? [...block.lineIndices] : [],
+        };
+      });
       if (lyricsContent && typeof lyricsContent === 'string') {
         this.lyrics = lyricsContent.split('\n').map((line: string) => line.trim()).filter((line: string) => line.length > 0);
       } else {

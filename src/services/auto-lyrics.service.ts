@@ -7,6 +7,7 @@ import { parseTaggedLyrics } from '../blocks/parser/tagged-lyrics.parser';
 import type { DetectedBlock } from '../blocks/parser/tagged-lyrics.parser';
 import type { PersistedSyncMarker, PersistedTextBlock } from '../types/persistence.types';
 import { computeLocalStopWords } from '../utils/block-utils';
+import { TAXONOMY_VERSION } from '../blocks/parser/block-taxonomy';
 
 // ── Types ──────────────────────────────────────────────
 
@@ -342,8 +343,13 @@ export function blockFirstLineSync(
       lineIndices: [],
       type: block.type,
       contentLines: block.contentLines,
+      originalTag: block.originalTag,
+      instrument: block.instrument,
+      reviewRequired: block.reviewRequired,
+      taxonomyVersion: TAXONOMY_VERSION,
+      // @ts-expect-error — diagnostic field, not in PersistedTextBlock
       _expectedLines: contentLines.length,
-    } as any);
+    });
   }
   
   const totalExpectedLines = expectedLines.reduce((s, n) => s + n, 0);
@@ -1618,6 +1624,10 @@ export function detectedBlocksToPersistedBlocks(
       lineIndices,
       type: block.type,
       contentLines,
+      originalTag: block.originalTag,
+      instrument: block.instrument,
+      reviewRequired: block.reviewRequired,
+      taxonomyVersion: TAXONOMY_VERSION,
     });
   }
 

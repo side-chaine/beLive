@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { BlockType, EditingBlock, SavedBlock } from '../types';
 import { BLOCK_TYPE_CONFIG } from '../types';
 import { parseTaggedLyrics } from '../parser/tagged-lyrics.parser';
-import { resolveBlockAlias } from '../../blocks/parser/block-taxonomy';
+import { resolveBlockAlias, TAXONOMY_VERSION } from '../../blocks/parser/block-taxonomy';
 
 /* ═══════════════════════════════════════════
    Block Editor Store — Sprint 36
@@ -350,6 +350,8 @@ export const useBlockEditorStore = create<BlockEditorState>((set, get) => ({
           name,
           lineIndices: b.lineIndices,
           type: b.type,
+          instrument: b.instrument,
+          taxonomyVersion: TAXONOMY_VERSION,
         };
       });
 

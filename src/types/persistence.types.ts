@@ -13,6 +13,13 @@ export interface PersistedTextBlock {
   type?: string;
   originalLineIndices?: number[];
   contentLines?: string[];  // TC-010: Display text for WagonTrain
+  // ── Taxonomy Gate B ──
+  originalTag?: string;        // оригинальный тег Genius ("Guitar Solo")
+  instrument?: string;         // для Solo: 'guitar', 'piano', 'drums'...
+  variant?: string;            // 'coda', 'spoken'...
+  delivery?: string;           // 'sing', 'rap', 'spoken', 'scream', 'whisper'
+  reviewRequired?: boolean;
+  taxonomyVersion?: number;    // для lazy migration
 }
 
 /**

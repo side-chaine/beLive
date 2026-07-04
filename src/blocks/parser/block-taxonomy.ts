@@ -30,6 +30,9 @@ export interface AliasEntry {
   variant?: string;       // 'coda' для Outro, 'spoken' для Intro...
 }
 
+/** Текущая версия taxonomy. Инкрементировать при изменении схемы полей блока. */
+export const TAXONOMY_VERSION = 1;
+
 export const ROLE_MAP: Record<BlockType, BlockRole> = {
   intro: 'core',
   verse: 'core',
