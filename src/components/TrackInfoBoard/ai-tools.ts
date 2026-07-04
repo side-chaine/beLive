@@ -16,6 +16,7 @@ import { useStemStore } from '../../stem/stem.store';
 import { usePracticeStore } from '../../stores/practice-session.store';
 import { getBlockTimeRange } from '../../utils/block-time-range';
 import { getStructureFormula } from '../../utils/structure-formula';
+import { BLOCK_TYPE_NAMES } from '../../blocks/parser/block-taxonomy';
 
 /* ═══ Interfaces ═══ */
 export interface ToolCall {
@@ -612,11 +613,7 @@ async function executeLoopSection(
     document.dispatchEvent(new CustomEvent('taxonomy-seek-mismatch', {
       detail: { sectionType, tool: 'loop_section', occurrence },
     }));
-    const ruNames: Record<string, string> = {
-      intro: 'Вступление', verse: 'Куплет', prechorus: 'Пре-хорус',
-      chorus: 'Припев', bridge: 'Бридж', interlude: 'Интерлюдия', outro: 'Заключение',
-    };
-    const label = ruNames[sectionType] || sectionType;
+    const label = BLOCK_TYPE_NAMES[sectionType] || sectionType;
     return {
       tool: 'loop_section',
       success: false,
@@ -634,11 +631,7 @@ async function executeLoopSection(
     } else {
       loopStore.toggleBlock(target);
     }
-    const ruNames: Record<string, string> = {
-      intro: 'Вступление', verse: 'Куплет', prechorus: 'Пре-хорус',
-      chorus: 'Припев', bridge: 'Бридж', interlude: 'Интерлюдия', outro: 'Заключение',
-    };
-    const label = ruNames[sectionType] || sectionType;
+    const label = BLOCK_TYPE_NAMES[sectionType] || sectionType;
     return { tool: 'loop_section', success: true, message: `${label} на повторе` };
   }
 
@@ -654,11 +647,7 @@ async function executeLoopSection(
     loopStore.toggleBlock(target);
   }
 
-  const ruNames: Record<string, string> = {
-    intro: 'Вступление', verse: 'Куплет', prechorus: 'Пре-хорус',
-    chorus: 'Припев', bridge: 'Бридж', interlude: 'Интерлюдия', outro: 'Заключение',
-  };
-  const label = ruNames[sectionType] || sectionType;
+  const label = BLOCK_TYPE_NAMES[sectionType] || sectionType;
   return { tool: 'loop_section', success: true, message: `${label} на повторе` };
 }
 

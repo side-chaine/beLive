@@ -62,7 +62,7 @@ export const BLOCK_TYPE_CONFIG: BlockTypeConfigEntry[] = [
   { type: 'drop',         label: 'Drop',        labelRu: 'Дроп',          color: '#FF1744', cssVar: '--bl-block-drop',       role: 'energy' },
   { type: 'breakdown',    label: 'Breakdown',   labelRu: 'Брейкдаун',     color: '#455A64', cssVar: '--bl-block-breakdown',  role: 'energy' },
   // Speech
-  { type: 'spoken',       label: 'Spoken',      labelRu: 'Говорят',       color: '#CFD8DC', cssVar: '--bl-block-spoken',     role: 'speech' },
+  { type: 'spoken',       label: 'Spoken',      labelRu: 'Речь',          color: '#CFD8DC', cssVar: '--bl-block-spoken',     role: 'speech' },
   { type: 'rap',          label: 'Rap',         labelRu: 'Рэп',           color: '#64DD17', cssVar: '--bl-block-rap',        role: 'speech' },
   // Ending
   { type: 'outro',        label: 'Outro',       labelRu: 'Аутро',         color: '#00BCD4', cssVar: '--bl-block-outro',      role: 'ending' },

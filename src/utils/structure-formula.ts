@@ -8,9 +8,18 @@ const BLOCK_TYPE_LETTER: Record<string, string> = {
   verse: 'A',
   prechorus: 'P',
   chorus: 'B',
+  postchorus: 'b',
+  hook: 'H',
   bridge: 'C',
   interlude: 'L',
   outro: 'O',
+  solo: 'S',
+  instrumental: 'N',
+  build: 'U',
+  drop: 'D',
+  breakdown: 'K',
+  spoken: 'W',
+  rap: 'R',
   unknown: '?',
 };
 

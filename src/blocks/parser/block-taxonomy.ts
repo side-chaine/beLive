@@ -185,3 +185,32 @@ export function extractInstrument(tag: string): string | undefined {
   const alias = BLOCK_ALIAS_MAP[normalized];
   return alias?.instrument;
 }
+
+/** Русские названия типов блоков — SSOT */
+export const BLOCK_TYPE_NAMES: Record<string, string> = {
+  intro: 'Вступление',
+  verse: 'Куплет',
+  prechorus: 'Предприпев',
+  chorus: 'Припев',
+  postchorus: 'Постприпев',
+  hook: 'Хук',
+  bridge: 'Бридж',
+  interlude: 'Интерлюдия',
+  solo: 'Соло',
+  instrumental: 'Инструментал',
+  build: 'Билд',
+  drop: 'Дроп',
+  breakdown: 'Брейкдаун',
+  spoken: 'Речь',
+  rap: 'Рэп',
+  outro: 'Аутро',
+  unknown: '???',
+};
+
+/** Построить русскую структурную формулу: "Куплет → Припев → Куплет → ..." */
+export function getRussianStructureFormula(
+  blocks: { type: string }[] | null,
+): string {
+  if (!blocks || blocks.length === 0) return '';
+  return blocks.map(b => BLOCK_TYPE_NAMES[b.type] || b.type).join(' → ');
+}

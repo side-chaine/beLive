@@ -234,23 +234,10 @@ export function getScenario(id: PracticeScenarioId): PracticeScenario | undefine
   return SCENARIOS[id];
 }
 
-/** Русские названия типов блоков — единый маппинг */
-export const BLOCK_TYPE_NAMES: Record<string, string> = {
-  intro: 'Вступление',
-  verse: 'Куплет',
-  prechorus: 'Пре-хорус',
-  chorus: 'Припев',
-  bridge: 'Бридж',
-  interlude: 'Интерлюдия',
-  outro: 'Заключение',
-  unknown: '???',
-};
-
-/** Построить русскую структурную формулу */
-export function getRussianStructureFormula(blocks: { type: string }[] | null): string {
-  if (!blocks || blocks.length === 0) return '';
-  return blocks.map(b => BLOCK_TYPE_NAMES[b.type] || b.type).join(' → ');
-}
+export {
+  BLOCK_TYPE_NAMES,
+  getRussianStructureFormula,
+} from '../blocks/parser/block-taxonomy';
 
 /** Сценарии которые РЕАЛИЗОВАНЫ и доступны в runtime */
 export const AVAILABLE_SCENARIO_IDS: readonly PracticeScenarioId[] = [
