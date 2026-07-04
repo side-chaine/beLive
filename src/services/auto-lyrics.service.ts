@@ -530,6 +530,110 @@ export function blockFirstLineSync(
   } else {
     console.warn('[TC-122] GSS-DP: no resolved chain found — all blocks fall back to Pass 2');
   }
+
+  // ═══ CGP (Containment Guard Point) — Pass 2.5 Quality Control ═══
+  // Проверяет границы блоков после DP, ДО Section 4 и Pass 3.
+  // Корректирует _lrcStartIdx для блоков с weak containment (первая LRC-строка
+  // не совпадает с первой Genius-строкой). Логи только в DEV mode.
+  const _GENIUS_FIRST_LINES: string[] = [];
+  for (let bi = 0; bi < N; bi++) {
+    const gl = (tagResult.blocks[bi]?.contentLines ?? []).filter((l: string) => l.trim());
+    _GENIUS_FIRST_LINES.push(gl.length > 0 ? gl[0] : '');
+  }
+
+  function _containmentScore(geniusLine: string, lrcLine: string): number {
+    const gNorm = _normalizeText(geniusLine);
+    const lNorm = _normalizeText(lrcLine);
+    const gWords = gNorm.split(/\s+/).filter(w => w.length > 2);
+    const lWords = new Set(lNorm.split(/\s+/).filter(w => w.length > 2));
+    if (gWords.length === 0) return 1;
+    let match = 0;
+    for (const w of gWords) if (lWords.has(w)) match++;
+    return match / gWords.length;
+  }
+
+  if (import.meta.env.DEV) console.log('╔═══ CGP ═══');
+  for (let bi = 0; bi < N; bi++) {
+    const currentIdx = _lrcStartIdx[bi];
+    const currentScore = _chosenMatchScore[bi];
+    if (currentIdx == null || currentIdx < 0) {
+      if (import.meta.env.DEV) console.log(`  Block ${bi} [${tagResult.blocks[bi]?.type ?? '?'}]: NOT MAPPED (skip)`);
+      continue;
+    }
+
+    // CGP only checks blocks where DP was highly confident (rawScore ≈ 1.0).
+    // Low rawScore means DP couldn't find a clean match — don't override.
+    // §7 CANDIDATE: порог 0.9 не откалиброван — выведен из зазора между Outro (1.0) и MJ Intro (0.667).
+    // Требует grid search (27 комбинаций) вместе с MIN_CANDIDATE_SCORE, SIGMA, UNIQUENESS_POWER.
+    if (currentScore != null && currentScore < 0.9) {
+      if (import.meta.env.DEV) console.log(`  Block ${bi} [${tagResult.blocks[bi]?.type ?? '?'}] "${tagResult.blocks[bi]?.label ?? ''}": low confidence (skip)`);
+      continue;
+    }
+
+    const geniusFirst = _GENIUS_FIRST_LINES[bi];
+    if (!geniusFirst) {
+      if (import.meta.env.DEV) console.log(`  Block ${bi} [${tagResult.blocks[bi]?.type ?? '?'}]: empty Genius (skip)`);
+      continue;
+    }
+
+    const currentLrcLine = displayLines[currentIdx];
+    const contain = _containmentScore(geniusFirst, currentLrcLine);
+    const isLowContain = contain < 0.6;
+
+    // Search forward by positional scan over displayLines (FLCG/BVP spec: линейный проход, break на первом containment≥0.8)
+    // НЕ используем allCandidates (top-K, upc-сортировка — может пропустить ближайший правильный кандидат)
+    // Search bound: до следующего MAPPED блока (чтобы не украсть его первую строку)
+    let nextBlockStart = displayLines.length;
+    for (let nb = bi + 1; nb < N; nb++) {
+      const ns = _lrcStartIdx[nb];
+      if (ns != null && ns >= 0 && ns > currentIdx) {
+        nextBlockStart = ns;
+        break;
+      }
+    }
+    const expectedLines = (tagResult.blocks[bi]?.contentLines ?? []).filter((l: string) => l.trim()).length;
+    const maxSearchIdx = Math.min(currentIdx + 1 + Math.max(4, expectedLines * 2), nextBlockStart);
+    let bestForwardIdx = -1;
+    let bestForwardContain = 0;
+    let bestForwardRawScore = 0;
+    for (let idx = currentIdx + 1; idx < maxSearchIdx; idx++) {
+      const candLrcLine = displayLines[idx];
+      if (!candLrcLine?.trim()) continue;
+      const candContain = _containmentScore(geniusFirst, candLrcLine);
+      if (candContain >= 0.8) {
+        // First adequate match — stop immediately (FLCG spec: "break on first containment ≥ 0.8")
+        bestForwardIdx = idx;
+        bestForwardContain = candContain;
+        bestForwardRawScore = candContain;
+        break;
+      }
+      if (candContain > bestForwardContain) {
+        bestForwardContain = candContain;
+        bestForwardIdx = idx;
+        bestForwardRawScore = candContain;
+      }
+    }
+
+    // CGP corrects when: (a) first line containment is weak, AND (b) a better forward candidate exists
+    const wouldCorrect = isLowContain && bestForwardIdx >= 0 && bestForwardContain >= 0.6;
+
+    if (wouldCorrect) {
+      _lrcStartIdx[bi] = bestForwardIdx;
+      _chosenMatchScore[bi] = bestForwardRawScore;
+    }
+
+    if (import.meta.env.DEV) {
+      console.log(
+        `  Block ${bi} [${tagResult.blocks[bi]?.type ?? '?'}] "${tagResult.blocks[bi]?.label ?? ''}":\n` +
+        `    Genius first line: "${geniusFirst.substring(0, 60)}"\n` +
+        `    Current LRC[${currentIdx}]="${currentLrcLine.substring(0, 60)}"\n` +
+        `    currentScore=${currentScore != null ? currentScore.toFixed(3) : 'N/A'}  containment=${contain.toFixed(3)}\n` +
+        `    forward search: ${bestForwardIdx >= 0 ? `LRC[${bestForwardIdx}]="${displayLines[bestForwardIdx].substring(0, 60)}" contain=${bestForwardContain.toFixed(3)} rawScore=${bestForwardRawScore.toFixed(3)}` : 'no candidate'}\n` +
+        `    → ${wouldCorrect ? '🟡 CORRECTED: LRC[' + currentIdx + ']→LRC[' + bestForwardIdx + ']' : '✅ no-op'}`
+      );
+    }
+  }
+  if (import.meta.env.DEV) console.log('╚═══ END CGP ═══');
   
   // ── Применяем _lrcStartIdx / _matchScore к blocks[] ──
   for (let bi = 0; bi < N; bi++) {
@@ -812,12 +916,13 @@ export function blockFirstLineSync(
     return { loBi, hiBi };
   }
 
-  // TC-142: Precompute word sets для ВСЕХ блоков (включая NOT MAPPED)
-  // Используем Genius contentLines, не LRC — чтобы NOT MAPPED Chorus мог
-  // получить orphan "All I wanna say" по текстовому совпадению.
+  // TC-142 + TC-152: Precompute word sets для ВСЕХ блоков (включая NOT MAPPED).
+  // Читаем ОРИГИНАЛЬНЫЙ Genius-текст из tagResult.blocks (НЕ blocks[b].contentLines,
+  // который Section 4 строка 599 уже перезаписал на LRC-текст).
+  // Без этого orphan "Never say goodbye" не находит Chorus 1.
   const blockWordSets: Map<number, Set<string>> = new Map();
   for (let b = 0; b < blocks.length; b++) {
-    const contentLines = (blocks[b].contentLines ?? []).filter((l: string) => l.trim());
+    const contentLines = (tagResult.blocks[b]?.contentLines ?? []).filter((l: string) => l.trim());
     if (contentLines.length === 0) continue;
     const fpWords = new Set<string>();
     for (const cl of contentLines) {
@@ -850,14 +955,49 @@ export function blockFirstLineSync(
         if (overlap > bestOverlap) {
           bestOverlap = overlap;
           bestBlock = b;
+        } else if (overlap === bestOverlap && overlap > 0 && b === lastValidBlockIdx) {
+          // TC-153: при равном overlap предпочесть lastValidBlockIdx
+          // (принципиально, а не "первый по порядку итерации")
+          bestBlock = b;
         }
       }
 
       if (bestBlock >= 0) {
+        // ═══ TC-150-RT: Orphan routing trace ═══
+        if (import.meta.env.DEV && bestBlock !== lastValidBlockIdx) {
+          console.log(
+            `[TC-150-RT] Orphan LRC[${i}]="${displayLines[i].substring(0, 50)}" ` +
+            `window=[${loBi}..${hiBi}] ` +
+            `contentMatch→bi=${bestBlock} ["${blocks[bestBlock].type}" "${blocks[bestBlock].name}"] ` +
+            `overlap=${bestOverlap} ` +
+            `\tfallback=${lastValidBlockIdx} ["${lastValidBlockIdx >= 0 ? blocks[lastValidBlockIdx].type + ' ' + blocks[lastValidBlockIdx].name : 'none'}"]`
+          );
+        } else if (import.meta.env.DEV) {
+          console.log(
+            `[TC-150-RT] Orphan LRC[${i}]="${displayLines[i].substring(0, 50)}" ` +
+            `→ bi=${bestBlock} (${bestBlock === lastValidBlockIdx ? 'fallback' : 'content'}) overlap=${bestOverlap}`
+          );
+        }
         blocks[bestBlock].lineIndices.push(i);
         indexToBlockMap.set(i, bestBlock);
         continue;
       }
+
+      // DEV: Log orphan with content words but no match
+      if (import.meta.env.DEV) {
+        console.log(
+          `[TC-150-RT] Orphan LRC[${i}]="${displayLines[i].substring(0, 50)}" ` +
+          `window=[${loBi}..${hiBi}] → NO_CONTENT_MATCH (lastValidBlockIdx=${lastValidBlockIdx})`
+        );
+      }
+    }
+
+    // DEV: Log filler orphan (no words → fallback to previous)
+    if (import.meta.env.DEV) {
+      console.log(
+        `[TC-150-RT] Orphan LRC[${i}]="${displayLines[i].substring(0, 50)}" ` +
+        `→ FILTER (no content words) lastValidBlockIdx=${lastValidBlockIdx}`
+      );
     }
 
     // Fallback: attach to previous mapped block

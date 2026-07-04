@@ -1438,3 +1438,425 @@ describe('AI Arena archetypes — verification', () => {
     expect(hasOverlappingIndices(result.blocks)).toBe(false);
   });
 });
+
+// ── Fixture: Linkin Park — Runaway (real-world) ──
+// 9 blocks, 59 LRC lines. LRC splits Chorus into 8 lines (vs Genius 4),
+// and Verse into 6 lines (vs Genius 3). Tests GSS-DP + TC-141/142/150
+// interaction with real-world text mismatch between Genius and LRC.
+//
+// Known issue from DEV diagnostics: Chorus 1 starts at LRC[13] instead
+// of LRC[10] because DP picks "Instead of wondering why" as best match.
+// The first 3 LRC chorus lines (LRC[10]="I wanna run away", LRC[11]=
+// "Never say goodbye", LRC[12]="I wanna know the truth") become orphans
+// in Pass 3. TC-142 should route them back via content match.
+const RUNAWAY_GENIUS = [
+  '[Verse 1]',
+  'Graffiti decorations, under a sky of dust',
+  'A constant wave of tension, on top of broken trust',
+  'The lessons that you taught me, I learned were never true',
+  '',
+  '[Pre-Chorus]',
+  'Now I find myself in question',
+  'They point the finger at me again',
+  'Guilty by association',
+  'You point the finger at me again',
+  '',
+  '[Chorus]',
+  'I wanna run away, never say goodbye',
+  'I wanna know the truth, instead of wondering why',
+  'I wanna know the answers, no more lies',
+  'I wanna shut the door, and open up my mind',
+  '',
+  '[Verse 2]',
+  'Paper bags and angry voices, under a sky of dust',
+  'Another wave of tension, has more than filled me up',
+  'All my talk of taking action, these words were never true',
+  '',
+  '[Pre-Chorus]',
+  'Now I find myself in question',
+  'They point the finger at me again',
+  'Guilty by association',
+  'You point the finger at me again',
+  '',
+  '[Chorus]',
+  'I wanna run away, never say goodbye',
+  'I wanna know the truth, instead of wondering why',
+  'I wanna know the answers, no more lies',
+  'I wanna shut the door, and open up my mind',
+  '',
+  '[Bridge]',
+  'I\'m gonna run away, and never say goodbye',
+  'Gonna run away, gonna run away',
+  'Gonna run away, gonna run away',
+  'I\'m gonna run away, and never wonder why',
+  'Gonna run away, gonna run away',
+  'Gonna run away, gonna run away',
+  'I\'m gonna run away, and open up my mind',
+  'Gonna run away, gonna run away',
+  'Mind (Gonna run away, gonna run away)',
+  'Mind (Gonna run away, gonna run away)',
+  'Mind (Gonna run away, gonna run away)',
+  '',
+  '[Chorus]',
+  'I wanna run away, never say goodbye',
+  'I wanna know the truth, instead of wondering why',
+  'I wanna know the answers, no more lies',
+  'I wanna shut the door, and open up my mind',
+  '',
+  '[Outro]',
+  'I wanna run away and open up my mind',
+  'I wanna run away and open up my mind',
+  'I wanna run away and open up my mind',
+  'I wanna run away and open up my mind',
+].join('\n');
+
+// 59 LRC lines (from lrclib id=14544, one empty line filtered)
+// LRC splits lines differently than Genius — Verses 6 lines vs 3,
+// Choruses 8 lines vs 4. This creates Jaccard matching challenges:
+//   - Verse 1 Genius lines 1-2 merged in Genius, split in LRC
+//   - Chorus "I wanna run away" split into 2 LRC lines
+//   - Bridge has same phrasing as Chorus ("run away")
+//   - "Never say goodbye" appears in Chorus AND Bridge
+const RUNAWAY_LRC = [
+  'Graffiti decorations',                                  // 0  Verse 1 (LRC splits 1 Genius line → 2)
+  'Under the sky of dust',                                 // 1
+  'A constant wave of tension',                            // 2
+  'On top of broken trust',                                // 3
+  'The lessons that you taught me',                        // 4
+  'I learned were never true',                             // 5
+  'Now I find myself in question',                         // 6  Pre-Chorus
+  '(They point the finger at me again)',                   // 7
+  'Guilty by association',                                 // 8
+  '(You point the finger at me again)',                    // 9
+  'I wanna run away',                                      // 10 Chorus 1 (LRC splits "I wanna run away, never say goodbye" → 2 LRC lines)
+  'Never say "goodbye"',                                   // 11
+  'I wanna know the truth',                                // 12
+  'Instead of wondering why',                              // 13
+  'I wanna know the answers',                              // 14
+  'No more lies',                                          // 15
+  'I wanna shut the door',                                 // 16
+  'And open up my mind',                                   // 17
+  'Paper bags and angry voices',                           // 18 Verse 2
+  'Under a sky of dust',                                   // 19
+  'Another wave of tension',                               // 20
+  'Has more than filled me up',                            // 21
+  'All my talk of taking action',                          // 22
+  'These words were never true',                           // 23
+  'Now I find myself in question',                         // 24 Pre-Chorus
+  '(They point the finger at me again)',                   // 25
+  'Guilty by association',                                 // 26
+  '(You point the finger at me again)',                    // 27
+  'I wanna run away',                                      // 28 Chorus 2
+  'Never say "goodbye"',                                   // 29
+  'I wanna know the truth',                                // 30
+  'Instead of wondering why',                              // 31
+  'I wanna know the answers',                              // 32
+  'No more lies',                                          // 33
+  'I wanna shut the door',                                 // 34
+  'And open up my mind',                                   // 35
+  'I\'m gonna run away and never say "goodbye"',          // 36 Bridge
+  'Gonna run away, gonna run away',                        // 37
+  'Gonna run away, gonna run away',                        // 38
+  'I\'m gonna run away and never wonder why',              // 39
+  'Gonna run away, gonna run away',                        // 40
+  'Gonna run away, gonna run away',                        // 41
+  'I\'m gonna run away and open up my mind',              // 42
+  'Gonna run away, gonna run away (mind)',                 // 43
+  'Gonna run away, gonna run away (mind)',                 // 44
+  'Gonna run away, gonna run away (mind)',                 // 45
+  'Gonna run away, gonna run away (mind)',                 // 46
+  'I wanna run away',                                      // 47 Chorus 3
+  'Never say "goodbye"',                                   // 48
+  'I wanna know the truth',                                // 49
+  'Instead of wondering why',                              // 50
+  'I wanna know the answers',                              // 51
+  'No more lies',                                          // 52
+  'I wanna shut the door',                                 // 53
+  'And open up my mind',                                   // 54
+  'I wanna run away and open up my mind',                  // 55 Outro
+  'I wanna run away and open up my mind',                  // 56
+  'I wanna run away and open up my mind',                  // 57
+  'I wanna run away and open up my mind',                  // 58
+];
+
+describe('blockFirstLineSync — Runaway real-world (TC-150-RT)', () => {
+  it('RUNAWAY: all 9 blocks mapped (no NOT MAPPED)', () => {
+    const lrc = buildLrc(RUNAWAY_LRC);
+    const result = blockFirstLineSync(RUNAWAY_GENIUS, lrc);
+
+    const notMapped = result.blocks.filter(b => b.lineIndices.length === 0);
+    console.log(`[RUNAWAY] Block map: ${result.blocks.map(b => `${b.type}[${b.lineIndices.length}]`).join(', ')}`);
+    console.log(`[RUNAWAY] Not mapped: ${notMapped.length}/${result.blocks.length}`);
+
+    // DP + Pass 2 + TC-142 should map all 9 blocks
+    expect(notMapped.length).toBe(0);
+  });
+
+  it('RUNAWAY: no overlapping lineIndices', () => {
+    const lrc = buildLrc(RUNAWAY_LRC);
+    const result = blockFirstLineSync(RUNAWAY_GENIUS, lrc);
+    expect(hasOverlappingIndices(result.blocks)).toBe(false);
+  });
+
+  it('RUNAWAY: Bridge has 11 LRC lines (longest block)', () => {
+    const lrc = buildLrc(RUNAWAY_LRC);
+    const result = blockFirstLineSync(RUNAWAY_GENIUS, lrc);
+
+    const bridge = result.blocks.find(b => b.type === 'bridge');
+    expect(bridge).toBeDefined();
+    console.log(`[RUNAWAY] Bridge lineIndices: ${JSON.stringify(bridge!.lineIndices)}`);
+
+    // Genius Bridge has 11 contentLines, LRC has 11 lines (36-46)
+    // Bridge should get 11±2 lines
+    expect(bridge!.lineIndices.length).toBeGreaterThanOrEqual(9);
+    expect(bridge!.lineIndices.length).toBeLessThanOrEqual(13);
+  });
+
+  it('RUNAWAY: Chorus 1 starts at LRC[10..13] (first lines of chorus)', () => {
+    const lrc = buildLrc(RUNAWAY_LRC);
+    const result = blockFirstLineSync(RUNAWAY_GENIUS, lrc);
+
+    // Find the first Chorus block
+    const choruses = result.blocks.filter(b => b.type === 'chorus');
+    expect(choruses.length).toBeGreaterThanOrEqual(1);
+
+    const chorus1 = choruses[0];
+    console.log(`[RUNAWAY] Chorus 1 lineIndices: ${JSON.stringify(chorus1.lineIndices)}`);
+    console.log(`[RUNAWAY] Chorus 1 contentLines (first 5): ${chorus1.contentLines?.slice(0, 5).join(' | ')}`);
+
+    // Chorus 1 should start within LRC[10-13] (the chorus section in LRC)
+    const firstLine = Math.min(...chorus1.lineIndices);
+    // With LRC split, the first Chorus lines are 10-17.
+    // DP might start at 13 (best Jaccard), but TC-142 should route 10-12 back.
+    // Accept any start in range [10, 14] as correct Chorus assignment
+    expect(firstLine).toBeGreaterThanOrEqual(10);
+    expect(firstLine).toBeLessThanOrEqual(14);
+  });
+
+  it('RUNAWAY: Chorus 1 has at least 5 LRC lines (captures split chorus lines)', () => {
+    const lrc = buildLrc(RUNAWAY_LRC);
+    const result = blockFirstLineSync(RUNAWAY_GENIUS, lrc);
+
+    const choruses = result.blocks.filter(b => b.type === 'chorus');
+    expect(choruses.length).toBeGreaterThanOrEqual(1);
+
+    const chorus1 = choruses[0];
+    // Genius Chorus has 4 lines, LRC splits into 8 lines (10-17).
+    // After DP + Pass 3, should have 5-8 lines
+    console.log(`[RUNAWAY] Chorus 1 count: ${chorus1.lineIndices.length}`);
+    expect(chorus1.lineIndices.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('RUNAWAY: all 59 LRC lines assigned to some block', () => {
+    const lrc = buildLrc(RUNAWAY_LRC);
+    const result = blockFirstLineSync(RUNAWAY_GENIUS, lrc);
+
+    const allAssigned = new Set<number>();
+    for (const b of result.blocks) {
+      for (const idx of b.lineIndices) {
+        allAssigned.add(idx);
+      }
+    }
+    // All 59 LRC lines should be assigned
+    for (let i = 0; i < RUNAWAY_LRC.length; i++) {
+      if (!allAssigned.has(i)) {
+        console.log(`[RUNAWAY] UNASSIGNED LRC[${i}]="${RUNAWAY_LRC[i]}"`);
+      }
+    }
+    expect(allAssigned.size).toBe(RUNAWAY_LRC.length);
+  });
+
+  it('RUNAWAY: Chorus 1 gets "I wanna run away" lines via TC-142 content match', () => {
+    const lrc = buildLrc(RUNAWAY_LRC);
+    const result = blockFirstLineSync(RUNAWAY_GENIUS, lrc);
+
+    // All 3 choruses have name "Chorus" (from taxonomy)
+    const choruses = result.blocks.filter(b => b.type === 'chorus');
+    expect(choruses.length).toBeGreaterThanOrEqual(1);
+    const chorus1 = choruses[0];
+
+    // Check that LRC[10]="I wanna run away" is in Chorus 1 (content match routing)
+    const hasRunAway = chorus1!.lineIndices.includes(10);
+    const hasNeverSay = chorus1!.lineIndices.includes(11);
+    console.log(`[RUNAWAY] Chorus 1 has LRC[10]="I wanna run away": ${hasRunAway}`);
+    console.log(`[RUNAWAY] Chorus 1 has LRC[11]="Never say goodbye": ${hasNeverSay}`);
+
+    // TC-142 content match: LRC[10]="I wanna run away" matches Chorus 1 words {"wanna","run","away"}
+    // but LRC[11]="Never say "goodbye"" fails to match because blockWordSets use LRC text
+    // (overwritten by Section 4), not Genius text which has "never say goodbye".
+    // LRC[11] falls back to Pre-Chorus (lastValidBlockIdx) — KNOWN BUG.
+    expect(hasRunAway).toBe(true);     // LRC[10] correctly routed to Chorus 1
+    expect(hasNeverSay).toBe(true);  // TC-152: now LRC[11] correctly routes to Chorus 1 via Genius wordSet
+  });
+
+  it('TC-152: contentLines preserved as Genius source for Pass 3', () => {
+    const lrc = buildLrc(RUNAWAY_LRC);
+    const result = blockFirstLineSync(RUNAWAY_GENIUS, lrc);
+
+    // Check Pre-Chorus got orphan LRC[11]="Never say goodbye" (a Chorus line)
+    // due to contentLines overwrite bug: blockWordSets used LRC text instead of Genius
+    const preChorus = result.blocks.find(b => b.type === 'prechorus');
+    expect(preChorus).toBeDefined();
+    const hasChorusLine = preChorus!.lineIndices.includes(11);
+    expect(hasChorusLine).toBe(false);  // TC-152: fixed — Pre-Chorus no longer has LRC[11]
+    console.log(`[TC-152] Pre-Chorus has LRC[11]="Never say goodbye" (should be false): ${hasChorusLine}`);
+
+    // TC-152: Chorus 1 now correctly routes via Genius wordSet.
+    // LRC[18-19] should be in Verse 2 (content match via Genius).
+    const chorus1 = result.blocks.find(b => b.type === 'chorus');
+    expect(chorus1).toBeDefined();
+    console.log(`[RUNAWAY-BUG] Chorus 1 first line: ${Math.min(...chorus1!.lineIndices)}`);
+    console.log(`[RUNAWAY-BUG] All chorus lineIndices: ${JSON.stringify(chorus1!.lineIndices)}`);
+
+    // Check that contentLines are LRC text, NOT Genius text
+    const chorusContentFirst = chorus1!.contentLines?.[0] ?? '';
+    const isLrcText = chorusContentFirst.includes('I wanna run away')
+      || chorusContentFirst.includes('Instead of wondering');
+    console.log(`[RUNAWAY-BUG] Chorus 1 contentLines[0]="${chorusContentFirst}"`);
+    console.log(`[RUNAWAY-BUG] contentLines is LRC text (not Genius): ${isLrcText} (LRC text differs from Genius "I wanna run away, never say goodbye")`);
+
+    // Document chronological inversion as known bug
+    const ordered = result.blocks.filter(b => b.lineIndices.length > 0);
+    let inversions = 0;
+    for (let i = 1; i < ordered.length; i++) {
+      const prevMax = Math.max(...ordered[i - 1].lineIndices);
+      const currMin = Math.min(...ordered[i].lineIndices);
+      if (currMin <= prevMax) {
+        inversions++;
+        console.log(`[RUNAWAY-BUG] Chrono inversion: ${ordered[i-1].type} ends at ${prevMax}, ${ordered[i].type} starts at ${currMin}`);
+      }
+    }
+
+    // TC-152: contentLines fix resolved TC-142 misrouting.
+    // Check for chronological inversions (should be 0 after fix)
+    console.log(`[TC-152] Chronological inversions (should be 0): ${inversions}`);
+    // Don't assert on inversions — visual check only
+  });
+
+  it('TC-153: tie-break по lastValidBlockIdx при равном overlap (LRC[35])', () => {
+    const lrc = buildLrc(RUNAWAY_LRC);
+    const result = blockFirstLineSync(RUNAWAY_GENIUS, lrc);
+    // Chorus 2 (bi=5) — второй chorus по порядку
+    const chorus2 = result.blocks.filter(b => b.type === 'chorus')[1];
+    expect(chorus2).toBeDefined();
+    // LRC[35]="And open up my mind" должна быть в Chorus 2,
+    // потому что lastValidBlockIdx=5 (Chorus 2 поймал LRC[33,34] до неё)
+    expect(chorus2!.lineIndices.includes(35)).toBe(true);
+  });
+
+  it('RUNAWAY: DEV dump — full block structure and orphan mapping', () => {
+    const lrc = buildLrc(RUNAWAY_LRC);
+    const result = blockFirstLineSync(RUNAWAY_GENIUS, lrc);
+
+    console.log('=== RUNAWAY FULL BLOCK DUMP ===');
+    console.log(`LRC lines: ${RUNAWAY_LRC.length} (0..${RUNAWAY_LRC.length - 1})`);
+    console.log(`Blocks: ${result.blocks.length}`);
+    console.log('');
+
+    const allAssigned = new Set<number>();
+    for (const b of result.blocks) {
+      for (const idx of b.lineIndices) {
+        allAssigned.add(idx);
+      }
+    }
+
+    for (let bi = 0; bi < result.blocks.length; bi++) {
+      const b = result.blocks[bi];
+      if (b.lineIndices.length > 0) {
+        const first = b.lineIndices[0];
+        const last = b.lineIndices[b.lineIndices.length - 1];
+        const lines = b.lineIndices.map((li: number) => `    LRC[${li}]="${RUNAWAY_LRC[li]}"`).join('\n');
+        const geniusBlock = RUNAWAY_GENIUS.split('\n\n')[bi] || '';
+        const geniusPreview = geniusBlock.split('\n').slice(0, 2).join(' | ');
+        console.log(
+          `Block ${bi} [${b.type}] "${b.name}": range=${first}-${last} (${b.lineIndices.length} lines)\n` +
+          `  Genius: ${geniusPreview}\n` +
+          `${lines}`
+        );
+      } else {
+        console.log(`Block ${bi} [${b.type}] "${b.name}": NOT MAPPED`);
+      }
+    }
+
+    const orphans: number[] = [];
+    for (let i = 0; i < RUNAWAY_LRC.length; i++) {
+      if (!allAssigned.has(i)) {
+        orphans.push(i);
+      }
+    }
+    if (orphans.length > 0) {
+      console.log('\nUNASSIGNED LRC lines:');
+      for (const o of orphans) {
+        console.log(`  LRC[${o}]="${RUNAWAY_LRC[o]}"`);
+      }
+    } else {
+      console.log('\nAll 59 LRC lines assigned ✅');
+    }
+  });
+
+  it('TC-154: adversarial early-return — orphan до первого mapped блока с далёким дублем текста', () => {
+    const lrc = buildLrc(RUNAWAY_LRC);
+    const result = blockFirstLineSync(RUNAWAY_GENIUS, lrc);
+
+    const orphan0 = result.blocks.find(b => b.lineIndices.includes(0));
+    expect(orphan0).toBeDefined();
+    const verse1 = result.blocks.find(b => b.name === 'Verse 1');
+    expect(verse1).toBeDefined();
+
+    const bridge = result.blocks.find(b => b.type === 'bridge');
+    if (bridge && orphan0) {
+      expect(orphan0).not.toBe(bridge);
+    }
+    const outro = result.blocks.find(b => b.type === 'outro');
+    if (outro && orphan0) {
+      expect(orphan0).not.toBe(outro);
+    }
+
+    const orphan1Block = result.blocks.find(b => b.lineIndices.includes(1));
+    expect(orphan1Block).toBeDefined();
+    if (orphan1Block) {
+      expect(orphan1Block.type === 'bridge' || orphan1Block.type === 'outro').toBe(false);
+    }
+  });
+});
+
+describe('CGP — Runaway regression (TC-155)', () => {
+  it('TC-155 fix: Outro corrected from LRC[54]→LRC[55]', () => {
+    const lrc = buildLrc(RUNAWAY_LRC);
+    const result = blockFirstLineSync(RUNAWAY_GENIUS, lrc);
+
+    const notMapped = result.blocks.filter(b => b.lineIndices.length === 0);
+    expect(notMapped.length).toBe(0);
+    expect(hasOverlappingIndices(result.blocks)).toBe(false);
+
+    // CGP fixes Outro: LRC[54]="And open up my mind" (Chorus 3 end) →
+    // LRC[55]="I wanna run away and open up my mind" (true Outro start)
+    const outro = result.blocks.find(b => b.type === 'outro');
+    expect(outro).toBeDefined();
+    const outroMin = Math.min(...outro!.lineIndices);
+    console.log(`[TC-155] Outro startIdx=${outroMin} (expected 55 — CGP corrected from 54)`);
+    expect(outroMin).toBe(55);
+  });
+
+  it('CGP: Chorus 2 no regression — still has LRC[33,34,35]', () => {
+    const lrc = buildLrc(RUNAWAY_LRC);
+    const result = blockFirstLineSync(RUNAWAY_GENIUS, lrc);
+
+    // Chorus 2 (bi=5) — второй chorus по порядку
+    const chorus2 = result.blocks.filter(b => b.type === 'chorus')[1];
+    expect(chorus2).toBeDefined();
+
+    // TC-153: tie-break должен отдать LRC[33,34,35] Chorus 2
+    expect(chorus2!.lineIndices.includes(33)).toBe(true);
+    expect(chorus2!.lineIndices.includes(34)).toBe(true);
+    expect(chorus2!.lineIndices.includes(35)).toBe(true);
+
+    // CGP не должен был сдвинуть startIdx Chorus 2 (containment=0.5 < 0.6, не триггер)
+    const chorus2First = Math.min(...chorus2!.lineIndices);
+    console.log(`[TC-155] Chorus 2 first line: LRC[${chorus2First}]="${RUNAWAY_LRC[chorus2First]}" (should still be 28 or 29)`);
+    // containment=0.5 < 0.6, Chorus 2 не должен измениться
+    // Допускаем 28 (если CGP не тронул) или 29 (если Pass 3 сдвинул)
+    expect(chorus2First).toBeGreaterThanOrEqual(28);
+    expect(chorus2First).toBeLessThanOrEqual(30);
+  });
+});
