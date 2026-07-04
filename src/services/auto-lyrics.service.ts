@@ -120,7 +120,7 @@ export function getCached(title: string): LrcResult | null {
 
 export async function waitForCache(
   title: string,
-  timeoutMs: number = 17000,
+  timeoutMs: number = 30000,
 ): Promise<LrcResult | null> {
   // Сначала проверяем сразу
   const cached = getCached(title);
@@ -249,12 +249,6 @@ export function blockFirstLineSync(
     });
   }
   
-  // 3. Map Genius blocks to LRC time ranges
-  //    Find first content line of each block in LRC
-  const normalizedDisplay = displayLines.map(l => _normalizeText(l));
-  let lastMatchedLrcIdx = -1;
-  const usedLrcIndices = new Set<number>();  // TC-6A: track assigned LRC indices
-  
   // TC-6D: Compute global stop words from ALL LRC lines using shared utility.
   // Words appearing in >40% of lines (FREQ_THRESHOLD in block-utils.ts) are
   // filtered from fingerprints to prevent Chorus↔Post-Chorus false matches.
@@ -264,203 +258,338 @@ export function blockFirstLineSync(
     displayLines
   );
   
-  // TC-6E: Pre-compute LRC word Sets to avoid GC pressure from 792+ Set constructions
-  const _lrcWordSets: Set<string>[] = normalizedDisplay.map(
-    (line: string) => new Set(line.split(/\s+/))
-  );
+  // ═══════════════════════════════════════════════════════════════
+  // TC-120: LRC Sanitization
+  // Фильтруем строки-заглушки ("♪", "...", "~") чтобы они не
+  // раздували M и не искажали gap/ratio в DP.
+  // ═══════════════════════════════════════════════════════════════
+  const FILLER_REGEX = /[♪~…\.\s]/g;
+  function isFillerLine(text: string): boolean {
+    return text.replace(FILLER_REGEX, '').length === 0;
+  }
   
-  const blocks: PersistedTextBlock[] = tagResult.blocks.map((block, bi) => {
-    const contentLines = block.contentLines.filter(l => l.trim());
-    const firstLine = contentLines[0];
-    if (!firstLine) {
-      return {
-        id: `auto-block-${bi}`,
-        name: block.label,
-        lineIndices: [],
-        type: block.type,
-        contentLines: block.contentLines,  // TC-6A: preserve for gap calculations
-        _expectedLines: contentLines.length,  // TC-6A: for cursor advance
-      } as any;
-    }
-    
-    // Find this Genius first line in LRC display
-    const firstNorm = _normalizeText(firstLine.trim());
-    // TC-6D: Filter out global stop words from fingerprint
-    // Prevents common words ("you", "not", "with", "the") from causing false matches
-    // between sections that share vocabulary (e.g., Chorus ↔ Post-Chorus)
-    let firstWords = firstNorm.split(/\s+/)
-      .filter((w: string) => w.length > 2 && !_globalStopWords.has(w))
-      .slice(0, 4);
-    // Fallback 1: if all words filtered out, use length-based filter
-    if (firstWords.length === 0) {
-      firstWords = firstNorm.split(/\s+/).filter((w: string) => w.length > 2).slice(0, 4);
-    }
-    // Fallback 2: short words like "yo", "oh", "we" are valid for matching.
-    if (firstWords.length === 0) {
-      firstWords = firstNorm.split(/\s+/).filter((w: string) => w.length >= 2).slice(0, 4);
-    }
-    
-    // Deduplicate: "All, all, all" → ["all"] — prevents score inflation
-    // where 3 identical words matching 1 LRC word gives false 100%
-    firstWords = [...new Set(firstWords)];
-    
-    // Supplement: if first line yields < 2 unique words (e.g., "All, all, all"),
-    // add unique words from contentLines[1..2] to strengthen matching.
-    // Genius = каркас: block structure tells us what lines belong together.
-    // A single word "all" matching "All caught up in the eye of the storm" 
-    // is a false positive. Adding "wanna","trade","this" from line 2 makes 
-    // the match specific: only "All I wanna do is trade this life..." scores high.
-    // TC-6D: Supplement lines also filtered through global stop words
-    if (firstWords.length < 2 && contentLines.length > 1) {
-      for (let v = 1; v < contentLines.length && firstWords.length < 3; v++) {
-        const vNorm = _normalizeText(contentLines[v].trim());
-        let vWords = vNorm.split(/\s+/)
-          .filter((w: string) => w.length > 2 && !_globalStopWords.has(w));
-        if (vWords.length === 0) {
-          vWords = vNorm.split(/\s+/).filter((w: string) => w.length > 2);
-        }
-        if (vWords.length === 0) {
-          vWords = vNorm.split(/\s+/).filter((w: string) => w.length >= 2);
-        }
-        for (const w of vWords) {
-          if (!firstWords.includes(w)) {
-            firstWords.push(w);
-            if (firstWords.length >= 4) break;
-          }
-        }
-        if (firstWords.length >= 3) break;
+  const validIndices: number[] = [];
+  for (let i = 0; i < displayLines.length; i++) {
+    if (!isFillerLine(displayLines[i])) validIndices.push(i);
+  }
+  const M = validIndices.length;
+  
+  const origIdxToValidRank = new Map<number, number>();
+  validIndices.forEach((origIdx, rank) => origIdxToValidRank.set(origIdx, rank));
+  
+  // ═══════════════════════════════════════════════════════════════
+  // TC-121: Candidate Collection + Jaccard bag-of-words + ECC uniqueness
+  // ═══════════════════════════════════════════════════════════════
+  
+  // ⚠️ КОНСТАНТЫ НЕ ОТКАЛИБРОВАНЫ — grid search обязателен (§7 MACRO)
+  const MIN_CANDIDATE_SCORE = 0.40;
+  const K = 10;
+  const MIN_SPATIAL_FLOOR = 0.15;
+  const UNIQUENESS_POWER = 3;
+  const WORDS_WINDOW = 3;
+  
+  interface Candidate {
+    lrcIdx: number;        // исходный индекс в displayLines (для результата)
+    validRank: number;     // ранг среди валидных строк (для скоринга)
+    rawScore: number;      // Jaccard bag-of-words score
+    uniqueness: number;    // ECC uniqueness блока
+    spatialPenalty: number;
+    upc: number;           // финальный вес для DP
+  }
+  
+  function buildWordSet(lines: string[], maxLines: number, stopWords: Set<string>): Set<string> {
+    const words = new Set<string>();
+    let taken = 0;
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      const norm = _normalizeText(trimmed);
+      for (const w of norm.split(/\s+/)) {
+        if (w.length > 2 && !stopWords.has(w)) words.add(w);
       }
+      taken++;
+      if (taken >= maxLines) break;
     }
-    
-    let bestIdx = -1;
-    let bestScore = 0;
-    
-    // Search FORWARD from last matched position (occurrence-aware)
-    const searchStart = Math.max(0, lastMatchedLrcIdx);
-    for (let i = searchStart; i < normalizedDisplay.length; i++) {
-      // TC-6A: Skip already-assigned LRC indices
-      if (usedLrcIndices.has(i)) continue;
-
-      // TC-6E: Use pre-computed Set cache
-      const lrcWords = _lrcWordSets[i];
-      const matchCount = firstWords.filter(w => lrcWords.has(w)).length;
-      const score = firstWords.length > 0 ? matchCount / firstWords.length : 0;
-      if (score > bestScore) {
-        bestScore = score;
-        bestIdx = i;
-      }
+    return words;
+  }
+  
+  function jaccardOverlap(a: Set<string>, b: Set<string>): number {
+    if (a.size === 0 || b.size === 0) return 0;
+    let intersection = 0;
+    for (const w of a) if (b.has(w)) intersection++;
+    const union = a.size + b.size - intersection;
+    return union > 0 ? intersection / union : 0;
+  }
+  
+  function getValidWindowLines(startPos: number, count: number): string[] {
+    const out: string[] = [];
+    for (let p = startPos; p < validIndices.length && out.length < count; p++) {
+      out.push(displayLines[validIndices[p]]);
     }
-    
-    // TC-6A: Extended forward search — try wider range if not found
-    // Some blocks (Post-Chorus, Verse 4/5) may be further ahead than expected
-    if (bestScore < 0.5 && contentLines.length > 0) {
-      const extendedEnd = Math.min(
-        normalizedDisplay.length,
-        searchStart + Math.ceil(contentLines.length * 2) + 20
-      );
-      for (let i = searchStart; i < extendedEnd; i++) {
-        if (usedLrcIndices.has(i)) continue;
-        // TC-6E: Use pre-computed Set cache
-        const lrcWords = _lrcWordSets[i];
-        const matchCount = firstWords.filter(w => lrcWords.has(w)).length;
-        const score = firstWords.length > 0 ? matchCount / firstWords.length : 0;
-        if (score > bestScore) {
-          bestScore = score;
-          bestIdx = i;
-        }
-      }
-    }
-    
-    // TC-6A: FULL global fallback — search entire LRC for occurrence-aware matching
-    // Handles cases where cursor drifted past the target (Post-Chorus, repeated Verse 4/5)
-    if (bestScore < 0.5) {
-      // Phase 1: search AFTER cursor (forward from lastMatchedLrcIdx to end)
-      for (let i = searchStart; i < normalizedDisplay.length; i++) {
-        if (usedLrcIndices.has(i)) continue;
-        if (i >= searchStart && i <= bestIdx) continue;  // already searched
-        // TC-6E: Use pre-computed Set cache
-        const lrcWords = _lrcWordSets[i];
-        const matchCount = firstWords.filter(w => lrcWords.has(w)).length;
-        const score = firstWords.length > 0 ? matchCount / firstWords.length : 0;
-        if (score > bestScore) {
-          bestScore = score;
-          bestIdx = i;
-        }
-      }
-      // Phase 2: search BEFORE cursor (from 0 to searchStart) — skipping used
-      if (bestScore < 0.5) {
-        for (let i = 0; i < searchStart; i++) {
-          if (usedLrcIndices.has(i)) continue;
-          // TC-6E: Use pre-computed Set cache
-          const lrcWords = _lrcWordSets[i];
-          const matchCount = firstWords.filter(w => lrcWords.has(w)).length;
-          const score = firstWords.length > 0 ? matchCount / firstWords.length : 0;
-          if (score > bestScore) {
-            bestScore = score;
-            bestIdx = i;
-          }
-        }
-      }
-    }
-    
-    if (bestScore < 0.5 || bestIdx < 0) {
-      if (import.meta.env.DEV) {
-        console.warn(
-          `[TC-010] Block "${block.label}" first line not found in LRC ` +
-          `(best score: ${(bestScore * 100).toFixed(0)}%) → "${firstLine.substring(0, 40)}"`
-        );
-      }
-      // ⚡ TC-BUG-01: Продвигаем lastMatchedLrcIdx даже при NOT MAPPED,
-      // чтобы следующий блок не украл строки этого блока
-      // TC-6A: advance by expected content length, not just +1
-      const advanceBy = Math.max(1, Math.floor(contentLines.length * 0.3));
-      lastMatchedLrcIdx = Math.min(lastMatchedLrcIdx + advanceBy, displayLines.length - 1);
-      return {
-        id: `auto-block-${bi}`,
-        name: block.label,
-        lineIndices: [],
-        type: block.type,
-        // ⚡ TC-BUG-03-A: Сохраняем contentLines из Genius даже при NOT MAPPED
-        // (без таймингов, но с текстом — для отображения в TrackMap)
-        contentLines: block.contentLines,
-        _expectedLines: contentLines.length,  // TC-6A: for gap protection
-      } as any;
-    }
-    
-    // TC-6A: Advance cursor by half expected block length + mark used
-    lastMatchedLrcIdx = bestIdx + Math.max(1, Math.floor(contentLines.length * 0.5));
-    usedLrcIndices.add(bestIdx);
-    
-    return {
+    return out;
+  }
+  
+  // ── Step 1: базовая структура блоков + ожидаемые линии ──
+  const blocks: PersistedTextBlock[] = [];
+  const expectedLines: number[] = [];
+  for (let bi = 0; bi < tagResult.blocks.length; bi++) {
+    const block = tagResult.blocks[bi];
+    const contentLines = block.contentLines.filter((l: string) => l.trim());
+    expectedLines.push(contentLines.length);
+    blocks.push({
       id: `auto-block-${bi}`,
       name: block.label,
-      _lrcStartIdx: bestIdx,
-      _matchScore: bestScore,
-      _expectedLines: contentLines.length,  // TC-6A: gap protection
+      lineIndices: [],
       type: block.type,
       contentLines: block.contentLines,
-    } as any;
-  });
+      _expectedLines: contentLines.length,
+    } as any);
+  }
+  
+  const totalExpectedLines = expectedLines.reduce((s, n) => s + n, 0);
+  // S = глобальный коэффициент сжатия: M валидных LRC-строк / totalExpectedLines
+  const S = totalExpectedLines > 0 ? M / totalExpectedLines : 1;
+  
+  // Prefix sum для gap-штрафа. cumExpectedLines[0] = 0.
+  const cumExpectedLines: number[] = [0];
+  for (let i = 0; i < expectedLines.length; i++) {
+    cumExpectedLines.push(cumExpectedLines[i] + expectedLines[i]);
+  }
+  
+  // ── Step 2: G_ratio (гибрид: textRatio + rankRatio) ──
+  const N = tagResult.blocks.length;
+  const gRatio: number[] = [];
+  {
+    let cumText = 0;
+    for (let i = 0; i < N; i++) {
+      const textRatio = totalExpectedLines > 0 ? cumText / totalExpectedLines : 0.5;
+      const rankRatio = N > 1 ? i / (N - 1) : 0.5;
+      gRatio.push(0.6 * textRatio + 0.4 * rankRatio);
+      cumText += expectedLines[i];
+    }
+  }
+  
+  const SIGMA = Math.max(0.08, Math.min(0.25, 1.5 / Math.max(1, N)));
+  
+  function calcSpatialPenalty(gR: number, validRank: number): number {
+    if (M === 0) return MIN_SPATIAL_FLOOR;
+    const lR = validRank / M;
+    const raw = Math.exp(-Math.pow(gR - lR, 2) / (2 * SIGMA * SIGMA));
+    return Math.max(raw, MIN_SPATIAL_FLOOR);
+  }
+  
+  // ── Step 3: Candidate collection per block ──
+  const allCandidates: Candidate[][] = [];
+  for (let bi = 0; bi < N; bi++) {
+    const contentLines = tagResult.blocks[bi].contentLines.filter((l: string) => l.trim());
+    if (contentLines.length === 0) {
+      allCandidates.push([]);
+      continue;
+    }
+    
+    const wordsG = buildWordSet(contentLines, WORDS_WINDOW, _globalStopWords);
+    
+    // Полный проход по ВСЕМ валидным LRC-строкам (без окна/курсора)
+    const rawPool: { validRank: number; lrcIdx: number; rawScore: number }[] = [];
+    for (let p = 0; p < M; p++) {
+      const wordsL = buildWordSet(getValidWindowLines(p, WORDS_WINDOW), WORDS_WINDOW, _globalStopWords);
+      const rawScore = jaccardOverlap(wordsG, wordsL);
+      if (rawScore >= MIN_CANDIDATE_SCORE) {
+        rawPool.push({ validRank: p, lrcIdx: validIndices[p], rawScore });
+      }
+    }
+    
+    // ECC uniqueness — один раз на блок
+    let matchMass = 0;
+    for (const c of rawPool) {
+      const normalized = (c.rawScore - MIN_CANDIDATE_SCORE) / (1 - MIN_CANDIDATE_SCORE);
+      matchMass += Math.pow(Math.max(0, normalized), UNIQUENESS_POWER);
+    }
+    const uniqueness = Math.max(0.2, Math.min(1.0, 1.0 / Math.max(1, matchMass)));
+    
+    // UPC на каждого кандидата
+    const scored: Candidate[] = rawPool.map(c => {
+      const spatial = calcSpatialPenalty(gRatio[bi], c.validRank);
+      return {
+        lrcIdx: c.lrcIdx,
+        validRank: c.validRank,
+        rawScore: c.rawScore,
+        uniqueness,
+        spatialPenalty: spatial,
+        upc: c.rawScore * uniqueness * spatial,
+      };
+    });
+    
+    scored.sort((a, b) => b.upc - a.upc || a.lrcIdx - b.lrcIdx);
+    allCandidates.push(scored.slice(0, K));
+  }
+  
+  // ═══════════════════════════════════════════════════════════════
+  // TC-122: Global Spatial-Sequence DP
+  // Forward pass с GLOBAL lookback (ВСЕ предки, не только ближайший).
+  // Индексация напрямую по bi (0..N-1) — БЕЗ nonEmptyBlockIndices.
+  // ═══════════════════════════════════════════════════════════════
+  
+  interface DpCell {
+    totalScore: number;
+    prevBlockIdx: number;  // исходный индекс блока-предшественника (-1 = начало цепи)
+    prevK: number;         // индекс кандидата у предшественника
+    resolved: boolean;
+  }
+  
+  const dp: DpCell[][] = allCandidates.map(cands =>
+    cands.map(() => ({ totalScore: 0, prevBlockIdx: -1, prevK: -1, resolved: false }))
+  );
+  
+  // Forward pass — GLOBAL lookback (ВСЕ prevBi, не только ближайший).
+  // ЛЮБОЙ блок без валидного предка может стартовать сам на своём upc.
+  // Это устраняет структурную дыру: если первое звено цепи резолвится
+  // на слабом/случайном совпадении (Intro с 50%), оно блокирует все
+  // следующие блоки монотонностью. DP выбирает глобально лучшую цепочку.
+  for (let bi = 0; bi < N; bi++) {
+    for (let k = 0; k < allCandidates[bi].length; k++) {
+      const cand = allCandidates[bi][k];
+      let bestTotal = -Infinity;
+      let bestPrevBi = -1;
+      let bestPrevK = -1;
+      
+      for (let prevBi = 0; prevBi < bi; prevBi++) {
+        for (let pk = 0; pk < allCandidates[prevBi].length; pk++) {
+          const prevCand = allCandidates[prevBi][pk];
+          if (!dp[prevBi][pk].resolved) continue;
+          // Строгая монотонность в исходном index-пространстве
+          if (prevCand.lrcIdx >= cand.lrcIdx) continue;
+          
+          // Gap-штраф в valid rank пространстве (без filler-строк)
+          const actualGap = cand.validRank - prevCand.validRank;
+          // Исправленная формула: cumExpectedLines[bi] - cumExpectedLines[prevBi],
+          // БЕЗ +1 (см. §0.1 MACRO — off-by-one fix)
+          const expectedLinesSum = cumExpectedLines[bi] - cumExpectedLines[prevBi];
+          const expectedScaled = expectedLinesSum * S;
+          const penalty = Math.pow(
+            (actualGap - expectedScaled) / (expectedScaled + 0.5), 2
+          );
+          
+          const total = dp[prevBi][pk].totalScore + cand.upc - penalty;
+          
+          if (total > bestTotal) {
+            bestTotal = total;
+            bestPrevBi = prevBi;
+            bestPrevK = pk;
+          }
+        }
+      }
+      
+      if (bestPrevBi >= 0) {
+        dp[bi][k] = {
+          totalScore: bestTotal,
+          prevBlockIdx: bestPrevBi,
+          prevK: bestPrevK,
+          resolved: true,
+        };
+      } else if (cand.upc > 0) {
+        // Fallback: нет валидного предка — блок стартует сам.
+        // DP взвесит: слабый start vs. полное отсутствие цепочки.
+        dp[bi][k] = {
+          totalScore: cand.upc,
+          prevBlockIdx: -1,
+          prevK: -1,
+          resolved: true,
+        };
+      }
+    }
+  }
+  
+  // Backward trace — глобальный максимум среди ВСЕХ resolved ячеек
+  const _lrcStartIdx: (number | null)[] = new Array(N).fill(null);
+  const _chosenMatchScore: (number | null)[] = new Array(N).fill(null);
+  
+  let globalBestBi = -1, globalBestK = -1, globalBestTotal = -Infinity;
+  for (let bi = 0; bi < N; bi++) {
+    for (let k = 0; k < dp[bi].length; k++) {
+      if (dp[bi][k].resolved && dp[bi][k].totalScore > globalBestTotal) {
+        globalBestTotal = dp[bi][k].totalScore;
+        globalBestBi = bi;
+        globalBestK = k;
+      }
+    }
+  }
+  
+  if (globalBestBi >= 0) {
+    let curBi = globalBestBi;
+    let curK = globalBestK;
+    while (curBi >= 0) {
+      _lrcStartIdx[curBi] = allCandidates[curBi][curK].lrcIdx;
+      _chosenMatchScore[curBi] = allCandidates[curBi][curK].rawScore;
+      
+      const cell = dp[curBi][curK];
+      if (cell.prevBlockIdx < 0) break;
+      curBi = cell.prevBlockIdx;
+      curK = cell.prevK;
+    }
+  } else {
+    console.warn('[TC-122] GSS-DP: no resolved chain found — all blocks fall back to Pass 2');
+  }
+  
+  // ── Применяем _lrcStartIdx / _matchScore к blocks[] ──
+  for (let bi = 0; bi < N; bi++) {
+    if (_lrcStartIdx[bi] !== null) {
+      (blocks[bi] as any)._lrcStartIdx = _lrcStartIdx[bi];
+      (blocks[bi] as any)._matchScore = _chosenMatchScore[bi];
+    }
+  }
   
   // 4. Assign LRC line ranges to blocks
   //    Block N owns lines from its startIdx to block N+1's startIdx
+  let _prevChronoEnd = -1;  // DIAG-CHRONO tracker
+  // ═══ TC-130: Occupied-Line Guard ═══
+  // Предотвращает пересечение lineIndices при немонотонном startIdx.
+  // Блоки, обработанные раньше, уже заняли некоторые LRC индексы.
+  // Следующие блоки пропускают занятые.
+  const occupied = new Set<number>();
   for (let i = 0; i < blocks.length; i++) {
     const startIdx = (blocks[i] as any)._lrcStartIdx;
     if (startIdx == null || startIdx < 0) continue;
+    
+    // DIAG-CHRONO: log chrono violations
+    if (import.meta.env.DEV && startIdx < _prevChronoEnd) {
+      console.warn(
+        `[DIAG-CHRONO] Block ${i} [${blocks[i].type}] "${blocks[i].name}": ` +
+        `startIdx=${startIdx} < prevEnd=${_prevChronoEnd} → CHRONO VIOLATION`
+      );
+    }
     
     // Find next block's start
     let endIdx = displayLines.length;
     for (let j = i + 1; j < blocks.length; j++) {
       const nextStart = (blocks[j] as any)._lrcStartIdx;
-      if (nextStart != null && nextStart >= 0) {
+      // Fix C: Skip chrono-violated nextStart (< startIdx). Prevents blocks
+      // from getting zero or negative range when a later block maps to an
+      // earlier LRC line.
+      if (nextStart != null && nextStart >= 0 && nextStart > startIdx) {
         endIdx = nextStart;
         break;
       }
     }
     
     blocks[i].lineIndices = [];
-    for (let k = startIdx; k < endIdx; k++) {
+    // Fix D: Cap range to prevent blocks from taking too many lines
+    // when adjacent blocks are NOT MAPPED (no startIdx boundary)
+    // Fix D: Cap range to prevent blocks from taking too many lines
+    // when adjacent blocks are NOT MAPPED (no startIdx boundary)
+    // TC-141: Tight cap с минимальной эластичностью.
+    // expectedLines — жёсткая граница. Блок с 8 строками НЕ может
+    // съесть idx 8,9 (припев). +1 эластичность только для коротких блоков
+    // (1 строка, ad-libs в LRC).
+    const expectedLines = (blocks[i] as any)._expectedLines ?? 0;
+    const elasticity = expectedLines <= 1 ? 1 : 0;  // только 1-строчные блоки
+    const cappedEnd = expectedLines > 0
+      ? Math.min(endIdx, startIdx + expectedLines + elasticity)
+      : endIdx;
+    for (let k = startIdx; k < cappedEnd; k++) {
+      if (occupied.has(k)) continue;  // TC-130: skip already taken
       blocks[i].lineIndices.push(k);
+      occupied.add(k);                // TC-130: mark as taken
     }
     
     // TC-010-FIX: Add contentLines for WagonTrain display
@@ -470,6 +599,7 @@ export function blockFirstLineSync(
       blocks[i].contentLines = blocks[i].lineIndices.map(
         (idx: number) => displayLines[idx]
       );
+      _prevChronoEnd = Math.max(...blocks[i].lineIndices);
     }
   }
 
@@ -542,22 +672,31 @@ export function blockFirstLineSync(
         (blocks[i] as any)._instrumentalGap = true;
       }
     }
-
+    
+    // Fix H1: sync contentLines after gap fill for blocks with empty content
+    if (blocks[i].lineIndices.length > 0 && !blocks[i].contentLines?.length) {
+      blocks[i].contentLines = blocks[i].lineIndices.map((idx: number) => displayLines[idx]);
+    }
+    
     // Если всё ещё не хватает строк — отнимаем от следующего блока с капом 50%
     const stillNeeded = isGapTakeAll ? 0 : neededLines - blocks[i].lineIndices.length;
     if (stillNeeded > 0 && nextBlockIdx >= 0) {
       const nextBlock = blocks[nextBlockIdx];
-      const cap = Math.floor(nextBlock.lineIndices.length * 0.5);
-      const shiftFromNext = Math.min(stillNeeded, cap);
+      // Fix C: Don't steal from correctly mapped blocks (score >= 0.5)
+      const nextScore = (nextBlock as any)._matchScore || 0;
+      if (nextScore < 0.5) {
+        const cap = Math.floor(nextBlock.lineIndices.length * 0.5);
+        const shiftFromNext = Math.min(stillNeeded, cap);
 
-      if (shiftFromNext > 0) {
-        // Забираем первые N строк следующего блока
-        const stolen = nextBlock.lineIndices.splice(0, shiftFromNext);
-        blocks[i].lineIndices.push(...stolen);
-        // Обновляем contentLines следующего блока (без пересоздания)
-        nextBlock.contentLines = nextBlock.lineIndices.map(
-          (idx: number) => displayLines[idx]
-        );
+        if (shiftFromNext > 0) {
+          // Забираем первые N строк следующего блока
+          const stolen = nextBlock.lineIndices.splice(0, shiftFromNext);
+          blocks[i].lineIndices.push(...stolen);
+          // Обновляем contentLines следующего блока (без пересоздания)
+          nextBlock.contentLines = nextBlock.lineIndices.map(
+            (idx: number) => displayLines[idx]
+          );
+        }
       }
     }
   }
@@ -586,22 +725,168 @@ export function blockFirstLineSync(
     console.log(`  Blocks: ${found}/${total} mapped (${(found/total*100).toFixed(0)}%)`);
     console.log(`  Lines covered by blocks: ${linesWithBlocks}/${displayLines.length}`);
     
-    for (const block of blocks) {
+    for (let di = 0; di < blocks.length; di++) {
+      const block = blocks[di];
+      const startIdx = (block as any)._lrcStartIdx;
+      const matchScore = (block as any)._matchScore;
+      
       if (block.lineIndices.length > 0) {
         const first = block.lineIndices[0];
         const last = block.lineIndices[block.lineIndices.length - 1];
+        const linesText = block.lineIndices.map((li: number) => `    LRC[${li}]="${displayLines[li]}"`).join('\n');
+        const isGapAssign = (block as any)._instrumentalGap;
         console.log(
-          `  [${block.type}] "${block.name}": ` +
-          `lines ${first}-${last} (${block.lineIndices.length}), ` +
-          `time ${markers[first]?.time?.toFixed(1)}s-${markers[last]?.time?.toFixed(1)}s` +
-          `${block.lineIndices.length > 8 ? ' ⚠️ >8 lines' : ''}`
+          `  ── Block ${di} [${block.type}] "${block.name}" ${isGapAssign ? '(gap-assigned)' : ''}──\n` +
+          `  startIdx=${startIdx ?? 'null'} matchScore=${matchScore ? (matchScore*100).toFixed(0)+'%' : 'N/A'}\n` +
+          `  range=${first}-${last} (${block.lineIndices.length} lines) time=${markers[first]?.time?.toFixed(1)}s-${markers[last]?.time?.toFixed(1)}s\n` +
+          `  contentLines (Genius): ${((block as any).contentLines ?? []).slice(0, 3).join(' | ')}\n` +
+          `  lineIndices (LRC text):\n${linesText.slice(0, 800)}`
         );
       } else {
-        console.log(`  [${block.type}] "${block.name}": NOT MAPPED`);
+        const geniusLines = ((block as any).contentLines ?? []).slice(0, 3);
+        console.log(
+          `  ── Block ${di} [${block.type}] "${block.name}" ──\n` +
+          `  startIdx=${startIdx ?? 'null'} matchScore=${matchScore ? (matchScore*100).toFixed(0)+'%' : 'N/A'}\n` +
+          `  NOT MAPPED — Genius lines: ${geniusLines.join(' | ')}`
+        );
       }
     }
   }
-  
+
+  // ═══ PASS 3: Orphan Absorption (TC-094) ═══
+  // Sweep-фаза: привязывает LRC-строки без блока (orphans)
+  // к текстово-близкому MAPPED блоку.
+  // TC-142: Content-Aware Orphan Routing — вместо "привяжи к предыдущему"
+  // используем текстовое совпадение: orphan к блоку с максимальным word overlap.
+  // Без TC-142: orphan "All I wanna say" привязался бы к Verse 1 (предыдущий),
+  // и припев клеился бы к куплету.
+  const indexToBlockMap = new Map<number, number>();
+  for (let b = 0; b < blocks.length; b++) {
+    for (const idx of blocks[b].lineIndices) {
+      indexToBlockMap.set(idx, b);
+    }
+  }
+
+  // ═══ TC-150: Structural Window Guard ═══
+  // Снимок границ уже замапленных блоков ДО начала Pass 3. Намеренно статичный
+  // (не пересчитывается по ходу цикла) — чтобы вся цепочка orphan'ов в одном
+  // разрыве видела одно и то же окно, без дрейфа от собственных же присвоений.
+  const mappedSnapshot: Array<{ bi: number; minIdx: number; maxIdx: number }> = [];
+  for (let b = 0; b < blocks.length; b++) {
+    if (blocks[b].lineIndices.length > 0) {
+      mappedSnapshot.push({
+        bi: b,
+        minIdx: Math.min(...blocks[b].lineIndices),
+        maxIdx: Math.max(...blocks[b].lineIndices),
+      });
+    }
+  }
+
+  // Для orphan-строки на LRC-индексе i возвращает диапазон СТРУКТУРНЫХ индексов
+  // блоков (позиция в Genius-порядке), внутри которого contentmatch вообще
+  // имеет право голоса.
+  // loBi = структурный индекс ближайшего MAPPED-блока СЛЕВА от i (или 0, если нет).
+  // hiBi = структурный индекс ближайшего MAPPED-блока СПРАВА от i (или последний, если нет).
+  function findStructuralWindow(i: number): { loBi: number; hiBi: number } {
+    // TC-150: orphan до ВСЕХ mapped-блоков → полный диапазон
+    // (иначе окно коллапсирует на первом блоке, bi=0, и Chorus не виден)
+    if (mappedSnapshot.length > 0) {
+      const firstMappedMin = Math.min(...mappedSnapshot.map(m => m.minIdx));
+      if (i < firstMappedMin) {
+        return { loBi: 0, hiBi: blocks.length - 1 };
+      }
+    }
+
+    let loBi = 0;
+    let hiBi = blocks.length - 1;
+    for (const m of mappedSnapshot) {
+      if (m.maxIdx < i && m.bi > loBi) loBi = m.bi;
+      if (m.minIdx > i && m.bi < hiBi) hiBi = m.bi;
+    }
+    if (loBi > hiBi) {
+      if (import.meta.env.DEV) {
+        console.warn(`[TC-150] window inversion at orphan i=${i}: loBi=${loBi} > hiBi=${hiBi}, сужаю до loBi`);
+      }
+      hiBi = loBi;
+    }
+    return { loBi, hiBi };
+  }
+
+  // TC-142: Precompute word sets для ВСЕХ блоков (включая NOT MAPPED)
+  // Используем Genius contentLines, не LRC — чтобы NOT MAPPED Chorus мог
+  // получить orphan "All I wanna say" по текстовому совпадению.
+  const blockWordSets: Map<number, Set<string>> = new Map();
+  for (let b = 0; b < blocks.length; b++) {
+    const contentLines = (blocks[b].contentLines ?? []).filter((l: string) => l.trim());
+    if (contentLines.length === 0) continue;
+    const fpWords = new Set<string>();
+    for (const cl of contentLines) {
+      const norm = _normalizeText(cl);
+      for (const w of norm.split(/\s+/)) {
+        if (w.length > 2) fpWords.add(w);
+      }
+    }
+    blockWordSets.set(b, fpWords);
+  }
+
+  let lastValidBlockIdx = -1;
+  for (let i = 0; i < displayLines.length; i++) {
+    if (indexToBlockMap.has(i)) {
+      lastValidBlockIdx = indexToBlockMap.get(i)!;
+      continue;
+    }
+
+    // TC-142 + TC-150: Content-aware orphan routing, ОГРАНИЧЕННЫЙ структурным окном
+    const orphanNorm = _normalizeText(displayLines[i]);
+    const orphanWords = new Set(orphanNorm.split(/\s+/).filter(w => w.length > 2));
+    if (orphanWords.size > 0) {
+      const { loBi, hiBi } = findStructuralWindow(i);   // ← TC-150: новая строка
+      let bestBlock = lastValidBlockIdx;  // fallback: предыдущий
+      let bestOverlap = 0;
+      for (const [b, blockWords] of blockWordSets) {
+        if (b < loBi || b > hiBi) continue;             // ← TC-150: новая строка (guard)
+        let overlap = 0;
+        for (const w of orphanWords) if (blockWords.has(w)) overlap++;
+        if (overlap > bestOverlap) {
+          bestOverlap = overlap;
+          bestBlock = b;
+        }
+      }
+
+      if (bestBlock >= 0) {
+        blocks[bestBlock].lineIndices.push(i);
+        indexToBlockMap.set(i, bestBlock);
+        continue;
+      }
+    }
+
+    // Fallback: attach to previous mapped block
+    // (filler orphans with no meaningful words)
+    if (lastValidBlockIdx !== -1) {
+      blocks[lastValidBlockIdx].lineIndices.push(i);
+      indexToBlockMap.set(i, lastValidBlockIdx);
+    } else {
+      // Before any mapped block — attach to first available
+      for (let b = 0; b < blocks.length; b++) {
+        if (blocks[b].lineIndices.length > 0) {
+          blocks[b].lineIndices.push(i);
+          indexToBlockMap.set(i, b);
+          break;
+        }
+      }
+    }
+  }
+
+  // Sort lineIndices + sync contentLines after orphan absorption
+  // sort обязателен: orphans добавляются через push() в конец,
+  // но могут оказаться перед старыми индексами (хронология!)
+  for (let b = 0; b < blocks.length; b++) {
+    if (blocks[b].lineIndices.length > 0) {
+      blocks[b].lineIndices.sort((a, z) => a - z);
+      blocks[b].contentLines = blocks[b].lineIndices.map((idx: number) => displayLines[idx]);
+    }
+  }
+
   // Clean up temp fields
   for (let i = 0; i < blocks.length; i++) {
     delete (blocks[i] as any)._lrcStartIdx;
@@ -1264,7 +1549,7 @@ async function _fetchLrclib(
     const searchUrl = `https://lrclib.net/api/search?q=${encodeURIComponent(artist + ' ' + track)}`;
     const searchRes = await fetch(searchUrl, {
       headers: { 'User-Agent': 'beLive/1.0' },
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(30000),
     });
 
     if (!searchRes.ok) {
@@ -1393,25 +1678,34 @@ export async function fetchLrcVersions(
  * TC-LRCPICKER-01: Parse an LRC version and return markers + blocks.
  * Reuses existing parseLrcString() + blockFirstLineSync().
  */
+// TC-123: Text-hash cache for parseLrcVersion — identical text = identical result,
+// even if timestamps differ. Prevents UI flicker when switching between LRC
+// versions with the same lyrics text but different timings.
+const _parseLrcCache = new Map<string, MatchResult>();
+
 export function parseLrcVersion(
   version: LrcVersion,
   geniusText?: string,  // optional: Genius text for block structure
 ): MatchResult {
+  // Build cache key from text only (not timestamps)
+  const cacheKey = `${geniusText ?? ''}||${version.lrcText}`;
+  const cached = _parseLrcCache.get(cacheKey);
+  if (cached) return cached;
+
   const lrcResult = parseLrcString(version.lrcText);
 
+  let result: MatchResult;
   if (geniusText) {
     // Genius provides block structure → better TrackMap
-    return blockFirstLineSync(geniusText, lrcResult);
+    result = blockFirstLineSync(geniusText, lrcResult);
+  } else {
+    // No Genius → markers only, no blocks
+    const { markers, lyricsLines } = lrcToMarkers(lrcResult);
+    result = { markers, blocks: [], confidence: 1.0, lyricsLines };
   }
 
-  // No Genius → markers only, no blocks
-  const { markers, lyricsLines } = lrcToMarkers(lrcResult);
-  return {
-    markers,
-    blocks: [],
-    confidence: 1.0,
-    lyricsLines,
-  };
+  _parseLrcCache.set(cacheKey, result);
+  return result;
 }
 
 /** Fallback to old /api/get endpoint if search fails */
@@ -1429,7 +1723,7 @@ async function _fetchLrclibFallback(
     });
     const res = await fetch(
       `https://lrclib.net/api/get?${params.toString()}`,
-      { headers: { 'User-Agent': 'beLive/1.0' }, signal: AbortSignal.timeout(15000) }
+      { headers: { 'User-Agent': 'beLive/1.0' }, signal: AbortSignal.timeout(30000) }
     );
     if (!res.ok) return;
     const data = await res.json();
@@ -1536,12 +1830,6 @@ function _levenshtein(a: string, b: string): number {
     [prev, curr] = [curr, prev]; // swap rows
   }
   return prev[m];
-}
-
-function _similarity(a: string, b: string): number {
-  const na = _normalizeText(a);
-  const nb = _normalizeText(b);
-  return _similarityNormalized(na, nb);
 }
 
 /** Compare already-normalized strings (no re-normalization) — used in hot matching loop */

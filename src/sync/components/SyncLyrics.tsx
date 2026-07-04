@@ -14,18 +14,6 @@ const LOCAL_BLOCK_COLORS: Record<string, string> = {
 
 const DEFAULT_COLOR = '#888888';
 
-function getBlockTypeForLine(
-  lineIndex: number,
-  blocks: Array<{ lineIndices: number[]; type?: string }>
-): string {
-  for (const block of blocks) {
-    if (block.lineIndices.includes(lineIndex)) {
-      return (block.type || 'default').toLowerCase().replace(/[\s\-_]/g, '');
-    }
-  }
-  return 'default';
-}
-
 export function SyncLyrics() {
   const lines = useLyricsStore((s) => s.lines);
   const activeLineIndex = useLyricsStore((s) => s.activeLineIndex);
@@ -48,6 +36,30 @@ export function SyncLyrics() {
     }
     return set;
   }, [markers]);
+
+  // TC-095: Inheritance Fallback — orphan строки наследуют тип от предыдущего блока
+  // Если все блоки NOT MAPPED — используется 'blank' (прозрачный)
+  const resolvedBlockTypes = useMemo(() => {
+    const types: string[] = [];
+    let lastKnownType = 'blank';
+    for (let i = 0; i < (lines?.length ?? 0); i++) {
+      let found = false;
+      for (const block of blocks) {
+        if (block.lineIndices.includes(i)) {
+          const t = (block.type || 'default').toLowerCase().replace(/[\s\-_]/g, '');
+          types.push(t);
+          lastKnownType = t;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        // orphan строка — наследуем тип от предыдущей
+        types.push(lastKnownType);
+      }
+    }
+    return types;
+  }, [lines?.length ?? 0, blocks]);
 
   // Legacy pattern: scrollIntoView smooth to top
   useEffect(() => {
@@ -113,7 +125,7 @@ export function SyncLyrics() {
         const isEmpty = !line || !line.trim();
         const isActive = idx === activeLineIndex;
         const isMarked = markedLines.has(idx);
-        const blockType = getBlockTypeForLine(idx, blocks);
+        const blockType = resolvedBlockTypes[idx] || 'blank';
         const color = LOCAL_BLOCK_COLORS[blockType] || getCanonicalBlockColor(blockType) || DEFAULT_COLOR;
         const isPast = idx < activeLineIndex;
         const hasWordSync = hasUsableWordSyncForLine(idx);
