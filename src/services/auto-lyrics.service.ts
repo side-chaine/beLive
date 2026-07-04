@@ -23,6 +23,7 @@ export interface LrcResult {
   confidence?: number; // от последнего match
   sourceId?: number;   // TC-096: lrclib version ID — для точного сравнения "та же версия?"
   duration?: number;   // TC-096: track duration (requested), для fetchLrcVersions scoring
+  versionDuration?: number; // TC-096-FIX: lrclib API version's reported duration (always known when sourceId exists)
 }
 
 interface MatchResult {
@@ -1743,6 +1744,7 @@ async function _fetchLrclib(
       fetchedAt: Date.now(),
       sourceId: best.id,
       duration: duration || undefined,
+      versionDuration: best.duration || undefined,  // TC-096-FIX: lrclib version's reported duration
     });
 
     if (import.meta.env.DEV) {
@@ -1890,6 +1892,7 @@ export async function tryBetterLrcVersion(
     lines: { time: number }[];
     sourceId?: number;
     duration?: number;
+    versionDuration?: number;  // TC-096-FIX: lrclib version's reported duration
   },
   currentMatchResult: { blocks: { lineIndices: number[] }[]; confidence: number },
   artist: string,
@@ -1905,20 +1908,24 @@ export async function tryBetterLrcVersion(
   // 2. Guard: низкий confidence = плохой Genius, не LRC проблема
   if (currentMatchResult.confidence < MIN_CONFIDENCE) return null;
 
-  // 3. Реальная длительность из кэша, fallback LRC timestamp
+  // 3. Реальная длительность: track duration → version's API duration → LRC timestamp → 0
+  //    priority: currentLrc.duration (real track) → currentLrc.versionDuration (version's API duration)
+  //    → last LRC timestamp → 0
   const trackDuration = currentLrc.duration
+    ?? currentLrc.versionDuration
     ?? (currentLrc.lines.length > 0 ? currentLrc.lines[currentLrc.lines.length - 1].time : 0);
   const allVersions = await fetchLrcVersions(artist, track, trackDuration);
   if (allVersions.length <= 1) return null;
 
   // 4. Исключаем текущую версию по sourceId (не по сырому тексту)
-  // Если sourceId нет — трек загружен через fallback-путь (_fetchLrclibFallback),
-  // у нас нет ID для сравнения. Retry невозможен — не рискуем перевыбрать ту же версию.
+  // Оба пути (_fetchLrclib и _fetchLrclibFallback) теперь сохраняют sourceId.
+  // Если sourceId всё ещё нет — версия загружена через устаревший/неизвестный путь.
+  // Retry невозможен — не рискуем перевыбрать ту же версию.
   if (!currentLrc.sourceId) {
     if (import.meta.env.DEV) {
       console.warn(
-        `[TC-096] LRC retry skipped: sourceId missing (fallback path). ` +
-        `Track "${artist} — ${track}" loaded via old API without version tracking.`
+        `[TC-096] LRC retry skipped: sourceId missing (${artist} — ${track}). ` +
+        `Version loaded via unrecognized path without version tracking.`
       );
     }
     return null;
@@ -1965,9 +1972,19 @@ async function _fetchLrclibFallback(
     const data = await res.json();
     if (!data.syncedLyrics) return;
     const lines = _parseLrc(data.syncedLyrics);
-    _cache.set(key, { lines, rawSynced: data.syncedLyrics, fetchedAt: Date.now() });
+    _cache.set(key, {
+      lines,
+      rawSynced: data.syncedLyrics,
+      fetchedAt: Date.now(),
+      sourceId: data.id,
+      duration: duration || undefined,
+      versionDuration: data.duration || undefined,
+    });
     if (import.meta.env.DEV) {
-      console.log(`[AutoLyrics] Fallback LRC: duration=${data.duration}s, ${lines.length} lines`);
+      console.log(
+        `[AutoLyrics] Fallback LRC: id=${data.id} duration=${data.duration}s ` +
+        `(requested=${duration ?? '?'}s, ${lines.length} lines)`
+      );
     }
   } catch (e) {
     if (import.meta.env.DEV) {
