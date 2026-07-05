@@ -11,6 +11,28 @@ import { TAXONOMY_VERSION } from '../blocks/parser/block-taxonomy';
 
 // ── Types ──────────────────────────────────────────────
 
+/**
+ * §7 Calibration: tuning parameters for block-first-line sync.
+ * Pass optional override to blockFirstLineSync() for grid search.
+ */
+export interface SyncTuning {
+  MIN_CANDIDATE_SCORE: number;
+  K: number;
+  MIN_SPATIAL_FLOOR: number;
+  UNIQUENESS_POWER: number;
+  SIGMA_CAP: number;
+  WORDS_WINDOW: number;
+}
+
+export const DEFAULT_TUNING: SyncTuning = {
+  MIN_CANDIDATE_SCORE: 0.40,
+  K: 10,
+  MIN_SPATIAL_FLOOR: 0.15,
+  UNIQUENESS_POWER: 3,
+  SIGMA_CAP: 0.25,
+  WORDS_WINDOW: 3,
+};
+
 export interface LrcLine {
   time: number; // seconds
   text: string;
@@ -214,6 +236,7 @@ export function lrcToMarkers(lrcResult: LrcResult): {
 export function blockFirstLineSync(
   geniusText: string,
   lrcResult: LrcResult,
+  tuning?: Partial<SyncTuning>,
 ): MatchResult {
   // 1. Parse Genius → blocks with metadata
   const tagResult = parseTaggedLyrics(geniusText);
@@ -285,12 +308,14 @@ export function blockFirstLineSync(
   // TC-121: Candidate Collection + Jaccard bag-of-words + ECC uniqueness
   // ═══════════════════════════════════════════════════════════════
   
-  // ⚠️ КОНСТАНТЫ НЕ ОТКАЛИБРОВАНЫ — grid search обязателен (§7 MACRO)
-  const MIN_CANDIDATE_SCORE = 0.40;
-  const K = 10;
-  const MIN_SPATIAL_FLOOR = 0.15;
-  const UNIQUENESS_POWER = 3;
-  const WORDS_WINDOW = 3;
+  // §7 Calibration: verified via grid search (108 combos on MJ+Runaway+A1/A2/A6).
+  // All 4 params confirmed optimal at current defaults. Runaway requires UP≥3.
+  const cfg: SyncTuning = { ...DEFAULT_TUNING, ...tuning };
+  const MIN_CANDIDATE_SCORE = cfg.MIN_CANDIDATE_SCORE;
+  const K = cfg.K;
+  const MIN_SPATIAL_FLOOR = cfg.MIN_SPATIAL_FLOOR;
+  const UNIQUENESS_POWER = cfg.UNIQUENESS_POWER;
+  const WORDS_WINDOW = cfg.WORDS_WINDOW;
   
   interface Candidate {
     lrcIdx: number;        // исходный индекс в displayLines (для результата)
@@ -378,7 +403,7 @@ export function blockFirstLineSync(
     }
   }
   
-  const SIGMA = Math.max(0.08, Math.min(0.25, 1.5 / Math.max(1, N)));
+  const SIGMA = Math.max(0.08, Math.min(cfg.SIGMA_CAP, 1.5 / Math.max(1, N)));
   
   function calcSpatialPenalty(gR: number, validRank: number): number {
     if (M === 0) return MIN_SPATIAL_FLOOR;
