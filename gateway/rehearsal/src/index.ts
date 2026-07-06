@@ -11,8 +11,20 @@ export interface Env {
 
 const TICKET_TTL_MS = 6 * 60 * 60 * 1000;
 
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': 'https://app.mybelive.com',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+  };
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders() });
+    }
+
     const url = new URL(request.url);
 
     if (url.pathname === '/ws') {
@@ -30,7 +42,7 @@ export default {
       const exp = Date.now() + TICKET_TTL_MS;
       const teacherTicket = await signTicket({ roomId, role: 'teacher', exp }, env.REHEARSAL_TICKET_SECRET);
       const studentTicket = await signTicket({ roomId, role: 'student', exp }, env.REHEARSAL_TICKET_SECRET);
-      return Response.json({ roomId, teacherTicket, studentTicket, expiresAt: exp });
+      return Response.json({ roomId, teacherTicket, studentTicket, expiresAt: exp }, { headers: corsHeaders() });
     }
 
     return new Response('Not found', { status: 404 });

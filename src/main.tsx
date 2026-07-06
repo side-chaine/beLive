@@ -13,6 +13,8 @@ import { patchLyricsDisplaySlimMethods } from './services/lyrics.service';
 import { initBlockEditorBridge } from './blocks/bridge/blockEditor.bridge';
 import { useUIStore } from './stores/ui.store';
 import { getColorForBlockType, buildBlocksFromMarkers, computeSections, getBlockTypeForLine } from './utils/markerUtils';
+import { SignalingClient } from './Rehearsal/services/signaling-client';
+import { PeerConnectionManager } from './Rehearsal/services/peer-connection';
 
 // import '../css/main.css'; // loaded via <link> in index.html
 // import '../css/ai-chat.css'; // loaded via <link> in index.html
@@ -532,6 +534,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   });
 });
+
+  // ★ Rehearsal Video Bridge — временный тестовый хук (Фаза 1, под удаление в Фазе 2)
+  (window as any).__testRehearsal = (roomId: string, role: 'teacher' | 'student', ticket: string) => {
+    const sc = new SignalingClient(roomId, role, ticket);
+    const pc = new PeerConnectionManager(sc, role);
+    sc.onOpen = () => console.log('[test] WS open, role=', role);
+    pc.onConnectionStateChange = (s) => console.log('[test] connectionState:', s);
+    pc.onClockSynced = (offset, rtt) => console.log('[test] clock synced. offset=', offset, 'rtt=', rtt);
+    sc.connect();
+    if (role === 'teacher') pc.createDataChannels();
+    (window as any).__pc = pc;
+    (window as any).__sc = sc;
+    return { sc, pc };
+  };
 
   // Surface guard — скрыть legacy header если нет профиля
   if (!localStorage.getItem('belive:user-profile')) {
