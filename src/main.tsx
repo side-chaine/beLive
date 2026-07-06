@@ -539,11 +539,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   (window as any).__testRehearsal = (roomId: string, role: 'teacher' | 'student', ticket: string) => {
     const sc = new SignalingClient(roomId, role, ticket);
     const pc = new PeerConnectionManager(sc, role);
-    sc.onOpen = () => console.log('[test] WS open, role=', role);
+    sc.onOpen = () => {
+      console.log('[test] WS open, role=', role);
+      if (role === 'teacher') pc.createDataChannels();
+    };
     pc.onConnectionStateChange = (s) => console.log('[test] connectionState:', s);
     pc.onClockSynced = (offset, rtt) => console.log('[test] clock synced. offset=', offset, 'rtt=', rtt);
     sc.connect();
-    if (role === 'teacher') pc.createDataChannels();
     (window as any).__pc = pc;
     (window as any).__sc = sc;
     return { sc, pc };
