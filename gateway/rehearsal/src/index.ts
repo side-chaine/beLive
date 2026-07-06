@@ -36,7 +36,7 @@ export default {
 
     if (url.pathname === '/rooms' && request.method === 'POST') {
       const userId = await verifyUserJwt(request, env.JWT_SECRET);
-      if (!userId) return new Response('Unauthorized', { status: 401 });
+      if (!userId) return new Response('Unauthorized', { status: 401, headers: corsHeaders() });
 
       const roomId = crypto.randomUUID();
       const exp = Date.now() + TICKET_TTL_MS;
