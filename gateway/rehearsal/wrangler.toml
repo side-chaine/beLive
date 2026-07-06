@@ -1,0 +1,11 @@
+name = "belive-rehearsal"
+main = "src/index.ts"
+compatibility_date = "2026-07-01"
+
+[[durable_objects.bindings]]
+name = "REHEARSAL_ROOM"
+class_name = "RehearsalRoomDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RehearsalRoomDO"]  # SQLite-backed DO for free plan

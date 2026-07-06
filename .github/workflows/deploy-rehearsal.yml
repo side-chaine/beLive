@@ -1,0 +1,29 @@
+name: Deploy belive-rehearsal
+on:
+  push:
+    branches: [main]
+    paths: ['gateway/rehearsal/**']
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gateway/rehearsal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: gateway/rehearsal
+          secrets: |
+            REHEARSAL_TICKET_SECRET
+            JWT_SECRET
+        env:
+          REHEARSAL_TICKET_SECRET: ${{ secrets.REHEARSAL_TICKET_SECRET }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}

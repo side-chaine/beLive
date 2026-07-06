@@ -60,6 +60,7 @@ import { FeedScreen } from './feed/FeedScreen';
 import { useFeedStore } from './catalog/feed/feed.store';
 import { initMetricsBridge } from './services/metrics.bridge';
 import { initSyncLifecycle } from './services/metrics-sync.service';
+import { handleRehearsalDeepLink } from './Rehearsal/services/deep-link.service';
 export default function App() {
   const mode = useModeStore((s) => s.mode);
   const syncOpen = useSyncStore((s) => s.open);
@@ -175,6 +176,15 @@ export default function App() {
       openedCatalogRef.current = true;
     }
   }, [surface]);
+
+  // Rehearsal Video Bridge: Deep-link ?room= — Surface Gate Bypass (TC-RVB-000)
+  useEffect(() => {
+    handleRehearsalDeepLink().then((rehearsalLink) => {
+      if (rehearsalLink) {
+        // Фаза 2: передать в rehearsal-session.store
+      }
+    });
+  }, []);
 
   // TC-107-14: Deep-link ?post= — scroll to post on feed
   useEffect(() => {
