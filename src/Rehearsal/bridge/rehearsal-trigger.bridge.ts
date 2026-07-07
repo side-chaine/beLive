@@ -6,7 +6,7 @@ import { useRehearsalSessionStore } from '../store/rehearsal-session.store';
 import { useAudioStore } from '../../stores/audio.store';
 import { useLoopStore } from '../../stores/loop.store';
 import { useStemStore } from '../../stem/stem.store';
-import { PlaybackWatchdog, DriftCorrector, CommandCoalescer } from './sync-primitives';
+import { PlaybackWatchdog, CommandCoalescer } from './sync-primitives';
 
 type Role = 'teacher' | 'student';
 
@@ -15,7 +15,6 @@ export class RehearsalTriggerBridge {
   private sender = new EnvelopeSender();
   private coalescer = new CommandCoalescer();
   private watchdog = new PlaybackWatchdog();
-  private drift = new DriftCorrector();
   private clockWorker: Worker;
   private pendingApplies = new Map<string, { mediaTime?: number; isPlaying?: boolean }>();
 
