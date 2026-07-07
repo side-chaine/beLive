@@ -1,0 +1,11 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "007",
+  "instructions": ["AGENTS.md"],
+  "agent": {
+    "001": { "model": "opencode-go/glm-5.2" },
+    "002": { "model": "opencode-go/glm-5.1" },
+    "008": { "model": "opencode-go/mimo-v2.5" },
+    "009": { "model": "opencode-go/kimi-k2.6" }
+  }
+}

@@ -15,6 +15,7 @@ import { useUIStore } from './stores/ui.store';
 import { getColorForBlockType, buildBlocksFromMarkers, computeSections, getBlockTypeForLine } from './utils/markerUtils';
 import { SignalingClient } from './Rehearsal/services/signaling-client';
 import { PeerConnectionManager } from './Rehearsal/services/peer-connection';
+import { RehearsalTriggerBridge } from './Rehearsal/bridge/rehearsal-trigger.bridge';
 
 // import '../css/main.css'; // loaded via <link> in index.html
 // import '../css/ai-chat.css'; // loaded via <link> in index.html
@@ -535,7 +536,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
-  // ★ Rehearsal Video Bridge — временный тестовый хук (Фаза 1, под удаление в Фазе 2)
+  // ★ Rehearsal Video Bridge — временный тестовый хук (Фаза 2: +bridge, Phase 3 удалить)
   (window as any).__testRehearsal = (roomId: string, role: 'teacher' | 'student', ticket: string) => {
     const sc = new SignalingClient(roomId, role, ticket);
     const pc = new PeerConnectionManager(sc, role);
@@ -546,10 +547,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     pc.onConnectionStateChange = (s) => console.log('[test] connectionState:', s);
     pc.onClockSynced = (offset, rtt) => console.log('[test] clock synced. offset=', offset, 'rtt=', rtt);
+    const bridge = new RehearsalTriggerBridge(pc, role);
     sc.connect();
     (window as any).__pc = pc;
     (window as any).__sc = sc;
-    return { sc, pc };
+    (window as any).__bridge = bridge;
+    return { sc, pc, bridge };
   };
 
   // Surface guard — скрыть legacy header если нет профиля
