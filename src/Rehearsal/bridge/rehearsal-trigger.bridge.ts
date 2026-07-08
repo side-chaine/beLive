@@ -137,6 +137,12 @@ export class RehearsalTriggerBridge {
       const expected = this.lastKnownSync.mediaTime + (Date.now() - this.lastKnownSync.wallClockAtSync) / 1000;
       const actual = ae?.getCurrentTime?.() ?? 0;
       const driftMs = (actual - expected) * 1000;
+      // Временный диагностический лог для живого теста (Definition of
+      // Done) — по конвенции [test], как onClockSynced в Фазе 1.
+      // Убрать после того, как живьём подтвердили что коррекция
+      // реально срабатывает, не оставлять в проде — 2с интервал даёт
+      // спам в консоль без пользы вне тестовой сессии.
+      console.log('[test] drift check:', driftMs.toFixed(1), 'ms', Math.abs(driftMs) > 40 ? '← КОРРЕКЦИЯ' : '');
       this.drift.maybeCorrect(driftMs, expected, (t) => ae?.seekTo?.(t));
     }, 2000);
   }
