@@ -6,7 +6,7 @@ import { useRehearsalSessionStore } from '../store/rehearsal-session.store';
 import { useAudioStore } from '../../stores/audio.store';
 import { useLoopStore } from '../../stores/loop.store';
 import { useStemStore } from '../../stem/stem.store';
-import { PlaybackWatchdog, CommandCoalescer } from './sync-primitives';
+import { PlaybackWatchdog, DriftCorrector, CommandCoalescer } from './sync-primitives';
 
 type Role = 'teacher' | 'student';
 
@@ -15,8 +15,14 @@ export class RehearsalTriggerBridge {
   private sender = new EnvelopeSender();
   private coalescer = new CommandCoalescer();
   private watchdog = new PlaybackWatchdog();
+  private drift = new DriftCorrector();
   private clockWorker: Worker;
   private pendingApplies = new Map<string, { mediaTime?: number; isPlaying?: boolean }>();
+  /** Последняя точка "истины": какой mediaTime был на какой момент
+   *  wall-clock. От неё считается ожидаемая позиция для фонового
+   *  drift-чека. Без этого DriftCorrector нечем кормить. */
+  private lastKnownSync: { mediaTime: number; wallClockAtSync: number } | null = null;
+  private driftCheckInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(private pc: PeerConnectionManager, private role: Role) {
     this.clockWorker = new Worker(
@@ -100,9 +106,44 @@ export class RehearsalTriggerBridge {
     this.pendingApplies.delete(msg.id);
     if (!merged) return;
     const ae = (window as any).audioEngine;
-    if (merged.mediaTime != null) ae?.seekTo?.(merged.mediaTime);
-    if (merged.isPlaying === true) this.playWithWatchdog();
-    else if (merged.isPlaying === false) ae?.pause?.();
+    if (merged.mediaTime != null) {
+      ae?.seekTo?.(merged.mediaTime);
+      // Точка отсчёта для фонового drift-чека — берём firedAt из
+      // воркера (реальное время срабатывания), а не Date.now() здесь,
+      // это чуть точнее.
+      this.lastKnownSync = { mediaTime: merged.mediaTime, wallClockAtSync: msg.firedAt };
+    }
+    if (merged.isPlaying === true) {
+      this.playWithWatchdog();
+      this.startDriftMonitoring();
+    } else if (merged.isPlaying === false) {
+      ae?.pause?.();
+      this.stopDriftMonitoring(); // на паузе сверять нечего
+    }
+  }
+
+  /** РАНЬШЕ ОТСУТСТВОВАЛО: DriftCorrector был спроектирован (3 раунда
+   *  обсуждений — экспоненциальный бэкофф) и объявлен полем, но нигде
+   *  не вызывался. 007 механически удалил поле как неиспользуемое
+   *  (TS6133) — это вскрыло реальный пробел, не косметику для Фазы 3.
+   *  Раз в 2с, пока реально играет: сверяем текущий currentTime с тем,
+   *  что должно быть по последней точке синхронизации + прошедшему
+   *  wall-clock времени. */
+  private startDriftMonitoring() {
+    this.stopDriftMonitoring();
+    this.driftCheckInterval = setInterval(() => {
+      if (!this.lastKnownSync) return;
+      const ae = (window as any).audioEngine;
+      const expected = this.lastKnownSync.mediaTime + (Date.now() - this.lastKnownSync.wallClockAtSync) / 1000;
+      const actual = ae?.getCurrentTime?.() ?? 0;
+      const driftMs = (actual - expected) * 1000;
+      this.drift.maybeCorrect(driftMs, expected, (t) => ae?.seekTo?.(t));
+    }, 2000);
+  }
+
+  private stopDriftMonitoring() {
+    if (this.driftCheckInterval != null) clearInterval(this.driftCheckInterval);
+    this.driftCheckInterval = null;
   }
 
   private playWithWatchdog(retriesLeft = 2) {
@@ -132,8 +173,9 @@ export class RehearsalTriggerBridge {
       useLoopStore.getState().clearLoop();
     }
     (window as any).audioEngine?.seekTo?.(s.currentTime);
-    if (s.isPlaying) this.playWithWatchdog();
-    else (window as any).audioEngine?.pause?.();
+    this.lastKnownSync = { mediaTime: s.currentTime, wallClockAtSync: Date.now() };
+    if (s.isPlaying) { this.playWithWatchdog(); this.startDriftMonitoring(); }
+    else { (window as any).audioEngine?.pause?.(); this.stopDriftMonitoring(); }
     useRehearsalSessionStore.getState().setResyncing(false);
   }
 
@@ -164,5 +206,6 @@ export class RehearsalTriggerBridge {
   dispose() {
     this.clockWorker.terminate();
     this.watchdog.stop();
+    this.stopDriftMonitoring();
   }
 }
