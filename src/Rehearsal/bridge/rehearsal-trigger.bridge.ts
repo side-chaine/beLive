@@ -24,6 +24,11 @@ export class RehearsalTriggerBridge {
   private lastKnownSync: { mediaTime: number; wallClockAtSync: number } | null = null;
   private driftCheckInterval: ReturnType<typeof setInterval> | null = null;
 
+  /** Сохраняем ссылку на handler для removeEventListener в dispose */
+  private onVisibilityChange = () => {
+    if (document.visibilityState === 'visible') this.send({ type: 'sync-request' });
+  };
+
   constructor(private pc: PeerConnectionManager, private role: Role) {
     this.clockWorker = new Worker(
       new URL('../workers/clock-scheduler.worker.ts', import.meta.url),
@@ -32,11 +37,13 @@ export class RehearsalTriggerBridge {
     this.clockWorker.onmessage = (e) => this.onWorkerFire(e.data);
 
     pc.onControlMessage = (raw) => this.handleControl(raw);
-    pc.onHardReset = () => this.sender.newEpoch();
+    pc.onHardReset = () => {
+      this.sender.newEpoch();
+      this.cancelPendingApplies();
+      this.stopDriftMonitoring();
+    };
 
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') this.send({ type: 'sync-request' });
-    });
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
 
   // --- Приём ---
@@ -66,6 +73,7 @@ export class RehearsalTriggerBridge {
         );
         break;
       case 'state-snapshot':
+        this.coalescer.cancel();
         this.applySnapshot(payload);
         break;
       case 'sync-request':
@@ -95,7 +103,7 @@ export class RehearsalTriggerBridge {
   }
 
   private scheduleApply(merged: { mediaTime?: number; isPlaying?: boolean }, wallClockTime: number) {
-    const localTarget = wallClockTime + this.pc.getClockOffset();
+    const localTarget = wallClockTime - this.pc.getClockOffset(); // FM-1: вычитаем offset (он = remote - local)
     const id = crypto.randomUUID();
     this.pendingApplies.set(id, merged);
     this.clockWorker.postMessage({ id, fireAtWallClock: localTarget });
@@ -152,9 +160,20 @@ export class RehearsalTriggerBridge {
     this.driftCheckInterval = null;
   }
 
+  /** Сброс всех отложенных apply'ов — при snapshot или hardReset */
+  private cancelPendingApplies() {
+    for (const id of this.pendingApplies.keys()) {
+      this.clockWorker.postMessage({ cancel: id });
+    }
+    this.pendingApplies.clear();
+  }
+
   private playWithWatchdog(retriesLeft = 2) {
     const ae = (window as any).audioEngine;
-    ae?.play?.().catch(() => {
+    // P1-3: ae?.play?.() может вернуть undefined (когда ae или play нет),
+    // .catch на undefined бросит TypeError. Проверяем что Promise реально.
+    const playPromise = ae?.play?.();
+    if (playPromise) playPromise.catch(() => {
       useRehearsalSessionStore.getState().setRequiresUserInteraction(true);
     });
     this.watchdog.start(
@@ -178,7 +197,14 @@ export class RehearsalTriggerBridge {
     } else {
       useLoopStore.getState().clearLoop();
     }
+    // Применяем stemVolumes (FM-8: были отправлены в sendSnapshot, но не применялись)
+    for (const [stemId, volume] of Object.entries(s.stemVolumes)) {
+      (window as any).audioEngine?.setStemVolume?.(stemId, volume);
+      useStemStore.getState().setStemVolume(stemId, volume);
+    }
     (window as any).audioEngine?.seekTo?.(s.currentTime);
+    // Сбрасываем отложенные apply'ы — snapshot приоритетнее, чем pending команды
+    this.cancelPendingApplies();
     this.lastKnownSync = { mediaTime: s.currentTime, wallClockAtSync: Date.now() };
     if (s.isPlaying) { this.playWithWatchdog(); this.startDriftMonitoring(); }
     else { (window as any).audioEngine?.pause?.(); this.stopDriftMonitoring(); }
@@ -210,6 +236,8 @@ export class RehearsalTriggerBridge {
   }
 
   dispose() {
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
+    this.cancelPendingApplies();
     this.clockWorker.terminate();
     this.watchdog.stop();
     this.stopDriftMonitoring();

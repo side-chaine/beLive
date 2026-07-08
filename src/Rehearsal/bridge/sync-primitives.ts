@@ -62,4 +62,10 @@ export class CommandCoalescer {
       flush(merged);
     }, delayMs);
   }
+
+  /** Сброс накопленных команд — при snapshot их применять уже не нужно */
+  cancel() {
+    if (this.timerId != null) { clearTimeout(this.timerId); this.timerId = null; }
+    this.pending = {};
+  }
 }

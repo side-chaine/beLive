@@ -28,6 +28,8 @@ export class PeerConnectionManager {
   private pendingPings = new Map<number, number>();
   private samples: ClockSample[] = [];
   private lastPongAt = 0;
+  /** Heartbeat interval (4s) — сохраняем ID для cleanup в hardReset/close */
+  private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
   onRemoteStream: ((stream: MediaStream) => void) | null = null;
   onControlMessage: ((data: string) => void) | null = null;
@@ -144,7 +146,7 @@ export class PeerConnectionManager {
       rounds++;
     }, 300);
 
-    setInterval(() => {
+    this.heartbeatInterval = setInterval(() => {
       if (this.triggerChannel?.readyState === 'open') this.sendClockPing();
     }, 4000);
   }
@@ -158,10 +160,17 @@ export class PeerConnectionManager {
   private recordClockSample(offset: number, rtt: number) {
     this.lastPongAt = Date.now();
     this.samples.push({ offset, rtt });
+    // Bounded: храним не более 32 последних сэмплов (rolling window ~128с)
+    if (this.samples.length > 32) this.samples.shift();
     const best = [...this.samples].sort((a, b) => a.rtt - b.rtt).slice(0, 3);
     this.clockOffset = best.reduce((s, x) => s + x.offset, 0) / best.length;
     this.rtt = best.reduce((s, x) => s + x.rtt, 0) / best.length;
     this.onClockSynced?.(this.clockOffset, this.rtt);
+    // Periodic sweep: очищаем pendingPings старше 10с
+    const now = Date.now();
+    for (const [seq, t1] of this.pendingPings) {
+      if (now - t1 > 10000) this.pendingPings.delete(seq);
+    }
   }
 
   getClockOffset() { return this.clockOffset; }
@@ -198,6 +207,16 @@ export class PeerConnectionManager {
   }
 
   private hardReset() {
+    // Очищаем heartbeat интервал, чтобы не накапливались при повторных reset'ах
+    if (this.heartbeatInterval != null) { clearInterval(this.heartbeatInterval); this.heartbeatInterval = null; }
+    // Сбрасываем clock state — stale offset после hardReset будет только мешать
+    this.clockOffset = 0;
+    this.rtt = 0;
+    this.samples = [];
+    this.pendingPings.clear();
+    this.pingSeq = 0;
+    this.lastPongAt = 0;
+
     this.pc.getSenders().forEach((s) => { try { s.replaceTrack(null); } catch { /* noop */ } });
     this.pc.close();
     this.pc = this.createPeerConnection();
@@ -213,6 +232,7 @@ export class PeerConnectionManager {
 
   close() {
     this.destroyed = true;
+    if (this.heartbeatInterval != null) { clearInterval(this.heartbeatInterval); this.heartbeatInterval = null; }
     this.pc.close();
   }
 }
