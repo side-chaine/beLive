@@ -24,7 +24,7 @@ const STEM_CLASSIFICATION_KEYWORDS: Readonly<Record<string, string[]>> = {
   keys:    ['keys', 'key_', '_key', 'piano', 'kys', 'synth'],
   guitar:  ['guitar', 'gtr', 'guit'],
   backing: ['back_voc', 'bgvoc', 'bvoc', 'backing_vocal', '_bv', 'bv_', 'back_vox', 'backing'],
-  other:   ['_other_', '_other.', 'other_[mvsep', 'other'],  // W9-UX-005: Include bare 'other' for re-import
+  other:   ['_other_', '_other.', 'other_[mvsep'],  // W9-UX-005: 2-stem promote via promote block, not bare keyword
 };
 
 // Backing vocal patterns — if matched, it's NOT lead vocal even if 'vocal' substring present
@@ -45,6 +45,15 @@ export function classifyStemFromFilename(baseName: string): string | null {
     }
   }
   return null; // No keyword match = instrumental
+}
+
+/** Normalize dashes in track titles: add spaces around unspaced separators */
+function normalizeTitleDashes(title: string): string {
+  // Left ≥3 letters, right ≥2 letters — avoids rock-n-roll, a-ha, dates
+  return title.replace(
+    /([A-Za-zА-Яа-яЁё]{3,})([-–—])([A-Za-zА-Яа-яЁё]{2,})/g,
+    '$1 $2 $3'
+  );
 }
 
 // Upload session types
@@ -780,10 +789,10 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
         if (baseNameNoExt.toLowerCase().includes('instrum')) {
           if (!instrumentalFile) {
             instrumentalFile = file;
-            uploadSession.overrideTitle = zipFileName
+            uploadSession.overrideTitle = normalizeTitleDashes(zipFileName
               .replace(/\.zip$/i, '')
               .replace(/\.(flac|mp3|wav|aac|m4a|ogg)$/i, '')
-              .trim();
+              .trim());
             if (import.meta.env.DEV) console.log(`[Upload] W7.2: mvsep instrum detected, title="${uploadSession.overrideTitle}" ← ${file.name}`);
             // W11: fire-and-forget lrclib prefetch (параллельно с загрузкой аудио)
             // Захватываем title синхронно ДО async импорта — сессия может сброситься раньше
@@ -807,7 +816,7 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
           if (!uploadSession.overrideTitle) {
             const titleFromFile = getFileNameWithoutExtension(file.name);
             if (titleFromFile && !titleFromFile.includes(' - ') && !titleFromFile.includes(' – ')) {
-              uploadSession.overrideTitle = zipFileName.replace(/\.zip$/i, '').trim();
+              uploadSession.overrideTitle = normalizeTitleDashes(zipFileName.replace(/\.zip$/i, '').trim());
               if (import.meta.env.DEV) console.log(`[Upload] TC-ZIP-06: overrideTitle from ZIP: "${uploadSession.overrideTitle}" ← "${titleFromFile}"`);
             }
           }
@@ -829,6 +838,45 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
             console.warn(`[Upload] W6.2: 'other' slot already taken, skipping: ${file.name}`);
           }
         }
+      }
+    }
+
+    // W9-UX-005: 2-stem ZIP (vocal + other) → promote 'other' → instrumental
+    // Guard: only promote when there's exactly 1 additional stem ('other') AND vocal exists
+    if (!instrumentalFile && vocalFile && uploadSession.additionalStems) {
+      const stemKeys = Object.keys(uploadSession.additionalStems);
+      if (stemKeys.length === 1 && stemKeys[0] === 'other') {
+        instrumentalFile = uploadSession.additionalStems['other'];
+        delete uploadSession.additionalStems['other'];
+
+        // Clean overrideTitle from vocal filename (FM-1 guard: vocalFile exists here)
+        if (!uploadSession.overrideTitle) {
+          const vocalName = getFileNameWithoutExtension(vocalFile.name);
+          const cleanTitle = vocalName
+            .replace(/[_-]vocals?[_-]?(?:\[mvsep\.com\])?/gi, '')
+            .replace(/\[mvsep\.com\]/gi, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+          // Если vocal filename содержит MVSEP-таймстамп (14 цифр в начале) —
+          // cleanTitle это машинный хэш, а не название. Берём из ZIP.
+          const isMvsepHash = /^\d{14}/.test(vocalName);
+          uploadSession.overrideTitle = normalizeTitleDashes(
+            (!isMvsepHash && cleanTitle)
+              ? cleanTitle
+              : zipFileName.replace(/\.zip$/i, '').trim()
+          );
+        }
+
+        // W11 lrclib prefetch (TC-ZIP-05 mirror for promoted 2-stem tracks)
+        const _promoteTitle = uploadSession.overrideTitle || getFileNameWithoutExtension(instrumentalFile.name);
+        if (_promoteTitle) {
+          import('./auto-lyrics.service').then(({ prefetch }) => {
+            if (import.meta.env.DEV) console.log('[W11] prefetch called (2-stem promote), title:', _promoteTitle);
+            prefetch(_promoteTitle);
+          }).catch(() => {});
+        }
+
+        if (import.meta.env.DEV) console.log(`[Upload] W9-UX-005: promoted 'other' → instrumental, title="${uploadSession.overrideTitle}"`);
       }
     }
 

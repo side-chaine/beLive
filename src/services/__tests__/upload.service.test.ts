@@ -41,15 +41,37 @@ describe('upload.service — чистые функции', () => {
       expect(classifyStemFromFilename('bgvoc_track')).toBe('backing');
     });
 
-    it('other → other', () => {
-      expect(classifyStemFromFilename('other_track')).toBe('other');
+    it('other → other (или null если bare other без разделителей)', () => {
+      // bare 'other' keyword removed — 'other_track' больше не совпадает (нет _other_)
+      expect(classifyStemFromFilename('other_track')).toBeNull();
+      // '_other_' keyword всё ещё активен
       expect(classifyStemFromFilename('track_other_')).toBe('other');
+      // 'other_[mvsep' keyword всё ещё активен
+      expect(classifyStemFromFilename('track_other_[mvsep.com]')).toBe('other');
     });
 
     it('case insensitive', () => {
       expect(classifyStemFromFilename('DRUMS')).toBe('drums');
       expect(classifyStemFromFilename('Bass_Track')).toBe('bass');
       expect(classifyStemFromFilename('Guitar_Solo')).toBe('guitar');
+    });
+
+    describe('2-stem ZIP promote (W9-UX-005)', () => {
+      it('other_[mvsep.com] классифицируется как other stem', () => {
+        expect(classifyStemFromFilename('Linkin Park - In the End_other_[mvsep.com]')).toBe('other');
+      });
+
+      it('vocals_[mvsep.com] классифицируется как vocals', () => {
+        expect(classifyStemFromFilename('Linkin Park - In the End_vocals_[mvsep.com]')).toBe('vocals');
+      });
+
+      it('instrumental_[mvsep.com] не имеет совпадений → null (instrumental)', () => {
+        expect(classifyStemFromFilename('Linkin Park - In the End_instrumental_[mvsep.com]')).toBeNull();
+      });
+
+      it('other_track (без разделителя) → null после удаления bare other', () => {
+        expect(classifyStemFromFilename('other_track')).toBeNull();
+      });
     });
   });
 

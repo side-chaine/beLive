@@ -105,6 +105,16 @@ export function parseTitleToArtistTrack(
     };
   }
 
+  // New: fallback — unspaced dash as separator (for "Artist-Title", "Артист-Название")
+  const dashFallback = cleaned.match(/^(.+?)[-–—](.+)$/);
+  if (dashFallback) {
+    const artist = dashFallback[1].trim();
+    const track = dashFallback[2].trim();
+    if (artist.length >= 2 && track.length >= 1) {
+      return { artist, track };
+    }
+  }
+
   // Нет разделителя — весь title как track
   return { artist: '', track: cleaned };
 }
