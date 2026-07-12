@@ -24,9 +24,24 @@ export class RehearsalTriggerBridge {
   private lastKnownSync: { mediaTime: number; wallClockAtSync: number } | null = null;
   private driftCheckInterval: ReturnType<typeof setInterval> | null = null;
 
-  /** Сохраняем ссылку на handler для removeEventListener в dispose */
+  /** Сохраняем ссылку на handler для removeEventListener в dispose.
+   *  [ПРАВКА ПО ЖИВОМУ ТЕСТУ 2026-07-07]: раньше обработчик ничего
+   *  не делал на hide — setInterval в фоне троттлился браузером,
+   *  накапливал Date.now() прыжок, и при возврате drift-чек считал
+   *  десятки секунд "дрифта" и дёргал seek. Лог: "drift check: 72398.7 ms".
+   *  Фикс: на hide — стоп мониторинга, на visible — свежий якорь. */
   private onVisibilityChange = () => {
-    if (document.visibilityState === 'visible') this.send({ type: 'sync-request' });
+    if (document.visibilityState === 'visible') {
+      this.send({ type: 'sync-request' });
+      // Переанкоровка: берём текущую реальную позицию как новую точку отсчёта
+      if (this.driftCheckInterval != null) {
+        const ae = (window as any).audioEngine;
+        this.lastKnownSync = { mediaTime: ae?.getCurrentTime?.() ?? 0, wallClockAtSync: Date.now() };
+        this.startDriftMonitoring();
+      }
+    } else {
+      this.stopDriftMonitoring(); // таймер в фоне троттлится — не меряем вслепую
+    }
   };
 
   constructor(private pc: PeerConnectionManager, private role: Role) {
@@ -145,13 +160,25 @@ export class RehearsalTriggerBridge {
       const expected = this.lastKnownSync.mediaTime + (Date.now() - this.lastKnownSync.wallClockAtSync) / 1000;
       const actual = ae?.getCurrentTime?.() ?? 0;
       const driftMs = (actual - expected) * 1000;
-      // Временный диагностический лог для живого теста (Definition of
-      // Done) — по конвенции [test], как onClockSynced в Фазе 1.
-      // Убрать после того, как живьём подтвердили что коррекция
-      // реально срабатывает, не оставлять в проде — 2с интервал даёт
-      // спам в консоль без пользы вне тестовой сессии.
       console.log('[test] drift check:', driftMs.toFixed(1), 'ms', Math.abs(driftMs) > 40 ? '← КОРРЕКЦИЯ' : '');
-      this.drift.maybeCorrect(driftMs, expected, (t) => ae?.seekTo?.(t));
+
+      // Защита от заведомо невозможных значений (GC-пауза, троттлинг
+      // другого рода, что угодно). Дрифт в несколько секунд — артефакт
+      // измерения, а не реальный рассинхрон. Не дёргаем seek, тихо
+      // переанкориваемся на реальное состояние.
+      if (Math.abs(driftMs) > 10000) {
+        console.log('[sanity-reanchor] driftMs=', driftMs.toFixed(1), '— re-anchoring');
+        this.lastKnownSync = { mediaTime: actual, wallClockAtSync: Date.now() };
+        return;
+      }
+
+      this.drift.maybeCorrect(driftMs, expected, (t) => {
+        ae?.seekTo?.(t);
+        // Переанкоровка сразу после реальной коррекции — следующий чек
+        // сравнивает со СВЕЖЕЙ точкой отсчёта, не с исходной, от которой
+        // уже накопилась история предыдущих поправок.
+        this.lastKnownSync = { mediaTime: t, wallClockAtSync: Date.now() };
+      });
     }, 2000);
   }
 
@@ -170,10 +197,16 @@ export class RehearsalTriggerBridge {
 
   private playWithWatchdog(retriesLeft = 2) {
     const ae = (window as any).audioEngine;
-    // P1-3: ae?.play?.() может вернуть undefined (когда ae или play нет),
-    // .catch на undefined бросит TypeError. Проверяем что Promise реально.
-    const playPromise = ae?.play?.();
-    if (playPromise) playPromise.catch(() => {
+    // [найдено чужой верификацией] ae?.play?.() короткозамыкается в
+    // undefined целиком, если ae отсутствует — .catch() на undefined
+    // кидает TypeError. Ранний return + прямой вызов ae.play().
+    if (!ae?.play) {
+      useRehearsalSessionStore.getState().setRequiresUserInteraction(true);
+      return;
+    }
+    void ae.play().catch(() => {
+      // iOS autoplay gate — тот же механизм, что и для холодного старта,
+      // отдельного пути для "очнулись после сна" не городим (Раунд 3, Слой 2).
       useRehearsalSessionStore.getState().setRequiresUserInteraction(true);
     });
     this.watchdog.start(
