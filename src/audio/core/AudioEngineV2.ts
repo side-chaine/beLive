@@ -63,7 +63,6 @@ export class AudioEngineV2 {
   private static readonly _LOOP_JUMP_COOLDOWN_MS = 80;
   /** Loop jump counter — for log throttling */
   private _loopJumpCount = 0;
-  private _loopIterationCount = 0;
   /** Blackout period after loop jump — drift monitor must not fire */
   private readonly _LOOP_RESYNC_BLACKOUT_MS = 800;
   /** Timeout handle for Phase 1 seeked-event timeout */
@@ -96,7 +95,7 @@ export class AudioEngineV2 {
   // === Transport hardening state (Phase 0 scaffolding) ===
   private _transportGen = 0;
   private _lastSeekTime = 0;
-  private _softResyncTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
+  private _softResyncTimer: ReturnType<typeof setTimeout> | null = null;
   private _lastHardResyncTime = 0;
   private readonly _SYNC_BLACKOUT_FLOOR = 80;
   private readonly _SYNC_BLACKOUT_MAX = 500;
@@ -1452,9 +1451,7 @@ export class AudioEngineV2 {
    * Called from _startLoopCheck interval with cooldown guard.
    */
   private _executeLoopJump(now: number): void {
-    const loopOffset = 0.005 * (1 - (this._loopIterationCount % 30) / 30);
-    this._loopIterationCount++;
-    const target = this._loopStart + loopOffset;
+    const target = this._loopStart + 0.005;
     const ctx = getAudioContext();
     const jumpNum = ++this._loopJumpCount;
 
@@ -1564,10 +1561,10 @@ export class AudioEngineV2 {
   // ============================================================
 
   private _clearSoftResync(): void {
-    for (const timer of this._softResyncTimers.values()) {
-      clearTimeout(timer);
+    if (this._softResyncTimer !== null) {
+      clearTimeout(this._softResyncTimer);
+      this._softResyncTimer = null;
     }
-    this._softResyncTimers.clear();
     // Reset playbackRate for all soft-resynced stems
     this._softResyncRates.forEach((_, stemId) => {
       const stem = this.stems.get(stemId);
@@ -1580,34 +1577,8 @@ export class AudioEngineV2 {
   }
 
   private _getSyncBlackoutMs(): number {
-    if (!this._firstSeekDone) return 200;
+    if (!this._firstSeekDone) return 800; // Extended blackout for first seek (TC-046R)
     return this._SYNC_BLACKOUT_MAX;
-  }
-
-  /**
-   * Resync only followers (stems) to master time, без инкремента _transportGen.
-   * Используется drift monitor'ом при >hardThreshold — не создаёт cascade.
-   */
-  private _atomicFollowerResync(masterTime: number): void {
-    const waits: Promise<void>[] = [];
-    this.stems.forEach((stem, id) => {
-      if (id === 'instrumental') return;
-      if (!stem.loaded) return;
-      const drift = Math.abs(stem.getCurrentTime() - masterTime);
-      if (drift > 0.01) {
-        stem.setCurrentTime(masterTime);
-        waits.push(this._waitForSeeked(stem));
-      }
-    });
-    if (waits.length > 0) {
-      const timeoutMs = 500;
-      Promise.race([
-        Promise.all(waits),
-        new Promise<void>(r => setTimeout(r, timeoutMs)),
-      ]).then(() => {
-        this._lastSeekTime = performance.now();
-      });
-    }
   }
 
   // ============================================================
@@ -1915,7 +1886,7 @@ export class AudioEngineV2 {
               const now = performance.now();
               if (now - this._lastHardResyncTime >= this._HARD_RESYNC_COOLDOWN_MS) {
                 this._lastHardResyncTime = now;
-                this._atomicFollowerResync(t);
+                this.setCurrentTime(t);
                 return;
               }
             } else if (worstDrift > SOFT_RESYNC_DEFAULTS.softThreshold) {
@@ -1973,9 +1944,7 @@ export class AudioEngineV2 {
     const correctionTimeMs = Math.abs(driftSeconds) / Math.abs(rateDelta) * 1000;
     const revertMs = Math.min(Math.max(correctionTimeMs, 1000), 5000); // 1-5 seconds
 
-    if (this._softResyncTimers.has(stemId)) clearTimeout(this._softResyncTimers.get(stemId)!);
-    this._softResyncTimers.set(stemId, setTimeout(() => {
-      this._softResyncTimers.delete(stemId);
+    this._softResyncTimer = setTimeout(() => {
       // Revert playbackRate
       if (stem.audio) stem.audio.playbackRate = this._playbackRate;
       this._softResyncRates.delete(stemId);
@@ -1985,7 +1954,8 @@ export class AudioEngineV2 {
         set.delete(stemId);
         if (set.size === 0) this._softResyncInProgress.delete(bus);
       }
-    }, revertMs));
+      this._softResyncTimer = null;
+    }, revertMs);
   }
 
   private _notifyPlaybackState(): void {
