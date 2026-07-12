@@ -23,6 +23,7 @@ export class RehearsalTriggerBridge {
    *  drift-чека. Без этого DriftCorrector нечем кормить. */
   private lastKnownSync: { mediaTime: number; wallClockAtSync: number } | null = null;
   private driftCheckInterval: ReturnType<typeof setInterval> | null = null;
+  private telemetryStats = { worstDriftMs: 0, resyncCount: 0, lastReportAt: 0 };
 
   /** Сохраняем ссылку на handler для removeEventListener в dispose.
    *  [ПРАВКА ПО ЖИВОМУ ТЕСТУ 2026-07-07]: раньше обработчик ничего
@@ -161,6 +162,16 @@ export class RehearsalTriggerBridge {
       const actual = ae?.getCurrentTime?.() ?? 0;
       const driftMs = (actual - expected) * 1000;
       console.log('[test] drift check:', driftMs.toFixed(1), 'ms', Math.abs(driftMs) > 40 ? '← КОРРЕКЦИЯ' : '');
+
+      if (Math.abs(driftMs) > Math.abs(this.telemetryStats.worstDriftMs)) {
+        this.telemetryStats.worstDriftMs = driftMs;
+      }
+      if (Math.abs(driftMs) > 40) this.telemetryStats.resyncCount++;
+      if (Date.now() - this.telemetryStats.lastReportAt > 10000) {
+        console.log('[telemetry] drift:', this.telemetryStats.worstDriftMs.toFixed(1),
+          'ms, resyncs:', this.telemetryStats.resyncCount);
+        this.telemetryStats.lastReportAt = Date.now();
+      }
 
       // Защита от заведомо невозможных значений (GC-пауза, троттлинг
       // другого рода, что угодно). Дрифт в несколько секунд — артефакт
