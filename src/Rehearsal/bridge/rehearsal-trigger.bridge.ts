@@ -7,6 +7,7 @@ import { useAudioStore } from '../../stores/audio.store';
 import { useLoopStore } from '../../stores/loop.store';
 import { useStemStore } from '../../stem/stem.store';
 import { PlaybackWatchdog, DriftCorrector, CommandCoalescer } from './sync-primitives';
+import { VirtualClock } from './virtual-clock';
 
 type Role = 'teacher' | 'student';
 
@@ -16,6 +17,7 @@ export class RehearsalTriggerBridge {
   private coalescer = new CommandCoalescer();
   private watchdog = new PlaybackWatchdog();
   private drift = new DriftCorrector();
+  private vclock = new VirtualClock();
   private clockWorker: Worker;
   private pendingApplies = new Map<string, { mediaTime?: number; isPlaying?: boolean }>();
   /** Последняя точка "истины": какой mediaTime был на какой момент
@@ -37,7 +39,9 @@ export class RehearsalTriggerBridge {
       // Переанкоровка: берём текущую реальную позицию как новую точку отсчёта
       if (this.driftCheckInterval != null) {
         const ae = (window as any).audioEngine;
-        this.lastKnownSync = { mediaTime: ae?.getCurrentTime?.() ?? 0, wallClockAtSync: Date.now() };
+        const t = ae?.getCurrentTime?.() ?? 0;
+        this.vclock.anchor(t, ae?.playbackRate ?? 1);
+        this.lastKnownSync = { mediaTime: t, wallClockAtSync: Date.now() };
         this.startDriftMonitoring();
       }
     } else {
@@ -132,6 +136,7 @@ export class RehearsalTriggerBridge {
     const ae = (window as any).audioEngine;
     if (merged.mediaTime != null) {
       ae?.seekTo?.(merged.mediaTime);
+      this.vclock.anchor(merged.mediaTime, ae?.playbackRate ?? 1);
       // Точка отсчёта для фонового drift-чека — берём firedAt из
       // воркера (реальное время срабатывания), а не Date.now() здесь,
       // это чуть точнее.
@@ -158,9 +163,19 @@ export class RehearsalTriggerBridge {
     this.driftCheckInterval = setInterval(() => {
       if (!this.lastKnownSync) return;
       const ae = (window as any).audioEngine;
-      const expected = this.lastKnownSync.mediaTime + (Date.now() - this.lastKnownSync.wallClockAtSync) / 1000;
+      const expected = this.vclock.getPosition();
       const actual = ae?.getCurrentTime?.() ?? 0;
       const driftMs = (actual - expected) * 1000;
+      const driftVC = actual - expected;
+      if (Math.abs(driftVC) > 100 && ae?.audioContext) {
+        try {
+          const ts = ae.audioContext.getOutputTimestamp();
+          const anchorWall = ts.performanceTime + (ts.contextTime - ae.getCurrentTime()) * 1000;
+          if (Math.abs(anchorWall - performance.now()) > 200) {
+            console.log('[clock] getOutputTimestamp drift:', (anchorWall - performance.now()).toFixed(1), 'ms');
+          }
+        } catch {}
+      }
       console.log('[test] drift check:', driftMs.toFixed(1), 'ms', Math.abs(driftMs) > 40 ? '← КОРРЕКЦИЯ' : '');
 
       if (Math.abs(driftMs) > Math.abs(this.telemetryStats.worstDriftMs)) {
@@ -247,6 +262,7 @@ export class RehearsalTriggerBridge {
       useStemStore.getState().setStemVolume(stemId, volume);
     }
     (window as any).audioEngine?.seekTo?.(s.currentTime);
+    this.vclock.anchor(s.currentTime, (window as any).audioEngine?.playbackRate ?? 1);
     // Сбрасываем отложенные apply'ы — snapshot приоритетнее, чем pending команды
     this.cancelPendingApplies();
     this.lastKnownSync = { mediaTime: s.currentTime, wallClockAtSync: Date.now() };
