@@ -14,7 +14,6 @@ export class VirtualClock {
   private anchorMediaTime = 0;
   private anchorPerfTime = 0;
   private rate = 1;
-  private _outputLatency = 0;
 
   /** Переанкоровка — после seek, loop jump, applySnapshot */
   anchor(mediaTime: number, playbackRate = 1) {
@@ -31,9 +30,7 @@ export class VirtualClock {
 
   /** Обновление playbackRate (при смене темпа) */
   setRate(rate: number) {
+    // Переанкорируемся на текущую расчётную позицию с новым rate
     this.anchor(performance.now(), rate);
   }
-
-  /** Установка outputLatency для компенсации (из getOutputTimestamp) */
-  setOutputLatency(ms: number) { this._outputLatency = ms; }
 }
