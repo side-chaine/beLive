@@ -562,12 +562,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ★ Phone connect — автоматическое подключение Student без консоли
   // Используется с docs/phone-connect.html (открыть на телефоне, ввести Room ID)
+  // URL: https://app.mybelive.com/?phone=1&room=live-xxxxxxxxxx
   (async () => {
-    const autoRoom = sessionStorage.getItem('blAutoRoom');
-    if (!autoRoom) return;
-    sessionStorage.removeItem('blAutoRoom');
-    const roomMatch = autoRoom.match(/['"](.+)['"]/) ?? [null, autoRoom];
-    const roomId = roomMatch[1];
+    const params = new URLSearchParams(location.search);
+    if (params.get('phone') !== '1') return;
+    const roomId = params.get('room');
+    if (!roomId) return;
     const exp = Date.now() + 3600000;
     const secret = 'test-rehearsal-secret-2026';
     try {
