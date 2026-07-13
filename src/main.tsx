@@ -574,7 +574,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
       const body = btoa(JSON.stringify({ roomId, role: 'student', exp }));
       const sig = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(body)))));
-      window.__testRehearsal(roomId, 'student', body + '.' + sig);
+      (window as any).__testRehearsal(roomId, 'student', body + '.' + sig);
     } catch (e) {
       console.warn('[phone] auto-connect failed:', e);
     }
