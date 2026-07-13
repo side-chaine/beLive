@@ -56,6 +56,53 @@ export class DriftCorrector {
     this.lastCorrectionAt = now;
     this.lockUntil = now + this.lockDurationMs;
   }
+
+  /** [FM-11] Без этого состояние бэкоффа (возможно уже эскалированное
+   *  до 12с) тащится через Hard Reset или свежий snapshot — новый
+   *  цикл синхронизации начинается с чужим, неактуальным локом. */
+  reset() {
+    this.lockUntil = 0;
+    this.lockDurationMs = 2000;
+    this.lastCorrectionAt = 0;
+  }
+}
+
+/** [E1] Локальная проекция позиции трека между сверками. Раньше —
+ *  самодельный { mediaTime, wallClockAtSync } на Date.now(). Проблема
+ *  Date.now(): не монотонный, может скакнуть если ОС/NTP поправит
+ *  системные часы посреди сессии (редко, но именно для многочасовой
+ *  репетиции — реалистично). performance.now() монотонный и не зависит
+ *  от системных часов — для ЛОКАЛЬНОГО отслеживания прошедшего времени
+ *  это строго лучше. Для СЕТЕВОГО offset (между машинами) Date.now()
+ *  остаётся правильным выбором — сравнивать performance.now() разных
+ *  устройств бессмысленно, у них не связанные эпохи. Два разных
+ *  назначения, не взаимозаменяемы. */
+export class VirtualClock {
+  private anchorMediaTime = 0;
+  private anchorPerfTime = 0;
+  private rate = 1;
+
+  anchor(mediaTime: number, playbackRate = 1) {
+    this.anchorMediaTime = mediaTime;
+    this.anchorPerfTime = performance.now();
+    this.rate = playbackRate;
+  }
+
+  getPosition(): number {
+    const elapsed = (performance.now() - this.anchorPerfTime) / 1000;
+    return this.anchorMediaTime + elapsed * this.rate;
+  }
+
+  /** ⚠️ ИСПРАВЛЕНО: в исходном варианте (007, раунд с 005/Context7)
+   *  вызывался anchor(performance.now(), rate) — первым аргументом
+   *  anchor() ждёт mediaTime (позиция трека в секундах), а не текущее
+   *  время выполнения. anchorMediaTime забивался огромным случайным
+   *  числом вместо реальной позиции — вся проекция после setRate()
+   *  была бы сломана. Верно — передать ТЕКУЩУЮ позицию (getPosition()
+   *  до смены темпа), не performance.now(). */
+  setRate(rate: number) {
+    this.anchor(this.getPosition(), rate);
+  }
 }
 
 /** Debounce burst команд (play+seek) в один apply */
