@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>beLive — Phone Connect</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 400px; margin: 0 auto; text-align: center; background: #111; color: #eee; }
+    input, button { width: 100%; padding: 14px; margin: 8px 0; font-size: 16px; box-sizing: border-box; border-radius: 8px; }
+    input { background: #222; border: 1px solid #444; color: #eee; }
+    button { background: #00a86b; color: white; border: none; cursor: pointer; font-weight: bold; }
+    h2 { color: #0f0; }
+    .hint { color: #888; font-size: 14px; }
+    .room { color: #0ff; font-size: 12px; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h2>🎵 beLive — Student</h2>
+  <p class="hint">Вставь Room ID с ноута (из консоли Teacher)</p>
+  
+  <input type="text" id="roomInput" placeholder="Например: live-1783927668350">
+  <button onclick="connect()">🔗 Подключиться как Student</button>
+  
+  <div id="step2" style="display:none; margin-top: 20px; padding: 15px; background: #1a3a1a; border-radius: 8px;">
+    <p style="color:#0f0;">✅ Данные сохранены!</p>
+    <p class="hint">Сейчас откроется приложение. Если трек не начнёт играть сам — нажми play в Teacher (ноут).</p>
+    <p class="hint" id="roomDisplay"></p>
+  </div>
+
+  <script>
+    async function connect() {
+      const room = document.getElementById('roomInput').value.trim();
+      if (!room) { alert('Введи Room ID с ноута!'); return; }
+
+      document.getElementById('roomDisplay').textContent = 'Room: ' + room;
+      document.getElementById('step2').style.display = 'block';
+      
+      // Сохраняем room ID в sessionStorage — main.tsx прочитает и подключится
+      sessionStorage.setItem('blAutoRoom', room);
+      
+      // Редирект на приложение — через 1 секунду
+      setTimeout(() => {
+        window.location.href = 'https://app.mybelive.com/?room=' + room;
+      }, 1000);
+    }
+
+    // Если room уже в URL — подставляем
+    const urlRoom = new URLSearchParams(location.search).get('room');
+    if (urlRoom) {
+      document.getElementById('roomInput').value = urlRoom;
+    }
+  </script>
+</body>
+</html>
