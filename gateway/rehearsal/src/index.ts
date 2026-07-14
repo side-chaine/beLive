@@ -68,3 +68,4 @@ async function verifyUserJwt(request: Request, secret: string): Promise<string |
   if (payload.exp && payload.exp * 1000 < Date.now()) return null;
   return payload.sub ?? null;
 }
+// force redeploy 2026-07-14
