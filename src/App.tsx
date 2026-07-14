@@ -60,7 +60,7 @@ import { FeedScreen } from './feed/FeedScreen';
 import { useFeedStore } from './catalog/feed/feed.store';
 import { initMetricsBridge } from './services/metrics.bridge';
 import { initSyncLifecycle } from './services/metrics-sync.service';
-import { handleRehearsalDeepLink } from './Rehearsal/services/deep-link.service';
+import { handleRehearsalDeepLink, connectRehearsalSession } from './Rehearsal/services/deep-link.service';
 export default function App() {
   const mode = useModeStore((s) => s.mode);
   const syncOpen = useSyncStore((s) => s.open);
@@ -181,7 +181,6 @@ export default function App() {
   useEffect(() => {
     handleRehearsalDeepLink().then((rehearsalLink) => {
       if (rehearsalLink) {
-        const { connectRehearsalSession } = require('./Rehearsal/services/deep-link.service');
         connectRehearsalSession(rehearsalLink);
       }
     });
