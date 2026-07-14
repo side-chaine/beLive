@@ -16,6 +16,7 @@ import { getColorForBlockType, buildBlocksFromMarkers, computeSections, getBlock
 import { SignalingClient } from './Rehearsal/services/signaling-client';
 import { PeerConnectionManager } from './Rehearsal/services/peer-connection';
 import { RehearsalTriggerBridge } from './Rehearsal/bridge/rehearsal-trigger.bridge';
+import { useRehearsalSessionStore } from './Rehearsal/store/rehearsal-session.store';
 
 // import '../css/main.css'; // loaded via <link> in index.html
 // import '../css/ai-chat.css'; // loaded via <link> in index.html
@@ -540,7 +541,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   (window as any).__testRehearsal = (roomId: string, role: 'teacher' | 'student', ticket: string) => {
     const sc = new SignalingClient(roomId, role, ticket);
     const pc = new PeerConnectionManager(sc, role);
-    sc.onOpen = () => console.log('[test] WS open, role=', role);
+    sc.onOpen = () => {
+      console.log('[test] WS open, role=', role);
+      useRehearsalSessionStore.getState().setConnectionState('connected');
+    };
+    sc.onClose = (code) => {
+      useRehearsalSessionStore.getState().setConnectionState(code === 4001 ? 'failed' : 'reconnecting');
+    };
     sc.onPeerJoined = (peerRole) => {
       console.log('[test] peer joined:', peerRole);
       if (role === 'teacher') pc.createDataChannels();
