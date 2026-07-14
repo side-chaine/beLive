@@ -15,6 +15,7 @@ export class SignalingClient {
   onPeerJoined: ((role: string) => void) | null = null;
   onPeerLeft: ((role: string) => void) | null = null;
   onOpen: (() => void) | null = null;
+  onClose: ((code: number) => void) | null = null;
 
   constructor(roomId: string, role: 'teacher' | 'student', ticket: string) {
     const base = import.meta.env.VITE_REHEARSAL_SIGNALING_URL as string | undefined;
@@ -36,6 +37,7 @@ export class SignalingClient {
     });
     this.ws.addEventListener('close', (event) => {
       if (this.closedByUser) return;
+      this.onClose?.(event.code);
       if (event.code === 4001) return;
       this.scheduleReconnect();
     });

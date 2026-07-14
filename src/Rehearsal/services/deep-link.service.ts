@@ -76,6 +76,12 @@ export function connectRehearsalSession(link: RehearsalLinkParams): void {
   useRehearsalSessionStore.getState().setRole(role, roomId);
   const sc = new SignalingClient(roomId, role, ticket);
   const pc = new PeerConnectionManager(sc, role);
+  sc.onOpen = () => {
+    useRehearsalSessionStore.getState().setConnectionState('connected');
+  };
+  sc.onClose = (code) => {
+    useRehearsalSessionStore.getState().setConnectionState(code === 4001 ? 'failed' : 'reconnecting');
+  };
   sc.onPeerJoined = () => {
     if (role === 'teacher') pc.createDataChannels();
   };
