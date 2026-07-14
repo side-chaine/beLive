@@ -34,6 +34,7 @@ jobs:
         env:
           VITE_GETSONGBPM_KEY: ${{ secrets.VITE_GETSONGBPM_KEY }}
           VITE_LASTFM_API_KEY: ${{ secrets.VITE_LASTFM_API_KEY }}
+          VITE_REHEARSAL_SIGNALING_URL: 'wss://belive-rehearsal.nikitosss007.workers.dev/ws'
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

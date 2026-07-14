@@ -14,11 +14,12 @@ export type ControlPayload =
   | { type: 'play'; mediaTime: number; wallClockTime: number }
   | { type: 'pause'; mediaTime: number; wallClockTime: number }
   | { type: 'seek'; mediaTime: number; wallClockTime: number }
-  | { type: 'state-snapshot'; currentTime: number; isPlaying: boolean; stemVolumes: Record<string, number>; loop: { start: number; end: number } | null; activeBlockId?: string }
+  | { type: 'state-snapshot'; currentTime: number; isPlaying: boolean; playbackRate: number; stemVolumes: Record<string, number>; loop: { start: number; end: number } | null; activeBlockId?: string }
   | { type: 'sync-request' }
   | { type: 'set-stem-volume'; stemId: string; volume: number }
   | { type: 'set-loop'; start: number; end: number }
-  | { type: 'clear-loop' };
+  | { type: 'clear-loop' }
+  | { type: 'set-playback-rate'; rate: number };
 
 export type TriggerPayload =
   | { type: 'annotation'; points: { x: number; y: number }[]; action: 'draw' | 'clear' }

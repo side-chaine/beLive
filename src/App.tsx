@@ -177,11 +177,12 @@ export default function App() {
     }
   }, [surface]);
 
-  // Rehearsal Video Bridge: Deep-link ?room= — Surface Gate Bypass (TC-RVB-000)
+  // Rehearsal Video Bridge: Deep-link ?room= — создаёт bridge и плашку статуса
   useEffect(() => {
     handleRehearsalDeepLink().then((rehearsalLink) => {
       if (rehearsalLink) {
-        // Фаза 2: передать в rehearsal-session.store
+        const { connectRehearsalSession } = require('./Rehearsal/services/deep-link.service');
+        connectRehearsalSession(rehearsalLink);
       }
     });
   }, []);

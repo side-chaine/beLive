@@ -21,6 +21,7 @@ export class RehearsalTriggerBridge {
   private pendingApplies = new Map<string, { mediaTime?: number; isPlaying?: boolean }>();
   private driftCheckInterval: ReturnType<typeof setInterval> | null = null;
   private telemetryStats = { worstDriftMs: 0, resyncCount: 0, lastReportAt: 0 };
+  private statusEl: HTMLDivElement | null = null;
 
   /** Сохраняем ссылку на handler для removeEventListener в dispose.
    *  [ПРАВКА ПО ЖИВОМУ ТЕСТУ 2026-07-07]: раньше обработчик ничего
@@ -43,6 +44,46 @@ export class RehearsalTriggerBridge {
     }
   };
 
+  /** Создаёт плашку статуса синхронизации прямо на странице.
+   *  Нужна для теста телефона: не требует USB debugging,
+   *  просто открываешь страницу и видишь цифры глазами. */
+  private createStatusOverlay(): void {
+    if (this.statusEl) return;
+    const el = document.createElement('div');
+    el.id = 'bl-rehearsal-status';
+    el.style.cssText = `
+      position: fixed; top: 8px; right: 8px; z-index: 99999;
+      background: rgba(0,0,0,0.85); color: #0f0; font: 12px/1.4 monospace;
+      padding: 10px 14px; border-radius: 8px; border: 1px solid #333;
+      min-width: 260px; pointer-events: none; user-select: none;
+      backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    `;
+    el.innerHTML = '🔄 connecting...';
+    document.body.appendChild(el);
+    this.statusEl = el;
+  }
+
+  private updateStatusOverlay(): void {
+    const el = this.statusEl;
+    if (!el) return;
+    const s = useRehearsalSessionStore.getState();
+    const ae = (window as any).audioEngine;
+    const driftMs = (() => {
+      try { return ((ae?.getCurrentTime?.() ?? 0) - this.vclock.getPosition()) * 1000; } catch { return 0; }
+    })();
+    const connIcon = s.connectionState === 'connected' ? '🟢' : s.connectionState === 'reconnecting' ? '🟡' : '🔴';
+    const playIcon = useAudioStore.getState().isPlaying ? '▶️' : '⏸';
+    el.innerHTML = `
+      ${connIcon} <b>${s.connectionState}</b> &nbsp;|&nbsp; 🕐 offset: <b>${s.clockOffset.toFixed(1)}ms</b> &nbsp;|&nbsp; 🔁 rtt: <b>${s.rtt.toFixed(0)}ms</b><br>
+      📊 drift: <b>${driftMs.toFixed(1)}ms</b> &nbsp; ${playIcon} ${s.isResyncing ? '🔄 resync' : ''}<br>
+      👤 ${s.role ?? '—'} &nbsp;|&nbsp; 🆔 ${s.roomId ?? '—'}
+    `;
+  }
+
+  private removeStatusOverlay(): void {
+    if (this.statusEl) { this.statusEl.remove(); this.statusEl = null; }
+  }
+
   constructor(private pc: PeerConnectionManager, private role: Role) {
     this.clockWorker = new Worker(
       new URL('../workers/clock-scheduler.worker.ts', import.meta.url),
@@ -59,6 +100,7 @@ export class RehearsalTriggerBridge {
     };
 
     document.addEventListener('visibilitychange', this.onVisibilityChange);
+    this.createStatusOverlay();
   }
 
   // --- Приём ---
@@ -114,6 +156,12 @@ export class RehearsalTriggerBridge {
         useStemStore.getState().setStemVolume(stemId, volume);
         break;
       }
+      case 'set-playback-rate': {
+        const { rate } = payload;
+        (window as any).audioEngine?.setPlaybackRate?.(rate);
+        this.vclock.setRate(rate);
+        break;
+      }
     }
   }
 
@@ -156,7 +204,7 @@ export class RehearsalTriggerBridge {
       const expected = this.vclock.getPosition();
       const actual = ae?.getCurrentTime?.() ?? 0;
       const driftMs = (actual - expected) * 1000;
-      console.log('[test] drift check:', driftMs.toFixed(1), 'ms', Math.abs(driftMs) > 40 ? '← КОРРЕКЦИЯ' : '');
+      this.updateStatusOverlay();
 
       // Telemetry
       if (Math.abs(driftMs) > Math.abs(this.telemetryStats.worstDriftMs)) {
@@ -248,7 +296,8 @@ export class RehearsalTriggerBridge {
       useStemStore.getState().setStemVolume(stemId, volume);
     }
     (window as any).audioEngine?.seekTo?.(s.currentTime);
-    this.vclock.anchor(s.currentTime, (window as any).audioEngine?.playbackRate ?? 1);
+    if ('playbackRate' in s) (window as any).audioEngine?.setPlaybackRate?.(s.playbackRate);
+    this.vclock.anchor(s.currentTime, s.playbackRate ?? (window as any).audioEngine?.playbackRate ?? 1);
     // Сбрасываем отложенные apply'ы — snapshot приоритетнее, чем pending команды
     this.cancelPendingApplies();
     this.drift.reset(); // [FM-11] свежий snapshot — свежий бэкофф
@@ -266,6 +315,7 @@ export class RehearsalTriggerBridge {
       type: 'state-snapshot',
       currentTime: ae?.getCurrentTime?.() ?? 0,
       isPlaying: useAudioStore.getState().isPlaying,
+      playbackRate: ae?.playbackRate ?? 1,
       stemVolumes: useStemStore.getState().stemVolumes,
       loop: isLooping && loopStartTime != null && loopEndTime != null
         ? { start: loopStartTime, end: loopEndTime }
@@ -281,11 +331,18 @@ export class RehearsalTriggerBridge {
     this.send({ ...payload, wallClockTime: Date.now() });
   }
 
+  /** Педагог меняет темп → шлём Student'у */
+  broadcastSetPlaybackRate(rate: number): void {
+    this.send({ type: 'set-playback-rate', rate });
+    this.vclock.setRate(rate);
+  }
+
   dispose() {
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     this.cancelPendingApplies();
     this.clockWorker.terminate();
     this.watchdog.stop();
     this.stopDriftMonitoring();
+    this.removeStatusOverlay();
   }
 }

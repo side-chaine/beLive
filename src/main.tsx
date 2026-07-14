@@ -568,13 +568,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (params.get('phone') !== '1') return;
     const roomId = params.get('room');
     if (!roomId) return;
-    const exp = Date.now() + 3600000;
     const secret = 'test-rehearsal-secret-2026';
     try {
-      const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-      const body = btoa(JSON.stringify({ roomId, role: 'student', exp }));
-      const sig = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(body)))));
-      (window as any).__testRehearsal(roomId, 'student', body + '.' + sig);
+      const { signClientTicket } = await import('./Rehearsal/services/deep-link.service');
+      const ticket = await signClientTicket(roomId, 'student', secret);
+      (window as any).__testRehearsal(roomId, 'student', ticket);
     } catch (e) {
       console.warn('[phone] auto-connect failed:', e);
     }
