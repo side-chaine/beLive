@@ -553,7 +553,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (role === 'teacher') pc.createDataChannels();
     };
     pc.onConnectionStateChange = (s) => console.log('[test] connectionState:', s);
-    pc.onClockSynced = (offset, rtt) => console.log('[test] clock synced. offset=', offset, 'rtt=', rtt);
+    pc.onClockSynced = (offset, rtt) => {
+      console.log('[test] clock synced. offset=', offset, 'rtt=', rtt);
+      useRehearsalSessionStore.getState().setClockSync(offset, rtt);
+    };
     const bridge = new RehearsalTriggerBridge(pc, role);
     sc.connect();
     (window as any).__pc = pc;

@@ -135,6 +135,14 @@ export class RehearsalTriggerBridge {
       this.broadcastTransport({ type: 'seek', mediaTime: t, wallClockTime: Date.now() });
       return result;
     };
+    // ★ setCurrentTime используется при клике по блокам — тоже broadcast
+    if (ae.setCurrentTime) {
+      const origSetCurrentTime = ae.setCurrentTime.bind(ae);
+      ae.setCurrentTime = (t: number) => {
+        origSetCurrentTime(t);
+        this.broadcastTransport({ type: 'seek', mediaTime: t, wallClockTime: Date.now() });
+      };
+    }
   }
 
   // --- Приём ---

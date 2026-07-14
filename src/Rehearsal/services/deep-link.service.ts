@@ -85,6 +85,9 @@ export function connectRehearsalSession(link: RehearsalLinkParams): void {
   sc.onPeerJoined = () => {
     if (role === 'teacher') pc.createDataChannels();
   };
+  pc.onClockSynced = (offset, rtt) => {
+    useRehearsalSessionStore.getState().setClockSync(offset, rtt);
+  };
   const bridge = new RehearsalTriggerBridge(pc, role);
   sc.connect();
   (window as any).__pc = pc;
