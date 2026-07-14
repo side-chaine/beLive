@@ -163,13 +163,9 @@ export class RehearsalTriggerBridge {
       case 'play':
       case 'pause':
       case 'seek':
-        this.coalescer.push(
-          {
-            mediaTime: 'mediaTime' in payload ? payload.mediaTime : undefined,
-            isPlaying: payload.type === 'play' ? true : payload.type === 'pause' ? false : undefined,
-          },
-          (merged) => this.scheduleApply(merged, 'wallClockTime' in payload ? payload.wallClockTime : Date.now()),
-        );
+        // ★ Немедленное apply: seek + play/pause сразу, без scheduler.
+        // На слабых телефонах (Galaxy J8) clockWorker не успевает, play не срабатывает.
+        this.applyPlayPauseSeek(payload);
         break;
       case 'state-snapshot':
         this.coalescer.cancel();
@@ -204,6 +200,20 @@ export class RehearsalTriggerBridge {
         this.vclock.setRate(rate);
         break;
       }
+    }
+  }
+
+  /** Немедленно применить play/pause/seek — без clockWorker, без coalescer */
+  private applyPlayPauseSeek(payload: any) {
+    const ae = (window as any).audioEngine;
+    const t = 'mediaTime' in payload ? payload.mediaTime : undefined;
+    if (t != null) ae?.seekTo?.(t);
+    if (payload.type === 'play') {
+      this.vclock.anchor(t ?? ae?.getCurrentTime?.() ?? 0, ae?.playbackRate ?? 1);
+      this.playWithWatchdog();
+    } else if (payload.type === 'pause') {
+      ae?.pause?.();
+      this.stopDriftMonitoring();
     }
   }
 
