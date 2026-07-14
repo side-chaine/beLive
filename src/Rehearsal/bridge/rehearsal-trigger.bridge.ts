@@ -52,7 +52,7 @@ export class RehearsalTriggerBridge {
     const el = document.createElement('div');
     el.id = 'bl-rehearsal-status';
     el.style.cssText = `
-      position: fixed; top: 8px; right: 8px; z-index: 99999;
+      position: fixed; bottom: 12px; right: 8px; z-index: 99999;
       background: rgba(0,0,0,0.85); color: #0f0; font: 12px/1.4 monospace;
       padding: 10px 14px; border-radius: 8px; border: 1px solid #333;
       min-width: 260px; pointer-events: none; user-select: none;
