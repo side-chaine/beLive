@@ -55,10 +55,16 @@ export class RehearsalTriggerBridge {
       position: fixed; top: 72px; right: 8px; z-index: 99999;
       background: rgba(0,0,0,0.85); color: #0f0; font: 12px/1.4 monospace;
       padding: 10px 14px; border-radius: 8px; border: 1px solid #333;
-      min-width: 260px; pointer-events: none; user-select: none;
+      min-width: 260px; cursor: pointer; user-select: none;
       backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     `;
     el.innerHTML = '🔄 connecting...';
+    // ★ Тап по плашке = play/pause для студента (обходит autoplay блокировку)
+    el.addEventListener('click', () => {
+      const ae = (window as any).audioEngine;
+      if (useAudioStore.getState().isPlaying) { ae?.pause?.(); }
+      else { ae?.play?.().catch(() => {}); }
+    });
     document.body.appendChild(el);
     this.statusEl = el;
   }
@@ -73,9 +79,10 @@ export class RehearsalTriggerBridge {
     })();
     const connIcon = s.connectionState === 'connected' ? '🟢' : s.connectionState === 'reconnecting' ? '🟡' : '🔴';
     const playIcon = useAudioStore.getState().isPlaying ? '▶️' : '⏸';
+    const hint = s.requiresUserInteraction ? ' 📱👆 Tap to Sync' : '';
     el.innerHTML = `
       ${connIcon} <b>${s.connectionState}</b> &nbsp;|&nbsp; 🕐 offset: <b>${s.clockOffset.toFixed(1)}ms</b> &nbsp;|&nbsp; 🔁 rtt: <b>${s.rtt.toFixed(0)}ms</b><br>
-      📊 drift: <b>${driftMs.toFixed(1)}ms</b> &nbsp; ${playIcon} ${s.isResyncing ? '🔄 resync' : ''}<br>
+      📊 drift: <b>${driftMs.toFixed(1)}ms</b> &nbsp; ${playIcon} ${s.isResyncing ? '🔄 resync' : ''}${hint}<br>
       👤 ${s.role ?? '—'} &nbsp;|&nbsp; 🆔 ${s.roomId ?? '—'}
     `;
   }
