@@ -101,6 +101,9 @@ export class RehearsalTriggerBridge {
 
     document.addEventListener('visibilitychange', this.onVisibilityChange);
     this.createStatusOverlay();
+    this.updateStatusOverlay();
+    // Обновляем плашку при любом изменении состояния сессии
+    useRehearsalSessionStore.subscribe(() => this.updateStatusOverlay());
   }
 
   // --- Приём ---
