@@ -104,6 +104,37 @@ export class RehearsalTriggerBridge {
     this.updateStatusOverlay();
     // Обновляем плашку при любом изменении состояния сессии
     useRehearsalSessionStore.subscribe(() => this.updateStatusOverlay());
+
+    // ★ Teacher: авто-перехват play/pause/seek — broadcast через bridge
+    if (role === 'teacher') this.hijackAudioTransport();
+  }
+
+  /** Патчит window.audioEngine.play/pause/seekTo — каждый вызов
+   *  автоматически шлёт broadcastTransport удалённому Student'у.
+   *  Без этого Phase 3 UI интеграции — teacher тыкает кнопки, student молчит. */
+  private hijackAudioTransport() {
+    const ae = (window as any).audioEngine;
+    if (!ae) { setTimeout(() => this.hijackAudioTransport(), 500); return; }
+
+    const origPlay = ae.play.bind(ae);
+    const origPause = ae.pause.bind(ae);
+    const origSeekTo = ae.seekTo.bind(ae);
+
+    ae.play = (...args: unknown[]) => {
+      const result = origPlay(...args);
+      this.broadcastTransport({ type: 'play', mediaTime: ae.getCurrentTime?.() ?? 0, wallClockTime: Date.now() });
+      return result;
+    };
+    ae.pause = (...args: unknown[]) => {
+      const result = origPause(...args);
+      this.broadcastTransport({ type: 'pause', mediaTime: ae.getCurrentTime?.() ?? 0, wallClockTime: Date.now() });
+      return result;
+    };
+    ae.seekTo = (t: number, ...args: unknown[]) => {
+      const result = origSeekTo(t, ...args);
+      this.broadcastTransport({ type: 'seek', mediaTime: t, wallClockTime: Date.now() });
+      return result;
+    };
   }
 
   // --- Приём ---
