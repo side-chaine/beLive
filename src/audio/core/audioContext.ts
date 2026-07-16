@@ -19,7 +19,14 @@ export function getAudioContext(): AudioContext {
 export async function ensureResumed(): Promise<void> {
   const ctx = getAudioContext();
   if (ctx.state === 'suspended') {
-    await ctx.resume();
+    const TIMEOUT_MS = 3000;
+    const timeout = new Promise<void>((_, reject) =>
+      setTimeout(() => reject(new Error('ctx.resume() timed out')), TIMEOUT_MS)
+    );
+    await Promise.race([ctx.resume(), timeout]);
+    if ((ctx.state as AudioContextState) !== 'running') {
+      throw new Error(`ctx.resume() resolved but state=${ctx.state}`);
+    }
   }
 }
 

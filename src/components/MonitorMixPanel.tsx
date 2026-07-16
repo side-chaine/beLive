@@ -6,6 +6,7 @@ import { CalibrationDrum } from './monitor/CalibrationDrum';
 import { DualAutoMixRow } from './monitor/DualAutoMixRow';
 import { ToggleSliderRow } from './monitor/ToggleSliderRow';
 import s from './MonitorMixPanel.module.css';
+import { V2Adapter } from '../audio/engine-v3/V2Adapter';
 
 export function MonitorMixPanel() {
   const st = useMonitorStore();
@@ -552,7 +553,7 @@ export function MonitorMixPanel() {
                         const ae = (window as any).audioEngine;
                         if (ae) {
                           // PART A: Remove strict > 0 gate, allow restore for valid position including 0
-                          ae.setCurrentTime(savedPositionRef.current || 0);
+                          try { V2Adapter.getInstance().delegateSync('seekTo', savedPositionRef.current || 0) } catch {}
                           void ae.play();
                         }
                         pausedByPulseRef.current = false;
@@ -607,7 +608,7 @@ export function MonitorMixPanel() {
                         const ae = (window as any).audioEngine;
                         if (ae) {
                           // PART A: Remove strict > 0 gate, allow restore for valid position including 0
-                          ae.setCurrentTime(savedPositionRef.current || 0);
+                          try { V2Adapter.getInstance().delegateSync('seekTo', savedPositionRef.current || 0) } catch {}
                           void ae.play();
                         }
                         pausedByPulseRef.current = false;

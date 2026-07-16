@@ -304,7 +304,7 @@ const [packProgress, setPackProgress] = useState<{ current: number; total: numbe
     document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'scene-crud' } }));
     setPackProgress(null);
 
-    console.log(`[PackUpload] Done: ${uploaded}/${toUpload} uploaded`);
+    if (import.meta.env.DEV) console.log(`[PackUpload] Done: ${uploaded}/${toUpload} uploaded`);
   };
 
   return (

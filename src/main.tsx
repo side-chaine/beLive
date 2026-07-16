@@ -2,16 +2,29 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { ThemeProvider } from './theme/components/ThemeProvider';
-import { initBlocksBridge } from './bridges/blocks.bridge';
+// retired: blocks.bridge → blocks-events (DUAL FIRE)
 import { installLiveGuard } from './bridges/live-guard';
 import { initLoopBridge } from './bridges/loop.bridge';
 import { registerLiveModeStub } from './services/live-mode.stub';
 import { registerWaveformEditorStub } from './services/waveform-editor.stub';
-import * as markerService from './services/marker.service';
 import { initAudioReactiveBridge } from './bridges/audio-reactive.bridge';
 import { patchLyricsDisplaySlimMethods } from './services/lyrics.service';
 import { initBlockEditorBridge } from './blocks/bridge/blockEditor.bridge';
-import { useUIStore } from './stores/ui.store';
+import { bridgeFacade } from './foundation/event-bus';
+import { getTransport } from './audio/engine-v3';
+import { initExerciseEvents } from './foundation/event-bus/wrappers/exercise-events';
+import { initTrackEvents } from './foundation/event-bus/wrappers/track-events';
+import { initCoverEvents } from './foundation/event-bus/wrappers/cover-events';
+import { initPlateEvents } from './foundation/event-bus/wrappers/plate-events';
+import { initBlocksEvents } from './foundation/event-bus/wrappers/blocks-events';
+import { initMarkersEvents } from './foundation/event-bus/wrappers/markers-events';
+import { initLyricsEvents } from './foundation/event-bus/wrappers/lyrics-events';
+import { initMonitorEvents } from './foundation/event-bus/wrappers/monitor-events';
+import { initAudioReactiveEvents } from './foundation/event-bus/wrappers/audio-reactive';
+import { initStemReactiveEvents } from './foundation/event-bus/wrappers/stem-reactive';
+import { initTextStyleEvents } from './foundation/event-bus/wrappers/text-style-events';
+import { registerInit, runAll } from './foundation/registry/initRegistry';
+import { initStemEngineSync } from './foundation/reactions/stem-engine-sync';
 import { getColorForBlockType, buildBlocksFromMarkers, computeSections, getBlockTypeForLine } from './utils/markerUtils';
 import { SignalingClient } from './Rehearsal/services/signaling-client';
 import { PeerConnectionManager } from './Rehearsal/services/peer-connection';
@@ -32,8 +45,32 @@ import { AIChatUI } from './js/ui/ai-chat-ui'; // Новый импорт
 
 declare global { interface Window { __BELIVE_BOOTED__?: boolean } }
 
+// --- HMR-safe wrapper init (module-eval, без DOM) ---
+void bridgeFacade.init()
+registerInit({ id: 'exercise-events', init: initExerciseEvents })
+registerInit({ id: 'stem-engine-sync', init: initStemEngineSync })
+// === DUAL FIRE: 10 GREEN bridges (gate verified, parity pass) ===
+registerInit({ id: 'track-events', init: initTrackEvents })
+registerInit({ id: 'cover-events', init: initCoverEvents })
+registerInit({ id: 'plate-events', init: initPlateEvents })
+registerInit({ id: 'blocks-events', init: initBlocksEvents })
+registerInit({ id: 'markers-events', init: initMarkersEvents })
+registerInit({ id: 'lyrics-events', init: initLyricsEvents })
+registerInit({ id: 'monitor-events', init: initMonitorEvents })
+registerInit({ id: 'audio-reactive', init: initAudioReactiveEvents })
+registerInit({ id: 'stem-reactive', init: initStemReactiveEvents })
+registerInit({ id: 'text-style-events', init: initTextStyleEvents })
+const cleanupAll = runAll()
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    cleanupAll()
+    bridgeFacade.destroy()
+  })
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
-  if (window.__BELIVE_BOOTED__) return; // Глобальный гард от повторной инициализации
+  if (window.__BELIVE_BOOTED__) return; // Legacy guard для MM-патчей
   window.__BELIVE_BOOTED__ = true;
 
   // --- App host stub (replaces legacy app.js) ---
@@ -58,14 +95,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   registerLiveModeStub();
   registerWaveformEditorStub();
-  initBlocksBridge();
   installLiveGuard();
   initLoopBridge();
   initAudioReactiveBridge();
   initBlockEditorBridge();
+  // Phase 5.1: cleanup bridgeFacade on page unload
+  window.addEventListener('beforeunload', () => { bridgeFacade.destroy() })
 
-  // F49: marker service for legacy LD access
-  (window as any).markerService = markerService;
+  // Activate EngineV3 singleton (V2 as fallback via V2Adapter)
+  getTransport()
 
   // F60: patch slim methods onto existing window.lyricsDisplay (no object swap)
   patchLyricsDisplaySlimMethods();
@@ -332,7 +370,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             );
             if (hasM1) {
               afterBlockId = block.id;
-              console.log('[M2] Active line', activeLineIndex, '→ block', block.id, '(has M1 markers)');
+              if (import.meta.env.DEV) console.log('[M2] Active line', activeLineIndex, '→ block', block.id, '(has M1 markers)');
             } else {
               // Active line's block has no M1 yet — find previous block that has markers
               const blockIdx = blocks.indexOf(block);
@@ -343,7 +381,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 );
                 if (hasPrevM1) {
                   afterBlockId = prevBlock.id;
-                  console.log('[M2] Active line block has no M1 → using previous block', prevBlock.id);
+                  if (import.meta.env.DEV) console.log('[M2] Active line block has no M1 → using previous block', prevBlock.id);
                   break;
                 }
               }
@@ -377,7 +415,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         time: currentTime,
         isSuggested: false,
       });
-      console.log('[M2] Updated M2 for block', afterBlockId, 'time:', currentTime.toFixed(2) + 's');
+      if (import.meta.env.DEV) console.log('[M2] Updated M2 for block', afterBlockId, 'time:', currentTime.toFixed(2) + 's');
     } else {
       // Create new M2 marker — NOT attached to any line, purely a time boundary
       const m2Marker = {
@@ -394,7 +432,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       mm.markers.push(m2Marker);
       mm.markers.sort((a: any, b: any) => a.time - b.time);
       mm._notifySubscribers?.('markerAdded', m2Marker);
-      console.log('[M2] Placed M2 closing marker after block', afterBlockId, 'time:', currentTime.toFixed(2) + 's');
+      if (import.meta.env.DEV) console.log('[M2] Placed M2 closing marker after block', afterBlockId, 'time:', currentTime.toFixed(2) + 's');
     }
   };
 
@@ -424,10 +462,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     },
   };
 
-  // Override legacy catalog opener → React catalog
-  (window as any).openCatalog = () => {
-    useUIStore.getState().setCatalogOpen(true);
-  };
+  // (openCatalog removed)
 
   const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:8787'; // Use environment variable or default
   const gatewayProvider = new GatewayProvider(GATEWAY_URL);
@@ -450,12 +485,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const settings = useAiSettingsStore.getState();
     if (!aiHub.getActiveModel() && settings.openRouterApiKey && settings.modelId) {
       aiHub.setActiveModel(settings.modelId);
-      console.log('[AI] Hydrated: set model:', settings.modelId);
+      if (import.meta.env.DEV) console.log('[AI] Hydrated: set model:', settings.modelId);
     } else if (!aiHub.getActiveModel() && settings.openRouterApiKey) {
       const defaultModel = 'deepseek/deepseek-chat-v3-0324';
       aiHub.setActiveModel(defaultModel);
       useAiSettingsStore.getState().setModelId(defaultModel);
-      console.log('[AI] Hydrated: set default model:', defaultModel);
+      if (import.meta.env.DEV) console.log('[AI] Hydrated: set default model:', defaultModel);
     }
   });
 
@@ -463,12 +498,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const currentSettings = useAiSettingsStore.getState();
   if (!aiHub.getActiveModel() && currentSettings.openRouterApiKey && currentSettings.modelId) {
     aiHub.setActiveModel(currentSettings.modelId);
-    console.log('[AI] Fallback: set model:', currentSettings.modelId);
+    if (import.meta.env.DEV) console.log('[AI] Fallback: set model:', currentSettings.modelId);
   } else if (!aiHub.getActiveModel() && currentSettings.openRouterApiKey) {
     const defaultModel = 'deepseek/deepseek-chat-v3-0324';
     aiHub.setActiveModel(defaultModel);
     useAiSettingsStore.getState().setModelId(defaultModel);
-    console.log('[AI] Fallback: set default model:', defaultModel);
+    if (import.meta.env.DEV) console.log('[AI] Fallback: set default model:', defaultModel);
   }
 
   new AIChatUI(); // Инициализация AIChatUI
@@ -477,9 +512,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Обработчик для кнопки AI Operator. Теперь он будет открывать чат.
   const aiOperatorButton = document.getElementById('toggle-loopblock-mode');
   if (aiOperatorButton) {
-    // console.log('✅ Found AI Operator button'); // Закомментировано
     // aiOperatorButton.addEventListener('click', () => { // Удален дублирующий обработчик
-    //   console.log('⚡ AI Operator button clicked!');
     //   aiChatUI.toggleChat(); // Переключаем видимость чата
     // });
   }
@@ -521,20 +554,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       operatorButton.appendChild(span);
   }
 
-  // ★ Billy Mode Switcher — instant, no reload ★
-  import('./stores/ai-settings.store').then(mod => {
-    (window as any).billyMode = (mode?: 'user' | 'tech') => {
-      const store = mod.useAiSettingsStore.getState();
-      if (!mode) {
-        console.log(`🤖 Billy mode: ${store.billyMode}`);
-        return store.billyMode;
-      }
-      store.setBillyMode(mode);
-      const icon = mode === 'tech' ? '🛠️' : '🎤';
-      console.log(`${icon} Billy switched to ${mode} mode (instant, no reload needed)`);
-      return mode;
-    };
-  });
 });
 
   // ★ Rehearsal Video Bridge — временный тестовый хук (Фаза 2: +bridge, Phase 3 удалить)
@@ -542,19 +561,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sc = new SignalingClient(roomId, role, ticket);
     const pc = new PeerConnectionManager(sc, role);
     sc.onOpen = () => {
-      console.log('[test] WS open, role=', role);
+      if (import.meta.env.DEV) console.log('[test] WS open, role=', role);
       useRehearsalSessionStore.getState().setConnectionState('connected');
     };
     sc.onClose = (code) => {
       useRehearsalSessionStore.getState().setConnectionState(code === 4001 ? 'failed' : 'reconnecting');
     };
     sc.onPeerJoined = (peerRole) => {
-      console.log('[test] peer joined:', peerRole);
+      if (import.meta.env.DEV) console.log('[test] peer joined:', peerRole);
       if (role === 'teacher') pc.createDataChannels();
     };
-    pc.onConnectionStateChange = (s) => console.log('[test] connectionState:', s);
+    pc.onConnectionStateChange = (s) => { if (import.meta.env.DEV) console.log('[test] connectionState:', s); };
     pc.onClockSynced = (offset, rtt) => {
-      console.log('[test] clock synced. offset=', offset, 'rtt=', rtt);
+      if (import.meta.env.DEV) console.log('[test] clock synced. offset=', offset, 'rtt=', rtt);
       useRehearsalSessionStore.getState().setClockSync(offset, rtt);
     };
     const bridge = new RehearsalTriggerBridge(pc, role);

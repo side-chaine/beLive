@@ -133,7 +133,7 @@ function patchWaveformEditor(): void {
           const trackId = we.currentTrackId;
           if (trackId && shouldSkipEditorsForTrack(trackId)) {
             if (import.meta.env.DEV) {
-              console.log('[AutoLyrics] Sync Editor skipped — auto-sync applied for track', trackId);
+              if (import.meta.env.DEV) console.log('[AutoLyrics] Sync Editor skipped — auto-sync applied for track', trackId);
             }
             return;
           }

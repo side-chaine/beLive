@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useTrackStore, TrackState } from '../stores/track.store';
 import { interruptPracticeSession } from '../exercises/exercise.interruption';
 import { useShowStore } from '../stores/show.store';
+import { V2Adapter } from '../audio/engine-v3/V2Adapter';
 
 export function useKeyboardShortcuts() {
   const tracksMeta = useTrackStore((s: TrackState) => s.tracksMeta);
@@ -40,13 +41,10 @@ export function useKeyboardShortcuts() {
           e.preventDefault();
           // Interrupt practice first if active, then seek
           interruptPracticeSession(() => {
-            const ae = (window as any).audioEngine;
-            if (ae?.getCurrentTime) {
-              const d = ae.getDuration?.() ?? 0;
-              if (d > 0) ae.setCurrentTime(
-                Math.max(0, Math.min(d, ae.getCurrentTime() + delta * 2))
-              );
-            }
+            const v2 = V2Adapter.getInstance();
+            const ct = v2.getSync<number>('currentTime') ?? 0;
+            const d = v2.getSync<number>('_duration') ?? 0;
+            if (d > 0) try { v2.delegateSync('seekTo', Math.max(0, Math.min(d, ct + delta * 2))) } catch {}
           });
         }
         return;

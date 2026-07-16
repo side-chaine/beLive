@@ -253,13 +253,13 @@ export function blockFirstLineSync(
   
   // 007-DEBUG: Log parseTaggedLyrics output to diagnose Bridge truncation
   if (import.meta.env.DEV) {
-    console.log('[007-SCAN] parseTaggedLyrics output:');
-    console.log(`  Total blocks: ${tagResult.blocks.length}`);
-    console.log(`  hasStructure: ${tagResult.hasStructure}`);
+    if (import.meta.env.DEV) console.log('[007-SCAN] parseTaggedLyrics output:');
+    if (import.meta.env.DEV) console.log(`  Total blocks: ${tagResult.blocks.length}`);
+    if (import.meta.env.DEV) console.log(`  hasStructure: ${tagResult.hasStructure}`);
     tagResult.blocks.forEach((b, i) => {
-      console.log(`  Block ${i} [${b.type}]: "${b.label}" — ${b.contentLines.length} contentLines`);
+      if (import.meta.env.DEV) console.log(`  Block ${i} [${b.type}]: "${b.label}" — ${b.contentLines.length} contentLines`);
       if (b.type === 'bridge') {
-        console.log(`    [007-CRITICAL] Bridge contentLines:`, b.contentLines);
+        if (import.meta.env.DEV) console.log(`    [007-CRITICAL] Bridge contentLines:`, b.contentLines);
       }
     });
   }
@@ -667,7 +667,7 @@ export function blockFirstLineSync(
     }
 
     if (import.meta.env.DEV) {
-      console.log(
+      if (import.meta.env.DEV) console.log(
         `  Block ${bi} [${tagResult.blocks[bi]?.type ?? '?'}] "${tagResult.blocks[bi]?.label ?? ''}":\n` +
         `    Genius first line: "${geniusFirst.substring(0, 60)}"\n` +
         `    Current LRC[${currentIdx}]="${currentLrcLine.substring(0, 60)}"\n` +
@@ -854,7 +854,7 @@ export function blockFirstLineSync(
     for (let di = 0; di < blocks.length; di++) {
       const b = blocks[di];
       const hasStart = (b as any)._lrcStartIdx;
-      console.log(
+      if (import.meta.env.DEV) console.log(
         `[Pass2-DIAG] Block ${di} [${b.type}] "${b.name}": ` +
         `startIdx=${hasStart ?? 'null'}, lineIndices=${JSON.stringify(b.lineIndices)}`
       );
@@ -867,11 +867,11 @@ export function blockFirstLineSync(
     const total = blocks.length;
     const linesWithBlocks = blocks.reduce((s, b) => s + b.lineIndices.length, 0);
     
-    console.log(`[TC-010] Block-first sync:`);
-    console.log(`  Display lines: ${displayLines.length} (from LRC)`);
-    console.log(`  Markers: ${markers.length} (exact LRC timestamps)`);
-    console.log(`  Blocks: ${found}/${total} mapped (${(found/total*100).toFixed(0)}%)`);
-    console.log(`  Lines covered by blocks: ${linesWithBlocks}/${displayLines.length}`);
+    if (import.meta.env.DEV) console.log(`[TC-010] Block-first sync:`);
+    if (import.meta.env.DEV) console.log(`  Display lines: ${displayLines.length} (from LRC)`);
+    if (import.meta.env.DEV) console.log(`  Markers: ${markers.length} (exact LRC timestamps)`);
+    if (import.meta.env.DEV) console.log(`  Blocks: ${found}/${total} mapped (${(found/total*100).toFixed(0)}%)`);
+    if (import.meta.env.DEV) console.log(`  Lines covered by blocks: ${linesWithBlocks}/${displayLines.length}`);
     
     for (let di = 0; di < blocks.length; di++) {
       const block = blocks[di];
@@ -883,7 +883,7 @@ export function blockFirstLineSync(
         const last = block.lineIndices[block.lineIndices.length - 1];
         const linesText = block.lineIndices.map((li: number) => `    LRC[${li}]="${displayLines[li]}"`).join('\n');
         const isGapAssign = (block as any)._instrumentalGap;
-        console.log(
+        if (import.meta.env.DEV) console.log(
           `  ── Block ${di} [${block.type}] "${block.name}" ${isGapAssign ? '(gap-assigned)' : ''}──\n` +
           `  startIdx=${startIdx ?? 'null'} matchScore=${matchScore ? (matchScore*100).toFixed(0)+'%' : 'N/A'}\n` +
           `  range=${first}-${last} (${block.lineIndices.length} lines) time=${markers[first]?.time?.toFixed(1)}s-${markers[last]?.time?.toFixed(1)}s\n` +
@@ -892,7 +892,7 @@ export function blockFirstLineSync(
         );
       } else {
         const geniusLines = ((block as any).contentLines ?? []).slice(0, 3);
-        console.log(
+        if (import.meta.env.DEV) console.log(
           `  ── Block ${di} [${block.type}] "${block.name}" ──\n` +
           `  startIdx=${startIdx ?? 'null'} matchScore=${matchScore ? (matchScore*100).toFixed(0)+'%' : 'N/A'}\n` +
           `  NOT MAPPED — Genius lines: ${geniusLines.join(' | ')}`
@@ -1009,7 +1009,7 @@ export function blockFirstLineSync(
       if (bestBlock >= 0) {
         // ═══ TC-150-RT: Orphan routing trace ═══
         if (import.meta.env.DEV && bestBlock !== lastValidBlockIdx) {
-          console.log(
+          if (import.meta.env.DEV) console.log(
             `[TC-150-RT] Orphan LRC[${i}]="${displayLines[i].substring(0, 50)}" ` +
             `window=[${loBi}..${hiBi}] ` +
             `contentMatch→bi=${bestBlock} ["${blocks[bestBlock].type}" "${blocks[bestBlock].name}"] ` +
@@ -1017,7 +1017,7 @@ export function blockFirstLineSync(
             `\tfallback=${lastValidBlockIdx} ["${lastValidBlockIdx >= 0 ? blocks[lastValidBlockIdx].type + ' ' + blocks[lastValidBlockIdx].name : 'none'}"]`
           );
         } else if (import.meta.env.DEV) {
-          console.log(
+          if (import.meta.env.DEV) console.log(
             `[TC-150-RT] Orphan LRC[${i}]="${displayLines[i].substring(0, 50)}" ` +
             `→ bi=${bestBlock} (${bestBlock === lastValidBlockIdx ? 'fallback' : 'content'}) overlap=${bestOverlap}`
           );
@@ -1029,7 +1029,7 @@ export function blockFirstLineSync(
 
       // DEV: Log orphan with content words but no match
       if (import.meta.env.DEV) {
-        console.log(
+        if (import.meta.env.DEV) console.log(
           `[TC-150-RT] Orphan LRC[${i}]="${displayLines[i].substring(0, 50)}" ` +
           `window=[${loBi}..${hiBi}] → NO_CONTENT_MATCH (lastValidBlockIdx=${lastValidBlockIdx})`
         );
@@ -1038,7 +1038,7 @@ export function blockFirstLineSync(
 
     // DEV: Log filler orphan (no words → fallback to previous)
     if (import.meta.env.DEV) {
-      console.log(
+      if (import.meta.env.DEV) console.log(
         `[TC-150-RT] Orphan LRC[${i}]="${displayLines[i].substring(0, 50)}" ` +
         `→ FILTER (no content words) lastValidBlockIdx=${lastValidBlockIdx}`
       );
@@ -1121,7 +1121,7 @@ function adjustMarkerTime(
   const adjustedTime = matchedLrcTime + fraction * duration;
   
   if (import.meta.env.DEV) {
-    console.log(
+    if (import.meta.env.DEV) console.log(
       `[TC-009] Word-pos ${positionInLrc}/${lrcWords.length}: ` +
       `${matchedLrcTime.toFixed(2)}s → ${adjustedTime.toFixed(2)}s ` +
       `(+${(adjustedTime - matchedLrcTime).toFixed(2)}s) "${rawText.substring(0, 40)}"`
@@ -1288,7 +1288,7 @@ export function matchGeniusToLrc(
 
   if (import.meta.env.DEV) {
     const elapsed = (performance.now() - t0).toFixed(1);
-    console.log(`[AutoLyrics] matching took ${elapsed}ms`);
+    if (import.meta.env.DEV) console.log(`[AutoLyrics] matching took ${elapsed}ms`);
   }
 
   // ── RESCUE PASS: time-constrained match for remaining unmatched raw lines ──
@@ -1360,7 +1360,7 @@ export function matchGeniusToLrc(
           text: rawText,
         });
         if (import.meta.env.DEV) {
-          console.log(`[AutoLyrics] rescued [${rawIdx}] score=${(bestScore * 100).toFixed(1)}% expected=${expectedTime.toFixed(1)}s → "${rawText}"`);
+          if (import.meta.env.DEV) console.log(`[AutoLyrics] rescued [${rawIdx}] score=${(bestScore * 100).toFixed(1)}% expected=${expectedTime.toFixed(1)}s → "${rawText}"`);
         }
       }
     }
@@ -1454,7 +1454,7 @@ export function matchGeniusToLrc(
           text: rawText,
         });
         if (import.meta.env.DEV) {
-          console.log(`[AutoLyrics] word-coverage [${rawIdx}] score=${(bestCoverage * 100).toFixed(1)}% expected=${expectedTime.toFixed(1)}s → "${rawText}"`);
+          if (import.meta.env.DEV) console.log(`[AutoLyrics] word-coverage [${rawIdx}] score=${(bestCoverage * 100).toFixed(1)}% expected=${expectedTime.toFixed(1)}s → "${rawText}"`);
         }
       }
     }
@@ -1495,27 +1495,27 @@ export function matchGeniusToLrc(
   if (import.meta.env.DEV) {
     const block6 = blocks.find(b => b.id === 'auto-block-6');
     if (block6) {
-      console.log(`[AutoM2-DIAG] Block 6 lines: ${block6.lineIndices.join(',')}`);
+      if (import.meta.env.DEV) console.log(`[AutoM2-DIAG] Block 6 lines: ${block6.lineIndices.join(',')}`);
       for (const li of block6.lineIndices) {
         const marker = markers.find(m => m.markerType !== 'M2' && m.lineIndex === li);
         const text = rawLyricsArray[li] || 'N/A';
-        console.log(`[AutoM2-DIAG]   Line ${li}: ${marker ? `MARKED at ${marker.time.toFixed(2)}s` : 'NO MARKER ← BUG!'} → "${text}"`);
+        if (import.meta.env.DEV) console.log(`[AutoM2-DIAG]   Line ${li}: ${marker ? `MARKED at ${marker.time.toFixed(2)}s` : 'NO MARKER ← BUG!'} → "${text}"`);
       }
     }
     // Also show what lrclib has for "And I'm about to break"
     const lrclibBreak = lrcResult.lines.filter(l => l.text.includes('about to break'));
-    console.log(`[AutoM2-DIAG] lrclib "about to break" lines:`, lrclibBreak.map(l => ({time: l.time, text: l.text})));
+    if (import.meta.env.DEV) console.log(`[AutoM2-DIAG] lrclib "about to break" lines:`, lrclibBreak.map(l => ({time: l.time, text: l.text})));
   }
 
   // DEV: Dump block 7 diagnostics (contains line 37)
   if (import.meta.env.DEV) {
     const block7 = blocks.find(b => b.id === 'auto-block-7');
     if (block7) {
-      console.log(`[AutoM2-DIAG] Block 7 lines: ${block7.lineIndices.join(',')}`);
+      if (import.meta.env.DEV) console.log(`[AutoM2-DIAG] Block 7 lines: ${block7.lineIndices.join(',')}`);
       for (const li of block7.lineIndices) {
         const marker = markers.find(m => m.markerType !== 'M2' && m.lineIndex === li);
         const text = rawLyricsArray[li] || 'N/A';
-        console.log(`[AutoM2-DIAG]   Line ${li}: ${marker ? `MARKED at ${marker.time.toFixed(2)}s` : 'NO MARKER'} → "${text}"`);
+        if (import.meta.env.DEV) console.log(`[AutoM2-DIAG]   Line ${li}: ${marker ? `MARKED at ${marker.time.toFixed(2)}s` : 'NO MARKER'} → "${text}"`);
       }
     }
   }
@@ -1563,7 +1563,7 @@ export function matchGeniusToLrc(
     }
 
     if (import.meta.env.DEV) {
-      console.log(`[AutoM2] Block ${block.id} (lines ${block.lineIndices.join(',')}): avgGap=${avgGap.toFixed(1)}s, gapToNext=${gapToNext.toFixed(1)}s, shouldCreate=${shouldCreateM2}`);
+      if (import.meta.env.DEV) console.log(`[AutoM2] Block ${block.id} (lines ${block.lineIndices.join(',')}): avgGap=${avgGap.toFixed(1)}s, gapToNext=${gapToNext.toFixed(1)}s, shouldCreate=${shouldCreateM2}`);
     }
 
     if (!shouldCreateM2) continue;
@@ -1585,7 +1585,7 @@ export function matchGeniusToLrc(
     });
 
     if (import.meta.env.DEV) {
-      console.log(`[AutoM2] Created M2 for block ${block.id} at ${m2Time.toFixed(2)}s`);
+      if (import.meta.env.DEV) console.log(`[AutoM2] Created M2 for block ${block.id} at ${m2Time.toFixed(2)}s`);
     }
   }
 
@@ -1671,7 +1671,7 @@ export function detectedBlocksToPersistedBlocks(
 
   // ZIP-DIAG: Log first 2 blocks for diagnostic verification
   if (import.meta.env.DEV) {
-    console.log('[ZIP-DIAG] detectedBlocksToPersistedBlocks:', {
+    if (import.meta.env.DEV) console.log('[ZIP-DIAG] detectedBlocksToPersistedBlocks:', {
       inputBlocks: detectedBlocks.length,
       cleanLines: cleanLyricLines.length,
       outputBlocks: result.length,
@@ -1783,7 +1783,7 @@ async function _fetchLrclib(
     });
 
     if (import.meta.env.DEV) {
-      console.log(
+      if (import.meta.env.DEV) console.log(
         `[AutoLyrics] Selected LRC: id=${best.id} duration=${best.duration}s ` +
         `(requested=${duration ?? '?'}s, ` +
         `diff=${Math.abs((best.duration || 0) - (duration || 0)).toFixed(1)}s, ` +
@@ -1853,7 +1853,7 @@ export async function fetchLrcVersions(
     // Sort: best score first
     versions.sort((a, b) => b.score - a.score);
 
-    console.log(
+    if (import.meta.env.DEV) console.log(
       `[LRC-Picker] Found ${versions.length} versions ` +
       `for "${artist} — ${title}" (${trackDurationSec}s)`
     );
@@ -1977,7 +1977,7 @@ export async function tryBetterLrcVersion(
   if (newCoverage <= currentCoverage) return null;
 
   if (import.meta.env.DEV) {
-    console.log(
+    if (import.meta.env.DEV) console.log(
       `[TC-096] Switched LRC: version #${currentLrc.sourceId} → #${nextBest.id} ` +
       `(coverage: ${(currentCoverage * 100).toFixed(0)}% → ${(newCoverage * 100).toFixed(0)}%)`
     );
@@ -2016,7 +2016,7 @@ async function _fetchLrclibFallback(
       versionDuration: data.duration || undefined,
     });
     if (import.meta.env.DEV) {
-      console.log(
+      if (import.meta.env.DEV) console.log(
         `[AutoLyrics] Fallback LRC: id=${data.id} duration=${data.duration}s ` +
         `(requested=${duration ?? '?'}s, ${lines.length} lines)`
       );

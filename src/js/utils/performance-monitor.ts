@@ -8,7 +8,7 @@ export class PerformanceMonitor {
     performance.measure('chat-open-duration', 'chat-open-start', 'chat-open-end');
     
     const measure = performance.getEntriesByName('chat-open-duration')[0];
-    console.log(`✅ Chat opened in ${measure.duration.toFixed(2)}ms`);
+    if (import.meta.env.DEV) console.log(`✅ Chat opened in ${measure.duration.toFixed(2)}ms`);
     
     // ❌ FAIL если > 150ms
     if (measure.duration > 150) {
@@ -21,6 +21,6 @@ export class PerformanceMonitor {
     performance.measure('time-to-first-token', 'message-sent', 'first-token');
     
     const measure = performance.getEntriesByName('time-to-first-token')[0];
-    console.log(`✅ First token in ${measure.duration.toFixed(2)}ms`);
+    if (import.meta.env.DEV) console.log(`✅ First token in ${measure.duration.toFixed(2)}ms`);
   }
 }

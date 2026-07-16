@@ -13,6 +13,25 @@ export function getZipAudioContext(): AudioContext {
   return _ctx;
 }
 
+const ZIP_RESUME_TIMEOUT = 3000;
+
+/**
+ * Resume ZIP AudioContext с таймаутом + post-verify.
+ * Аналог ensureResumed() из audioContext.ts — Phase 7 / 1b.
+ */
+export async function ensureZipResumed(): Promise<void> {
+  const ctx = getZipAudioContext();
+  if (ctx.state === 'suspended') {
+    const timeout = new Promise<void>((_, reject) =>
+      setTimeout(() => reject(new Error('zip ctx.resume() timed out')), ZIP_RESUME_TIMEOUT)
+    );
+    await Promise.race([ctx.resume(), timeout]);
+    if ((ctx.state as AudioContextState) !== 'running') {
+      throw new Error(`zip ctx.resume() resolved but state=${ctx.state}`);
+    }
+  }
+}
+
 export function closeZipAudioContext(): void {
   if (_ctx) {
     _ctx.close().catch(() => {});

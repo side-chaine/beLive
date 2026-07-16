@@ -17,6 +17,7 @@ import { usePracticeStore } from '../../stores/practice-session.store';
 import { getBlockTimeRange } from '../../utils/block-time-range';
 import { getStructureFormula } from '../../utils/structure-formula';
 import { BLOCK_TYPE_NAMES } from '../../blocks/parser/block-taxonomy';
+import { V2Adapter } from '../../audio/engine-v3/V2Adapter';
 
 /* ═══ Interfaces ═══ */
 export interface ToolCall {
@@ -236,18 +237,13 @@ async function executeSeekToSection(args: Record<string, unknown>): Promise<Tool
       };
     }
 
-    const ae = (window as any).audioEngine;
-    if (ae?.setCurrentTime) {
-      ae.setCurrentTime(range.startTime);
-      return {
-        tool: 'seek_to_section',
-        success: true,
-        message: `Перемотка к ${sectionType} #${targetIndex + 1} (${formatTime(range.startTime)})`,
-        data: { sectionType, occurrence: targetIndex + 1, time: range.startTime },
-      };
-    }
-
-    return { tool: 'seek_to_section', success: false, message: 'Audio engine не доступен' };
+    try { V2Adapter.getInstance().delegateSync('seekTo', range.startTime) } catch {}
+    return {
+      tool: 'seek_to_section',
+      success: true,
+      message: `Перемотка к ${sectionType} #${targetIndex + 1} (${formatTime(range.startTime)})`,
+      data: { sectionType, occurrence: targetIndex + 1, time: range.startTime },
+    };
   } catch (err: any) {
     return { tool: 'seek_to_section', success: false, message: `Ошибка перемотки: ${err?.message || 'неизвестная'}` };
   }
@@ -370,7 +366,7 @@ async function executeSearchAudioDB(args: Record<string, unknown>): Promise<Tool
       song = parts.slice(Math.min(2, Math.ceil(parts.length / 2))).join(' ');
     }
 
-    console.log('[GetSongBPM] Searching:', { artist, song });
+    if (import.meta.env.DEV) console.log('[GetSongBPM] Searching:', { artist, song });
 
     // GetSongBPM API
     const url = `https://api.getsong.co/search/?api_key=${import.meta.env.VITE_GETSONGBPM_KEY}&type=both&lookup=song:${encodeURIComponent(song)}+artist:${encodeURIComponent(artist)}`;
@@ -379,7 +375,7 @@ async function executeSearchAudioDB(args: Record<string, unknown>): Promise<Tool
 
     if (!res.ok) {
       // Fallback: try TheAudioDB as backup
-      console.log('[GetSongBPM] Failed, trying AudioDB fallback');
+      if (import.meta.env.DEV) console.log('[GetSongBPM] Failed, trying AudioDB fallback');
       return executeSearchAudioDBFallback(artist, song);
     }
 
@@ -430,7 +426,7 @@ async function executeSearchAudioDB(args: Record<string, unknown>): Promise<Tool
 async function executeSearchAudioDBFallback(artist: string, song: string): Promise<ToolCallResult> {
   try {
     const url = `https://www.theaudiodb.com/api/v1/json/2/searchtrack.php?s=${encodeURIComponent(artist)}&t=${encodeURIComponent(song)}`;
-    console.log('[AudioDB] Fallback search:', { artist, song });
+    if (import.meta.env.DEV) console.log('[AudioDB] Fallback search:', { artist, song });
 
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) {

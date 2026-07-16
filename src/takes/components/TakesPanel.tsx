@@ -1,6 +1,7 @@
 import React from 'react';
 import { TakesCanvas } from './TakesCanvas';
 import { TakesControlStrip } from './TakesControlStrip';
+import { TakesToolbar } from './TakesToolbar';
 import { useTakesStore } from '../takes.store';
 import { useBlocksStore } from '../../stores/blocks.store';
 import { useMarkersStore } from '../../stores/markers.store';
@@ -28,15 +29,6 @@ import {
 // Exercise UI components
 import { ExerciseStrip } from '../../exercises/components/ExerciseStrip';
 import { QuestCompletionMoment } from '../../exercises/components/QuestCompletionMoment';
-
-/** Format seconds as MM:SS */
-function formatTime(sec: number): string {
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-import { getCanonicalBlockColor } from '../../structure/block-colors';
 
 /**
  * TakesPanel — renders waveform canvas for active block in Takes mode.
@@ -553,7 +545,7 @@ export const TakesPanel: React.FC = () => {
     if (!compareTakeTarget || !timeRange) return null;
     const buffer = takeAssets.getAudioBuffer(compareTakeTarget.id);
     if (!buffer) {
-      console.log('[PEAKS-MISS]', { takeId: compareTakeTarget.id, slot: compareTakeTarget.slot, reason: 'audioBuffer-null' });
+      if (import.meta.env.DEV) console.log('[PEAKS-MISS]', { takeId: compareTakeTarget.id, slot: compareTakeTarget.slot, reason: 'audioBuffer-null' });
       return null;
     }
     
@@ -604,7 +596,7 @@ export const TakesPanel: React.FC = () => {
   // One-time confirmation log for buffer availability
   React.useEffect(() => {
     if (instrumentalBuffer) {
-      console.log('[TakesCanvas] Instrumental buffer ready:', {
+      if (import.meta.env.DEV) console.log('[TakesCanvas] Instrumental buffer ready:', {
         duration: instrumentalBuffer.duration,
         sampleRate: instrumentalBuffer.sampleRate,
         length: instrumentalBuffer.length,
@@ -1455,195 +1447,23 @@ export const TakesPanel: React.FC = () => {
             </div>
           )}
           
-          {/* UNIFIED TOP CONTROL LINE: Block info + main control grammar */}
-          {activeBlock && timeRange && (
-            <div
-              data-no-seek
-              style={{
-                position: 'absolute',
-                top: activeExercise ? 34 : 8,
-                left: 8,
-                right: 8,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                zIndex: 8,
-                pointerEvents: 'auto',
-              }}
-            >
-              {/* Block info chip */}
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '3px 8px',
-                  borderRadius: 999,
-                  background: 'rgba(0,0,0,0.48)',
-                  border: '1px solid rgba(255,255,255,0.07)',
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: 'rgba(255,255,255,0.72)',
-                  letterSpacing: '0.03em',
-                  pointerEvents: 'none',
-                }}
-              >
-                <span style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: '50%',
-                  background: getCanonicalBlockColor(activeBlock.type),
-                  boxShadow: `0 0 10px ${getCanonicalBlockColor(activeBlock.type)}55`,
-                }} />
-                <span>{activeBlock.name || activeBlockId}</span>
-                <span style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>
-                  {formatTime(timeRange.startTime)}—{formatTime(timeRange.endTime)}
-                </span>
-              </div>
-              
-              {/* Controls section */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                {/* Scenario button - opens recipe popover */}
-                <div style={{ position: 'relative' }}>
-                  <button
-                    data-no-seek
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      interruptPracticeSession(() => {
-                        if (exercisePlaybackLocked) return;
-                        setRecipesOpen((v) => !v);
-                      });
-                    }}
-                    disabled={exercisePlaybackLocked}
-                    style={{
-                      padding: '5px 14px',
-                      borderRadius: 6,
-                      border: '1px solid rgba(255,255,255,0.15)',
-                      background: recipesOpen ? 'rgba(255,255,255,0.10)' : 'transparent',
-                      color: exercisePlaybackLocked ? 'rgba(255,255,255,0.15)' : recipesOpen ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.60)',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      cursor: exercisePlaybackLocked ? 'not-allowed' : 'pointer',
-                      opacity: exercisePlaybackLocked ? 0.5 : 1,
-                    }}
-                    title={exercisePlaybackLocked ? 'Unavailable during exercise execution' : 'Scenario'}
-                  >
-                    Scenario
-                  </button>
-                </div>
-                
-                {/* Divider */}
-                <div style={{
-                  width: 1,
-                  height: 24,
-                  background: 'rgba(255,255,255,0.07)',
-                }} />
-                
-                {/* Compare toggle */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{
-                    fontSize: 9,
-                    color: 'rgba(255,255,255,0.3)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                  }}>
-                    Compare
-                  </span>
-                  <button
-                    data-no-seek
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      interruptPracticeSession(() => {
-                        if (exercisePlaybackLocked) return;
-                        setCompareMode(compareMode === 'ab' ? 'off' : 'ab');
-                      });
-                    }}
-                    style={{
-                      padding: '3px 8px',
-                      borderRadius: 6,
-                      border: `1px solid ${compareMode === 'ab' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.07)'}`,
-                      background: compareMode === 'ab' ? 'rgba(255,255,255,0.07)' : 'transparent',
-                      color: exercisePlaybackLocked ? 'rgba(255,255,255,0.15)' : compareMode === 'ab' ? 'rgba(255,255,255,0.82)' : 'rgba(255,255,255,0.36)',
-                      fontSize: 10,
-                      fontWeight: 700,
-                      cursor: exercisePlaybackLocked ? 'not-allowed' : 'pointer',
-                      opacity: exercisePlaybackLocked ? 0.5 : 1,
-                    }}
-                  >
-                    {compareMode === 'ab' ? 'On' : 'Off'}
-                  </button>
-                </div>
-                
-                {/* Divider */}
-                <div style={{
-                  width: 1,
-                  height: 24,
-                  background: 'rgba(255,255,255,0.07)',
-                }} />
-                
-                {/* Solo toggle */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <button
-                    data-no-seek
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      interruptPracticeSession(() => {
-                        if (exercisePlaybackLocked) return;
-                        setPreviewMode(previewMode === 'solo' ? 'context' : 'solo');
-                      });
-                    }}
-                    style={{
-                      padding: '3px 10px',
-                      borderRadius: 6,
-                      border: `1px solid ${previewMode === 'solo' ? 'rgba(255,140,0,0.5)' : 'rgba(255,255,255,0.07)'}`,
-                      background: previewMode === 'solo' ? 'rgba(255,140,0,0.15)' : 'transparent',
-                      color: exercisePlaybackLocked ? 'rgba(255,255,255,0.15)' : previewMode === 'solo' ? 'rgba(255,140,0,0.95)' : 'rgba(255,255,255,0.45)',
-                      fontSize: 10,
-                      fontWeight: 700,
-                      cursor: exercisePlaybackLocked ? 'not-allowed' : 'pointer',
-                      opacity: exercisePlaybackLocked ? 0.5 : 1,
-                    }}
-                  >
-                    Solo
-                  </button>
-                </div>
-                
-                {/* Divider */}
-                <div style={{
-                  width: 1,
-                  height: 24,
-                  background: 'rgba(255,255,255,0.07)',
-                }} />
-                
-                {/* I/V/M mode buttons */}
-                <div style={{ display: 'flex', gap: 3 }}>
-                  {(['inst', 'voc', 'mix'] as const).map(m => (
-                    <button
-                      key={m}
-                      data-no-seek
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setViewMode(m);
-                      }}
-                      style={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: 6,
-                        border: `1px solid ${viewMode === m ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)'}`,
-                        background: viewMode === m ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.48)',
-                        color: viewMode === m ? (m === 'inst' ? '#d25555' : m === 'voc' ? '#4f8bff' : '#ccc') : 'rgba(255,255,255,0.42)',
-                        fontSize: 11,
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {m === 'inst' ? 'I' : m === 'voc' ? 'V' : 'M'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* UNIFIED TOP TOOLBAR: Block info + main control grammar */}
+          <TakesToolbar
+            activeBlock={activeBlock}
+            activeBlockId={activeBlockId}
+            timeRange={timeRange}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            previewMode={previewMode}
+            setPreviewMode={setPreviewMode}
+            compareMode={compareMode}
+            setCompareMode={setCompareMode}
+            exercisePlaybackLocked={exercisePlaybackLocked}
+            recipesOpen={recipesOpen}
+            setRecipesOpen={setRecipesOpen}
+            activeExercise={activeExercise}
+            onInterrupt={interruptPracticeSession}
+          />
           
           {/* BOTTOM-RIGHT HUD: REC badge */}
           {isRecording && (

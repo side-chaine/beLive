@@ -6,6 +6,7 @@ import { usePracticeStore } from '../../stores/practice-session.store';
 import { getBlockTimeRange } from '../../utils/block-time-range';
 import { BLOCK_TYPE_CONFIG } from '../../blocks/types';
 import styles from './TrackInfoBoard.module.css';
+import { V2Adapter } from '../../audio/engine-v3/V2Adapter';
 
 const BLOCK_TYPE_LETTER: Record<string, string> = {
   intro: 'I',
@@ -122,8 +123,7 @@ export function StructureDiagram() {
               useTrackInfoStore.getState().setClickedBlockType(bd.block.type);
               const range = getBlockTimeRange(bd.block, markers);
               if (range) {
-                const ae = (window as any).audioEngine;
-                if (ae?.setCurrentTime) ae.setCurrentTime(range.startTime);
+                try { V2Adapter.getInstance().delegateSync('seekTo', range.startTime) } catch {}
               }
             }}
             title={`${bd.block.name} (${bd.block.type}) ${bd.duration > 0 ? formatDuration(bd.duration) : ''}`}

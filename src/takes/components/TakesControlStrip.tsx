@@ -7,13 +7,14 @@ import { createTakeId } from '../takes.types';
 import type { TakeMeta } from '../takes.types';
 import { useExerciseStore } from '../../exercises/exercise.store';
 import { isExerciseExecutionLocked } from '../../exercises/exercise.runtime';
-import { RecipeCardPopover } from '../../exercises/components/RecipeCardPopover';
 import {
   interruptPracticeSession,
 } from '../../exercises/exercise.interruption';
 import { useTakesPlayback } from '../hooks/useTakesPlayback';
 import { useTakeDelete } from '../hooks/useTakeDelete';
 import { usePracticeInterrupt } from '../hooks/usePracticeInterrupt';
+import { TakeSlot } from './TakeSlot';
+import { V2Adapter } from '../../audio/engine-v3/V2Adapter';
 
 interface TakesControlStripProps {
   activeBlockId: string;
@@ -67,8 +68,6 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
   const deleteReRecordTimeoutRef = React.useRef<number | null>(null);
 
   const [countdown, setCountdown] = React.useState<number | null>(null);
-  const [recipesOpen, setRecipesOpen] = React.useState(false);
-  
   // Reference playback constant
   const PLAYING_REFERENCE_ID = '__reference__';
 
@@ -110,28 +109,6 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
     setCountdown,
   });
   
-  // Reference label - compact helper when compare is on but no reference selected
-  const referenceHelperLabel = React.useMemo(() => {
-    if (compareMode !== 'ab') return null;
-    
-    const bt = blockTakes;
-    if (!bt) return null;
-    
-    if (bt.selectedSlot === null || bt.takes[bt.selectedSlot]?.status !== 'ready') {
-      return '★ Pick Ref';
-    }
-    
-    return null;
-  }, [compareMode, blockTakes]);
-  
-  // Target label removed - moved to card-level semantics
-  
-  // Check if vocal reference is available
-  const hasVocalReference = React.useMemo(() => {
-    const ae = (window as any).audioEngine;
-    return !!ae?.stems?.has?.('vocals');
-  }, [activeBlockId]);
-
   // Cleanup helper for active recording timers
   const clearActiveRecordingTimers = React.useCallback(() => {
     if (timeCheckRef.current) {
@@ -199,7 +176,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       // Pre-roll seek and playback
       const preRollStart = Math.max(0, effectiveTimeRange.startTime - effectivePreRoll);
       const actualPreRoll = effectiveTimeRange.startTime - preRollStart;
-      if (typeof ae.setCurrentTime === 'function') ae.setCurrentTime(preRollStart);
+      try { V2Adapter.getInstance().delegateSync('seekTo', preRollStart) } catch {}
       ae.play();
       
       // Start recorder AFTER seek+play — engine is now at preRollStart position
@@ -278,7 +255,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       const wasClippedBefore = oldTrim !== (wallDeltaSec - rawDeltaSec);
       const fixDeltaMs = (computedTrim - oldTrim) * 1000;
       
-      console.log('[TRIM-BASIS]', {
+      if (import.meta.env.DEV) console.log('[TRIM-BASIS]', {
         blockId: activeBlockId,
         slot,
         blockStart: effectiveTimeRange.startTime,
@@ -302,7 +279,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       const lateStartOffsetSec = engineNow - effectiveTimeRange.startTime; // unclipped
       (recorderRef.current as any).__lateStartOffsetSec = lateStartOffsetSec;
       
-      console.log('[Takes] Recorder armed early, visible REC started at engine time:', 
+      if (import.meta.env.DEV) console.log('[Takes] Recorder armed early, visible REC started at engine time:', 
         ae.getCurrentTime?.()?.toFixed(3));
       // Start stop timer / safety timeout
       clearActiveRecordingTimers();
@@ -393,7 +370,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
 
       const trimStartSec = (recorder as any).__trimStartSec ?? 0;
       const lateStartOffsetSec = (recorder as any).__lateStartOffsetSec ?? 0;
-      console.log('[SYNC]', { 
+      if (import.meta.env.DEV) console.log('[SYNC]', { 
         trim: trimStartSec.toFixed(4), 
         late: lateStartOffsetSec.toFixed(4),
         slot: currentSlot 
@@ -832,13 +809,6 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
     };
   }, [onRecorderAnalyserChange, onCountdownChange]);
 
-  // Auto-close recipe popover when panel loses activeBlockId or exercise starts
-  React.useEffect(() => {
-    if (!activeBlockId) {
-      setRecipesOpen(false);
-    }
-  }, [activeBlockId]);
-
   return (
     <div style={styles.root}>
       {/* Centered hero cluster wrapper */}
@@ -861,290 +831,61 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
           const isCurrentVisible = compareMode === 'off' && activeCompareSlot === slot;
 
           return (
-            <div
+            <TakeSlot
               key={slot}
-              onClick={() => {
-                // Interrupt practice first if active, then continue requested action
+              slot={slot}
+              take={take}
+              isEmpty={isEmpty}
+              isReady={isReady}
+              isBest={isBest}
+              isThisRec={isThisRec}
+              isPlaying={isPlaying}
+              isCurrentVisible={isCurrentVisible}
+              compareMode={compareMode}
+              activeCompareSlot={activeCompareSlot ?? null}
+              exercisePlaybackLocked={exercisePlaybackLocked}
+              isRecording={isRecording}
+              countdown={countdown}
+              onRecord={(s) => {
                 interruptPracticeSession(() => {
-                  // BLOCK: prevent take preview during active exercise execution
                   if (exercisePlaybackLocked) return;
-                  
-                  if (isThisRec) return;
-                  // Empty slot → record to THIS slot
-                  if (isEmpty && !isRecording && countdown === null) {
-                    // Set this slot as future compare target before recording starts
-                    onActiveCompareSlotChange?.(slot);
-                    handleRecord(slot);
-                    return;
-                  }
-                  // Play if ready
-                  if (isReady) {
-                    // Set active compare target
-                    onActiveCompareSlotChange?.(slot);
-                    
-                    // Always play the clicked take
-                    handlePlayTake(take.id);
-                  }
+                  onActiveCompareSlotChange?.(s);
+                  handleRecord(s);
                 });
               }}
-              onMouseEnter={(e) => {
-                if (!isEmpty && !isThisRec && !exercisePlaybackLocked) {
-                  e.currentTarget.style.transform = 'scale(1.015) translateY(-6px)';
-                  e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.55)';
-                  e.currentTarget.style.borderColor = isEmpty 
-                    ? 'rgba(255,255,255,0.45)' 
-                    : isBest 
-                      ? 'rgba(0,200,83,0.85)' 
-                      : 'rgba(255,140,0,0.85)';
-                } else if (isEmpty && !exercisePlaybackLocked) {
-                  // Empty card hover: invitation feel
-                  e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.48)';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.40)';
-                }
+              onPlay={(takeId) => {
+                interruptPracticeSession(() => {
+                  if (exercisePlaybackLocked) return;
+                  onActiveCompareSlotChange?.(slot);
+                  handlePlayTake(takeId);
+                });
               }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = isPlaying
-                  ? `inset 0 0 0 2px ${isBest ? 'rgba(0,200,83,0.7)' : 'rgba(255,140,0,0.7)'}`
-                  : (isEmpty ? 'none' : 'none');
-                e.currentTarget.style.borderColor = isEmpty 
-                  ? 'rgba(255,255,255,0.22)' 
-                  : isBest 
-                    ? 'rgba(0,200,83,0.55)' 
-                    : isThisRec 
-                      ? 'rgba(255,70,70,0.6)' 
-                      : 'rgba(255,140,0,0.55)';
+              onSelectCompare={(slot) => onActiveCompareSlotChange?.(slot)}
+              onRetake={() => {
+                interruptPracticeSession(() => {
+                  if (exercisePlaybackLocked) return;
+                  if (activeCompareSlot === slot) onActiveCompareSlotChange?.(null);
+                  handleDeleteSlot(slot);
+                  onActiveCompareSlotChange?.(slot);
+                  deleteReRecordTimeoutRef.current = window.setTimeout(() => handleRecord(slot), 150);
+                });
               }}
-              style={{
-                position: 'relative',
-                width: 340,
-                height: 64,
-                borderRadius: 14,
-                overflow: 'visible',
-                cursor: (isReady || isEmpty) ? 'pointer' : 'default',
-                border: `1px ${isEmpty ? 'dashed' : 'solid'} ${
-                  isEmpty ? 'rgba(255,255,255,0.22)'
-                    : isCurrentVisible ? 'rgba(100,200,255,0.8)'
-                    : isBest ? 'rgba(0,200,83,0.55)'
-                    : isThisRec ? 'rgba(255,70,70,0.6)'
-                    : 'rgba(255,140,0,0.55)'
-                }`,
-                background:
-                  isEmpty ? '#16171f'
-                  : isCurrentVisible ? 'rgba(100,200,255,0.06)'
-                  : isBest ? 'rgba(0,200,83,0.08)'
-                  : isThisRec ? 'rgba(255,70,70,0.08)'
-                  : 'rgba(255,140,0,0.08)',
-                boxShadow: isPlaying
-                  ? `inset 0 0 0 2px ${isBest 
-                      ? 'rgba(0,200,83,0.7)' 
-                      : 'rgba(255,140,0,0.7)'}`
-                  : 'none',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: isEmpty ? 'center' : 'flex-start',
-                justifyContent: isEmpty ? 'center' : 'flex-end',
-                padding: '8px 12px',
-                transition: 'transform 0.15s ease-out, box-shadow 0.15s ease-out, border-color 0.15s ease-out',
-                transform: 'scale(1)',
+              onStar={() => {
+                interruptPracticeSession(() => {
+                  if (exercisePlaybackLocked) return;
+                  const current = blockTakes?.selectedSlot;
+                  selectTake(activeBlockId, current === slot ? null : slot);
+                });
               }}
-            >
-            {isEmpty ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 8px' }}>
-                <span style={{ 
-                  fontSize: 15, 
-                  color: 'rgba(255,255,255,0.65)', 
-                  fontWeight: 800,
-                  letterSpacing: '0.03em',
-                }}>
-                  Take {slot + 1}
-                </span>
-                <span style={{
-                  fontSize: 10,
-                  color: 'rgba(255,70,70,0.80)',
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                }}>
-                  ● Record
-                </span>
-              </div>
-            ) : (
-              <>
-                <div style={{
-                  position: 'absolute',
-                  top: 0, left: 0, right: 0,
-                  padding: '8px 14px',
-                  fontSize: 12, fontWeight: 800,
-                  color: 'rgba(255,255,255,0.88)',
-                  pointerEvents: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  flexWrap: 'wrap',
-                }}>
-                  <span style={{ fontSize: 13, fontWeight: 900, whiteSpace: 'nowrap' }}>
-                    {isThisRec ? '● ' : ''}
-                    Take {slot + 1}
-                  </span>
-                  {/* Compact inline markers for compare semantics */}
-                  {compareMode === 'ab' && isBest && (
-                    <span style={{
-                      fontSize: 10,
-                      fontWeight: 800,
-                      color: 'rgba(247,201,72,0.98)',
-                      background: 'rgba(247,201,72,0.18)',
-                      padding: '3px 6px',
-                      borderRadius: 4,
-                      letterSpacing: '0.03em',
-                    }}>
-                      Ref
-                    </span>
-                  )}
-                  {compareMode === 'ab' && activeCompareSlot === slot && !isBest && (
-                    <span style={{
-                      fontSize: 10,
-                      fontWeight: 800,
-                      color: 'rgba(0,200,83,0.98)',
-                      background: 'rgba(0,200,83,0.18)',
-                      padding: '3px 6px',
-                      borderRadius: 4,
-                      letterSpacing: '0.03em',
-                    }}>
-                      Target
-                    </span>
-                  )}
-                  {compareMode === 'ab' && activeCompareSlot === slot && isBest && (
-                    <span style={{
-                      fontSize: 10,
-                      fontWeight: 800,
-                      color: 'rgba(255,255,255,0.98)',
-                      background: 'rgba(255,255,255,0.25)',
-                      padding: '3px 6px',
-                      borderRadius: 4,
-                      letterSpacing: '0.03em',
-                    }}>
-                      Ref+Target
-                    </span>
-                  )}
-                  {take?.tempoRate && take.tempoRate !== 1.0 && (
-                    <span style={{
-                      fontSize: 10,
-                      fontWeight: 800,
-                      color: 'rgba(100,200,255,0.98)',
-                      background: 'rgba(100,200,255,0.18)',
-                      padding: '3px 6px',
-                      borderRadius: 4,
-                      letterSpacing: '0.03em',
-                    }}>
-                      {Math.round(take.tempoRate * 100)}%
-                    </span>
-                  )}
-                </div>
-                
-                {/* Hover actions: Star + Delete */}
-                {isReady && !isThisRec && (
-                  <div
-                    onMouseEnter={(e) => { 
-                      e.currentTarget.style.opacity = '1'; 
-                    }}
-                    onMouseLeave={(e) => { 
-                      e.currentTarget.style.opacity = '0'; 
-                    }}
-                    style={{
-                      position: 'absolute',
-                      top: 5, right: 5,
-                      display: 'flex', gap: 4,
-                      zIndex: 3,
-                      opacity: exercisePlaybackLocked ? 0.3 : 0,
-                      transition: 'opacity 0.15s',
-                      pointerEvents: exercisePlaybackLocked ? 'none' : 'auto',
-                    }}
-                  >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Interrupt practice first if active, then continue requested action
-                        interruptPracticeSession(() => {
-                          // BLOCK: prevent retake during exercise execution
-                          if (exercisePlaybackLocked) return;
-                          // Clear active compare if retaking current target
-                          if (activeCompareSlot === slot) {
-                            onActiveCompareSlotChange?.(null);
-                          }
-                          handleDeleteSlot(slot);
-                          // Set this slot as future compare target before retake
-                          onActiveCompareSlotChange?.(slot);
-                          deleteReRecordTimeoutRef.current = window.setTimeout(() => handleRecord(slot), 150);
-                        });
-                      }}
-                      style={{
-                        width: 22, height: 22, borderRadius: 6,
-                        border: '1px solid rgba(255,255,255,0.10)',
-                        background: 'rgba(0,0,0,0.65)',
-                        color: 'rgba(255,70,70,0.82)',
-                        fontSize: 10, cursor: exercisePlaybackLocked ? 'not-allowed' : 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        opacity: exercisePlaybackLocked ? 0.5 : 1,
-                      }}
-                      disabled={exercisePlaybackLocked}
-                      title={exercisePlaybackLocked ? 'Unavailable during exercise execution' : 'Retake'}
-                    >⟳</button>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Interrupt practice first if active, then continue requested action
-                        interruptPracticeSession(() => {
-                          // BLOCK: prevent star toggle during exercise execution
-                          if (exercisePlaybackLocked) return;
-                          const current = blockTakes?.selectedSlot;
-                          selectTake(activeBlockId, current === slot ? null : slot);
-                        });
-                      }}
-                      style={{
-                        width: 22, height: 22, borderRadius: 6,
-                        border: '1px solid rgba(255,255,255,0.10)',
-                        background: 'rgba(0,0,0,0.65)',
-                        color: isBest ? '#f7c948' : 'rgba(255,255,255,0.65)',
-                        fontSize: 12, cursor: exercisePlaybackLocked ? 'not-allowed' : 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        opacity: exercisePlaybackLocked ? 0.5 : 1,
-                      }}
-                      disabled={exercisePlaybackLocked}
-                      title={exercisePlaybackLocked ? 'Unavailable during exercise execution' : 'Set reference'}
-                    >{isBest ? '★' : '☆'}</button>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Interrupt practice first if active, then continue requested action
-                        interruptPracticeSession(() => {
-                          // BLOCK: prevent delete during exercise execution
-                          if (exercisePlaybackLocked) return;
-                          handleDeleteSlot(slot);
-                        });
-                      }}
-                      style={{
-                        width: 22, height: 22, borderRadius: 6,
-                        border: '1px solid rgba(255,255,255,0.10)',
-                        background: 'rgba(0,0,0,0.65)',
-                        color: 'rgba(255,255,255,0.65)',
-                        fontSize: 12, cursor: exercisePlaybackLocked ? 'not-allowed' : 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        opacity: exercisePlaybackLocked ? 0.5 : 1,
-                      }}
-                      disabled={exercisePlaybackLocked}
-                      title={exercisePlaybackLocked ? 'Unavailable during exercise execution' : 'Delete take'}
-                    >✕</button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        );
-      })}
+              onDelete={() => {
+                interruptPracticeSession(() => {
+                  if (exercisePlaybackLocked) return;
+                  handleDeleteSlot(slot);
+                });
+              }}
+            />
+          );
+        })}
       </div>
       
       {/* Right utility zone: stop button */}

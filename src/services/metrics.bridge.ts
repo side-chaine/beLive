@@ -104,19 +104,7 @@ export function initMetricsBridge(): () => void {
     onTracksChanged();
   }
 
-  // ─── Cleanup ───
-  _cleanup = () => {
-    document.removeEventListener('track-fully-loaded', onTrackStart);
-    document.removeEventListener('before-track-change', onTrackStop);
-    document.removeEventListener('practice:completed', onPracticeCompleted);
-    document.removeEventListener('practice:completed-kept', onPracticeCompleted);
-    unsubExercise();
-    unsubTracks();
-    unsubAudio();
-    _cleanup = null;
-  };
-
-  // ─── Cleanup ───
+  // ─── Cleanup (merged from both versions) ───
   _cleanup = () => {
     document.removeEventListener('track-fully-loaded', onTrackStart);
     document.removeEventListener('before-track-change', onTrackStop);
@@ -125,6 +113,7 @@ export function initMetricsBridge(): () => void {
     document.removeEventListener('tracks-changed', onTracksChanged);
     unsubExercise();
     unsubTracks();
+    unsubAudio();
     _cleanup = null;
   };
 

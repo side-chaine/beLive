@@ -2,6 +2,7 @@ import React, { useCallback, useRef } from 'react';
 import { useAudioStore } from '../stores/audio.store';
 import { useModeStore } from '../stores/mode.store';
 import { interruptPracticeSession } from '../exercises/exercise.interruption';
+import { V2Adapter } from '../audio/engine-v3/V2Adapter';
 
 const MODE_COLORS: Record<string, string> = {
   concert: '#3498db',
@@ -30,12 +31,11 @@ export function TransportBar() {
     (e: React.MouseEvent<HTMLDivElement>) => {
       // Interrupt practice first if active, then seek
       interruptPracticeSession(() => {
-        const ae = (window as any).audioEngine;
-        if (!ae || !trackRef.current || duration === 0) return;
+        if (!trackRef.current || duration === 0) return;
         const rect = trackRef.current.getBoundingClientRect();
         const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         const newTime = ratio * duration;
-        ae.setCurrentTime(newTime);
+        try { V2Adapter.getInstance().delegateSync('seekTo', newTime) } catch {}
         useAudioStore.setState({ currentTime: newTime });
       });
     },

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Playlist, PlaylistEntry, CenterTab, ShowcaseSection, ArtistGroup } from '../types';
+import type { GhostTrack } from '../../stores/ghost.store';
 import { parseTrackName } from '../types';
 import { switchMode } from '../../bridges/mode-switch.bridge';
 import * as idb from '../../services/idb.service';
@@ -26,6 +27,9 @@ interface CatalogState {
   /* ── Column 3: Search ── */
   searchQuery: string;
   showUpload: boolean;
+
+  // ADDITIVE: ghost tracks (migrated from ghostStore)
+  ghosts: GhostTrack[];
 
   /* ── Actions: My Music ── */
   setMyMusicIds: (ids: number[]) => void;
@@ -65,6 +69,12 @@ interface CatalogState {
   /* ── Actions: Search ── */
   setSearchQuery: (q: string) => void;
   setShowUpload: (v: boolean) => void;
+
+  // ADDITIVE: ghost track actions (migrated from ghostStore)
+  addGhost: (g: GhostTrack) => void;
+  updateGhost: (id: string, patch: Partial<GhostTrack>) => void;
+  removeGhost: (id: string) => void;
+  clearGhosts: () => void;
 }
 
 function _defaultShowcase(): ShowcaseSection[] {
@@ -118,6 +128,8 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
   buildingTracks: [],
   searchQuery: '',
   showUpload: false,
+  // ADDITIVE: ghost tracks (migrated from ghostStore)
+  ghosts: [],
   _activePlaylist: null,
   _activePlaylistIndex: 0,
   showcaseSections: _defaultShowcase(),
@@ -232,9 +244,6 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
 
     // Switch to Rehearsal + Deck(Mix)
     switchMode('rehearsal');
-    // RESIDUE: no known listeners found in repo-wide scan as of 2025-07.
-    // Kept as protective compatibility signal. Do not remove without explicit architectural decision.
-    document.dispatchEvent(new CustomEvent('sync-editor-closed'));
     document.dispatchEvent(new CustomEvent('deck-set-tab', { detail: { tab: 'mix', expanded: true } }));
 
     // Start sequential playback (same pattern as legacy _playPlaylistSequentially)
@@ -246,7 +255,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     const playNext = () => {
       if (index >= playlist.tracks.length) {
         set({ _activePlaylist: null, _activePlaylistIndex: 0 });
-        console.log('[CatalogStore] Playlist finished:', playlist.name);
+        if (import.meta.env.DEV) console.log('[CatalogStore] Playlist finished:', playlist.name);
         return;
       }
 
@@ -266,7 +275,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
 
       const trackIdx = all.indexOf(candidate);
       set({ _activePlaylistIndex: index });
-      console.log('[CatalogStore] Playlist:', playlist.name, 'track', index + 1, '/', playlist.tracks.length, '-', candidate.title);
+      if (import.meta.env.DEV) console.log('[CatalogStore] Playlist:', playlist.name, 'track', index + 1, '/', playlist.tracks.length, '-', candidate.title);
 
       const loadPromise = loadTrack(trackIdx, { autoplay: true, openSyncEditor: false });
 
@@ -293,13 +302,13 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     };
 
     playNext();
-    console.log('[CatalogStore] Starting playlist:', playlist.name, playlist.tracks.length, 'tracks');
+    if (import.meta.env.DEV) console.log('[CatalogStore] Starting playlist:', playlist.name, playlist.tracks.length, 'tracks');
   },
 
   playNextInPlaylist: () => {
     // Sequential playback is now handled by recursive onBothEnded in loadPlaylist.
     // This action is kept for potential manual "skip" feature.
-    console.log('[CatalogStore] playNextInPlaylist — sequential handled by onBothEnded chain');
+    if (import.meta.env.DEV) console.log('[CatalogStore] playNextInPlaylist — sequential handled by onBothEnded chain');
   },
 
   syncPlaylistsFromLegacy: () => {
@@ -365,4 +374,14 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       return b.tracks.length - a.tracks.length;
     });
   },
+
+  // ADDITIVE: ghost track actions (migrated from ghostStore)
+  addGhost: (g) => set((s) => ({ ghosts: [...s.ghosts, g] })),
+  updateGhost: (id, patch) => set((s) => ({
+    ghosts: s.ghosts.map((g) => g.id === id ? { ...g, ...patch } : g),
+  })),
+  removeGhost: (id) => set((s) => ({
+    ghosts: s.ghosts.filter((g) => g.id !== id),
+  })),
+  clearGhosts: () => set({ ghosts: [] }),
 }));

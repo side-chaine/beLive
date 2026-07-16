@@ -214,7 +214,7 @@ export class GatewayProvider implements AIProvider {
       callbacks.onDone?.(fullText);
     } catch (e: any) {
       if (e.name === 'AbortError') {
-        console.log('Stream aborted.');
+        if (import.meta.env.DEV) console.log('Stream aborted.');
         return; // Stream was intentionally stopped
       }
       callbacks.onError?.(new AIError('STREAM_FETCH_ERROR', e.message || 'Failed to fetch stream', this.id));

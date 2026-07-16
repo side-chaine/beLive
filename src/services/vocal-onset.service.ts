@@ -351,7 +351,7 @@ export function detectMultiAnchorOffsets(
 
   // >>> VOC LOGGING (DEV only) <<<
   if (import.meta.env.DEV) {
-    console.log(
+    if (import.meta.env.DEV) console.log(
       `[VOC] Track: ${audioBuffer.duration.toFixed(1)}s, ` +
       `${m1Markers.length} markers, ${blocks.length} blocks`
     );
@@ -436,7 +436,7 @@ export function detectMultiAnchorOffsets(
   const foundAnchors = anchors.filter(a => a.found);
   if (foundAnchors.length < 2) {
     if (import.meta.env.DEV) {
-      console.log(
+      if (import.meta.env.DEV) console.log(
         `[VOC] L2 APPLIED: linear offset (only ${foundAnchors.length}/${anchors.length} anchors found, need ≥2)`
       );
     }
@@ -452,7 +452,7 @@ export function detectMultiAnchorOffsets(
   if (offsetRange < ANCHOR_CONFIG.minOffsetRange) {
     // All anchors agree — linear offset (L2) is sufficient
     if (import.meta.env.DEV) {
-      console.log(
+      if (import.meta.env.DEV) console.log(
         `[VOC] L2 APPLIED: linear offset (range=${offsetRange.toFixed(2)}s < ${ANCHOR_CONFIG.minOffsetRange}s)`
       );
     }
@@ -464,7 +464,7 @@ export function detectMultiAnchorOffsets(
   }
 
   if (import.meta.env.DEV) {
-    console.log(
+    if (import.meta.env.DEV) console.log(
       `[VOC] L3 APPLIED: ${foundAnchors.length}/${anchors.length} anchors, ` +
       `non-linear correction (range=${offsetRange.toFixed(3)}s)`
     );

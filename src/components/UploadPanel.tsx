@@ -482,20 +482,20 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                     
                     // 007-DEBUG: Log pastedText to see raw Genius input
                     if (import.meta.env.DEV) {
-                      console.log('[007-SCAN] Raw pastedText (first 500 chars):');
-                      console.log(pastedText.trim().substring(0, 500));
-                      console.log('[007-SCAN] Looking for [Bridge] and [Chorus] tags...');
+                      if (import.meta.env.DEV) console.log('[007-SCAN] Raw pastedText (first 500 chars):');
+                      if (import.meta.env.DEV) console.log(pastedText.trim().substring(0, 500));
+                      if (import.meta.env.DEV) console.log('[007-SCAN] Looking for [Bridge] and [Chorus] tags...');
                       const bridgeIdx = pastedText.indexOf('[Bridge');
                       const chorusAfterBridge = pastedText.indexOf('[Chorus', bridgeIdx + 1);
                       if (bridgeIdx >= 0) {
-                        console.log(`  [Bridge] found at index: ${bridgeIdx}`);
-                        console.log(`  Text after [Bridge] (next 200 chars):`, pastedText.substring(bridgeIdx, bridgeIdx + 200));
+                        if (import.meta.env.DEV) console.log(`  [Bridge] found at index: ${bridgeIdx}`);
+                        if (import.meta.env.DEV) console.log(`  Text after [Bridge] (next 200 chars):`, pastedText.substring(bridgeIdx, bridgeIdx + 200));
                       }
                       if (chorusAfterBridge >= 0) {
-                        console.log(`  Next [Chorus] after [Bridge] at index: ${chorusAfterBridge}`);
-                        console.log(`  Text between Bridge and Chorus:`, pastedText.substring(bridgeIdx, chorusAfterBridge));
+                        if (import.meta.env.DEV) console.log(`  Next [Chorus] after [Bridge] at index: ${chorusAfterBridge}`);
+                        if (import.meta.env.DEV) console.log(`  Text between Bridge and Chorus:`, pastedText.substring(bridgeIdx, chorusAfterBridge));
                       } else {
-                        console.log('  [007-CRITICAL] NO [Chorus] tag found after [Bridge]!');
+                        if (import.meta.env.DEV) console.log('  [007-CRITICAL] NO [Chorus] tag found after [Bridge]!');
                       }
                     }
                     
@@ -504,12 +504,12 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                     
                     // 007-DEBUG: Log tagResult.blocks structure
                     if (import.meta.env.DEV && tagResult.hasStructure) {
-                      console.log('[007-SCAN] tagResult.blocks:');
-                      console.log(`  Total blocks: ${tagResult.blocks.length}`);
+                      if (import.meta.env.DEV) console.log('[007-SCAN] tagResult.blocks:');
+                      if (import.meta.env.DEV) console.log(`  Total blocks: ${tagResult.blocks.length}`);
                       tagResult.blocks.forEach((b, i) => {
-                        console.log(`  Block ${i} [${b.type}]: "${b.label}" — ${b.contentLines.length} contentLines`);
+                        if (import.meta.env.DEV) console.log(`  Block ${i} [${b.type}]: "${b.label}" — ${b.contentLines.length} contentLines`);
                         if (b.type === 'bridge') {
-                          console.log(`    [007-CRITICAL] Bridge contentLines:`, b.contentLines);
+                          if (import.meta.env.DEV) console.log(`    [007-CRITICAL] Bridge contentLines:`, b.contentLines);
                         }
                       });
                     }
@@ -558,8 +558,8 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                         // Genius blocks = structure overlay
                         matchResult = autoLyrics.blockFirstLineSync(pastedText.trim(), lrcResult);
                         if (import.meta.env.DEV) {
-                          console.log(`[TC-010] confidence=${(matchResult.confidence * 100).toFixed(1)}%`);
-                          console.log(`[LyricsPaste] blockFirstLineSync: ${(performance.now() - _t0).toFixed(1)}ms`);
+                          if (import.meta.env.DEV) console.log(`[TC-010] confidence=${(matchResult.confidence * 100).toFixed(1)}%`);
+                          if (import.meta.env.DEV) console.log(`[LyricsPaste] blockFirstLineSync: ${(performance.now() - _t0).toFixed(1)}ms`);
                         }
 
                         // ═══ TC-096-01: Variant B — retry with next-best LRC if coverage low ═══
@@ -578,7 +578,7 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                             if (better) {
                               matchResult = better.matchResult;
                               if (import.meta.env.DEV) {
-                                console.log(
+                                if (import.meta.env.DEV) console.log(
                                   `[TC-096] Version switch → id=${better.version.id} `
                                   + `(${better.version.lineCount} lines, score=${better.version.score})`
                                 );
@@ -612,7 +612,7 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                           bracketLines
                         );
                       }
-                      console.log(
+                      if (import.meta.env.DEV) console.log(
                         `[TC-002] Saved lyrics: ${cleanLyricLines.length} lines ` +
                         `(was ${pastedText.split('\n').filter((l: string) => l.trim()).length} with tags)` +
                         `${matchResult && matchResult.confidence >= 0.8 ? ' [auto-sync]' : ' [manual]'}`
@@ -633,7 +633,7 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                       if (matchResult.blocks.length > 0) idbFields.blocksData = matchResult.blocks;
 
                       if (import.meta.env.DEV) {
-                        console.log(
+                        if (import.meta.env.DEV) console.log(
                           `[TC-008] Low confidence auto-sync applied (${(matchResult.confidence * 100).toFixed(1)}%). ` +
                           `Opening Sync Editor for review. Unmatched lines may need manual markers.`
                         );
@@ -645,10 +645,10 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
 
                     await w.idbService?.updateTrackField(pendingTrackId, idbFields);
                     if (import.meta.env.DEV) {
-                      console.log(`[LyricsPaste] IDB save (single): ${(performance.now() - _t0).toFixed(1)}ms`);
+                      if (import.meta.env.DEV) console.log(`[LyricsPaste] IDB save (single): ${(performance.now() - _t0).toFixed(1)}ms`);
                       // ZIP-DIAG: Diagnostic log to verify what was saved to IDB
                       const blocksArr = idbFields.blocksData;
-                      console.log('[ZIP-DIAG] idbFields saved:', JSON.stringify({
+                      if (import.meta.env.DEV) console.log('[ZIP-DIAG] idbFields saved:', JSON.stringify({
                         hasBlocks: !!(blocksArr as any[])?.length,
                         blockCount: (blocksArr as any[])?.length ?? 0,
                         firstBlockLines: (blocksArr as any[])?.[0]?.lineIndices?.length ?? -1,
@@ -711,7 +711,7 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                     // ═══ TC-FLOW-02: fallback — открыть sync editor вместо Block Editor ═══
                     if (!autoSyncApplied) {
                       if (import.meta.env.DEV) {
-                        console.log('[AutoLyrics] auto-sync not applied, opening Sync Editor');
+                        if (import.meta.env.DEV) console.log('[AutoLyrics] auto-sync not applied, opening Sync Editor');
                       }
                       const track = await w.idbService?.getTrack(pendingTrackId);
                       if (track) {

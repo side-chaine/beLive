@@ -87,7 +87,7 @@ export function usePracticeInterrupt({
       stopPreview({ pauseEngine: true });
     }
     
-    console.log('[TakesControlStrip] Practice session interrupted - cleaned up in-progress transactions');
+    if (import.meta.env.DEV) console.log('[TakesControlStrip] Practice session interrupted - cleaned up in-progress transactions');
   }, [
     countdownRef,
     timeCheckRef,

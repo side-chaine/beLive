@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { initAudioBridge } from './bridges/audio.bridge';
 import { initLyricsBridge } from './bridges/lyrics.bridge';
-import { initMarkersBridge } from './bridges/markers.bridge';
+// retired: markers.bridge → markers-events
 import { initModeBridge } from './bridges/mode.bridge';
-import { initTrackBridge } from './bridges/track.bridge';
-import { initCoverThemeBridge } from './bridges/cover-theme.bridge';
+// retired: track.bridge → track-events
+// retired: cover-theme.bridge → cover-events
 import { initStemReactiveBridge } from './bridges/stem-reactive.bridge';
 import { initTrackEventListeners } from './services/track.actions';
 import { CatalogPanel } from './components/CatalogPanel';
@@ -20,7 +20,7 @@ import { BillyDock } from './components/BillyDock/BillyDock';
 // TC-PITCH-04: Removed PianoOverlay import (now PitchTab in dock)
 
 import { initTextStyleBridge, destroyTextStyleBridge } from './bridges/textStyle.bridge';
-import { initPlateBridge, destroyPlateBridge } from './bridges/plate.bridge';
+// retired: plate.bridge → plate-events
 import { initPerformanceBridge } from './performance/performance.bridge';
 import { initBillyBridge } from './billy/billy.bridge';
 import { initTakesBridge } from './takes/takes.bridge';
@@ -82,16 +82,12 @@ export default function App() {
     initTrackEventListeners();
     const cleanupAudio = initAudioBridge();
     const cleanupLyrics = initLyricsBridge();
-    const cleanupMarkers = initMarkersBridge();
     const cleanupMode = initModeBridge();
-    const cleanupTrack = initTrackBridge();
-    const cleanupCoverTheme = initCoverThemeBridge();
     const cleanupSync = initSyncBridge();
     const cleanupTimeSync = initTimeSync();
     const cleanupTrigger = initTriggerBridge();
     const cleanupStemReactive = initStemReactiveBridge();
     const cleanupTextStyle = initTextStyleBridge();
-    const cleanupPlate = initPlateBridge();
     const cleanupPerformance = initPerformanceBridge();
     const cleanupBilly = initBillyBridge();
     const cleanupTakes = initTakesBridge();
@@ -110,16 +106,11 @@ export default function App() {
     return () => {
       cleanupAudio();
       cleanupLyrics();
-      cleanupMarkers();
       cleanupMode();
-      cleanupTrack();
-      cleanupCoverTheme();
       cleanupSync();
-      cleanupTimeSync();
       cleanupTrigger();
       cleanupStemReactive();
       destroyTextStyleBridge();
-      destroyPlateBridge();
       cleanupPerformance();
       cleanupBilly();
       cleanupTakes();

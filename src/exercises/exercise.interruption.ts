@@ -166,7 +166,7 @@ export function initPracticeInterruptionBridge(): PracticeInterruptionBridge {
     
     interrupt: (actionName?: string) => {
       if (actionName) {
-        console.log(`[PracticeInterruption] Interrupting for: ${actionName}`);
+        if (import.meta.env.DEV) console.log(`[PracticeInterruption] Interrupting for: ${actionName}`);
       }
       interruptPracticeSession();
     },

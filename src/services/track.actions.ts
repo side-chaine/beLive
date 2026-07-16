@@ -222,7 +222,4 @@ export async function importMarkersFromFile(file: File): Promise<void> {
   }
 }
 
-if (typeof window !== 'undefined') {
-  (window as any).clearAllTracksAction = clearAllTracks;
-  (window as any).importMarkersAction = importMarkersFromFile;
-}
+// (window globals removed — clearAllTracksAction/importMarkersAction no longer exposed)

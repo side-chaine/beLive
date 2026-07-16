@@ -17,7 +17,10 @@
     "preview": "vite preview",
     "test": "vitest",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "verify:events": "npx tsx scripts/verify-event-map.ts",
+    "verify:parity": "npx tsx scripts/verify-bridge-parity.ts",
+    "verify:ci": "npm run verify:events && npm run verify:parity"
   },
   "repository": {
     "type": "git",

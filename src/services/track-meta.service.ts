@@ -74,7 +74,7 @@ async function fetchMusicBrainz(
     }
 
     // Diagnostic: log lookup results
-    console.log('[TrackMeta] MusicBrainz lookup:', {
+    if (import.meta.env.DEV) console.log('[TrackMeta] MusicBrainz lookup:', {
       mbid: rec.id,
       hasGenre: !!result.genre?.length,
       genreCount: result.genre?.length || 0,
@@ -107,7 +107,7 @@ async function fetchLastFm(
     if (!track) return null;
 
     // Diagnostic: log raw response structure
-    console.log('[TrackMeta] Last.fm response:', {
+    if (import.meta.env.DEV) console.log('[TrackMeta] Last.fm response:', {
       artist,
       title,
       httpStatus: resp.status,
@@ -120,7 +120,7 @@ async function fetchLastFm(
       playcount: data.track?.playcount || 'none',
       similarRaw: data.track?.similar?.track?.slice(0, 2) || 'none',
     });
-    console.log('[TrackMeta] Last.fm similar raw:', JSON.stringify(data.track?.similar)?.slice(0, 300));
+    if (import.meta.env.DEV) console.log('[TrackMeta] Last.fm similar raw:', JSON.stringify(data.track?.similar)?.slice(0, 300));
 
     const result: TrackMetaPartial = {};
 
@@ -178,7 +178,7 @@ async function fetchGetSongBPM(
     if (!track) return null;
 
     // DEBUG: log raw track to see API response format
-    console.log('[TrackMeta] GetSongBPM raw:', JSON.stringify(track));
+    if (import.meta.env.DEV) console.log('[TrackMeta] GetSongBPM raw:', JSON.stringify(track));
 
     const result: TrackMetaPartial = {};
     if (track.tempo) result.bpm = Number(track.tempo);
@@ -190,7 +190,7 @@ async function fetchGetSongBPM(
       result.camelot = openKeyToCamelot(track.open_key);
     }
 
-    console.log('[TrackMeta] GetSongBPM:', {
+    if (import.meta.env.DEV) console.log('[TrackMeta] GetSongBPM:', {
       artist,
       title,
       bpm: result.bpm ?? 'none',
@@ -275,7 +275,7 @@ export async function fetchTrackMeta(
   }
 
   // Diagnostic: log merged result
-  console.log('[TrackMeta] Merged result:', {
+  if (import.meta.env.DEV) console.log('[TrackMeta] Merged result:', {
     trackId,
     artist,
     title,
