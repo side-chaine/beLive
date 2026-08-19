@@ -293,21 +293,21 @@ export function PitchTab() {
 
   /* ── Mic engine ── */
   useEffect(() => {
-    console.log('[PitchTab] Mic engine useEffect, micActive:', micActive);
+    if (import.meta.env.DEV) console.log('[PitchTab] Mic engine useEffect, micActive:', micActive);
     if (!micActive) {
       if (micEngineRef.current) {
-        console.log('[PitchTab] Mic engine cleanup (inactive)');
+        if (import.meta.env.DEV) console.log('[PitchTab] Mic engine cleanup (inactive)');
         micEngineRef.current.destroy();
         micEngineRef.current = null;
         setMicEngine(null);
       }
       return;
     }
-    console.log('[PitchTab] Mic engine init...');
+    if (import.meta.env.DEV) console.log('[PitchTab] Mic engine init...');
     const eng = new PitchEngine();
     micEngineRef.current = eng;
     eng.initFromMic().then(() => {
-      console.log('[PitchTab] Mic engine initialized');
+      if (import.meta.env.DEV) console.log('[PitchTab] Mic engine initialized');
       setMicEngine(eng);
     }).catch(err => {
       console.warn('[PitchTab] mic engine failed:', err);
@@ -315,7 +315,7 @@ export function PitchTab() {
     });
 
     return () => {
-      console.log('[PitchTab] Mic engine cleanup');
+      if (import.meta.env.DEV) console.log('[PitchTab] Mic engine cleanup');
       eng.destroy();
       micEngineRef.current = null;
       setMicEngine(null);

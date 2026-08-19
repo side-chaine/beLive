@@ -150,6 +150,7 @@ export class RehearsalTriggerBridge {
         this.broadcastTransport({ type: 'seek', mediaTime: t, wallClockTime: Date.now() });
       };
     }
+    console.log('[PATCH-ORDER] rehearsal-trigger: hijackAudioTransport — play/pause/seekTo/setCurrentTime patched');
   }
 
   // --- Приём ---

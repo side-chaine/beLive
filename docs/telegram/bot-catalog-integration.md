@@ -13,14 +13,20 @@ Telegram-бот предоставляет каталог треков (52 тр�
 ```
 Telegram Bot (belive-feed-bot)        beLive PWA (app.mybelive.com)
 ┌──────────────────────┐              ┌──────────────────────┐
-│  /tracks (GET)       │◄────CORS────►│  CatalogLayout.tsx   │
-│  /download/:fileId   │  fetch       │  Поиск → ↓ click    │
-│  (CORS: app.mybelive)│              │  → fetch /download   │
-│                      │              │  → handleZip()       │
-│  KV: track metadata  │              │  → PORT progress     │
+│  /tracks (GET)       │◄────CORS────►│  CatalogContent.tsx  │
+│  /download/:fileId   │  fetch+Stream│  downloadTgTrack()   │
+│  (CORS: app.mybelive)│  API         │  (fetch → getReader) │
+│                      │              │  → ghost phases      │
+│  KV: track metadata  │              │  → handleZip()       │
 │  file_ids → TG files │              │  → IDB saveTrack()   │
 └──────────────────────┘              └──────────────────────┘
 ```
+
+**TG Download (`CatalogContent.tsx:22` — `downloadTgTrack`):**
+- `fetch` + `ReadableStream.getReader()` (Stream API, replaces legacy XHR)
+- Ghost phases: `download` → `processing` → `done` / `error`
+- Progress tracking через Content-Length заголовок
+- Orphan protection через KV optimistic lock (feed-bot)
 
 ## Команды бота
 

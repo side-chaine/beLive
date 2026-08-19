@@ -2,21 +2,44 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { ThemeProvider } from './theme/components/ThemeProvider';
-import { initBlocksBridge } from './bridges/blocks.bridge';
+// retired: blocks.bridge → blocks-events (DUAL FIRE)
 import { installLiveGuard } from './bridges/live-guard';
-import { initLoopBridge } from './bridges/loop.bridge';
+// retired: loop.bridge → loop-events
+import { initLoopEvents } from './foundation/event-bus/wrappers/loop-events';
 import { registerLiveModeStub } from './services/live-mode.stub';
 import { registerWaveformEditorStub } from './services/waveform-editor.stub';
-import * as markerService from './services/marker.service';
-import { initAudioReactiveBridge } from './bridges/audio-reactive.bridge';
+// import { initAudioReactiveBridge } from './bridges/audio-reactive.bridge';  // retired → audio-reactive wrapper
 import { patchLyricsDisplaySlimMethods } from './services/lyrics.service';
-import { initBlockEditorBridge } from './blocks/bridge/blockEditor.bridge';
-import { useUIStore } from './stores/ui.store';
+import { initBlockEditorService } from './blocks/bridge/blockEditor.service';
+import { bridgeFacade } from './foundation/event-bus';
+import { V3StatePublisher, V3DataInterceptor, getTransport, V2Adapter, setStatePublisher, MonitorRouter } from './audio/engine-v3';
+import { V2AudioCage } from './audio/engine-v3/integration/V2AudioCage';
+import { MonitorEngine } from './audio/engine-v3/monitor/MonitorEngine';
+import { getAudioContext } from './audio/core/audioContext';
+import { eventBus, EventBusChannel } from './foundation/event-bus';
+import { initExerciseEvents } from './foundation/event-bus/wrappers/exercise-events';
+import { initTrackEvents } from './foundation/event-bus/wrappers/track-events';
+import { initCoverEvents } from './foundation/event-bus/wrappers/cover-events';
+import { initPlateEvents } from './foundation/event-bus/wrappers/plate-events';
+import { initBlocksEvents } from './foundation/event-bus/wrappers/blocks-events';
+import { initMarkersEvents } from './foundation/event-bus/wrappers/markers-events';
+import { initLyricsEvents } from './foundation/event-bus/wrappers/lyrics-events';
+import { initMonitorEvents } from './foundation/event-bus/wrappers/monitor-events';
+import { initAudioReactiveEvents } from './foundation/event-bus/wrappers/audio-reactive';
+import { initStemReactiveEvents } from './foundation/event-bus/wrappers/stem-reactive';
+import { initTextStyleEvents } from './foundation/event-bus/wrappers/text-style-events';
+import { initTakesEvents } from './foundation/event-bus/wrappers/takes-events';
+import { initModeEvents } from './foundation/event-bus/wrappers/mode-events';
+import { initPositionSync } from './foundation/event-bus/wrappers/position-sync';
+import { initAudioEvents } from './foundation/event-bus/wrappers/audio-events';
+import { registerInit, runAll } from './foundation/registry/initRegistry';
+import { initStemEngineSync } from './foundation/reactions/stem-engine-sync';
 import { getColorForBlockType, buildBlocksFromMarkers, computeSections, getBlockTypeForLine } from './utils/markerUtils';
 import { SignalingClient } from './Rehearsal/services/signaling-client';
 import { PeerConnectionManager } from './Rehearsal/services/peer-connection';
 import { RehearsalTriggerBridge } from './Rehearsal/bridge/rehearsal-trigger.bridge';
 import { useRehearsalSessionStore } from './Rehearsal/store/rehearsal-session.store';
+import { useStemStore } from './stem/stem.store';
 
 // import '../css/main.css'; // loaded via <link> in index.html
 // import '../css/ai-chat.css'; // loaded via <link> in index.html
@@ -32,8 +55,298 @@ import { AIChatUI } from './js/ui/ai-chat-ui'; // Новый импорт
 
 declare global { interface Window { __BELIVE_BOOTED__?: boolean } }
 
+// --- HMR-safe wrapper init (module-eval, без DOM) ---
+void bridgeFacade.init()
+registerInit({ id: 'exercise-events', init: initExerciseEvents })
+registerInit({ id: 'stem-engine-sync', init: initStemEngineSync })
+// === DUAL FIRE: 10 GREEN bridges (gate verified, parity pass) ===
+registerInit({ id: 'track-events', init: initTrackEvents })
+registerInit({ id: 'cover-events', init: initCoverEvents })
+registerInit({ id: 'plate-events', init: initPlateEvents })
+registerInit({ id: 'blocks-events', init: initBlocksEvents })
+registerInit({ id: 'markers-events', init: initMarkersEvents })
+registerInit({ id: 'lyrics-events', init: initLyricsEvents })
+registerInit({ id: 'monitor-events', init: initMonitorEvents })
+registerInit({ id: 'audio-reactive', init: initAudioReactiveEvents })
+registerInit({ id: 'stem-reactive', init: initStemReactiveEvents })
+registerInit({ id: 'takes-events', init: initTakesEvents })
+registerInit({ id: 'text-style-events', init: initTextStyleEvents })
+registerInit({ id: 'mode-events', init: initModeEvents })
+registerInit({ id: 'position-sync', init: initPositionSync })
+registerInit({ id: 'audio-events', init: initAudioEvents })
+registerInit({ id: 'loop-events', init: initLoopEvents })
+const cleanupAll = runAll()
+
+// ═══ AETHER v3.0 Boot ═══
+// TransportV3 singleton через getTransport()
+
+let _aetherPublisher: V3StatePublisher | undefined
+
+function bootAether(): void {
+  try {
+    const transport = getTransport()
+    if (!transport) return // V2 not available
+
+    // 1. Publisher — публикация времени в UI
+    _aetherPublisher = new V3StatePublisher(transport)
+    setStatePublisher(_aetherPublisher) // для UI компонентов (publishSeek)
+    _aetherPublisher.start()
+
+    // 1b. MonitorRouter + MonitorEngine — Static Output Bus (TC-2C).
+    //     Eager: стемы с рождения в Router. Permanent Facade — один раз навсегда.
+    const ctx = getAudioContext()
+    let router: MonitorRouter | null = null
+    let monitorEngine: MonitorEngine | null = null
+    try {
+      router = new MonitorRouter(ctx)
+      transport.orchestrator.setOutputRouting(router.programInput, router.vocalHallInput)
+      monitorEngine = new MonitorEngine()
+      monitorEngine.setBackend(router, ctx)
+      // 🔬 RECON-3: временный глобальный доступ для диагностики
+      ;(window as any).__router = router
+      console.log('[AETHER] ✅ MonitorRouter + MonitorEngine active — Static Output Bus')
+    } catch (e) { console.warn('[AETHER] MonitorRouter failed — stems → ctx.destination', e) }
+
+    // 2. Interceptor — получение треков из IDB параллельно V2 (СТРОГО ПОСЛЕ Router)
+    const interceptor = new V3DataInterceptor(ctx, transport.orchestrator, transport)
+
+    // 🧟 MP-18: V2AudioCage — внешняя клетка для подавления V2
+    // Создаётся синхронно, не зависит от pipeline. Attach к interceptor
+    // для активации при V3 auto-play.
+    const v2Cage = new V2AudioCage()
+    interceptor.attachCage(v2Cage)
+    ;(window as any).__v2Cage = v2Cage
+
+    // 🛡️ MP-18: V2 Interceptor — блокируем V2.play() пока V3 активен
+    // Monkey-patch на V2Adapter.delegateSync. Это защита от:
+    //   - V2 autoplay timer (track.orchestrator.ts:474 ae.play() — но это
+    //     НЕ через V2Adapter, блокируем на уровне API для всех остальных)
+    //   - Keyboard Space fallback на V2 (useKeyboardShortcuts.ts:88)
+    //   - Любого другого кода, пытающегося ре-активировать V2
+    let _v3Active = false
+    ;(window as any).__v3Active = false
+    const _adapter = V2Adapter.getInstance()
+    const _originalDelegate = _adapter.delegateSync.bind(_adapter)
+    _adapter.delegateSync = ((method: string, ...args: any[]): any => {
+      if (method === 'play' && _v3Active) {
+        console.log('[V2Interceptor] 🚫 V2.play() blocked — V3 is active')
+        return
+      }
+      if ((method === 'seekTo' || method === 'setCurrentTime') && _v3Active) {
+        console.log(`[V2Interceptor] 🚫 V2.${method}() blocked — V3 is active`)
+        return
+      }
+      return _originalDelegate(method, ...args)
+    }) as typeof _adapter.delegateSync
+
+    // Экспортируем функцию для установки флага из V3DataInterceptor
+    ;(window as any).__setV3Active = (active: boolean) => {
+      _v3Active = active
+      ;(window as any).__v3Active = active
+    }
+
+    // 🟢 Phase F: HybridPipelineService — 4+3 Per-Stem (REGIME 3)
+    ;(async () => {
+      try {
+        const { HybridPipelineService } = await import('./audio/engine-v3/pipeline/HybridPipelineService')
+        const pipeline = new HybridPipelineService(ctx)
+        await pipeline.init()
+
+        // Подключаем pipeline к MonitorRouter
+        // Topology: pipeline.outputNode → router.programInput → _defaultBranch → destination
+        if (router) {
+          pipeline.outputNode.connect(router.programInput)
+        }
+
+        // Подключаем pipeline к TransportV3 (через IPipelineController)
+        transport.attachPipeline(pipeline)
+
+
+
+        // Attach pipeline к Interceptor для загрузки стемов в WASM
+        interceptor.attachPipeline(pipeline)
+
+        // Выставляем в window для дебага
+        ;(window as any).__belive = (window as any).__belive || {}
+        ;(window as any).__belive.pipeline = pipeline
+
+        console.log('[AETHER] ✅ HybridPipelineService Phase F — ACTIVE')
+        console.log('[AETHER] ⚡ __belive.pipeline — diagnostics API')
+      } catch (e) {
+        console.warn('[AETHER] ❌ HybridPipelineService init deferred — varispeed fallback:', e)
+      }
+    })()
+
+    // 🧪 Expose для консоли: __getTransport().setPlaybackRate(0.85)
+    ;(window as any).__getTransport = getTransport
+
+    // 🎮 Консольные команды для управления V3 (Phase F)
+    ;(window as any).__tp = transport  // быстрая ссылка
+    ;(window as any).__v3play = async (offset?: number) => {
+      try { V2Adapter.getInstance().delegateSync('stop') } catch {}
+      transport.play(offset);
+      console.log('[🎮] play', offset ?? 0, '🔇 V3')
+    }
+    ;(window as any).__v3pause = () => { transport.pause(); console.log('[🎮] pause') }
+    ;(window as any).__v3stop = () => { transport.stop(); console.log('[🎮] stop') }
+    ;(window as any).__v3rate = (r: number) => { transport.setPlaybackRate(r); console.log('[🎮] rate →', r) }
+    ;(window as any).__v3seek = (t: number) => { transport.seek(t); console.log('[🎮] seek →', t.toFixed(1) + 's') }
+    ;(window as any).__v3status = () => {
+      const stems = transport.orchestrator.all()
+      const p = (window as any).__belive?.pipeline
+      console.log(`[🎮] state:${transport.state} rate:${transport.playbackRate.toFixed(2)} stems:${stems.length} pipeline:${p ? '✅' : '❌'}`)
+    }
+
+    // ⚡ Функция переключения V3 в master (вызывается из консоли или автоматически)
+    ;(window as any).__switchToV3 = async () => {
+      try {
+        // Проверяем что стемы есть
+        const stems = transport.orchestrator.all()
+        if (stems.length === 0) {
+          console.warn('[AETHER] Нет стемов — подожди загрузки трека')
+          return
+        }
+
+        // 1. Читаем время V2 через V2Adapter (MP-18: delegateSync, не getSync — currentTime не геттер!)
+        const offset = (V2Adapter.getInstance().delegateSync('getCurrentTime') as number) ?? 0
+
+        // 2. 🔧 FIX Double Playback: multi-layer V2 shutdown
+        //    setStemMute + setStemVolume + setStemsEnabled + setInstrumentalVolume/setVocalsVolume + stop
+        //    Каскадное обнуление gain на всех уровнях V2 гарантирует тишину,
+        //    Каскадное обнуление gain на всех уровнях V2 гарантирует тишину.
+        const stemIds = ['instrumental', 'vocals', 'drums', 'bass', 'keys', 'guitar', 'backing', 'other']
+        stemIds.forEach(id => {
+          V2Adapter.getInstance().delegateSync('setStemMute', id, true)
+          V2Adapter.getInstance().delegateSync('setStemVolume', id, 0)
+        })
+        V2Adapter.getInstance().delegateSync('setInstrumentalVolume', 0)
+        V2Adapter.getInstance().delegateSync('setVocalsVolume', 0)
+        V2Adapter.getInstance().delegateSync('setStemsEnabled', false)
+        V2Adapter.getInstance().delegateSync('stop')
+
+        // 🔧 FIX Gate квадратной формы: V3 играет ВСЕ стемы (включая instrumental),
+        //    но FR-014 (audio-events.ts) ставит instrumental=0 при наличии music стемов.
+        //    Восстанавливаем instrumental volume в store, чтобы stem-engine-sync
+        //    применял к V3 корректный gain, а не 0.
+        useStemStore.getState().setStemVolume('instrumental', 1)
+
+        // 3. ИСПОЛЬЗУЕМ ТРАНСПОРТ (Фикс Sonnet): play(initialOffset) — старт с позиции в один вызов!
+        //    Стемы уже подключены к MonitorRouter (ProgramMixGain → DefaultBranch → destination)
+        await transport.play(offset)
+        if (monitorEngine) {
+          monitorEngine.setBackendMode('v3')
+          // Перенос state от legacy если V3 только что активирован
+          if ((window as any).__legacyMonitorMix) {
+            monitorEngine.adoptState((window as any).__legacyMonitorMix)
+          }
+        }
+        const route = router ? '→ Router' : '→ destination'
+        console.log('[AETHER] ✅ V3 ACTIVE — V2 stopped & killed', offset.toFixed(1) + 's', stems.length + ' stems', route)
+      } catch (e) {
+        console.warn('[AETHER] Switch failed:', e)
+      }
+    }
+
+    // Подписка на before-track-change (V3 pipeline — единственный путь)
+    document.addEventListener('before-track-change', async (event) => {
+      console.log('[TRACE] 🎯 before-track-change HANDLER FIRED', (event as CustomEvent).detail)
+      const payload = (event as CustomEvent).detail
+      const trackId = payload?.toTrackId
+      if (!trackId) return
+
+      // M2 (P1-a): глушим звук СРАЗУ — не ждём IDB-фетч, старый трек не должен звучать
+      try { getTransport()?.stop?.() } catch {}
+      try { (window as any).__belive?.pipeline?.stop?.() } catch {}
+      
+      try {
+        const idbModule = await import('./services/idb.service')
+        const getTrack = idbModule.getTrack
+        const numericId = Number(trackId)
+        const record = await getTrack(numericId)
+        
+        if (record) {
+          // 🔧 FIX: Не блокируем V2 — грузим V3 в фоне.
+          // V3DataInterceptor.loadTrack() медленный (addBuffers → AudioWorklet postMessage может зависнуть).
+          // V2 продолжает играть, пока V3 грузится в фоне.
+          // Когда V3 загрузится → авто-старт (в loadTrack есть transport.play()) + глушим V2.
+          console.log('[TRACE] ⏳ V3 loading in background — V2 continues...')
+          // M2 (345): latency instrumentation — load-to-first-audio
+          const __tLoadStart = performance.now();
+          interceptor.loadTrack(record as any).then(() => {
+            // M2 (345): P50/P95 sampling
+            try {
+              const __lat = performance.now() - __tLoadStart;
+              const __samples = ((window as any).__latencySamples = (window as any).__latencySamples || []);
+              __samples.push(__lat);
+              console.log(`[M2-latency] load-to-first-audio: ${__lat.toFixed(0)}ms (samples=${__samples.length})`)
+            } catch {}
+            console.log('[TRACE] ✅ V3 loadTrack completed', { 
+              stems: transport.orchestrator.all().length, 
+              state: transport.state 
+            })
+            
+            // 🧟 MP-18: V2 silencing теперь ВНУТРИ loadTrack() через V2AudioCage.activate()
+            //    pause() вместо stop() — не триггерит _restoreSilencedStems()
+            //    watchdog 100ms удерживает gain=0
+            //    V2Interceptor блокирует V2.play() пока __v3Active=true
+            //
+            // Здесь: только восстановление pipeline gains для V3
+            // (FR-014 gate мог занулить instrumental при наличии music стемов)
+            if ((window as any).__belive?.pipeline) {
+              const stemIds = ['instrumental', 'vocals', 'drums', 'bass', 'keys', 'guitar', 'backing', 'other']
+              const p = (window as any).__belive.pipeline
+              stemIds.forEach(id => p.setStemVolume(id, 1.0))
+              console.log('[AETHER] ✅ V3 pipeline gains restored to 1.0')
+            }
+            if (monitorEngine) monitorEngine.setBackendMode('v3')
+            console.log('[AETHER] ✅ V3 loaded for track', trackId)
+
+            // M1-2 (342, расширение): публикуем trackUrls для V3-фасада.
+            // UI-потребители (useWaveformData/SyncEditor) ждут ae.hybridEngine.instrumentalUrl —
+            // фасад читает window.__belive.trackUrls (см. js/audio-facade-v3.js).
+            try {
+              const belive = (window as any).__belive || ((window as any).__belive = {})
+              const r = record as any
+              if (r?.instrumentalData) {
+                const blob = new Blob([r.instrumentalData], { type: r.instrumentalType ?? 'audio/mpeg' })
+                belive.trackUrls = belive.trackUrls || {}
+                belive.trackUrls.instrumentalUrl = URL.createObjectURL(blob)
+              }
+              if (r?.vocalsData) {
+                const blob = new Blob([r.vocalsData], { type: r.vocalsType ?? 'audio/mpeg' })
+                belive.trackUrls = belive.trackUrls || {}
+                belive.trackUrls.vocalsUrl = URL.createObjectURL(blob)
+              }
+            } catch (e) {
+              console.warn('[AETHER] trackUrls publish failed:', e)
+            }
+          }).catch((e: unknown) => {
+            console.warn('[AETHER] V3 loadTrack failed — V2 continues playing:', e)
+          })
+        } else {
+          console.log('[TRACE] ❌ getTrack returned null for trackId:', numericId)
+        }
+      } catch (e) {
+        console.warn('[AETHER] Interceptor failed:', e)
+      }
+    })
+
+  } catch (e) {
+    console.warn('[AETHER] Boot failed — V2 continues', e)
+  }
+}
+bootAether()
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    cleanupAll()
+    bridgeFacade.destroy()
+    _aetherPublisher?.dispose()
+  })
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
-  if (window.__BELIVE_BOOTED__) return; // Глобальный гард от повторной инициализации
+  if (window.__BELIVE_BOOTED__) return; // Legacy guard для MM-патчей
   window.__BELIVE_BOOTED__ = true;
 
   // --- App host stub (replaces legacy app.js) ---
@@ -58,14 +371,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   registerLiveModeStub();
   registerWaveformEditorStub();
-  initBlocksBridge();
   installLiveGuard();
-  initLoopBridge();
-  initAudioReactiveBridge();
-  initBlockEditorBridge();
+  // initLoopBridge();  // retired → loop-events in initRegistry
+  // initAudioReactiveBridge();  // retired → audio-reactive wrapper in registerInit
+  initBlockEditorService();
+  // Phase 5.1: cleanup bridgeFacade on page unload
+  window.addEventListener('beforeunload', () => { bridgeFacade.destroy() })
 
-  // F49: marker service for legacy LD access
-  (window as any).markerService = markerService;
+  // AETHER v2.3 — TransportV3 будет создан при первой загрузке трека
+  // (см. StemOrchestrator.addStem + TransportV3 в V3StatePublisher)
 
   // F60: patch slim methods onto existing window.lyricsDisplay (no object swap)
   patchLyricsDisplaySlimMethods();
@@ -103,7 +417,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     mm.setMarkers = (markers: any[]) => {
       if (!Array.isArray(markers)) { console.error('Invalid markers array'); return; }
       const ld = mm.lyricsDisplay || (window as any).lyricsDisplay;
-      const validMarkers: any[] = [], usedLineIndexes = new Set<number>(), totalLyricLines = ld ? ld.lyrics.length : 0;
+      const totalLyricLines = ld ? ld.lyrics.length : 0;
+      const validMarkers: any[] = [], usedLineIndexes = new Set<number>();
       markers.forEach((marker: any) => {
         if (marker && typeof marker.lineIndex === 'number' && marker.lineIndex >= 0 && marker.lineIndex < totalLyricLines && !usedLineIndexes.has(marker.lineIndex)) {
           usedLineIndexes.add(marker.lineIndex); const updatedMarker = { ...marker };
@@ -332,7 +647,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             );
             if (hasM1) {
               afterBlockId = block.id;
-              console.log('[M2] Active line', activeLineIndex, '→ block', block.id, '(has M1 markers)');
+              if (import.meta.env.DEV) console.log('[M2] Active line', activeLineIndex, '→ block', block.id, '(has M1 markers)');
             } else {
               // Active line's block has no M1 yet — find previous block that has markers
               const blockIdx = blocks.indexOf(block);
@@ -343,7 +658,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 );
                 if (hasPrevM1) {
                   afterBlockId = prevBlock.id;
-                  console.log('[M2] Active line block has no M1 → using previous block', prevBlock.id);
+                  if (import.meta.env.DEV) console.log('[M2] Active line block has no M1 → using previous block', prevBlock.id);
                   break;
                 }
               }
@@ -377,7 +692,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         time: currentTime,
         isSuggested: false,
       });
-      console.log('[M2] Updated M2 for block', afterBlockId, 'time:', currentTime.toFixed(2) + 's');
+      if (import.meta.env.DEV) console.log('[M2] Updated M2 for block', afterBlockId, 'time:', currentTime.toFixed(2) + 's');
     } else {
       // Create new M2 marker — NOT attached to any line, purely a time boundary
       const m2Marker = {
@@ -394,7 +709,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       mm.markers.push(m2Marker);
       mm.markers.sort((a: any, b: any) => a.time - b.time);
       mm._notifySubscribers?.('markerAdded', m2Marker);
-      console.log('[M2] Placed M2 closing marker after block', afterBlockId, 'time:', currentTime.toFixed(2) + 's');
+      if (import.meta.env.DEV) console.log('[M2] Placed M2 closing marker after block', afterBlockId, 'time:', currentTime.toFixed(2) + 's');
     }
   };
 
@@ -424,10 +739,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     },
   };
 
-  // Override legacy catalog opener → React catalog
-  (window as any).openCatalog = () => {
-    useUIStore.getState().setCatalogOpen(true);
-  };
+  // (openCatalog removed)
 
   const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:8787'; // Use environment variable or default
   const gatewayProvider = new GatewayProvider(GATEWAY_URL);
@@ -450,12 +762,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const settings = useAiSettingsStore.getState();
     if (!aiHub.getActiveModel() && settings.openRouterApiKey && settings.modelId) {
       aiHub.setActiveModel(settings.modelId);
-      console.log('[AI] Hydrated: set model:', settings.modelId);
+      if (import.meta.env.DEV) console.log('[AI] Hydrated: set model:', settings.modelId);
     } else if (!aiHub.getActiveModel() && settings.openRouterApiKey) {
       const defaultModel = 'deepseek/deepseek-chat-v3-0324';
       aiHub.setActiveModel(defaultModel);
       useAiSettingsStore.getState().setModelId(defaultModel);
-      console.log('[AI] Hydrated: set default model:', defaultModel);
+      if (import.meta.env.DEV) console.log('[AI] Hydrated: set default model:', defaultModel);
     }
   });
 
@@ -463,12 +775,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const currentSettings = useAiSettingsStore.getState();
   if (!aiHub.getActiveModel() && currentSettings.openRouterApiKey && currentSettings.modelId) {
     aiHub.setActiveModel(currentSettings.modelId);
-    console.log('[AI] Fallback: set model:', currentSettings.modelId);
+    if (import.meta.env.DEV) console.log('[AI] Fallback: set model:', currentSettings.modelId);
   } else if (!aiHub.getActiveModel() && currentSettings.openRouterApiKey) {
     const defaultModel = 'deepseek/deepseek-chat-v3-0324';
     aiHub.setActiveModel(defaultModel);
     useAiSettingsStore.getState().setModelId(defaultModel);
-    console.log('[AI] Fallback: set default model:', defaultModel);
+    if (import.meta.env.DEV) console.log('[AI] Fallback: set default model:', defaultModel);
   }
 
   new AIChatUI(); // Инициализация AIChatUI
@@ -477,9 +789,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Обработчик для кнопки AI Operator. Теперь он будет открывать чат.
   const aiOperatorButton = document.getElementById('toggle-loopblock-mode');
   if (aiOperatorButton) {
-    // console.log('✅ Found AI Operator button'); // Закомментировано
     // aiOperatorButton.addEventListener('click', () => { // Удален дублирующий обработчик
-    //   console.log('⚡ AI Operator button clicked!');
     //   aiChatUI.toggleChat(); // Переключаем видимость чата
     // });
   }
@@ -521,20 +831,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       operatorButton.appendChild(span);
   }
 
-  // ★ Billy Mode Switcher — instant, no reload ★
-  import('./stores/ai-settings.store').then(mod => {
-    (window as any).billyMode = (mode?: 'user' | 'tech') => {
-      const store = mod.useAiSettingsStore.getState();
-      if (!mode) {
-        console.log(`🤖 Billy mode: ${store.billyMode}`);
-        return store.billyMode;
-      }
-      store.setBillyMode(mode);
-      const icon = mode === 'tech' ? '🛠️' : '🎤';
-      console.log(`${icon} Billy switched to ${mode} mode (instant, no reload needed)`);
-      return mode;
-    };
-  });
 });
 
   // ★ Rehearsal Video Bridge — временный тестовый хук (Фаза 2: +bridge, Phase 3 удалить)
@@ -542,19 +838,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sc = new SignalingClient(roomId, role, ticket);
     const pc = new PeerConnectionManager(sc, role);
     sc.onOpen = () => {
-      console.log('[test] WS open, role=', role);
+      if (import.meta.env.DEV) console.log('[test] WS open, role=', role);
       useRehearsalSessionStore.getState().setConnectionState('connected');
     };
     sc.onClose = (code) => {
       useRehearsalSessionStore.getState().setConnectionState(code === 4001 ? 'failed' : 'reconnecting');
     };
     sc.onPeerJoined = (peerRole) => {
-      console.log('[test] peer joined:', peerRole);
+      if (import.meta.env.DEV) console.log('[test] peer joined:', peerRole);
       if (role === 'teacher') pc.createDataChannels();
     };
-    pc.onConnectionStateChange = (s) => console.log('[test] connectionState:', s);
+    pc.onConnectionStateChange = (s) => { if (import.meta.env.DEV) console.log('[test] connectionState:', s); };
     pc.onClockSynced = (offset, rtt) => {
-      console.log('[test] clock synced. offset=', offset, 'rtt=', rtt);
+      if (import.meta.env.DEV) console.log('[test] clock synced. offset=', offset, 'rtt=', rtt);
       useRehearsalSessionStore.getState().setClockSync(offset, rtt);
     };
     const bridge = new RehearsalTriggerBridge(pc, role);

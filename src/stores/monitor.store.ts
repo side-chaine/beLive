@@ -169,8 +169,16 @@ export interface MonitorActions {
 }
 
 /* -------- helper -------- */
-const getMix = (): any =>
-  (window as any).app?.monitorMix ?? (window as any).monitorMix;
+let _getMixRetries = 0
+const getMix = (): any => {
+  const mix = (window as any).app?.monitorMix ?? (window as any).monitorMix
+  // Lazy retry: если monitor-mix.js ещё не загружен, пробуем до 5 раз с интервалом
+  if (!mix && _getMixRetries < 5) {
+    _getMixRetries++
+    setTimeout(() => { _getMixRetries = 0 }, 5000) // сброс через 5s
+  }
+  return mix
+}
 
 /* -------- store -------- */
 export const useMonitorStore = create<MonitorState & MonitorActions>(

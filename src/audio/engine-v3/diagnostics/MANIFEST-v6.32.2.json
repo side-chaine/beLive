@@ -1,0 +1,24 @@
+{
+  "manifest": "MANIFEST-v6.32.2",
+  "scriptVersion": "v6.32.2",
+  "file": "run-impulse-diagnostics-v6.32.2.console.js",
+  "sha256": "4f78aa8568a499a2e39e7bb3d17e63bf103317fa518af67c49ea8277b35e6908",
+  "sha12": "4f78aa8568a4",
+  "base": "run-impulse-diagnostics-v632.1.console.js (SHA 716a373f3554, frozen)",
+  "microPack": "MICRO-PACK-097.md + MICRO-PACK-098.md",
+  "date": "2026-08-03",
+  "reason": "CODE/SCHEMA REPAIR по блокер-листу Сол_2: итог=PHASE-DIAGNOSTIC (не Gate 3B); chunkId/rowIndex fix (row 100); checkpoint=только текущий chunk; form/peak bounds; vendorKRef вне health baseline + anomaly raw rows INVALID; log/filename v6.32.2; ](http нет. 098: vendorKRefSafe = robust median по VALID measurement rows (mean включал аномалии, занижая baseline); anomaly классифицируется ПОСЛЕ baseline",
+  "blockersFixed": [
+    "Gate3B PASS невозможен -> PHASE-DIAGNOSTIC + qualification=NOT_GATE3B + diagnostic объект",
+    "chunkId=floor((rep-1)/100), rowIndex=(rep-1)%100 (rep 1-based)",
+    "checkpoint filter r.chunkId===c (только свой chunk)",
+    "peakBaseline/peakRange добавлены; allFormOk += peak bound",
+    "kVendorRaw/kVendorInvalid/kVendorValidE/vendorKRefSafe; vendorInvalidCount в schema",
+    "log [v6.32.2]; filename impulse-v6.32.2-...",
+    "](http): в коде отсутствует (проверено grep=0)",
+    "098: vendorKRefSafe = median по kVendorValidSorted (robust, anomaly после baseline)"
+  ],
+  "nodeCheck": "PASS",
+  "verifiedBy": "007",
+  "status": "GO as PHASE DIAGNOSTIC (Sol OK 2026-08-03): c128 primary + c44 stress, никогда Gate3B PASS"
+}

@@ -14,6 +14,7 @@ import { useStemStore } from '../stem/stem.store';
 import { BUILTIN_STEMS, STEM_CAPACITY_BY_TIER, sortStemsForDisplay } from '../stem/stemTypes';
 import { usePerformanceStore } from '../performance/performance.store';
 import { InstrumentStrip } from './InstrumentStrip';
+import { getTransport } from '../audio/engine-v3';
 // TC-VIS-09: Critical CSS import — tier gating + recording clamp for InstrumentCard
 import '../triggers/instrument-card.css';
 import styles from './MixerPanel.module.css';
@@ -37,19 +38,19 @@ function ChannelStrip({ stemId, level, meterStyle }: ChannelStripProps) {
   const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const v = parseFloat(e.target.value);
     useStemStore.getState().setStemVolume(stemId, v);
-    (window as any).audioEngine?.setStemVolume?.(stemId, v);
+    // Прямой V2 вызов удалён — Engine Arbiter (stem-engine-sync) сам маршрутизирует
   }, [stemId]);
 
   const handleMuteToggle = useCallback(() => {
     const prevMute = useStemStore.getState().stemMutes[stemId] ?? false;
     useStemStore.getState().setStemMute(stemId, !prevMute);
-    (window as any).audioEngine?.setStemMute?.(stemId, !prevMute);
+    // Прямой V2 вызов удалён — Engine Arbiter сам маршрутизирует
   }, [stemId]);
 
   const handleSoloToggle = useCallback(() => {
     const prevSolo = useStemStore.getState().stemSolos[stemId] ?? false;
     useStemStore.getState().setStemSolo(stemId, !prevSolo);
-    (window as any).audioEngine?.setStemSolo?.(stemId, !prevSolo);
+    // Прямой V2 вызов удалён — Engine Arbiter сам маршрутизирует
   }, [stemId]);
 
   // Convert RMS (0~1) to dB-ish scale for meter (0% = -60dB, 100% = 0dB)
@@ -208,13 +209,38 @@ export function MixerPanel() {
     }
 
     const interval = 1000 / meterFps;
+    // Переиспользуемый Float32Array для RMS (ноль аллокаций в горячем пути)
+    const _fftBuf = new Float32Array(256);
+
+    const readMeterV3 = (stemId: string): number => {
+      const t3 = getTransport();
+      if (!t3 || t3.state === 'idle') return 0;
+      const stem = t3.orchestrator.get(stemId);
+      if (!stem) return 0;
+      try {
+        const analyser = stem.analyserNode;
+        analyser.getFloatTimeDomainData(_fftBuf);
+        let sumSq = 0;
+        for (let i = 0; i < _fftBuf.length; i++) sumSq += _fftBuf[i] * _fftBuf[i];
+        return Math.sqrt(sumSq / _fftBuf.length);
+      } catch { return 0; }
+    };
+
     timerRef.current = setInterval(() => {
-      const ae = (window as any).audioEngine;
-      if (!ae?.getStemMeterLevel) return;
+      const t3 = getTransport();
+      const isV3 = t3 && t3.state !== 'idle' && t3.orchestrator.all().length > 0;
 
       const levels: Record<string, number> = {};
-      for (const stemId of orderedStems) {
-        levels[stemId] = ae.getStemMeterLevel(stemId) ?? 0;
+      if (isV3) {
+        for (const stemId of orderedStems) {
+          levels[stemId] = readMeterV3(stemId);
+        }
+      } else {
+        const ae = (window as any).audioEngine;
+        if (!ae?.getStemMeterLevel) return;
+        for (const stemId of orderedStems) {
+          levels[stemId] = ae.getStemMeterLevel(stemId) ?? 0;
+        }
       }
       setMeterLevels(levels);
     }, interval);

@@ -3,6 +3,7 @@ import { useBlocksStore } from '../stores/blocks.store';
 import { useMarkersStore } from '../stores/markers.store';
 import { useLyricsStore } from '../stores/lyrics.store';
 import { getActiveBlock, createSubBlocks, getActiveSubBlockIndex } from '../utils/block-utils';
+import { V2Adapter, getTransport, getStatePublisher } from '../audio/engine-v3';
 import { useLoopStore } from '../stores/loop.store';
 import { useDeckStore } from '../stores/deck.store';
 import { useTakesStore } from '../takes/takes.store';
@@ -92,7 +93,13 @@ export function WagonTrain() {
         loopStore.rebindToBlock(block);
       }
 
-      (window as any).audioEngine?.setCurrentTime?.(marker.time);
+      const transport = getTransport();
+      if (transport && transport.state !== 'idle' && ((window as any).__v3Active || transport.orchestrator.all().length > 0)) {
+        void transport.seek(marker.time);
+        getStatePublisher()?.publishSeek(marker.time, transport.duration)
+      } else {
+        try { V2Adapter.getInstance().delegateSync('seekTo', marker.time) } catch {}
+      }
 
       // If Takes panel is active (open and selected), select this block for recording
       if (takesPanelActive) {
@@ -111,7 +118,13 @@ export function WagonTrain() {
         loopStore.rebindToBlock(block);
       }
 
-      (window as any).audioEngine?.setCurrentTime?.(marker.time);
+      const transport = getTransport();
+      if (transport && transport.state !== 'idle' && ((window as any).__v3Active || transport.orchestrator.all().length > 0)) {
+        void transport.seek(marker.time);
+        getStatePublisher()?.publishSeek(marker.time, transport.duration)
+      } else {
+        try { V2Adapter.getInstance().delegateSync('seekTo', marker.time) } catch {}
+      }
     });
   };
 

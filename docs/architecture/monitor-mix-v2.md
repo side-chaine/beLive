@@ -1,8 +1,8 @@
 # Split (Monitor Mix) — Subsystem Architecture
 
 **Status:** Active boundary engine — documented, verified
-**Version:** 2.0
-**Date:** 2026-03-21
+**Version:** 2.1
+**Date:** 2026-07-18 (quick-fix: bridge retired, sizes corrected)
 **Authors:** Centre 1.5 + Agent 007 + Куратор Соннет 4.6
 **Based on:** SCAN-09 → SCAN-15 (v1.0) + F46-SCAN-30 + runtime verification 2026-03-21
 **Supersedes:** monitor-mix.md v1.0 (2025-07-14)
@@ -58,14 +58,14 @@ Context varies (rehearsal room, stage, home). Workflow stays one.
 
 ## 3. Current Subsystem Architecture
 
-### Ownership model
+### Ownership model (актуально на 2026-07-18)
 
 ```
-React UI (MonitorMixPanel — dock panel, 919 lines TSX — includes inlined CalibrationDrum, DualAutoMixRow, ToggleSliderRow)
+React UI (MonitorMixPanel — dock panel, 753 lines TSX + 3 extracted sub-components)
   ↓
-useMonitorStore (Zustand, 474 lines)
+useMonitorStore (Zustand, 545 lines)
   ↓
-monitor.bridge.ts (hydration + event sync, 166 lines)
+monitor-events.ts (EventBus wrapper, 50 lines — заменил monitor.bridge.ts ✅ RETIRED)
   ↓
 window.monitorMix (MonitorMix class, js/monitor-mix.js, ~420 lines)
   ↓
@@ -312,7 +312,9 @@ if (type.includes('outro'))   → autoOutroLevel
 
 ## 9. Store / Bridge / Panel Contract
 
-### monitor.store.ts (474 lines)
+> **Update 2026-07-18:** `monitor.bridge.ts` — ✅ RETIRED (bridge layer 22/22). Заменён на `monitor-events.ts` (50 строк, EventBus wrapper). Bridge секция ниже — историческая справка.
+
+### monitor.store.ts (545 lines)
 
 **Engine-mirrored state (synced via bridge):**
 - `enabled`, `routeMainEnabled`, `includeMusic`, `musicLevel`
@@ -447,6 +449,8 @@ Structure:
 
 ## 12. Open Seams
 
+> **Update 2026-07-18:** Добавлены новые seams, найденные при сверке spec vs code.
+
 ### 🟡 Remaining (not critical blockers)
 
 | Seam | Impact | Status |
@@ -463,6 +467,16 @@ Structure:
 | Seam | Impact | Status |
 |------|--------|--------|
 | No `destroy()` method | App-lifetime singleton | Document only |
+
+### Новые seams (2026-07-18, сверка spec vs code)
+
+| Seam | Severity | Описание |
+|------|:--------:|----------|
+| **Block type resolution: exact != fuzzy** | 🔴 HIGH | Spec §7 описывает `.includes()` fuzzy match. Код `_getBlockTypeByLine()` использует `===`. Если `block.type = "verse 1"` — AutoMix gain=0 вместо ожидаемого. |
+| **Pulse-калибровка не документирована** | 🟡 MEDIUM | Line Up column (Pulse calibration, Tap Assist, nudge undo/redo) — ~200 строк engine + ~100 UI. Признана "MAJOR UNDOCUMENTED FEATURE" в §9, но не описана. |
+| **monitor.bridge.ts удалён** | 🟡 MEDIUM | Spec §3/§9 описывали bridge как активный слой. Retired → заменён на `monitor-events.ts` (50 строк, EventBus wrapper). |
+| **setHallVolume/setMonitorVolume — dead calls** | 🟢 LOW | Store делегирует в `mix?.setHallVolume(v)`, но метода нет в monitor-mix.js. Sliders не используются в UI. |
+| **syncGainNode — orphan node** | 🟢 LOW | Создаётся в конструкторе (строка 63), нигде не используется. Dead code. |
 | Hidden `<audio>` never removed | 2 max, not growing | Tolerable |
 | `_autoMixHandler` never unsubscribed | Single subscription, app-lifetime | Tolerable |
 | Back Vocal not in bridge | UI-only by design Stage 1 | Expected |

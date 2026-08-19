@@ -62,22 +62,6 @@ export interface Exercise {
   authorId?: string;
 }
 
-export interface QuestStepRef {
-  recipeId: string;
-  scopeOverride?: ExerciseScope;
-  title?: string;
-}
-
-export interface Quest {
-  id: string;
-  title: string;
-  subtitle?: string;
-  icon: string;
-  exercises: QuestStepRef[];
-  completionRule: 'all' | 'any-n';
-  completionCount?: number;
-}
-
 export interface AttemptResult {
   stepIndex: number;
   takeId: string | null;

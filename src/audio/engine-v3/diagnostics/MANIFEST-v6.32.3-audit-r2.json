@@ -1,0 +1,26 @@
+{
+  "manifest": "MANIFEST-v6.32.3-audit-r2",
+  "scriptVersion": "v6.32.3-audit-r2",
+  "file": "run-impulse-diagnostics-v6.32.3-audit-r2.console.js",
+  "sha256": "6ae8ba7a3cb9260734463467054e2b32801b0e2e89325c00a04b504402f0c710",
+  "sha12": "6ae8ba7a3cb9",
+  "base": "run-impulse-diagnostics-v6.32.3-audit.console.js (SHA 42720d60820946548a714519286a7a2bfdbbe4d49bdb3ddc5a8b1c1b0c2b693a)",
+  "commit": "13a1e21c14c0ba363347dffbaf72afba18acefc1",
+  "branch": "067-e-regime-0",
+  "experimentId": "phase-plus-energy-profile-v6.32.3-audit-r2",
+  "trackId": "1783197557717",
+  "date": "2026-08-04",
+  "reason": "Sol_3 решение 137: c44 v6.32.3-audit INVALID EVIDENCE (900/900 rpc_unhealthy:readPoints) — readPoints ошибочно в rpcRecs. Fix A: readPoints вынесен из rpcRecs в rowExtras (row.raw_observations.readPoints), rpcRecs содержит только RPC-записи. Fix B: vendorProcessCount читает Number.isFinite(ins.processCalls) из allowlist-результата getInstrumentMetrics (ins передаётся в readHealth(ctx,cap,vendor,ins)); UNAVAILABLE только когда поле реально отсутствует. C1-C4 остаются. Новая immutable revision v6.32.3-audit-r2, experimentId/phases/filename-prefix/логи обновлены.",
+  "observabilityOnly": [
+    "Fix A (137): readPoints в row.raw_observations.readPoints, НЕ в rpcRecs (rpc-health iteration чистая)",
+    "Fix B (137): vendorProcessCount = {value: ins.processCalls, units:'process calls'} или 'UNAVAILABLE'; silent null запрещён",
+    "readWindow.result: redacted=false + samples lossless для trigger rows (SSO-candidate, matched-pool); redacted=true для остальных (C1)",
+    "metadata.commit = baseline прогона r2 (vendor 55c227ae = тот же, что при v6.32.2)",
+    "log/filename prefix [v6.32.3-audit-r2] / impulse-v6.32.3-audit-r2-"
+  ],
+  "acceptanceUnchanged": "да — verdict/классификация/coverage/seek algebra/checkpoint не тронуты; исправлены только plumbing-баги readPoints-валидации и vendorProcessCount-чтения",
+  "nodeCheck": "PASS",
+  "staticChecks": "W3-VERIFIER-v4 PASS (exit 0): S0 source assertions 6/6, S1 fixture readPoints вне rpc-health 3/3, S2 vendorProcessCount 3/3, S3 fail-closed old schema, S4 RPC allowlist",
+  "verifiedBy": "007",
+  "status": "STATIC VERIFIED — execution HOLD (Sol_3: после PASS статических checks будет отдельный execution GO на c44→c128)"
+}

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useTrackStore, TrackState } from '../stores/track.store';
 import { interruptPracticeSession } from '../exercises/exercise.interruption';
 import { useShowStore } from '../stores/show.store';
+import { V2Adapter, getTransport, getStatePublisher } from '../audio/engine-v3';
 
 export function useKeyboardShortcuts() {
   const tracksMeta = useTrackStore((s: TrackState) => s.tracksMeta);
@@ -40,14 +41,58 @@ export function useKeyboardShortcuts() {
           e.preventDefault();
           // Interrupt practice first if active, then seek
           interruptPracticeSession(() => {
-            const ae = (window as any).audioEngine;
-            if (ae?.getCurrentTime) {
-              const d = ae.getDuration?.() ?? 0;
-              if (d > 0) ae.setCurrentTime(
-                Math.max(0, Math.min(d, ae.getCurrentTime() + delta * 2))
-              );
+            const transport = getTransport();
+            // 🛡 V3 path: __v3Active ИЛИ старый orchestrator guard
+            if (transport && ((window as any).__v3Active || (transport.state !== 'idle' && transport.orchestrator.all().length > 0))) {
+              try {
+                const ct = transport.currentTime;
+                const d = transport.duration;
+                if (d > 0 && (transport?.isAudioContextRunning ?? true)) {
+                  const nt = Math.max(0, Math.min(d, ct + delta * 2))
+                  void transport.seek(nt)
+                  getStatePublisher()?.publishSeek(nt, d)
+                }
+              } catch { /* V3 seek failed — не роняем клавиатуру */ }
+            } else {
+              // 🛡 V2 fallback — guard на V3
+              if ((window as any).__v3Active) return;      // V3 жив → ждём
+              if ((window as any).__loadingV3) return;     // V3 грузится → не пускаем V2
+              try {
+                const v2 = V2Adapter.getInstance();
+                const ct = v2.delegateSync('getCurrentTime') as number ?? 0;
+                const d = v2.getSync<number>('duration') ?? 0;
+                if (d > 0) v2.delegateSync('seekTo', Math.max(0, Math.min(d, ct + delta * 2)));
+              } catch { /* V2 seek failed — тишина лучше двойного аудио */ }
             }
           });
+        }
+        return;
+      }
+
+      if (e.code === 'Space') {
+        if (e.repeat) return;
+        console.log('[KEYBOARD] Space pressed', { isTrusted: e.isTrusted, target: (e.target as HTMLElement)?.tagName, time: performance.now().toFixed(0) });
+        // Show scenario guard: в презентации при showSlide=true — PresenterDock обрабатывает сам
+        const showState = useShowStore.getState();
+        if (showState.activeMode === 'scenario' && showState.isPresenting && showState.showSlide) return;
+        e.preventDefault();
+        const transport = getTransport();
+        // 🛡 Единый V3 блок: __v3Active ИЛИ старый orchestrator guard
+        if (transport && ((window as any).__v3Active || (transport.state !== 'idle' && transport.orchestrator.all().length > 0))) {
+          if (transport.state === 'playing') {
+            void transport.pause();
+          } else if (transport?.isAudioContextRunning ?? true) {
+            void transport.play();
+          }
+        } else {
+          // 🛡 V2 fallback — guard на V3
+          if ((window as any).__v3Active) return;      // V3 жив → ждём
+          if ((window as any).__loadingV3) return;     // V3 грузится → не пускаем V2
+          try {
+            const v2 = V2Adapter.getInstance();
+            const isPlaying = v2.getSync<boolean>('isPlaying') ?? false;
+            if (isPlaying) { v2.delegateSync('pause'); } else { v2.delegateSync('play'); }
+          } catch { /* V2 fallback failed */ }
         }
         return;
       }

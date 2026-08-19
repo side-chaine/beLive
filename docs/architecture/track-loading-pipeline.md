@@ -11,6 +11,8 @@
 
 beLive загружает трек в 5 фаз: от ZIP-файла до готового воспроизведения. Каждая фаза имеет чёткого владельца и зависимости.
 
+> **Update 2026-07-17:** Parallel FileReader (concurrency 2) в `upload.service.ts`. Dedup guard для trackCatalog.push. TG download теперь через `fetch` + Stream API (`getReader()`) вместо XHR (см. `CatalogContent.tsx:43`).
+
 ```
 ZIP Upload → Lyrics Acquisition → Sync & Alignment → Audio Engine → State Init
    (1)              (2)                 (3)              (4)          (5)

@@ -2,18 +2,18 @@ audio-engine.md
 # LAYER A — Short architect report
 
 > **⚠️ This document is a domain-specific reference. For the complete current architecture, see [Architecture Map 2.1](./architecture-map-2.1.md).**
+> **Update 2026-07-17:** EngineV3 active (7 modules). Bridge layer 22/22 retired → EventBus wrappers.
 
 ## Freeze verdict
 
-Текущий аудиодвижок beLive уже находится в состоянии **рабочего v2 transport core** с зафиксированными boundary и понятной ownership-моделью. Это не “черновая миграция”, а уже полноценный runtime, который можно документировать и развивать дальше точечно.
+Текущий аудиодвижок beLive — **v2 frozen core + EngineV3 additive layer**. 
 
 Главный итог:
-- transport authority уже в `AudioEngineV2`
-- loop ownership для TrackMap уже в `useLoopStore + loop.bridge`
-- sync editor loop живёт отдельным локальным путём через `WaveformCanvas`
-- block jump теперь может rebind-ить loop owner на clicked block
-- track switching уже защищён load-abort / transport generation / autoplay timer cleanup
-- remaining issues — это уже не “архитектурный хаос”, а оставшиеся transport/product edge cases
+- transport authority: `AudioEngineV2` (❄️ frozen, core) + `EngineV3` (через V2Adapter)
+- loop ownership: `loop-events.ts` → `loop.store`
+- sync editor loop: `WaveformCanvas` (direct engine-backed)
+- EngineV3: 7 production modules (TransportV3, V2Adapter, DuckGuardV3, MeterNodeV3 + support)
+
 
 ## Current architecture, condensed
 
@@ -37,27 +37,34 @@ React boot вызывает `tryActivateV2()` через `src/App.tsx` и `src/a
 `track.orchestrator` — главный high-level load pipeline:
 `lyrics/blocks ready → audio load → markers apply → optional autoplay`.
 
-`audio.bridge` — UI/state mirror для playback state, duration и optimistic seek mirroring.
+`audio.bridge` — ✅ RETIRED → `audio-events.ts` (EventBus wrapper)
 
-`time-sync` — 10Hz polling currentTime bridge.
+`time-sync` — ✅ RETIRED → `position-sync.ts` (EventBus wrapper)
 
-`lyrics.bridge` — active line sync shell поверх current markers and currentTime.
+`lyrics.bridge` — ✅ RETIRED → `lyrics-events.ts` (EventBus wrapper)
 
-`loop.store + loop.bridge` — TrackMap loop state owner и engine sync.
+`loop.store + loop-events.ts` — TrackMap loop state owner (loop.bridge ✅ RETIRED)
 
-`WaveformCanvas` — отдельный sync-editor loop path, direct engine-backed, не через `loop.store`.
+`WaveformCanvas` — отдельный sync-editor loop path, direct engine-backed, не через loop store.
 
 ## Ownership map
 
 ### Transport authority
-Подтверждённо: `AudioEngineV2`
+Подтверждённо: `AudioEngineV2` (❄️ frozen, runtime authority) + `EngineV3` (additive layer через V2Adapter)
 
-Ключевые методы:
+Ключевые методы (V2 core — frozen):
 - `loadTrack` — `src/audio/core/AudioEngineV2.ts:63-147`
 - `play` — `327-360`
 - `pause` — `362-369`
 - `setCurrentTime/seekTo` — `375-392`
 - `stop` — `546-553`
+
+**EngineV3 (additive, см. §EngineV3 ниже):**
+- `TransportV3.ts` — singleton facade, 5 состояний, error recovery
+- `V2Adapter.ts` — `delegateSync(method, ...args)` / `getSync(prop)` — единственный bridge к frozen V2
+- `getTransport()` — lazy singleton, в `main.tsx:115`
+
+**Архитектурный invariant:** EngineV3 НЕ имеет прямого доступа к приватным полям V2 (`_`-prefixed). Только через `IV2PublicContract`. Нарушение — STOP.
 
 ### Master clock
 Подтверждённо: **instrumental stem**
@@ -1030,6 +1037,39 @@ A more DAW-like transport with tighter loop/seek/selection semantics remains a r
 - old loop silently survives
 - loop disappears unexpectedly
 - ghost ownership remains
+
+---
+
+## EngineV3 — Additive Layer (2026-07-17)
+
+**Статус:** 7 production modules, 7 archived → `src/legacy/engine-v3/`
+
+### Production (7)
+```
+src/audio/engine-v3/
+├── V2Adapter.ts          — единственный мост к AudioEngineV2 (15+ импортов)
+├── TransportV3.ts        — singleton, 5 состояний, error recovery
+├── IV2PublicContract.ts  — публичный контракт V2
+├── DuckGuardV3.ts        — Web Audio ducking (сохранён)
+├── MeterNodeV3.ts        — RMS/peak анализатор (сохранён)
+├── index.ts              — barrel + getTransport()
+└── types.ts              — типы
+```
+
+### Archived (7 → `src/legacy/engine-v3/`)
+StemPlayerV3, VocalMixV3, MicrophoneV3, LoopEngineV3, CrossfadeV3, CaptureBusV3, RateParamV3
+— 0 внешних импортов, код сохранён в git + legacy.
+
+### Lifecycle
+- `getTransport()` — lazy singleton (main.tsx:115)
+- `acquire/release` через `playback-orchestrator.service`
+- `_v2Fallback` — fallback для методов, не реализованных в V3
+- AudioContext — единый (V2 через V2Adapter)
+
+### Frozen boundary
+- `src/audio/core/AudioEngineV2.ts` — ❄️ НЕ ТРОГАТЬ
+- `src/audio/compat/patchV1.ts` — ❄️ НЕ ТРОГАТЬ
+- V2Adapter — только read через IV2PublicContract
 
 ---
 

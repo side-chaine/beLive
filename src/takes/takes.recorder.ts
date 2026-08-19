@@ -63,6 +63,11 @@ export class TakesRecorder {
 
     // Ensure mic is enabled (this also routes to output — headphones required)
     if (!ae.microphone?.enabled) {
+      const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+      if (engineMode === 'v3') {
+        // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
+        return;
+      }
       await ae.enableMicrophone();
     }
 

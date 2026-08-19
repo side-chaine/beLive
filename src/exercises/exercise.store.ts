@@ -6,7 +6,6 @@ import type {
   ExerciseProgressDisplay,
   ExerciseResult,
   ExerciseStep,
-  Quest,
   RoundCaptureState,
   ScenarioMixOverride,
   SessionProgress,
@@ -34,8 +33,6 @@ interface ActivationState {
 
 interface ExerciseState {
   activeExercise: Exercise | null;
-  activeQuest: Quest | null;
-
   phase: ExercisePhase;
   currentRound: number;
   currentStepIndex: number;
@@ -128,7 +125,6 @@ function activateCurrentStep(
 
 export const useExerciseStore = create<ExerciseState>((set, get) => ({
   activeExercise: null,
-  activeQuest: null,
 
   phase: 'idle',
   currentRound: 0,
@@ -175,7 +171,6 @@ export const useExerciseStore = create<ExerciseState>((set, get) => ({
     
     set((state) => ({
       activeExercise: exercise,
-      activeQuest: null,
       phase: activation.phase,
       currentRound: 0,
       currentStepIndex: 0,
@@ -299,7 +294,6 @@ export const useExerciseStore = create<ExerciseState>((set, get) => ({
   cancelExercise: () => {
     set({
       activeExercise: null,
-      activeQuest: null,
       phase: 'idle',
       currentRound: 0,
       currentStepIndex: 0,

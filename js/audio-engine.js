@@ -1,7 +1,7 @@
 /**
  * AudioEngine v1 — STUB.
  * All methods patched by React v2 (src/audio/compat/patchV1.ts).
- * This stub provides: boot object + AudioContext + space bar.
+ * This stub provides: boot object + AudioContext.
  */
 class AudioEngine {
     constructor() {
@@ -14,26 +14,7 @@ class AudioEngine {
         this._onTrackLoadedCallbacks = [];
         this._onPositionUpdateCallbacks = [];
         this._onBothEndedCallbacks = [];
-        this._setupSpaceBar();
-    }
-
-    _setupSpaceBar() {
-        document.addEventListener('keydown', (e) => {
-            const t = e.target?.tagName;
-            if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return;
-            if (e.target?.isContentEditable) return;
-            if (e.code === 'Space') {
-                e.preventDefault();
-                // Interrupt practice first if active, then toggle transport
-                const bridge = window.__belivePracticeInterruption;
-                if (bridge && typeof bridge.interrupt === 'function') {
-                    bridge.interrupt('Space');
-                }
-                // Then perform normal play/pause toggle
-                if (this.isPlaying) { if (this.pause) this.pause(); }
-                else { if (this.play) this.play(); }
-            }
-        });
+        // _setupSpaceBar() migrated to useKeyboardShortcuts.ts
     }
 
     // Stubs — overwritten by patchV1WithV2() from React

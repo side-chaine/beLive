@@ -11,7 +11,8 @@ import { useLoopStore } from './loop.store';
 import { useBlocksStore } from './blocks.store';
 import { useStemStore } from '../stem/stem.store';
 import type { PracticeScenarioId, PracticeContext, PracticeProgress } from '../practice/practice-scenarios';
-import { BLOCK_TYPE_NAMES } from '../practice/practice-scenarios';
+import { getScenario, BLOCK_TYPE_NAMES } from '../practice/practice-scenarios';
+import { runPracticeActions } from '../practice/billy-action-runner';
 
 /* ═══ Types ═══ */
 
@@ -242,6 +243,19 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
     });
     startAutoPassDetection();
     emitPracticeEvent('started', { scenarioId });
+    // Execute scenario startActions (seek, loop, rate — инициализация аудио)
+    const scenario = getScenario(scenarioId as PracticeScenarioId);
+    if (scenario) {
+      const ctx: PracticeContext = {
+        requestedBlockId: targetBlockId ?? undefined,
+      };
+      const actions = typeof scenario.startActions === 'function'
+        ? scenario.startActions(ctx)
+        : scenario.startActions;
+      runPracticeActions({ actions }).catch((e) =>
+        console.warn('[Practice] startActions failed:', e)
+      );
+    }
   },
 
   endPractice: () => {

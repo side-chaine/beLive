@@ -48,6 +48,7 @@ interface StemState {
 
   /** TC-10.12: True after first IDB restore — prevents IDB override on track switch */
   _stemsBootRestored: boolean;
+  stemsBootRestored: boolean; // публичное имя (миграция с _)
 
   /** Per-track display order (persisted in TrackRecord) */
   stemDisplayOrder: StemDisplayOrder[] | null;
@@ -132,7 +133,8 @@ export const useStemStore = create<StemState>((set, get) => ({
   stemsEnabled: false, // W10-001: default = instrumental mode
   stemsLoading: false, // TC-8.6A: not loading by default
   stemsMode: false, // TC-10.6: tumbler preference (show/hide stem faders)
-  _stemsBootRestored: false, // TC-10.12: not yet restored from IDB
+  _stemsBootRestored: false,
+  stemsBootRestored: false, // TC-10.12: not yet restored from IDB
   stemDisplayOrder: null,
   stemAutomation: null,
   _lastSnapshot: null,

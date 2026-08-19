@@ -136,7 +136,7 @@ export async function fetchCoverArtAndUpdate(
     if (import.meta.env.DEV) {
       const msg = `[CoverArt] No cover found for: "${trackTitle}"`;
       if (lastError) console.warn(msg, lastError);
-      else console.log(msg);
+      else if (import.meta.env.DEV) console.log(msg);
     }
     return;
   }

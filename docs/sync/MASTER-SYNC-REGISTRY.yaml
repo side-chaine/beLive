@@ -3,12 +3,47 @@
 # Created: 2026-06-16 (DOC-CHECK first pass after ШТУРМ ZIP)
 
 docs:
+  - path: "docs/architecture/audio-engine.md"
+    description: Audio engine architecture — V2 + EngineV3 additive layer
+    status: UPDATED
+    last_sync: 2026-07-17
+    health: 85
+    note: "Updated by 007_1.4: EngineV3 section added (7 production modules, 7 archived). Bridge references updated (22/22 retired). Dual-statement transport authority."
+
+  - path: "docs/architecture/architecture-map-2.1.md"
+    description: Master architecture map — ownership, invariants, seams
+    status: UPDATED
+    last_sync: 2026-07-17
+    health: 85
+    note: "Updated 2026-07-17 by 007_1.4: numeric drifts fixed (stores 27→44, bridges 18+→4, TS 190→413). Bridge layer retired, EngineV3 as primary transport authority."
+
   - path: "docs/architecture/zip-pipeline.md"
     description: ZIP Export & Import pipeline + stem transcode «Sample & Tighten»
     status: UPDATED
     last_sync: 2026-06-26
     health: 95
     note: "v2.0 — Added §10 stem transcode system (priority chain, budget gate, overlap pipeline, protected stems)"
+
+  - path: "docs/architecture/frozen-zones-v2.md"
+    description: Frozen zones map — permanent + bridges in retire
+    status: UPDATED
+    last_sync: 2026-07-17
+    health: 90
+    note: "Updated 2026-07-17 by 007_1.4: 19/22 bridges retired, table replaced with current 6 remaining bridges."
+
+  - path: "docs/architecture/transport-v3.md"
+    description: EngineV3 transport — singleton, 5 states, error recovery, 15 modules
+    status: UPDATED
+    last_sync: 2026-07-17
+    health: 90
+    note: "Updated 2026-07-17 by 007_1.4: V3 — полноценный engine (15 модулей), не прослойка. Добавлена таблица всех модулей."
+
+  - path: "docs/ARCH-BASE.md"
+    description: Base architecture (superseded, архивный)
+    status: UPDATED
+    last_sync: 2026-07-17
+    health: 60
+    note: "Updated 2026-07-17 by 007_1.4: исправлена ссылка на FULL-BASE, обновлены цифры (bridges 13+→4, stores 17+→44), bridge слой больше не 'permanent'."
 
   - path: "docs/architecture/block-first-lyrics-sync.md"
     description: Block-First Line Sync (TC-010)
@@ -26,10 +61,10 @@ docs:
 
   - path: "docs/architecture/track-loading-pipeline.md"
     description: Track loading pipeline
-    status: STALE
-    last_sync: 2026-04-22
-    health: 85
-    note: "Needs update: parallel FileReader, dedup guard, TG HTTP handling + queue."
+    status: UPDATED
+    last_sync: 2026-07-17
+    health: 90
+    note: "Updated by 007_1.4: added parallel FileReader (concurrency 2), dedup guard, TG Stream API note."
 
   - path: "docs/telegram/bot-catalog-integration.md"
     description: TG Bot ↔ Catalog Integration (upload + download)
@@ -379,11 +414,12 @@ services:
     note: "Added tg-upload-complete listener, polling fallback (3×5s), refactored fetchTgTracks to useCallback."
 
 registry_meta:
-  version: "1.5"
-  last_full_scan: 2026-06-26
-  total_docs: 28
+  version: "1.8"
+  last_full_scan: 2026-07-17
+  total_docs: 36
   ok: 1
-  updated: 19
-  stale: 3
-  created: 12
+  updated: 27
+  stale: 0
+  created: 14
   maintenance: 2
+  note: "Updated by 007_1.4: architecture-map-2.1.md re-added with drift fixes. EngineV3 archive complete."

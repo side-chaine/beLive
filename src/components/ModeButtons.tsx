@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useModeStore } from '../stores/mode.store';
 import { useUIStore } from '../stores/ui.store';
-import { switchMode } from '../bridges/mode-switch.bridge';
+import { switchMode } from '../services/mode-switch.service';
 import { BeLiveButton } from './BeLiveButton';
 
 const MODES = [

@@ -68,7 +68,7 @@ registerFeature({
     // Сохранить snapshot для deactivate
     _lastSnapshot = snapshot;
     useDeckStore.getState().setTab('mixer');
-    console.log('[FeatureRegistry] open-studio-mixer, preset:', preset);
+    if (import.meta.env.DEV) console.log('[FeatureRegistry] open-studio-mixer, preset:', preset);
   },
   deactivate: () => {
     if (_lastSnapshot) {

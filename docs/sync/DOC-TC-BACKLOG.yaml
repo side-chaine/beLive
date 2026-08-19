@@ -8,40 +8,44 @@ backlog:
     target: "docs/architecture/block-first-lyrics-sync.md"
     description: "Update to reflect lrc-parser.service.ts as canonical LRC parser entry point. Add deprecation notices."
     priority: LOW
-    status: OPEN
+    status: DONE
     found_by: "007-DOC-CHECK"
     found_date: 2026-06-16
     blocked_by: null
+    completed_by: "007_1.4 quick-fix 2026-07-17"
 
   - id: "DOC-TC-002"
     type: UPDATE
     target: "docs/architecture/track-meta-pipeline.md"
     description: "Document cover API retry logic (fetchCoverOnce with exponential backoff)."
     priority: LOW
-    status: OPEN
+    status: DONE
     found_by: "007-DOC-CHECK"
     found_date: 2026-06-16
     blocked_by: null
+    completed_by: "007_1.4 quick-fix 2026-07-17"
 
   - id: "DOC-TC-003"
     type: CREATE
     target: "docs/architecture/lrc-parser-service.md"
     description: "Create documentation for new lrc-parser.service.ts — unified entry point, semantic split between parseLrcFile (stripper) and parseLrc (parser)."
     priority: LOW
-    status: OPEN
+    status: DONE
     found_by: "007-DOC-CHECK"
     found_date: 2026-06-16
     blocked_by: null
+    completed_by: "007_1.4 quick-fix 2026-07-17"
 
   - id: "DOC-TC-004"
     type: UPDATE
     target: "docs/telegram/bot-catalog-integration.md"
     description: "Update TG download section: downloadTgTrack function, fetch+Stream API (replaces XHR), ghost error/done phases, HTTP status handling."
     priority: MEDIUM
-    status: OPEN
+    status: DONE
     found_by: "007-DOC-CHECK (ШТУРМ P-02)"
     found_date: 2026-06-16
     blocked_by: null
+    completed_by: "007_1.4 quick-fix 2026-07-17"
 
   - id: "DOC-TC-006"
     type: CREATE
@@ -70,10 +74,11 @@ backlog:
     target: "docs/architecture/track-loading-pipeline.md"
     description: "Update pipeline: add parallel FileReader (concurrency 2), dedup guard for trackCatalog.push, note on TG download HTTP handling improvements."
     priority: LOW
-    status: OPEN
+    status: DONE
     found_by: "007-DOC-CHECK"
     found_date: 2026-06-16
     blocked_by: null
+    completed_by: "007_1.4 quick-fix 2026-07-17"
 
   - id: "DOC-TC-008"
     type: CREATE

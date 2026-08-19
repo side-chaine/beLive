@@ -2,6 +2,10 @@ import { create } from 'zustand';
 
 type AppSurface = 'welcome' | 'app' | 'profile';
 
+/**
+ * @deprecated Используйте useUserProfileStore (surface, authChecked, setSurface, setAuthChecked)
+ * Мигрировано в user-profile.store.ts — Фаза 4
+ */
 interface AppState {
   surface: AppSurface;
   authChecked: boolean;
@@ -9,6 +13,7 @@ interface AppState {
   setAuthChecked: (v: boolean) => void;
 }
 
+/** @deprecated Используйте useUserProfileStore */
 export const useAppStore = create<AppState>((set) => ({
   surface: 'welcome',
   authChecked: false,

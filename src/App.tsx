@@ -1,11 +1,11 @@
-import React, { useEffect, useRef } from 'react';
-import { initAudioBridge } from './bridges/audio.bridge';
-import { initLyricsBridge } from './bridges/lyrics.bridge';
-import { initMarkersBridge } from './bridges/markers.bridge';
-import { initModeBridge } from './bridges/mode.bridge';
-import { initTrackBridge } from './bridges/track.bridge';
-import { initCoverThemeBridge } from './bridges/cover-theme.bridge';
-import { initStemReactiveBridge } from './bridges/stem-reactive.bridge';
+import { useEffect, useRef } from 'react';
+import { AudioCrashModal, useAudioContextHealth, getTransport } from './audio/engine-v3';
+// retired: audio.bridge → audio-events (main.tsx)
+// retired: lyrics.bridge → lyrics-events in main.tsx
+// retired: markers.bridge → markers-events
+// retired: track.bridge → track-events
+// retired: cover-theme.bridge → cover-events
+// retired: stem-reactive.bridge → stem-reactive events in main.tsx
 import { initTrackEventListeners } from './services/track.actions';
 import { CatalogPanel } from './components/CatalogPanel';
 import { Header } from './components/Header';
@@ -19,19 +19,22 @@ import { ControlDeck } from './components/ControlDeck';
 import { BillyDock } from './components/BillyDock/BillyDock';
 // TC-PITCH-04: Removed PianoOverlay import (now PitchTab in dock)
 
-import { initTextStyleBridge, destroyTextStyleBridge } from './bridges/textStyle.bridge';
-import { initPlateBridge, destroyPlateBridge } from './bridges/plate.bridge';
-import { initPerformanceBridge } from './performance/performance.bridge';
-import { initBillyBridge } from './billy/billy.bridge';
-import { initTakesBridge } from './takes/takes.bridge';
-import { initExerciseBridge } from './exercises/exercise.bridge';
+// retired: textStyle.bridge → text-style-events (main.tsx)
+
+// retired: plate.bridge → plate-events
+// retired: performance.bridge
+
+import { initBillyBridge } from './billy/billy.service';
+// retired: takes.bridge → takes-events in main.tsx
+
 import { useSyncStore } from './sync/store/sync.store';
 import BlockEditorModal from './blocks/components/BlockEditorModal';
 import SyncEditorPanel from './sync/components/SyncEditorPanel';
 import { SyncLyrics } from './sync/components/SyncLyrics';
-import { initSyncBridge } from './sync/bridge/sync.bridge';
-import { initTimeSync } from './bridges/time-sync';
-import { initTriggerBridge } from './triggers/trigger.bridge';
+// retired: sync.bridge → useSyncStore directly
+
+// retired: time-sync
+import { initTriggerVisualService } from './triggers/trigger-visual.service';
 import { TriggerDebugOverlay } from './triggers/TriggerDebugOverlay';
 import { PlaybackPerfOverlay } from './components/PlaybackPerfOverlay';
 import { TrackInfoBoard } from './components/TrackInfoBoard/TrackInfoBoard';
@@ -39,8 +42,10 @@ import { useTrackInfoStore } from './stores/trackInfo.store';
 import { useModeStore } from './stores/mode.store';
 import { useBackgroundManagers } from './hooks/useBackgroundManagers';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { usePerformanceTier } from './hooks/usePerformanceTier';
 import { tryActivateV2 } from './audio/featureFlag';
-import { initMonitorBridge, destroyMonitorBridge } from './bridges/monitor.bridge';
+// retired: monitor.bridge → monitor-events (main.tsx)
+
 import { AiSettingsModal } from './components/AiSettingsModal';
 import { BlockScenesModal } from './components/BlockScenesModal';
 import { useAiSettingsStore } from './stores/ai-settings.store';
@@ -58,7 +63,8 @@ import { useUserProfileStore } from './stores/user-profile.store';
 import { mvsepPollingService } from './services/mvsep-polling.service';
 import { FeedScreen } from './feed/FeedScreen';
 import { useFeedStore } from './catalog/feed/feed.store';
-import { initMetricsBridge } from './services/metrics.bridge';
+// retired: metrics.bridge → metrics data frozen in store
+
 import { initSyncLifecycle } from './services/metrics-sync.service';
 import { handleRehearsalDeepLink, connectRehearsalSession } from './Rehearsal/services/deep-link.service';
 export default function App() {
@@ -71,6 +77,8 @@ export default function App() {
   const featureActive = useShowStore(s => s.featureActive);
   useBackgroundManagers();
   useKeyboardShortcuts();
+  usePerformanceTier();
+  const { isHealthy } = useAudioContextHealth(getTransport()!);
 
   const surface = useAppStore(s => s.surface);
   const authChecked = useAppStore(s => s.authChecked);
@@ -78,26 +86,29 @@ export default function App() {
 
   useEffect(() => {
     if (surface !== 'app') return;
-    tryActivateV2();
+    // M1 (342): No-Birth — в V3-режиме V2 не рождается (runtime death)
+    const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+    if (engineMode !== 'v3') {
+      tryActivateV2();
+      // M2 (345): V2 birth counter — доказательство No-Birth
+      (window as any).__v2BirthCount = ((window as any).__v2BirthCount || 0) + 1;
+    } else {
+      (window as any).__v2BirthCount = 0;
+    }
     initTrackEventListeners();
-    const cleanupAudio = initAudioBridge();
-    const cleanupLyrics = initLyricsBridge();
-    const cleanupMarkers = initMarkersBridge();
-    const cleanupMode = initModeBridge();
-    const cleanupTrack = initTrackBridge();
-    const cleanupCoverTheme = initCoverThemeBridge();
-    const cleanupSync = initSyncBridge();
-    const cleanupTimeSync = initTimeSync();
-    const cleanupTrigger = initTriggerBridge();
-    const cleanupStemReactive = initStemReactiveBridge();
-    const cleanupTextStyle = initTextStyleBridge();
-    const cleanupPlate = initPlateBridge();
-    const cleanupPerformance = initPerformanceBridge();
+    // const cleanupAudio = initAudioBridge();  // retired → audio-events in main.tsx
+    // const cleanupLyrics = initLyricsBridge();  // retired → lyrics-events in main.tsx
+    // const cleanupSync = initSyncBridge();  // retired → useSyncStore directly
+    // const cleanupTimeSync = initTimeSync();  // retired
+    const cleanupTrigger = initTriggerVisualService();
+    // const cleanupStemReactive = initStemReactiveBridge();  // retired → stem-reactive events in main.tsx
+    // const cleanupTextStyle = initTextStyleBridge();  // retired → text-style-events in main.tsx
+    // const cleanupPerformance = initPerformanceBridge();  // retired
     const cleanupBilly = initBillyBridge();
-    const cleanupTakes = initTakesBridge();
-    const cleanupExercise = initExerciseBridge();
-    const cleanupMonitor = initMonitorBridge();
-    const cleanupMetrics = initMetricsBridge();
+    // retired: takes.bridge → takes-events in main.tsx
+    // const cleanupExercise = initExerciseBridge();  // retired — exercise-events in main.tsx
+    // const cleanupMonitor = initMonitorBridge();  // retired → monitor-events in main.tsx
+    // const cleanupMetrics = initMetricsBridge();  // retired
     const cleanupMetricsSync = initSyncLifecycle();
 
     // MVSEP: Resume orphaned stem separation jobs after tab close
@@ -108,24 +119,16 @@ export default function App() {
     }, 2000); // Delay: IDB needs to be ready
 
     return () => {
-      cleanupAudio();
-      cleanupLyrics();
-      cleanupMarkers();
-      cleanupMode();
-      cleanupTrack();
-      cleanupCoverTheme();
-      cleanupSync();
-      cleanupTimeSync();
+      // cleanupAudio();  // retired
+      // cleanupLyrics();  // retired → lyrics-events in main.tsx
+      // cleanupSync();  // retired
       cleanupTrigger();
-      cleanupStemReactive();
-      destroyTextStyleBridge();
-      destroyPlateBridge();
-      cleanupPerformance();
+      // cleanupStemReactive();  // retired → stem-reactive events in main.tsx
+      // cleanupPerformance();  // retired
       cleanupBilly();
-      cleanupTakes();
-      cleanupExercise();
-      destroyMonitorBridge();
-      cleanupMetrics();
+      // cleanupTakes();  // retired → takes-events in main.tsx
+      // cleanupExercise();  // retired
+      // cleanupMetrics();  // retired
       cleanupMetricsSync();
     };
   }, [surface]);
@@ -250,6 +253,7 @@ export default function App() {
       {!showActive && !featureActive && <BillyDock />}
       {!showActive && !featureActive && <TriggerDebugOverlay />}
       {!showActive && !featureActive && <PlaybackPerfOverlay />}
+      <AudioCrashModal visible={!isHealthy} />
       {trackInfoOpen && <TrackInfoBoard />}
       {aiSettingsOpen && <AiSettingsModal onClose={() => useAiSettingsStore.getState().setShowSettings(false)} />}
       {surface === 'profile' && <UserRoom />}

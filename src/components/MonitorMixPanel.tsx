@@ -6,6 +6,8 @@ import { CalibrationDrum } from './monitor/CalibrationDrum';
 import { DualAutoMixRow } from './monitor/DualAutoMixRow';
 import { ToggleSliderRow } from './monitor/ToggleSliderRow';
 import s from './MonitorMixPanel.module.css';
+import { V2Adapter } from '../audio/engine-v3/V2Adapter';
+import { getTransport } from '../audio/engine-v3';
 
 export function MonitorMixPanel() {
   const st = useMonitorStore();
@@ -403,8 +405,13 @@ export function MonitorMixPanel() {
                     savedPositionRef.current = ae?.getCurrentTime?.() ?? ae?.currentTime ?? 0;
                     pausedByPulseRef.current = true;
                     
-                    // Pause playback
-                    ae.pause();
+                    // HOTFIX FM-9: Всегда паузим V2 — он мог играть в фоне
+                    // V3 паузим только если он реально активен (не idle)
+                    try { V2Adapter.getInstance().delegateSync('pause') } catch {}
+                    const t3 = getTransport();
+                    if (t3 && t3.state !== 'idle' && t3.orchestrator.all().length > 0) {
+                      t3.pause();
+                    }
                   }
                   
                   // Auto-detect calibration mode based on playback state
@@ -551,17 +558,24 @@ export function MonitorMixPanel() {
                       if (pausedByPulseRef.current && wasPlayingBeforeTestRef.current) {
                         const ae = (window as any).audioEngine;
                         if (ae) {
-                          // PART A: Remove strict > 0 gate, allow restore for valid position including 0
-                          ae.setCurrentTime(savedPositionRef.current || 0);
-                          void ae.play();
+                          // HOTFIX FM-9 + Sonnet fix: double guard перед play()
+                          const t3 = getTransport();
+                          const v3Active = t3 && t3.state !== 'idle' && t3.orchestrator.all().length > 0;
+                          try { V2Adapter.getInstance().delegateSync('seekTo', savedPositionRef.current || 0) } catch {}
+                          if (!v3Active) {
+                            try { V2Adapter.getInstance().delegateSync('play') } catch {}
+                          }
+                          if (v3Active) {
+                            void t3!.play(savedPositionRef.current || 0);
+                          }
                         }
                         pausedByPulseRef.current = false;
                       }
-                              
+                      
                       // Re-lock
                       isLineUpLockedRef.current = true;
                       forceUpdate(n => n + 1);
-                              
+                      
                       // Clear refs and reset tap session
                       wasPlayingBeforeTestRef.current = false;
                       savedPositionRef.current = 0;
@@ -575,19 +589,19 @@ export function MonitorMixPanel() {
                     onClick={() => {
                       // Stop test sequence
                       st.endPulseCalibration();
-                              
+                      
                       // Commit delay to audio engine and persist
                       const finalDelay = useMonitorStore.getState().lineUpDelayMs;
                       
                       useMonitorStore.getState().setLineUpDelayMs(finalDelay);
                       st.setDelayMs(finalDelay);
-                              
+                      
                       // Save calibration to device memory
                       const deviceId = st.outputDeviceId;
                       if (deviceId) {
                         const device = st.devices.find(d => d.deviceId === deviceId);
                         const deviceLabel = device?.label || `Device ${deviceId.slice(0, 8)}`;
-                                
+                        
                         saveCalibration(deviceId, {
                           label: deviceLabel,
                           delayMs: finalDelay,
@@ -595,7 +609,7 @@ export function MonitorMixPanel() {
                           calibratedAt: Date.now(),
                         });
                       }
-                              
+                      
                       // Update UI state
                       useMonitorStore.getState().setLineUpStatus('synced');
                       useMonitorStore.getState().setTestInProgress(false);
@@ -606,9 +620,16 @@ export function MonitorMixPanel() {
                       if (pausedByPulseRef.current && wasPlayingBeforeTestRef.current) {
                         const ae = (window as any).audioEngine;
                         if (ae) {
-                          // PART A: Remove strict > 0 gate, allow restore for valid position including 0
-                          ae.setCurrentTime(savedPositionRef.current || 0);
-                          void ae.play();
+                          // HOTFIX FM-9 + Sonnet fix: double guard перед play()
+                          const t3 = getTransport();
+                          const v3Active = t3 && t3.state !== 'idle' && t3.orchestrator.all().length > 0;
+                          try { V2Adapter.getInstance().delegateSync('seekTo', savedPositionRef.current || 0) } catch {}
+                          if (!v3Active) {
+                            try { V2Adapter.getInstance().delegateSync('play') } catch {}
+                          }
+                          if (v3Active) {
+                            void t3!.play(savedPositionRef.current || 0);
+                          }
                         }
                         pausedByPulseRef.current = false;
                       }

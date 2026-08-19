@@ -3,7 +3,7 @@
  * Управляет Web Worker'ом для транскодинга.
  */
 
-import { getZipAudioContext } from './audio-context-manager';
+import { getZipAudioContext, ensureZipResumed } from './audio-context-manager';
 
 interface TranscodeResult {
   data: ArrayBuffer;
@@ -57,6 +57,7 @@ export async function transcodeStem(
   kbps: number,
   callbacks?: TranscodeCallback
 ): Promise<TranscodeResult> {
+  await ensureZipResumed();
   const ctx = getZipAudioContext();
   const jobId = ++_jobCounter;
 
@@ -141,6 +142,7 @@ export async function transcodeStem(
 export async function decodeStem(
   arrayBuffer: ArrayBuffer,
 ): Promise<{ audioBuffer: AudioBuffer; channels: number; sampleRate: number }> {
+  await ensureZipResumed();
   const ctx = getZipAudioContext();
   const audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
   return {

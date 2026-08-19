@@ -104,7 +104,7 @@ async function ensureInit(): Promise<void> {
         await libsonare.init();
         _analyzeFn = libsonare.analyze;
         
-        console.log('[AudioAnalysis] WASM initialized (auto-detect)');
+        if (import.meta.env.DEV) console.log('[AudioAnalysis] WASM initialized (auto-detect)');
         return;
       } catch (_) {
         // auto-detect failed, try explicit path
@@ -116,7 +116,7 @@ async function ensureInit(): Promise<void> {
         await libsonare.init({ wasmPath: wasmModule.default });
         _analyzeFn = libsonare.analyze;
         
-        console.log('[AudioAnalysis] WASM initialized (explicit wasm path)');
+        if (import.meta.env.DEV) console.log('[AudioAnalysis] WASM initialized (explicit wasm path)');
         return;
       } catch (e2) {
         _initPromise = null;
@@ -167,7 +167,7 @@ async function decodeAudioFromArrayBuffer(
     mono[i] = (left[i] + right[i]) / 2;
   }
 
-  console.log(`[AudioAnalysis] Decoded at ${sampleRate}Hz, ${mono.length} samples`);
+  if (import.meta.env.DEV) console.log(`[AudioAnalysis] Decoded at ${sampleRate}Hz, ${mono.length} samples`);
   return { samples: mono, sampleRate };
 }
 
@@ -189,7 +189,7 @@ export async function analyzeTrack(
     const t0 = performance.now();
     const result = _analyzeFn(samples, sampleRate);
     const elapsed = performance.now() - t0;
-    console.log(`[AudioAnalysis] analyze() took ${elapsed.toFixed(0)}ms`);
+    if (import.meta.env.DEV) console.log(`[AudioAnalysis] analyze() took ${elapsed.toFixed(0)}ms`);
 
     if (!result) {
       console.warn('[AudioAnalysis] analyze() returned null/undefined');
@@ -246,7 +246,7 @@ export async function analyzeAndPersist(
 
     // 2. Skip if already analyzed (any bpm value present)
     if (track.trackMeta?.bpm != null) {
-      console.log('[AudioAnalysis] Track', trackId, 'already analyzed (BPM:', track.trackMeta.bpm, ')');
+      if (import.meta.env.DEV) console.log('[AudioAnalysis] Track', trackId, 'already analyzed (BPM:', track.trackMeta.bpm, ')');
       return null;
     }
 
@@ -276,7 +276,7 @@ export async function analyzeAndPersist(
 
     await updateTrackField(trackId, { trackMeta: mergedMeta });
 
-    console.log('[AudioAnalysis] Persisted for track', trackId,
+    if (import.meta.env.DEV) console.log('[AudioAnalysis] Persisted for track', trackId,
       { bpm: result.bpm, key: result.key, camelot: result.camelot, energy: result.energy });
 
     return result;

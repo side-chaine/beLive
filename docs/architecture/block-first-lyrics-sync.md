@@ -2,7 +2,7 @@
 
 **Status:** ✅ PRODUCTION (since 2025-04-13)
 **Replaces:** `matchGeniusToLrc()` (legacy N:M fuzzy matching)
-**Files:** `src/services/auto-lyrics.service.ts`, `src/components/UploadPanel.tsx`, `src/types/persistence.types.ts`
+**Files:** `src/services/auto-lyrics.service.ts`, `src/services/lrc-parser.service.ts` (canonical LRC entry point), `src/components/UploadPanel.tsx`, `src/types/persistence.types.ts`
 
 ---
 

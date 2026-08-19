@@ -1,0 +1,115 @@
+{
+  "artifact": "286-007-E1E7-VERIFIER",
+  "generatedAt": "2026-08-10T18:53:53.351Z",
+  "total": 21,
+  "passed": 21,
+  "failed": 0,
+  "results": [
+    {
+      "name": "T8 E7",
+      "ok": true,
+      "detail": "cap=0.5"
+    },
+    {
+      "name": "T3 E3 n=13",
+      "ok": true,
+      "detail": "n=13 calculable, drift=0.10864432331588848"
+    },
+    {
+      "name": "T3 E3 n=12",
+      "ok": true,
+      "detail": "n=12 calculable, drift=0.10864432331588848"
+    },
+    {
+      "name": "T3 E3 n=11",
+      "ok": true,
+      "detail": "n=11 -> INSUFFICIENT-EVIDENCE (n=11)"
+    },
+    {
+      "name": "T1 E1 fresh acceptance collapse",
+      "ok": true,
+      "detail": "drift=0.108644 (<cap), но свежий collapse на acceptance -> NOT-PASS"
+    },
+    {
+      "name": "T2 E1 diagnostic-only collapse",
+      "ok": true,
+      "detail": "collapse только на diagnostic -> HS=HS-PASS (отдельно), production PASS=false"
+    },
+    {
+      "name": "T4 E4 K0 fail",
+      "ok": true,
+      "detail": "K0 fail -> INVALID"
+    },
+    {
+      "name": "T4 E4 K4410 fail",
+      "ok": true,
+      "detail": "K4410 fail -> INVALID"
+    },
+    {
+      "name": "T4 E4 both pass",
+      "ok": true,
+      "detail": "both K pass -> membership valid (HS-PASS)"
+    },
+    {
+      "name": "T5 E5 legacy vector",
+      "ok": true,
+      "detail": "deriver regression vector = 0.10864432331588848 (expected 0.10864432331588848), exact=true"
+    },
+    {
+      "name": "T11 E5 exclusion-vector",
+      "ok": true,
+      "detail": "INCLUDED-13 → 0.10864432331588848 (regression); если EXCLUDED в denom (баг) → 0.9366020127721636 ≠ regression (exclusion ловится)"
+    },
+    {
+      "name": "T6 E5 missing gateContribution",
+      "ok": true,
+      "detail": "missing field -> STOP (gateContribution missing)"
+    },
+    {
+      "name": "T6 E5 invalid value",
+      "ok": true,
+      "detail": "invalid value -> STOP (invalid gateContribution: MAYBE)"
+    },
+    {
+      "name": "T7 E6 manifest match",
+      "ok": true,
+      "detail": "sha 7294e3ea669008c1... vs manifest 7294e3ea669008c1..."
+    },
+    {
+      "name": "T7 E6 auto-void",
+      "ok": true,
+      "detail": "altered sha -> auto-void"
+    },
+    {
+      "name": "T9 V49 length",
+      "ok": true,
+      "detail": "49 rows (actual 49)"
+    },
+    {
+      "name": "T9 V49 unique",
+      "ok": true,
+      "detail": "no duplicates"
+    },
+    {
+      "name": "T9 V49 exact",
+      "ok": true,
+      "detail": "no hidden additions, no omissions"
+    },
+    {
+      "name": "T10 E2 CD descriptive",
+      "ok": true,
+      "detail": "CD formula=\"нет drift PASS/FAIL — descriptive/diagnostic только\", cap=n/a (не production verdict) (descriptive, no drift/cap/PASS-FAIL)"
+    },
+    {
+      "name": "T12 C2 E1-over-E3",
+      "ok": true,
+      "detail": "two locked collapse -> NOT-PASS (NOT INSUFFICIENT-EVIDENCE)"
+    },
+    {
+      "name": "T12 C1 recovery/descriptive not E1",
+      "ok": true,
+      "detail": "recovery/descriptive collapse -> HS-PASS"
+    }
+  ],
+  "exitStatus": "PASS"
+}

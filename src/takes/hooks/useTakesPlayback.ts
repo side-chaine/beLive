@@ -2,6 +2,8 @@ import React from 'react';
 import { useTakesStore } from '../takes.store';
 import { useAudioStore } from '../../stores/audio.store';
 import { takeAssets } from '../takes.assets';
+import { V2Adapter } from '../../audio/engine-v3/V2Adapter';
+import { getTransport } from '../../audio/engine-v3';
 
 interface UseTakesPlaybackOptions {
   activeBlockId: string;
@@ -95,7 +97,7 @@ export function useTakesPlayback({
     forceContextRef.current = false;
     
     if (options?.pauseEngine) {
-      if (ae?.isPlaying) ae.pause();
+      if (ae?.isPlaying) void getTransport().pause();
     }
   }, [restoreVolumes]);
 
@@ -169,7 +171,7 @@ export function useTakesPlayback({
       
       previewSourceRef.current = source;
       previewGainRef.current = gain;
-      ae.setCurrentTime(timeRange.startTime);
+      try { V2Adapter.getInstance().delegateSync('seekTo', timeRange.startTime) } catch {};
       
       // Store forceContext flag
       if (options?.forceContext) {
@@ -182,7 +184,7 @@ export function useTakesPlayback({
       }
       
       // Deterministic play start — wait for engine sync instead of fixed 200ms drift
-      const playResult = ae.play?.();
+      const playResult = getTransport().play();
       if (playResult && typeof playResult.then === 'function') {
         try {
           await playResult;

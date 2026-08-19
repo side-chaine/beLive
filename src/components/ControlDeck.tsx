@@ -10,7 +10,7 @@ import { useAudioStore } from '../stores/audio.store';
 import { usePracticeStore } from '../stores/practice-session.store';
 import { useStemStore } from '../stem/stem.store';
 import { useSyncStore } from '../sync/store/sync.store';
-import { requestOpenSync, requestCloseSync } from '../sync/bridge/sync.bridge';
+import { useSyncStore } from '../sync/store/sync.store';
 import { useMonitorStore } from '../stores/monitor.store';
 import { useRecordingStore } from '../stores/recording.store';
 import { interruptPracticeSession } from '../exercises/exercise.interruption';
@@ -305,7 +305,9 @@ export function ControlDeck() {
             onChange={(rate) => {
               interruptPracticeSession(() => {
                 const safe = Math.max(0.25, Math.min(4, rate));
+                // Двойной путь: V2 (legacy) + store (для V3 arbiter)
                 (window as any).audioEngine?.setPlaybackRate?.(safe);
+                useAudioStore.setState({ playbackRate: safe });
               });
             }}
           />
@@ -323,7 +325,14 @@ export function ControlDeck() {
                 const ae = (window as any).audioEngine;
                 if (!ae) return;
                 if (vocalMixEnabled) ae.disableVocalMix();
-                else ae.enableVocalMix();
+                else {
+                  const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+                  if (engineMode === 'v3') {
+                    // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
+                    return;
+                  }
+                  ae.enableVocalMix();
+                }
               }}
               style={{
                 background: vocalMixEnabled ? 'rgba(255, 140, 0, 0.25)' : 'transparent',
@@ -346,7 +355,14 @@ export function ControlDeck() {
                 const ae = (window as any).audioEngine;
                 if (!ae) return;
                 if (micEnabled) ae.disableMicrophone();
-                else ae.enableMicrophone();
+                else {
+                  const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+                  if (engineMode === 'v3') {
+                    // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
+                    return;
+                  }
+                  ae.enableMicrophone();
+                }
               }}
               style={{
                 background: micEnabled ? 'rgba(255, 140, 0, 0.25)' : 'transparent',
@@ -438,8 +454,8 @@ export function ControlDeck() {
             // Interrupt practice first if active, then continue requested action
             interruptPracticeSession(() => {
               useDeckStore.getState().setTab('');
-              if (syncOpen) requestCloseSync();
-              else requestOpenSync();
+              if (syncOpen) useSyncStore.getState().closeSync();
+              else useSyncStore.getState().openSync();
             });
           }}
           title='Sync'

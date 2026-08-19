@@ -14,12 +14,14 @@ interface LoopState {
   loopEndTime: number | null;
   loopStartLine: number | null;
   loopEndLine: number | null;
+  loopOrigin: 'ui' | 'canvas' | null;
   toggleBlock: (block: TextBlock) => void;
   toggleSubBlock: (block: TextBlock, subIndex: number, lines?: string[]) => void;
   rebindToBlock: (block: TextBlock) => void;
   replaceLoop: (block: TextBlock) => void;
   setBoundaryLines: (startLine: number, endLine: number) => void;
   clearLoop: () => void;
+  setRawLoop: (start: number, end: number) => void;
 }
 
 function sortByBlockOrder(keys: string[]): string[] {
@@ -44,6 +46,7 @@ function recalculateFromSubBlockKeys(keys: string[]) {
       loopEndTime: null as number | null,
       loopStartLine: null as number | null,
       loopEndLine: null as number | null,
+      loopOrigin: null,
     };
   }
   const markers = useMarkersStore.getState().markers as any[];
@@ -113,6 +116,7 @@ export const useLoopStore = create<LoopState>((set, get) => ({
   loopEndTime: null,
   loopStartLine: null,
   loopEndLine: null,
+  loopOrigin: null,
 
   toggleSubBlock: (block, subIndex, lines) => {
     const key = `${block.id}:${subIndex}`;
@@ -127,13 +131,13 @@ export const useLoopStore = create<LoopState>((set, get) => ({
         get().clearLoop();
         return;
       }
-      set(recalculateFromSubBlockKeys(newKeys));
+      set({ ...recalculateFromSubBlockKeys(newKeys), loopOrigin: 'ui' });
     } else {
       if (loopSubBlockKeys.length > 0 && !isSubBlockAdjacent(key, loopSubBlockKeys)) {
         return;
       }
       const newKeys = [...loopSubBlockKeys, key];
-      set(recalculateFromSubBlockKeys(newKeys));
+      set({ ...recalculateFromSubBlockKeys(newKeys), loopOrigin: 'ui' });
     }
   },
 
@@ -156,7 +160,7 @@ export const useLoopStore = create<LoopState>((set, get) => ({
         get().clearLoop();
         return;
       }
-      set(recalculateFromSubBlockKeys(newKeys));
+      set({ ...recalculateFromSubBlockKeys(newKeys), loopOrigin: 'ui' });
     } else {
       if (loopBlockIds.length > 0) {
         const blockIdx = allBlocks.findIndex(b => b.id === block.id);
@@ -167,7 +171,7 @@ export const useLoopStore = create<LoopState>((set, get) => ({
         if (!isAdjacent) return;
       }
       const newKeys = [...loopSubBlockKeys, ...blockSubKeys];
-      set(recalculateFromSubBlockKeys(newKeys));
+      set({ ...recalculateFromSubBlockKeys(newKeys), loopOrigin: 'ui' });
     }
   },
 
@@ -204,6 +208,7 @@ export const useLoopStore = create<LoopState>((set, get) => ({
       loopEndTime: range.endTime,
       loopStartLine: Math.min(...block.lineIndices),
       loopEndLine: Math.max(...block.lineIndices),
+      loopOrigin: 'ui',
     });
   },
 
@@ -236,6 +241,7 @@ export const useLoopStore = create<LoopState>((set, get) => ({
       loopEndTime: range?.endTime ?? get().loopEndTime,
       loopSubBlockKeys: newSubBlockKeys,
       loopBlockIds: newBlockIds,
+      loopOrigin: 'ui',
     });
   },
 
@@ -248,6 +254,15 @@ export const useLoopStore = create<LoopState>((set, get) => ({
       loopEndTime: null,
       loopStartLine: null,
       loopEndLine: null,
+      loopOrigin: null,
     });
   },
+
+  setRawLoop: (start, end) => set({
+    isLooping: true,
+    loopStartTime: start,
+    loopEndTime: end,
+    loopOrigin: 'canvas',
+    // NOT touching loopBlockIds/SubBlockKeys/StartLine/EndLine
+  }),
 }));

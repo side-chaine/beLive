@@ -75,7 +75,7 @@ export class PlaybackVisualScheduler {
     this._scheduleTick();
     if (import.meta.env.DEV) {
       // eslint-disable-next-line no-console
-      console.log('[PlaybackVisualScheduler] started');
+      if (import.meta.env.DEV) console.log('[PlaybackVisualScheduler] started');
     }
   }
 
@@ -88,7 +88,7 @@ export class PlaybackVisualScheduler {
     this._running = false;
     if (import.meta.env.DEV) {
       // eslint-disable-next-line no-console
-      console.log('[PlaybackVisualScheduler] stopped');
+      if (import.meta.env.DEV) console.log('[PlaybackVisualScheduler] stopped');
     }
   }
 

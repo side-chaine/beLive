@@ -1,7 +1,7 @@
 export { triggerBus } from './trigger.bus';
 export { TriggerEngine } from './trigger.engine';
 export { useTriggerStore } from './trigger.store';
-export { initTriggerBridge } from './trigger.bridge';
+export { initTriggerVisualService } from './trigger-visual.service';
 export { TriggerDebugOverlay } from './TriggerDebugOverlay';
 export { WordLineDetector } from './detectors/word-line.detector';
 

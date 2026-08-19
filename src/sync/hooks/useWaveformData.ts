@@ -79,7 +79,7 @@ export function useWaveformData(): WaveformData {
           error: null,
         });
 
-        console.log(
+        if (import.meta.env.DEV) console.log(
           '[SyncWaveform] loaded:',
           'I=' + (iBuf ? `${iBuf.duration.toFixed(1)}s` : 'none'),
           'V=' + (vBuf ? `${vBuf.duration.toFixed(1)}s` : 'none')

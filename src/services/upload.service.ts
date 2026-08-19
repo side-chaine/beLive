@@ -260,7 +260,7 @@ export async function handleFileSelect(
     case 'json':
       // Guard: skip alignment files - they are handled separately in ZIP processing
       if (isAlignmentFile(file.name)) {
-        console.log('UploadService: Skipping alignment file in handleFileSelect:', file.name);
+        if (import.meta.env.DEV) console.log('UploadService: Skipping alignment file in handleFileSelect:', file.name);
         break;
       }
       uploadSession.json = file;
@@ -462,11 +462,11 @@ export async function saveTrack(): Promise<void> {
         if (!Array.isArray(session.jsonMarkers) || session.jsonMarkers.length === 0) {
           trackData.syncMarkers = lrcMarkers;
           trackData.blocksData = []; // No blocks without Genius text
-          console.log(
+          if (import.meta.env.DEV) console.log(
             `[AutoLyrics] LRC parsed locally: ${lyricsLines.length} clean lines, ${lrcMarkers.length} markers`
           );
         } else {
-          console.log(
+          if (import.meta.env.DEV) console.log(
             `[AutoLyrics] LRC detected but JSON markers present (${session.jsonMarkers.length}). Keeping JSON markers.`
           );
         }
@@ -630,7 +630,7 @@ export async function saveTrack(): Promise<void> {
         // Если auto-sync уже применился — ничего не делаем
         if (shouldSkipEditorsForTrack(savedTrack.id)) {
           if (import.meta.env.DEV) {
-            console.log('[AutoLyrics] Block Editor skipped in saveTrack — auto-sync applied for track', savedTrack.id);
+            if (import.meta.env.DEV) console.log('[AutoLyrics] Block Editor skipped in saveTrack — auto-sync applied for track', savedTrack.id);
           }
           return;
         }
@@ -642,14 +642,14 @@ export async function saveTrack(): Promise<void> {
         if (lrcResult) {
           // lrclib нашёл данные — трек уже получит auto-sync через UploadPanel
           if (import.meta.env.DEV) {
-            console.log('[TC-FLOW] lrclib data cached for', title, '— no editor needed');
+            if (import.meta.env.DEV) console.log('[TC-FLOW] lrclib data cached for', title, '— no editor needed');
           }
           return;
         }
 
         // lrclib не нашёл — открываем sync editor
         if (import.meta.env.DEV) {
-          console.log('[TC-FLOW] lrclib NOT found for', title, '— opening sync editor');
+          if (import.meta.env.DEV) console.log('[TC-FLOW] lrclib NOT found for', title, '— opening sync editor');
         }
         const trackIndex = useTrackStore.getState().tracksMeta
           .findIndex(t => String(t.id) === String(savedTrack.id));
@@ -802,7 +802,7 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
             if (_prefetchTitle) {
               import('./auto-lyrics.service').then(({ prefetch }) => {
                 if (import.meta.env.DEV) {
-                  console.log('[W11] prefetch called, title:', _prefetchTitle);
+                  if (import.meta.env.DEV) console.log('[W11] prefetch called, title:', _prefetchTitle);
                 }
                 prefetch(_prefetchTitle);
               }).catch(() => {});
@@ -948,7 +948,7 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
             uploadSession.customBgBlob = new Blob([ab], {
               type: isPng ? 'image/png' : 'image/jpeg',
             });
-            console.log('[CustomBg] Extracted from ZIP:', Math.round(ab.byteLength / 1024) + 'KB');
+            if (import.meta.env.DEV) console.log('[CustomBg] Extracted from ZIP:', Math.round(ab.byteLength / 1024) + 'KB');
           } catch (e) {
             console.warn('[Upload] Failed to extract custom bg:', e);
           }
@@ -1011,7 +1011,7 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
             }
             onProgress?.(85 + Math.round((importedScenes / totalScenes) * 14));
           }
-          console.log(`[SceneImport] Imported ${importedCount}/${sessionScenes.length} scenes for trackId=${newTrackId}`);
+          if (import.meta.env.DEV) console.log(`[SceneImport] Imported ${importedCount}/${sessionScenes.length} scenes for trackId=${newTrackId}`);
 
           // Trigger scene reload — preload ran before import completed
           if (importedCount > 0) {

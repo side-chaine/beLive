@@ -28,6 +28,13 @@ TIB открыт  → loadCachedTrackMeta(IDB) → fetchTrackMeta(API) → merge
 
 | Свойство | Значение |
 |----------|----------|
+
+**Cover Art retry (fetchCoverOnce — `src/services/cover-art.service.ts:73`):**
+- **Strategy 1:** iTunes Search API (CORS-friendly) — primary
+- **Strategy 2:** Title-only iTunes search (если artist пустой)
+- **Strategy 3:** Last.fm fallback (proxy)
+- No explicit retry/backoff — каждая стратегия вызывается один раз последовательно
+- Если всё упало — возвращает `null`, TrackInfoBoard показывает placeholder
 | **Endpoint** | `https://musicbrainz.org/ws/2/recording` |
 | **API Key** | Не требуется (User-Agent header) |
 | **Rate Limit** | 1 req/sec |

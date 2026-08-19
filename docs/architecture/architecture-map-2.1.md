@@ -2,7 +2,7 @@
 
 **Status:** Master Architecture Map — Complete (merged v2.1 + v2.2 delta)
 **Version:** 2.2
-**Date:** 2026-06-10
+**Date:** 2026-07-17 (updated by 007_1.4: numeric drifts fixed, bridge layer retired, EngineV3 active)
 **Authors:** Architecture Team (Centre 1.3 + Agent 007)
 **Based on:** Code-verified recon, live repo state, pipeline docs, v2.2 delta merge
 
@@ -33,7 +33,7 @@
 
 ### Core truths
 
-- ✅ React/TS owns product runtime (190+ TS/TSX files, 27 Zustand stores)
+- ✅ React/TS owns product runtime (410+ TS/TSX files, 44 Zustand stores)
 - ✅ Legacy JS remains as 5 compact boundary shells, not business logic centers
 - ❄️ Markers remain canonical line-sync backbone
 - ❄️ Word sync is additive overlay, never replaces line backbone
@@ -154,7 +154,7 @@ CONTOUR C: App Runtime (Where A + B Meet)
 
 | Domain | Runtime Authority | Mirrors/Consumers | Key Files | Status |
 |--------|------------------|-------------------|-----------|--------|
-| Audio transport | ✅ `AudioEngineV2` | `audio.store`, bridges | `AudioEngineV2.ts`, `patchV1.ts` | ❄️ Frozen |
+| Audio transport | ✅ `EngineV3` (через V2Adapter → `AudioEngineV2` ❄️) | `audio.store`, bridges | `TransportV3.ts`, `V2Adapter.ts` | ❄️ Frozen (V2 core) |
 | Volume authority | ⚠️ W4a migration: `instrumentalVolume` and `vocalsVolume` removed from `audio.store`. All per-stem volumes now in `useStemStore.stemVolumes`. The 2-stem volume model is DEPRECATED in code. See `n-stem-architecture.md` for current volume authority. |
 | Master clock | ✅ Instrumental stem | All time consumers | `AudioEngineV2.ts:371-373` | ❄️ Frozen |
 | Track load | ✅ `track.orchestrator` | `track.actions` entry | `track.orchestrator.ts` | ❄️ Frozen |
@@ -198,7 +198,7 @@ src/
 │   │   └── patchV1.ts          ← Identity preservation: V1 object → V2 methods
 │   ├── featureFlag.ts          ← tryActivateV2()
 │
-├── bridges/                    ← PERMANENT synchronization fabric (18+ files)
+├── bridges/                    ← 4 файла (19/22 retired → EventBus wrappers)
 │   ├── audio.bridge.ts         ← State mirror + optimistic seek
 │   ├── audio-reactive.bridge.ts← Frequency analysis → CSS vars
 │   ├── blocks.bridge.ts        ← Legacy LD blocks → store mirror
@@ -229,7 +229,7 @@ src/
 │   ├── upload.actions.ts       ← Upload UI actions
 │   └── cover-art.service.ts    ← Cover art fetch + blob persist + theme extraction
 │
-├── stores/                     ← 27 Zustand stores
+├── stores/                     ← ~44 Zustand stores
 │   ├── audio.store.ts          ← Playback state mirror
 │   ├── lyrics.store.ts         ← Lines + activeLineIndex
 │   ├── markers.store.ts        ← Markers + sections

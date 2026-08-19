@@ -3,11 +3,11 @@
   "default_agent": "007",
   "instructions": ["AGENTS.md"],
   "agent": {
-    "001": { "model": "opencode-go/glm-5.2" },
-    "002": { "model": "opencode-go/glm-5.1" },
-    "005": { "model": "opencode-go/glm-5.2" },
-    "008": { "model": "opencode-go/mimo-v2.5" },
-    "009": { "model": "opencode-go/kimi-k2.6" },
-    "operator": { "model": "opencode-go/deepseek-v4-flash-free" }
+    "001": { "model": "opencode-go/kimi-k3" },
+    "002": { "model": "opencode-go/kimi-k3" },
+    "005": { "model": "opencode-go/kimi-k3" },
+    "008": { "model": "opencode/mimo-v2.5-free" },
+    "009": { "model": "opencode-go/kimi-k3" },
+    "operator": { "model": "opencode/deepseek-v4-flash-free" }
   }
 }

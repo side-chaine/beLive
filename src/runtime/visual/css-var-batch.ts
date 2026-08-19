@@ -46,11 +46,20 @@ export function flushQueuedCssVars(target?: HTMLElement): void {
 }
 
 /**
- * Clear all queued CSS variables without writing to DOM.
+ * Clear queued CSS variables without writing to DOM.
  * Use when aborting a batch (e.g., track change cleanup).
+ * Если указан namespace — очищает только переменные с префиксом --bl-{namespace}-
+ * (защита от cross-bridge contamination).
  */
-export function clearQueuedCssVars(): void {
-  queue.clear();
+export function clearQueuedCssVars(namespace?: string): void {
+  if (namespace) {
+    const prefix = `--bl-${namespace}-`;
+    for (const key of queue.keys()) {
+      if (key.startsWith(prefix)) queue.delete(key);
+    }
+  } else {
+    queue.clear();
+  }
 }
 
 /**

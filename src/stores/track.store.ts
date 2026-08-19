@@ -21,12 +21,20 @@ export interface TrackState {
   currentCoverTheme: CoverArtTheme | null;
   hasBlockScenes: boolean;
 
+  // ADDITIVE: новые поля
+  _loadingTrackId: string | null;
+  _lastLoadError: string | null;
+
   setTracksMeta: (t: TrackMeta[]) => void;
   setCurrentTrack: (t: TrackMeta | null) => void;
   setCurrentTrackIndex: (i: number) => void;
   removeTrack: (id: string) => void;
   setCurrentCoverTheme: (theme: CoverArtTheme | null) => void;
   setHasBlockScenes: (v: boolean) => void;
+
+  // ADDITIVE: новые actions
+  setLoadingTrackId: (id: string | null) => void;
+  setLastLoadError: (err: string | null) => void;
 }
 
 export const useTrackStore = create<TrackState>((set) => ({
@@ -35,6 +43,8 @@ export const useTrackStore = create<TrackState>((set) => ({
   currentTrackIndex: -1,
   currentCoverTheme: null,
   hasBlockScenes: false,
+  _loadingTrackId: null,
+  _lastLoadError: null,
 
   setTracksMeta: (t) => set({ tracksMeta: t }),
   setCurrentTrack: (t) => set({ currentTrack: t }),
@@ -57,4 +67,14 @@ export const useTrackStore = create<TrackState>((set) => ({
       currentTrackIndex: nextIndex,
     };
   }),
+
+  // ADDITIVE: новые actions
+  setLoadingTrackId: (id) => set({ _loadingTrackId: id }),
+  setLastLoadError: (err) => set({ _lastLoadError: err }),
 }));
+
+// ---- ADDITIVE: новые селекторы ----
+export const useCurrentTrackId = () => useTrackStore(s => s.currentTrack?.id ?? null)
+export const useCurrentTrackTitle = () => useTrackStore(s => s.currentTrack?.title ?? '')
+export const useTrackCount = () => useTrackStore(s => s.tracksMeta.length)
+export const useHasTrack = () => useTrackStore(s => s.currentTrack !== null)

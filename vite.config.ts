@@ -173,7 +173,7 @@ export default defineConfig({
   ],
 
   optimizeDeps: {
-    exclude: ['@libraz/libsonare'],
+    exclude: ['@libraz/libsonare', 'signalsmith-stretch'],
   },
 
   server: {

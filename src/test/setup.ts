@@ -130,6 +130,9 @@ Object.defineProperty(window, 'devicePixelRatio', {
   writable: true,
 });
 
+// Mock AudioWorkletNode больше не нужен — SoundTouch грузится динамически
+// (см. PitchNode.ts: import внутри ensureSoundTouchRegistered, не static top-level)
+
 // Mock navigator properties for performance detection
 Object.defineProperty(navigator, 'hardwareConcurrency', {
   value: 4,

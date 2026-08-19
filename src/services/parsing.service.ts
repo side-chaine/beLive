@@ -440,7 +440,7 @@ export function sanitizeBlocks(blocks: unknown[], lyricsLength: number): ParsedB
     if (filtered > 0) {
       console.warn(`[ZIP-DIAG] sanitizeBlocks: ${filtered}/${total} blocks filtered. ${result.length} remain. lyricsLength=${lyricsLength}`);
       result.slice(0, 2).forEach((b, i) => {
-        console.log(`[ZIP-DIAG] sanitized block[${i}]:`, JSON.stringify({ id: b.id, name: b.name, lines: b.lineIndices.length, type: b.type }));
+        if (import.meta.env.DEV) console.log(`[ZIP-DIAG] sanitized block[${i}]:`, JSON.stringify({ id: b.id, name: b.name, lines: b.lineIndices.length, type: b.type }));
       });
     }
   }

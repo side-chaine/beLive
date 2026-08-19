@@ -87,14 +87,28 @@ export function VolumeControls() {
     const ae = (window as any).audioEngine;
     if (!ae) return;
     if (vocalMix) ae.disableVocalMix();
-    else ae.enableVocalMix();
+    else {
+      const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+      if (engineMode === 'v3') {
+        // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
+        return;
+      }
+      ae.enableVocalMix();
+    }
   }, [vocalMix]);
 
   const toggleMic = useCallback(() => {
     const ae = (window as any).audioEngine;
     if (!ae) return;
     if (mic) ae.disableMicrophone();
-    else ae.enableMicrophone();
+    else {
+      const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+      if (engineMode === 'v3') {
+        // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
+        return;
+      }
+      ae.enableMicrophone();
+    }
   }, [mic]);
 
   return (

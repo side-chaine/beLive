@@ -21,6 +21,12 @@ interface UserProfileStoreState extends UserState {
   isReturning: boolean;
   userName: string;
   userAvatar: string;
+
+  // ADDITIVE: app surface state (migrated from appStore)
+  surface: 'welcome' | 'app' | 'profile';
+  authChecked: boolean;
+  setSurface: (s: 'welcome' | 'app' | 'profile') => void;
+  setAuthChecked: (v: boolean) => void;
   
   // Actions
   createProfile: (name: string, emoji: string, isGuest?: boolean) => UserProfile;
@@ -57,6 +63,8 @@ const initialState = {
   userAvatar: '🎤',
   catalogOnboardingComplete: false,
   onboardingProgress: { step1Done: false, step2Done: false, activeStep: 1 },
+  surface: 'welcome' as const,
+  authChecked: false,
 };
 
 export const useUserProfileStore = create<UserProfileStoreState>()(
@@ -171,6 +179,10 @@ export const useUserProfileStore = create<UserProfileStoreState>()(
           },
         };
       }),
+
+    // ADDITIVE: app surface state (migrated from appStore)
+    setSurface: (surface) => set({ surface }),
+    setAuthChecked: (authChecked) => set({ authChecked }),
   }), {
     name: 'belive:user-profile',
     version: 2,

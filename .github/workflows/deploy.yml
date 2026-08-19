@@ -29,6 +29,9 @@ jobs:
       - name: Test
         run: npm test -- --run
 
+      - name: Verify EventBus + Bridge Parity
+        run: npm run verify:ci
+
       - name: Build
         run: npm run build
         env:

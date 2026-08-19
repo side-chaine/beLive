@@ -134,7 +134,7 @@ function _getDB(): Promise<IDBDatabase> {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
 
     req.onupgradeneeded = (e) => {
-      console.log(`[IDB] Upgrade: v${e.oldVersion} → v${e.newVersion}`);
+      if (import.meta.env.DEV) console.log(`[IDB] Upgrade: v${e.oldVersion} → v${e.newVersion}`);
       const db = (e.target as IDBOpenDBRequest).result;
       if (!db.objectStoreNames.contains('tracks')) {
         const s = db.createObjectStore('tracks', { keyPath: 'id' });
@@ -162,7 +162,7 @@ function _getDB(): Promise<IDBDatabase> {
 
 
 
-      console.log('[IDB] Upgrade complete, stores:', [...db.objectStoreNames]);
+      if (import.meta.env.DEV) console.log('[IDB] Upgrade complete, stores:', [...db.objectStoreNames]);
     };
 
     req.onsuccess = () => {
@@ -390,13 +390,13 @@ function _getScenesDB(): Promise<IDBDatabase> {
     const req = indexedDB.open(SCENES_DB_NAME, SCENES_DB_VERSION);
 
     req.onupgradeneeded = (e) => {
-      console.log(`[ScenesDB] Upgrade: v${e.oldVersion} → v${e.newVersion}`);
+      if (import.meta.env.DEV) console.log(`[ScenesDB] Upgrade: v${e.oldVersion} → v${e.newVersion}`);
       const db = (e.target as IDBOpenDBRequest).result;
       if (!db.objectStoreNames.contains('custom_backgrounds')) {
         const store = db.createObjectStore('custom_backgrounds', { keyPath: 'id' });
         store.createIndex('trackId', 'trackId', { unique: false });
       }
-      console.log('[ScenesDB] Stores:', [...db.objectStoreNames]);
+      if (import.meta.env.DEV) console.log('[ScenesDB] Stores:', [...db.objectStoreNames]);
     };
 
     req.onsuccess = () => {

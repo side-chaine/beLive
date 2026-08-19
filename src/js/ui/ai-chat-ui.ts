@@ -209,12 +209,12 @@ export class AIChatUI {
   }
 
   public toggleChat(): void {
-    console.log('💬 AIChatUI: toggleChat called.');
+    if (import.meta.env.DEV) console.log('💬 AIChatUI: toggleChat called.');
     this.isOpen ? this.closeChat() : this.openChat();
   }
 
   public openChat(): void {
-    console.log('💬 AIChatUI: openChat called.');
+    if (import.meta.env.DEV) console.log('💬 AIChatUI: openChat called.');
     PerformanceMonitor.measureChatOpen();
     this.isOpen = true;
     this.chatWindow.classList.add('active');
@@ -238,7 +238,7 @@ export class AIChatUI {
   }
 
   public closeChat(): void {
-    console.log('💬 AIChatUI: closeChat called.');
+    if (import.meta.env.DEV) console.log('💬 AIChatUI: closeChat called.');
     this.isOpen = false;
     this.chatWindow.classList.remove('active');
     this.chatWindow.classList.add('hidden');

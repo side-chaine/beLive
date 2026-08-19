@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { useModeStore } from '../stores/mode.store';
 import { usePianoStore } from '../stores/piano.store';
 import { useMonitorStore } from '../stores/monitor.store';
-import { requestOpenSync } from '../sync/bridge/sync.bridge';
+import { useSyncStore } from '../sync/store/sync.store';
 
 
 const MODE_COLORS: Record<string, string> = {
@@ -18,7 +18,7 @@ export function ControlPanel() {
 
   const onMonitor = useCallback(() => useMonitorStore.getState().toggleOpen(), []);
   const togglePiano = usePianoStore(s => s.togglePiano);
-  const onSync    = useCallback(() => { requestOpenSync(); }, []);
+  const onSync    = useCallback(() => { useSyncStore.getState().openSync(); }, []);
 
   const handleBlockEditor = useCallback(() => {
     const w = window as any;

@@ -2,6 +2,9 @@ import React, { useCallback, useRef } from 'react';
 import { useAudioStore } from '../stores/audio.store';
 import { useModeStore } from '../stores/mode.store';
 import { interruptPracticeSession } from '../exercises/exercise.interruption';
+import { V2Adapter, getTransport, getStatePublisher } from '../audio/engine-v3';
+import { eventBus } from '../foundation/event-bus/event-bus';
+import { EventBusChannel } from '../foundation/event-bus/types';
 
 const MODE_COLORS: Record<string, string> = {
   concert: '#3498db',
@@ -30,13 +33,27 @@ export function TransportBar() {
     (e: React.MouseEvent<HTMLDivElement>) => {
       // Interrupt practice first if active, then seek
       interruptPracticeSession(() => {
-        const ae = (window as any).audioEngine;
-        if (!ae || !trackRef.current || duration === 0) return;
+        if (!trackRef.current || duration === 0) return;
         const rect = trackRef.current.getBoundingClientRect();
         const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         const newTime = ratio * duration;
-        ae.setCurrentTime(newTime);
-        useAudioStore.setState({ currentTime: newTime });
+        const transport = getTransport();
+        if (transport && transport.state !== 'idle' && ((window as any).__v3Active || transport.orchestrator.all().length > 0)) {
+          // V3 path — seek + publish через publisher (обновляет _lastPublishedTime!)
+          // eventBus.publish НЕ используем — publisher.publishSeek() сам публикует событие
+          void transport.seek(newTime);
+          getStatePublisher()?.publishSeek(newTime, duration);
+        } else {
+          // V2 fallback — байт-идентичен оригиналу (001 требование)
+          // eventBus.publish тут ОСТАЁТСЯ — position-sync.seekSub подписан на него
+          try {
+            V2Adapter.getInstance().delegateSync('seekTo', newTime)
+            eventBus.publish(EventBusChannel.Audio, 'seek-position-changed', {
+              currentTime: newTime, duration,
+            })
+            useAudioStore.setState({ currentTime: newTime });
+          } catch {}
+        }
       });
     },
     [duration]

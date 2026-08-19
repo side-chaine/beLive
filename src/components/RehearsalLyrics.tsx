@@ -4,8 +4,8 @@ import { useLyricsStore } from '../stores/lyrics.store';
 import { useBlocksStore, type TextBlock } from '../stores/blocks.store';
 import { useLoopStore } from '../stores/loop.store';
 import { useTextStyleStore } from '../stores/textStyle.store';
-import { useWordSyncStore } from '../stores/wordSync.store';
 import { useMarkersStore } from '../stores/markers.store';
+import { hasUsableWordSync } from '../sync/selectors/word-selectors';
 import { useTrackStore } from '../stores/track.store';
 import { usePlateStore } from '../stores/plate.store';
 import { useAudioStore } from '../stores/audio.store';
@@ -495,7 +495,7 @@ export function RehearsalLyrics() {
             && measurement.containerHeight > 0
             && measurement.nextBlockId === expectedId;
 
-          console.log('[PS Travel] Trigger fired', {
+          if (import.meta.env.DEV) console.log('[PS Travel] Trigger fired', {
             nextBlockId: nextBlock?.id,
             isLastSub,
             expectedMeasureId: expectedId,
@@ -536,7 +536,7 @@ export function RehearsalLyrics() {
 
             setPsOverlayTop(clampedTarget);
 
-            console.log('[PS Travel] Unified L2', {
+            if (import.meta.env.DEV) console.log('[PS Travel] Unified L2', {
               transitionType: isLastSub ? 'block→block' : 'subblock→subblock',
               containerHeight: measurement.containerHeight,
               contentHeight: measurement.contentHeight,
@@ -554,7 +554,7 @@ export function RehearsalLyrics() {
                 ? rootRect.top + rootRect.height / 2 - lineH / 2
                 : window.innerHeight / 2 - lineH / 2
             );
-            console.log('[PS Travel] Fallback — no valid measurement');
+            if (import.meta.env.DEV) console.log('[PS Travel] Fallback — no valid measurement');
           }
         }
       }
@@ -834,7 +834,7 @@ export function RehearsalLyrics() {
                     data-word-fx-mode={isActive ? wordFxMode : undefined}
                     data-reactive-words={
                       isActive && !slot.isPreview 
-                        && useWordSyncStore.getState().hasUsableWordSyncForLine(slot.lineIndex) 
+                        && hasUsableWordSync(slot.lineIndex) 
                         ? 'true' : undefined
                     }
                     data-line-next={isNext ? 'true' : undefined}
@@ -933,7 +933,7 @@ export function RehearsalLyrics() {
                   data-active={li === activeLineIndex}
                   data-block-type={displayBlock.type}
                   data-word-fx-mode={li === activeLineIndex ? wordFxMode : undefined}
-                  data-reactive-words={li === activeLineIndex && useWordSyncStore.getState().hasUsableWordSyncForLine(li) ? 'true' : undefined}
+                  data-reactive-words={li === activeLineIndex && hasUsableWordSync(li) ? 'true' : undefined}
                   data-line-next={li === nextLineIndexInBlock ? 'true' : undefined}
                   data-line-next-level={li === nextLineIndexInBlock ? lineNextLevel : undefined}
                   style={{
@@ -1046,7 +1046,7 @@ export function RehearsalLyrics() {
             className={styles.line}
             data-active={i === activeLineIndex}
             data-word-fx-mode={i === activeLineIndex ? wordFxMode : undefined}
-            data-reactive-words={i === activeLineIndex && useWordSyncStore.getState().hasUsableWordSyncForLine(i) ? 'true' : undefined}
+            data-reactive-words={i === activeLineIndex && hasUsableWordSync(i) ? 'true' : undefined}
             style={getInactiveLineStyle(lineOthersLevel)}
           >
             {wordFocusLevel === 'off' ? (

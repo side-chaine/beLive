@@ -126,6 +126,15 @@ export class LyricsService {
     try {
       document.dispatchEvent(new CustomEvent('lyrics-rendered'));
     } catch (_) { /* ignore */ }
+    // M1-2 (342, расширение): публикуем в EventBus — EventBus-подписчики
+    // (lyrics-events, blocks-events) ждут это событие для наполнения
+    // useLyricsStore.lines (React-плашка текста) и TrackMap.
+    // В V2-режиме мост document→EventBus существовал; при No-Birth его нет.
+    try {
+      void import('../foundation/event-bus').then(({ SyncBus }) => {
+        SyncBus.lyricsRendered();
+      });
+    } catch (_) { /* ignore */ }
   }
 
   setActiveLine(index: number, force = false): void {

@@ -50,7 +50,7 @@ export function prepareWordSyncLayer(
   // PERF DIAG: granular timing to find the 137s bottleneck
   const _t0 = performance.now();
   if (import.meta.env.DEV) {
-    console.log(`[WordSync] input sizes: displayLyrics=${displayLyrics.length}, hashSource=${hashSourceLyrics.length}`);
+    if (import.meta.env.DEV) console.log(`[WordSync] input sizes: displayLyrics=${displayLyrics.length}, hashSource=${hashSourceLyrics.length}`);
   }
 
   const { lineMap } = buildLineMap(displayLyrics);

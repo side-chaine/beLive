@@ -1,7 +1,7 @@
 # 📄 SHOW — Архитектурный документ beLive
 
-**Версия:** 2.2  
-**Дата:** 2026-06-03  
+**Версия:** 2.3  
+**Дата:** 2026-07-17 (quick-fix: store split)  
 **Статус:** ✅ MVP реализован  
 **Based on:** Sub-Slide model  
 **Архитекторы:** Центр_30.1, Центр_31, Центр_31.1, 007_32
@@ -171,72 +171,28 @@ export type SlideColor = typeof SLIDE_COLORS[number];
 
 ---
 
-# §6. Store
+# §6. Store (Split Model)
 
-**Файл:** `src/stores/show.store.ts`
+> **Update 2026-07-18:** Store разделён на 3 файла. `useShowStore` — deprecated alias.
 
-```typescript
-interface ShowState {
-  // Режим
-  activeMode: ShowMode;           // 'entry' | 'scenario'
-  // Сценарий
-  scenario: ShowScenario;
-  activePointIndex: number;
-  activeStepIndex: number;
-  // Feature state
-  featureActive: boolean;
-  activeFeatureId: string | null;
-  featureSourceStepId: string | null;
-  _featureSnapshot: FeatureSnapshot | null;
-  // Sub-Slide
-  activeSubSlideIndex: number;
-  activeBulletIndex: number;
-  featureTransition: boolean;        // заглушка для Фазы 2
-  featureTransitionLabel: string | null;
-  // Presentation
-  isPresenting: boolean;
-  showSlide: boolean;
-  dockPosition: { x: number; y: number };
-  // Guards
-  scenarioComplete: boolean;
-  // Actions
-  openScenario / closeScenario
-  updateTitle
-  addPoint / removePoint / updatePoint / movePoint
-  addStep / removeStep / updateStep / moveStep
-  nextStep / prevStep / nextPoint / prevPoint
-  activateFeature / deactivateFeature
-  startPresentation / stopPresentation / toggleSlide
-  setDockPosition
-  save / load (persistence)
-  nextScreen / prevScreen
-  getCurrentScreenInfo
-}
-
-export type ScreenInfo =
-  | {
-      type: 'subslide';
-      subSlideIndex: number;
-      totalSubSlides: number;
-      bulletIndex: number;
-      totalBullets: number;
-      isFirst: boolean;
-      isLast: boolean;
-      screenNumber: number;
-      totalScreens: number;
-      stepIndex: number;
-      totalSteps: number;
-      pointIndex: number;
-      totalPoints: number;
-    }
-  | {
-      type: 'legacy';
-      stepIndex: number;
-      totalSteps: number;
-      pointIndex: number;
-      totalPoints: number;
-    };
 ```
+show.store.ts (6 строк, barrel)
+├── re-export useShowEditorStore — PRIMARY (753 строк)
+│   └── сценарий, точки, шаги, sub-slides, feature state, флаги
+└── re-export useShowPresentationStore — RESERVE (60 строк, 0 consumers)
+    └── presentation state: isPresenting, showSlide, dockPosition
+```
+
+**Ключевые поля и их расположение:**
+
+| Поле | Где | Примечание |
+|:-----|:----|:-----------|
+| `activeMode`, `scenario`, `activePointIndex`, `activeStepIndex` | editor store | Основные |
+| `featureActive`, `activeFeatureId`, `featureSourceStepId` | editor store | Feature state |
+| `activeSubSlideIndex`, `activeBulletIndex`, `featureTransition` | editor store | Sub-slide |
+| `isPresenting`, `showSlide`, `dockPosition` | editor store | Временно здесь, target = presentation store |
+| `scenarioComplete` | editor store | Guard |
+| `startPresentation/stopPresentation/toggleSlide/setDockPosition` | editor store | Дублируется с presentation store |
 
 **Инварианты:**
 - `featureActive === true` → `activeMode === 'scenario'`
@@ -449,7 +405,9 @@ deactivateFeature()
 | Файл | Назначение |
 |------|-----------|
 | `src/types/show.types.ts` | Типы данных (ShowScenario, ShowPoint, ShowStep, FeatureAction) |
-| `src/stores/show.store.ts` | Zustand store + auto-save + dockPosition + presentation state |
+| `src/stores/show.store.ts` | Barrel (re-export useShowEditorStore + useShowPresentationStore) |
+| `src/stores/show-editor.store.ts` | **Primary** — сценарий, точки, шаги, sub-slides, feature state |
+| `src/stores/show-presentation.store.ts` | **Reserve** — presentation state (0 consumers, Phase 2 target) |
 | `src/components/Show/ShowEditor.tsx` | Fullscreen редактор сценария |
 | `src/components/Show/ShowEditor.module.css` | Стили редактора (z-index 999999) |
 | `src/components/Show/StepWorkspace.tsx` | Inline редактор шагов (content + feature) |
@@ -505,7 +463,8 @@ deactivateFeature()
 
 # §12. Frozen-зоны (не трогать)
 
-```
+> **Update 2026-07-17:** Актуальный frozen список — см. `frozen-zones-v2.md`.
+
 ❌ src/audio/core/AudioEngineV2.ts
 ❌ src/audio/compat/patchV1.ts
 ❌ src/bridges/**/*.ts

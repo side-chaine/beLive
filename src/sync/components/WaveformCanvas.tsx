@@ -5,6 +5,11 @@ import { useMarkersStore } from '../../stores/markers.store';
 import { useWaveformRender } from '../hooks/useWaveformRender';
 import { useWaveformViewport } from '../hooks/useWaveformViewport';
 import { findNearestMarker, detectLoopHandle } from '../canvas/hit-testing';
+import { V2Adapter } from '../../audio/engine-v3/V2Adapter';
+import { getTransport, getStatePublisher } from '../../audio/engine-v3';
+import { useLoopStore } from '../../stores/loop.store';
+import { eventBus } from '../../foundation/event-bus/event-bus';
+import { EventBusChannel } from '../../foundation/event-bus/types';
 
 export function WaveformCanvas() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -249,20 +254,17 @@ export function WaveformCanvas() {
 
         if (loopDragRef.current === 'start') {
           loopRef.current.startTime = Math.min(time, loopRef.current.endTime - 0.1);
-          const ae = (window as any).audioEngine;
-          ae?.setLoop?.(loopRef.current.startTime, loopRef.current.endTime);
+          useLoopStore.getState().setRawLoop(loopRef.current.startTime, loopRef.current.endTime);
         } else if (loopDragRef.current === 'end') {
           loopRef.current.endTime = Math.max(time, loopRef.current.startTime + 0.1);
-          const ae = (window as any).audioEngine;
-          ae?.setLoop?.(loopRef.current.startTime, loopRef.current.endTime);
+          useLoopStore.getState().setRawLoop(loopRef.current.startTime, loopRef.current.endTime);
         } else if (loopDragRef.current === 'body') {
           const loopWidth = loopRef.current.endTime - loopRef.current.startTime;
           const newStart = Math.max(0, (x - loopDragOffset.current + scrollLeftRef.current) / zoom);
           if (newStart + loopWidth <= duration) {
             loopRef.current.startTime = newStart;
             loopRef.current.endTime = newStart + loopWidth;
-            const ae = (window as any).audioEngine;
-            ae?.setLoop?.(loopRef.current.startTime, loopRef.current.endTime);
+            useLoopStore.getState().setRawLoop(loopRef.current.startTime, loopRef.current.endTime);
           }
         }
 
@@ -354,7 +356,7 @@ export function WaveformCanvas() {
       // End loop drag
       if (loopDragRef.current) {
         loopDragRef.current = null;
-        console.log('[Sync] loop adjusted:',
+        if (import.meta.env.DEV) console.log('[Sync] loop adjusted:',
           loopRef.current.startTime.toFixed(2), '-',
           loopRef.current.endTime.toFixed(2));
         const container = containerRef.current;
@@ -382,11 +384,11 @@ export function WaveformCanvas() {
                 }
               }
             }
-            console.log(`[Sync] group drag: ${count} markers moved`);
+            if (import.meta.env.DEV) console.log(`[Sync] group drag: ${count} markers moved`);
           } else {
             // SINGLE PERSIST: save one marker
             useMarkersStore.getState().updateMarker(markerId, { time: currentTime });
-            console.log('[Sync] marker', markerId, 'moved to', currentTime.toFixed(2) + 's');
+            if (import.meta.env.DEV) console.log('[Sync] marker', markerId, 'moved to', currentTime.toFixed(2) + 's');
           }
         }
 
@@ -412,29 +414,41 @@ export function WaveformCanvas() {
             const end = Math.max(selectionRef.current.startTime, selectionRef.current.endTime);
             if (end - start > 0.1) {
               loopRef.current = { active: true, startTime: start, endTime: end };
-              const ae = (window as any).audioEngine;
-              ae?.setLoop?.(start, end);
+              useLoopStore.getState().setRawLoop(start, end);
               // Save follow state and disable during loop
               followBeforeLoop.current = useSyncStore.getState().followPlayhead;
               if (useSyncStore.getState().followPlayhead) {
                 useSyncStore.getState().toggleFollow();
               }
-              console.log('[Sync] loop created:', start.toFixed(2), '-', end.toFixed(2));
+              if (import.meta.env.DEV) console.log('[Sync] loop created:', start.toFixed(2), '-', end.toFixed(2));
             }
             selectionRef.current = { active: false, startTime: 0, endTime: 0 };
             selectedMarkerIds.current.clear();
           } else {
             const count = selectedMarkerIds.current.size;
             if (count > 0) {
-              console.log('[Sync] selected', count, 'markers');
+              if (import.meta.env.DEV) console.log('[Sync] selected', count, 'markers');
             }
           }
         } else {
-          // Simple click → seek
+          // Simple click → seek (via V2Adapter)
           const clickTime = mouseDownRef.current.time;
           const clampedTime = Math.max(0, Math.min(clickTime, duration));
-          const ae = (window as any).audioEngine;
-          if (ae?.setCurrentTime) ae.setCurrentTime(clampedTime);
+          try {
+            // M2 (2a): в V3-режиме seek идёт через TransportV3, не через V2Adapter (который блокируется)
+            const t3 = getTransport()
+            const v3Active = (window as any).__v3Active || (t3 && t3.state !== 'idle')
+            if (v3Active && t3) {
+              void t3.seek(clampedTime)
+              getStatePublisher()?.publishSeek(clampedTime, t3.duration)
+            } else {
+              V2Adapter.getInstance().delegateSync('seekTo', clampedTime)
+            }
+            // Публикуем seek-position-changed ТОЛЬКО после успешного seek
+            eventBus.publish(EventBusChannel.Audio, 'seek-position-changed', {
+              currentTime: clampedTime, duration,
+            })
+          } catch {}
 
           // Clear selection
           selectionRef.current = { active: false, startTime: 0, endTime: 0 };
@@ -465,7 +479,7 @@ export function WaveformCanvas() {
         }
         selectedMarkerIds.current.clear();
         selectionRef.current = { active: false, startTime: 0, endTime: 0 };
-        console.log('[Sync] deleted', ids.length, 'selected markers');
+        if (import.meta.env.DEV) console.log('[Sync] deleted', ids.length, 'selected markers');
         draw();
         return;
       }
@@ -473,7 +487,7 @@ export function WaveformCanvas() {
       // Single select: delete last clicked
       const id = lastClickedMarkerRef.current || hoverMarkerRef.current;
       if (!id) {
-        console.log('[Sync] no marker selected to delete');
+        if (import.meta.env.DEV) console.log('[Sync] no marker selected to delete');
         return;
       }
 
@@ -483,7 +497,7 @@ export function WaveformCanvas() {
       lastClickedMarkerRef.current = null;
       hoverMarkerRef.current = null;
       selectedMarkerRef.current = null;
-      console.log('[Sync] deleted marker', id);
+      if (import.meta.env.DEV) console.log('[Sync] deleted marker', id);
       draw();
     };
     return () => { delete (window as any).__syncDeleteMarker; };
@@ -493,13 +507,12 @@ export function WaveformCanvas() {
   useEffect(() => {
     (window as any).__syncClearLoop = () => {
       loopRef.current = { active: false, startTime: 0, endTime: 0 };
-      const ae = (window as any).audioEngine;
-      ae?.clearLoop?.();
+      useLoopStore.getState().clearLoop();
       // Restore follow state
       if (followBeforeLoop.current && !useSyncStore.getState().followPlayhead) {
         useSyncStore.getState().toggleFollow();
       }
-      console.log('[Sync] loop cleared, follow restored');
+      if (import.meta.env.DEV) console.log('[Sync] loop cleared, follow restored');
       draw();
     };
     (window as any).__syncHasLoop = () => loopRef.current.active;

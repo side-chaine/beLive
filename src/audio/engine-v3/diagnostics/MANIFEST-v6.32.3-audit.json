@@ -1,0 +1,25 @@
+{
+  "manifest": "MANIFEST-v6.32.3-audit",
+  "scriptVersion": "v6.32.3-audit",
+  "file": "run-impulse-diagnostics-v6.32.3-audit.console.js",
+  "sha256": "e361e3d333a0b80f6fb61e4f124fb95ac243b390b33a5998a8188082581e8743",
+  "sha12": "e361e3d333a0",
+  "base": "run-impulse-diagnostics-v6.32.2.console.js (SHA 4f78aa8568a499a2e39e7bb3d17e63bf103317fa518af67c49ea8277b35e6908)",
+  "commit": "aef5d7ef8119f36eb6ae59239e62c5f92b5883c7",
+  "branch": "067-e-regime-0",
+  "experimentId": "phase-plus-energy-profile-v6.32.3-audit",
+  "trackId": "1783197557717",
+  "date": "2026-08-04",
+  "reason": "Sol_3 решение 135: схема v6.32.3-audit APPROVED WITH CONDITIONS (C1-C4 observability-only). C1: lossless raw window для SSO-candidate (B3: onset===2334 && support===clickLen) + delay-0 matched pool; digest НЕ в harness — W3-VERIFIER-v3 считает node sha256 LE из samples. C2: vendorProcessCount число c units или 'UNAVAILABLE' (silent null запрещён) + vendorState[]. C3: coordinate origin/convention. C4: T0 deliberate early (до waitMs), T1-T3 = declaredLatency + 300/600/1200 ms, elapsedMs от tStartMs. matched-row policy по Sol_3 §2: PRIMARY same-clickLen + nearest delay + protocol position, fallback rowIndex+100, NO_MATCH.",
+  "observabilityOnly": [
+    "readWindow.result: redacted=false + samples lossless для trigger rows (SSO-candidate, matched-pool); redacted=true для остальных (C1)",
+    "vendorProcessCount: {value, units:'process calls'} или 'UNAVAILABLE'; vendorState[] (C2)",
+    "rpcRecs.readPoints: {declaredLatencyMs, T0-T3 c elapsedMs от tStartMs} (C4)",
+    "metadata.commit = aef5d7ef8119f36eb6ae59239e62c5f92b5883c7 (baseline прогона, vendor 55c227ae)",
+    "log/filename prefix [v6.32.3-audit] / impulse-v6.32.3-audit-"
+  ],
+  "acceptanceUnchanged": "да — verdict/классификация/coverage/seek algebra/checkpoint не тронуты (diff observability-only подтверждён 007)",
+  "nodeCheck": "PASS",
+  "verifiedBy": "007",
+  "status": "PREPARED — GO на выполнение НЕ выдан (Sol_3: прогон только после explicit execution GO; verifier-v3 против нового schema PASS на fixtures, fail-closed на старой схеме)"
+}
