@@ -75,3 +75,14 @@ research/
 # Internal agent docs
 docs/agents/
 belive-api/
+
+# ─── Win11/WSL2 migration (Opus_5 362 §3 Блокер 3) ───
+# Внутренние отчёты трека — не для публичного репозитория
+/docs/agents-hub/
+/[0-9][0-9][0-9]-*.md
+/CONTEXT-007.md
+/MICRO-PACK-*
+/MACRO-PACK_*
+AGENT_202_WASM_CRASH_BRIEF.md
+DECISION-LOG.md
+RUN-1-EXECUTION-PACKAGE-PHASE2.md
