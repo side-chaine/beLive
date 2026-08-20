@@ -45,6 +45,11 @@ export class TransportV3 extends EventTarget {
   /** 🆕 кэш — защита от duration=0 при переключении треков */
   private _lastTrackDuration = 0;
 
+  /** 369: loop-состояние для V3StatePublisher (эмит loopcompleted) */
+  get loopEnabled(): boolean { return this.clock.loopEnabled; }
+  get loopStart(): number { return this.clock.loopStart; }
+  get loopEnd(): number { return this.clock.loopEnd; }
+
   constructor(ctx: AudioContext, masterClockStemId: string) {
     super();
     this.ctx = ctx;
@@ -123,7 +128,6 @@ export class TransportV3 extends EventTarget {
    * was a wasted schedule-then-cancel round trip for something that has a direct fix.
    */
   async play(initialOffset?: number): Promise<void> {
-    console.trace('[TRACE-PLAY]')
     if (this._state === 'idle' || this._state === 'ended') {
       this.clock.seek(initialOffset ?? 0);
       this._setState('ready');
@@ -165,7 +169,6 @@ export class TransportV3 extends EventTarget {
   }
 
   async pause(): Promise<void> {
-    console.trace('[TRACE-PAUSE]')
     if (this._state !== 'playing') return;
     // 🔥 Flush Guard: применяем зависший rate ДО остановки источников
     this._rateThrottler.flush()
@@ -252,6 +255,12 @@ export class TransportV3 extends EventTarget {
     // M2 (2b): clock тоже знает loop-границы — плейхэд заворачивается (а не растёт мимо loopEnd)
     this.clock.setLoop(start, end)
     if (this._state === 'playing') await this.seek(this.clock.getCurrentTime());
+    // 369: V2→V3 parity — loop-set (V2: AudioEngineV2.ts:1307)
+    if (typeof document !== 'undefined') {
+      document.dispatchEvent(new CustomEvent('loop-set', {
+        detail: { startTime: start, endTime: end },
+      }));
+    }
   }
 
   clearLoop(): void {
@@ -263,6 +272,12 @@ export class TransportV3 extends EventTarget {
     // M2 (2b): сброс wrap-логики в clock
     this.clock.clearLoop()
     if (this._state === 'playing') void this.seek(resyncTime)
+    // 369: V2→V3 parity — loop-cleared (V2: AudioEngineV2.ts:1319)
+    if (typeof document !== 'undefined') {
+      document.dispatchEvent(new CustomEvent('loop-cleared', {
+        detail: { time: resyncTime, wasActive: true },
+      }));
+    }
   }
 
   private _handleTrackEnded(): void {

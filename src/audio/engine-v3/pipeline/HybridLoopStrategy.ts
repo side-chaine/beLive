@@ -10,32 +10,23 @@ export class HybridLoopStrategy {
   private _loopActive = false
   private _loopStart = 0
   private _loopEnd = 0
-  // Sonnet: диагностика гонки setLoop/clearLoop
-  private _loopGen = 0
 
   constructor(stretchPool: StretchInstancePool) {
     this._stretchPool = stretchPool
   }
 
   async setLoop(start: number, end: number): Promise<void> {
-    const gen = ++this._loopGen
-    console.log(`[LoopTrace] setLoop(${start.toFixed(2)},${end.toFixed(2)}) gen=${gen} START`)
     this._loopActive = true
     this._loopStart = start
     this._loopEnd = end
     // Bus A: native signalsmith loop (fire-and-forget)
     await this._stretchPool.scheduleLoopAll(start, end)
-    console.log(`[LoopTrace] setLoop gen=${gen} DONE, current=${this._loopGen}`)
   }
 
   clearLoop(): void {
-    const gen = ++this._loopGen
-    console.log(`[LoopTrace] clearLoop() gen=${gen} START`)
     this._loopActive = false
     // M2 (Корень B): нативный signalsmith loop тоже снимаем — иначе звук зациклен после clear
-    this._stretchPool.scheduleLoopNoneAll().then(() =>
-      console.log(`[LoopTrace] clearLoop gen=${gen} DONE, current=${this._loopGen}`)
-    )
+    this._stretchPool.scheduleLoopNoneAll()
   }
 
   get isActive(): boolean { return this._loopActive }
