@@ -11,7 +11,7 @@ export function setAudioContext(ctx: AudioContext): void {
 
 export function getAudioContext(): AudioContext {
   if (!_ctx) {
-    _ctx = new (window.AudioContext || (window as any).webkitAudioContext)({ latencyHint: 'playback' });
+    _ctx = new (window.AudioContext || (window as any).webkitAudioContext)({ latencyHint: 'interactive' });
   }
   return _ctx;
 }
