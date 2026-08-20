@@ -146,6 +146,7 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
         const pipeline = (window as any).__belive?.pipeline
         if (pipeline?.setStemVolume) pipeline.setStemVolume(id, current.stemVolumes[id])
         const stem = t3.orchestrator.get(id)
+        // ⚠️ fallback-путь: no-op в V3 (orchestrator пуст, MP-23). Защита гейна — в pipeline single-writer (пак A).
         if (stem) stem.volume = current.stemVolumes[id]
       } else if (isV2) {
         safeDelegate(v2, 'setStemVolume', id, current.stemVolumes[id])
@@ -176,25 +177,7 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
           if (pipeline?.soloStem) pipeline.soloStem(id, current.stemSolos[id])
         }
       }
-      // 🔧 SOLO-RESTORE (баг сессии 24.08): StemChain._applySolo при отжатии
-      // последнего solo ставит ВСЕМ стемам volume=1 (не хранит snapshot до solo).
-      // Переприменяем volume из стора (source of truth): ползунковые значения
-      // возвращаются, активная solo-маска сохраняется, mute учитывается.
-      // ⚠️ БЕЗ stemsEnabled (FR-014): volumes-блок применяет raw (V3 STATE GATE —
-      // stemsEnabled к V3 не применяется), иначе drums/bass гаснут после solo.
-      const pipeline = (window as any).__belive?.pipeline
-      const hasSolo = Object.values(current.stemSolos).some(Boolean)
-      for (const id of Object.keys(current.stemVolumes)) {
-        let vol: number
-        if (hasSolo) {
-          vol = current.stemSolos[id] ? (current.stemVolumes[id] ?? 1) : 0
-        } else {
-          vol = current.stemMutes[id] ? 0 : (current.stemVolumes[id] ?? 1)
-        }
-        if (pipeline?.setStemVolume) pipeline.setStemVolume(id, vol)
-        const stem = t3.orchestrator.get(id)
-        if (stem) stem.volume = vol
-      }
+      // Solo-маска применяется в pipeline (single-writer effectiveGain, пак A) — re-apply не нужен
     } else if (isV2) {
       for (const id of Object.keys(current.stemSolos)) {
         if (current.stemSolos[id] !== prev.stemSolos[id]) {

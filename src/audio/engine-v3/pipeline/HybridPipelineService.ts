@@ -61,6 +61,10 @@ export class HybridPipelineService implements IPipelineController {
   /** Per-stem AnalyserNode для VU-метринга — параллельный тап после _stretchGains,
    *  никогда не в основном сигнальном пути до destination */
   private readonly _stretchMeters: Map<string, AnalyserNode> = new Map()
+  /** Raw volume из UI (не трогается solo/mute) — parity V2._stemVolumes */
+  private readonly _stemRawVolumes: Record<string, number> = {}
+  /** Mute-состояние стема — parity V2._stemMutes */
+  private readonly _stemMuted: Record<string, boolean> = {}
   /** R1: pre-fader vocal hall send — тап от instance.outputNode (ДО stretchGain), только vocals.
    *  Mute/solo/volume (все идут через stretchGain) НЕ влияют на зал. */
   private readonly _vocalHallSend: GainNode
@@ -404,7 +408,7 @@ export class HybridPipelineService implements IPipelineController {
         records.push({
           stemId,
           bus: chain,
-          audible: Math.abs(masterGain) > ROUTE_CHECK_EPSILON,
+          audible: Math.abs(masterGain) > ROUTE_CHECK_EPSILON && this._effectiveGainOf(stemId) > ROUTE_CHECK_EPSILON,
           hasStretchInstance: this._stretchPool.get(stemId)?.isActive === true,
           hasBuffer: stem.getBuffer() !== null,
           gain: stem.volume ?? 1,
@@ -461,24 +465,14 @@ export class HybridPipelineService implements IPipelineController {
   // 067-D: _forceMuteOneBackend удалён — single path не требует force-mute
 
   muteStem(stemId: string, muted: boolean): void {
-    this._chainA.muteStem(stemId, muted)
-    // Bus A stretch gain: ramp + восстановление volume при unmute
-    const sg = this._stretchGains.get(stemId)
-    if (sg) {
-      const stem = this._chainA.stems.get(stemId)
-      this._rampGain(sg, muted ? 0 : (stem?.volume ?? 1))
-    }
+    this._stemMuted[stemId] = muted
+    this._applyEffectiveGain(stemId)
   }
 
-  /** Плавная регулировка громкости стема (для UI fader) */
+  /** Плавная регулировка громкости стема (для UI fader). raw сохраняется; solo/mute применятся автоматически */
   setStemVolume(stemId: string, volume: number): void {
-    // Bus A stretch: stretchGain управляет громкостью
-    const stretchGain = this._stretchGains.get(stemId)
-    if (stretchGain) {
-      this._rampGain(stretchGain, volume)
-    }
-    // Bus A: stem._faderGain
-    this._chainA.setStemVolume(stemId, Math.max(0, Math.min(1, volume)))
+    this._stemRawVolumes[stemId] = Math.max(0, Math.min(1, volume))
+    this._applyEffectiveGain(stemId)
   }
 
   /** Mute/unmute стема для pipeline */
@@ -488,11 +482,8 @@ export class HybridPipelineService implements IPipelineController {
 
   soloStem(stemId: string, soloed: boolean): void {
     this._chainA.soloStem(stemId, soloed)
-    // Bus A stretch gains: синхронизируем с solo состоянием через stem.volume
-    for (const [id, stem] of this._chainA.stems) {
-      const sg = this._stretchGains.get(id)
-      if (sg) this._rampGain(sg, stem.volume)
-    }
+    // Single-writer: пересчитываем ВСЕ гейны по маске
+    for (const id of this._chainA.stems.keys()) this._applyEffectiveGain(id)
   }
 
   /** RMS-уровень (0-1) стема, читается с AnalyserNode-тапа ПОСЛЕ volume+mute+solo (366) */
@@ -531,6 +522,23 @@ export class HybridPipelineService implements IPipelineController {
     g.gain.cancelScheduledValues(now)
     g.gain.setValueAtTime(g.gain.value, now)
     g.gain.linearRampToValueAtTime(v, now + ms / 1000)
+  }
+
+  /** Эффективный гейн стема: 0 при mute или вне solo-маски, иначе raw volume (parity V2._applyEffectiveGain) */
+  private _effectiveGainOf(stemId: string): number {
+    const raw = this._stemRawVolumes[stemId] ?? 1
+    const muted = this._stemMuted[stemId] === true
+    const audible = this._chainA.isStemAudible(stemId)
+    return muted || !audible ? 0 : Math.max(0, Math.min(1, raw))
+  }
+
+  /** ЕДИНСТВЕННЫЙ writer гейна: stretchGain + stem.volume из _effectiveGainOf */
+  private _applyEffectiveGain(stemId: string): void {
+    const target = this._effectiveGainOf(stemId)
+    const sg = this._stretchGains.get(stemId)
+    if (sg) this._rampGain(sg, target)
+    const stem = this._chainA.stems.get(stemId)
+    if (stem) stem.volume = target
   }
 
   /** 🧹 Полный сброс pipeline при смене трека — очистка цепей и WASM */

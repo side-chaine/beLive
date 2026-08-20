@@ -102,6 +102,16 @@ export class StemChain {
     }
   }
 
+  /** Solo-маска активна (есть хотя бы один засолоенный стем) */
+  isSoloActive(): boolean {
+    return this._soloed.size > 0
+  }
+
+  /** Стем слышим: solo-маска не активна ИЛИ стем в маске */
+  isStemAudible(stemId: string): boolean {
+    return this._soloed.size === 0 || this._soloed.has(stemId)
+  }
+
   /** Глобальный mute — 0ms latency (muteGain до DelayNode) */
   setGlobalMute(muted: boolean): void {
     this._muteGain.gain.value = muted ? 0 : 1
