@@ -61,6 +61,11 @@ export class HybridPipelineService implements IPipelineController {
   /** Per-stem AnalyserNode для VU-метринга — параллельный тап после _stretchGains,
    *  никогда не в основном сигнальном пути до destination */
   private readonly _stretchMeters: Map<string, AnalyserNode> = new Map()
+  /** R1: pre-fader vocal hall send — тап от instance.outputNode (ДО stretchGain), только vocals.
+   *  Mute/solo/volume (все идут через stretchGain) НЕ влияют на зал. */
+  private readonly _vocalHallSend: GainNode
+  private _vocalHallTarget: AudioNode | null = null
+  private _vocalHallSource: AudioNode | null = null
   /** Переиспользуемый scratch-буфер для RMS — ноль аллокаций в горячем пути */
   private readonly _meterScratch = new Float32Array(256)
   /** 061-B1: generation counter для switchBackend — старый callback не убивает новый backend */
@@ -74,6 +79,8 @@ export class HybridPipelineService implements IPipelineController {
     this._loopStrategy = new HybridLoopStrategy(this._stretchPool)
     this._outputGain = ctx.createGain()
     this._outputGain.gain.value = 1.0
+    this._vocalHallSend = ctx.createGain()
+    this._vocalHallSend.gain.value = 1.0
 
     // 067-D: single path — только Bus A (stretch)
     this._busAGain = ctx.createGain()
@@ -144,6 +151,15 @@ export class HybridPipelineService implements IPipelineController {
     }
   }
 
+  /** R1: задать цель vocal-hall (router.vocalHallInput). Вызывается из bootAether. */
+  setVocalHallTarget(target: AudioNode | null): void {
+    this._vocalHallTarget = target
+    if (this._vocalHallSend && target) {
+      try { this._vocalHallSend.disconnect() } catch {}
+      this._vocalHallSend.connect(target)
+    }
+  }
+
   async loadStem(stemId: string, buffer: AudioBuffer): Promise<void> {
     // 067-D: single path — только stretch. Bus B не создаём.
     const busAStem = new StemPlayerV3({ id: stemId, ctx: this._ctx })
@@ -165,6 +181,15 @@ export class HybridPipelineService implements IPipelineController {
         const stretchGain = this._ctx.createGain()
         stretchGain.gain.value = 1.0
         instance.outputNode.connect(stretchGain)
+        // R1: pre-fader vocal hall tap (только vocals) — от instance.outputNode ДО stretchGain.
+        // Повторный loadStem того же инстанса (пул переиспользует WASM) — НЕ дублируем connect.
+        if (stemId === 'vocals' && this._vocalHallTarget) {
+          if (this._vocalHallSource !== instance.outputNode) {
+            if (this._vocalHallSource) { try { this._vocalHallSource.disconnect(this._vocalHallSend) } catch {} }
+            instance.outputNode.connect(this._vocalHallSend)
+            this._vocalHallSource = instance.outputNode
+          }
+        }
         stretchGain.connect(this._chainA.mergeGain)
         this._stretchGains.set(stemId, stretchGain)
 
@@ -578,6 +603,9 @@ export class HybridPipelineService implements IPipelineController {
     }
     this._stretchCrashHandlers.clear()
     this._stretchPool.dispose()
+    if (this._vocalHallSend) { try { this._vocalHallSend.disconnect() } catch {} }
+    this._vocalHallTarget = null
+    this._vocalHallSource = null
     this._loopStrategy.dispose()
     try { this._outputGain.disconnect() } catch {}
   }

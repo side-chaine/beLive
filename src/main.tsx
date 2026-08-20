@@ -157,6 +157,7 @@ function bootAether(): void {
         // Topology: pipeline.outputNode → router.programInput → _defaultBranch → destination
         if (router) {
           pipeline.outputNode.connect(router.programInput)
+          pipeline.setVocalHallTarget(router.vocalHallInput)
         }
 
         // Подключаем pipeline к TransportV3 (через IPipelineController)

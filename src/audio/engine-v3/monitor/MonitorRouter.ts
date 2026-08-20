@@ -69,7 +69,7 @@ export class MonitorRouter {
     this._musicGain.gain.value = 0.0 // music in monitor off by default
 
     this._vocalHallGain = ctx.createGain()
-    this._vocalHallGain.gain.value = 0.0
+    this._vocalHallGain.gain.value = 0.2
 
     this._captureGain = ctx.createGain()
     this._captureGain.gain.value = 1.0
@@ -104,8 +104,9 @@ export class MonitorRouter {
     this._musicGain.connect(this._monitorMaster)
     this._monitorMaster.connect(this.monitorStream)
 
-    // Vocal hall — after MainDelay (shared delay)
-    this.vocalHallInput.connect(this._mainDelay)
+    // Vocal hall — каскад R2: dynamics (AutoMix, vocalHallInput.gain) × trim (_vocalHallGain)
+    this.vocalHallInput.connect(this._vocalHallGain)
+    this._vocalHallGain.connect(this._mainDelay)
 
     // Mic path — own delay (for monitor compensation)
     this.micInput.connect(this._micDelay)
