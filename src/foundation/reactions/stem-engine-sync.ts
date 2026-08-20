@@ -176,6 +176,17 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
           if (pipeline?.soloStem) pipeline.soloStem(id, current.stemSolos[id])
         }
       }
+      // 🔧 SOLO-RESTORE (баг сессии 24.08): StemChain._applySolo при отжатии
+      // последнего solo ставит ВСЕМ стемам volume=1 (не хранит snapshot до solo).
+      // Переприменяем effectiveGain из стора (source of truth): ползунковые значения
+      // возвращаются, активная solo-маска сохраняется, mute учитывается.
+      const pipeline = (window as any).__belive?.pipeline
+      for (const id of Object.keys(current.stemVolumes)) {
+        const vol = effectiveGain(current, id)
+        if (pipeline?.setStemVolume) pipeline.setStemVolume(id, vol)
+        const stem = t3.orchestrator.get(id)
+        if (stem) stem.volume = vol
+      }
     } else if (isV2) {
       for (const id of Object.keys(current.stemSolos)) {
         if (current.stemSolos[id] !== prev.stemSolos[id]) {
