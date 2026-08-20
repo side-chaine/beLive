@@ -615,7 +615,10 @@ export const TakesPanel: React.FC = () => {
     
     const tick = () => {
       const ae = (window as any).audioEngine;
-      const t: number = ae?.getCurrentTime?.() ?? 0;
+      // 007/418: V3-фон закейджил V2 → ae.getCurrentTime() замёрз. Когда V3 активен —
+      // берём время из V3StatePublisher (__belive.currentTime, 20fps); иначе V2 (как раньше).
+      const v3t = (window as any).__belive?.currentTime;
+      const t: number = (window as any).__v3Active && v3t !== undefined ? v3t : (ae?.getCurrentTime?.() ?? 0);
       const w = widthRef.current;
       
       if (!timeRange || w === 0) {
