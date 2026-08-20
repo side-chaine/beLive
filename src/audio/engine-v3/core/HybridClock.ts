@@ -125,6 +125,11 @@ export class HybridClock {
   }
   clearLoop(): void { this._loopEnabled = false; }
 
+  /** 369: loop-состояние наружу (для publisher-эмитов loopcompleted) */
+  get loopEnabled(): boolean { return this._loopEnabled; }
+  get loopStart(): number { return this._loopStart; }
+  get loopEnd(): number { return this._loopEnd; }
+
   setPlaybackRate(rate: number): void {
     if (rate <= 0) throw new Error('playbackRate must be > 0');
     if (this._state === 'playing') {

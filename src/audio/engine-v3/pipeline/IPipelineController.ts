@@ -47,6 +47,9 @@ export interface IPipelineController {
   /** Mute/unmute стема */
   setStemMuted(stemId: string, muted: boolean): void
 
+  /** RMS-уровень (0-1) стема — с тапа после volume+mute+solo (366) */
+  getStemMeterLevel(stemId: string): number
+
   /** Назначить стем на шину */
   assignStem(stemId: string, bus: BusType): void
 

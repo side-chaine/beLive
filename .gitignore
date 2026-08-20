@@ -86,3 +86,13 @@ belive-api/
 AGENT_202_WASM_CRASH_BRIEF.md
 DECISION-LOG.md
 RUN-1-EXECUTION-PACKAGE-PHASE2.md
+
+# Temporary spikes / manual test artifacts (NOT project code)
+signalsmith-spike/
+spike-s4-real-cpu.html
+test-aether/
+test-aether.html
+test-permission.txt
+switch-mode.sh
+opencode.json.high
+opencode.json.low

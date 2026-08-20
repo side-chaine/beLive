@@ -209,26 +209,16 @@ export function MixerPanel() {
     }
 
     const interval = 1000 / meterFps;
-    // Переиспользуемый Float32Array для RMS (ноль аллокаций в горячем пути)
-    const _fftBuf = new Float32Array(256);
 
     const readMeterV3 = (stemId: string): number => {
-      const t3 = getTransport();
-      if (!t3 || t3.state === 'idle') return 0;
-      const stem = t3.orchestrator.get(stemId);
-      if (!stem) return 0;
-      try {
-        const analyser = stem.analyserNode;
-        analyser.getFloatTimeDomainData(_fftBuf);
-        let sumSq = 0;
-        for (let i = 0; i < _fftBuf.length; i++) sumSq += _fftBuf[i] * _fftBuf[i];
-        return Math.sqrt(sumSq / _fftBuf.length);
-      } catch { return 0; }
+      const pipeline = (window as any).__belive?.pipeline;
+      if (!pipeline?.getStemMeterLevel) return 0;
+      return pipeline.getStemMeterLevel(stemId) ?? 0;
     };
 
     timerRef.current = setInterval(() => {
       const t3 = getTransport();
-      const isV3 = t3 && t3.state !== 'idle' && t3.orchestrator.all().length > 0;
+      const isV3 = t3 && t3.state !== 'idle' && !!(window as any).__belive?.pipeline;
 
       const levels: Record<string, number> = {};
       if (isV3) {

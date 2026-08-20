@@ -29,6 +29,9 @@ export class V3StatePublisher {
   private _fallbackInterval: ReturnType<typeof setInterval> | null = null;
   private _visibilityHandler: (() => void) | null = null;
   private _started = false;
+
+  /** 369: last-seen time для детекции loop-wrap (loopcompleted) */
+  private _lastTickTimeForLoop = -1;
   constructor(private readonly transport: TransportV3) {
     // Subscribed eagerly, not inside start(): this is cheap, event-driven, and has
     // no environment dependency — unlike the tick loop below, there's no reason to
@@ -84,6 +87,8 @@ export class V3StatePublisher {
 
   private _onStateChange = (e: Event): void => {
     const detail = (e as CustomEvent<TransportStateChangeDetail>).detail;
+    // 369: при остановке сбрасываем базу детекции loop-wrap
+    if (detail.state !== 'playing') this._lastTickTimeForLoop = -1;
     const isPlaying = detail.state === 'playing';
     const currentTime = this.transport.currentTime;
     const duration = this.transport.duration;
@@ -117,7 +122,24 @@ export class V3StatePublisher {
     const now = performance.now()
     if (now - this._lastTickAt < 50) return
     this._lastTickAt = now
-    this._publishTickIfChanged(this.transport.currentTime)
+    const t = this.transport.currentTime
+    // 369: V2→V3 parity — loopcompleted при wrap (V2: AudioEngineV2.ts:1509)
+    if (this.transport.loopEnabled && this._lastTickTimeForLoop >= 0) {
+      if (t < this._lastTickTimeForLoop - 0.25) {
+        if (typeof document !== 'undefined') {
+          document.dispatchEvent(new CustomEvent('loopcompleted', {
+            detail: {
+              previousTime: this._lastTickTimeForLoop,
+              newTime: t,
+              loopStart: this.transport.loopStart,
+              loopEnd: this.transport.loopEnd,
+            },
+          }));
+        }
+      }
+    }
+    this._lastTickTimeForLoop = t
+    this._publishTickIfChanged(t)
   }
 
   private _publishTickIfChanged(currentTime: number): void {

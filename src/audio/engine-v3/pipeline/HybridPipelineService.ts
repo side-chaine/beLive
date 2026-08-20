@@ -58,6 +58,11 @@ export class HybridPipelineService implements IPipelineController {
   private _currentRate = 1.0
   /** 053-B1: Map<node, handler> — нет leak при перезаписи */
   private _stretchCrashHandlers = new Map<AudioNode, EventListener>();
+  /** Per-stem AnalyserNode для VU-метринга — параллельный тап после _stretchGains,
+   *  никогда не в основном сигнальном пути до destination */
+  private readonly _stretchMeters: Map<string, AnalyserNode> = new Map()
+  /** Переиспользуемый scratch-буфер для RMS — ноль аллокаций в горячем пути */
+  private readonly _meterScratch = new Float32Array(256)
   /** 061-B1: generation counter для switchBackend — старый callback не убивает новый backend */
   private _switchGeneration = 0;
 
@@ -153,6 +158,8 @@ export class HybridPipelineService implements IPipelineController {
         // 053-B2: снести дубликат stretch gain
         const staleGain = this._stretchGains.get(stemId)
         if (staleGain) { try { staleGain.disconnect() } catch {}; this._stretchGains.delete(stemId) }
+        const staleMeter = this._stretchMeters.get(stemId)
+        if (staleMeter) { try { staleMeter.disconnect() } catch {}; this._stretchMeters.delete(stemId) }
 
         // stretch output → per-stem gain → chainA.mergeGain
         const stretchGain = this._ctx.createGain()
@@ -160,6 +167,11 @@ export class HybridPipelineService implements IPipelineController {
         instance.outputNode.connect(stretchGain)
         stretchGain.connect(this._chainA.mergeGain)
         this._stretchGains.set(stemId, stretchGain)
+
+        const meter = this._ctx.createAnalyser()
+        meter.fftSize = 256
+        stretchGain.connect(meter)
+        this._stretchMeters.set(stemId, meter)
 
         // 053-B3: per-node crash handler (без изменений)
         const node = instance.outputNode
@@ -204,10 +216,12 @@ export class HybridPipelineService implements IPipelineController {
       this._busBGain.gain.value = 0.0
       this._activeBackend = 'stretch'
 
-      // stretch gains → chainA.mergeGain
-      for (const g of this._stretchGains.values()) {
+      // stretch gains → chainA.mergeGain + parallel meter taps (366: метр живёт тем же циклом, что реконнект)
+      for (const [stemId, g] of this._stretchGains.entries()) {
         try { g.disconnect() } catch {}
         g.connect(this._chainA.mergeGain)
+        const meter = this._stretchMeters.get(stemId)
+        if (meter) g.connect(meter)
       }
 
       // Bus A: REGIME 3 — параллельный старт stretch
@@ -456,6 +470,20 @@ export class HybridPipelineService implements IPipelineController {
     }
   }
 
+  /** RMS-уровень (0-1) стема, читается с AnalyserNode-тапа ПОСЛЕ volume+mute+solo (366) */
+  getStemMeterLevel(stemId: string): number {
+    const meter = this._stretchMeters.get(stemId)
+    if (!meter) return 0
+    try {
+      meter.getFloatTimeDomainData(this._meterScratch)
+      let sumSq = 0
+      for (let i = 0; i < this._meterScratch.length; i++) sumSq += this._meterScratch[i] * this._meterScratch[i]
+      return Math.sqrt(sumSq / this._meterScratch.length)
+    } catch {
+      return 0
+    }
+  }
+
   /** 053-F: assignStem отключён — терял буфер стема (создавал StemPlayerV3 без setBuffer) */
   assignStem(_stemId: string, _bus: BusType): void {
     console.warn('[HybridPipeline] assignStem() отключён (053): терял буфер стема. Требует loadStem заново.')
@@ -481,12 +509,18 @@ export class HybridPipelineService implements IPipelineController {
     
     // Останавливаем всё
     this.stop()
+    // 🧹 Fix E0·4: loop не должен переживать смену трека (parity V2 loadTrack)
+    this._loopStrategy.clearLoop()
     
     // Очищаем stretch gains
     for (const gain of this._stretchGains.values()) {
       try { gain.disconnect() } catch {}
     }
     this._stretchGains.clear()
+    for (const meter of this._stretchMeters.values()) {
+      try { meter.disconnect() } catch {}
+    }
+    this._stretchMeters.clear()
     
     // 🧹 053-B4: чистим все listener через Map
     for (const [node, h] of this._stretchCrashHandlers) {
@@ -527,6 +561,10 @@ export class HybridPipelineService implements IPipelineController {
       try { gain.disconnect() } catch {}
     }
     this._stretchGains.clear()
+    for (const meter of this._stretchMeters.values()) {
+      try { meter.disconnect() } catch {}
+    }
+    this._stretchMeters.clear()
     this._chainA.dispose()
     // _chainB не dispose — не используется
     // 🧹 053-B4: чистим все listener через Map
