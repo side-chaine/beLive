@@ -30,7 +30,7 @@ import {
 import { ExerciseStrip } from '../../exercises/components/ExerciseStrip';
 import { QuestCompletionMoment } from '../../exercises/components/QuestCompletionMoment';
 import { getTransport } from '../../audio/engine-v3';
-import { V2Adapter } from '../../audio/engine-v3/V2Adapter';
+import { getPlaybackTime, seekTo } from '../takes.time';
 
 /**
  * TakesPanel — renders waveform canvas for active block in Takes mode.
@@ -1090,7 +1090,7 @@ export const TakesPanel: React.FC = () => {
     
     // REFERENCE LISTEN PATH: Standard playback for 'reference' or undefined listenSource
     // Seek to start and play (guard: only play if not already playing)
-    try { V2Adapter.getInstance().delegateSync('seekTo', range.startTime) } catch {}
+    try { seekTo(range.startTime) } catch {}
     if (!ae?.isPlaying) getTransport().play();
     
     // Determine if next step requires continuous handoff (Call & Response)
@@ -1143,7 +1143,7 @@ export const TakesPanel: React.FC = () => {
         return;
       }
   
-      const currentTime = ae.getCurrentTime?.() ?? 0;
+      const currentTime = getPlaybackTime();
   
       // Show anticipatory response cue during continuous handoff
       if (shouldContinuousHandoff && responseCueTargetTime !== null) {
@@ -1353,7 +1353,7 @@ export const TakesPanel: React.FC = () => {
               const t = timeRange.startTime + 
                         progress * (timeRange.endTime - timeRange.startTime);
               const ae = (window as any).audioEngine;
-              try { V2Adapter.getInstance().delegateSync('seekTo', t) } catch {};
+              try { seekTo(t) } catch {};
             });
           }}
         >

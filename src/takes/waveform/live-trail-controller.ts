@@ -15,6 +15,7 @@ import type { WaveformTierConfig } from './waveform-tier-config';
 import type { LiveTrailSkin } from './waveform-skins';
 import { LiveWaveformAccumulator } from './live-waveform-accumulator';
 import { LiveTrailRenderer } from './live-trail-renderer';
+import { getPlaybackTime, isPlaying } from '../takes.time';
 
 export interface TimeRange {
   startTime: number;
@@ -186,8 +187,7 @@ export class LiveTrailController {
     }
 
     // Get audio engine state
-    const ae = (window as any).audioEngine;
-    if (!ae?.isPlaying) {
+    if (!isPlaying()) {
       return;
     }
 
@@ -201,7 +201,7 @@ export class LiveTrailController {
     }
 
     // Compute current playback progress within block
-    const currentTime = ae.getCurrentTime?.() ?? 0;
+    const currentTime = getPlaybackTime();
     const progress = (currentTime - this.timeRange.startTime) / 
                      (this.timeRange.endTime - this.timeRange.startTime);
     

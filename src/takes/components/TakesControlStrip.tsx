@@ -15,7 +15,7 @@ import { useTakeDelete } from '../hooks/useTakeDelete';
 import { usePracticeInterrupt } from '../hooks/usePracticeInterrupt';
 import { getTransport } from '../../audio/engine-v3';
 import { TakeSlot } from './TakeSlot';
-import { V2Adapter } from '../../audio/engine-v3/V2Adapter';
+import { getPlaybackTime, seekTo } from '../takes.time';
 
 interface TakesControlStripProps {
   activeBlockId: string;
@@ -184,7 +184,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       // Pre-roll seek and playback
       const preRollStart = Math.max(0, effectiveTimeRange.startTime - effectivePreRoll);
       const actualPreRoll = effectiveTimeRange.startTime - preRollStart;
-      try { V2Adapter.getInstance().delegateSync('seekTo', preRollStart) } catch {}
+      try { seekTo(preRollStart) } catch {}
       getTransport().play();
       
       // Start recorder AFTER seek+play — engine is now at preRollStart position
@@ -203,7 +203,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
           let remaining = Math.ceil(actualPreRoll);
           let vocalFadeScheduled = false;
           const tick = () => {
-            const ct = ae.getCurrentTime?.() ?? 0;
+            const ct = getPlaybackTime();
             const left = Math.max(0, effectiveTimeRange.startTime - ct);
             if (left <= 0.05) { 
               setCountdown(null); 
@@ -248,7 +248,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       
       // Compute trimStartSec using already-armed recorder
       const detectedAtWall = performance.now();
-      const engineNow = ae.getCurrentTime?.() ?? effectiveTimeRange.startTime;
+      const engineNow = getPlaybackTime() || effectiveTimeRange.startTime;
       
       // [TRIM-BASIS] Log trim computation for standard visible path
       const rawDelta = engineNow - effectiveTimeRange.startTime;
@@ -288,12 +288,12 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       (recorderRef.current as any).__lateStartOffsetSec = lateStartOffsetSec;
       
       if (import.meta.env.DEV) console.log('[Takes] Recorder armed early, visible REC started at engine time:', 
-        ae.getCurrentTime?.()?.toFixed(3));
+        getPlaybackTime().toFixed(3));
       // Start stop timer / safety timeout
       clearActiveRecordingTimers();
       const blockEnd = effectiveTimeRange.endTime;
       timeCheckRef.current = window.setInterval(() => {
-        const ct = ae.getCurrentTime?.() ?? 0;
+        const ct = getPlaybackTime();
         if (ct >= blockEnd) handleStopRef.current();
       }, 100);
       // Adjust safety timeout for tempo-aware training record: slower tempo needs more wall-time
@@ -476,7 +476,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       clearActiveRecordingTimers();
       const stopTime = exerciseResolvedTimeRange.endTime;
       timeCheckRef.current = window.setInterval(() => {
-        const ct = ae.getCurrentTime?.() ?? 0;
+        const ct = getPlaybackTime();
         const isFinalWindow =
           (currentStep?.totalResponseWindows ?? 1) - 1 <= (currentStep?.responseWindowIndex ?? 0);
 
@@ -530,7 +530,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       // 3. Wait until engine reaches target start time
       await new Promise<void>((resolve) => {
         const waitForTarget = () => {
-          const ct = ae.getCurrentTime?.() ?? 0;
+          const ct = getPlaybackTime();
           if (ct >= exerciseResolvedTimeRange.startTime) {
             const detectedAtWall = performance.now();
             const engineProgressSec = Math.max(
@@ -563,7 +563,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
 
       clearActiveRecordingTimers();
       timeCheckRef.current = window.setInterval(() => {
-        const ct = ae.getCurrentTime?.() ?? 0;
+        const ct = getPlaybackTime();
         if (ct >= stopTime) {
           if (isFinalWindow) {
             handleRoundCaptureFinalize();

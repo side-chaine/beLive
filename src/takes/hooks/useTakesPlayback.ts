@@ -2,7 +2,7 @@ import React from 'react';
 import { useTakesStore } from '../takes.store';
 import { useAudioStore } from '../../stores/audio.store';
 import { takeAssets } from '../takes.assets';
-import { V2Adapter } from '../../audio/engine-v3/V2Adapter';
+import { getPlaybackTime, seekTo } from '../takes.time';
 import { getTransport } from '../../audio/engine-v3';
 
 interface UseTakesPlaybackOptions {
@@ -171,7 +171,7 @@ export function useTakesPlayback({
       
       previewSourceRef.current = source;
       previewGainRef.current = gain;
-      try { V2Adapter.getInstance().delegateSync('seekTo', timeRange.startTime) } catch {};
+      try { seekTo(timeRange.startTime) } catch {};
       
       // Store forceContext flag
       if (options?.forceContext) {
@@ -195,7 +195,7 @@ export function useTakesPlayback({
       if (gen !== previewGenRef.current) return;
       
       const engineOffsetSec = Math.max(0,
-        (ae.getCurrentTime?.() ?? timeRange.startTime) - timeRange.startTime);
+        (getPlaybackTime() || timeRange.startTime) - timeRange.startTime);
       
       source.start(ctx.currentTime + 0.01, trimStart + engineOffsetSec);
       setPlayingTakeId(takeId);
