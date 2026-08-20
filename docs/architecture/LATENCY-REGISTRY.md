@@ -45,7 +45,7 @@
 |---|---|---|---|---|
 | Микрофон raw | спека готова (R9), WS-1 | `micInput → _micDelay → _monitorGain → _monitorMaster` | input ~10ms | constraints exact; setDeviceId C11 |
 | VocalHall (вокал в зал) | ✅ C15 (C+D, R1+R2) | тап `instance.outputNode → _vocalHallSend → vocalHallInput → _vocalHallGain → _mainDelay` | гейн-тап ~0 задержки; задержка живёт в `_mainDelay` | pre-fader (mute/solo/volume вокала не трогают зал); дефолт trim 0.2 |
-| AutoMix | legacy-точность (R6) | `vocalHallInput.gain` (рампы) | — | exact-match + strict zero |
+| AutoMix | ✅ C17 (B-pack, R6) | `vocalHallInput.gain` (рампы setTargetAtTime) | 0 (только рампы на gain, без узлов в пути) | **exact-match** (fuzzy вырублен): «verse 1» → strict zero (TC-065, parity legacy); fallback-резолвер нормализует как legacy (pre-chorus→prechorus); конфиг живёт в AutoMixController (singleton, переживает смену трека — R10) |
 | **Примочки (компрессор, реверб, pitch, фиксы)** | 🔮 ПЛАНИРУЕТСЯ | **TBD** (для каждой — строка в этом реестре) | **меряется до имплементации** | правило: см. F |
 
 ## E. МЕТОДИКА ИЗМЕРЕНИЯ (для каждой новой обработки)
