@@ -229,6 +229,11 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
               setCountdown(null);
               onCountdownChange?.(null);
               useTakesStore.getState().cancelRecording();
+              // М2-teardown: разбираем recorder/analyser — не оставляем тёплый микрофон
+              recorderRef.current?.cancel();
+              recorderRef.current = null;
+              onRecorderAnalyserChange?.(null);
+              clearActiveRecordingTimers();
               onRecordAbort?.(`Синхронизация pre-roll не удалась. Попробуй ещё раз.`);
               return;
             }
@@ -634,7 +639,8 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
     if (countdownRef.current) { cancelAnimationFrame(countdownRef.current); countdownRef.current = null; }
     setCountdown(null);
     onCountdownChange?.(null);
-    setRate(1); // М3: восстановить rate после записи (V3 и V2)
+    // М3-parity: НЕ сбрасываем rate здесь — V2 в handleStop rate не трогал.
+    // Восстановление делает exercise-флоу (TakesPanel:901-913 savedPlaybackRate → setPlaybackRate(savedPlaybackRate)).
     if (timeCheckRef.current) { clearInterval(timeCheckRef.current); timeCheckRef.current = null; }
     if (stopTimerRef.current) { clearTimeout(stopTimerRef.current); stopTimerRef.current = null; }
     const ae = (window as any).audioEngine;

@@ -42,12 +42,16 @@ vi.mock('../../stem/stem.store', () => ({
   },
 }));
 
-vi.mock('../../practice/practice-scenarios', () => ({
-  BLOCK_TYPE_NAMES: {},
-  PracticeScenarioId: {},
-  PracticeContext: {},
-  PracticeProgress: {},
-}));
+vi.mock('../../practice/practice-scenarios', async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
+  return {
+    ...actual,
+    BLOCK_TYPE_NAMES: {},
+    PracticeScenarioId: {},
+    PracticeContext: {},
+    PracticeProgress: {},
+  };
+});
 
 import { usePracticeStore } from '../practice-session.store';
 
