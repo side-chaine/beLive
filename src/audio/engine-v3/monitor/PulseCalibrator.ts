@@ -49,14 +49,17 @@ export class PulseCalibrator {
     const gain = this._ctx.createGain()
     gain.gain.value = 0.5
     src.connect(gain)
-    gain.connect(this._router.monitorStream as any)
+    gain.connect(this._router.monitorStream as any)   // BT path (always) — legacy monitor-mix.js:606
+    this._router.connectCalibrationPulse(gain)        // main path: ВХОД _mainDelay (пре-делей) — legacy :610-614
     src.start(time)
     src.onended = () => { try { src.disconnect(); gain.disconnect() } catch {} }
   }
 
   /** Запустить lookahead scheduler */
-  beginPulseCalibration(_delayMs: number, intervalMs: number = 667): void {
+  beginPulseCalibration(seedMs: number, intervalMs: number = 667): void {
     if (this._active) this.endPulseCalibration()
+    // R8: seedMs → previewDelayMs (legacy monitor-mix.js:863) — калибровочная задержка main
+    this.previewDelayMs(seedMs)
     this._active = true
     this._intervalSec = intervalMs / 1000
     this._nextPulse = this._ctx.currentTime + 0.05
@@ -81,13 +84,31 @@ export class PulseCalibrator {
     }
   }
 
+  /** Проверка задержки слухом: 1kHz/60ms, оба выхода НАПРЯМУЮ (не калибровка) — parity legacy testPulse (monitor-mix.js:506-517) */
   testPulse(): Promise<void> {
     return new Promise(resolve => {
-      this._emitPulse(this._ctx.currentTime + 0.05)
+      const now = this._ctx.currentTime
+      const dur = 0.06
+      const mk = (toNode: AudioNode) => {
+        const osc = this._ctx.createOscillator()
+        const g = this._ctx.createGain()
+        osc.frequency.value = 1000
+        g.gain.setValueAtTime(0.0001, now)
+        g.gain.exponentialRampToValueAtTime(0.8, now + 0.002)
+        g.gain.exponentialRampToValueAtTime(0.0001, now + dur)
+        osc.connect(g).connect(toNode)
+        osc.start(now)
+        osc.stop(now + dur)
+      }
+      mk(this._router.monitorStream as any)
+      mk(this._router.mainStream as any)
       setTimeout(resolve, 200)
     })
   }
 
   stopSyncSequence(): void { this.endPulseCalibration() }
-  previewDelayMs(_ms: number): void { /* drag preview — бездействует */ }
+  /** R8: калибровочная задержка → _mainDelay через router.setDelayMs (clamp 0..1000 — legacy monitor-mix.js:1084) */
+  previewDelayMs(ms: number): void {
+    try { this._router.setDelayMs(ms) } catch (e) { console.warn('[PulseCalibrator] previewDelayMs failed', e) }
+  }
 }

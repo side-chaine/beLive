@@ -185,6 +185,13 @@ export class MonitorRouter {
     }
   }
 
+  /** R8 (C19): калибровочный плак main-пути — подключение к ВХОДУ _mainDelay (пре-делей),
+   *  чтобы seed (previewDelayMs) действовал на импульс. Parity legacy monitor-mix.js:610-614
+   *  ("through mainDelayNode so previewDelayMs() works"). _mainDelay существует всегда (:53). */
+  connectCalibrationPulse(source: AudioNode): void {
+    try { source.connect(this._mainDelay) } catch (e) { console.warn('[MonitorRouter] connectCalibrationPulse failed', e) }
+  }
+
   /** Connect mic (V2Adapter.enableMicrophone calls this) */
   setMicEnabled(on: boolean): void {
     const now = this.programInput.context.currentTime
