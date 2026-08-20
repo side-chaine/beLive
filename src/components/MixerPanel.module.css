@@ -274,13 +274,19 @@
   padding: 3px 10px;
   border-radius: 4px;
   border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.6);
+  /* Непрозрачный тёмный фон — открытый дропдаун наследует его (иначе системный белый + белый текст) */
+  background: #1a1a2e;
+  color: rgba(255,255,255,0.85);
   font-size: 11px;
   cursor: pointer;
   max-width: 190px;
   text-overflow: ellipsis;
   transition: all 0.15s;
+}
+
+.micSelect option {
+  background: #1a1a2e;
+  color: #fff;
 }
 
 .micSelect:hover:not(:disabled) {
@@ -297,4 +303,9 @@
   background: rgba(255, 140, 0, 0.15);
   border-color: rgba(255, 140, 0, 0.5);
   color: #ff8c00;
+}
+
+.micActive option {
+  background: #1a1a2e;
+  color: #fff;
 }
