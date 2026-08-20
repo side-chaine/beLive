@@ -137,16 +137,16 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
   for (const id of Object.keys(current.stemVolumes)) {
     if (current.stemVolumes[id] !== prev.stemVolumes[id]) {
       if (t3) {
+        // 🔥 V3 STATE GATE: применяем raw volume, НЕ effectiveGain.
+        // effectiveGain учитывает solo/mute — V2 солоит vocals, что глушит 6/7 стемов.
+        // V3 управляет gain напрямую, solo/mute V2 игнорируются.
+        // 🧹 Fix 389: volume применяется к pipeline НАПРЯМУЮ (как mute/solo).
+        // Ранее блокировалось `if (stem)` из t3.orchestrator.get(id) — orchestrator
+        // пуст в V3-режиме (MP-23), поэтому setStemVolume не доходил до pipeline.
+        const pipeline = (window as any).__belive?.pipeline
+        if (pipeline?.setStemVolume) pipeline.setStemVolume(id, current.stemVolumes[id])
         const stem = t3.orchestrator.get(id)
-        if (stem) {
-          // 🔥 V3 STATE GATE: применяем raw volume, НЕ effectiveGain.
-          // effectiveGain учитывает solo/mute — V2 солоит vocals, что глушит 6/7 стемов.
-          // V3 управляет gain напрямую, solo/mute V2 игнорируются.
-          stem.volume = current.stemVolumes[id]
-          // Pipeline sync (если активен)
-          const pipeline = (window as any).__belive?.pipeline
-          if (pipeline) pipeline.setStemVolume(id, current.stemVolumes[id])
-        }
+        if (stem) stem.volume = current.stemVolumes[id]
       } else if (isV2) {
         safeDelegate(v2, 'setStemVolume', id, current.stemVolumes[id])
       }
@@ -218,14 +218,13 @@ function applyAll(v2: V2Adapter, state: EngineStateSnapshot): void {
 
   if (t3) {
     // V3 path — применяем effective gain ко всем стемам
+    // 🧹 Fix 389: cold-start тоже применяет к pipeline напрямую (MP-23)
+    const pipeline = (window as any).__belive?.pipeline
     for (const id of Object.keys(state.stemVolumes)) {
+      const vol = effectiveGain(state, id)
+      if (pipeline?.setStemVolume) pipeline.setStemVolume(id, vol)
       const stem = t3.orchestrator.get(id)
-      if (stem) {
-        stem.volume = effectiveGain(state, id)
-        // Pipeline sync (если активен)
-        const pipeline = (window as any).__belive?.pipeline
-        if (pipeline) pipeline.setStemVolume(id, stem.volume)
-      }
+      if (stem) stem.volume = vol
     }
   } else {
     // V2 path — оригинальная логика
