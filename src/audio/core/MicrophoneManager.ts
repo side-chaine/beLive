@@ -12,10 +12,12 @@ export class MicrophoneManager {
   private _sourceNode: MediaStreamAudioSourceNode | null = null;
   private _enabled = false;
   private _volume = 0.7;
+  private _deviceId = '';
 
   constructor() {
     this.gainNode = getAudioContext().createGain();
     this.gainNode.gain.value = this._volume;
+    try { this._deviceId = localStorage.getItem('mic:deviceId') ?? '' } catch { this._deviceId = '' }
   }
 
   get enabled(): boolean { return this._enabled; }
@@ -32,6 +34,7 @@ export class MicrophoneManager {
           echoCancellation: false,
           noiseSuppression: false,
           autoGainControl: false,
+          ...(this._deviceId ? { deviceId: { exact: this._deviceId } } : {}),
         },
       });
     }
@@ -61,6 +64,41 @@ export class MicrophoneManager {
       return { enabled: false, volume: this._volume };
     }
     return this.enable();
+  }
+
+  get deviceId(): string { return this._deviceId }
+
+  /** Выбрать устройство ввода (deviceId). При включённом микрофоне — пере-включение с новым устройством.
+   *  При недоступности выбранного устройства — авто-fallback на default. */
+  async setDeviceId(deviceId: string): Promise<{ enabled: boolean; volume: number }> {
+    const wasEnabled = this._enabled;
+    this._deviceId = deviceId || '';
+    try { localStorage.setItem('mic:deviceId', this._deviceId) } catch {}
+    // Сброс закешированного stream — следующий getUserMedia возьмёт новое устройство
+    this._resetStream();
+    if (wasEnabled) {
+      this.disable();
+      try {
+        return await this.enable();
+      } catch (err) {
+        // Fallback: устройство недоступно → откат на default
+        console.warn('[MicrophoneManager] device unavailable, fallback to default:', err);
+        this._deviceId = '';
+        try { localStorage.setItem('mic:deviceId', '') } catch {}
+        this._resetStream();
+        return this.enable();
+      }
+    }
+    return { enabled: this._enabled, volume: this._volume };
+  }
+
+  /** Сбросить закешированный stream (остановить треки) — следующий getUserMedia возьмёт новое устройство. */
+  private _resetStream(): void {
+    if (this.stream) {
+      this.stream.getTracks().forEach(t => { try { t.stop() } catch {} });
+      this.stream = null;
+      this._sourceNode = null;
+    }
   }
 
   setVolume(v: number): void {

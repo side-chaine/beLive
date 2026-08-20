@@ -268,3 +268,33 @@
   border-color: #9b59b6;
   color: #9b59b6;
 }
+
+/* MIC-400: Mic input select — в стиле тулбар-кнопок, чуть удлинённый для названия */
+.micSelect {
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.6);
+  font-size: 11px;
+  cursor: pointer;
+  max-width: 190px;
+  text-overflow: ellipsis;
+  transition: all 0.15s;
+}
+
+.micSelect:hover:not(:disabled) {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.9);
+}
+
+.micSelect:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.micActive {
+  background: rgba(255, 140, 0, 0.15);
+  border-color: rgba(255, 140, 0, 0.5);
+  color: #ff8c00;
+}

@@ -13,6 +13,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useStemStore } from '../stem/stem.store';
 import { BUILTIN_STEMS, STEM_CAPACITY_BY_TIER, sortStemsForDisplay } from '../stem/stemTypes';
 import { usePerformanceStore } from '../performance/performance.store';
+import { useAudioStore } from '../stores/audio.store';
 import { InstrumentStrip } from './InstrumentStrip';
 import { getTransport } from '../audio/engine-v3';
 // TC-VIS-09: Critical CSS import — tier gating + recording clamp for InstrumentCard
@@ -120,6 +121,25 @@ export function MixerPanel() {
     const tier = s.getEffectiveTier();
     return STEM_CAPACITY_BY_TIER[tier]?.meterStyle ?? 'solid';
   });
+
+  const micEnabled = useAudioStore(s => s.micEnabled);
+  const [micInputs, setMicInputs] = useState<MediaDeviceInfo[]>([]);
+
+  const refreshMicInputs = useCallback(async () => {
+    try {
+      const all = await navigator.mediaDevices.enumerateDevices();
+      setMicInputs(all.filter(d => d.kind === 'audioinput'));
+    } catch { setMicInputs([]) }
+  }, []);
+
+  useEffect(() => {
+    refreshMicInputs();
+    navigator.mediaDevices?.addEventListener('devicechange', refreshMicInputs);
+    return () => navigator.mediaDevices?.removeEventListener('devicechange', refreshMicInputs);
+  }, [refreshMicInputs]);
+
+  const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+  const micDeviceId = (window as any).audioEngine?.microphone?.deviceId ?? '';
 
   // W10-002: Stems mode toggle handler
   const handleStemsModeToggle = useCallback(async () => {
@@ -279,6 +299,26 @@ export function MixerPanel() {
           >
             Visual
           </button>
+          {/* Mic input select — выбор микрофона (дефолт или подключаемый) */}
+          <select
+            className={`${styles.micSelect} ${micEnabled ? styles.micActive : ''}`}
+            value={micDeviceId}
+            disabled={engineMode === 'v3'}
+            title="Microphone input"
+            onChange={async (e) => {
+              const ae = (window as any).audioEngine;
+              if (!ae?.microphone?.setDeviceId) return;
+              try { await ae.microphone.setDeviceId(e.target.value); }
+              catch (err) { console.warn('[MicSelect] failed:', err); }
+            }}
+          >
+            <option value="">🎤 Default</option>
+            {micInputs.map(d => (
+              <option key={d.deviceId} value={d.deviceId}>
+                🎤 {d.label || `Device …${d.deviceId.slice(-4)}`}
+              </option>
+            ))}
+          </select>
         </div>
       )}
       {/* TC-VIS-09: Conditional rendering — Visual mode vs DAW faders */}
