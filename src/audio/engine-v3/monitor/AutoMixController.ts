@@ -43,6 +43,11 @@ export class AutoMixController {
     }
   }
 
+  /** Текущий конфиг блока (для on/level сеттеров без потери второй половины) */
+  getConfig(block: BlockType): BlockConfig | undefined {
+    return this._config[block]
+  }
+
   start(): void {
     if (this._unsub) return
     this._unsub = eventBus.subscribe(
@@ -76,7 +81,13 @@ export class AutoMixController {
       const blocks: any[] = ld?.textBlocks ?? []
       for (const b of blocks) {
         if (b.lineIndices?.includes(lineIndex)) {
-          blockType = b.type ?? null
+          const t = (b.type ?? '').toLowerCase()
+          if (t === 'chorus' || t === 'bridge' || t === 'verse') { blockType = t; break }
+          if (t === 'prechorus' || t === 'pre-chorus') { blockType = 'prechorus'; break }
+          if (t === 'intro') { blockType = 'intro'; break }
+          if (t === 'outro') { blockType = 'outro'; break }
+          // Unknown block type → strict zero (TC-065, legacy monitor-mix.js:447-448)
+          blockType = null
           break
         }
       }
@@ -84,13 +95,11 @@ export class AutoMixController {
 
     if (!blockType) return
 
-    // Fuzzy match — "verse 1" → verse
+    // R6: exact-match (parity legacy TC-065) — "verse 1" НЕ матчится → strict zero
     let matchedConfig: BlockConfig | null = null
-    for (const bt of BLOCK_TYPES) {
-      if (blockType.includes(bt) && this._config[bt]?.on) {
-        matchedConfig = this._config[bt]
-        break
-      }
+    if (blockType) {
+      const exact = this._config[blockType as BlockType]
+      if (exact?.on) matchedConfig = exact
     }
 
     const targetLevel = matchedConfig ? matchedConfig.level : 0

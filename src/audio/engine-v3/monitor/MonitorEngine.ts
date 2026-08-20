@@ -12,7 +12,7 @@
 
 import { MonitorRouter } from './MonitorRouter'
 import { PulseCalibrator } from './PulseCalibrator'
-import { AutoMixController } from './AutoMixController'
+import { AutoMixController, type BlockType } from './AutoMixController'
 import { DeviceManager } from './DeviceManager'
 
 export type BackendMode = 'v2' | 'v3'
@@ -160,6 +160,13 @@ export class MonitorEngine {
     this._state.vocalHallLevel = v
   }
 
+  /** V3: обновить AutoMix-конфиг блока без потери on/level (R10: конфиг живёт в контроллере) */
+  private _setAutoMixConfig(block: BlockType, on?: boolean, level?: number): void {
+    if (this._mode !== 'v3' || !this._autoMix) return
+    const cur = this._autoMix.getConfig(block)
+    this._autoMix.setConfig(block, on ?? cur?.on ?? false, level ?? cur?.level ?? 0.3)
+  }
+
   async setOutputDevice(deviceId: string): Promise<boolean> {
     if (this._mode === 'v3' && this._deviceManager) {
       const ok = await this._deviceManager.setOutputDevice(deviceId, 'monitor')
@@ -179,18 +186,54 @@ export class MonitorEngine {
   }
 
   // AutoMix config
-  setAutoVerse(on: boolean): void { this._legacy?.setAutoVerse?.(on) }
-  setAutoVerseLevel(v: number): void { this._legacy?.setAutoVerseLevel?.(v) }
-  setAutoChorus(on: boolean): void { this._legacy?.setAutoChorus?.(on) }
-  setAutoChorusLevel(v: number): void { this._legacy?.setAutoChorusLevel?.(v) }
-  setAutoBridge(on: boolean): void { this._legacy?.setAutoBridge?.(on) }
-  setAutoBridgeLevel(v: number): void { this._legacy?.setAutoBridgeLevel?.(v) }
-  setAutoIntro(on: boolean): void { this._legacy?.setAutoIntro?.(on) }
-  setAutoIntroLevel(v: number): void { this._legacy?.setAutoIntroLevel?.(v) }
-  setAutoPreChorus(on: boolean): void { this._legacy?.setAutoPreChorus?.(on) }
-  setAutoPreChorusLevel(v: number): void { this._legacy?.setAutoPreChorusLevel?.(v) }
-  setAutoOutro(on: boolean): void { this._legacy?.setAutoOutro?.(on) }
-  setAutoOutroLevel(v: number): void { this._legacy?.setAutoOutroLevel?.(v) }
+  setAutoVerse(on: boolean): void {
+    if (this._mode === 'v3' && this._autoMix) { this._setAutoMixConfig('verse', on); return }
+    this._legacy?.setAutoVerse?.(on)
+  }
+  setAutoVerseLevel(v: number): void {
+    if (this._mode === 'v3' && this._autoMix) { this._setAutoMixConfig('verse', undefined, v); return }
+    this._legacy?.setAutoVerseLevel?.(v)
+  }
+  setAutoChorus(on: boolean): void {
+    if (this._mode === 'v3' && this._autoMix) { this._setAutoMixConfig('chorus', on); return }
+    this._legacy?.setAutoChorus?.(on)
+  }
+  setAutoChorusLevel(v: number): void {
+    if (this._mode === 'v3' && this._autoMix) { this._setAutoMixConfig('chorus', undefined, v); return }
+    this._legacy?.setAutoChorusLevel?.(v)
+  }
+  setAutoBridge(on: boolean): void {
+    if (this._mode === 'v3' && this._autoMix) { this._setAutoMixConfig('bridge', on); return }
+    this._legacy?.setAutoBridge?.(on)
+  }
+  setAutoBridgeLevel(v: number): void {
+    if (this._mode === 'v3' && this._autoMix) { this._setAutoMixConfig('bridge', undefined, v); return }
+    this._legacy?.setAutoBridgeLevel?.(v)
+  }
+  setAutoIntro(on: boolean): void {
+    if (this._mode === 'v3' && this._autoMix) { this._setAutoMixConfig('intro', on); return }
+    this._legacy?.setAutoIntro?.(on)
+  }
+  setAutoIntroLevel(v: number): void {
+    if (this._mode === 'v3' && this._autoMix) { this._setAutoMixConfig('intro', undefined, v); return }
+    this._legacy?.setAutoIntroLevel?.(v)
+  }
+  setAutoPreChorus(on: boolean): void {
+    if (this._mode === 'v3' && this._autoMix) { this._setAutoMixConfig('preChorus', on); return }
+    this._legacy?.setAutoPreChorus?.(on)
+  }
+  setAutoPreChorusLevel(v: number): void {
+    if (this._mode === 'v3' && this._autoMix) { this._setAutoMixConfig('preChorus', undefined, v); return }
+    this._legacy?.setAutoPreChorusLevel?.(v)
+  }
+  setAutoOutro(on: boolean): void {
+    if (this._mode === 'v3' && this._autoMix) { this._setAutoMixConfig('outro', on); return }
+    this._legacy?.setAutoOutro?.(on)
+  }
+  setAutoOutroLevel(v: number): void {
+    if (this._mode === 'v3' && this._autoMix) { this._setAutoMixConfig('outro', undefined, v); return }
+    this._legacy?.setAutoOutroLevel?.(v)
+  }
 
   setLineUpSource(s: 'pulse' | 'voc'): void { this._legacy?.setLineUpSource?.(s) }
   setHallVolume(v: number): void { if (this._router) this._router.setHallVolume(v) }
