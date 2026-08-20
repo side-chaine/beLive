@@ -126,6 +126,12 @@ export function MixerPanel() {
     const st = useStemStore.getState();
     const ae = (window as any).audioEngine;
     const newEnabled = !st.stemsEnabled;
+    // 🧹 Fix 391: в V3-режиме громкостями управляет pipeline — кнопка не перезаписывает.
+    // Parity: audio-events.ts MP-19 (if (!__v3Active)). V3 сам роутит стемы.
+    if ((window as any).__v3Active) {
+      st.setStemsEnabled(newEnabled);
+      return;
+    }
 
     // 1. Toggle stemsEnabled
     st.setStemsEnabled(newEnabled);
