@@ -119,7 +119,8 @@ export function useStemWaveform({ stemId, canvasRef, enabled }: UseStemWaveformO
       if (timestamp - lastDrawRef.current < frameInterval) return;
       lastDrawRef.current = timestamp;
 
-      const analyser = ae?.getStemAnalyser?.(stemId) as AnalyserNode | null;
+      const analyser = (window as any).__belive?.pipeline?.getStemAnalyser?.(stemId)
+        ?? ae?.getStemAnalyser?.(stemId) as AnalyserNode | null;
       if (!analyser) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         return;

@@ -52,7 +52,8 @@ export function initStemReactiveEvents(): () => void {
 
       // Phase A: drums kick-band (60fps) — lazy re-fetch analyser + length guard
       if (!drumsAnalyser || drumsAnalyser.frequencyBinCount !== drumsFreqArray?.length) {
-        const fresh = (window as any).audioEngine?.getStemAnalyser?.('drums')
+        const fresh = (window as any).__belive?.pipeline?.getStemAnalyser?.('drums')
+          ?? (window as any).audioEngine?.getStemAnalyser?.('drums')
         if (fresh) {
           drumsAnalyser = fresh
           drumsFreqArray = new Uint8Array(fresh.frequencyBinCount)
@@ -88,7 +89,8 @@ export function initStemReactiveEvents(): () => void {
         if (stemId === 'instrumental') return
 
         // RMS
-        const rms = (window as any).audioEngine?.getStemMeterLevel(stemId) ?? 0
+        const rms = (window as any).__belive?.pipeline?.getStemMeterLevel?.(stemId)
+          ?? (window as any).audioEngine?.getStemMeterLevel(stemId) ?? 0
 
         if (stemId === 'drums') {
           // Drums: instant attack + kick detection

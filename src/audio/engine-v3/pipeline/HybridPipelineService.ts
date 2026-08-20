@@ -484,6 +484,11 @@ export class HybridPipelineService implements IPipelineController {
     }
   }
 
+  /** AnalyserNode стема (для waveform/kick) — тап после volume+mute+solo (366) */
+  getStemAnalyser(stemId: string): AnalyserNode | null {
+    return this._stretchMeters.get(stemId) ?? null
+  }
+
   /** 053-F: assignStem отключён — терял буфер стема (создавал StemPlayerV3 без setBuffer) */
   assignStem(_stemId: string, _bus: BusType): void {
     console.warn('[HybridPipeline] assignStem() отключён (053): терял буфер стема. Требует loadStem заново.')

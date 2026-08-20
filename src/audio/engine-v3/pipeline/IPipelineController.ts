@@ -50,6 +50,9 @@ export interface IPipelineController {
   /** RMS-уровень (0-1) стема — с тапа после volume+mute+solo (366) */
   getStemMeterLevel(stemId: string): number
 
+  /** AnalyserNode стема — waveform/kick (394) */
+  getStemAnalyser(stemId: string): AnalyserNode | null
+
   /** Назначить стем на шину */
   assignStem(stemId: string, bus: BusType): void
 
