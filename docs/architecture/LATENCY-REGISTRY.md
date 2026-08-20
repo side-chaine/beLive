@@ -30,6 +30,8 @@
 | B4 | MonitorRouter `_micDelay` | createDelay(1.0) | MonitorRouter.ts:56 | мониторная компенсация микрофона; **G14: не молча 120ms** |
 | B5 | V2-граф (mic→merger→dest) | 0ms | VocalMix.ts | чистый merger |
 | B6 | Render quantum V3 | ~2.9ms (128/44.1k) | TransportV3.ts:117 | — |
+| B7 | Pulse-плак (калибровка) | 880Hz/120ms/6 гармоник | PulseCalibrator._emitPulse: monitor напрямую (всегда) + main через ВХОД `_mainDelay` (**ПРЕ-ДЕЛЕЙ**, legacy :610-614 «through mainDelayNode so previewDelayMs() works») | seed→`setDelayMs` (clamp 0..1000, legacy :1084); C19 |
+| B8 | testPulse (проверка слухом) | 1kHz/60ms, оба выхода НАПРЯМУЮ, delay НЕ участвует | PulseCalibrator.testPulse (legacy :506-517) | не калибровка, C19 |
 
 ## C. КОМПЕНСАЦИИ (точки, где задержка уже компенсируется)
 
