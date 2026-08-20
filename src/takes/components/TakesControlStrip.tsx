@@ -15,7 +15,7 @@ import { useTakeDelete } from '../hooks/useTakeDelete';
 import { usePracticeInterrupt } from '../hooks/usePracticeInterrupt';
 import { getTransport } from '../../audio/engine-v3';
 import { TakeSlot } from './TakeSlot';
-import { getPlaybackTime, seekTo } from '../takes.time';
+import { getPlaybackTime, seekTo, setRate } from '../takes.time';
 
 interface TakesControlStripProps {
   activeBlockId: string;
@@ -26,10 +26,11 @@ interface TakesControlStripProps {
   activeCompareSlot?: number | null;
   onActiveCompareSlotChange?: (slot: number | null) => void;
   onRecorderAnalyserChange?: (analyser: AnalyserNode | null) => void;
+  onRecordAbort?: (message: string) => void;
 }
 
 export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
-  activeBlockId, timeRange, onCountdownChange, compareMode = 'off', onCompareModeChange, activeCompareSlot, onActiveCompareSlotChange, onRecorderAnalyserChange,
+  activeBlockId, timeRange, onCountdownChange, compareMode = 'off', onCompareModeChange, activeCompareSlot, onActiveCompareSlotChange, onRecorderAnalyserChange, onRecordAbort,
 }) => {
   const isRecording = useTakesStore(s => s.isRecording);
   const recordingSlot = useTakesStore(s => s.recordingSlot);
@@ -162,12 +163,8 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
     if (!ae) return;
     
     try {
-      // Only force 1.0 playback rate if NOT a tempo-aware training record
-      if (typeof ae.setPlaybackRate === 'function' && !tempoRate) {
-        ae.setPlaybackRate(1);
-      } else if (typeof ae.setPlaybackRate === 'function' && tempoRate) {
-        ae.setPlaybackRate(tempoRate);
-      }
+      // Rate: единый роутинг V3/V2 (М3) — tempoRate через TransportV3 при V3-фоне
+      setRate(tempoRate ?? 1);
       if (ae.microphone && !ae.microphone.enabled) {
         const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
         if (engineMode === 'v3') {
@@ -181,19 +178,24 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       const isLineScopedRecord = currentStep?.scope?.lineRange !== undefined;
       const effectivePreRoll = isLineScopedRecord ? 0 : PRE_ROLL_SEC;
       
-      // Pre-roll seek and playback
-      const preRollStart = Math.max(0, effectiveTimeRange.startTime - effectivePreRoll);
-      const actualPreRoll = effectiveTimeRange.startTime - preRollStart;
-      try { seekTo(preRollStart) } catch {}
-      getTransport().play();
-      
-      // Start recorder AFTER seek+play — engine is now at preRollStart position
+      // 🔧 422: recorder стартует ПЕРВЫМ (cold init MediaRecorder может занять секунды).
+      // Пока он инициализируется, трек НЕ трогаем — pre-roll не протухает.
+      const recorderInitStart = performance.now();
       const recorder = new TakesRecorder();
       recorderRef.current = recorder;
       await recorder.start();
+      const recorderInitMs = performance.now() - recorderInitStart;
       
-      // Store start time for trim calculation
+      // Store start time for trim calculation (база blob — СРАЗУ после старта рекордера)
       const recorderStartedAt = performance.now();
+      
+      // Pre-roll seek and playback — только после готовности рекордера
+      const preRollStart = Math.max(0, effectiveTimeRange.startTime - effectivePreRoll);
+      const actualPreRoll = effectiveTimeRange.startTime - preRollStart;
+      const seekStart = performance.now();
+      try { seekTo(preRollStart) } catch {}
+      getTransport().play();
+      const seekMs = performance.now() - seekStart;
       
       // Countdown UX (if pre-roll > 0.5s)
       if (actualPreRoll > 0.5) {
@@ -202,14 +204,33 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
         await new Promise<void>((resolve) => {
           let remaining = Math.ceil(actualPreRoll);
           let vocalFadeScheduled = false;
+          let stalenessStrikes = 0;
+          const maxStalenessStrikes = 1;
+          const wallStartMs = performance.now();
+          const wallTimeoutMs = (actualPreRoll / (tempoRate ?? 1) + 2.5) * 1000;
           const tick = () => {
             const ct = getPlaybackTime();
             const left = Math.max(0, effectiveTimeRange.startTime - ct);
+            // М2: staleness-гвард — если позиция УЖЕ внутри блока (pre-roll протух)
+            if (ct > effectiveTimeRange.startTime + 0.05 && stalenessStrikes < maxStalenessStrikes) {
+              stalenessStrikes++;
+              try { seekTo(preRollStart) } catch {}
+              countdownRef.current = requestAnimationFrame(tick);
+              return;
+            }
             if (left <= 0.05) { 
               setCountdown(null); 
               onCountdownChange?.(null);
               resolve(); 
               return; 
+            }
+            // М1: wall-clock ТОЛЬКО страховка (не источник цифры)
+            if (performance.now() - wallStartMs > wallTimeoutMs) {
+              setCountdown(null);
+              onCountdownChange?.(null);
+              useTakesStore.getState().cancelRecording();
+              onRecordAbort?.(`Синхронизация pre-roll не удалась. Попробуй ещё раз.`);
+              return;
             }
             const nc = Math.ceil(left);
             if (nc !== remaining) { 
@@ -277,6 +298,9 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
         fixDeltaMs,
         tempoRate,
         takeKind,
+        v3Active: (window as any).__v3Active,
+        recorderInitMs,
+        seekMs,
       });
       
       (recorderRef.current as any).__trimStartSec = computedTrim;
@@ -310,7 +334,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       onCountdownChange?.(null);
       useTakesStore.getState().cancelRecording();
     }
-  }, [activeBlockId, timeRange, nextSlot, isRecording, countdown, startRecording, blockTakes, activeExercise, exercisePhase, exerciseResolvedTimeRange, getCurrentStep]);
+  }, [activeBlockId, timeRange, nextSlot, isRecording, countdown, startRecording, blockTakes, activeExercise, exercisePhase, exerciseResolvedTimeRange, getCurrentStep, onRecordAbort]);
 
   // Intermediate window end handler - keeps recorder session alive
   const handleIntermediateWindowEnd = React.useCallback(() => {
@@ -610,6 +634,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
     if (countdownRef.current) { cancelAnimationFrame(countdownRef.current); countdownRef.current = null; }
     setCountdown(null);
     onCountdownChange?.(null);
+    setRate(1); // М3: восстановить rate после записи (V3 и V2)
     if (timeCheckRef.current) { clearInterval(timeCheckRef.current); timeCheckRef.current = null; }
     if (stopTimerRef.current) { clearTimeout(stopTimerRef.current); stopTimerRef.current = null; }
     const ae = (window as any).audioEngine;

@@ -83,6 +83,14 @@ export const TakesPanel: React.FC = () => {
   // Countdown overlay state
   const [countdownOverlay, setCountdownOverlay] = React.useState<number | null>(null);
   
+  // Record abort message state (M2) — auto-clear after 3.5s
+  const [recordAbortMsg, setRecordAbortMsg] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (!recordAbortMsg) return;
+    const t = window.setTimeout(() => setRecordAbortMsg(null), 3500);
+    return () => window.clearTimeout(t);
+  }, [recordAbortMsg]);
+  
   // Response cue for Call & Response (anticipatory countdown during pre-recording)
   const [responseCue, setResponseCue] = React.useState<number | null>(null);
   
@@ -1424,6 +1432,63 @@ export const TakesPanel: React.FC = () => {
               </span>
             </div>
           )}
+
+          {/* REC BADGE (М5): явный фидбек записи */}
+          {isRecording && (
+            <div
+              data-no-seek
+              style={{
+                position: 'absolute',
+                top: 14,
+                right: 14,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                zIndex: 30,
+                background: 'rgba(0,0,0,0.55)',
+                border: '1px solid rgba(255,70,70,0.6)',
+                borderRadius: 10,
+                padding: '6px 14px',
+                pointerEvents: 'none',
+              }}
+            >
+              <span style={{
+                width: 12, height: 12, borderRadius: '50%',
+                background: '#ff4646',
+                animation: 'beliveRecPulse 1s ease-in-out infinite',
+              }} />
+              <span style={{
+                fontSize: 15, fontWeight: 900, color: '#ff4646',
+                letterSpacing: '0.08em',
+              }}>
+                REC
+              </span>
+            </div>
+          )}
+
+          {/* ABORT NOTIFICATION (М2): никогда молча */}
+          {recordAbortMsg !== null && (
+            <div
+              data-no-seek
+              style={{
+                position: 'absolute',
+                top: 64,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 30,
+                background: 'rgba(40,10,10,0.92)',
+                border: '1px solid rgba(255,70,70,0.7)',
+                borderRadius: 10,
+                padding: '10px 18px',
+                color: '#ffb0b0',
+                fontSize: 14,
+                fontWeight: 700,
+                pointerEvents: 'none',
+              }}
+            >
+              {recordAbortMsg}
+            </div>
+          )}
           
           {/* RESPONSE CUE FOR CALL & RESPONSE (lightweight anticipatory countdown) */}
           {responseCue !== null && (
@@ -1536,6 +1601,7 @@ export const TakesPanel: React.FC = () => {
             timeRange={timeRange}
             onCountdownChange={setCountdownOverlay}
             onRecorderAnalyserChange={setLiveAnalyser}
+            onRecordAbort={setRecordAbortMsg}
             compareMode={compareMode}
             onCompareModeChange={setCompareMode}
             activeCompareSlot={activeCompareSlot}

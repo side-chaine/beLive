@@ -7,10 +7,16 @@
 import { getTransport } from '../audio/engine-v3';
 import { V2Adapter } from '../audio/engine-v3/V2Adapter';
 
-/** Текущее время воспроизведения: V3-тайм при активном V3, иначе V2. */
+/** Текущее время воспроизведения: свежее V3-clock при активном V3, иначе V2. */
 export function getPlaybackTime(): number {
-  const v3t = (window as any).__belive?.currentTime;
-  if ((window as any).__v3Active && v3t !== undefined) return v3t;
+  if ((window as any).__v3Active) {
+    // Свежее время: TransportV3.currentTime (clock, геттер), БЕЗ 50мс-кэша __belive.currentTime
+    const fresh = getTransport()?.currentTime;
+    if (fresh !== undefined) return fresh;
+    const cached = (window as any).__belive?.currentTime;
+    if (cached !== undefined) return cached;
+    return 0;
+  }
   return (window as any).audioEngine?.getCurrentTime?.() ?? 0;
 }
 
@@ -29,4 +35,13 @@ export function isPlaying(): boolean {
     return getTransport()?.state === 'playing';
   }
   return !!(window as any).audioEngine?.isPlaying;
+}
+
+/** Скорость воспроизведения: TransportV3 при активном V3, иначе V2.setPlaybackRate. */
+export function setRate(rate: number): void {
+  if ((window as any).__v3Active) {
+    try { getTransport()?.setPlaybackRate(rate); } catch {}
+    return;
+  }
+  try { (window as any).audioEngine?.setPlaybackRate?.(rate); } catch {}
 }
