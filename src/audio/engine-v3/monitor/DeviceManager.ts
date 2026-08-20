@@ -52,7 +52,7 @@ export class DeviceManager {
     if (!('setSinkId' in HTMLAudioElement.prototype)) return false
     try {
       await (el as any).setSinkId(deviceId)
-      const key = target === 'monitor' ? 'monitor:outputDeviceId' : 'monitor:mainDeviceId'
+      const key = target === 'monitor' ? 'monitor:deviceId' : 'monitor:mainDeviceId'
       localStorage.setItem(key, deviceId)
       return true
     } catch { return false }

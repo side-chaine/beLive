@@ -13,6 +13,7 @@
 import { MonitorRouter } from './MonitorRouter'
 import { PulseCalibrator } from './PulseCalibrator'
 import { AutoMixController } from './AutoMixController'
+import { DeviceManager } from './DeviceManager'
 
 export type BackendMode = 'v2' | 'v3'
 
@@ -29,6 +30,7 @@ export class MonitorEngine {
   private _router: MonitorRouter | null = null
   private _calibrator: PulseCalibrator | null = null
   private _autoMix: AutoMixController | null = null
+  private _deviceManager: DeviceManager | null = null
   private _state: MonitorEngineState = {
     enabled: false, delayMs: 120, includeMusic: false,
     musicLevel: 0.15, outputDeviceId: '', mainDeviceId: '',
@@ -55,8 +57,9 @@ export class MonitorEngine {
   }
 
   /** Подключить Router + контроллеры (вызывается из bootAether после создания Router) */
-  setBackend(router: MonitorRouter, ctx: AudioContext): void {
+  setBackend(router: MonitorRouter, ctx: AudioContext, deviceManager?: DeviceManager): void {
     this._router = router
+    this._deviceManager = deviceManager ?? null
     this._calibrator = new PulseCalibrator(router, ctx)
     this._autoMix = new AutoMixController(router)
     this._autoMix.start()
@@ -157,6 +160,24 @@ export class MonitorEngine {
     this._state.vocalHallLevel = v
   }
 
+  async setOutputDevice(deviceId: string): Promise<boolean> {
+    if (this._mode === 'v3' && this._deviceManager) {
+      const ok = await this._deviceManager.setOutputDevice(deviceId, 'monitor')
+      if (ok) { this._state.outputDeviceId = deviceId; this._dispatch('monitor-state-changed') }
+      return ok
+    }
+    return (await this._legacy?.setOutputDevice?.(deviceId)) ?? false
+  }
+
+  async setMainOutputDevice(deviceId: string): Promise<boolean> {
+    if (this._mode === 'v3' && this._deviceManager) {
+      const ok = await this._deviceManager.setOutputDevice(deviceId, 'main')
+      if (ok) { this._state.mainDeviceId = deviceId; this._dispatch('monitor-state-changed') }
+      return ok
+    }
+    return (await this._legacy?.setMainOutputDevice?.(deviceId)) ?? false
+  }
+
   // AutoMix config
   setAutoVerse(on: boolean): void { this._legacy?.setAutoVerse?.(on) }
   setAutoVerseLevel(v: number): void { this._legacy?.setAutoVerseLevel?.(v) }
@@ -195,7 +216,14 @@ export class MonitorEngine {
     if (this._mode === 'v3' && this._calibrator) return this._calibrator.testPulse()
     return this._legacy?.testPulse?.()
   }
-  async listOutputs(): Promise<MediaDeviceInfo[]> { return this._legacy?.listOutputs?.() ?? [] }
+  async listOutputs(): Promise<MediaDeviceInfo[]> {
+    if (this._mode === 'v3' && this._deviceManager) {
+      const devices = await this._deviceManager.listOutputs()
+      this._state.devices = devices
+      return devices
+    }
+    return this._legacy?.listOutputs?.() ?? []
+  }
 
   /** Для __switchToV3 — принять состояние от legacy */
   adoptState(legacy: any): void {

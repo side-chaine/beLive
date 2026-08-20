@@ -15,6 +15,7 @@ import { bridgeFacade } from './foundation/event-bus';
 import { V3StatePublisher, V3DataInterceptor, getTransport, V2Adapter, setStatePublisher, MonitorRouter } from './audio/engine-v3';
 import { V2AudioCage } from './audio/engine-v3/integration/V2AudioCage';
 import { MonitorEngine } from './audio/engine-v3/monitor/MonitorEngine';
+import { DeviceManager } from './audio/engine-v3/monitor/DeviceManager';
 import { getAudioContext } from './audio/core/audioContext';
 import { eventBus, EventBusChannel } from './foundation/event-bus';
 import { initExerciseEvents } from './foundation/event-bus/wrappers/exercise-events';
@@ -101,7 +102,7 @@ function bootAether(): void {
       router = new MonitorRouter(ctx)
       transport.orchestrator.setOutputRouting(router.programInput, router.vocalHallInput)
       monitorEngine = new MonitorEngine()
-      monitorEngine.setBackend(router, ctx)
+      monitorEngine.setBackend(router, ctx, new DeviceManager(router.monitorStream, router.mainStream))
       // 🔬 RECON-3: временный глобальный доступ для диагностики
       ;(window as any).__router = router
       console.log('[AETHER] ✅ MonitorRouter + MonitorEngine active — Static Output Bus')
