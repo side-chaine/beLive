@@ -9,13 +9,12 @@
  * CSS-only meters for v1 (no canvas, no peak hold).
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useStemStore } from '../stem/stem.store';
 import { BUILTIN_STEMS, STEM_CAPACITY_BY_TIER, sortStemsForDisplay } from '../stem/stemTypes';
 import { usePerformanceStore } from '../performance/performance.store';
 import { useAudioStore } from '../stores/audio.store';
 import { InstrumentStrip } from './InstrumentStrip';
-import { getTransport } from '../audio/engine-v3';
 // TC-VIS-09: Critical CSS import — tier gating + recording clamp for InstrumentCard
 import '../triggers/instrument-card.css';
 import styles from './MixerPanel.module.css';
@@ -110,7 +109,6 @@ export function MixerPanel() {
   const [visualMode, setVisualMode] = useState(false); // TC-VIS-09: Visual sub-mode
   const orderedStems = useMemo(() => sortStemsForDisplay(loadedStems), [loadedStems]);
   const [meterLevels, setMeterLevels] = useState<Record<string, number>>({});
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Get performance tier for meter settings
   const meterFps = usePerformanceStore(s => {
@@ -242,10 +240,14 @@ export function MixerPanel() {
       return pipeline.getStemMeterLevel(stemId) ?? 0;
     };
 
-    timerRef.current = setInterval(() => {
-      const t3 = getTransport();
-      const isV3 = t3 && t3.state !== 'idle' && !!(window as any).__belive?.pipeline;
+    let rafId = 0;
+    let lastTs = 0;
+    const tick = (ts: number) => {
+      rafId = requestAnimationFrame(tick);
+      if (ts - lastTs < interval) return;
+      lastTs = ts;
 
+      const isV3 = !!(window as any).__belive?.pipeline;
       const levels: Record<string, number> = {};
       if (isV3) {
         for (const stemId of orderedStems) {
@@ -259,11 +261,10 @@ export function MixerPanel() {
         }
       }
       setMeterLevels(levels);
-    }, interval);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
     };
+    rafId = requestAnimationFrame(tick);
+
+    return () => cancelAnimationFrame(rafId);
   }, [orderedStems, meterFps]);
 
   if (orderedStems.length === 0) {

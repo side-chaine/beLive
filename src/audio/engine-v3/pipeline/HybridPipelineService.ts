@@ -68,6 +68,8 @@ export class HybridPipelineService implements IPipelineController {
   /** R1: pre-fader vocal hall send — тап от instance.outputNode (ДО stretchGain), только vocals.
    *  Mute/solo/volume (все идут через stretchGain) НЕ влияют на зал. */
   private readonly _vocalHallSend: GainNode
+  /** R1: Analyser-тап на vocal-hall send (pre-fader, только vocals) — параллельный, не в сигнальном пути */
+  private _vocalHallMeter: AnalyserNode | null = null
   private _vocalHallTarget: AudioNode | null = null
   private _vocalHallSource: AudioNode | null = null
   /** Переиспользуемый scratch-буфер для RMS — ноль аллокаций в горячем пути */
@@ -85,6 +87,9 @@ export class HybridPipelineService implements IPipelineController {
     this._outputGain.gain.value = 1.0
     this._vocalHallSend = ctx.createGain()
     this._vocalHallSend.gain.value = 1.0
+    this._vocalHallMeter = ctx.createAnalyser()
+    this._vocalHallMeter.fftSize = 256
+    this._vocalHallSend.connect(this._vocalHallMeter)
 
     // 067-D: single path — только Bus A (stretch)
     this._busAGain = ctx.createGain()
@@ -161,6 +166,8 @@ export class HybridPipelineService implements IPipelineController {
     if (this._vocalHallSend && target) {
       try { this._vocalHallSend.disconnect() } catch {}
       this._vocalHallSend.connect(target)
+      // 428: после полного disconnect пере-подключаем R1-метр (иначе тап разорван)
+      if (this._vocalHallMeter) this._vocalHallSend.connect(this._vocalHallMeter)
     }
   }
 
@@ -489,6 +496,21 @@ export class HybridPipelineService implements IPipelineController {
   /** RMS-уровень (0-1) стема, читается с AnalyserNode-тапа ПОСЛЕ volume+mute+solo (366) */
   getStemMeterLevel(stemId: string): number {
     const meter = this._stretchMeters.get(stemId)
+    if (!meter) return 0
+    try {
+      meter.getFloatTimeDomainData(this._meterScratch)
+      let sumSq = 0
+      for (let i = 0; i < this._meterScratch.length; i++) sumSq += this._meterScratch[i] * this._meterScratch[i]
+      return Math.sqrt(sumSq / this._meterScratch.length)
+    } catch {
+      return 0
+    }
+  }
+
+  /** R1: RMS-уровень vocal-hall цепи (pre-fader от instance.outputNode, до stretchGain).
+   *  Mute/solo/volume vocals НЕ влияют на зал — метр доказывает это числами (CDP R1-proof). */
+  getVocalHallLevel(): number {
+    const meter = this._vocalHallMeter
     if (!meter) return 0
     try {
       meter.getFloatTimeDomainData(this._meterScratch)
