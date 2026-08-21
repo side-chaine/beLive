@@ -4,6 +4,7 @@ import { useAudioStore } from '../../stores/audio.store';
 import { takeAssets } from '../takes.assets';
 import { getPlaybackTime, seekTo } from '../takes.time';
 import { getTransport } from '../../audio/engine-v3';
+import { getAudioContext } from '../../audio/core/audioContext';
 
 interface UseTakesPlaybackOptions {
   activeBlockId: string;
@@ -113,7 +114,7 @@ export function useTakesPlayback({
       try {
         const ab = await blob.arrayBuffer();
         if (gen !== previewGenRef.current) return;
-        const ctx: AudioContext = ae.audioContext ?? ae._audioContext;
+        const ctx: AudioContext = getAudioContext();
         audioBuffer = await ctx.decodeAudioData(ab);
         if (gen !== previewGenRef.current) return;
         const { generatePeaks } = await import('../../sync/canvas/peaks');
@@ -131,7 +132,7 @@ export function useTakesPlayback({
     }
     if (gen !== previewGenRef.current) return;
     try {
-      const ctx: AudioContext = ae.audioContext ?? ae._audioContext;
+      const ctx: AudioContext = getAudioContext();
       if (!ctx) return;
       const parts = takeId.split('-');
       const slot = parseInt(parts[parts.length - 1], 10);
