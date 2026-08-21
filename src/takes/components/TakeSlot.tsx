@@ -36,6 +36,7 @@ export const TakeSlot: React.FC<TakeSlotProps> = ({
   onRetake, onStar, onDelete,
 }) => {
   const handleClick = () => {
+    console.log(`[TAKE-CLICK] slot=${slot} isReady=${isReady} isThisRec=${isThisRec} exercisePlaybackLocked=${exercisePlaybackLocked}`);
     if (exercisePlaybackLocked) return;
     if (isThisRec) return;
     if (isEmpty && !isRecording && countdown === null) {

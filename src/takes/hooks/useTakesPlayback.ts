@@ -6,6 +6,12 @@ import { getPlaybackTime, seekTo } from '../takes.time';
 import { getTransport } from '../../audio/engine-v3';
 import { getAudioContext } from '../../audio/core/audioContext';
 
+// C⁺-TRACE (438): тегированная инструментация бампов previewGenRef
+function __traceGenBump(tag: string, val: number) {
+  const stack = new Error().stack?.split('\n').slice(1, 5).join(' << ');
+  console.log(`[GEN-BUMP] tag=${tag} val=${val} stack=${stack}`);
+}
+
 interface UseTakesPlaybackOptions {
   activeBlockId: string;
   timeRange: { startTime: number; endTime: number };
@@ -63,6 +69,7 @@ export function useTakesPlayback({
 
   const stopPreview = React.useCallback((options?: { pauseEngine?: boolean }) => {
     previewGenRef.current++;
+    __traceGenBump('stopPreview', previewGenRef.current);
     
     // 1. Stop source
     try { previewSourceRef.current?.stop(); } catch (_) {}
@@ -107,6 +114,8 @@ export function useTakesPlayback({
     if (!ae) return;
     stopPreview();
     const gen = ++previewGenRef.current;
+    __traceGenBump('handlePlayTake-start', gen);
+    console.log(`[PLAY-TAKE] enter takeId=${takeId} gen=${gen}`);
     let audioBuffer = takeAssets.getAudioBuffer(takeId);
     if (!audioBuffer) {
       const blob = takeAssets.getBlob(takeId);
@@ -130,7 +139,12 @@ export function useTakesPlayback({
         return;
       }
     }
-    if (gen !== previewGenRef.current) return;
+    if (gen !== previewGenRef.current) {
+      console.log(`[GEN-GUARD:133] BAIL gen=${gen} cur=${previewGenRef.current}`);
+      return;
+    } else {
+      console.log(`[GEN-GUARD:133] PASS gen=${gen}`);
+    }
     try {
       const ctx: AudioContext = getAudioContext();
       if (!ctx) return;
@@ -200,7 +214,7 @@ export function useTakesPlayback({
       // ref is stable; a genuinely newer stop (separate user action) is still caught
       // by the decode-branch gen checks above.
       const settleGen = previewGenRef.current;
-      if (settleGen !== previewGenRef.current) return;
+      console.log(`[GEN-SETTLE] gen=${gen} cur=${settleGen} (C33 no-op guard, kept benign)`);
       
       const engineOffsetSec = Math.max(0,
         (getPlaybackTime() || timeRange.startTime) - timeRange.startTime);
@@ -209,10 +223,15 @@ export function useTakesPlayback({
         Math.max(0, trimStart + engineOffsetSec),
         Math.max(0, (audioBuffer?.duration ?? 0) - 0.005),
       );
+      console.log(`[GEN-SRC-START] REACHED startOffset=${startOffset.toFixed(3)} gain=${gain.gain.value} gen=${gen} cur=${previewGenRef.current}`);
       source.start(ctx.currentTime + 0.01, startOffset);
       setPlayingTakeId(takeId);
       source.onended = () => {
-        if (gen !== previewGenRef.current) return;
+        if (gen !== previewGenRef.current) {
+          console.log(`[GEN-ONENDED] BAIL gen=${gen} cur=${previewGenRef.current}`);
+          return;
+        }
+        console.log(`[GEN-ONENDED] natural-end gen=${gen}`);
         stopPreview({ pauseEngine: true });
       };
     } catch (err) {
