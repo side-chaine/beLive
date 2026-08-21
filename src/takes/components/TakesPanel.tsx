@@ -491,6 +491,37 @@ export const TakesPanel: React.FC = () => {
     }
     const ae = (window as any).audioEngine;
     
+    // F-1.5 (432): v3 — инструментал = сумма не-vocal стемов из pipeline (V2-API заглушён кейджем)
+    const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+    if (engineMode === 'v3') {
+      const pipeline = (window as any).__belive?.pipeline;
+      const stems = pipeline?.chainA?.stems;
+      if (pipeline && stems && stems.size > 0) {
+        const instBufs: AudioBuffer[] = [];
+        stems.forEach((st: any, id: string) => {
+          if (id === 'vocals') return;
+          const b = st.getBuffer?.();
+          if (b) instBufs.push(b);
+        });
+        if (instBufs.length > 0) {
+          const ref = instBufs[0];
+          let len = 0;
+          for (const b of instBufs) len = Math.max(len, b.length);
+          const mixed = pipeline.ctx.createBuffer(ref.numberOfChannels, len, ref.sampleRate);
+          for (let ch = 0; ch < ref.numberOfChannels; ch++) {
+            const out = mixed.getChannelData(ch);
+            for (const b of instBufs) {
+              const src = b.getChannelData(Math.min(ch, b.numberOfChannels - 1));
+              const n = Math.min(src.length, out.length);
+              for (let i = 0; i < n; i++) out[i] += src[i];
+            }
+          }
+          if (!cancelled) setInstrumentalBuffer(mixed);
+          return;
+        }
+      }
+      return; // v3: стемов ещё нет — V2-fallback бесполезен, ждём [duration]-реран
+    }
     // Try sync first (if buffer already decoded)
     const existing = ae?.getAudioBuffer?.() ?? null;
     if (existing) {
@@ -516,6 +547,14 @@ export const TakesPanel: React.FC = () => {
       return;
     }
     const ae = (window as any).audioEngine;
+    // F-1.5 (432): v3 — вокальный буфер напрямую из стема 'vocals'
+    const engineModeV = import.meta.env.VITE_ENGINE ?? 'v2';
+    if (engineModeV === 'v3') {
+      const stems = (window as any).__belive?.pipeline?.chainA?.stems;
+      const vb = stems?.get?.('vocals')?.getBuffer?.() ?? null;
+      if (vb) { if (!cancelled) setVocalBuffer(vb); }
+      return;
+    }
     // Try sync first (buffer may already be decoded)
     const existing = ae?.getVocalAudioBuffer?.() ?? null;
     if (existing) {

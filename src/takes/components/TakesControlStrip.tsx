@@ -14,6 +14,7 @@ import { useTakesPlayback } from '../hooks/useTakesPlayback';
 import { useTakeDelete } from '../hooks/useTakeDelete';
 import { usePracticeInterrupt } from '../hooks/usePracticeInterrupt';
 import { getTransport } from '../../audio/engine-v3';
+import { getAudioContext } from '../../audio/core/audioContext';
 import { TakeSlot } from './TakeSlot';
 import { getPlaybackTime, seekTo, setRate } from '../takes.time';
 
@@ -433,10 +434,8 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
 
       blob.arrayBuffer()
         .then(async (ab) => {
-          const ctx2: AudioContext =
-            ((window as any).audioEngine?.audioContext ??
-             (window as any).audioEngine?._audioContext);
-          if (!ctx2) return;
+          const ctx2: AudioContext = getAudioContext();
+          if (!ctx2) { console.error('[Takes] нет AudioContext для декодирования'); return; }
           const audioBuffer = await ctx2.decodeAudioData(ab);
           const { generatePeaks } = await import('../../sync/canvas/peaks');
           const ch = audioBuffer.getChannelData(0);
@@ -683,8 +682,8 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       };
       useTakesStore.getState().finishRecording(meta);
       blob.arrayBuffer().then(async (ab) => {
-        const ctx2: AudioContext = ae?.audioContext ?? ae?._audioContext;
-        if (!ctx2) return;
+        const ctx2: AudioContext = getAudioContext();
+        if (!ctx2) { console.error('[Takes] нет AudioContext для декодирования'); return; }
         const audioBuffer = await ctx2.decodeAudioData(ab);
         const { generatePeaks } = await import('../../sync/canvas/peaks');
         const ch = audioBuffer.getChannelData(0);
@@ -768,10 +767,8 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
 
       blob.arrayBuffer()
         .then(async (ab) => {
-          const ctx2: AudioContext =
-            ((window as any).audioEngine?.audioContext ??
-             (window as any).audioEngine?._audioContext);
-          if (!ctx2) return;
+          const ctx2: AudioContext = getAudioContext();
+          if (!ctx2) { console.error('[Takes] нет AudioContext для декодирования'); return; }
           const audioBuffer = await ctx2.decodeAudioData(ab);
           const { generatePeaks } = await import('../../sync/canvas/peaks');
           const ch = audioBuffer.getChannelData(0);
