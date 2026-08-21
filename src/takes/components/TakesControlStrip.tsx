@@ -62,6 +62,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
   const exercisePlaybackLocked = isExerciseExecutionLocked(activeExercise, exercisePhase);
 
   const recorderRef = React.useRef<TakesRecorder | null>(null);
+  const [micError, setMicError] = React.useState<string | null>(null);
   const handleStopRef = React.useRef<() => void>(() => {});
   const handleInFlightStopRef = React.useRef<() => void>(() => {});
   const stopTimerRef = React.useRef<number | null>(null);
@@ -167,11 +168,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       setRate(tempoRate ?? 1);
       if (ae.microphone && !ae.microphone.enabled) {
         const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
-        if (engineMode === 'v3') {
-          // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
-          return;
-        }
-        await ae.enableMicrophone();
+        if (engineMode !== 'v3') await ae.enableMicrophone(); // v3: acquisition внутри TakesRecorder.start() (F-1 431)
       }
       
       // Detect line-scoped record stage: reduce pre-roll to 0 for line-range-scoped transactions
@@ -184,6 +181,13 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       const recorder = new TakesRecorder();
       recorderRef.current = recorder;
       await recorder.start();
+      if (recorder.lastError) {
+        setMicError(recorder.lastError);
+        recorderRef.current = null;
+        console.error(`[Takes] запись не начата: микрофон (${recorder.lastError})`);
+        return; // abort: pre-roll/playback не начинаем
+      }
+      setMicError(null);
       const recorderInitMs = performance.now() - recorderInitStart;
       
       // Store start time for trim calculation (база blob — СРАЗУ после старта рекордера)
@@ -539,18 +543,20 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       // 1. Enable microphone if needed (hidden, no UI state yet)
       if (ae.microphone && !ae.microphone.enabled) {
         const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
-        if (engineMode === 'v3') {
-          // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
-          return;
-        }
-        await ae.enableMicrophone();
+        if (engineMode !== 'v3') await ae.enableMicrophone(); // v3: acquisition внутри TakesRecorder.start() (F-1 431)
       }
 
       // 2. Create and start recorder (armed but hidden - no UI state yet)
       const recorder = new TakesRecorder();
       recorderRef.current = recorder;
       await recorder.start();
-      
+      if (recorder.lastError) {
+        setMicError(recorder.lastError);
+        recorderRef.current = null;
+        console.error(`[Takes] сценарная запись не начата: микрофон (${recorder.lastError})`);
+        return;
+      }
+
       // DO NOT expose analyser yet - keeps live trail hidden
       // onRecorderAnalyserChange?.(recorder.analyser ?? null); // ← NOT YET
 
@@ -864,6 +870,19 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
         alignItems: 'center',
         gap: '16px',
       }}>
+        {micError && (
+          <div style={{
+            position: 'absolute', top: '-30px', left: '50%', transform: 'translateX(-50%)',
+            padding: '3px 12px', borderRadius: '10px',
+            background: 'rgba(220,60,60,0.92)', color: '#fff',
+            fontSize: '12px', whiteSpace: 'nowrap', zIndex: 10,
+          }}>
+            🎤 {micError === 'permission-denied' ? 'Доступ к микрофону запрещён'
+              : micError === 'no-device' ? 'Микрофон не найден'
+              : micError === 'mic-source-unavailable' ? 'Аудио-движок ещё инициализируется'
+              : 'Микрофон недоступен'}
+          </div>
+        )}
         {/* Neutral layout: Take 1 / Take 2 / Take 3 */}
         {[0, 1, 2].map(slot => {
           const take = blockTakes?.takes[slot] ?? null;

@@ -120,6 +120,8 @@ export class HybridPipelineService implements IPipelineController {
 
   get outputNode(): AudioNode { return this._outputGain }
   get inputNode(): AudioNode { return this._chainA.mergeGain }
+  /** F-1 (431): публичный AudioContext пайплайна (analyser-тапы мик-стрима; F-2 монитор-маршрут) */
+  get ctx(): AudioContext { return this._ctx; }
   get chainA(): StemChain { return this._chainA }
   get chainB(): StemChain { return this._chainB }
   get stretchPool(): StretchInstancePool { return this._stretchPool }

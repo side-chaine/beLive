@@ -303,10 +303,15 @@ export function MixerPanel() {
           {/* Mic input select — выбор микрофона (дефолт или подключаемый) */}
           <select
             className={`${styles.micSelect} ${micEnabled ? styles.micActive : ''}`}
-            value={micDeviceId}
-            disabled={engineMode === 'v3'}
+            value={engineMode === 'v3' ? (() => { try { return localStorage.getItem('mic:deviceId') ?? '' } catch { return '' } })() : micDeviceId}
             title="Microphone input"
             onChange={async (e) => {
+              const em = import.meta.env.VITE_ENGINE ?? 'v2';
+              if (em === 'v3') {
+                try { await (window as any).__belive?.micSource?.setDevice(e.target.value); }
+                catch (err) { console.warn('[MicSelect] v3 setDevice failed:', err); }
+                return;
+              }
               const ae = (window as any).audioEngine;
               if (!ae?.microphone?.setDeviceId) return;
               try { await ae.microphone.setDeviceId(e.target.value); }

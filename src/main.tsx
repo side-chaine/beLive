@@ -41,6 +41,7 @@ import { PeerConnectionManager } from './Rehearsal/services/peer-connection';
 import { RehearsalTriggerBridge } from './Rehearsal/bridge/rehearsal-trigger.bridge';
 import { useRehearsalSessionStore } from './Rehearsal/store/rehearsal-session.store';
 import { useStemStore } from './stem/stem.store';
+import { MicSourceV3 } from './audio/engine-v3/services/MicSourceV3';
 
 // import '../css/main.css'; // loaded via <link> in index.html
 // import '../css/ai-chat.css'; // loaded via <link> in index.html
@@ -171,6 +172,7 @@ function bootAether(): void {
         // Выставляем в window для дебага
         ;(window as any).__belive = (window as any).__belive || {}
         ;(window as any).__belive.pipeline = pipeline
+        ;(window as any).__belive.micSource = (window as any).__belive.micSource ?? new MicSourceV3()
 
         console.log('[AETHER] ✅ HybridPipelineService Phase F — ACTIVE')
         console.log('[AETHER] ⚡ __belive.pipeline — diagnostics API')

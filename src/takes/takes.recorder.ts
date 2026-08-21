@@ -37,10 +37,17 @@ export class TakesRecorder {
   private _analyser: AnalyserNode | null = null;
   private _sourceNode: MediaStreamAudioSourceNode | null = null;
   private _mimeType: string = '';
+  private _lastError: string | null = null;
+  private _v3Owned = false;
 
   /** Current analyser node for live waveform visualization */
   get analyser(): AnalyserNode | null {
     return this._analyser;
+  }
+
+  /** F-1 (431): причина последнего неудачного start() ('permission-denied'|'no-device'|'stream-fail'|'mic-source-unavailable') */
+  get lastError(): string | null {
+    return this._lastError;
   }
 
   /** Whether currently recording */
@@ -60,28 +67,44 @@ export class TakesRecorder {
   async start(): Promise<void> {
     const ae = (window as any).audioEngine;
     if (!ae) throw new Error('AudioEngine not available');
+    const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+    let stream: MediaStream | null = null;
 
-    // Ensure mic is enabled (this also routes to output — headphones required)
-    if (!ae.microphone?.enabled) {
-      const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
-      if (engineMode === 'v3') {
-        // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
+    if (engineMode === 'v3') {
+      // F-1 (431): acquisition через MicSourceV3 (мик ВЫШЕ плейбек-pipeline)
+      const src = (window as any).__belive?.micSource;
+      if (!src) {
+        this._lastError = 'mic-source-unavailable';
+        console.error('[TakesRecorder] __belive.micSource недоступен');
         return;
       }
-      await ae.enableMicrophone();
+      try {
+        stream = await src.acquire();
+        this._v3Owned = true;
+      } catch (e: any) {
+        this._lastError = e?.kind ?? 'stream-fail';
+        console.error(`[TakesRecorder] mic acquire failed: ${this._lastError}`);
+        return;
+      }
+    } else {
+      // Ensure mic is enabled (this also routes to output — headphones required)
+      if (!ae.microphone?.enabled) {
+        await ae.enableMicrophone();
+      }
+      // Get raw mic stream (unaffected by volume slider)
+      stream = ae.getMicrophoneStream?.('raw') ?? ae.microphone?.getStream?.('raw');
     }
 
-    // Get raw mic stream (unaffected by volume slider)
-    const stream: MediaStream | null = ae.getMicrophoneStream?.('raw')
-      ?? ae.microphone?.getStream?.('raw');
-
     if (!stream) throw new Error('Raw mic stream not available');
+    this._lastError = null;
 
     // Detect format
     this._mimeType = detectAudioMime();
 
     // Create AnalyserNode for live waveform (listen-only tap)
-    const ctx: AudioContext = ae.audioContext ?? ae._audioContext;
+    const ctx: AudioContext = engineMode === 'v3'
+      ? ((window as any).__belive?.pipeline?.ctx ?? ae.audioContext ?? ae._audioContext)
+      : (ae.audioContext ?? ae._audioContext);
     if (ctx) {
       this._sourceNode = ctx.createMediaStreamSource(stream);
       this._analyser = ctx.createAnalyser();
@@ -141,6 +164,10 @@ export class TakesRecorder {
   private cleanupNodes(): void {
     try { this._sourceNode?.disconnect(); } catch (_) {}
     try { this._analyser?.disconnect(); } catch (_) {}
+    if (this._v3Owned) {
+      try { (window as any).__belive?.micSource?.release(); } catch (_) {}
+      this._v3Owned = false;
+    }
     this._sourceNode = null;
     this._analyser = null;
     this.recorder = null;
