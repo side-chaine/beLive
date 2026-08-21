@@ -106,6 +106,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
     stopTimerRef,
     deleteReRecordTimeoutRef,
     recorderRef,
+    handleStopRef,
     onCountdownChange,
     onRecorderAnalyserChange,
     playingTakeId,

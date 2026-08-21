@@ -12,6 +12,7 @@ interface UsePracticeInterruptOptions {
   stopTimerRef: React.MutableRefObject<number | null>;
   deleteReRecordTimeoutRef: React.MutableRefObject<number | null>;
   recorderRef: React.MutableRefObject<any>;
+  handleStopRef?: React.MutableRefObject<() => void>;
   onCountdownChange?: (value: number | null) => void;
   onRecorderAnalyserChange?: (analyser: AnalyserNode | null) => void;
   playingTakeId: string | null;
@@ -29,6 +30,7 @@ export function usePracticeInterrupt({
   stopTimerRef,
   deleteReRecordTimeoutRef,
   recorderRef,
+  handleStopRef,
   onCountdownChange,
   onRecorderAnalyserChange,
   playingTakeId,
@@ -60,10 +62,23 @@ export function usePracticeInterrupt({
       deleteReRecordTimeoutRef.current = null;
     }
     
-    // 4. Cancel active recorder if recording is in progress
-    // Do NOT commit partial blob - just cancel
+    // 4. Recording in progress: COMMIT через штатный handleStop (F-1.6, 433).
+    // Раньше здесь был cancel() без сохранения блоба: на границе блока в квесте
+    // автопереход дёргал interrupt раньше автостопа (шаг 3 уже убил timeCheck)
+    // и тейк терялся целиком. Коммит идёт через ту же ветку blob→decode→ready.
+    // ⚠️ Делегирование = немедленный return: шаги 5-7 ниже синхронно стирают
+    // analyser/recordingSlot, которые асинхронный коммит ещё прочитает.
     if (recorderRef.current?.isRecording) {
-      recorderRef.current.cancel();
+      if (handleStopRef?.current) {
+        try {
+          handleStopRef.current(); // async: сам остановит рекордер, занулит ref, закоммитит take
+        } catch {
+          try { recorderRef.current?.cancel(); } catch {}
+          recorderRef.current = null;
+        }
+        return;
+      }
+      try { recorderRef.current.cancel(); } catch {}
       recorderRef.current = null;
     }
     
