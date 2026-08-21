@@ -14,6 +14,21 @@
 
 ## INBOX
 
+### TASK-009 · Take-highlight/selection state audit (коммит vs Space) — [DONE]
+**Бриф (юзер/007):** Исследовать store-состояния, управляющие ПОДСВЕТКОЙ/ВЫДЕЛЕНИЕМ слота тейка в TakesControlStrip/TakeSlot. Симптом (юзер, после N2-фикса 440): после записи тейка и возврата на блок — тейк НЕ подсвечен; подсветка только после Space/Play. Голос при клике есть (isReady ок, N2 закрыт). Значит подсветка — отдельное состояние от isReady.
+**Рекон 007:** N2-фикс (440-MICRO-PACK, Оператор, tsc 314 / vitest 749/749) сделал blockTakes/isReady реактивным (слот появляется), но подсветка всё ещё только по Space. 006 TASK-004: слоты ре-рендерятся только на playingTakeId (пробел). Гипотеза: подсветка/selected = playingTakeId (или selectedTakeId), НЕ выставляется при commit, только при Space/Play (keyboard handler).
+**Что сделать 006 (read-only + документ):**
+1. В takes.store.ts (+ TakesControlStrip/TakeSlot) найти состояние подсветки (playingTakeId? selectedTakeId? isThisRec? другое) — file:line.
+2. Где оно ВЫСТАВЛЯЕТСЯ при Space/Play (useKeyboardShortcuts.ts:74? TakesControlStrip onPlay?) — file:line.
+3. Где тейк КОММИТИТСЯ (handleStop/commit в takes.recorder/store) — выставляется ли highlight-состояние.
+4. Микро-фикс: выставлять highlight при commit ИЛИ деривить подсветку от «тейк существует и последний записан»; риски конфликта с playingTakeId при проигрывании/auto-advance.
+5. (опц.) Коротко N3-β эталон-чек V2: оставался ли V2 на блоке после записи тейка или auto-advance (frozen-read lyrics.bridge.ts / V2 takes flow).
+**Доставить:** OUTBOX с file:line + рекоменд. микро-фикс (2-3 строки) + риски. 006 НЕ правит код.
+
+**Ц3 инвариант (релей 439b):** коммит записи САМ выставляет `selectedTakeId` (и `playingTakeId` при автоплей-превью, если сценарий есть) на свежезаписанный тейк. Space работает, т.к. play-путь трогает эти поля, commit-путь — нет. Proof-of-change (стандарт Ц3): после фикса запись → тейк **подсвечен сразу**, без Space (трейс-строкой или скрином).
+
+---
+
 ### TASK-001 · v-Mix эталон-чек V2 (Ц3 рулинг §3) · [DONE]
 **Бриф:** Ц3 переопределил v-Mix как СТЕРЕО-РАЗВОДКУ (vocals->L, mic->R), не громкость. Нужен точный эталон по V2, чтобы воспроизвести парити, а не по памяти.
 **Найти и прочитать (frozen-ЧТЕНИЕ ок):** VocalMix.ts (V2-мерджер vocals->L/R), monitor-mix.js (v-Mix путь в мониторе). Локации — через grep по репозиторию.
@@ -42,7 +57,7 @@
 
 ---
 
-### TASK-004 · N2: слот не перерисовывается до пробела · [DONE]
+### TASK-004 · N2: слот не перерисовывается до пробела · [DONE] → RESOLVED-BY-440 (007)
 Бриф §5: найти подписку TakesPanel/TakeSlot на bumpAssetRevision vs только play-state. **Статус:** DONE (см. OUTBOX). Рут = TakesControlStrip.tsx:38 сабскрайб функции getBlockTakes (не данных); микро-фикс = сабскрайб blockTakesMap[activeBlockId] (или assetRevision).
 
 ---
@@ -156,7 +171,9 @@ micGain ─────(R)──┘        [ChannelMergerNode, без delay, lat
 
 ---
 
-### TASK-004 · N2: слот не перерисовывается до пробела — [DONE]
+### TASK-004 · N2: слот не перерисовывается до пробела — [DONE] → RESOLVED-BY-440 (007 применил 440-MICRO-PACK через Оператора; текущее дерево уже сабскрайбит blockTakesMap — DRIFT закрыт)
+
+> **007 VERIFY (21.08):** Якоря `:38`/`:78` НЕ совпадают с текущим деревом (см. STATUS-LOG). Вероятно, N2 уже пофикшен C32 — требуется повторная проверка 007 перед действием.
 
 **Рут (file:line):** `TakesControlStrip.tsx:38` сабскрайбит **функцию** `getBlockTakes`:
 `const getBlockTakes = useTakesStore(s => s.getBlockTakes);` — селектор возвращает стабильную ссылку на функцию, поэтому компонент НЕ ре-рендерится при изменении содержимого `blockTakesMap`.
@@ -239,6 +256,48 @@ Waveform: useWaveformData.ts:74 / useWaveformRender.ts:82-86 рисуют из i
 
 ---
 
+### TASK-009 · Take-highlight/selection state audit (коммит vs Space) — [DONE]
+
+**Симптом (юзер):** после записи тейка и возврата на блок — тейк НЕ подсвечен; «подсветка» появляется только после Play (клик/space по тейку). Голос есть (isReady ок, N2 закрыт).
+
+**1. Состояния подсветки (где рендерятся) — `TakeSlot.tsx`:**
+- `isBest` = `blockTakes?.selectedSlot === slot` (TakesControlStrip.tsx:889) → зелёная рамка `rgba(0,200,83,0.55)` + зелёный фон (:94/:101). Это «best/Ref/selected»-подсветка. [@@FACT]
+- `isPlaying` = `playingTakeId === take?.id` (TakesControlStrip.tsx:891) → inset box-shadow (:104-108). Это «играет сейчас»-подсветка. [@@FACT]
+- `isThisRec` = `isRecording && recordingSlot===slot` (:890) — только во время записи.
+- Дефолт (ни best, ни playing) = оранжевая рамка `rgba(255,140,0,0.55)` (:96/:103). Именно его юзер и видит после записи.
+
+**2. Где isBest/isPlaying ВЫСТАВЛЯЮТСЯ:**
+- `isBest` (selectedSlot): ТОЛЬКО в `selectTake(activeBlockId, slot)` (takes.store.ts:122-131), вызывается из `onStar` (TakesControlStrip.tsx:934-939). Больше НИГДЕ. [@@FACT]
+- `isPlaying` (playingTakeId): ТОЛЬКО в `handlePlayTake` → `setPlayingTakeId(takeId)` (useTakesPlayback.ts:228), вызывается из `onPlay` (TakesControlStrip.tsx:917-923) ← `TakeSlot.handleClick` (:47-50). [@@FACT]
+- ⚠️ **Коррекция рекона 007:** предполагалось «Space/keyboard handler выставляет playingTakeId». ФАКТ: Space-хандлер `useKeyboardShortcuts.ts:72-97` зовёт `transport.play()/pause()` (трек-transport), он НЕ трогает `playingTakeId`/`selectedSlot` (grep: 0 упоминаний takes в этом файле). «Подсветка после Play» реально приходит от **клика по тейку** (onPlay→handlePlayTake:228), а не от Space. [@@FACT]
+
+**3. Где тейк КОММИТИТСЯ — выставляется ли highlight?**
+- `finishRecording(meta)` (takes.store.ts:77-91): ставит `isRecording=false`, `recordingSlot=null`, новый `blockTakesMap` (с take). **`selectedSlot` и `playingTakeId` НЕ трогает.** [@@FACT]
+- Коллеры: TakesControlStrip.tsx:684 (`status:'processing'`) и :701 (`status:'ready'`) — оба идут через `finishRecording`. После них `selectedSlot`/`playingTakeId` НЕ выставляются (проверено :678-705). → коммит НЕ даёт подсветки. **Точное совпадение с симптомом.** [@@FACT]
+
+**4. Микро-фикс (для Оператора, 006 не правит):** выставить `selectedSlot` на свежезаписанный тейк внутри `finishRecording` (одна точка покрывает оба коллера :684/:701):
+```ts
+// takes.store.ts · finishRecording (внутри set, ~:86)
+blockTakesMap: {
+  ...state.blockTakesMap,
+  [meta.blockId]: { ...bt, takes: newTakes, selectedSlot: meta.slot },
+},
+```
+`meta.slot` и `meta.blockId` валидны (используются на :79/:88). → после коммита `isBest===true` → зелёная «best»-подсветка сразу, без Play. Совпадает с инвариантом Ц3 (relay 439b: коммит САМ выставляет selectedTakeId). [@@REC]
+- `playingTakeId` из стора НЕ выставлять (это локальный стейт `useTakesPlayback`, не из стора; autopreview-сценария нет — см. риски). Если позже захотят autopreview, это отдельный хук-колбэк, не в сторе.
+
+**5. Риски:**
+- selectedSlot становится «best/Ref» сразу после записи — по Ц3 ок. Если в блоке уже был застаренный take, новый перехватывает best — приемлемо.
+- Нет конфликта с `playingTakeId`: selectedSlot (store) и playingTakeId (hook) независимы; auto-advance гасит `playingTakeId` в `onended` (useTakesPlayback.ts:229-235), selectedSlot живёт. [@@FACT]
+- Двойной вызов finishRecording (processing→ready): фикс идемпотентен (selectedSlot один и тот же slot). Во время `'processing'` слот уже «best» но не ready — визуально ок (рамка зелёная, контент грузится).
+- Старая гипотеза «Space выставляет highlight» — неверна (см. п.2); не править keyboard-хандлер.
+
+**(опц.) N3-β V2-эталон-чек:** пропущен (опционально). V2 takes-flow — frozen-чтение (`AudioEngineV2.ts`, `lyrics.bridge.ts`), не исследовано; скажи, если нужно для N3. Не блокирует TASK-009.
+
+**Вывод для Ц3/007:** рут N9 = коммит `finishRecording` не выставляет `selectedSlot` → `isBest` ложно → тейк оранжевый (не «best»). Фикс: 1 строка в `takes.store.ts:86`. Proof-of-change: запись → тейк зелёный (best) сразу. FROZEN-комплаенс: только чтение (takes.store.ts/TakeSlot/TakesControlStrip/useTakesPlayback/useKeyboardShortcuts — НЕ frozen).
+
+---
+
 ## STATUS-LOG
 
 - 21.08.2026: 007 создал реестр, посеял TASK-001 (v-Mix эталон V2). 006 не запущен.
@@ -254,3 +313,11 @@ Waveform: useWaveformData.ts:74 / useWaveformRender.ts:82-86 рисуют из i
 - 21.08.2026: 007 добавил TASK-008 (V3 instrumental-vs-stems «на атомы», предпосылка v-Mix) в INBOX. Якоря: MX-01 skip instrumental-master (V3DataInterceptor.ts:75), MASTER_CLOCK_STEM_ID (V3DataInterceptor.ts:20), параллельный декод (V3DataInterceptor.ts:33), setInstrumentalVolume (IV2PublicContract.ts:38 / V2AudioCage.ts:88/106). Цель: разобрать, что играет (music-стемы vs instrumental-master) и где instrumental в UI. Ждёт go юзера. Открытый вопрос 006 (MASTER vs MONITOR) ЗАКРЫТ юзером: vocals L / mic R / music center, выход MASTER.
 - 21.08.2026: 006 (full agent) исследовал TASK-008 [DONE] → OUTBOX: атомарная схема load+route. MX-01 ПОДТВЕРЖДЁН (V3DataInterceptor.ts:75-87): при hasStems instrumental-мастер не грузится/не играет → «music center» = music-стемы. instrumental = clock-стем (timing всегда, audio только без стемов). Фейдер instrumental есть в UI (ControlDeck/MixerPanel/VolumeControls/SyncEditor) но no-op на звук при hasStems. «instrumental сначала» опровергнуто: декод PARALLEL; иллюзия — из волны useWaveformData/useWaveformRender (рисуют instrumentalData) + UploadPanel instrumental required. vocals = отдельный стем (:81-83) → подтверждает TASK-007 vocalsInput. Конфиг v-Mix: vocals→L, music-стемы→center, mic→R, MASTER; instrumental-мастер в v-Mix игнорируется при стемах. ВСЕ 8 TASK закрыты.
 - 21.08.2026: 006 RE-CHECK TASK-008 (second pass). Перепроверены якоря против исходников: index.ts:40 (TransportV3 clock='instrumental') ✅; HybridPipelineService.ts:51-52 («В FULL мастер не грузить» = дубль MX-01) ✅; MonitorRouter.ts:89-91 (programInput→_defaultBranch→ctx.destination = MASTER) ✅; MonitorRouter.ts:112-114 (mic→только monitorStream, НЕ MASTER) ✅ = подтверждает флаг TASK-007 (v-Mix нужен mic→MASTER). Дрейфа нет, TASK-008 стоит.
+- 21.08.2026: 007 VERIFY-PASS всей OUTBOX 006 (независимая сверка якорей с текущим деревом, FROZEN-комплаенс ок — 006 только читал). Итог: TASK-001/002/003/005/006/007/008 — CONFIRMED; **TASK-004 — DRIFT**. Детали: (1) TASK-001 ✅ VocalMix.ts stereo-MASTER (ранее + MonitorRouter.ts:89-91 MASTER в этой сессии). (2) TASK-002 ✅ ядро подтверждено: usePracticeInterrupt.ts:101 `if(playingTakeId) stopPreview({pauseEngine:true})` — шаг 8 зовёт stopPreview; call-graph консистентен. (3) TASK-003 ✅ audio-facade-v3.js: НЕТ getters audioContext/isPlaying; setVocalsVolume/setInstrumentalVolume no-op (:33); enableVocalMix/disableVocalMix no-op (:37); attachProgramSource/detachProgramSource no-op (:39). (4) **TASK-004 ⚠️ DRIFT**: заявлено «:38 сабскрайб функцию getBlockTakes, :78 getBlockTakes(activeBlockId)». ФАКТ по текущему дереву: TakesControlStrip.tsx:38 = `const blockTakesMap = useTakesStore(s => s.blockTakesMap)` (сабскрайб ДАННЫХ); :78 = `blockTakesMap[activeBlockId] ?? getBlockTakes(...)`. takes.store.ts:86/111/126 коммиты делают НОВЫЙ объект blockTakesMap (иммутабельно) → компонент ре-рендерится на коммит. Описанный 006 рут НЕ воспроизводится → N2 вероятно УЖЕ пофикшен (C32). Рекомендация 007: переоткрыть TASK-004, перепроверить N2 на живом дереве; если симптома нет — закрыть как resolved-by-C32, иначе искать рут в другом месте (не :38). (5) TASK-005 ✅ StemChain.ts:95-103 точь-в-точь (solo→stem.volume поле, benign-same-tick). (6) TASK-006 ✅ __v3Active main.tsx:129(init)/147(set) подтверждено; НО частичный гард УЖЕ есть в main.tsx:132-142 (блокирует play/seekTo/setCurrentTime при __v3Active, НЕ volume) — рекомендация 006 «добавить гард в V2Adapter.ts:51» верна по сути, но надо ПРОДЛИТЬ существующий гард на volume-методы, а не создавать с нуля. (7) TASK-007 ✅ MonitorRouter.ts:89-91 MASTER, :112-114 mic→только monitorStream. (8) TASK-008 ✅ (эта сессия).
+- 21.08.2026: 006 (full agent) исследовал TASK-009 [DONE] → OUTBOX: N9-рут = коммит `finishRecording` (takes.store.ts:77-91) НЕ выставляет `selectedSlot` → `isBest` ложно → тейк оранжевый (не «best») после записи. `isBest` выставляется ТОЛЬКО в `selectTake` (store :122-131, коллер onStar TakesControlStrip.tsx:934-939); `isPlaying` — ТОЛЬКО в `handlePlayTake`→`setPlayingTakeId` (useTakesPlayback.ts:228, коллер onPlay :917). ⚠️ Коррекция рекона: Space-хандлер useKeyboardShortcuts.ts:72-97 играет transport, НЕ трогает takes — «подсветка после Play» реально от клика по тейку, не от Space. Микро-фикс: 1 строка в finishRecording — `selectedSlot: meta.slot` (покрывает оба коллера :684/:701), совпадает с инвариантом Ц3 439b. Риски: нет конфликта с playingTakeId (независимые); идемпотентно при double-commit. FROZEN-комплаенс ок (чтение takes.store/TakeSlot/TakesControlStrip/useTakesPlayback/useKeyboardShortcuts).
+- 21.08.2026 (доп 007): TASK-004 DRIFT ЗАКРЫТ → RESOLVED-BY-440. Уточнение к VERIFY-PASS: N2 пофикшен НЕ C32 (C32 = audioContext, F-1.7), а 440-MICRO-PACK (007→Оператор), который сделал сабскрайб blockTakesMap на :38/:78. 006 verify подтвердил по текущему дереву; юзер-ретест подтвердил isReady/голос. «Подсветка только по Space» — НЕ N2, а отдельное состояние → TASK-009 (активна). TASK-006: гард ПРОДЛИТЬ существующий main.tsx:132-142 на volume-методы (НЕ дублировать в V2Adapter.ts:51) — уточнение B-slice скоупа.
+- 21.08.2026 (доп 007b · TASK-009 DONE): 006 VERIFY-PASS, 007 независимо прочитал takes.store.ts:77-91 → подтверждено. Root N9: finishRecording НЕ выставляет selectedSlot → isBest ложно → тейк оранжевый после записи. Поле selectedSlot живёт в blockTakesMap, выставляется только selectTake (:122-131, коллер onStar). Коррекция брифа: Space-хандлер (useKeyboardShortcuts.ts:72-97) играет transport, НЕ трогает playingTakeId/selectedSlot. Фикс (441-MICRO-PACK): в finishRecording :88 добавить selectedSlot: meta.slot → тейк зелёный (best) сразу без Play. Совпадает с инвариантом Ц3 (relay 439b). FROZEN-OK (takes.store.ts не frozen). Оператор dispatched.
+- 21.08.2026 (доп 007c · TASK-009 PROOF + №17): БРАУЗЕР-РЕТЕСТ юзера ПОДТВЕРДИЛ зелёный best сразу при записи → TASK-009 ЗАКРЫТ с proof-of-change. Юзер подтвердил (β): после записи прыжок на след. блок («не должно быть переключения») = №17 (подписан). 442-MICRO-PACK (DRAFT, Вар.A/B) на подпись Ц3. FROZEN-OK.
+- 21.08.2026 (доп 007d · Ц3 релей 443): №17 = Вар.B DECIDED. 442 финализирован (убрать advanceToNextStep из handleIntermediateWindowEnd :365; прогрессия жива через onStepCompleted/skipStep/ExerciseStrip). Оператор dispatched. НОРМЫ: §4а frozen-вериф = метод+файлы; §4б убрать «GitHub SSH готов» из отчётов. GO: 442→B-slice→F-2→mic-уши. 440/441 закоммитить в 442-коммите (push 🔒). 443-FULL-REPORT записан+буфер.
+- 21.08.2026: ⚠️ STANDING DIRECTIVE (от юзера, после потери в апдейте): ВСЕ отчёты для Ц3/SA (любой *-REPORT / итог 007) → НЕМЕДЛЕННО копировать в буфер по умолчанию (WSL: `iconv -f UTF-8 -t UTF-16LE <file | clip.exe`, с BOM), НЕ дожидаясь явной команды «в буфер» на каждый отчёт. Юзер пересылает архитектору (Центр и SA). 439-REPORT-N1-RETEST уже закинут в буфер ✅.
+- 21.08.2026: N2 микро-фикс ПРИМЕНЁН (440-MICRO-PACK, Оператор): TakesControlStrip.tsx:38/78 → подписка на blockTakesMap (данные, не функция). tsc 314 / vitest 749/749 ✅. Голос подтверждён юзером (isReady ок). ОСТАТОК: тейк не подсвечен сразу после коммита (только Space/Play) — отдельное состояние от isReady; делегировано 006 (TASK-009, аудит store-состояний подсветки/выделения). N3(β) auto-advance ещё не фиксили (ждёт эталон-чек V2). V-Mix/инструментал-уровень — №18, дизайн после F-2.

@@ -85,7 +85,7 @@ export const useTakesStore = create<TakesState>()(
         recordingSlot: null,
         blockTakesMap: {
           ...state.blockTakesMap,
-          [meta.blockId]: { ...bt, takes: newTakes },
+          [meta.blockId]: { ...bt, takes: newTakes, selectedSlot: meta.slot },
         },
       });
     },

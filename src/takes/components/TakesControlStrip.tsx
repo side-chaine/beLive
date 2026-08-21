@@ -35,7 +35,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
 }) => {
   const isRecording = useTakesStore(s => s.isRecording);
   const recordingSlot = useTakesStore(s => s.recordingSlot);
-  const getBlockTakes = useTakesStore(s => s.getBlockTakes);
+  const blockTakesMap = useTakesStore(s => s.blockTakesMap);
   const getNextEmptySlot = useTakesStore(s => s.getNextEmptySlot);
   const startRecording = useTakesStore(s => s.startRecording);
   const selectTake = useTakesStore(s => s.selectTake);
@@ -75,7 +75,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
   // Reference playback constant
   const PLAYING_REFERENCE_ID = '__reference__';
 
-  const blockTakes = getBlockTakes(activeBlockId);
+  const blockTakes = blockTakesMap[activeBlockId] ?? useTakesStore.getState().getBlockTakes(activeBlockId);
   const nextSlot = getNextEmptySlot(activeBlockId);
   const PRE_ROLL_SEC = 3;
   const previewMode = useTakesStore(s => s.previewMode);
@@ -361,8 +361,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
     onRecorderAnalyserChange?.(null);
     setRoundCaptureResponseActive(false);
 
-    // move exercise forward, but keep recorder session alive
-    useExerciseStore.getState().advanceToNextStep();
+    // keep recorder session alive (advance is explicit user action, not a side effect of stop)
   }, [onRecorderAnalyserChange, setRoundCaptureResponseActive]);
 
   // Round capture finalize handler - stops recorder and commits blob once
