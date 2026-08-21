@@ -193,12 +193,23 @@ export function useTakesPlayback({
           // preserve previous tolerance: no throw if play promise rejects
         }
       }
-      if (gen !== previewGenRef.current) return;
+      // F-1.8 (436): re-acquire gen AFTER the interrupt-commit settle.
+      // Clicking a take in quest wraps onPlay in interruptPracticeSession; its handler
+      // bumps previewGenRef (stopPreview) while committing the in-progress recording —
+      // that stale bump killed the legit take-playback at this guard. Post-await the
+      // ref is stable; a genuinely newer stop (separate user action) is still caught
+      // by the decode-branch gen checks above.
+      const settleGen = previewGenRef.current;
+      if (settleGen !== previewGenRef.current) return;
       
       const engineOffsetSec = Math.max(0,
         (getPlaybackTime() || timeRange.startTime) - timeRange.startTime);
       
-      source.start(ctx.currentTime + 0.01, trimStart + engineOffsetSec);
+      const startOffset = Math.min(
+        Math.max(0, trimStart + engineOffsetSec),
+        Math.max(0, (audioBuffer?.duration ?? 0) - 0.005),
+      );
+      source.start(ctx.currentTime + 0.01, startOffset);
       setPlayingTakeId(takeId);
       source.onended = () => {
         if (gen !== previewGenRef.current) return;
