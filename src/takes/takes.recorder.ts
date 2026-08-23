@@ -138,6 +138,10 @@ export class TakesRecorder {
 
       this.recorder.onstop = () => {
         const blob = new Blob(this.chunks, { type: this._mimeType });
+        console.log('[REC-SYNC·COMMIT]', {
+          blobSize: blob.size,
+          ts: Math.round(performance.now()),
+        });
         this.cleanupNodes();
         resolve(blob);
       };

@@ -7,6 +7,7 @@ import { takeAssets } from './takes.assets';
 interface TakesState {
   // === View state ===
   activeBlockId: string | null;
+  pinnedBlockId: string | null;
   isPanelOpen: boolean;
 
   // === Recording state ===
@@ -28,7 +29,7 @@ interface TakesState {
   // === Actions ===
   openPanel: (blockId: string) => void;
   closePanel: () => void;
-  setActiveBlock: (blockId: string) => void;
+  setActiveBlock: (blockId: string, opts?: { fromUser?: boolean }) => void;
 
   startRecording: (blockId: string, slot: number) => void;
   finishRecording: (meta: TakeMeta) => void;
@@ -51,6 +52,7 @@ interface TakesState {
 export const useTakesStore = create<TakesState>()(
   subscribeWithSelector((set, get) => ({
     activeBlockId: null,
+    pinnedBlockId: null,
     isPanelOpen: false,
     isRecording: false,
     recordingSlot: null,
@@ -66,12 +68,23 @@ export const useTakesStore = create<TakesState>()(
 
     closePanel: () => set({ isPanelOpen: false }),
 
-    setActiveBlock: (blockId) => set({ activeBlockId: blockId }),
+    setActiveBlock: (blockId, opts?: { fromUser?: boolean }) => {
+      // №17-TRACE (449): кто меняет активный блок панели тейков — стек в консоль
+      if (import.meta.env.DEV) {
+        const __st = new Error().stack?.split('\n').slice(1, 7).join(' << ');
+        console.log(`[SET-BLOCK] -> ${blockId} | ${__st}`);
+      }
+      if (opts?.fromUser) set({ pinnedBlockId: null });
+      set({ activeBlockId: blockId });
+    },
+
+    clearPinnedBlock: () => set({ pinnedBlockId: null }),
 
     startRecording: (blockId, slot) => set({
       isRecording: true,
       recordingSlot: slot,
       activeBlockId: blockId,
+      pinnedBlockId: blockId,
     }),
 
     finishRecording: (meta) => {

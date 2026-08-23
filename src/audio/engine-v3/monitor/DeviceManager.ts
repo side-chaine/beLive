@@ -30,6 +30,8 @@ export class DeviceManager {
     } catch { return [] }
   }
 
+  async ensureMonitorPlaying(): Promise<void> { await this._ensureAudio('monitor') }
+
   private async _ensureAudio(target: 'monitor' | 'main'): Promise<HTMLAudioElement> {
     const key = target === 'monitor' ? '_monitorEl' : '_mainEl'
     if (this[key]) return this[key]!

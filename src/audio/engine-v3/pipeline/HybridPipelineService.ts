@@ -16,6 +16,7 @@ import { StemChain } from './StemChain'
 import { StretchInstancePool, MAX_STRETCH_INSTANCES } from './StretchInstancePool'
 import { HybridLoopStrategy } from './HybridLoopStrategy'
 import type { IPipelineController, BusType } from './IPipelineController'
+import { BUILTIN_STEMS } from '../../../stem/stemTypes'
 import {
   checkDuplicateAudioRoutes,
   type RouteRecord,
@@ -63,6 +64,12 @@ export class HybridPipelineService implements IPipelineController {
   private readonly _stretchMeters: Map<string, AnalyserNode> = new Map()
   /** Raw volume из UI (не трогается solo/mute) — parity V2._stemVolumes */
   private readonly _stemRawVolumes: Record<string, number> = {}
+  /** №18-BUS H1.1: bus faders V3 (busId → 0..1) — user-pref, НЕ чистится в reset() (паритет V2 engine-level) */
+  private readonly _busVolumes: Record<string, number> = {}
+  /** №18-BUS H1.2: stretch-crashed стемы — effective gain 0, play/seek не воскрешают */
+  private readonly _crashedStems = new Set<string>()
+  /** №18-BUS H1.5: мёртвые стемы (load failed / нет слота) — effective gain 0 до успешного reload */
+  private readonly _deadStems = new Set<string>()
   /** Mute-состояние стема — parity V2._stemMutes */
   private readonly _stemMuted: Record<string, boolean> = {}
   /** R1: pre-fader vocal hall send — тап от instance.outputNode (ДО stretchGain), только vocals.
@@ -218,6 +225,8 @@ export class HybridPipelineService implements IPipelineController {
         const handler = ((e: Event) => {
           const stemId = (e as CustomEvent).detail.id
           console.warn(`[HybridPipeline] ⚠️ Stretch "${stemId}" crashed — fallback to varispeed (per-stem)`)
+          // №18-BUS H1.2: двусторонний crash — effective gain 0, play/seek не воскрешают
+          this._crashedStems.add(stemId)
           if (!stemId) return
           // Per-stem mute: mute только stretch gain, Direct (Bus B) остаётся
           const sg = this._stretchGains.get(stemId)
@@ -229,11 +238,17 @@ export class HybridPipelineService implements IPipelineController {
         this._stretchCrashHandlers.set(node, handler)
 
         console.log(`[HybridPipeline] 🔥 "${stemId}" → Single: Stretch only (067-D)`)
+        // №18-BUS H1.5: повторный успешный loadStem снимает dead/crash и применяет effective gain
+        this._deadStems.delete(stemId)
+        this._crashedStems.delete(stemId)
+        this._applyEffectiveGain(stemId)
       } catch (e) {
         console.warn(`[HybridPipeline] ❌ Stretch load failed for ${stemId}:`, e)
+        this._deadStems.add(stemId)   // №18-BUS H1.5: мёртвый стем — gain 0
       }
     } else {
       console.error(`[HybridPipeline] ❌ "${stemId}": нет stretch-слота. Стем НЕ звучит (single-path: varispeed fallback запрещён).`)
+      this._deadStems.add(stemId)     // №18-BUS H1.5: мёртвый стем — gain 0
     }
   }
 
@@ -269,7 +284,10 @@ export class HybridPipelineService implements IPipelineController {
         if (instance?.isActive && stretchGain) {
           try {
             await instance.start(offset, rate)
-            stretchGain.gain.value = stem.volume ?? 1.0
+            // №18-BUS H1.2: resurrection-гвард — crashed stem не получает gain обратно
+            if (!this._crashedStems.has(stemId)) {
+              stretchGain.gain.value = stem.volume ?? 1.0
+            }
             if (import.meta.env.DEV) console.log(`[RECON-1] Pipeline:${stemId} | ...`)
           } catch (e) {
             console.warn(`[HybridPipeline] Stretch start error for ${stemId}:`, e)
@@ -326,7 +344,7 @@ export class HybridPipelineService implements IPipelineController {
     try {
       if (myGen !== this._seekGeneration) return   // 🔧 нас обогнали, пока ждали lock
 
-      console.log(`[RECON-SEEK] seek(time=${time.toFixed(2)}, rate=${rate.toFixed(3)}) gen=${myGen} isPlaying=${this._isPlaying}`)
+      console.log(`[RECON-SEEK] seek(time=${time.toFixed(2)}, rate=${rate.toFixed(3)}) gen=${myGen} isPlaying=${this._isPlaying} | ${(new Error().stack ?? '').split('\n').slice(1, 6).join(' << ')}`)
       this._currentOffset = time
       this._playStartTime = this._ctx.currentTime
       this._currentRate = rate
@@ -346,7 +364,10 @@ export class HybridPipelineService implements IPipelineController {
                 const currentRate = this._currentRate
                 return instance.scheduleRate(currentRate, 0)
               })
-              .then(() => { stretchGain.gain.value = stem.volume ?? 1.0 })
+              .then(() => {
+                // №18-BUS H1.2: resurrection-гвард — crashed stem не получает gain обратно
+                if (!this._crashedStems.has(stemId)) stretchGain.gain.value = stem.volume ?? 1.0
+              })
               .catch(e => console.warn(`[HybridPipeline] Stretch seek error for ${stemId}:`, e))
           )
         }
@@ -480,9 +501,20 @@ export class HybridPipelineService implements IPipelineController {
 
   /** Плавная регулировка громкости стема (для UI fader). raw сохраняется; solo/mute применятся автоматически */
   setStemVolume(stemId: string, volume: number): void {
+    if (!Number.isFinite(volume)) return // №18-BUS H2.5: NaN-гард — первая строка
     this._stemRawVolumes[stemId] = Math.max(0, Math.min(1, volume))
     this._applyEffectiveGain(stemId)
   }
+
+  /** №18-BUS H1.3: bus fader V3 — clamp 0..1, пересчёт всех стемов этой шины */
+  setBusVolume(busId: string, volume: number): void {
+    if (!Number.isFinite(volume)) return
+    this._busVolumes[busId] = Math.max(0, Math.min(1, volume))
+    for (const id of this._chainA.stems.keys()) {
+      if (this.busOf(id) === busId) this._applyEffectiveGain(id)
+    }
+  }
+  getBusVolume(busId: string): number { return this._busVolumes[busId] ?? 1 }
 
   /** Mute/unmute стема для pipeline */
   setStemMuted(stemId: string, muted: boolean): void {
@@ -548,12 +580,24 @@ export class HybridPipelineService implements IPipelineController {
     g.gain.linearRampToValueAtTime(v, now + ms / 1000)
   }
 
-  /** Эффективный гейн стема: 0 при mute или вне solo-маски, иначе raw volume (parity V2._applyEffectiveGain) */
+  /** Эффективный гейн стема: 0 при mute или вне solo-маски, иначе raw × busFactor (parity V2._applyEffectiveGain) */
   private _effectiveGainOf(stemId: string): number {
+    // №18-BUS H1.2: crashed/dead стемы всегда тише — двусторонний crash
+    if (this._crashedStems.has(stemId) || this._deadStems.has(stemId)) return 0
     const raw = this._stemRawVolumes[stemId] ?? 1
     const muted = this._stemMuted[stemId] === true
     const audible = this._chainA.isStemAudible(stemId)
-    return muted || !audible ? 0 : Math.max(0, Math.min(1, raw))
+    const bus = this.busOf(stemId)
+    return muted || !audible ? 0 : Math.max(0, Math.min(1, raw)) * (bus ? Math.max(0, Math.min(1, this._busVolumes[bus] ?? 1)) : 1)
+  }
+
+  /** №18-BUS H1.4: роль стема → шина. instrumental вне шин, effect/fx вне скоупа (фактор 1.0) */
+  private busOf(stemId: string): string | null {
+    if (stemId === 'instrumental') return null            // master clock-tap инвариант A2.25
+    const role = BUILTIN_STEMS[stemId as keyof typeof BUILTIN_STEMS]?.role
+    if (!role) return 'music-bus'                          // паритет V2 :1152 unknown→music-bus (009-fix A1)
+    return role === 'vocal' || role === 'backing' ? 'vocal-bus'
+         : role === 'music' ? 'music-bus' : null           // effect/fx → вне скоупа (фактор 1.0)
   }
 
   /** ЕДИНСТВЕННЫЙ writer гейна: stretchGain + stem.volume из _effectiveGainOf */
@@ -605,6 +649,11 @@ export class HybridPipelineService implements IPipelineController {
     this._seekGeneration = 0
     this._playStartTime = 0       // 🔧 Fix D (FM-N3)
     this._currentRate = 1.0       // 🔧 Fix D (FM-N3)
+
+    // №18-BUS H1.1: crash/dead-марки не переживают смену трека;
+    // _busVolumes НЕ чистим — user-pref переживает reset (паритет V2 engine-level)
+    this._crashedStems.clear()
+    this._deadStems.clear()
 
     // StretchPool остаётся — переиспользуем WASM инстансы
     this._stretchPool.stopAll()

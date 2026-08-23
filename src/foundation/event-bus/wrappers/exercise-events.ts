@@ -34,11 +34,6 @@ export function initExerciseEvents(): () => void {
       exercise.setPhase('recording')
     }
 
-    // recording → completed step
-    if (prevIsRecording && !isRecording && exercise.phase === 'recording') {
-      exercise.onStepCompleted()
-    }
-
     prevIsRecording = isRecording
   })
 

@@ -4,6 +4,8 @@
 
 **КТО ТАКОЙ 006 (важно, чтобы не путать):** Реальный 006 — это ОТДЕЛЬНАЯ сессия OpenCode, которую юзер запускает вручную («go»). 007 НЕ может активировать её автоматически: Task-тул спавнит лишь эфемерных субагентов внутри сессии 007, которые 006 НЕ являются. Любой субагент, запущенный 007 для проверки, в логах помечается `007-TEST-SUBAGENT` и НЕ атрибутируется реальному 006. Исследовательские задачи 007 ВСЕГДА оставляет в INBOX для реального 006; своих research-субагентов для них не поднимает.
 
+**008 (vision-аналог 006):** параллельная сессия OpenCode (запускает юзер, как 006), НО умеет читать скриншоты/фото (007/006 не могут). Пишет отчёты в `agent-registry/008-*.md`; исходники не правит; скрины удаляет после фиксации. Координация — те же INBOX/OUTBOX через реестр. 007 читает 008-отчёты (не спавнит субагентом).
+
 **ПРАВИЛА**
 - 007 пишет задачи в ## INBOX (тег [OPEN]). 006 берёт, исследует, пишет в ## OUTBOX под тем же TASK-ID, ставит задаче [DONE], добавляет строку в ## STATUS-LOG.
 - 006 — ТОЛЬКО чтение/исследование. НЕ модифицирует исходники. FROZEN (чтение разрешено, правка — нет): src/audio/core/AudioEngineV2.ts, src/audio/compat/patchV1.ts, src/bridges/*, src/services/track.orchestrator.ts, приватные _.
@@ -13,6 +15,56 @@
 ---
 
 ## INBOX
+
+### TASK-014 · Мик-тумблер ControlDeck мёртв в v3 (легаси-заглушка) · [PROPOSAL READY → agent-registry/006-PROPOSAL-TASK-014-MIC-TOGGLE.md · ждёт SYNC-OK 007]
+**Симптом юзера:** кнопка 🎤 ON/OFF в ControlDeck кликается, но ничего не делает («неактивная»); микрофон в микшере выбран и работает системно.
+**ROOT:** ControlDeck.tsx:386-389 — в v3 тихий return (заглушка эпохи ДО MicSourceV3, 430-REPORT). Запись тейков работает — takes.recorder ходит на MicSourceV3 напрямую, МИМО тумблера.
+**Живой API:** MicSourceV3.acquire()/release() (refcount, общий с рекордером). enableMicrophone жив только в замейдженном V2.
+**Вопросы к спеке 006:** Q1: ON→acquire()+micEnabled=true; OFF→release(). Как с общим refcount (держать +1 постоянно ок?). Q2: слайдер громкости микра — какой сеттер живой в v3? Q3: мониторинг себя при включении — MonitorRouter:195 или F-2?
+[@PROPOSAL patch] жду от 006; 007 dispatch по SYNC-OK.
+
+
+### TASK-013 · [INIT·007] Параллельная модель: готовь будущее + спека красного фейдера · [SPEC v3.1 ГОТОВА → agent-registry/006-SPEC-MICROPACK-№18-BUS-FADER-v3.md · DOC-CHECK#3 CONDITIONAL PASS, правки внесены · ждёт нумерацию+dispatch 007]
+**Модель (директива юзера):** 007 жжёт настоящее с Оператором; 006 прорабатывает следующие шаги — задел на будущее.
+**GO ПОЛУЧЕН: красный фейдер.** Твоя рекомендация принята юзером: `Inst-фейдер → setBusVolume('music-bus')` при __v3Active+hasMusicStems, явная декларация смены контракта.
+**Твои деливераблы (твоя зона):**
+1. Внести 5 правок плана №18-BUS из CHAIN-REPORT + AMEND красного фейдера в R4 (документация — твоя зона).
+2. Прогнать третий DOC-CHECK цепочкой 009 → PASS/FAIL строкой сюда.
+3. Готовую спеку MICRO-PACK красного фейдера (точные файлы/строки/формулы) положить в INBOX → я dispatch Оператора.
+4. **Задел на будущее:** брифинг следующего шага F-2 — мик-маршрут G14 (0мс на проводном) детали + v-Mix стерео-разводка по эталону VocalMix.ts (frozen-read: vocals→L, mic→R, music→center, MASTER). Плюс карта cleanup сырых publishSeek дубликатов (после E: TransportBar:45/:51, WaveformCanvas:443/:448, ручные вызовы) и handoff TakesPanel ~1050-1210.
+5. Ответ A2 для Ц3 одной строкой в доку пака: «двойной writer существовал (coldSync :227 effective→raw; resyncV3 мёртв), устранён Шагом 0».
+**Пока ты работаешь — 007 ждёт твою спеку фейдера, ничего не dispatch'ит по нему (four-eyes §3).**
+
+### TASK-012 · Студийная синхронизация записи (voice↔минус ±мс) + точность волны · [OPEN]
+**Симптом (юзер):** записанный тейк при воспроизведении звучит РАНЬШЕ, чем был спет относительно минуса. Первые тейки после загрузки страницы кривее, затем нормализуются (warm-up?). Требование: голос на минус миллисекунда-в-миллисекунду; волна отрисовывает буфер точно.
+**Якоря 007:** TakesControlStrip.tsx:298/325 TRIM-BASIS `rawDeltaSec ≈ -0.045..-0.048` (arm РАНЬШЕ blockStart — by design?); takes.recorder.ts v3-ветка (MicSourceV3 acquisition C29); useTakesPlayback.ts:219-227 `startOffset = trimStart + engineOffset` (трим срезает голову буфера!); RTL§H baseLatency .01 / outputLatency .043 @48kHz; StretchInstance latency 60ms ×7 пул; preroll seek −3s; MicSourceV3 R9 {EC,NS,AGC:false}.
+**Вопросы (file:line обязателен):**
+Q1: полная карта таймингов capture→буфер→trim→store→playback — каждый сдвиг в мс с источником значения.
+Q2: кто сегодня владеет компенсацией латентностей? Гипотезы 007: H2 — startOffset срезает голову буфера ⇒ вокал смещается РАНЬШЕ ровно на срез; H1 — outputLatency не компенсируется нигде (тянет в «поздно»); живые данные юзера скажут, что доминирует.
+Q3: механизм warm-up первых тейков (AudioWorklet init / MicSourceV3 stream ramp / StretchPool cold?).
+Q4: где ПРАВИЛЬНО компенсировать — сдвиг содержимого при commit ИЛИ коррекция startOffset при плейбеке? Дух single-writer Ц3.
+Q5: волна: peaks из декодированного буфера (useTakesPlayback:129-133) — подтвердить, что проблема ТОЛЬКО в origin буфера, не в отрисовке.
+**Ограничения:** read-only; [@PROPOSAL patch] через TASK-012-dialogue.md; инструментация (НЕ фикс!) — первым паком 007 (уроки L2/L3).
+
+### TASK-010 · Quest auto-jump root hunt №3 (параллельно с 007) · [DONE · 006-отчёт → agent-registry/007-BRIEFING-TASK-010-SYNC.md + OUTBOX ниже]
+**Симптом (юзер-логи post-445+447):** в квесте после записи тейка и natural-end превью — транспорт САМ делает `seek(37.98)` (= ровно старт следующего блока auto-block-1), панель тейков уже на след. блоке (пустые слоты). Прыжок происходит НЕ в момент стопа записи, а ПОЗЖЕ — похоже, когда программа пересекает границу шага/блока. Уже убиты: exercise-events:39 (B2), TakesControlStrip:365 (442), auto-follow запинен (447 blockPinRef), PS Travel переведён на V3-часы (447).
+**Найти ВЕСЬ писатель, который в квест-потоке меняет activeBlockId/шаг и/или секает транспорт на старт след. блока. file:line обязателен.**
+1. **TakesPanel.tsx ~1040-1200**: эффекты хэндоффа шагов (`shouldContinuousHandoff`, `listenSource === 'previous-take'`, `nextStep?.scope`) — зовут ли setActiveBlock/seek при смене currentExerciseStep?
+2. **exercise.store / движок квеста**: внутренние таймеры/окна шага (round-capture, intermediateWindow, step window по времени блока) — что авто-двигает шаг БЕЗ наших убитых коллеров? Кто планирует, что вызывает (advanceToNextStep? seek? publishSeek?).
+3. **handleIntermediateWindowEnd (TakesControlStrip ~:365, тело ПОСЛЕ 442)**: что осталось кроме убранного advanceToNextStep; кто вызывает; секает ли транспорт / пишет блок.
+4. **GLOBAL grep `setActiveBlock|getState\(\)\.setActiveBlock`** по ВСЕМУ src вне takes/WagonTrain — скрытые писатели.
+5. **useTakesPlayback.ts**: возвратный seek после превью — от какого blockId считается (activeBlockIdRef?) — может «догонять» уже переключённый блок.
+6. **exercise.interruption.ts**: полная карта побочных эффектов interruptPracticeSession.
+**Доставить:** OUTBOX c call-graph + ВИНОВНИК file:line + минимал-фикс предложение. READ-ONLY, frozen-чтение ок. Тег [@@FACT]/[@@HYP].
+
+**ДОПОЛНЕНИЕ 007 (22.08 · после трейса 449/450 и фикса 451-D) — фокус сузился, проверь ЭТО:**
+Установлено цифрами: транспорт на 20.014, а `__belive.currentTime` = 28.89→37.69 (+8.9…+17.7 дрейф). После 451-D PS Travel стреляет верно (tt=36.98 ct=36.99 при границе 37.98 ✅). НО панель тейков держится пином, а юзер хочет: панель следует за активным блоком при легитимном движении песни.
+1. **[@@FACT проверить] V3StatePublisher**: как вычисляется `currentTime` кэша (`__belive`), где base-time сбрасывается; подтвердить, что `publishSeek()` зовётся ТОЛЬКО из WagonTrain.tsx:99 (клик чипа) и НЕ зовётся из `HybridPipelineService.seek()` / REC-preroll / возврата после превью. file:line обоих путей.
+2. **[@@FACT] Полный инвентарь потребителей `__belive.currentTime`** по всему src (grep) — кто ещё ест дрейфующий кэш (известен: TakesPanel playhead/follow C21-паттерн :666-668; найти остальных).
+3. **[@@HYP оценить] Дизайн №17-E**: добавить `getStatePublisher()?.publishSeek(newTime)` внутрь `HybridPipelineService.seek()` (или TransportV3.seek — где единая точка?). Риски: дубль-publish при клике чипа (WagonTrain уже зовёт publishSeek ПОСЛЕ transport.seek → будет ли двойной вызов безвреден?); влияние на positionSync/monitor-events обёртки. Предложить точную локацию + сигнатуру.
+4. **[@@HYP] Семантика ослабления пина blockPinRef (TakesPanel 447)**: снять пин когда транспорт ФАКТИЧЕСКИ вошёл в другой блок (по честному времени после №17-E). Предложить условие (граница блока по blockRanges vs transport.currentTime) + куда встроить.
+5. **[@@FACT] Подтвердить/опровергнуть**: исходный «мгновенный прыжок панели после стопа записи» (до 447) был вызван тем же дрейфом (follow читал +13с вперёд → считал плейхед уже в след. блоке). Если да — вся сага №17 = один корень.
+Доставить: OUTBOX TASK-010 с ответами 1-5, file:line, вердикт [@@FACT]/[@@HYP], рекомендация по №17-E. READ-ONLY.
 
 ### TASK-009 · Take-highlight/selection state audit (коммит vs Space) — [DONE]
 **Бриф (юзер/007):** Исследовать store-состояния, управляющие ПОДСВЕТКОЙ/ВЫДЕЛЕНИЕМ слота тейка в TakesControlStrip/TakeSlot. Симптом (юзер, после N2-фикса 440): после записи тейка и возврата на блок — тейк НЕ подсвечен; подсветка только после Space/Play. Голос при клике есть (isReady ок, N2 закрыт). Значит подсветка — отдельное состояние от isReady.
@@ -298,6 +350,72 @@ blockTakesMap: {
 
 ---
 
+### TASK-010 · Quest auto-jump root hunt №3 — [DONE] (006, 22.08)
+
+**ПОЛНЫЙ ОТЧЁТ:** `agent-registry/007-BRIEFING-TASK-010-SYNC.md` (все file:line, ответы 1–5). Якоря TakesPanel — ПОСЛЕ приземления 453/№17-F (файл вырос до 1694 строк, сдвиг +10).
+
+TL;DR:
+1. **[@@FACT]** Единственный писатель `__belive.currentTime` = тик-луп V3StatePublisher.ts:145-157 (:153-154), гейт playing :121, троттл 50мс. **На паузе кэш замерзает навсегда.** `publishSeek()` (:77-81) кэш НЕ пишет.
+2. **[@@FACT]** publishSeek зовётся из 5 сайтов (НЕ только WagonTrain): WagonTrain:101/:126, TransportBar:45 (+raw-дубль :51), WaveformCanvas:443 (+raw :448), useKeyboardShortcuts:53. НЕ зовётся из REC-preroll (TakesControlStrip:202/223), превью-возврата (useTakesPlayback:189) и HybridPipelineService.seek.
+3. **[@@FACT+HYP]** Единая точка seek = TransportV3.seek (:203-237; через него идут и takes.time.seekTo:26). 17-E ставить ТУДА, сразу после clock.seek :211 (dispatch CustomEvent('seek') по образцу statechange; publisher подписывается в конструкторе, цикла нет). **Обязательно**: publishSeek должен ДОБАВИТЬ запись `__belive.currentTime` — иначе заморозка кэша на паузе не лечится. Дубль-publish безвреден: единственный слушатель position-sync.ts:71-77 идемпотентен; дубли уже есть сегодня (TransportBar:45+:51, WaveformCanvas:443+:448).
+4. **[@@FACT]** Потребители кэша всего 3: TakesPanel:686 (follow), RehearsalLyrics:487, takes.time.ts:16 (fallback). Скрытых писателей setActiveBlock вне takes/WagonTrain НЕТ (writers: takes.store:69, TakesPanel:660/722, WagonTrain:108).
+5. **[@@FACT]** Один корень подтверждён: превью ГОНЯЕТ основной транспорт через блок (useTakesPlayback:189 seek на старт блока + :202 play + :227 буфер поверх); natural-end = пауза НА МЕСТЕ у границы (:229-236 → stopPreview pauseEngine → transport.pause ~:107-109), кэш замирает ~37.x → follow ест призрак. [@@HYP] «Дрейф 20.014 vs 28.89→37.69» = сравнение V2-заморозки с живым V3-clock, НЕ порча кэша.
+
+⚠️ **РИСК №17-F (уже в дереве)**: unpin-условие TakesPanel:709-714 читает ТОТ ЖЕ кэш (:686). Если последний тик перед паузой приземлился за endTime блока записи → ложный unpin → симптом вернётся на natural-end. Ставить 17-E В ПАРУ с 17-F.
+
+---
+
+### CHAIN-REPORT №17-E · 001→002→001*→009* · [DONE] (006 координировал цепочку через general-спавны, 22.08)
+
+**Контекст запуска:** юзер приказал прогнать боевую цепочку агентов по назначению. Воркараунд спавна: кастомные agent-файлы через Task падают (`Insufficient balance`, платформенный косяк opencode), поэтому роли грузились промптом «прочитай .opencode/agent/NNN.md» на встроенном `general`. Этапы 3–4 (ревизия 001 / верификация 009) НЕ спавнились — юзер разрешил экономию токенов, синтез и якорь-верификацию выполнил сам 006 (все OLD-блоки 457 сверены с деревом лично: TransportV3.ts:210-211, V3StatePublisher.ts :41-43/:77-81/:113-116/:70-74 — совпадение 1:1).
+
+**Участники:** 001 CEO → DECISION v1 (D1-D5+P1); 002 Stress-Test → атаки A6(MED)+A7-A11(LOW)+чистые зоны; финальную ревизию сверил 006.
+
+**ВЕРДИКТ ЦЕПОЧКИ на 457-MICRO-PACK (007): `REVIEW: AGREE`** — EDIT 1-5 точно реализуют D1/D2/D3; cleanup корректно отложен в отдельный пак (D4 Phase B); D5 подтверждён появлением №17-G/A в дереве (TakesPanel.tsx:688-694 честное время вперёд — проверено grep'ом 006).
+
+**Поправки (не блокируют dispatch):**
+- AMEND-1 (P1-lite, рекомендую тем же паком отдельным хунком): запись кэша `__belive.currentTime` также в `_onStateChange` (~V3StatePublisher.ts:101). Дыра: natural-end превью паузит БЕЗ seek (useTakesPlayback:107-109), idle→play(initialOffset) обходит событие (TransportV3.ts:132, гейт :204 молча отбрасывает — A6/MED от 002). Побочка A7/LOW: после stop() кэш станет 0 вместо замороженного — fallback-читатели переваривают (`getPlaybackTime()||startTime`: useTakesPlayback:219-220, TakesControlStrip:283).
+- AMEND-2 (док, одна строка): «единая точка всех app-seek'ов» → смягчить: точек входа clock.seek три, из idle-seeks невидимы и сегодня (не регрессия).
+
+**Чистые зоны (атаки 002 не вскрыли):** гонки generation-vs-event (событие проигравшего всегда precedes победителя), реентрантность dispatchEvent (event-bus.ts:46-49 snapshot), single-writer кэша сохранён (греп .ts+.js — один писатель V3StatePublisher.ts:154), dispose-симметрия тривиальна, идемпотентность position-sync.ts:71-77, тесты совместимы (V3StatePublisher.test.ts:30-39 инвариантен; wiring seek→publishSeek НИЧЕМ не покрыт — добавить кейс по возможности).
+
+**Граница ответственности:** пак пишет ТОЛЬКО Оператор через 007 (директива юзера). После применения — live browser-proof за юзером: (1) REC на блоке у границы → natural-end превью → панель ДОЛЖНА остаться; (2) клики чипов → канвас волны следует за активным блоком (наблюдение юзера 22.08, кандидат TASK-011); (3) lyrics строка прыгает по internal seeks без тика.
+
+---
+
+### CHAIN-REPORT №18-BUS · 001→002→001→009 (полная цепочка) · [DONE · CONDITIONAL PASS] (006 автономно, 22.08)
+
+**Миссия юзера:** пока 007+Оператор закрывают №17-I (458; семантика юзера: после записи ОСТАЁМСЯ на блоке записи, авто-релиз пина запрещён), подготовить СЛЕДУЮЩИЙ пак дорожной карты через полную боевую цепочку. Цель выбрана 006: **№18-BUS** (шина громкости, часть F-2; факты A1 свежие).
+
+**Участники:** 001 CEO (DECISION v1: D1-D5) → 002 Stress-Test (атаки A1-A19; блокеры **A9/A12/A13 CRIT**) → 001 ревизия (**FINAL v2**, R1-R5) → 009 Independent Verification (таблица V1-V9 + вердикт).
+
+**Ядро FINAL v2:**
+- Шина = скалярные множители `music-bus`/`vocal-bus` БЕЗ аудио-графа; единственный writer гейна сохранён (_applyEffectiveGain HybridPipelineService.ts:561-567).
+- **Шаг 0 обязателен — гигиена raw-слота** (A9): писателей _stemRawVolumes четыре, coldSync (stem-engine-sync.ts:227) пишет EFFECTIVE в RAW → формула raw×bus поверх отравленных данных = мусор.
+- busOf(unknown)=music-bus (паритет V2 AudioEngineV2.ts:1152); master/instrumental исключён из fan-out (clock-tap инвариант A2.25).
+- Красный фейдер ОСТАЁТСЯ stem-volume фейдером (контракт AudioEngineV2.ts:1212-1218); в V3-stems инертен для мастер-микса — осознанный контракт до B-slice. Двухрежимность v1 ОТЗЫВАЕТСЯ.
+- Гард main.tsx:132-142 на volume НЕ расширяется (сломал бы cage re-zero — подтверждено независимо 002 атакой и 009 защитой); вместо него volume-gate.ts хелпер + миграция 8 источников сброса backing И мини-гард 4 громкостных методов ae.* в bootAether (self-contained).
+- Crash-guard двусторонний (ramp→0 :218-227 И resurrection play():272/seek():349); NaN guards store (:216-219)+pipeline (:482-485); pre-attach replay очередь setBusVolume.
+
+**Верификация 009:** V1 ✅ (resyncV3=dead code, N2/HIGH) · V2 ✅ · V3 ❌ опровергнуто в рантайме (.env v3 → patchV1 не вызывается, App.tsx:91; но ordering риск N3/MED) · V4 ✅ · V5 ✅ (main.tsx:302/:235) · V6 ✅ (+resurrection) · V7 ✅ · V8 частично (легально файлово) · V9 частично (A13 обоснование неверно при v3-env, архитектура верна). Новые: N4 MED Effect 2d≡2f дубль (TakesPanel:849/:901), N5/N6/N7 LOW, N8 INFO реестр писателей неполон (ControlDeck.tsx:186).
+
+**ВЕРДИКТ: CONDITIONAL PASS.** Обязательные правки перед MICRO-PACK:
+1. resyncV3 убрать как живой вектор (мёртвый код), оставить coldSync:226-227+зеркала;
+2. обёртка self-contained без делегирования в фасад-no-op (patchV1 мёртв при v3-env);
+3. зафиксировать assumption `VITE_ENGINE=v3` / защита от перезаписи patchV1WithV2;
+4. флаг crash двусторонний;
+5. дополнить реестр писателей (ControlDeck dual-calls, diffAndApply:147).
+После правок 1-5 → третий DOC-CHECK (009) → MICRO-PACK пишет 007 для Оператора (dispatch только через 007).
+
+**Ценность цикла:** пойманы 3 CRIT дефекта дизайна ДО dispatch (отравленный raw дал бы сломанную математику шины; неполный гейт воскресил бы симптом 37→100 на pre-recording/конце упражнения; ложь про no-op фасада открыла бы окно double-playback). ❄️ Frozen не затронуты планом ни в одной стадии.
+
+#### ДОПОЛНЕНИЕ (review Санета · диагностик/со-архитектор · передано юзером 22.08)
+1. **A9 = эхо старого вопроса A2 (эра C27).** Ц3 спрашивал 007 после сведения _chainA в single-writer: «старый двойной writer убран или заброшен рядом?» — ответа не было (второе напоминание). Цепочка нашла ровно это: coldSync :227 пишет effective в raw. **Действие:** в пак №18-BUS включить ЯВНОЕ закрытие A2 — «Ответ на вопрос Ц3 (C27/A2): двойной writer существовал и жил в sync-слое; устраняется Шагом 0 гигиены raw. Вопрос закрыт.»
+2. **КРАСНЫЙ ФЕЙДЕР — вопрос вслух, ОТВЕТ 006: НЕТ.** После №18-BUS v2 движение Inst-фейдера («Inst 45», жалоба юзера «не могу опустить минус») в Quest НЕ изменит слышимый уровень бэкинга. Механика: фейдер пишет setStemVolume('instrumental') → но при hasStems instrumental-instance в пайплайне отсутствует (грузятся только vocals/bass/drums/guitar/keys — лог юзера; MX-01) → _applyEffectiveGain('instrumental') = no-op без звукового следа. «Инертен до B-slice» = кнопка так и останется бесполезной в этом режиме.
+3. **КОНФЛИКТ, требующий решения Ц3/юзера (одним словом GO):** FINAL v2 отменил двухрежимность v1 (фейдер→music-bus при стемах) под давлением атаки A13, НО 009 опроверг A13 в рантайме (patchV1 мёртв при v3-env) → основание отката ослабло. При этом: (а) рулинг Ц3 уже был «красный фейдер = шина music-стемов»; (б) жалоба юзера требует именно этого. **Рекомендация 006:** вернуть в паковую область минимальную связку «Inst-фейдер → setBusVolume('music-bus') при __v3Active+hasMusicStems» с ЯВНОЙ декларацией смены контракта (что и требовала атака A2 — декларация, а не отказ). Атака A1 закрыта busOf(unknown)=music-bus; A3 (backing-only треки) — задокументировать ячейку. Ждёт GO — иначе третий DOC-CHECK фиксирует инертность как контракт.
+
+---
+
 ## STATUS-LOG
 
 - 21.08.2026: 007 создал реестр, посеял TASK-001 (v-Mix эталон V2). 006 не запущен.
@@ -320,4 +438,15 @@ blockTakesMap: {
 - 21.08.2026 (доп 007c · TASK-009 PROOF + №17): БРАУЗЕР-РЕТЕСТ юзера ПОДТВЕРДИЛ зелёный best сразу при записи → TASK-009 ЗАКРЫТ с proof-of-change. Юзер подтвердил (β): после записи прыжок на след. блок («не должно быть переключения») = №17 (подписан). 442-MICRO-PACK (DRAFT, Вар.A/B) на подпись Ц3. FROZEN-OK.
 - 21.08.2026 (доп 007d · Ц3 релей 443): №17 = Вар.B DECIDED. 442 финализирован (убрать advanceToNextStep из handleIntermediateWindowEnd :365; прогрессия жива через onStepCompleted/skipStep/ExerciseStrip). Оператор dispatched. НОРМЫ: §4а frozen-вериф = метод+файлы; §4б убрать «GitHub SSH готов» из отчётов. GO: 442→B-slice→F-2→mic-уши. 440/441 закоммитить в 442-коммите (push 🔒). 443-FULL-REPORT записан+буфер.
 - 21.08.2026: ⚠️ STANDING DIRECTIVE (от юзера, после потери в апдейте): ВСЕ отчёты для Ц3/SA (любой *-REPORT / итог 007) → НЕМЕДЛЕННО копировать в буфер по умолчанию (WSL: `iconv -f UTF-8 -t UTF-16LE <file | clip.exe`, с BOM), НЕ дожидаясь явной команды «в буфер» на каждый отчёт. Юзер пересылает архитектору (Центр и SA). 439-REPORT-N1-RETEST уже закинут в буфер ✅.
-- 21.08.2026: N2 микро-фикс ПРИМЕНЁН (440-MICRO-PACK, Оператор): TakesControlStrip.tsx:38/78 → подписка на blockTakesMap (данные, не функция). tsc 314 / vitest 749/749 ✅. Голос подтверждён юзером (isReady ок). ОСТАТОК: тейк не подсвечен сразу после коммита (только Space/Play) — отдельное состояние от isReady; делегировано 006 (TASK-009, аудит store-состояний подсветки/выделения). N3(β) auto-advance ещё не фиксили (ждёт эталон-чек V2). V-Mix/инструментал-уровень — №18, дизайн после F-2.
+ - 21.08.2026: N2 микро-фикс ПРИМЕНЁН (440-MICRO-PACK, Оператор): TakesControlStrip.tsx:38/78 → подписка на blockTakesMap (данные, не функция). tsc 314 / vitest 749/749 ✅. Голос подтверждён юзером (isReady ок). ОСТАТОК: тейк не подсвечен сразу после коммита (только Space/Play) — отдельное состояние от isReady; делегировано 006 (TASK-009, аудит store-состояний подсветки/выделения). N3(β) auto-advance ещё не фиксили (ждёт эталон-чек V2). V-Mix/инструментал-уровень — №18, дизайн после F-2.
+ - 21.08.2026 (доп · 008 VISION INTEGRATED): 008 = vision-агент, параллельная сессия (как 006), читает скриншоты, пишет agent-registry/008-*.md, удаляет скрины после фиксации. 008-vision-report.md: №17 визуально ПОДТВЕРЖДЁН (прыжок на Pre-Chorus после записи Verse1); №18 конкретизирован (Inst-фейдер dead-layer при стемах + сброс 37→100 на смене блока). 007 нашёл №17 ВТОРОЙ триггер exercise-events.ts:39 (442 в неверном месте:365) — коррекция №17-B2 на GO Ц3 (444-REPORT-№17-CORRECTION-008VISION-Ц3.md).
+ - 21.08.2026 (доп · №17-B2 ПРИМЕНЁН + А1): Оператор применил 445-MICRO-PACK — exercise-events.ts:37-40 удалён; tsc 314 / vitest 749/749 ✅. Урок 442 (петка-норма #3): grep onStepCompleted/advanceToNextStep ДО выреза. Browser-proof (обе половины) ЗА ЮЗЕРОМ. А1 (frozen-read V2): bus-множитель ЕСТЬ (AudioEngineV2.ts:1154 `stemVolume * busVolume` + setBusVolume:1059); V3 HybridPipelineService:560 НЕТ ×busVolume ⇒ V3 потеряла шину. №18 = ВОССТАНОВЛЕНИЕ ПАРИТИ V2 (не новая фича); красный фейдер = шина music-стемов. А2 cleanup → B-first-slice; А4 канон vitest зафиксирован. Буфер Ц3: 446-REPORT-№17B2-DONE-A1-ANSWER-Ц3.md.
+ - 21.08.2026 (доп · №17 ROOT CAUSE + 447-№17-C): B2-proof FAILED (прыжок живёт). Инвентаризация двигателей: 🔴 TakesPanel.tsx:687 auto-follow следует за плейхедом после стопа записи → панель прыгает; 🔴 RehearsalLyrics.tsx:480 PS Travel на замороженных V2-часах (E1-family) → мгновенный визуальный выстрел; WagonTrain:106 = ручной чип (не трогаем). Директива юзера «после записи стоять ТАМ ЖЕ» + GO → 447-MICRO-PACK-№17-C-BLOCK-PIN применён Оператором (blockPinRef pin/unpin + гвард follow; PS Travel V3-часы parity C21/418). tsc 314 / vitest 749/749 ✅. Буфер Ц3: 448-REPORT.
+- 22.08.2026: 006 (реальная сессия, восстановлен контекст) закрыл TASK-010 [DONE] → OUTBOX + полный брифинг `agent-registry/007-BRIEFING-TASK-010-SYNC.md` для синхронизации с параллельным копанием 007. Ядро: кэш `__belive.currentTime` пишет ТОЛЬКО тик-луп при playing (V3StatePublisher:145-157) и замерзает на паузе навсегда; publishSeek (:77-81) кэш НЕ пишет; внутренние seeks takes-флоу (TakesControlStrip:202/223, useTakesPlayback:189 через takes.time.seekTo:26) идут без публикации. Рекомендация 17-E: dispatch 'seek' из TransportV3.seek после clock.seek :211 + добавить запись кэша в publishSeek; дубль-publish безвреден (единственный слушатель position-sync:71-77 идемпотентен; дубли уже есть: TransportBar:45+:51, WaveformCanvas:443+:448). ⚠️ Во время исследования параллельно приземлился 453/№17-F — unpin TakesPanel:709-714 ест тот же кэш; риск ложного unpin на natural-end → ставить 17-E В ПАРУ с 17-F. Один корень всей саги подтверждён ([@@FACT] механизм; [@@HYP] арифметика исторического «дрейфа» = V2-freeze vs живой V3-clock).
+- 22.08.2026 (SYNC · 006 chain): прогнана боевая цепочка 001→002→001*→009* (*=синтез 006 вместо спавна, экономия токенов по директиве юзера). Вердикт на 457-MICRO-PACK: REVIEW: AGREE + 2 поправки (AMEND-1 P1-lite кэш в _onStateChange; AMEND-2 док про «единую точку»). Полный отчёт: OUTBOX «CHAIN-REPORT №17-E». Обнаружено: в дереве уже №17-G/A (TakesPanel:688-694) — 007 применил пак по брифингу 006, синхронизация работает. Оператора dispatch'ит только 007 (директива юзера). Live-proof пункты для юзера — в CHAIN-REPORT.
+- 22.08.2026 (автономно · 006 chain №18-BUS): пока 007 закрывает №17-I, прогнана ПОЛНАЯ цепочка 001→002→001→009 по следующему шагу дорожной карты — пак №18-BUS (шина громкости, F-2). Итог: CONDITIONAL PASS + 5 обязательных правок плана до MICRO-PACK (см. OUTBOX «CHAIN-REPORT №18-BUS»). Цепочка поймала 3 CRIT: отравленный raw-слот (coldSync/resyncV3 пишут effective в raw), неполный гейт источников сброса backing (Effects 2d/2f/4), ложь про no-op фасада после бута (patchV1 мёртв при v3-env — опровергнуто 009 в рантайме). Красный фейдер остаётся stem-фейдером (двухрежимность отозвана). Гард на volume не расширяется — cage re-zero приоритетнее; вместо него volume-gate.ts + мини-гард bootAether. Оператора dispatch'ит только 007. После правок → третий DOC-CHECK 009.
+- 22.08.2026 (SYNC · review Санета): диагностик/со-архитектор прочитал CHAIN-REPORT №18-BUS, дал 2 пункта. (1) A9 = эхо неотвеченного вопроса Ц3 «A2» эпохи C27 (двойной writer убран или заброшен?) → в пак включить ЯВНОЕ закрытие A2. (2) КРАСНЫЙ ФЕЙДЕР: ответ 006 на вопрос «юзер услышит минус тише после №18-BUS?» = **НЕТ** — фейдер инертен при стемах (instrumental-instance отсутствует, MX-01 + лог юзера). Обнаружен конфликт: FINAL v2 отменил dual-mode по атаке A13, которую 009 опроверг в рантайме; рулинг Ц3 («фейдер = шина music-стемов») и жалоба юзера требуют обратного. Рекомендация 006: вернуть Inst-фейдер→music-bus с декларацией контракта. ЖДЁТ GO юзера/Ц3 до третьего DOC-CHECK. Полностью: OUTBOX «ДОПОЛНЕНИЕ review Санета».
+- 22.08.2026 (SYNC · 006): сводный брифинг для 007 по ВСЕМ открытым вопросам → `agent-registry/007-BRIEFING-OPEN-DECISIONS-22.08.md`. Ядро: 🔴 БЛОКЕР — красный фейдер GO/NO-GO (ответ на вопрос Санета = НЕТ, инертен; рекомендация вернуть music-bus связку, т.к. A13 опровергнута 009 в рантайме); №17-E ждёт окна после №17-I; №18-BUS CONDITIONAL PASS (5 правок до MICRO-PACK + третий DOC-CHECK); закрыть вопрос Ц3 «A2» строкой в паке; TASK-011 кандидат (канвас↔чипы). Оператора dispatch'ит только 007.
+- 22.08.2026 (006 · помощь по №17 прыжку): статический аудит текущего дерева ПОСЛЕ применения 458(I)+459(J). ВЕРДИКТ: авто-прыжок на след. блок после записи СТАТИСТИЧЕСКИ НЕВОЗМОЖЕН. Инвентарь писателей setActiveBlock: (1) TakesPanel:660 self-heal → только в ПЕРВЫЙ блок при null/stale; (2) TakesPanel:730 G/B follow → заперт !blockPinRef && !activeExercise && !isRecording + требует непрерывный кросс |t-prevT|<1.0s; (3) WagonTrain:108/:134 — только ручные клики {fromUser:true}. Пин: component blockPinRef (arm при isRecording) + store pinnedBlockId (startRecording :87) — снимается ТОЛЬКО кликом чипа (clearPinnedBlock внешних вызовов нет). PS Travel загейчен (RehearsalLyrics:501 isRecording||pinnedBlockId → молчит). ГИПОТЕЗА №1: провальный тест юзера был ДО применения I/J (паки легли минуты назад — Оператор только что прогнал J). ПРОТОКОЛ РЕТЕСТА для юзера: свежий лог консоли при воспроизведении — takes.store:75 логирует [SET-BLOCK] СО СТЕКОМ на КАЖДУЮ смену → стек мгновенно назовёт виновника. Ожидаемые стеки: startRecording (arm, норма) / WagonTrain handleClick (ручной клик, норма) / tick (БАГ — прислать мне) / self-heal (БАГ). Нюанс для юзера: после первой записи текст/панель держат блок ДОСРОЧНО до ручного клика чипа — это ФИЧА по его же директиве, не баг.
+- 22.08.2026 (006 · TASK-013): спека MICRO-PACK «№18-BUS+FADER» v3.1 ГОТОВА и прошла третий DOC-CHECK (009): таблица V1-V9 все OK, вердикт CONDITIONAL PASS → 3 правки внесены дословно (тест TC-005 синхронно с resyncV3; гард !__v3 на ae-вызов фейдера — убран DEV-warn спам; whitelist :195 в static-grep) + INFO-страховка cold-start stemsEnabled. Файл: `agent-registry/006-SPEC-MICROPACK-№18-BUS-FADER-v3.md`. Группы применения: pipeline→hygiene→store/sync/fader→gard/docs/tests, checkpoint после каждой. A2-closure строка для Ц3 внутри (H4.2). Остаток TASK-013: брифинг F-2 (G14+v-Mix эталон) и карта cleanup publishSeek — следующим ходом.
+- 22.08.2026 (006 · TASK-014 PROPOSAL READY): [@PROPOSAL patch] написан → `agent-registry/006-PROPOSAL-TASK-014-MIC-TOGGLE.md`. Ядро: E1 MonitorRouter.setMicMonitor(on,volume) публичный API над _monitorGain; E2 __belive.monitorRouter экспозиция (main.tsx, замена легаси __router); E3 ControlDeck onClick — v3-ветка acquire()+createMediaStreamSource→micInput+setMicMonitor(true)/OFF=disconnect+release(). Ответы Q1 (refcount+1 постоянный ок, рекордер независимо держит свой), Q2 (живого сеттера нет — громкость=self-monitor через _monitorGain, паритет V2 «raw stream unaffected by slider» :91), Q3 (каскад MonitorRouter готов и ждёт :16; _micDelay=0 сейчас, G14-компенсация осознанно в F-2). Риски R1-R4 внутри. Юзер прислал скриншот — симптом подтверждён визуально (+ бонус: vision главной сессии работает, 008 выведен из контура).

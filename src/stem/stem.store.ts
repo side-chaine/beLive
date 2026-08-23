@@ -37,6 +37,9 @@ interface StemState {
   /** Per-stem pan (-1 = full left, 0 = center, 1 = full right) */
   stemPans: Record<string, number>;
 
+  /** №18-BUS H3.1: bus faders V3 (busId → 0..1). Не сбрасывается initStems/clearStems (user-pref) */
+  busVolumes: Record<string, number>;
+
   /** Stems mode enabled (true = stems mode, false = instrumental mode) */
   stemsEnabled: boolean;
 
@@ -97,6 +100,9 @@ interface StemState {
   /** Set pan for a specific stem */
   setStemPan: (stemId: string, pan: number) => void;
 
+  /** №18-BUS H3.1: set volume for a bus ('music-bus' | 'vocal-bus') */
+  setBusVolume: (busId: string, v: number) => void;
+
   /** Set display order (from TrackRecord persistence) */
   setStemDisplayOrder: (order: StemDisplayOrder[] | null) => void;
 
@@ -130,6 +136,7 @@ export const useStemStore = create<StemState>((set, get) => ({
   stemMutes: {},
   stemSolos: {},
   stemPans: {},
+  busVolumes: {}, // №18-BUS H3.1
   stemsEnabled: false, // W10-001: default = instrumental mode
   stemsLoading: false, // TC-8.6A: not loading by default
   stemsMode: false, // TC-10.6: tumbler preference (show/hide stem faders)
@@ -214,6 +221,7 @@ export const useStemStore = create<StemState>((set, get) => ({
   // ─── Volume ─────────────────────────────────────────────
 
   setStemVolume: (stemId: string, volume: number) => {
+    if (!Number.isFinite(volume)) return; // №18-BUS H2.5: NaN-гард — первая строка
     set((s) => ({
       stemVolumes: { ...s.stemVolumes, [stemId]: Math.max(0, Math.min(1, volume)) },
     }));
@@ -252,6 +260,15 @@ export const useStemStore = create<StemState>((set, get) => ({
   setStemPan: (stemId: string, pan: number) => {
     set((s) => ({
       stemPans: { ...s.stemPans, [stemId]: Math.max(-1, Math.min(1, pan)) },
+    }));
+  },
+
+  // ─── Bus Volume (№18-BUS H3.1) ──────────────────────────
+
+  setBusVolume: (busId: string, v: number) => {
+    if (!Number.isFinite(v)) return; // NaN-гард
+    set((s) => ({
+      busVolumes: { ...s.busVolumes, [busId]: Math.max(0, Math.min(1, v)) },
     }));
   },
 

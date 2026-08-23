@@ -31,7 +31,15 @@ export function WagonTrain() {
   // REMOVED: exerciseLocked blanket check - now uses interruptPracticeSession()
 
   const activeBlock = useMemo(
-    () => getActiveBlock(activeLineIndex, blocks),
+    () => {
+      // №17-K: пин блока записи — подсветка чипа держится на блоке записи
+      const pinned = useTakesStore.getState().pinnedBlockId;
+      if (pinned) {
+        const held = blocks.find(b => b.id === pinned);
+        if (held) return held;
+      }
+      return getActiveBlock(activeLineIndex, blocks);
+    },
     [activeLineIndex, blocks]
   );
 
@@ -82,6 +90,8 @@ export function WagonTrain() {
   if (blocks.length === 0) return null;
 
   const handleWagonClick = (block: TextBlock) => {
+    // №17-TRACE (449): ручной клик по чипу блока
+    if (import.meta.env.DEV) console.log(`[CHIP-CLICK] ${block.id}`);
     // Interrupt practice first if active, then continue requested action
     interruptPracticeSession(() => {
       const firstLine = Math.min(...block.lineIndices);
@@ -103,7 +113,7 @@ export function WagonTrain() {
 
       // If Takes panel is active (open and selected), select this block for recording
       if (takesPanelActive) {
-        setActiveBlock(block.id);
+        setActiveBlock(block.id, { fromUser: true });
       }
     });
   };
@@ -124,6 +134,12 @@ export function WagonTrain() {
         getStatePublisher()?.publishSeek(marker.time, transport.duration)
       } else {
         try { V2Adapter.getInstance().delegateSync('seekTo', marker.time) } catch {}
+      }
+
+      // TASK-011 / №17-H: клик по субблоку тоже выбирает блок панели тейков
+      // (паритет с handleWagonClick; находка юзера 22.08)
+      if (takesPanelActive) {
+        setActiveBlock(block.id, { fromUser: true });
       }
     });
   };

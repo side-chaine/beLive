@@ -3,7 +3,7 @@
 // Phase 5: diffAndApply, coldSync, idempotent guard
 // ============================================================
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useStemStore } from '../../../stem/stem.store'
 
 // V2Adapter mock
@@ -19,8 +19,9 @@ vi.mock('../../../audio/engine-v3', () => ({
   getTransport: vi.fn(),
 }))
 
+// №18-BUS H2.2 (009-fix#1): resyncV3 удалён (мёртвый код) вместе с тестом TC-005
+const { initStemEngineSync } = await import('../stem-engine-sync')
 import { getTransport } from '../../../audio/engine-v3'
-const { initStemEngineSync, resyncV3 } = await import('../stem-engine-sync')
 
 describe('Central Bridge (stem-engine-sync)', () => {
   beforeEach(() => {
@@ -30,6 +31,7 @@ describe('Central Bridge (stem-engine-sync)', () => {
       stemMutes: {},
       stemSolos: {},
       stemPans: {},
+      busVolumes: {},
       stemsEnabled: false,
     })
   })
@@ -101,50 +103,65 @@ describe('Central Bridge (stem-engine-sync)', () => {
   })
 })
 
-// ═══ TC-005: resyncV3 ═══
+// ═══ TC-005 (resyncV3) удалён синхронно с resyncV3 — №18-BUS H2.2 (009-fix#1) ═══
 
-describe('resyncV3', () => {
-  it('should silently skip when V3 is not active', () => {
-    // V2 ready, but no V3 transport
+// ═══ №18-BUS H3.2: проводка busVolumes (V3 pipeline / V2 safeDelegate) + H3.3 stemsEnabled V3 ═══
+
+describe('№18-BUS: busVolumes wiring (diffAndApply)', () => {
+  afterEach(() => {
+    ;(window as any).__v3Active = false
+    ;(window as any).__belive = undefined
+    vi.mocked(getTransport).mockReset()
+  })
+
+  it('V2-path: изменение busVolumes → safeDelegate(setBusVolume)', () => {
     mockV2.getV2Engine.mockReturnValue({})
     const cleanup = initStemEngineSync()
-    
-    // resyncV3 should not throw when V3 is not master
-    expect(() => resyncV3()).not.toThrow()
+
+    useStemStore.getState().setBusVolume('music-bus', 0.42)
+    expect(mockV2.delegateSync).toHaveBeenCalledWith('setBusVolume', 'music-bus', 0.42)
+
+    // idempotent: то же значение — нового делегата нет
+    vi.clearAllMocks()
+    useStemStore.getState().setBusVolume('music-bus', 0.42)
+    expect(mockV2.delegateSync).not.toHaveBeenCalledWith('setBusVolume', 'music-bus', 0.42)
     cleanup()
   })
 
-  it('should apply current store state to V3 stems', () => {
-    // Setup mock transport with orchestrator
-    // Используем per-ID моки, чтобы итерация по стемам не затирала значения
-    const mockStems: Record<string, { volume: number }> = {
-      instrumental: { volume: 0 },
-      vocals: { volume: 0 },
-    }
-    const mockOrchestrator = {
-      all: vi.fn().mockReturnValue(Object.values(mockStems)),
-      get: vi.fn((id: string) => mockStems[id] || null),
-    }
-    const mockTransport = {
-      state: 'playing',
-      orchestrator: mockOrchestrator,
-    }
-    
-    // Mock getTransport to return our mock
-    vi.mocked(getTransport).mockReturnValue(mockTransport as any)
-    
-    // Set initial store state
-    useStemStore.getState().initStems(['instrumental', 'vocals'])
-    useStemStore.getState().setStemVolume('instrumental', 0.5)
-    
+  it('V3-path: изменение busVolumes → pipeline.setBusVolume', () => {
+    const setBusVolume = vi.fn()
+    ;(window as any).__belive = { pipeline: { setBusVolume } }
+    ;(window as any).__v3Active = true
+    mockV2.getV2Engine.mockReturnValue(null)
+    vi.mocked(getTransport).mockReturnValue({ orchestrator: { all: () => [] } } as any)
+
     const cleanup = initStemEngineSync()
-    
-    // Apply resync
-    resyncV3()
-    
-    // V3 stem should get effective gain (0.5), vocals unchanged (default 1)
-    expect(mockStems.instrumental.volume).toBe(0.5)
-    expect(mockStems.vocals.volume).toBe(1)
+    useStemStore.getState().setBusVolume('vocal-bus', 0.6)
+    expect(setBusVolume).toHaveBeenCalledWith('vocal-bus', 0.6)
+    cleanup()
+  })
+
+  it('H3.3: V3 stemsEnabled=false глушит music+backing (vocals/instrumental не трогаются)', () => {
+    const setStemMuted = vi.fn()
+    ;(window as any).__belive = { pipeline: { setStemMuted, setBusVolume: vi.fn() } }
+    ;(window as any).__v3Active = true
+    mockV2.getV2Engine.mockReturnValue(null)
+    vi.mocked(getTransport).mockReturnValue({ orchestrator: { all: () => [], get: () => null } } as any)
+
+    useStemStore.getState().initStems(['drums', 'vocals', 'instrumental', 'backing'], true)
+    const cleanup = initStemEngineSync()
+
+    useStemStore.getState().setStemsEnabled(false)
+    expect(setStemMuted).toHaveBeenCalledWith('drums', true)
+    expect(setStemMuted).toHaveBeenCalledWith('backing', true)
+    expect(setStemMuted).not.toHaveBeenCalledWith('vocals', true)
+    expect(setStemMuted).not.toHaveBeenCalledWith('instrumental', true)
+
+    // обратное включение снимает mute
+    vi.clearAllMocks()
+    useStemStore.getState().setStemsEnabled(true)
+    expect(setStemMuted).toHaveBeenCalledWith('drums', false)
+    expect(setStemMuted).toHaveBeenCalledWith('backing', false)
     cleanup()
   })
 })

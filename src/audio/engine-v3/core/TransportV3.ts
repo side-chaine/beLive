@@ -209,6 +209,10 @@ export class TransportV3 extends EventTarget {
 
     this.stems.pauseAll();
     this.clock.seek(time);
+    // №17-E (457): публикуем факт seek для V3StatePublisher — обновление кэша
+    // __belive.currentTime, который иначе замерзает на паузе (006/TASK-010).
+    // CustomEvent вместо импорта публикатора — без циклических зависимостей.
+    this.dispatchEvent(new CustomEvent('seek', { detail: { time } }));
 
     if (!wasPlaying) {
       this._setState('paused');

@@ -41,6 +41,8 @@ export class V3StatePublisher {
     this.transport.addEventListener('statechange', this._onStateChange as EventListener);
     // 🆕 EventBus rate integration: publish rate change
     this.transport.addEventListener('ratechange', this._onRateChange as EventListener);
+    // №17-E (457): дискретные seeks транспорта → publishSeek (кэш + EventBus + store)
+    this.transport.addEventListener('seek', this._onSeek as EventListener);
   }
 
   /** Starts the continuous 60Hz tick loop + background visibility fallback. Requires
@@ -71,6 +73,7 @@ export class V3StatePublisher {
     this.stop();
     this.transport.removeEventListener('statechange', this._onStateChange as EventListener);
     this.transport.removeEventListener('ratechange', this._onRateChange as EventListener);
+    this.transport.removeEventListener('seek', this._onSeek as EventListener);
   }
 
   /** Call from wherever an ACTUAL seek happens (scrub, block-jump, loop restart) — not every tick. */
@@ -78,6 +81,14 @@ export class V3StatePublisher {
     eventBus.publish(EventBusChannel.Audio, 'seek-position-changed', { currentTime, duration });
     useAudioStore.getState().setCurrentTime(currentTime);
     this._lastPublishedTime = currentTime;
+    // №17-E (457): ОБЯЗАТЕЛЬНАЯ запись кэша (006/TASK-010 §3) — иначе кэш остаётся
+    // протухшим до следующего тика, а на паузе тиков нет вообще.
+    try {
+      if (typeof window !== 'undefined') {
+        (window as any).__belive = (window as any).__belive || {};
+        (window as any).__belive.currentTime = currentTime;
+      }
+    } catch {}
   }
 
   publishRateChange(rate: number): void {
@@ -100,6 +111,17 @@ export class V3StatePublisher {
     store.setPlaying(isPlaying);
     store.setCurrentTime(currentTime);
     store.setDuration(duration);
+    // №17-E AMEND-1 (001/006): кэш обновляется и на сменах состояния — иначе пауза
+    // без seek (natural-end превью, useTakesPlayback:107-109) замораживает его навсегда,
+    // а idle→play (TransportV3.ts:132) обходит событие seek. Побочка A7: после stop()
+    // кэш станет 0 вместо замороженного — fallback-читатели переваривают
+    // (getPlaybackTime() || startTime).
+    try {
+      if (typeof window !== 'undefined') {
+        (window as any).__belive = (window as any).__belive || {};
+        (window as any).__belive.currentTime = currentTime;
+      }
+    } catch {}
 
     // Legacy bridge for wrapper code not yet migrated onto the EventBus. Event NAME
     // here is a placeholder — I don't know what old wrapper code actually listens
@@ -113,6 +135,13 @@ export class V3StatePublisher {
   private _onRateChange = (e: Event): void => {
     const { rate } = (e as CustomEvent<PlaybackRateChangeDetail>).detail;
     this.publishRateChange(rate);
+  };
+
+  // №17-E (457): транспорт просекекся — синхронизируем кэш/store даже на паузе
+  private _onSeek = (e: Event): void => {
+    const detail = (e as CustomEvent<{ time?: number }>).detail;
+    const t = typeof detail?.time === 'number' ? detail.time : this.transport.currentTime;
+    this.publishSeek(t, this.transport.duration);
   };
 
   private _lastTickAt = 0

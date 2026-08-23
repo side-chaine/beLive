@@ -204,6 +204,11 @@ export const useExerciseStore = create<ExerciseState>((set, get) => ({
 
   advanceToNextStep: () => {
     const exercise = get().activeExercise;
+    // №17-TRACE (449): если шаг квеста двинулся — видим кто вызвал
+    if (import.meta.env.DEV && exercise) {
+      const __st = new Error().stack?.split('\n').slice(1, 6).join(' << ');
+      console.log(`[STEP-ADVANCE] stepIndex=${get().currentStepIndex} | ${__st}`);
+    }
     if (!exercise) return;
 
     const result = advanceExerciseCursor(

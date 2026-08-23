@@ -112,6 +112,9 @@ export class MonitorRouter {
     this.micInput.connect(this._micDelay)
     this._micDelay.connect(this._monitorGain)
     this._monitorGain.connect(this._monitorMaster)
+    // №464b (TASK-014c): локальный тап монитора на реальный выход.
+    // music-tap по умолчанию 0.0 + mic-gain 0.0 до enable ⇒ тап молчит до включения.
+    this._monitorMaster.connect(ctx.destination)
 
     // 🔬 RECON-3: начальное состояние роутера
     this.dumpState('constructor');
@@ -120,6 +123,11 @@ export class MonitorRouter {
   // 🔬 RECON-3: временный метод диагностики
   public dumpState(label: string): void {
     console.log(`[RECON-3] ${label} | programInput:${this.programInput.gain.value.toFixed(4)} | defaultBranch:${this._defaultBranch.gain.value.toFixed(4)} | mainBranch:${this._mainBranch.gain.value.toFixed(4)} | vocalHallInput:${this.vocalHallInput.gain.value.toFixed(4)}`);
+  }
+
+  /** TASK-014: самоконтроль микра (наушники). G14 latency-компенсация — отдельный пак F-2. */
+  setMicMonitor(on: boolean, volume = 1.0): void {
+    this._monitorGain.gain.value = on ? Math.max(0, Math.min(1, volume)) : 0
   }
 
   // ── Routing control ──

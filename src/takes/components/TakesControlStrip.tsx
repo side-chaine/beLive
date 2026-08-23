@@ -324,6 +324,16 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       
       if (import.meta.env.DEV) console.log('[Takes] Recorder armed early, visible REC started at engine time:', 
         getPlaybackTime().toFixed(3));
+      const _ac = getAudioContext();
+      console.log('[REC-SYNC·ARM]', {
+        engineNow: +(getPlaybackTime?.() ?? 0).toFixed(1),
+        blockStart: effectiveTimeRange.startTime,
+        baseLatency: _ac.baseLatency,
+        outputLatency: _ac.outputLatency,
+        inputLatency: (_ac as any).inputLatency,
+        sampleRate: _ac.sampleRate,
+        ts: Math.round(performance.now()),
+      });
       // Start stop timer / safety timeout
       clearActiveRecordingTimers();
       const blockEnd = effectiveTimeRange.endTime;

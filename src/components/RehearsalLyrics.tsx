@@ -9,6 +9,7 @@ import { hasUsableWordSync } from '../sync/selectors/word-selectors';
 import { useTrackStore } from '../stores/track.store';
 import { usePlateStore } from '../stores/plate.store';
 import { useAudioStore } from '../stores/audio.store';
+import { useTakesStore } from '../takes/takes.store';
 import { TRANSITION_PRESETS, DEFAULT_PRESET } from '../data/transition-presets';
 import { useEffectiveTier } from '../performance/performance.hooks';
 import {
@@ -20,6 +21,7 @@ import {
 import { useSlotMatrix } from '../slot-matrix/use-slot-matrix';
 import { measureNextBlock, type NextBlockMeasurement } from '../slot-matrix/measure-next-block';
 import { MAX_SUB_BLOCK_LINES } from '../slot-matrix/slot-matrix.utils';
+import { getTransport } from '../audio/engine-v3';
 
 import styles from './RehearsalLyrics.module.css';
 import { WordHighlightLine } from '../triggers/WordHighlightLine';
@@ -134,6 +136,14 @@ export function RehearsalLyrics() {
   );
 
   const displayBlock = useMemo(() => {
+    // №17-K: пин блока записи — текст держится на блоке записи, не следует за песней.
+    // Пин ставит startRecording, снимает только явный клик юзера ({fromUser:true}).
+    const _pinnedId = useTakesStore.getState().pinnedBlockId;
+    const _held = _pinnedId ? blocks.find(b => b.id === _pinnedId) : null;
+    if (_held) {
+      prevBlockRef.current = _held;
+      return _held;
+    }
     const candidate = activeBlock ?? (hasBlocks ? blocks[0] : null);
     if (!candidate) {
       prevBlockRef.current = null;
@@ -477,7 +487,21 @@ export function RehearsalLyrics() {
         return;
       }
 
-      const ct = ae?.getCurrentTime?.() ?? 0;
+      // №17-D: __belive.currentTime ДРЕЙФУЕТ (publishSeek не зовётся на внутренних seek'ах,
+      // доказано трейсом: транспорт 20.0, часы 28.9/37.7). Честное время = TransportV3.currentTime;
+      // кэш публикатора и V2 — только fallback (паттерн takes.time.getPlaybackTime).
+      const t3 = getTransport()?.currentTime;
+      const ct = (window as any).__v3Active && typeof t3 === 'number'
+        ? t3
+        : ((window as any).__belive?.currentTime ?? ae?.getCurrentTime?.() ?? 0);
+
+      // №17-J: держим текст на блоке записи — не путешествуем во время/после записи,
+      // пока юзер сам не сменит блок (пин в takes.store). Песня играет — текст стоит.
+      const _ts = useTakesStore.getState();
+      if (_ts.isRecording || _ts.pinnedBlockId) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
 
       if (ct >= triggerTime && ct <= triggerTime + effectivePreset.timing.triggerWindow) {
         if (!triggered) {
@@ -495,7 +519,7 @@ export function RehearsalLyrics() {
             && measurement.containerHeight > 0
             && measurement.nextBlockId === expectedId;
 
-          if (import.meta.env.DEV) console.log('[PS Travel] Trigger fired', {
+          if (import.meta.env.DEV) console.log(`[PS Travel] Trigger fired tt=${Number(triggerTime).toFixed(2)} ct=${Number(ct).toFixed(2)} v2clock=${((ae as any)?.getCurrentTime?.() ?? -1).toFixed(2)} nbFMT=${Number(nextBlockFirstMarkerTime).toFixed(2)} nsFMT=${Number(nextSubBlockFirstMarkerTime).toFixed(2)} isLastSub=${isLastSub} nb=${nextBlock?.id}`, {
             nextBlockId: nextBlock?.id,
             isLastSub,
             expectedMeasureId: expectedId,

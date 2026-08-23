@@ -223,7 +223,7 @@ export function useTakesPlayback({
         Math.max(0, trimStart + engineOffsetSec),
         Math.max(0, (audioBuffer?.duration ?? 0) - 0.005),
       );
-      console.log(`[GEN-SRC-START] REACHED startOffset=${startOffset.toFixed(3)} gain=${gain.gain.value} gen=${gen} cur=${previewGenRef.current}`);
+      console.log(`[GEN-SRC-START] REACHED startOffset=${startOffset.toFixed(3)} = trimStart(${(trimStart ?? 0).toFixed(3)}) + engineOffset(${engineOffsetSec.toFixed(3)}) | transportT=${(getPlaybackTime() ?? -1).toFixed(3)} timeRangeStart=${timeRange.startTime} gain=${gain.gain.value} gen=${gen} cur=${previewGenRef.current}`);
       source.start(ctx.currentTime + 0.01, startOffset);
       setPlayingTakeId(takeId);
       source.onended = () => {

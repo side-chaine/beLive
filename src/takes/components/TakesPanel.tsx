@@ -344,6 +344,9 @@ export const TakesPanel: React.FC = () => {
   const exercisePhaseRef = React.useRef<typeof phase>(phase);
   const activeExerciseRef = React.useRef(activeExercise);
   const completionMomentRef = React.useRef(completionMoment);
+  // №17-C: пин блока take-сессии — после записи остаёмся на блоке записи
+  // (директива юзера). Снимается только сменой трека (activeBlockId → null).
+  const blockPinRef = React.useRef<string | null>(null);
   
   React.useEffect(() => {
     isRecordingRef.current = isRecording;
@@ -364,6 +367,22 @@ export const TakesPanel: React.FC = () => {
   React.useEffect(() => {
     completionMomentRef.current = completionMoment;
   }, [completionMoment]);
+
+  // №17-C: PIN при постановке записи (arm) — фиксируем блок take-сессии.
+  React.useEffect(() => {
+    if (isRecording) {
+      blockPinRef.current = activeBlockIdRef.current;
+    }
+  }, [isRecording]);
+
+  // №17-C: UNPIN только при смене трека (takes.store сбрасывает activeBlockId в null).
+  // Ручная навигация по чипам (WagonTrain setActiveBlock) работает ПОВЕРХ пина,
+  // авто-follow остаётся заблокирован до смены трека — панель не улетает от плейхеда.
+  React.useEffect(() => {
+    if (!activeBlockId) {
+      blockPinRef.current = null;
+    }
+  }, [activeBlockId]);
   
   // Width cache through ResizeObserver (NOT in rAF)
   React.useEffect(() => {
@@ -653,6 +672,9 @@ export const TakesPanel: React.FC = () => {
     }
   }, [instrumentalBuffer]);
   
+  // №17-G: прошлая позиция тика — для детекции непрерывного пересечения границы блока
+  const prevTickTimeRef = React.useRef(-1);
+
   // Playhead rAF loop (direct engine read, NO store subscription)
   React.useEffect(() => {
     const el = playheadRef.current;
@@ -662,10 +684,13 @@ export const TakesPanel: React.FC = () => {
     
     const tick = () => {
       const ae = (window as any).audioEngine;
-      // 007/418: V3-фон закейджил V2 → ae.getCurrentTime() замёрз. Когда V3 активен —
-      // берём время из V3StatePublisher (__belive.currentTime, 20fps); иначе V2 (как раньше).
-      const v3t = (window as any).__belive?.currentTime;
-      const t: number = (window as any).__v3Active && v3t !== undefined ? v3t : (ae?.getCurrentTime?.() ?? 0);
+      // №17-G/A: кэш __belive.currentTime ЗАМЕРЗАЕТ на паузе (пишется тик-лупом только
+      // при playing — 006/TASK-010). Честное время = TransportV3.currentTime (паттерн 451-D);
+      // кэш и V2 — только fallback.
+      const t3 = getTransport()?.currentTime;
+      const t: number = (window as any).__v3Active && typeof t3 === 'number'
+        ? t3
+        : ((window as any).__belive?.currentTime ?? ae?.getCurrentTime?.() ?? 0);
       const w = widthRef.current;
       
       if (!timeRange || w === 0) {
@@ -684,13 +709,26 @@ export const TakesPanel: React.FC = () => {
         el.style.display = 'none';
       }
       
-      // Block auto-follow (throttled: every ~15 frames ≈ 4Hz)
-      if (!isRecordingRef.current && !activeExerciseRef.current && !completionMomentRef.current && followCount % 15 === 0) {
-        const currentBlockRange = blockRangesRef.current.find(
-          br => t >= br.startTime && t < br.endTime
-        );
-        if (currentBlockRange && currentBlockRange.blockId !== activeBlockIdRef.current) {
-          setActiveBlock(currentBlockRange.blockId);
+      // №17-I: пин блока записи БЕССРОЧЕН (директива юзера 22.08: «после остановки
+      // записи блок не переключается»). Снимают пин только: клик чипа (setActiveBlock
+      // напрямую), новая запись на другом блоке (re-pin при arm), смена трека
+      // (activeBlockId→null). Авто-релиза по времени НЕТ.
+      // №17-G/B: follow ТОЛЬКО на непрерывном пересечении конца активного блока.
+      // Скачок времени (seek/ручная навигация чипом) панель НЕ переключает —
+      // выбор юзера стикает (война tick↔WagonTrain из ретеста 22.08 устранена).
+      const prevT = prevTickTimeRef.current;
+      prevTickTimeRef.current = t;
+      if (
+        !isRecordingRef.current && !blockPinRef.current &&
+        !activeExerciseRef.current && !completionMomentRef.current &&
+        prevT >= 0 && Math.abs(t - prevT) < 1.0 && followCount % 15 === 0
+      ) {
+        const cur = blockRangesRef.current.find(br => br.blockId === activeBlockIdRef.current);
+        if (cur && prevT >= cur.startTime && prevT < cur.endTime && t >= cur.endTime) {
+          const nxt = blockRangesRef.current.find(br => t >= br.startTime && t < br.endTime);
+          if (nxt && nxt.blockId !== activeBlockIdRef.current) {
+            setActiveBlock(nxt.blockId);
+          }
         }
       }
       followCount++;

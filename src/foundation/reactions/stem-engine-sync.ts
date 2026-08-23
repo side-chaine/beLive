@@ -24,33 +24,21 @@ function isV3Master(): boolean {
   return !!(t3 && ((window as any).__v3Active || t3.orchestrator.all().length > 0))
 }
 
+// №18-BUS: MUSIC_STEMS временно удалён в GROUP 2 (потребитель effectiveGain() мёртв,
+// noUnusedLocals) — пере-введён в GROUP 3 для H3.3/H3.3b mute-циклов.
+
+// №18-BUS: MUSIC_STEMS пере-введён в GROUP 3 для H3.3/H3.3b mute-циклов
+// (в GROUP 2 был удалён вместе с effectiveGain() как мёртвый код).
 /** Music stems (excl. instrumental + vocals) muted by default per FR-014 */
 const MUSIC_STEMS = new Set(['drums', 'bass', 'keys', 'guitar', 'backing', 'other'])
-
-/** Вычислить effective gain для применения к V3 стему */
-function effectiveGain(state: EngineStateSnapshot, id: string): number {
-  if (!state.stemsEnabled && MUSIC_STEMS.has(id)) {
-    if (id === 'instrumental') console.log(`[RECON-7] ${performance.now().toFixed(0)} instrumental MUTED by FR-014 | stemsEnabled:${state.stemsEnabled}`);
-    return 0
-  }
-
-  const hasSolo = Object.values(state.stemSolos).some(Boolean)
-  if (hasSolo) {
-    const result = state.stemSolos[id] ? state.stemVolumes[id] ?? 1 : 0
-    if (id === 'instrumental') console.log(`[RECON-7] ${performance.now().toFixed(0)} instrumental SOLO | solos:${JSON.stringify(state.stemSolos)} | vol:${state.stemVolumes[id]} | result:${result}`);
-    return result
-  }
-
-  const result = state.stemMutes[id] ? 0 : (state.stemVolumes[id] ?? 1)
-  if (id === 'instrumental') console.log(`[RECON-7] ${performance.now().toFixed(0)} instrumental MUTE/VOL | muted:${state.stemMutes[id]} | vol:${state.stemVolumes[id]} | result:${result}`);
-  return result
-}
 
 interface EngineStateSnapshot {
   stemVolumes: Record<string, number>
   stemMutes: Record<string, boolean>
   stemSolos: Record<string, boolean>
   stemPans: Record<string, number>
+  /** №18-BUS H3.2: bus faders V3 */
+  busVolumes: Record<string, number>
   stemsEnabled: boolean
 }
 
@@ -74,6 +62,7 @@ export function initStemEngineSync(): () => void {
       stemMutes: state.stemMutes,
       stemSolos: state.stemSolos,
       stemPans: state.stemPans,
+      busVolumes: state.busVolumes,
       stemsEnabled: state.stemsEnabled,
     }
     diffAndApply(current, _prevSnapshot ?? current)
@@ -121,6 +110,7 @@ function coldSync(v2: V2Adapter): void {
     stemMutes: { ...state.stemMutes },
     stemSolos: { ...state.stemSolos },
     stemPans: { ...state.stemPans },
+    busVolumes: { ...state.busVolumes },
     stemsEnabled: state.stemsEnabled,
   }
   applyAll(v2, current)
@@ -150,6 +140,18 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
         if (stem) stem.volume = current.stemVolumes[id]
       } else if (isV2) {
         safeDelegate(v2, 'setStemVolume', id, current.stemVolumes[id])
+      }
+    }
+  }
+
+  // №18-BUS H3.2: BusVolumes — bus faders (V3 pipeline / V2 delegate)
+  for (const busId of Object.keys(current.busVolumes)) {
+    if (current.busVolumes[busId] !== prev.busVolumes[busId]) {
+      if (t3) {
+        const pipeline = (window as any).__belive?.pipeline
+        if (pipeline?.setBusVolume) pipeline.setBusVolume(busId, current.busVolumes[busId])
+      } else if (isV2) {
+        safeDelegate(v2, 'setBusVolume', busId, current.busVolumes[busId])
       }
     }
   }
@@ -197,8 +199,14 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
   // StemsEnabled — V3: mute/unmute music stems
   if (current.stemsEnabled !== prev.stemsEnabled) {
     if (t3) {
-      // 🔥 V3 STATE GATE: V2 stemsEnabled не применяется к V3.
-      // V3 управляет музыкальными стемами через pipeline.
+      // №18-BUS H3.3: V3-ветка реализована — глушим music+backing стемы через pipeline.
+      // vocals/instrumental не трогаются (instrumental = master clock-tap, A2.25).
+      const pipeline = (window as any).__belive?.pipeline
+      if (pipeline?.setStemMuted) {
+        for (const id of Object.keys(current.stemMutes)) {
+          if (MUSIC_STEMS.has(id)) pipeline.setStemMuted(id, !current.stemsEnabled)
+        }
+      }
     } else if (isV2) {
       safeDelegate(v2, 'setStemsEnabled', current.stemsEnabled)
     }
@@ -219,14 +227,22 @@ function applyAll(v2: V2Adapter, state: EngineStateSnapshot): void {
   const t3 = isV3Master() ? getTransport() : null
 
   if (t3) {
-    // V3 path — применяем effective gain ко всем стемам
+    // V3 path — применяем RAW volume ко всем стемам.
+    // №18-BUS H2.1 (009-fix#1): пишем RAW, НЕ effectiveGain — pipeline сам считает
+    // effective (solo/mute/busFactor). Запись effective→raw была отравителем raw-слота.
     // 🧹 Fix 389: cold-start тоже применяет к pipeline напрямую (MP-23)
     const pipeline = (window as any).__belive?.pipeline
     for (const id of Object.keys(state.stemVolumes)) {
-      const vol = effectiveGain(state, id)
-      if (pipeline?.setStemVolume) pipeline.setStemVolume(id, vol)
+      if (pipeline?.setStemVolume) pipeline.setStemVolume(id, state.stemVolumes[id])
       const stem = t3.orchestrator.get(id)
-      if (stem) stem.volume = vol
+      if (stem) stem.volume = state.stemVolumes[id]
+    }
+    // №18-BUS H3.3b (📌DC3 INFO-страховка): cold-load применяет текущий stemsEnabled сразу —
+    // иначе V3 cold-load при stemsEnabled=false оставит music слышимыми до первого переключения.
+    if (pipeline?.setStemMuted) {
+      for (const id of Object.keys(state.stemMutes)) {
+        if (MUSIC_STEMS.has(id)) pipeline.setStemMuted(id, !state.stemsEnabled)
+      }
     }
   } else {
     // V2 path — оригинальная логика
@@ -253,6 +269,7 @@ function snapshot(): EngineStateSnapshot {
     stemMutes: { ...s.stemMutes },
     stemSolos: { ...s.stemSolos },
     stemPans: { ...s.stemPans },
+    busVolumes: { ...s.busVolumes },
     stemsEnabled: s.stemsEnabled,
   }
 }
@@ -265,42 +282,7 @@ function safeDelegate(v2: V2Adapter, method: string, ...args: unknown[]): void {
   }
 }
 
-/**
- * Mode Switch → V3 arbiter entry point.
- * Принудительная ре-синхронизация stem store → V3 engine.
- * Вызывается после transport.play() в __switchToV3().
- * 
- * Использует module-level _prevSnapshot для консистентности diffAndApply.
- * Silently skip если V3 не активен или стемы не загружены.
- */
-export function resyncV3(): void {
-  try {
-    const t3 = isV3Master() ? getTransport() : null
-    if (!t3) return
-
-    const state = useStemStore.getState()
-    const current: EngineStateSnapshot = {
-      stemVolumes: { ...state.stemVolumes },
-      stemMutes: { ...state.stemMutes },
-      stemSolos: { ...state.stemSolos },
-      stemPans: { ...state.stemPans },
-      stemsEnabled: state.stemsEnabled,
-    }
-
-    // Применяем effectiveGain ко всем V3 стемам
-    for (const id of Object.keys(current.stemVolumes)) {
-      const stem = t3.orchestrator.get(id)
-      if (stem) {
-        stem.volume = effectiveGain(current, id)
-        // Pipeline sync (если активен)
-        const pipeline = (window as any).__belive?.pipeline
-        if (pipeline) pipeline.setStemVolume(id, stem.volume)
-      }
-    }
-
-    // Обновляем _prevSnapshot для консистентности следующих diffAndApply
-    _prevSnapshot = current
-  } catch (e) {
-    console.warn('[StemEngineSync] resyncV3() failed:', e)
-  }
-}
+// №18-BUS H2.2 (009-fix#1): resyncV3 удалён целиком — мёртвый код по верификации 009
+// (grep живых вызовов: 0). Он писал effective→raw (двойной writer, отравление raw-слота).
+// effectiveGain()/MUSIC_STEMS удалены вместе с ним — единственные потребители исчезли.
+// A2-closure см. пак-файл 462-MICRO-PACK-№18-BUS-FADER.md (H4.2).

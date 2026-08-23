@@ -9,6 +9,7 @@ import styles from './ControlDeck.module.css';
 import { useAudioStore } from '../stores/audio.store';
 import { usePracticeStore } from '../stores/practice-session.store';
 import { useStemStore } from '../stem/stem.store';
+import { BUILTIN_STEMS } from '../stem/stemTypes';
 import { useSyncStore } from '../sync/store/sync.store';
 import { useSyncStore } from '../sync/store/sync.store';
 import { useMonitorStore } from '../stores/monitor.store';
@@ -55,12 +56,20 @@ export function ControlDeck() {
 
   const instrumentalVolume = useStemStore(s => s.stemVolumes['instrumental'] ?? 1);
   const vocalsVolume = useStemStore(s => s.stemVolumes['vocals'] ?? 1);
+  // №18-BUS H3.4 (GO): красный фейдер dual-mode.
+  // V3-stems: Inst-фейдер = уровень минуса (music-bus); no-stems: инструментал-мастер (как в V2).
+  const loadedStems = useStemStore(s => s.loadedStems);
+  const musicBusVolume = useStemStore(s => s.busVolumes['music-bus'] ?? 1);
+  const __v3Active = !!(window as any).__v3Active;
+  const hasMusicStems = loadedStems.some(id => BUILTIN_STEMS[id]?.role === 'music');
+  const instFaderValue = __v3Active && hasMusicStems ? musicBusVolume : instrumentalVolume;
   const hasVocals = useAudioStore(s => s.hasVocals);
   const playbackRate = useAudioStore(s => s.playbackRate);
   const isPracticeActive = usePracticeStore(s => s.isActive);
   const practiceCurrentRate = usePracticeStore(s => s.currentRate);
   const vocalMixEnabled = useAudioStore(s => s.vocalMixEnabled);
   const micEnabled = useAudioStore(s => s.micEnabled);
+  const setMicEnabled = useAudioStore(s => s.setMicEnabled);
   const micVolume = useAudioStore(s => s.micVolume);
 
   // TC-PITCH-03: Removed pianoOpenRef + pianoOpen checks (pitch = tab now)
@@ -182,9 +191,18 @@ export function ControlDeck() {
               const rect = e.currentTarget.getBoundingClientRect();
               const x = e.clientX - rect.left;
               const v = Math.max(0, Math.min(1, x / rect.width));
-              const ae = (window as any).audioEngine;
-              if (ae) ae.setInstrumentalVolume(v);
-              useStemStore.getState().setStemVolume('instrumental', v);
+              // №18-BUS H3.4: dual-mode маршрутизация красного фейдера
+              const __v3 = (window as any).__v3Active;
+              if (__v3 && hasMusicStems) {
+                // V3-stems: фейдер управляет music-bus (уровень минуса)
+                useStemStore.getState().setBusVolume('music-bus', v);
+              } else {
+                if (!__v3) { // 📌DC3: гард от DEV-warn спама обёрткой H4.1 (009 LOW#2)
+                  const ae = (window as any).audioEngine;
+                  if (ae) ae.setInstrumentalVolume(v);
+                }
+                useStemStore.getState().setStemVolume('instrumental', v); // зеркало всегда (дисплей/синк)
+              }
               if (activeExercise) setInstrumentalOverride(v);
             }}
             onMouseDown={(e) => {
@@ -194,9 +212,18 @@ export function ControlDeck() {
                 const rect = slider.getBoundingClientRect();
                 const x = ev.clientX - rect.left;
                 const v = Math.max(0, Math.min(1, x / rect.width));
-                const ae = (window as any).audioEngine;
-                if (ae) ae.setInstrumentalVolume(v);
-                useStemStore.getState().setStemVolume('instrumental', v);
+                // №18-BUS H3.4: dual-mode маршрутизация красного фейдера
+                const __v3 = (window as any).__v3Active;
+                if (__v3 && hasMusicStems) {
+                  // V3-stems: фейдер управляет music-bus (уровень минуса)
+                  useStemStore.getState().setBusVolume('music-bus', v);
+                } else {
+                  if (!__v3) { // 📌DC3: гард от DEV-warn спама обёрткой H4.1 (009 LOW#2)
+                    const ae = (window as any).audioEngine;
+                    if (ae) ae.setInstrumentalVolume(v);
+                  }
+                  useStemStore.getState().setStemVolume('instrumental', v); // зеркало всегда (дисплей/синк)
+                }
                 if (activeExercise) setInstrumentalOverride(v);
               };
               const onUp = () => {
@@ -206,12 +233,12 @@ export function ControlDeck() {
               document.addEventListener('mousemove', onMove);
               document.addEventListener('mouseup', onUp);
             }}
-            title='Instrumental volume'
+            title='V3-stems: Inst-фейдер = уровень минуса (music-bus); no-stems: инструментал-мастер (как в V2)'
           >
             <div style={{
               position: 'absolute',
               left: 0, top: 0, bottom: 0,
-              width: `${Math.round(instrumentalVolume * 100)}%`,
+              width: `${Math.round(instFaderValue * 100)}%`,
               background: 'rgba(255, 60, 60, 0.3)',
               transition: 'width 0.05s',
               pointerEvents: 'none',
@@ -228,7 +255,7 @@ export function ControlDeck() {
               userSelect: 'none',
               pointerEvents: 'none',
             }}>
-              Inst {Math.round(instrumentalVolume * 100)}
+              Inst {Math.round(instFaderValue * 100)}
             </span>
           </div>
 
@@ -351,18 +378,43 @@ export function ControlDeck() {
 
             {/* Mic toggle */}
             <button
-              onClick={() => {
-                const ae = (window as any).audioEngine;
-                if (!ae) return;
-                if (micEnabled) ae.disableMicrophone();
-                else {
-                  const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
-                  if (engineMode === 'v3') {
-                    // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
-                    return;
-                  }
-                  ae.enableMicrophone();
+              onClick={async () => {
+                const belive = (window as any).__belive;
+                const src = belive?.micSource;
+                if (!src) return;
+                if (micEnabled) {
+                  try { (belive.__micMonitorNode as MediaStreamAudioSourceNode)?.disconnect(); } catch {}
+                  belive.__micMonitorNode = null;
+                  try { belive.monitorRouter?.setMicMonitor(false); } catch {}
+                  src.release();
+                  setMicEnabled(false);
+                  return;
                 }
+                try {
+                  const stream = await src.acquire();
+                  const ctx = belive?.pipeline?.ctx;
+                  const router = belive?.monitorRouter;
+                  if (ctx && router) {
+                    // R1-гвард: быстрый ON/OFF/ON — переиспользуем слот
+                    try { (belive.__micMonitorNode as MediaStreamAudioSourceNode)?.disconnect(); } catch {}
+                    const node = ctx.createMediaStreamSource(stream);
+                    node.connect(router.micInput);
+                    belive.__micMonitorNode = node;
+                    try { await belive.deviceManager?.ensureMonitorPlaying?.(); } catch {}
+                    router.setMicMonitor(true);
+                    setTimeout(() => {
+                      try {
+                        const g = (router as any)._monitorGain.gain.value;
+                        const st = (ctx as AudioContext).state;
+                        console.log(`[MON-PROBE] monitorGain=${g} ctx=${st}`);
+                      } catch {}
+                    }, 150);
+                    setMicEnabled(true);
+                  } else {
+                    src.release();
+                    console.warn('[ControlDeck] mic monitor недоступен (нет router/ctx)');
+                  }
+                } catch (e) { console.warn('[ControlDeck] mic enable failed', e); }
               }}
               style={{
                 background: micEnabled ? 'rgba(255, 140, 0, 0.25)' : 'transparent',

@@ -99,11 +99,13 @@ function bootAether(): void {
     const ctx = getAudioContext()
     let router: MonitorRouter | null = null
     let monitorEngine: MonitorEngine | null = null
+    let deviceManager: InstanceType<typeof DeviceManager> | null = null
     try {
       router = new MonitorRouter(ctx)
       transport.orchestrator.setOutputRouting(router.programInput, router.vocalHallInput)
       monitorEngine = new MonitorEngine()
-      monitorEngine.setBackend(router, ctx, new DeviceManager(router.monitorStream, router.mainStream))
+      deviceManager = new DeviceManager(router.monitorStream, router.mainStream)
+      monitorEngine.setBackend(router, ctx, deviceManager)
       // 🔬 RECON-3: временный глобальный доступ для диагностики
       ;(window as any).__router = router
       console.log('[AETHER] ✅ MonitorRouter + MonitorEngine active — Static Output Bus')
@@ -173,6 +175,8 @@ function bootAether(): void {
         ;(window as any).__belive = (window as any).__belive || {}
         ;(window as any).__belive.pipeline = pipeline
         ;(window as any).__belive.micSource = (window as any).__belive.micSource ?? new MicSourceV3()
+        ;(window as any).__belive.monitorRouter = router
+        if (deviceManager) { ;(window as any).__belive.deviceManager = deviceManager }
 
         console.log('[AETHER] ✅ HybridPipelineService Phase F — ACTIVE')
         console.log('[AETHER] ⚡ __belive.pipeline — diagnostics API')
@@ -232,6 +236,7 @@ function bootAether(): void {
         //    но FR-014 (audio-events.ts) ставит instrumental=0 при наличии music стемов.
         //    Восстанавливаем instrumental volume в store, чтобы stem-engine-sync
         //    применял к V3 корректный gain, а не 0.
+        // №18-BUS H2.4: instrumental: значимо только в no-stems режиме
         useStemStore.getState().setStemVolume('instrumental', 1)
 
         // 3. ИСПОЛЬЗУЕМ ТРАНСПОРТ (Фикс Sonnet): play(initialOffset) — старт с позиции в один вызов!
@@ -248,6 +253,37 @@ function bootAether(): void {
         console.log('[AETHER] ✅ V3 ACTIVE — V2 stopped & killed', offset.toFixed(1) + 's', stems.length + ' stems', route)
       } catch (e) {
         console.warn('[AETHER] Switch failed:', e)
+      }
+    }
+
+    // 🛡️ №18-BUS H4.1: mini-gard на ae.* volume-surface при активном V3.
+    // Обёртка 4 методов: __v3Active → DEV-warn+return, иначе оригинал.
+    // Self-contained: под обёрткой в v3-env фасад-no-op (js/audio-facade-v3.js);
+    // cage идёт через V2Adapter (main.tsx V2Interceptor/V2AudioCage) — не задевается.
+    // assumes VITE_ENGINE=v3; в v2-конфиге patchV1WithV2 перезапишет обёртку позже — принято
+    {
+      const __ae = (window as any).audioEngine as Record<string, any> | undefined
+      if (__ae) {
+        const __warnedAeMethods = new Set<string>()
+        const __guardAeMethod = (name: string): void => {
+          const orig = typeof __ae[name] === 'function' ? __ae[name].bind(__ae) : null
+          if (!orig) return
+          __ae[name] = (...args: unknown[]): void => {
+            if ((window as any).__v3Active) {
+              // №17-K-fix: warn ОДИН раз на метод — cage-watchdog зовёт каждый тик, спам не нужен
+              if (import.meta.env.DEV && !__warnedAeMethods.has(name)) {
+                __warnedAeMethods.add(name)
+                console.warn(`[№18-BUS] ae.${name}() ignored — V3 active (далее тихо)`)
+              }
+              return
+            }
+            orig(...args)
+          }
+        }
+        __guardAeMethod('setInstrumentalVolume')
+        __guardAeMethod('setVocalsVolume')
+        __guardAeMethod('setStemVolume')
+        __guardAeMethod('setStemsEnabled')
       }
     }
 
@@ -294,14 +330,8 @@ function bootAether(): void {
             //    watchdog 100ms удерживает gain=0
             //    V2Interceptor блокирует V2.play() пока __v3Active=true
             //
-            // Здесь: только восстановление pipeline gains для V3
-            // (FR-014 gate мог занулить instrumental при наличии music стемов)
-            if ((window as any).__belive?.pipeline) {
-              const stemIds = ['instrumental', 'vocals', 'drums', 'bass', 'keys', 'guitar', 'backing', 'other']
-              const p = (window as any).__belive.pipeline
-              stemIds.forEach(id => p.setStemVolume(id, 1.0))
-              console.log('[AETHER] ✅ V3 pipeline gains restored to 1.0')
-            }
+            // №18-BUS H2.3: блок «gains restored to 1.0» УДАЛЁН — четвёртый отравитель raw-слота.
+            // pipeline сам восстанавливает effective gains из RAW (_stemRawVolumes переживают reset).
             if (monitorEngine) monitorEngine.setBackendMode('v3')
             console.log('[AETHER] ✅ V3 loaded for track', trackId)
 
