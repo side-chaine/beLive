@@ -43,7 +43,13 @@ export class DeviceManager {
     el.style.display = 'none'
     el.srcObject = (target === 'monitor' ? this.monitorStream : this.mainStream) as any
     document.body.appendChild(el)
-    try { await el.play() } catch { /* user gesture needed */ }
+    el.volume = 1; el.muted = false
+    try {
+      await el.play()
+      if (import.meta.env.DEV) console.log(`[DeviceManager] ${target} audio PLAYING`)
+    } catch (e) {
+      console.warn(`[DeviceManager] ${target} play() BLOCKED`, e)
+    }
     this[key] = el
     return el
   }

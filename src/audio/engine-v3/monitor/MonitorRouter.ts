@@ -22,6 +22,16 @@ export class MonitorRouter {
   readonly vocalHallInput: GainNode
   readonly micInput: GainNode
 
+  // ── TASK-015: v-Mix стерео-разводка (vocals L / music center / mic R) ──
+  /** ← orchestrator.setVMixCenterTap (music без вокала, центр = оба канала) */
+  readonly vmixCenterIn: GainNode
+  /** ← vocalHallInput (вокал, L) */
+  readonly vmixVocalIn: GainNode
+  /** ← micInput (мик, R) */
+  readonly vmixMicIn: GainNode
+  private readonly _vmixMerger: ChannelMergerNode
+  private readonly _vmixMaster: GainNode // 0.0 = OFF
+
   // ── Stream endpoints ──
   readonly captureStream: MediaStreamAudioDestinationNode
   readonly monitorStream: MediaStreamAudioDestinationNode
@@ -84,6 +94,17 @@ export class MonitorRouter {
     this.micInput = ctx.createGain()
     this.micInput.gain.value = 1.0
 
+    // TASK-015: v-Mix подграф
+    this.vmixCenterIn = ctx.createGain()
+    this.vmixCenterIn.gain.value = 1.0
+    this.vmixVocalIn = ctx.createGain()
+    this.vmixVocalIn.gain.value = 1.0
+    this.vmixMicIn = ctx.createGain()
+    this.vmixMicIn.gain.value = 1.0
+    this._vmixMerger = ctx.createChannelMerger(2)
+    this._vmixMaster = ctx.createGain()
+    this._vmixMaster.gain.value = 0.0 // 0.0 = OFF
+
     // ── Static graph (НЕ перестраивается, 0 disconnect) ──
     // ProgramMix → Default + Main branches
     this.programInput.connect(this._defaultBranch)
@@ -112,9 +133,19 @@ export class MonitorRouter {
     this.micInput.connect(this._micDelay)
     this._micDelay.connect(this._monitorGain)
     this._monitorGain.connect(this._monitorMaster)
-    // №464b (TASK-014c): локальный тап монитора на реальный выход.
-    // music-tap по умолчанию 0.0 + mic-gain 0.0 до enable ⇒ тап молчит до включения.
+    // TASK-014c (464b): локальный тап монитора на реальный выход.
+    // Тишина по умолчанию: _musicGain=0.0 + _monitorGain=0.0 до enable.
     this._monitorMaster.connect(ctx.destination)
+
+    // ── TASK-015: v-Mix стерео-разводка (vocals L / music center / mic R → MASTER) ──
+    this.vmixCenterIn.connect(this._vmixMerger, 0, 0);
+    this.vmixCenterIn.connect(this._vmixMerger, 0, 1);  // центр = оба канала
+    this.vmixVocalIn.connect(this._vmixMerger, 0, 0);   // L
+    this.vmixMicIn.connect(this._vmixMerger, 0, 1);     // R
+    this._vmixMerger.connect(this._vmixMaster);         // БЕЗ delay-узлов ⇒ latency 0
+    this._vmixMaster.connect(ctx.destination);          // MASTER (рулинг Ц3)
+    this.vocalHallInput.connect(this.vmixVocalIn);      // вокал уже тут (Orchestrator addStem)
+    this.micInput.connect(this.vmixMicIn);              // постоянный тап, мастер гейтит
 
     // 🔬 RECON-3: начальное состояние роутера
     this.dumpState('constructor');
@@ -145,6 +176,19 @@ export class MonitorRouter {
     // 🔬 RECON-3: логируем переключение
     this.dumpState(`setRouteMain(${on})`);
   }
+
+  /** TASK-015: v-Mix стерео-разводка ON/OFF. ON: defaultBranch глушится (иначе вокал задвоится center+L). */
+  setVMix(on: boolean): void {
+    const now = this.programInput.context.currentTime, r = now + 0.02;
+    for (const g of [this._defaultBranch, this._vmixMaster]) g.gain.cancelScheduledValues(now);
+    this._defaultBranch.gain.setValueAtTime(this._defaultBranch.gain.value, now);
+    this._vmixMaster.gain.setValueAtTime(this._vmixMaster.gain.value, now);
+    this._defaultBranch.gain.linearRampToValueAtTime(on ? 0 : 1, r);
+    this._vmixMaster.gain.linearRampToValueAtTime(on ? 1 : 0, r);
+    this.dumpState(`setVMix(${on})`);
+  }
+
+  isVMixOn(): boolean { return this._vmixMaster.gain.value > 0.5 }
 
   /** Music level in monitor mix */
   setMusicLevel(v: number): void {

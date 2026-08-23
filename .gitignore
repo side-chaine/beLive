@@ -96,3 +96,5 @@ test-permission.txt
 switch-mode.sh
 opencode.json.high
 opencode.json.low
+REPO-STATE.md
+.tmp-frames/

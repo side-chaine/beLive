@@ -16,6 +16,19 @@ export class StemOrchestrator {
   private readonly stems = new Map<StemId, StemPlayerV3>();
   private _programOut: AudioNode | null = null;
   private _vocalHall: AudioNode | null = null;
+  /** TASK-015: тап центра v-Mix — все стемы КРОМЕ vocals. */
+  private _vmixCenter: AudioNode | null = null;
+
+  /** TASK-015: тап центра v-Mix — все стемы КРОМЕ vocals. */
+  setVMixCenterTap(node: AudioNode | null): void {
+    if (this._vmixCenter) for (const [id, st] of this.stems) {
+      if (id !== 'vocals') { try { st.outputNode.disconnect(this._vmixCenter) } catch {} }
+    }
+    this._vmixCenter = node;
+    if (node) for (const [id, st] of this.stems) {
+      if (id !== 'vocals') st.outputNode.connect(node);
+    }
+  }
 
   constructor(opts: StemOrchestratorOptions) {
     this.ctx = opts.ctx;
@@ -49,6 +62,8 @@ export class StemOrchestrator {
     // TC-2C: stems подключаются к Router (или destination если Router не установлен)
     stem.outputNode.connect(this._programOut ?? this.ctx.destination)
     if (id === 'vocals' && this._vocalHall) stem.outputNode.connect(this._vocalHall)
+    // TASK-015: центр v-Mix — все стемы КРОМЕ vocals (тапы аддитивные).
+    if (id !== 'vocals' && this._vmixCenter) stem.outputNode.connect(this._vmixCenter)
     this.stems.set(id, stem);
     return stem;
   }

@@ -350,16 +350,22 @@ export function ControlDeck() {
             <button
               onClick={() => {
                 const ae = (window as any).audioEngine;
-                if (!ae) return;
-                if (vocalMixEnabled) ae.disableVocalMix();
-                else {
-                  const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
-                  if (engineMode === 'v3') {
-                    // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
-                    return;
-                  }
-                  ae.enableVocalMix();
+                // TASK-015 (v3): стерео-разводка через MonitorRouter.setVMix
+                const router = (window as any).__belive?.monitorRouter;
+                if (router?.setVMix) {
+                  const next = !vocalMixEnabled;
+                  router.setVMix(next);
+                  useAudioStore.setState({ vocalMixEnabled: next });
+                  return;
                 }
+                if (!ae) return;
+                const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+                if (engineMode === 'v3') {
+                  // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
+                  return;
+                }
+                if (vocalMixEnabled) ae.disableVocalMix();
+                else ae.enableVocalMix();
               }}
               style={{
                 background: vocalMixEnabled ? 'rgba(255, 140, 0, 0.25)' : 'transparent',
@@ -371,7 +377,7 @@ export function ControlDeck() {
                 cursor: 'pointer',
                 fontWeight: 600,
               }}
-              title='VMix'
+              title='VMix — vocals L / music center / mic R (нужен включённый 🎤)'
             >
               VMix {vocalMixEnabled ? 'ON' : 'OFF'}
             </button>

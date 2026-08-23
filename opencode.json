@@ -8,6 +8,6 @@
     "005": { "model": "opencode-go/kimi-k3" },
     "008": { "model": "opencode/mimo-v2.5-free" },
     "009": { "model": "opencode-go/kimi-k3" },
-    "operator": { "model": "opencode/deepseek-v4-flash-free" }
+    "operator": { "model": "opencode/big-pickle" }
   }
 }

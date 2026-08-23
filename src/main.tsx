@@ -176,6 +176,10 @@ function bootAether(): void {
         ;(window as any).__belive.pipeline = pipeline
         ;(window as any).__belive.micSource = (window as any).__belive.micSource ?? new MicSourceV3()
         ;(window as any).__belive.monitorRouter = router
+        // TASK-015: экспонируем StemOrchestrator (держится TransportV3, публичный геттер .orchestrator)
+        // и проводим центр-тап v-Mix ОДИН раз при буте (addStem-хук ловит поздние стемы).
+        ;(window as any).__belive.stemOrchestrator = transport.orchestrator
+        ;(window as any).__belive.stemOrchestrator?.setVMixCenterTap?.((window as any).__belive.monitorRouter?.vmixCenterIn)
         if (deviceManager) { ;(window as any).__belive.deviceManager = deviceManager }
 
         console.log('[AETHER] ✅ HybridPipelineService Phase F — ACTIVE')
