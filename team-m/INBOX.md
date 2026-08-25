@@ -1,6 +1,6 @@
 # Mac Team — INBOX (авто, не редактировать вручную)
 
-_Обновлено: 2026-08-25T10:06:00Z_
+_Обновлено: 2026-08-25T10:14:45Z_
 
 | agent | task | status | updated |
 |--------|------|--------|---------|
@@ -13,6 +13,7 @@ _Обновлено: 2026-08-25T10:06:00Z_
 | mac-007 | ack-hub-2026-08-25 | — |  |
 | mac-007 | run1-m1-verify | — |  |
 | mac-007 | glm-qwen-007-prompt | — |  |
+| mac-007 | g0-p1-nullguard-committed | — |  |
 | mac-007 | run4-m4-layer2 | — |  |
 | mac-007 | go-chain-packet1 | — |  |
 | mac-007 | answers-l-m-sweep-groups | — |  |
@@ -28,4 +29,4 @@ _Обновлено: 2026-08-25T10:06:00Z_
 | mac-007 | ack-h-letter-d4-verified | — |  |
 | mac-007 | proposal-coachpanel-body | — |  |
 
-_Всего отчётов: 23
+_Всего отчётов: 24
