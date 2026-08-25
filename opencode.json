@@ -3,11 +3,11 @@
   "default_agent": "007",
   "instructions": ["AGENTS.md"],
   "agent": {
-    "001": { "model": "opencode-go/kimi-k3" },
-    "002": { "model": "opencode-go/kimi-k3" },
-    "005": { "model": "opencode-go/kimi-k3" },
+    "001": { "model": "opencode/ox-alpha-free" },
+    "002": { "model": "opencode/ox-alpha-free" },
+    "005": { "model": "opencode/ox-alpha-free" },
     "008": { "model": "opencode/ox-alpha-free" },
-    "009": { "model": "opencode-go/kimi-k3" },
+    "009": { "model": "opencode/ox-alpha-free" },
     "operator": { "model": "opencode/big-pickle" }
   }
 }
