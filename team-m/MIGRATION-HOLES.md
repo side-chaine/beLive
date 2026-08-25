@@ -32,3 +32,11 @@ CharacterSoundManager (ASSISTANT_RESPONSE_COMPLETED) — движко-незав
 ## Статистика
 Найдено: **7×P1 + 8×P2**. Frozen-нарушений: 0. Actionable: 15/15.
 Приоритет Near Light: R1-пак (Ц3) → E5/E3-семейство (уже в пака) → event-surface v3 → fallback dead-zone.
+
+## ⚖️ СТРЕСС-КОРРЕКЦИЯ (Ф002 adversarial, `stress-holes-verdict.md`, 25.08 поздн.)
+| Находка | Вердикт | Коррекция |
+|---|---|---|
+| Phantom methods (V2Adapter:57) | **PARTIAL** | P1→**P2 latent**: жертв нет — pan-UI не существует (store.setStemPan зовут только тесты), setStemsMode через адаптер не зовёт никто |
+| Fallback dead-zone (main.tsx) | **CONFIRMED P1** | retry 0, путь восстановления отсутствует целиком; в dual-env НЕ воспроизводится |
+| Event-surface (только V2 эмиттит) | **PARTIAL** | P1→**P2**: primary-тумблеры самосогласованы (ControlDeck пишет store напрямую); рассинхрон реален на practice-restore (:127-134), exercise-автоматизации (TakesPanel:1009-1041), mic-горяч-при-OFF |
+Итог скорректированный: **P1 = 5** (R1-zombie ×2, fallback dead-zone, takes-audio кластер, маркерный рассинхрон), P2 = 10.
