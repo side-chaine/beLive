@@ -40,3 +40,12 @@ CharacterSoundManager (ASSISTANT_RESPONSE_COMPLETED) — движко-незав
 | Fallback dead-zone (main.tsx) | **CONFIRMED P1** | retry 0, путь восстановления отсутствует целиком; в dual-env НЕ воспроизводится |
 | Event-surface (только V2 эмиттит) | **PARTIAL** | P1→**P2**: primary-тумблеры самосогласованы (ControlDeck пишет store напрямую); рассинхрон реален на practice-restore (:127-134), exercise-автоматизации (TakesPanel:1009-1041), mic-горяч-при-OFF |
 Итог скорректированный: **P1 = 5** (R1-zombie ×2, fallback dead-zone, takes-audio кластер, маркерный рассинхрон), P2 = 10.
+
+## ⚖️ СТРЕСС-КОРРЕКЦИЯ #2 (P2-adversarial, `stress-p2-verdict.md`, 25.08 late)
+| Позиция | Вердикт | Детали |
+|---|---|---|
+| Program-capture | ⬆️ **CONFIRMED, серьёзнее** | в v3 запись сломана END-TO-END: у фасада нет getProgramCaptureStream → recording.store:42 молча пишет video-only webm; router.captureStream/CaptureBusV3 — ноль консьюмеров. Фича записи в v3 = видео без звука |
+| MicSourceV3 race | CONFIRMED | два входа без мьютекса (ControlDeck:400 🎤 + takes.recorder:82 REC), окно=permission-промпт → orphaned live stream до reload |
+| takes.recorder гейт | CONFIRMED ядро | pipeline fail → micSource не публикуется → запись тейков мертва без V2-fallback; «чужой ctx» опровергнут (атомарный publish main.tsx:178-181) |
+| Whitelist drift | DOWNGRADE→latent | warn-ветка недостижима: busVolumes писатели зарезечены `__v3Active && hasMusicStems` |
+| DuckGuardV3/RehearsalTriggerWriter | мёртвые ✅ | 0 продакшн-инстанцирований; DuckGuardV3**Native** живой (StemPlayerV3:74) — не трогать |

@@ -1,6 +1,6 @@
 # Mac Team — INBOX (авто, не редактировать вручную)
 
-_Обновлено: 2026-08-25T14:57:42Z_
+_Обновлено: 2026-08-25T15:22:29Z_
 
 | agent | task | status | updated |
 |--------|------|--------|---------|
@@ -9,6 +9,7 @@ _Обновлено: 2026-08-25T14:57:42Z_
 | m007 | character-ai-status | — |  |
 | mac-007 | run2-m2-landing | — |  |
 | mac-007 | MICRO-PACK-TAKES-AUDIO-draft | — |  |
+| mac-007 | stress-p2-verdict | — |  |
 | mac-007 | stress-holes-verdict | — |  |
 | mac-007 | work-start-m2-m3-m4 | — |  |
 | mac-007 | guard-pass-convergence-e5-e8 | — |  |
@@ -40,4 +41,4 @@ _Обновлено: 2026-08-25T14:57:42Z_
 | mac-007 | proposal-coachpanel-body | — |  |
 | mac-007 | MICRO-PACK-E1-PREDICATE-draft | — |  |
 
-_Всего отчётов: 35
+_Всего отчётов: 36
