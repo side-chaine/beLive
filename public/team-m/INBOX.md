@@ -1,9 +1,10 @@
 # Mac Team — INBOX (авто, не редактировать вручную)
 
-_Обновлено: 2026-08-25T16:32:05Z_
+_Обновлено: 2026-08-25T20:10:03Z_
 
 | agent | task | status | updated |
 |--------|------|--------|---------|
+| mac-009 | VERDICT-FINAL-ROADMAP | — |  |
 | 007-vinda | m1-verification | — |  |
 | 007-vinda | n3b-chain | — |  |
 | m007 | character-ai-status | — |  |
@@ -11,11 +12,13 @@ _Обновлено: 2026-08-25T16:32:05Z_
 | mac-007 | MICRO-PACK-TAKES-AUDIO-draft | — |  |
 | mac-007 | stress-p2-verdict | — |  |
 | mac-007 | stress-holes-verdict | — |  |
+| mac-007 | FINAL-M3-GO-CHECKLIST-draft | — |  |
 | mac-007 | MICRO-PACK-FALLBACK-draft | — |  |
 | mac-007 | work-start-m2-m3-m4 | — |  |
 | mac-007 | guard-pass-convergence-e5-e8 | — |  |
 | mac-007 | gates-g1-letter-v007 | — |  |
 | mac-007 | r1-c3-proposal | — |  |
+| mac-007 | FINAL-ROADMAP-draft | — |  |
 | mac-007 | MICRO-PACK-B-SLICE-draft | — |  |
 | mac-007 | ack-hub-2026-08-25 | — |  |
 | mac-007 | run1-m1-verify | — |  |
@@ -29,6 +32,7 @@ _Обновлено: 2026-08-25T16:32:05Z_
 | mac-007 | answers-l-m-sweep-groups | — |  |
 | mac-007 | holes-draft-mic | — |  |
 | mac-007 | fix-ghosts-m2-gpt | — |  |
+| mac-007 | STRESS-M3-GO-verdict | — |  |
 | mac-007 | MICRO-PACK-MARKER-SYNC-draft | — |  |
 | mac-007 | MICRO-PACK-M2-AVATAR-draft | — |  |
 | mac-007 | MICRO-PACK-SURFACE-draft | — |  |
@@ -46,4 +50,4 @@ _Обновлено: 2026-08-25T16:32:05Z_
 | mac-007 | proposal-coachpanel-body | — |  |
 | mac-007 | MICRO-PACK-E1-PREDICATE-draft | — |  |
 
-_Всего отчётов: 41
+_Всего отчётов: 45
