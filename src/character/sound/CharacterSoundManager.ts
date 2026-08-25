@@ -12,6 +12,10 @@ export interface CueSpec {
   points: Array<[number, number]>;
 }
 
+export type SoundCue =
+  | ({ kind: 'synth' } & CueSpec)
+  | { kind: 'asset'; url: string; gain: number };
+
 // Дизайн-контракт GPT (HARD CONTRACT §4): 880→1760 Гц, sine, ~0.2с, gain 0.15 — профиль Billy.
 export const CUE_DEFAULT: CueSpec = {
   wave: 'sine',
@@ -32,6 +36,7 @@ export class CharacterSoundManager {
   private ctx: AudioContext | null = null;
   private enabled = true;
   private lastPlayed = 0;
+  private assetCache = new Map<string, AudioBuffer>();
   private static COOLDOWN_MS = 400; // защита от двойного фаера и «долбёжки» на каждый токен
 
   /** Подписка на единственный источник завершения ответа. Звать один раз при старте. */
@@ -65,18 +70,45 @@ export class CharacterSoundManager {
 
   setEnabled(v: boolean): void { this.enabled = v; }
 
-  /** Проигрывает cue. По умолчанию — CUE_DEFAULT (контракт). Персонажи подменяют spec. */
-  playCue(spec: CueSpec = CUE_DEFAULT): void {
+  /** Проигрывает cue. По умолчанию — CUE_DEFAULT (контракт §4). Персонажи подменяют cue. */
+  playCue(cue: SoundCue = { kind: 'synth', ...CUE_DEFAULT }): void {
     if (!this.enabled || !getSoundEnabled() || !this.ctx || this.ctx.state !== 'running') return;
     const now = performance.now();
     if (now - this.lastPlayed < CharacterSoundManager.COOLDOWN_MS) return;
     this.lastPlayed = now;
-    this.blip(spec);
+    if (cue.kind === 'asset') void this.playAsset(cue);
+    else this.blip(cue);
+  }
+
+  /** Ассет-ветка (§13.4): декодируем один раз, кэшируем, антиклик-envelope. */
+  private async playAsset(cue: { kind: 'asset'; url: string; gain: number }): Promise<void> {
+    const ctx = this.ctx!;
+    try {
+      let buf = this.assetCache.get(cue.url);
+      if (!buf) {
+        const resp = await fetch(cue.url);
+        if (!resp.ok) return;
+        const arr = await resp.arrayBuffer();
+        buf = await ctx.decodeAudioData(arr);
+        this.assetCache.set(cue.url, buf);
+      }
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const gain = ctx.createGain();
+      const t = ctx.currentTime;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(cue.gain, t + 0.01); // attack, антиклик
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(0.1, buf.duration));
+      src.connect(gain).connect(ctx.destination);
+      src.start(t);
+    } catch {
+      /* офлайн/нет ассета — тихо без звука (не блокер) */
+    }
   }
 
   /** Layer-2: мягкий cue прихода отчёта от Mac-команды. */
   playNotification(): void {
-    this.playCue(NOTIFY_CUE);
+    this.playCue({ kind: 'synth', ...NOTIFY_CUE });
   }
 
   private blip(spec: CueSpec): void {
@@ -92,7 +124,7 @@ export class CharacterSoundManager {
     }
     // Огибающая громкости
     gain.gain.setValueAtTime(0.0001, t);
-    gain.gain.linearRampToValueAtTime(spec.gain, t + 0.02);
+    gain.gain.linearRampToValueAtTime(spec.gain, t + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + spec.dur);
     osc.connect(gain).connect(ctx.destination);
     osc.start(t);

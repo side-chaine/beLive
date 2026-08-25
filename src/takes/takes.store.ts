@@ -78,8 +78,6 @@ export const useTakesStore = create<TakesState>()(
       set({ activeBlockId: blockId });
     },
 
-    clearPinnedBlock: () => set({ pinnedBlockId: null }),
-
     startRecording: (blockId, slot) => set({
       isRecording: true,
       recordingSlot: slot,
@@ -174,6 +172,7 @@ export const useTakesStore = create<TakesState>()(
         blockTakesMap: {},
         assetRevision: 0,
         viewMode: 'voc',
+        pinnedBlockId: null,
       });
     },
   }))

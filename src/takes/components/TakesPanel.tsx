@@ -345,8 +345,8 @@ export const TakesPanel: React.FC = () => {
   const activeExerciseRef = React.useRef(activeExercise);
   const completionMomentRef = React.useRef(completionMoment);
   // №17-C: пин блока take-сессии — после записи остаёмся на блоке записи
-  // (директива юзера). Снимается только сменой трека (activeBlockId → null).
-  const blockPinRef = React.useRef<string | null>(null);
+  // (директива юзера). Снимается клик чипа (fromUser) и смена трека (cleanup).
+  // Хранится в takes.store.pinnedBlockId — React-ref удалён в N3β-P1#4.
   
   React.useEffect(() => {
     isRecordingRef.current = isRecording;
@@ -368,22 +368,7 @@ export const TakesPanel: React.FC = () => {
     completionMomentRef.current = completionMoment;
   }, [completionMoment]);
 
-  // №17-C: PIN при постановке записи (arm) — фиксируем блок take-сессии.
-  React.useEffect(() => {
-    if (isRecording) {
-      blockPinRef.current = activeBlockIdRef.current;
-    }
-  }, [isRecording]);
 
-  // №17-C: UNPIN только при смене трека (takes.store сбрасывает activeBlockId в null).
-  // Ручная навигация по чипам (WagonTrain setActiveBlock) работает ПОВЕРХ пина,
-  // авто-follow остаётся заблокирован до смены трека — панель не улетает от плейхеда.
-  React.useEffect(() => {
-    if (!activeBlockId) {
-      blockPinRef.current = null;
-    }
-  }, [activeBlockId]);
-  
   // Width cache through ResizeObserver (NOT in rAF)
   React.useEffect(() => {
     const el = canvasZoneRef.current;
@@ -709,17 +694,15 @@ export const TakesPanel: React.FC = () => {
         el.style.display = 'none';
       }
       
-      // №17-I: пин блока записи БЕССРОЧЕН (директива юзера 22.08: «после остановки
-      // записи блок не переключается»). Снимают пин только: клик чипа (setActiveBlock
-      // напрямую), новая запись на другом блоке (re-pin при arm), смена трека
-      // (activeBlockId→null). Авто-релиза по времени НЕТ.
+      // №17-I: пин бессрочный; снимают клик чипа (fromUser) и смена трека
+      // (cleanup); синхронизация follow — в пределах следующего кадра rAF.
       // №17-G/B: follow ТОЛЬКО на непрерывном пересечении конца активного блока.
       // Скачок времени (seek/ручная навигация чипом) панель НЕ переключает —
       // выбор юзера стикает (война tick↔WagonTrain из ретеста 22.08 устранена).
       const prevT = prevTickTimeRef.current;
       prevTickTimeRef.current = t;
       if (
-        !isRecordingRef.current && !blockPinRef.current &&
+        !isRecordingRef.current && !useTakesStore.getState().pinnedBlockId &&
         !activeExerciseRef.current && !completionMomentRef.current &&
         prevT >= 0 && Math.abs(t - prevT) < 1.0 && followCount % 15 === 0
       ) {
