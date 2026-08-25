@@ -141,6 +141,10 @@ function bootAether(): void {
         console.log(`[V2Interceptor] 🚫 V2.${method}() blocked — V3 is active`)
         return
       }
+      if (method === 'setInstrumentalVolume' || method === 'setVocalsVolume') {
+        console.warn('[delegateSync] master-volume blocked')
+        return
+      }
       return _originalDelegate(method, ...args)
     }) as typeof _adapter.delegateSync
 
@@ -287,8 +291,6 @@ function bootAether(): void {
             orig(...args)
           }
         }
-        __guardAeMethod('setInstrumentalVolume')
-        __guardAeMethod('setVocalsVolume')
         __guardAeMethod('setStemVolume')
         __guardAeMethod('setStemsEnabled')
       }

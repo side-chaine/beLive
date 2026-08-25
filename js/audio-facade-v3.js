@@ -32,7 +32,36 @@
     loadTrack() { return Promise.resolve(); },
     setInstrumentalVolume() {}, setVocalsVolume() {}, setMicrophoneVolume() {},
     setStemVolume() {}, setStemsEnabled() {}, setStemMute() {}, setStemSolo() {}, setStemPan() {}, setStemsMode() {},
-    getStemMeterLevel() { return 0; }, getStemAnalyser() { return null; }, getStemAudioBuffer() { return null; },
+    getStemMeterLevel() { return 0; }, getStemAnalyser() { return null; },
+    getStemAudioBuffer(stemId) {
+      try {
+        const p = window.__belive && window.__belive.pipeline;
+        if (!p) return null;
+        const stem = p.chainA && p.chainA.stems && p.chainA.stems.get && p.chainA.stems.get(stemId);
+        return stem && typeof stem.getBuffer === 'function' ? stem.getBuffer() : null;
+      } catch { return null; }
+    },
+    awaitStemReady(stemId, timeoutMs) {
+      const timeout = timeoutMs || 10000;
+      return new Promise(function (resolve) {
+        var start = Date.now();
+        (function poll() {
+          try {
+            var p = window.__belive && window.__belive.pipeline;
+            if (p) {
+              var stems = p.chainA && p.chainA.stems;
+              var stem = stems && stems.get && stems.get(stemId);
+              if (stem && typeof stem.getBuffer === 'function' && stem.getBuffer()) {
+                resolve(true);
+                return;
+              }
+            }
+          } catch {}
+          if (Date.now() - start > timeout) { resolve(false); return; }
+          setTimeout(poll, 100);
+        })();
+      });
+    },
     enableMicrophone() { return Promise.resolve({ enabled: false, volume: 0 }); }, disableMicrophone() {},
     enableVocalMix() {}, disableVocalMix() {},
     getPlaybackRate() { return 1; }, setPlaybackRate() {},

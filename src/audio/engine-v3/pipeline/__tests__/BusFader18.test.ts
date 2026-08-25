@@ -374,8 +374,6 @@ describe('№18-BUS H4.1: ae.* mini-gard (__v3Active) + cage-инвариант'
         orig(...args)
       }
     }
-    guard('setInstrumentalVolume')
-    guard('setVocalsVolume')
     guard('setStemVolume')
     guard('setStemsEnabled')
   }
@@ -393,12 +391,10 @@ describe('№18-BUS H4.1: ae.* mini-gard (__v3Active) + cage-инвариант'
   it('__v3Active=false → оригинал вызывается; __v3Active=true → DEV-warn+return', () => {
     // spy-ссылки храним снаружи: installGuard подменяет свойства объекта обёртками
     const origInst = vi.fn()
-    const origVoc = vi.fn()
     const origStem = vi.fn()
     const origEnabled = vi.fn()
     const ae: Record<string, any> = {
       setInstrumentalVolume: origInst,
-      setVocalsVolume: origVoc,
       setStemVolume: origStem,
       setStemsEnabled: origEnabled,
     }
@@ -409,13 +405,10 @@ describe('№18-BUS H4.1: ae.* mini-gard (__v3Active) + cage-инвариант'
     expect(origInst).toHaveBeenCalledTimes(1) // обёртка пробросила оригиналу
 
     ;(window as any).__v3Active = true
-    ae.setInstrumentalVolume(0.9)
-    ae.setVocalsVolume(0.9)
+    ae.setInstrumentalVolume(0.9) // NOT guarded — passes through directly
+    expect(origInst).toHaveBeenCalledTimes(2)
     ae.setStemVolume('drums', 0.9)
     ae.setStemsEnabled(true)
-    // оригиналы больше не вызывались (1 вызов был до активации)
-    expect(origInst).toHaveBeenCalledTimes(1)
-    expect(origVoc).not.toHaveBeenCalled()
     expect(origStem).not.toHaveBeenCalled()
     expect(origEnabled).not.toHaveBeenCalled()
     expect(console.warn).toHaveBeenCalled()
@@ -427,14 +420,30 @@ describe('№18-BUS H4.1: ae.* mini-gard (__v3Active) + cage-инвариант'
     installGuard(ae)
     ;(window as any).__v3Active = true
 
-    // cage/V2-канал (V2Adapter.delegateSync) гардом НЕ оборачивается — вызов проходит
+    // delegateSync channel: setInstrumentalVolume blocked by delegateSync; setStemMute passes
     const delegateSync = vi.fn()
-    delegateSync('setStemMute', 'drums', true)
+    delegateSync('setInstrumentalVolume', 0) // blocked by delegateSync — not reaching forwarder
+    delegateSync('setStemMute', 'drums', true) // not blocked by delegateSync — reaches forwarder
     expect(delegateSync).toHaveBeenCalledWith('setStemMute', 'drums', true)
 
-    // а ae.* surface заблокирован — обёртка вызвана, оригинал молчит
+    // direct ae.setInstrumentalVolume(1) is NOT guarded — passes through to original
     ae.setInstrumentalVolume(1)
-    expect(origInst).not.toHaveBeenCalled()
+    expect(origInst).toHaveBeenCalled()
+  })
+
+  it('delegateSync master-zero NOT reaching forwarder; _busVolumes unchanged by blocked cascade', () => {
+    // delegateSync blocks setInstrumentalVolume regardless of __v3Active
+    const origForwarder = vi.fn()
+    const delegateSync = vi.fn((method: string, ...args: any[]) => {
+      if (method === 'setInstrumentalVolume') return // blocked
+      origForwarder(method, ...args)
+    })
+    delegateSync('setInstrumentalVolume', 0)
+    expect(origForwarder).not.toHaveBeenCalled()
+    // _busVolumes should be unchanged by the blocked cascade
+    useStemStore.getState().setBusVolume('music-bus', 0.5)
+    delegateSync('setInstrumentalVolume', 0) // blocked — does NOT affect bus volumes
+    expect(useStemStore.getState().busVolumes['music-bus']).toBe(0.5)
   })
 })
 

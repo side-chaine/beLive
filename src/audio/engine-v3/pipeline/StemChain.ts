@@ -71,15 +71,13 @@ export class StemChain {
   }
 
   /** Mute/Unmute стема в этой цепи */
-  muteStem(stemId: string, muted: boolean): void {
-    const stem = this.stems.get(stemId)
-    if (stem) stem.volume = muted ? 0 : 1
+  muteStem(_stemId: string, _muted: boolean): void {
+    console.warn('[StemChain] disabled (E8b): use pipeline.setStemVolume')
   }
 
   /** Плавная регулировка громкости (не только 0/1 как mute) */
-  setStemVolume(stemId: string, volume: number): void {
-    const stem = this.stems.get(stemId)
-    if (stem) stem.volume = volume
+  setStemVolume(_stemId: string, _volume: number): void {
+    console.warn('[StemChain] disabled (E8b): use pipeline.setStemVolume')
   }
 
   /** Solo: все не-solo стемы приглушаются */
@@ -93,13 +91,8 @@ export class StemChain {
   }
 
   private _applySolo(): void {
-    if (this._soloed.size === 0) {
-      for (const stem of this.stems.values()) stem.volume = 1
-      return
-    }
-    for (const [id, stem] of this.stems) {
-      stem.volume = this._soloed.has(id) ? 1 : 0
-    }
+    // E8b: removed direct stem.volume writes — single-writer is _applyEffectiveGain in HybridPipelineService.
+    // Only mask bookkeeping here; isSoloActive()/isStemAudible() read the mask.
   }
 
   /** Solo-маска активна (есть хотя бы один засолоенный стем) */

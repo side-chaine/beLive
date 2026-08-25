@@ -549,6 +549,7 @@ export class HybridPipelineService implements IPipelineController {
     this.muteStem(stemId, muted)
   }
 
+  /** soloStem: only chainA (pre _chainB.outputNode) — Bus B not connected in 067-D */
   soloStem(stemId: string, soloed: boolean): void {
     this._chainA.soloStem(stemId, soloed)
     // Single-writer: пересчитываем ВСЕ гейны по маске
