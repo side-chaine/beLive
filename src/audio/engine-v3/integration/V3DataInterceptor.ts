@@ -213,6 +213,13 @@ export class V3DataInterceptor {
       } catch (e) {
         console.warn('[V3DataInterceptor] track-loaded document dispatch failed:', e)
       }
+      // B1: bridge-compat alias — track-stem-ready + track-fully-loaded (consumers: audio.bridge.ts:109,217)
+      try {
+        document.dispatchEvent(new CustomEvent('track-stem-ready', { detail: { stemIds: loadedStemIds } }));
+      } catch {}
+      try {
+        document.dispatchEvent(new CustomEvent('track-fully-loaded', { detail }));
+      } catch {}
     }
 
     return { loadedStemIds, failedStemIds };

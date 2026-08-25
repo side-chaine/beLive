@@ -198,6 +198,8 @@ export class MonitorRouter {
     this._vmixMicGate.gain.cancelScheduledValues(now);
     this._vmixMicGate.gain.setValueAtTime(this._vmixMicGate.gain.value, now);
     this._vmixMicGate.gain.linearRampToValueAtTime(on ? 0 : 1, r);
+    // B1: bridge-compat — vocalmix-state-changed (consumers: audio.bridge.ts:220, PitchTab.tsx:270)
+    try { document.dispatchEvent(new CustomEvent('vocalmix-state-changed', { detail: { enabled: on } })); } catch {}
   }
 
   isVMixOn(): boolean { return this._vmixMaster.gain.value > 0.5 }
