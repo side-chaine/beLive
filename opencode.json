@@ -3,11 +3,13 @@
   "default_agent": "007",
   "instructions": ["AGENTS.md"],
   "agent": {
-    "001": { "model": "opencode/ox-alpha-free" },
-    "002": { "model": "opencode/ox-alpha-free" },
-    "005": { "model": "opencode/ox-alpha-free" },
-    "008": { "model": "opencode/ox-alpha-free" },
-    "009": { "model": "opencode/ox-alpha-free" },
-    "operator": { "model": "opencode/big-pickle" }
+    "001": { "description": "Со-Архитектор beLive — ищет элегантное/минимальное решение", "mode": "subagent", "model": "opencode/ox-alpha-free" },
+    "002": { "description": "Стресс-тестер — атакует решения 001, ищет краевые случаи", "mode": "subagent", "model": "opencode/ox-alpha-free" },
+    "005": { "description": "Усилитель — подключает Context7 для актуальных док/версий", "mode": "subagent", "model": "opencode/ox-alpha-free" },
+    "008": { "description": "Утилитный сабагент — общая поддержка/связка", "mode": "subagent", "model": "opencode/ox-alpha-free" },
+    "009": { "description": "Независимый эксперт — финальный вердикт по задаче", "mode": "subagent", "model": "opencode/ox-alpha-free" },
+    "explore": { "description": "Read-only explorer (built-in override)", "mode": "subagent", "model": "opencode/ox-alpha-free" },
+    "general": { "description": "General-purpose subagent (built-in override)", "mode": "subagent", "model": "opencode/ox-alpha-free" },
+    "operator": { "description": "Исполнитель кода — применяет MICRO-PACK/патчи по dispatch Hub", "mode": "subagent", "model": "opencode/big-pickle" }
   }
 }
