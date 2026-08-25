@@ -410,7 +410,7 @@ export function ControlDeck() {
                     router.setMicMonitor(true);
                     setTimeout(() => {
                       try {
-                        const g = (router as any)._monitorGain.gain.value;
+                        const g = router.monitorLevel;
                         const st = (ctx as AudioContext).state;
                         console.log(`[MON-PROBE] monitorGain=${g} ctx=${st}`);
                       } catch {}

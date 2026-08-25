@@ -51,6 +51,7 @@ export class MonitorRouter {
   private readonly _vocalHallGain: GainNode
   private readonly _captureGain: GainNode
   private _micCompensationMs = 0; // G14: компенсация latency самоконтроля (ms); хранится, чтобы setDelayMs/setCompensateTarget не затирали
+  private _mainCompensationMs = 0; // R8: main-path delay compensation (ms); stored so target-switch не затирает
 
   constructor(ctx: AudioContext) {
     // ── Create all nodes ──
@@ -154,13 +155,6 @@ export class MonitorRouter {
     this._vmixMaster.connect(ctx.destination);          // MASTER (рулинг Ц3)
     this.micInput.connect(this.vmixMicIn);              // постоянный тап, мастер гейтит
 
-    // 🔬 RECON-3: начальное состояние роутера
-    this.dumpState('constructor');
-  }
-
-  // 🔬 RECON-3: временный метод диагностики
-  public dumpState(label: string): void {
-    console.log(`[RECON-3] ${label} | programInput:${this.programInput.gain.value.toFixed(4)} | defaultBranch:${this._defaultBranch.gain.value.toFixed(4)} | mainBranch:${this._mainBranch.gain.value.toFixed(4)} | vocalHallInput:${this.vocalHallInput.gain.value.toFixed(4)}`);
   }
 
   /** TASK-014: самоконтроль микра (наушники). G14 latency-компенсация — отдельный пак F-2. */
@@ -187,8 +181,6 @@ export class MonitorRouter {
     this._mainBranch.gain.setValueAtTime(this._mainBranch.gain.value, now)
     this._defaultBranch.gain.linearRampToValueAtTime(on ? 0 : 1, ramp)
     this._mainBranch.gain.linearRampToValueAtTime(on ? 1 : 0, ramp)
-    // 🔬 RECON-3: логируем переключение
-    this.dumpState(`setRouteMain(${on})`);
   }
 
   /** TASK-015: v-Mix стерео-разводка ON/OFF. ON: defaultBranch глушится (иначе вокал задвоится center+L). */
@@ -206,7 +198,6 @@ export class MonitorRouter {
     this._vmixMicGate.gain.cancelScheduledValues(now);
     this._vmixMicGate.gain.setValueAtTime(this._vmixMicGate.gain.value, now);
     this._vmixMicGate.gain.linearRampToValueAtTime(on ? 0 : 1, r);
-    this.dumpState(`setVMix(${on})`);
   }
 
   isVMixOn(): boolean { return this._vmixMaster.gain.value > 0.5 }
@@ -244,7 +235,9 @@ export class MonitorRouter {
 
   /** Delay compensation — main or monitor path. Clamp 0..1000ms (iOS) */
   setDelayMs(ms: number): void {
-    const v = Math.max(0, Math.min(1000, ms)) / 1000
+    const clamped = Math.max(0, Math.min(1000, ms))
+    this._mainCompensationMs = clamped
+    const v = clamped / 1000
     this._mainDelay.delayTime.value = v
     // G14: НЕ затираем компенсацию микрофона (раньше было =0). Возвращаем сохранённое значение.
     this._micDelay.delayTime.value = this._micCompensationMs / 1000
@@ -252,11 +245,9 @@ export class MonitorRouter {
 
   /** Which path gets delay — monitor or main */
   setCompensateTarget(t: 'monitor' | 'main'): void {
-    if (t === 'monitor') {
-      this._mainDelay.delayTime.value = 0
-    } else {
-      this._mainDelay.delayTime.value = 0 // main-path delay сброшен
-    }
+    // 'monitor' → main path gets NO delay (monitor compensated via mic delay)
+    // 'main'    → main path keeps its stored R8 calibration delay
+    this._mainDelay.delayTime.value = t === 'monitor' ? 0 : this._mainCompensationMs / 1000
     // G14: mic-компенсация НЕ затирается (раньше this._micDelay = 0)
     this._micDelay.delayTime.value = this._micCompensationMs / 1000
   }
@@ -282,4 +273,7 @@ export class MonitorRouter {
     // stem.outputNode → ProgramMixGain уже есть. Это для внешних источников (mic preview)
     node.connect(this._captureGain)
   }
+
+  /** Read-only monitor level for diagnostics (replaces ControlDeck `as any` access) */
+  get monitorLevel(): number { return this._monitorGain.gain.value }
 }
