@@ -1,3 +1,4 @@
+import { ENGINE_MODE } from '../../engine-mode';
 import React from 'react';
 import { TakesCanvas } from './TakesCanvas';
 import { TakesControlStrip } from './TakesControlStrip';
@@ -496,7 +497,7 @@ export const TakesPanel: React.FC = () => {
     const ae = (window as any).audioEngine;
     
     // F-1.5 (432): v3 — инструментал = сумма не-vocal стемов из pipeline (V2-API заглушён кейджем)
-    const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+    const engineMode = ENGINE_MODE;
     if (engineMode === 'v3') {
       const pipeline = (window as any).__belive?.pipeline;
       const stems = pipeline?.chainA?.stems;
@@ -552,7 +553,7 @@ export const TakesPanel: React.FC = () => {
     }
     const ae = (window as any).audioEngine;
     // F-1.5 (432): v3 — вокальный буфер напрямую из стема 'vocals'
-    const engineModeV = import.meta.env.VITE_ENGINE ?? 'v2';
+    const engineModeV = ENGINE_MODE;
     if (engineModeV === 'v3') {
       const stems = (window as any).__belive?.pipeline?.chainA?.stems;
       const vb = stems?.get?.('vocals')?.getBuffer?.() ?? null;

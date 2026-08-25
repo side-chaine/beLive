@@ -1,3 +1,4 @@
+import { ENGINE_MODE } from './engine-mode';
 import { useEffect, useRef } from 'react';
 import { AudioCrashModal, useAudioContextHealth, getTransport } from './audio/engine-v3';
 // retired: audio.bridge → audio-events (main.tsx)
@@ -90,7 +91,7 @@ export default function App() {
   useEffect(() => {
     if (surface !== 'app') return;
     // M1 (342): No-Birth — в V3-режиме V2 не рождается (runtime death)
-    const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+    const engineMode = ENGINE_MODE;
     if (engineMode !== 'v3') {
       tryActivateV2();
       // M2 (345): V2 birth counter — доказательство No-Birth

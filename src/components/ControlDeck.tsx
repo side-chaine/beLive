@@ -1,3 +1,4 @@
+import { ENGINE_MODE } from '../engine-mode';
 import { Suspense, useEffect, useRef } from 'react';
 import { useDeckStore } from '../stores/deck.store';
 import { useModeStore } from '../stores/mode.store';
@@ -359,7 +360,7 @@ export function ControlDeck() {
                   return;
                 }
                 if (!ae) return;
-                const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+                const engineMode = ENGINE_MODE;
                 if (engineMode === 'v3') {
                   // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
                   return;

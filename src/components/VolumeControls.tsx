@@ -1,3 +1,4 @@
+import { ENGINE_MODE } from '../engine-mode';
 import React, { useCallback } from 'react';
 import { useAudioStore } from '../stores/audio.store';
 import { useStemStore } from '../stem/stem.store';
@@ -88,7 +89,7 @@ export function VolumeControls() {
     if (!ae) return;
     if (vocalMix) ae.disableVocalMix();
     else {
-      const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+      const engineMode = ENGINE_MODE;
       if (engineMode === 'v3') {
         // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
         return;
@@ -102,7 +103,7 @@ export function VolumeControls() {
     if (!ae) return;
     if (mic) ae.disableMicrophone();
     else {
-      const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+      const engineMode = ENGINE_MODE;
       if (engineMode === 'v3') {
         // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
         return;

@@ -1,3 +1,5 @@
+import { ENGINE_MODE } from '../engine-mode';
+
 /**
  * TakesRecorder — thin MediaRecorder wrapper for vocal take capture.
  * 
@@ -67,7 +69,7 @@ export class TakesRecorder {
   async start(): Promise<void> {
     const ae = (window as any).audioEngine;
     if (!ae) throw new Error('AudioEngine not available');
-    const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+    const engineMode = ENGINE_MODE;
     let stream: MediaStream | null = null;
 
     if (engineMode === 'v3') {

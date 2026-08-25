@@ -1,3 +1,4 @@
+import { ENGINE_MODE } from '../engine-mode';
 import { create } from 'zustand';
 import { usePerformanceStore } from '../performance/performance.store';
 import { getRecordingCaptureProfile } from '../performance/performance.recording';
@@ -45,7 +46,7 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
       // Auto-enable mic hardware if not already enabled
       if (ae?.microphone && !ae.microphone.enabled) {
         try {
-          const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+          const engineMode = ENGINE_MODE;
           if (engineMode === 'v3') {
             // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
             return;

@@ -1,3 +1,4 @@
+import { ENGINE_MODE } from '../../engine-mode';
 import React from 'react';
 import { useTakesStore } from '../takes.store';
 import { useAudioStore } from '../../stores/audio.store';
@@ -171,7 +172,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       // Rate: единый роутинг V3/V2 (М3) — tempoRate через TransportV3 при V3-фоне
       setRate(tempoRate ?? 1);
       if (ae.microphone && !ae.microphone.enabled) {
-        const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+        const engineMode = ENGINE_MODE;
         if (engineMode !== 'v3') await ae.enableMicrophone(); // v3: acquisition внутри TakesRecorder.start() (F-1 431)
       }
       
@@ -568,7 +569,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
     try {
       // 1. Enable microphone if needed (hidden, no UI state yet)
       if (ae.microphone && !ae.microphone.enabled) {
-        const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+        const engineMode = ENGINE_MODE;
         if (engineMode !== 'v3') await ae.enableMicrophone(); // v3: acquisition внутри TakesRecorder.start() (F-1 431)
       }
 

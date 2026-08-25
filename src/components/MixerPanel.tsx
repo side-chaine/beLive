@@ -9,6 +9,7 @@
  * CSS-only meters for v1 (no canvas, no peak hold).
  */
 
+import { ENGINE_MODE } from '../engine-mode';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useStemStore } from '../stem/stem.store';
 import { BUILTIN_STEMS, STEM_CAPACITY_BY_TIER, sortStemsForDisplay } from '../stem/stemTypes';
@@ -136,7 +137,7 @@ export function MixerPanel() {
     return () => navigator.mediaDevices?.removeEventListener('devicechange', refreshMicInputs);
   }, [refreshMicInputs]);
 
-  const engineMode = import.meta.env.VITE_ENGINE ?? 'v2';
+  const engineMode = ENGINE_MODE;
   const micDeviceId = (window as any).audioEngine?.microphone?.deviceId ?? '';
 
   // W10-002: Stems mode toggle handler
@@ -306,7 +307,7 @@ export function MixerPanel() {
             value={engineMode === 'v3' ? (() => { try { return localStorage.getItem('mic:deviceId') ?? '' } catch { return '' } })() : micDeviceId}
             title="Microphone input"
             onChange={async (e) => {
-              const em = import.meta.env.VITE_ENGINE ?? 'v2';
+              const em = ENGINE_MODE;
               if (em === 'v3') {
                 try { await (window as any).__belive?.micSource?.setDevice(e.target.value); }
                 catch (err) { console.warn('[MicSelect] v3 setDevice failed:', err); }
