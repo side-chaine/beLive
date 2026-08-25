@@ -17,6 +17,7 @@ import { getTransport } from '../../audio/engine-v3';
 import { getAudioContext } from '../../audio/core/audioContext';
 import { TakeSlot } from './TakeSlot';
 import { getPlaybackTime, seekTo, setRate } from '../takes.time';
+import { duckProgram, type DuckHandle } from '../takes.duck';
 
 interface TakesControlStripProps {
   activeBlockId: string;
@@ -70,6 +71,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
   const timeCheckRef = React.useRef<number | null>(null);
   const countdownRef = React.useRef<number | null>(null);
   const deleteReRecordTimeoutRef = React.useRef<number | null>(null);
+  const vocalFadeDuckRef = React.useRef<DuckHandle | null>(null);
 
   const [countdown, setCountdown] = React.useState<number | null>(null);
   // Reference playback constant
@@ -200,7 +202,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       const actualPreRoll = effectiveTimeRange.startTime - preRollStart;
       const seekStart = performance.now();
       try { seekTo(preRollStart) } catch {}
-      getTransport().play();
+      getTransport()?.play();
       const seekMs = performance.now() - seekStart;
       
       // Countdown UX (if pre-roll > 0.5s)
@@ -240,6 +242,8 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
               recorderRef.current = null;
               onRecorderAnalyserChange?.(null);
               clearActiveRecordingTimers();
+              vocalFadeDuckRef.current?.restore();
+              vocalFadeDuckRef.current = null;
               onRecordAbort?.(`Синхронизация pre-roll не удалась. Попробуй ещё раз.`);
               return;
             }
@@ -253,18 +257,25 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
             // Smooth vocal fade in final countdown window (one-shot per countdown)
             if (!vocalFadeScheduled && left <= 1.0) {
               vocalFadeScheduled = true;
-              try {
-                const vocalsGain = (ae as any).stems?.get?.('vocals')?.gainNode;
-                if (vocalsGain && vocalsGain.gain && typeof vocalsGain.gain.linearRampToValueAtTime === 'function') {
-                  const ctx = (ae as any).audioContext;
-                  if (ctx) {
-                    const targetVocal = 0;
-                    const fadeEndTime = ctx.currentTime + left;
-                    vocalsGain.gain.linearRampToValueAtTime(targetVocal, fadeEndTime);
+              if ((window as any).__v3Active) {
+                // v3: fade vocal-bus via pipeline
+                const h = duckProgram({ buses: ['vocal-bus'], rampMs: Math.max(50, left * 1000) });
+                if (h) vocalFadeDuckRef.current = h;
+              } else {
+                // v2: legacy gainNode ramp
+                try {
+                  const vocalsGain = (ae as any).stems?.get?.('vocals')?.gainNode;
+                  if (vocalsGain && vocalsGain.gain && typeof vocalsGain.gain.linearRampToValueAtTime === 'function') {
+                    const ctx = (ae as any).audioContext;
+                    if (ctx) {
+                      const targetVocal = 0;
+                      const fadeEndTime = ctx.currentTime + left;
+                      vocalsGain.gain.linearRampToValueAtTime(targetVocal, fadeEndTime);
+                    }
                   }
+                } catch (_) {
+                  // Fallback: if vocalsGain unavailable, continue without fade
                 }
-              } catch (_) {
-                // Fallback: if vocalsGain unavailable, continue without fade
               }
             }
             
@@ -370,6 +381,8 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
 
     onRecorderAnalyserChange?.(null);
     setRoundCaptureResponseActive(false);
+    vocalFadeDuckRef.current?.restore();
+    vocalFadeDuckRef.current = null;
 
     // keep recorder session alive (advance is explicit user action, not a side effect of stop)
   }, [onRecorderAnalyserChange, setRoundCaptureResponseActive]);
@@ -391,6 +404,8 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       setRoundCaptureResponseActive(false);
       setRoundCaptureRecorderArmed(false);
       clearRoundCapture();
+      vocalFadeDuckRef.current?.restore();
+      vocalFadeDuckRef.current = null;
       useTakesStore.getState().cancelRecording();
       return;
     }
@@ -399,6 +414,8 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       const blob = await recorder.stop();
       recorderRef.current = null;
       onRecorderAnalyserChange?.(null);
+      vocalFadeDuckRef.current?.restore();
+      vocalFadeDuckRef.current = null;
 
       setRoundCaptureResponseActive(false);
       setRoundCaptureRecorderArmed(false);
@@ -858,6 +875,8 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       if (countdownRef.current) cancelAnimationFrame(countdownRef.current);
       if (deleteReRecordTimeoutRef.current) clearTimeout(deleteReRecordTimeoutRef.current);
       if (recorderRef.current?.isRecording) recorderRef.current.cancel();
+      vocalFadeDuckRef.current?.restore();
+      vocalFadeDuckRef.current = null;
       
       // Cleanup analyser on unmount
       onRecorderAnalyserChange?.(null);

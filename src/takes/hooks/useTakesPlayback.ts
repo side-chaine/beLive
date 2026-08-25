@@ -1,8 +1,8 @@
 import React from 'react';
 import { useTakesStore } from '../takes.store';
-import { useAudioStore } from '../../stores/audio.store';
 import { takeAssets } from '../takes.assets';
-import { getPlaybackTime, seekTo } from '../takes.time';
+import { getPlaybackTime, seekTo, isPlaying, setRate } from '../takes.time';
+import { duckProgram, type DuckHandle } from '../takes.duck';
 import { getTransport } from '../../audio/engine-v3';
 import { getAudioContext } from '../../audio/core/audioContext';
 
@@ -41,31 +41,25 @@ export function useTakesPlayback({
   const soloActiveRef = React.useRef(false);
   const forceContextRef = React.useRef(false);
   const referenceContextActiveRef = React.useRef(false);
+  const duckHandleRef = React.useRef<DuckHandle | null>(null);
 
-  const instrumentalVolume = useAudioStore((s) => s.instrumentalVolume);
-  const vocalsVolume = useAudioStore((s) => s.vocalsVolume);
+  // No audio.store selectors needed — duck/restore uses takes.duck.ts
+  // (instrumentalVolume/vocalsVolume removed from AudioState per W4a)
 
   const applySoloMute = React.useCallback(() => {
-    const ae = (window as any).audioEngine;
-    if (!ae) return;
-    ae.setInstrumentalVolume?.(0);
-    ae.setVocalsVolume?.(0);
+    duckHandleRef.current = duckProgram();
     soloActiveRef.current = true;
   }, []);
 
   const restoreVolumes = React.useCallback(() => {
-    const ae = (window as any).audioEngine;
-    if (!ae) return;
-
     if (!soloActiveRef.current && !referenceContextActiveRef.current) return;
 
-    const { instrumentalVolume, vocalsVolume } = useAudioStore.getState();
-    ae.setInstrumentalVolume?.(instrumentalVolume);
-    ae.setVocalsVolume?.(vocalsVolume);
+    duckHandleRef.current?.restore();
+    duckHandleRef.current = null;
 
     soloActiveRef.current = false;
     referenceContextActiveRef.current = false;
-  }, [instrumentalVolume, vocalsVolume]);
+  }, []);
 
   const stopPreview = React.useCallback((options?: { pauseEngine?: boolean }) => {
     previewGenRef.current++;
@@ -95,18 +89,14 @@ export function useTakesPlayback({
     
     // Restore playback rate if tempo-aware playback was active
     if (previewTempoRateRef.current !== null) {
-      if (ae && typeof ae.setPlaybackRate === 'function') {
-        ae.setPlaybackRate(1);
-      }
+      setRate(1);
       previewTempoRateRef.current = null;
     }
     
     // Clear forceContext flag
     forceContextRef.current = false;
     
-    if (options?.pauseEngine) {
-      if (ae?.isPlaying) void getTransport().pause();
-    }
+    if (options?.pauseEngine && isPlaying()) void getTransport()?.pause();
   }, [restoreVolumes]);
 
   const handlePlayTake = React.useCallback(async (takeId: string, options?: { pan?: number; forceContext?: boolean }) => {
@@ -159,10 +149,8 @@ export function useTakesPlayback({
       const tempoRate = takeMeta?.tempoRate;
       const takeKind = takeMeta?.takeKind;
       if (tempoRate && takeKind === 'training') {
-        if (typeof ae.setPlaybackRate === 'function') {
-          ae.setPlaybackRate(tempoRate);
-          previewTempoRateRef.current = tempoRate;
-        }
+        setRate(tempoRate);
+        previewTempoRateRef.current = tempoRate;
       }
       
       const source = ctx.createBufferSource();
@@ -199,7 +187,10 @@ export function useTakesPlayback({
       }
       
       // Deterministic play start — wait for engine sync instead of fixed 200ms drift
-      const playResult = getTransport().play();
+      // §1.4: state-aware start — from idle/ended use play(startTime) directly
+      const tr = getTransport();
+      const fromIdle = tr?.state === 'idle' || tr?.state === 'ended';
+      const playResult = fromIdle ? tr!.play(timeRange.startTime) : tr!.play();
       if (playResult && typeof playResult.then === 'function') {
         try {
           await playResult;

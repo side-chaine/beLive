@@ -544,6 +544,17 @@ export class HybridPipelineService implements IPipelineController {
   }
   getBusVolume(busId: string): number { return this._busVolumes[busId] ?? 1 }
 
+  /** Плавный фейд шины (TakesControlStrip pre-roll): bookkeeping сразу, гейн — рампой */
+  fadeBusVolume(busId: string, target: number, rampMs: number): void {
+    const c = Number.isFinite(target) ? Math.max(0, Math.min(1, target)) : 1
+    this._busVolumes[busId] = c
+    for (const id of this._chainA.stems.keys()) {
+      if (this.busOf(id) !== busId) continue
+      const sg = this._stretchGains.get(id)
+      if (sg) this._rampGain(sg, this._effectiveGainOf(id), Math.max(0, rampMs))
+    }
+  }
+
   /** Mute/unmute стема для pipeline */
   setStemMuted(stemId: string, muted: boolean): void {
     this.muteStem(stemId, muted)
