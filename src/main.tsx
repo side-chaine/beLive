@@ -13,6 +13,7 @@ import { patchLyricsDisplaySlimMethods } from './services/lyrics.service';
 import { initBlockEditorService } from './blocks/bridge/blockEditor.service';
 import { bridgeFacade } from './foundation/event-bus';
 import { V3StatePublisher, V3DataInterceptor, getTransport, V2Adapter, setStatePublisher, MonitorRouter } from './audio/engine-v3';
+import type { HybridPipelineService as HybridPipelineServiceType } from './audio/engine-v3/pipeline/HybridPipelineService';
 import { V2AudioCage } from './audio/engine-v3/integration/V2AudioCage';
 import { MonitorEngine } from './audio/engine-v3/monitor/MonitorEngine';
 import { DeviceManager } from './audio/engine-v3/monitor/DeviceManager';
@@ -41,6 +42,8 @@ import { PeerConnectionManager } from './Rehearsal/services/peer-connection';
 import { RehearsalTriggerBridge } from './Rehearsal/bridge/rehearsal-trigger.bridge';
 import { useRehearsalSessionStore } from './Rehearsal/store/rehearsal-session.store';
 import { useStemStore } from './stem/stem.store';
+import { useAudioStore } from './stores/audio.store';
+import { useNotifyStore } from './stores/notify.store';
 import { MicSourceV3 } from './audio/engine-v3/services/MicSourceV3';
 
 // import '../css/main.css'; // loaded via <link> in index.html
@@ -154,13 +157,41 @@ function bootAether(): void {
       ;(window as any).__v3Active = active
     }
 
-    // 🟢 Phase F: HybridPipelineService — 4+3 Per-Stem (REGIME 3)
-    ;(async () => {
+    // 🟢 Phase F: HybridPipelineService — retry/re-entry + explicit fail-state
+    const initV3Pipeline = async (attempt = 0): Promise<HybridPipelineServiceType | null> => {
+      const MAX = 3
+      const BACKOFF = [1000, 2000, 4000]
       try {
         const { HybridPipelineService } = await import('./audio/engine-v3/pipeline/HybridPipelineService')
         const pipeline = new HybridPipelineService(ctx)
         await pipeline.init()
+        return pipeline
+      } catch (e) {
+        if (attempt < MAX) {
+          console.warn(`[AETHER] ❌ HybridPipelineService init failed (${attempt + 1}/${MAX}) — retry in ${BACKOFF[attempt]}ms:`, e)
+          await new Promise(r => setTimeout(r, BACKOFF[attempt]))
+          return initV3Pipeline(attempt + 1)
+        }
+        return null
+      }
+    }
 
+    const handleV3BootFailure = () => {
+      useAudioStore.getState().setV3BootStatus({ status: 'failed', attempts: 3, at: Date.now() })
+      useNotifyStore.getState().pushToast({
+        level: 'error',
+        title: 'V3 engine unavailable',
+        message: 'Audio running in degraded mode — reload to restore V3.',
+      })
+      ;(window as any).__restoreV2Engine?.()
+      ;(window as any).__setV3Active?.(false)
+      console.error('[AETHER] ❌ V3 boot failed after retries — V2 restored, user notified')
+    }
+
+    ;(async () => {
+      const pipeline = await initV3Pipeline()
+      if (!pipeline) { handleV3BootFailure(); return }
+      try {
         // Подключаем pipeline к MonitorRouter
         // Topology: pipeline.outputNode → router.programInput → _defaultBranch → destination
         if (router) {
@@ -173,8 +204,6 @@ function bootAether(): void {
         // Подключаем pipeline к TransportV3 (через IPipelineController)
         transport.attachPipeline(pipeline)
 
-
-
         // Attach pipeline к Interceptor для загрузки стемов в WASM
         interceptor.attachPipeline(pipeline)
 
@@ -183,8 +212,6 @@ function bootAether(): void {
         ;(window as any).__belive.pipeline = pipeline
         ;(window as any).__belive.micSource = (window as any).__belive.micSource ?? new MicSourceV3()
         ;(window as any).__belive.monitorRouter = router
-        // TASK-015: экспонируем StemOrchestrator (держится TransportV3, публичный геттер .orchestrator)
-        // и проводим центр-тап v-Mix ОДИН раз при буте (addStem-хук ловит поздние стемы).
         ;(window as any).__belive.stemOrchestrator = transport.orchestrator
         ;(window as any).__belive.stemOrchestrator?.setVMixCenterTap?.((window as any).__belive.monitorRouter?.vmixCenterIn)
         if (deviceManager) { ;(window as any).__belive.deviceManager = deviceManager }
@@ -192,7 +219,7 @@ function bootAether(): void {
         console.log('[AETHER] ✅ HybridPipelineService Phase F — ACTIVE')
         console.log('[AETHER] ⚡ __belive.pipeline — diagnostics API')
       } catch (e) {
-        console.warn('[AETHER] ❌ HybridPipelineService init deferred — varispeed fallback:', e)
+        console.warn('[AETHER] ❌ HybridPipelineService wiring deferred — varispeed fallback:', e)
       }
     })()
 

@@ -5,6 +5,10 @@
 //  - audioContext → общий (из V3-движка)
 //  - остальные методы → no-op (гейтится UI)
 (function () {
+  // MICRO-PACK-FALLBACK: save the real V2 engine BEFORE the no-op facade overwrites it
+  const _v2Engine = window.audioEngine;
+  window.__restoreV2Engine = function () { window.audioEngine = _v2Engine; };
+
   const facade = {
     // ВРЕМЯ — критично (маркеры, word-sync)
     // M1 (342): читаем реальное V3-время, публикуемое V3StatePublisher
