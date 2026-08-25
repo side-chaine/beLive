@@ -6,7 +6,7 @@
     "001": { "model": "opencode-go/kimi-k3" },
     "002": { "model": "opencode-go/kimi-k3" },
     "005": { "model": "opencode-go/kimi-k3" },
-    "008": { "model": "opencode/mimo-v2.5-free" },
+    "008": { "model": "opencode/ox-alpha-free" },
     "009": { "model": "opencode-go/kimi-k3" },
     "operator": { "model": "opencode/big-pickle" }
   }
