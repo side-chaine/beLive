@@ -142,6 +142,12 @@ export class V3DataInterceptor {
       console.log(`[V3DataInterceptor] ✅ Pipeline: ${loadedStemIds.length} stems loaded`)
     }
 
+    // R1: generation-check ПОСЛЕ decode+reset+loadStem×N — сталый лад не активирует клетку/флаг
+    if (myGeneration !== this._loadGeneration) {
+      console.log('[V3DataInterceptor] stale load aborted — track superseded')
+      return { loadedStemIds: [], failedStemIds }
+    }
+
     // 8. 🎯 Zombie Kill Switch — заглушить V2 + запуск V3 с offset + safety net 🔴
     if (this._pipeline && loadedStemIds.length > 0) {
       // 8a. Активируем клетку V2: pause (НЕ stop — избегаем _restoreSilencedStems)
@@ -164,6 +170,11 @@ export class V3DataInterceptor {
         await Promise.race([this.transport.play(offset), timeoutPromise])
         console.log('[V3DataInterceptor] 🎯 Auto-play V3 at', offset.toFixed(1) + 's')
       } catch (error) {
+        // R1: generation-check — stale rollback не гасит флаг/пайплайн нового трека
+        if (myGeneration !== this._loadGeneration) {
+          console.log('[V3DataInterceptor] stale rollback skipped — track superseded')
+          return { loadedStemIds, failedStemIds }
+        }
         console.error('[V3DataInterceptor] ❌ V3 activation failed — V3-native recovery:', error)
         try { this._pipeline?.stop() } catch {}                          // 🔇 ghost sound kill
         try { (window as any).__setV3Active(false) } catch {}            // ⛔ сброс флага
