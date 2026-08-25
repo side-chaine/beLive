@@ -1,8 +1,10 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "007",
+  "subagent_depth": 1,
   "instructions": [
-    "AGENTS.md"
+    "AGENTS.md",
+    "team-m/prompts/SHARED.md"
   ],
   "agent": {
     "001": {
