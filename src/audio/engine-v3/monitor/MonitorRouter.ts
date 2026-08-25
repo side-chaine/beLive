@@ -167,6 +167,8 @@ export class MonitorRouter {
       this._micDelay.delayTime.value = compMs / 1000
     }
     this._monitorGain.gain.value = on ? Math.max(0, Math.min(1, volume)) : 0
+    // E15 (SURFACE): bridge-compat — microphone-state-changed (consumers: audio.bridge.ts)
+    try { document.dispatchEvent(new CustomEvent('microphone-state-changed', { detail: { enabled: on, volume } })); } catch {}
   }
 
   // ── Routing control ──

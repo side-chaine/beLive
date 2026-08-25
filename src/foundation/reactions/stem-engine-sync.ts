@@ -32,6 +32,14 @@ function isV3Master(): boolean {
 /** Music stems (excl. instrumental + vocals) muted by default per FR-014 */
 const MUSIC_STEMS = new Set(['drums', 'bass', 'keys', 'guitar', 'backing', 'other'])
 
+// E11-E13 (SURFACE): pan not supported by any engine (FR-007) — warn once per session
+let _panWarned = false
+function warnPanUnsupported(): void {
+  if (_panWarned) return
+  _panWarned = true
+  console.warn('[StemEngineSync] stem pan not supported by any engine (FR-007) — fader is inert')
+}
+
 interface EngineStateSnapshot {
   stemVolumes: Record<string, number>
   stemMutes: Record<string, boolean>
@@ -189,10 +197,10 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
     }
   }
 
-  // StemPans — V3 пока не поддерживает pan (FR-007 immutable routing)
+  // StemPans — FR-007: pan not supported by any engine — warn once (E11/SURFACE)
   for (const id of Object.keys(current.stemPans)) {
     if (current.stemPans[id] !== prev.stemPans[id]) {
-      if (isV2) safeDelegate(v2, 'setStemPan', id, current.stemPans[id])
+      if (isV2) warnPanUnsupported()
     }
   }
 
@@ -255,9 +263,8 @@ function applyAll(v2: V2Adapter, state: EngineStateSnapshot): void {
     for (const [id, solo] of Object.entries(state.stemSolos)) {
       safeDelegate(v2, 'setStemSolo', id, solo)
     }
-    for (const [id, pan] of Object.entries(state.stemPans)) {
-      safeDelegate(v2, 'setStemPan', id, pan)
-    }
+    // E12 (SURFACE): FR-007 pan not supported — warn once
+    if (Object.keys(state.stemPans).length > 0) warnPanUnsupported()
     safeDelegate(v2, 'setStemsEnabled', state.stemsEnabled)
   }
 }

@@ -69,7 +69,7 @@ export function ControlDeck() {
   const practiceCurrentRate = usePracticeStore(s => s.currentRate);
   const vocalMixEnabled = useAudioStore(s => s.vocalMixEnabled);
   const micEnabled = useAudioStore(s => s.micEnabled);
-  const setMicEnabled = useAudioStore(s => s.setMicEnabled);
+  // E17-E19 (SURFACE): setMicEnabled removed — store updated via microphone-state-changed event
   const micVolume = useAudioStore(s => s.micVolume);
 
   // TC-PITCH-03: Removed pianoOpenRef + pianoOpen checks (pitch = tab now)
@@ -355,7 +355,7 @@ export function ControlDeck() {
                 if (router?.setVMix) {
                   const next = !vocalMixEnabled;
                   router.setVMix(next);
-                  useAudioStore.setState({ vocalMixEnabled: next });
+                  // E17 (SURFACE): store updated via vocalmix-state-changed event → audio-events
                   return;
                 }
                 if (!ae) return;
@@ -393,7 +393,7 @@ export function ControlDeck() {
                   belive.__micMonitorNode = null;
                   try { belive.monitorRouter?.setMicMonitor(false); } catch {}
                   src.release();
-                  setMicEnabled(false);
+                  // E18 (SURFACE): store updated via microphone-state-changed event → audio-events
                   return;
                 }
                 try {
@@ -415,7 +415,7 @@ export function ControlDeck() {
                         console.log(`[MON-PROBE] monitorGain=${g} ctx=${st}`);
                       } catch {}
                     }, 150);
-                    setMicEnabled(true);
+                    // E19 (SURFACE): store updated via microphone-state-changed event → audio-events
                   } else {
                     src.release();
                     console.warn('[ControlDeck] mic monitor недоступен (нет router/ctx)');

@@ -54,7 +54,14 @@ export class V2Adapter {
     }
     const v2 = this.getV2Engine()
     if (!v2) throw new Error('[V2Adapter] V2 not available')
-    return (v2 as any)[method]?.(...args)
+    const fn = (v2 as any)[method]
+    if (typeof fn !== 'function') {
+      const msg = `[V2Adapter] phantom method '${method}': in PUBLIC_METHODS but missing on engine`
+      if (import.meta.env.DEV) throw new Error(msg)
+      console.warn(msg)
+      return undefined
+    }
+    return fn.call(v2, ...args)
   }
 
   async delegateAsync(method: string, ...args: any[]): Promise<any> {
@@ -63,7 +70,14 @@ export class V2Adapter {
     }
     const v2 = this.getV2Engine()
     if (!v2) throw new Error('[V2Adapter] V2 not available')
-    const result = (v2 as any)[method]?.(...args)
+    const fn = (v2 as any)[method]
+    if (typeof fn !== 'function') {
+      const msg = `[V2Adapter] phantom method '${method}': in PUBLIC_METHODS but missing on engine`
+      if (import.meta.env.DEV) throw new Error(msg)
+      console.warn(msg)
+      return Promise.resolve(undefined)
+    }
+    const result = fn.call(v2, ...args)
     return result instanceof Promise ? result : Promise.resolve(result)
   }
 }

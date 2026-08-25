@@ -32,6 +32,7 @@ export interface IV2PublicContract {
   setStemSolo(stemId: string, soloed: boolean): void
   // setStemPan — REMOVED (A1A2): no StereoPannerNode/pan= path exists; pan store-only until pipeline.setStemPan exists
   // setStemsMode — RETIRED (A1A2): dup of stemsEnabled, signature mismatch (contract 'performance'|'studio' vs store boolean)
+  setBusVolume(busId: string, volume: number): void
   getStemMeterLevel(stemId: string): number
   getStemAnalyser(stemId: string): AnalyserNode | null
   getStemAudioBuffer(stemId: string): AudioBuffer | null
@@ -72,7 +73,7 @@ export interface IV2PublicContract {
 export const PUBLIC_GETTERS: ReadonlySet<string> = new Set([
   'isPlaying',
   'duration',
-  'currentTime', // через геттер AudioEngineV2.getCurrentTime()
+  // 'currentTime' removed (E8/SURFACE): getSync('currentTime') always returns undefined — use delegateSync('getCurrentTime') instead
 ])
 
 /** Список разрешённых для вызова через delegateSync публичных методов */
@@ -87,6 +88,7 @@ export const PUBLIC_METHODS: ReadonlySet<string> = new Set([
   'setStemsEnabled',
   'setStemMute',
   'setStemSolo',
+  'setBusVolume',
   'getStemMeterLevel',
   'getStemAnalyser',
   'getStemAudioBuffer',

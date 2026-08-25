@@ -93,6 +93,8 @@ export class V3StatePublisher {
 
   publishRateChange(rate: number): void {
     eventBus.publish(EventBusChannel.Audio, 'playback-rate-changed', { rate });
+    // E20 (SURFACE): intentional dual-fire — document-листенеры (practice-session.store:469) получают rate
+    document.dispatchEvent(new CustomEvent('playback-rate-changed', { detail: { rate } }));
     useAudioStore.getState().setPlaybackRate(rate);
   }
 
