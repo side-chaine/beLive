@@ -1,6 +1,6 @@
 # Mac Team — INBOX (авто, не редактировать вручную)
 
-_Обновлено: 2026-08-25T16:03:04Z_
+_Обновлено: 2026-08-25T16:20:29Z_
 
 | agent | task | status | updated |
 |--------|------|--------|---------|
@@ -20,6 +20,7 @@ _Обновлено: 2026-08-25T16:03:04Z_
 | mac-007 | ack-hub-2026-08-25 | — |  |
 | mac-007 | run1-m1-verify | — |  |
 | mac-007 | glm-qwen-007-prompt | — |  |
+| mac-007 | MICRO-PACK-G3-LAYER2-EMIT-draft | — |  |
 | mac-007 | holes-draft-audio | — |  |
 | mac-007 | g0-p1-nullguard-committed | — |  |
 | mac-007 | run4-m4-layer2 | — |  |
@@ -28,6 +29,7 @@ _Обновлено: 2026-08-25T16:03:04Z_
 | mac-007 | holes-draft-mic | — |  |
 | mac-007 | fix-ghosts-m2-gpt | — |  |
 | mac-007 | MICRO-PACK-MARKER-SYNC-draft | — |  |
+| mac-007 | MICRO-PACK-M2-AVATAR-draft | — |  |
 | mac-007 | MICRO-PACK-SURFACE-draft | — |  |
 | mac-007 | holes-draft-sync | — |  |
 | mac-007 | go-001-full-run | — |  |
@@ -43,4 +45,4 @@ _Обновлено: 2026-08-25T16:03:04Z_
 | mac-007 | proposal-coachpanel-body | — |  |
 | mac-007 | MICRO-PACK-E1-PREDICATE-draft | — |  |
 
-_Всего отчётов: 38
+_Всего отчётов: 40

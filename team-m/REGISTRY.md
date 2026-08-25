@@ -126,6 +126,15 @@
 
 ---
 
+- **2026-08-25 · OPERATOR-ПОЕЗД ЗАВЕРШЁН (Hub Near Light)** — применены 7 паков в порядке Ц3: PC-MonitorRouter → E1(verify) → B-slice(+VOC) → A1/A2 → B1 → SURFACE → R1. Канон GREEN: tsc 313 (baseline), vitest 770 passed (+1 от нового теста B-SLICE; было 769). 2 legacy-теста в `src/legacy/engine-v3/` с битым импортом `./V2Adapter` — доканонные, вне счёта (PLAN §2). 6 код-коммитов (E1 = verify-only, без коммита), без пуша. E1 подтверждён: single writer `main.tsx:148` = `__setV3Active`, 28 sites. V3DataInterceptor: B1-диспатчи + R1-generation-guard сосуществуют. G5 (MonitorRouter/HPS) закоммичен → F-1/F-2 пилот разблокирован (ждёт браузер-тест Босса). Остаток P1 (Ц3-порядок): TAKES-AUDIO (Мак финализирует) → fallback-пак (R1 deactivate + retry, смыкается с R1) → marker-sync (дизайн 006). Мак на ходу (letter aa: патчи moot, PC взял WIP fc98e3f). Соннет пока думает.
+
+---
+
+- **2026-08-25 · F-1/F-2 ПИЛОТ — ✅ PASSED (браузер-тест Босса, VITE_ENGINE=v3 GREEN)** — MonitorRouter/MonitorEngine active, HybridPipeline 7/7, V2AudioCage silenced V2, 5 stems loaded, play@0s, VOC L2, monitorGain=1/ctx=running (G14 не затирается), seek+Space работают, crash/zombie — нет. CORS на catalog-feed — внешний (worker allowlist), не миграция. **F-2-дубль ПОДТВЕРЖДЁН.** Следующий шаг: mic-уши-сессия → M3-GO (18 строк). R1 zombie (смена трека в 5s-timeout) в прогоне явно не воспроизводился, но регрессий нет; program-capture v3 (ab #2) НЕ тестировался (playback only) — баг живой, пак от PC упакован. TAKES-AUDIO/fallback/marker-паки ждут финала Мака (letter ab). Hub послал SYNC-HUB-TO-MAC-2026-08-25-ac.md (pilot green + запрос финальных паков + PC-пак program-capture на подтверждение). Соннет пока думает.
+- **2026-08-25 · candidate P1 (ab #2): program-capture v3 — ✅ ПРИМЕНЁН (Hub, PC-зона)** — CONFIRMED silent data-loss устранён: `MICRO-PACK-PC-PROGRAM-CAPTURE` применён Operator'ом → `js/audio-facade-v3.js` получил `getProgramCaptureStream()` → `window.__belive.monitorRouter.captureStream.stream`. commit `b0b9b8e` (НЕ запушен). Канон GREEN: tsc 313, vitest 770 passed (2 legacy-файла с битым импортом — доканонные, вне счёта), `verify:ci` PARITY PASS. Frozen-зону не трогал. Вторично — `MICRO-PACK-PC-MICSOURCE-RACE.md` (MicSourceV3 acquire race) **ПОКА НЕ ПРИМЕНЁН** — держим, чтобы не конфликтовать с pending TAKES-AUDIO Мака (MicSourceV3.ts). Hub послал Mac'у `SYNC-HUB-TO-MAC-2026-08-25-ad.md`: pilot green + запрос финальных TAKES-AUDIO/fallback/marker-паков + co-author оффер на fallback (PC-зона).
+
+---
+
 ## 6. Trigger protocol (зеркало 006 — симметрично для Mac-007 И Hub)
 > Босс управляет агент-сессиями (006, Mac-007, **Hub**) одной командой — точь-в-точь как у 006 (`agent-registry/006-BRIEFING.md` + `006-007-registry.md`): **Босс пишет `GO` в сессии агента → агент идёт в реестр за новой работой.** Никакой копипасты из буфера Босса.
 
@@ -149,12 +158,14 @@
 | D4 CoachPanel (build + mount) | avatar/CSS | ✅ **ЗАКОММИЧЕНО `c0084c2`** (Оператор MAC-002, tsc 314): store + компонент + маунт `App.tsx:253`. Ждёт smoke юзера | `proposal-coachpanel.md` |
 | G3 / Layer-2 мост `team-m.report-arrived` | avatar/CSS | ✅ **ЗАКОММИЧЕНО `c0084c2` + ГЕЙТЫ 1–3 ЗАКРЫТЫ**: A3 на диске, sync public/team-m, prebuild-хук, ратификация tsc 314. Ждёт smoke «правка INBOX → звук» | `go-001-full-run.md` + SYNC-g/h |
 
-### Очередь/статусы Мака (SSOT · обновил 007_Мак 25.08 late, санкция письма z#4)
-- ✅ git identity mac-007 · sweep G0/G2/G3 закоммичены (`b9f6a28`, `71178c2`) · audio-core WIP принят PC (`fc98e3f`, канон 313)
-- 🟡 Паки в Operator-поезде: SURFACE → R1 → TAKES-AUDIO → fallback → marker-sync (B-SLICE/E1 ратифицированы ранее); MIGRATION-HOLES: P1=5/P2=10 (стресс-коррекция)
-- 🟡 Smoke «правка INBOX → звук»: протокол готов (`smoke-inbox-sound-protocol.md`), ждёт dev+браузер на PC
-- ⏸ M2 скелеты · html-projections · public/audio Mac-часть — ждут GPT A–E артефакты Босса
-- 🔬 Запущен: P2-adversarial прогон (санкция z#5)
+### Очередь/статусы Мака (SSOT · обновил 007_Мак 25.08 re-read registry)
+- ✅ git identity mac-007 · sweep G0/G2/G3 (`b9f6a28`,`71178c2`) · audio-core WIP принят PC (`fc98e3f`, канон 313) · D4 CoachPanel компонент закоммичен (`c0084c2`)
+- ✅ ВСЕ P1-пака Far Light доставлены: SURFACE/R1/B-SLICE/E1/PC-PROGRAM-CAPTURE (применены PC) + мои TAKES-AUDIO/FALLBACK/MARKER-SYNC (final, ae/`04b3738`) — финал Operator-поезда
+- ✅ P2-adversarial завершён (ab+`stress-p2-verdict`: program-capture fixed by PC, mic-race/recorder-gate confirmed, whitelist latent)
+- 🟢 G3/Layer-2 `team-m.report-arrived`: Windows-listener есть, Mac-эмиттер ОТСУТСТВОВАЛ (мост DORMANT) → спроектирован `MICRO-PACK-G3-LAYER2-EMIT-draft.md` (sole-writer `emitReportArrived` + `aiHub.on(ASSISTANT_RESPONSE_COMPLETED)`)
+- 🟢 M2 avatar: спроектирован `MICRO-PACK-M2-AVATAR-draft.md` (visual states + avatar.css + UX-MAP + data-state к существующему store; `celebrateUntil` НЕТ — бинд к setState)
+- 🟡 Smoke «INBOX→звук»: протокол готов, ждёт dev+браузер PC; Character-AI визуал (G1/G2) + M1 parity re-check — нужен PC dev/canon (tsc 313/769)
+- ⏸ CoachPanel body HOLD (директива Ц3, до разбора sweep); html-projections/public/audio Mac-часть — ждут GPT A–E артефакты Босса
 | M2 (GPT A–E) — скелеты | avatar/CSS/Mac-build | ⏸ пауза, ждёт GPT-промпты | `youtube-cover-brief.md` + `fix-ghosts-m2-gpt.md` |
 | M3/D3/D4 (AssistantProfile UI) | avatar/CSS | ⏸ условно GO, до аппрува | `team-m/TASKS-V007-TO-M007.md` |
 | html-projections + `public/audio` (Mac-часть) | design | 🟡 по готовности | — |
