@@ -17,6 +17,7 @@ import { CameraPreview } from './components/CameraPreview';
 import { LiveControls } from './components/LiveControls';
 import { ControlDeck } from './components/ControlDeck';
 import { BillyDock } from './components/BillyDock/BillyDock';
+import { CoachPanel } from './js/ui/CoachPanel';
 // TC-PITCH-04: Removed PianoOverlay import (now PitchTab in dock)
 
 // retired: textStyle.bridge → text-style-events (main.tsx)
@@ -49,6 +50,7 @@ import { tryActivateV2 } from './audio/featureFlag';
 import { AiSettingsModal } from './components/AiSettingsModal';
 import { BlockScenesModal } from './components/BlockScenesModal';
 import { useAiSettingsStore } from './stores/ai-settings.store';
+import { useCoachPanelStore } from './stores/coachPanel.store';
 import { useShowStore } from './stores/show.store';
 import { ShowEditor } from './components/Show/ShowEditor';
 import { FeatureOverlay } from './components/Show/FeatureOverlay';
@@ -72,6 +74,7 @@ export default function App() {
   const syncOpen = useSyncStore((s) => s.open);
   const trackInfoOpen = useTrackInfoStore((s) => s.isOpen);
   const aiSettingsOpen = useAiSettingsStore(s => s.showSettings);
+  const coachPanelOpen = useCoachPanelStore((s) => s.open);
   const showActive = useShowStore(s => s.activeMode !== 'entry' && !s.featureActive && !s.isPresenting);
   const isPresenting = useShowStore(s => s.isPresenting);
   const featureActive = useShowStore(s => s.featureActive);
@@ -251,6 +254,7 @@ export default function App() {
       {featureActive && <FeatureOverlay />}
       {isPresenting && <PresenterDock />}
       {!showActive && !featureActive && <BillyDock />}
+      {coachPanelOpen && <CoachPanel onClose={() => useCoachPanelStore.getState().setOpen(false)} />}
       {!showActive && !featureActive && <TriggerDebugOverlay />}
       {!showActive && !featureActive && <PlaybackPerfOverlay />}
       <AudioCrashModal visible={!isHealthy} />
