@@ -2,7 +2,7 @@ import React, { useCallback, useRef } from 'react';
 import { useAudioStore } from '../stores/audio.store';
 import { useModeStore } from '../stores/mode.store';
 import { interruptPracticeSession } from '../exercises/exercise.interruption';
-import { V2Adapter, getTransport, getStatePublisher } from '../audio/engine-v3';
+import { V2Adapter, getTransport } from '../audio/engine-v3';
 import { eventBus } from '../foundation/event-bus/event-bus';
 import { EventBusChannel } from '../foundation/event-bus/types';
 
@@ -39,10 +39,9 @@ export function TransportBar() {
         const newTime = ratio * duration;
         const transport = getTransport();
         if (transport && transport.state !== 'idle' && ((window as any).__v3Active || transport.orchestrator.all().length > 0)) {
-          // V3 path — seek + publish через publisher (обновляет _lastPublishedTime!)
-          // eventBus.publish НЕ используем — publisher.publishSeek() сам публикует событие
+          // V3 path — seek через transport; publisher сам публикует seek-position-changed
+          // через _onSeek (V3StatePublisher) — publishSeek здесь не дублируем (#TASK-013.4)
           void transport.seek(newTime);
-          getStatePublisher()?.publishSeek(newTime, duration);
         } else {
           // V2 fallback — байт-идентичен оригиналу (001 требование)
           // eventBus.publish тут ОСТАЁТСЯ — position-sync.seekSub подписан на него

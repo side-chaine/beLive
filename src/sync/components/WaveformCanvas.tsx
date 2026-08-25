@@ -6,7 +6,7 @@ import { useWaveformRender } from '../hooks/useWaveformRender';
 import { useWaveformViewport } from '../hooks/useWaveformViewport';
 import { findNearestMarker, detectLoopHandle } from '../canvas/hit-testing';
 import { V2Adapter } from '../../audio/engine-v3/V2Adapter';
-import { getTransport, getStatePublisher } from '../../audio/engine-v3';
+import { getTransport } from '../../audio/engine-v3';
 import { useLoopStore } from '../../stores/loop.store';
 import { eventBus } from '../../foundation/event-bus/event-bus';
 import { EventBusChannel } from '../../foundation/event-bus/types';
@@ -440,14 +440,14 @@ export function WaveformCanvas() {
             const v3Active = (window as any).__v3Active || (t3 && t3.state !== 'idle')
             if (v3Active && t3) {
               void t3.seek(clampedTime)
-              getStatePublisher()?.publishSeek(clampedTime, t3.duration)
+              // V3: seek-position-changed публикует _onSeek (V3StatePublisher) — не дублируем (#TASK-013.4)
             } else {
               V2Adapter.getInstance().delegateSync('seekTo', clampedTime)
+              // V2 fallback: публикуем вручную (иначе никто не узнает о seek)
+              eventBus.publish(EventBusChannel.Audio, 'seek-position-changed', {
+                currentTime: clampedTime, duration,
+              })
             }
-            // Публикуем seek-position-changed ТОЛЬКО после успешного seek
-            eventBus.publish(EventBusChannel.Audio, 'seek-position-changed', {
-              currentTime: clampedTime, duration,
-            })
           } catch {}
 
           // Clear selection

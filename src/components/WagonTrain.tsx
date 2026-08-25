@@ -3,7 +3,7 @@ import { useBlocksStore } from '../stores/blocks.store';
 import { useMarkersStore } from '../stores/markers.store';
 import { useLyricsStore } from '../stores/lyrics.store';
 import { getActiveBlock, createSubBlocks, getActiveSubBlockIndex } from '../utils/block-utils';
-import { V2Adapter, getTransport, getStatePublisher } from '../audio/engine-v3';
+import { V2Adapter, getTransport } from '../audio/engine-v3';
 import { useLoopStore } from '../stores/loop.store';
 import { useDeckStore } from '../stores/deck.store';
 import { useTakesStore } from '../takes/takes.store';
@@ -106,7 +106,7 @@ export function WagonTrain() {
       const transport = getTransport();
       if (transport && transport.state !== 'idle' && ((window as any).__v3Active || transport.orchestrator.all().length > 0)) {
         void transport.seek(marker.time);
-        getStatePublisher()?.publishSeek(marker.time, transport.duration)
+        // publishSeek идёт через _onSeek (V3StatePublisher) — не дублируем (#TASK-013.4)
       } else {
         try { V2Adapter.getInstance().delegateSync('seekTo', marker.time) } catch {}
       }
@@ -131,7 +131,7 @@ export function WagonTrain() {
       const transport = getTransport();
       if (transport && transport.state !== 'idle' && ((window as any).__v3Active || transport.orchestrator.all().length > 0)) {
         void transport.seek(marker.time);
-        getStatePublisher()?.publishSeek(marker.time, transport.duration)
+        // publishSeek идёт через _onSeek (V3StatePublisher) — не дублируем (#TASK-013.4)
       } else {
         try { V2Adapter.getInstance().delegateSync('seekTo', marker.time) } catch {}
       }

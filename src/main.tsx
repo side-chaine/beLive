@@ -48,6 +48,7 @@ import { MicSourceV3 } from './audio/engine-v3/services/MicSourceV3';
 // import '../css/avatar-studio.css'; // loaded via <link> in index.html
 
 import { aiHub } from './js/ai/registry';
+import './character';
 import { GatewayProvider } from './js/ai/providers/gateway-provider';
 import { OpenRouterDirectProvider } from './js/ai/providers/openrouter-direct.provider';
 import { BeliveProvider } from './js/ai/providers/belive.provider';
@@ -851,6 +852,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           operatorButton.appendChild(span);
       }
   });
+
+  // ▼ Слой «эмоций» персонажа (звук на завершение ответа) саморегистрируется через
+  // ./character → registerInit('character-layer') в initRegistry (engine-agnostic, R9).
 
   // Убедимся, что начальное состояние кнопки правильное при загрузке
   const initialActiveModel = aiHub.getActiveModel();

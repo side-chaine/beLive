@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useTrackStore, TrackState } from '../stores/track.store';
 import { interruptPracticeSession } from '../exercises/exercise.interruption';
 import { useShowStore } from '../stores/show.store';
-import { V2Adapter, getTransport, getStatePublisher } from '../audio/engine-v3';
+import { V2Adapter, getTransport } from '../audio/engine-v3';
 
 export function useKeyboardShortcuts() {
   const tracksMeta = useTrackStore((s: TrackState) => s.tracksMeta);
@@ -50,7 +50,7 @@ export function useKeyboardShortcuts() {
                 if (d > 0 && (transport?.isAudioContextRunning ?? true)) {
                   const nt = Math.max(0, Math.min(d, ct + delta * 2))
                   void transport.seek(nt)
-                  getStatePublisher()?.publishSeek(nt, d)
+                  // publishSeek идёт через _onSeek (V3StatePublisher) — не дублируем (#TASK-013.4)
                 }
               } catch { /* V3 seek failed — не роняем клавиатуру */ }
             } else {
