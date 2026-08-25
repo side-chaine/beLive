@@ -1,5 +1,6 @@
 import { registerInit } from '../foundation/registry/initRegistry';
 import { useNotifyStore } from '../stores/notify.store';
+import { emitReportArrived } from './notify-emit';
 import inboxVirtual from '../../team-m/INBOX.md?raw';
 
 const POLL_MS = 1500;
@@ -17,7 +18,7 @@ function apply(next: string): void {
   if (hash === lastHash) return;
   const hadBaseline = lastHash !== '';
   setArrival(hash);
-  if (hadBaseline) window.dispatchEvent(new CustomEvent('team-m.report-arrived'));
+  if (hadBaseline) emitReportArrived({ source: 'inbox-sync', reportId: hash, ts: Date.now() });
 }
 
 async function pollInbox(): Promise<void> {
