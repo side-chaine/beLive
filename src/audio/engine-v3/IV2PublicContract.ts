@@ -30,8 +30,8 @@ export interface IV2PublicContract {
   setStemsEnabled(enabled: boolean): void
   setStemMute(stemId: string, muted: boolean): void
   setStemSolo(stemId: string, soloed: boolean): void
-  setStemPan(stemId: string, pan: number): void
-  setStemsMode(mode: 'performance' | 'studio'): void
+  // setStemPan — REMOVED (A1A2): no StereoPannerNode/pan= path exists; pan store-only until pipeline.setStemPan exists
+  // setStemsMode — RETIRED (A1A2): dup of stemsEnabled, signature mismatch (contract 'performance'|'studio' vs store boolean)
   getStemMeterLevel(stemId: string): number
   getStemAnalyser(stemId: string): AnalyserNode | null
   getStemAudioBuffer(stemId: string): AudioBuffer | null
@@ -87,8 +87,6 @@ export const PUBLIC_METHODS: ReadonlySet<string> = new Set([
   'setStemsEnabled',
   'setStemMute',
   'setStemSolo',
-  'setStemPan',
-  'setStemsMode',
   'getStemMeterLevel',
   'getStemAnalyser',
   'getStemAudioBuffer',
