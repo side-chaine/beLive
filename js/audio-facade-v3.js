@@ -66,6 +66,14 @@
     enableVocalMix() {}, disableVocalMix() {},
     getPlaybackRate() { return 1; }, setPlaybackRate() {},
     attachProgramSource() {}, detachProgramSource() {},
+    // P1 (program-capture): вернуть program-capture bus из MonitorRouter (FR-008).
+    // captureStream — MediaStreamAudioDestinationNode; .stream — программный аудиопоток (music+vocals).
+    getProgramCaptureStream() {
+      try {
+        const r = (window.__belive && window.__belive.monitorRouter);
+        return (r && r.captureStream && r.captureStream.stream) ? r.captureStream.stream : null;
+      } catch { return null; }
+    },
     ensureInstrumentalBuffer() { return Promise.resolve(null); },
     setLoop() { return false; }, clearLoop() { return false; },
   };
