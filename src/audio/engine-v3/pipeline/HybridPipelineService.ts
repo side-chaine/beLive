@@ -79,6 +79,10 @@ export class HybridPipelineService implements IPipelineController {
   private _vocalHallMeter: AnalyserNode | null = null
   private _vocalHallTarget: AudioNode | null = null
   private _vocalHallSource: AudioNode | null = null
+  /** TASK-015 fix: V-Mix centre (music-минус) питается post-fader пайплайн-стемами */
+  private _vmixCenterTarget: AudioNode | null = null
+  /** TASK-015 fix: V-Mix vocal-L питается post-fader вокальным стемом */
+  private _vmixVocalTarget: AudioNode | null = null
   /** Переиспользуемый scratch-буфер для RMS — ноль аллокаций в горячем пути */
   private readonly _meterScratch = new Float32Array(256)
   /** 061-B1: generation counter для switchBackend — старый callback не убивает новый backend */
@@ -180,6 +184,16 @@ export class HybridPipelineService implements IPipelineController {
     }
   }
 
+  /** TASK-015 fix: задать цель V-Mix centre (router.vmixCenterIn) — post-fader music-стемы */
+  setVMixCenterTarget(target: AudioNode | null): void {
+    this._vmixCenterTarget = target
+  }
+
+  /** TASK-015 fix: задать цель V-Mix vocal-L (router.vmixVocalIn) — post-fader вокал */
+  setVMixVocalTarget(target: AudioNode | null): void {
+    this._vmixVocalTarget = target
+  }
+
   async loadStem(stemId: string, buffer: AudioBuffer): Promise<void> {
     // 067-D: single path — только stretch. Bus B не создаём.
     const busAStem = new StemPlayerV3({ id: stemId, ctx: this._ctx })
@@ -212,6 +226,13 @@ export class HybridPipelineService implements IPipelineController {
         }
         stretchGain.connect(this._chainA.mergeGain)
         this._stretchGains.set(stemId, stretchGain)
+        // TASK-015 fix: V-Mix centre = post-fader non-vocal стемы; vocal = post-fader вокал
+        if (this._vmixCenterTarget && stemId !== 'vocals') {
+          try { stretchGain.connect(this._vmixCenterTarget) } catch {}
+        }
+        if (this._vmixVocalTarget && stemId === 'vocals') {
+          try { stretchGain.connect(this._vmixVocalTarget) } catch {}
+        }
 
         const meter = this._ctx.createAnalyser()
         meter.fftSize = 256
@@ -275,6 +296,13 @@ export class HybridPipelineService implements IPipelineController {
         g.connect(this._chainA.mergeGain)
         const meter = this._stretchMeters.get(stemId)
         if (meter) g.connect(meter)
+        // TASK-015 fix: вернуть V-Mix тапы (g.disconnect() выше снёс все исходящие рёбра)
+        if (this._vmixCenterTarget && stemId !== 'vocals') {
+          try { g.connect(this._vmixCenterTarget) } catch {}
+        }
+        if (this._vmixVocalTarget && stemId === 'vocals') {
+          try { g.connect(this._vmixVocalTarget) } catch {}
+        }
       }
 
       // Bus A: REGIME 3 — параллельный старт stretch

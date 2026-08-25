@@ -43,11 +43,14 @@ export class MonitorRouter {
   private readonly _mainDelay: DelayNode
   private readonly _micDelay: DelayNode
   private readonly _monitorGain: GainNode
+  /** TASK-015b: serial gate for mic self-monitor (_monitorGain → _monitorMaster). 1.0 normal; 0.0 = V-Mix ON. Immune to 🎤 toggle. _musicGain bypasses gate. */
+  private readonly _vmixMicGate: GainNode
   private readonly _monitorMaster: GainNode
   private readonly _hallMaster: GainNode
   private readonly _musicGain: GainNode
   private readonly _vocalHallGain: GainNode
   private readonly _captureGain: GainNode
+  private _micCompensationMs = 0; // G14: компенсация latency самоконтроля (ms); хранится, чтобы setDelayMs/setCompensateTarget не затирали
 
   constructor(ctx: AudioContext) {
     // ── Create all nodes ──
@@ -68,6 +71,9 @@ export class MonitorRouter {
 
     this._monitorGain = ctx.createGain()
     this._monitorGain.gain.value = 0.0 // mic off by default
+
+    this._vmixMicGate = ctx.createGain()
+    this._vmixMicGate.gain.value = 1.0 // TASK-015b: mic self-monitor gate; 0.0 only in V-Mix
 
     this._monitorMaster = ctx.createGain()
     this._monitorMaster.gain.value = 1.0
@@ -132,7 +138,9 @@ export class MonitorRouter {
     // Mic path — own delay (for monitor compensation)
     this.micInput.connect(this._micDelay)
     this._micDelay.connect(this._monitorGain)
-    this._monitorGain.connect(this._monitorMaster)
+    // TASK-015b: serial gate before monitor master (V-Mix mutes self-monitor at graph level)
+    this._monitorGain.connect(this._vmixMicGate)
+    this._vmixMicGate.connect(this._monitorMaster)
     // TASK-014c (464b): локальный тап монитора на реальный выход.
     // Тишина по умолчанию: _musicGain=0.0 + _monitorGain=0.0 до enable.
     this._monitorMaster.connect(ctx.destination)
@@ -144,7 +152,6 @@ export class MonitorRouter {
     this.vmixMicIn.connect(this._vmixMerger, 0, 1);     // R
     this._vmixMerger.connect(this._vmixMaster);         // БЕЗ delay-узлов ⇒ latency 0
     this._vmixMaster.connect(ctx.destination);          // MASTER (рулинг Ц3)
-    this.vocalHallInput.connect(this.vmixVocalIn);      // вокал уже тут (Orchestrator addStem)
     this.micInput.connect(this.vmixMicIn);              // постоянный тап, мастер гейтит
 
     // 🔬 RECON-3: начальное состояние роутера
@@ -158,6 +165,13 @@ export class MonitorRouter {
 
   /** TASK-014: самоконтроль микра (наушники). G14 latency-компенсация — отдельный пак F-2. */
   setMicMonitor(on: boolean, volume = 1.0): void {
+    if (on) {
+      // G14: компенсируем latency самоконтроля (~outputLatency, ~43мс на проводе),
+      // чтобы мик в наушниках не опережал playback.
+      const compMs = ((this.programInput.context as AudioContext).outputLatency || 0) * 1000
+      this._micCompensationMs = compMs
+      this._micDelay.delayTime.value = compMs / 1000
+    }
     this._monitorGain.gain.value = on ? Math.max(0, Math.min(1, volume)) : 0
   }
 
@@ -185,6 +199,13 @@ export class MonitorRouter {
     this._vmixMaster.gain.setValueAtTime(this._vmixMaster.gain.value, now);
     this._defaultBranch.gain.linearRampToValueAtTime(on ? 0 : 1, r);
     this._vmixMaster.gain.linearRampToValueAtTime(on ? 1 : 0, r);
+    // TASK-015b (replaces V007-007): mic self-monitor muted by GRAPH gate _vmixMicGate,
+    // NOT setMicMonitor(false) — otherwise 🎤-toggle (ControlDeck:410 → setMicMonitor(true)) overrides.
+    // Gate is AFTER _monitorGain ⇒ 🎤 state preserved and auto-restores on V-Mix OFF.
+    // _musicGain → _monitorMaster bypasses the gate — music monitor unaffected.
+    this._vmixMicGate.gain.cancelScheduledValues(now);
+    this._vmixMicGate.gain.setValueAtTime(this._vmixMicGate.gain.value, now);
+    this._vmixMicGate.gain.linearRampToValueAtTime(on ? 0 : 1, r);
     this.dumpState(`setVMix(${on})`);
   }
 
@@ -225,7 +246,8 @@ export class MonitorRouter {
   setDelayMs(ms: number): void {
     const v = Math.max(0, Math.min(1000, ms)) / 1000
     this._mainDelay.delayTime.value = v
-    this._micDelay.delayTime.value = 0
+    // G14: НЕ затираем компенсацию микрофона (раньше было =0). Возвращаем сохранённое значение.
+    this._micDelay.delayTime.value = this._micCompensationMs / 1000
   }
 
   /** Which path gets delay — monitor or main */
@@ -233,8 +255,10 @@ export class MonitorRouter {
     if (t === 'monitor') {
       this._mainDelay.delayTime.value = 0
     } else {
-      this._micDelay.delayTime.value = 0
+      this._mainDelay.delayTime.value = 0 // main-path delay сброшен
     }
+    // G14: mic-компенсация НЕ затирается (раньше this._micDelay = 0)
+    this._micDelay.delayTime.value = this._micCompensationMs / 1000
   }
 
   /** R8 (C19): калибровочный плак main-пути — подключение к ВХОДУ _mainDelay (пре-делей),

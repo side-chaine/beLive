@@ -162,6 +162,8 @@ function bootAether(): void {
         if (router) {
           pipeline.outputNode.connect(router.programInput)
           pipeline.setVocalHallTarget(router.vocalHallInput)
+          pipeline.setVMixCenterTarget(router.vmixCenterIn)
+          pipeline.setVMixVocalTarget(router.vmixVocalIn)
         }
 
         // Подключаем pipeline к TransportV3 (через IPipelineController)
