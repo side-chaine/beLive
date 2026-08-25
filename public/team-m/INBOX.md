@@ -1,6 +1,6 @@
 # Mac Team — INBOX (авто, не редактировать вручную)
 
-_Обновлено: 2026-08-25T16:20:29Z_
+_Обновлено: 2026-08-25T16:32:05Z_
 
 | agent | task | status | updated |
 |--------|------|--------|---------|
@@ -19,6 +19,7 @@ _Обновлено: 2026-08-25T16:20:29Z_
 | mac-007 | MICRO-PACK-B-SLICE-draft | — |  |
 | mac-007 | ack-hub-2026-08-25 | — |  |
 | mac-007 | run1-m1-verify | — |  |
+| mac-007 | MICRO-PACK-CHARACTERAI-VISUAL-CHECK-draft | — |  |
 | mac-007 | glm-qwen-007-prompt | — |  |
 | mac-007 | MICRO-PACK-G3-LAYER2-EMIT-draft | — |  |
 | mac-007 | holes-draft-audio | — |  |
@@ -45,4 +46,4 @@ _Обновлено: 2026-08-25T16:20:29Z_
 | mac-007 | proposal-coachpanel-body | — |  |
 | mac-007 | MICRO-PACK-E1-PREDICATE-draft | — |  |
 
-_Всего отчётов: 40
+_Всего отчётов: 41
