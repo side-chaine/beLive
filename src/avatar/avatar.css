@@ -138,3 +138,34 @@
   max-width: 64px;
   max-height: 96px;
 }
+
+/* ─── M2: transitions между состояниями ─── */
+@property --rx-scale {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+.av-container {
+  transition:
+    --rx-scale 0.25s ease,
+    transform 0.25s ease;
+}
+.av-container .av-body,
+.av-container .av-mouth-path {
+  transition:
+    transform 0.2s ease,
+    d 0.2s ease;
+}
+
+/* ─── M2: reactive как честный data-state (dormant; живой путь = data-reactive="beat") ─── */
+.av-container[data-state="reactive"] {
+  --rx-scale: 1.1;
+}
+.av-container[data-state="reactive"] .av-body {
+  animation: reactive-pulse 0.15s ease;
+}
+
+/* ─── M2: G1-guard — happy держит яркость, error-дим не гасит празднование ─── */
+.av-container[data-state="happy"] { opacity: 1; filter: none; }
+.av-container[data-state="error"] { opacity: 0.85; }
+.av-container.is-celebrating[data-state="error"] { opacity: 1; }

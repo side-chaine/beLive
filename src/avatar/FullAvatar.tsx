@@ -5,6 +5,7 @@ import { memo, useEffect, useRef, useId } from 'react';
 import { useAvatarStore, type AvatarStateId, type AvatarMode } from './avatar.store';
 import { useFeedStore } from '../catalog/feed/feed.store';
 import { useAiStore } from '../stores/ai.store';
+import { aiHub, ASSISTANT_RESPONSE_COMPLETED } from '../js/ai/registry';
 import { AVATAR_PRESETS } from './avatar.assets';
 import { getPlaybackVisualScheduler } from '../playback';
 import type { PlaybackVisualFrameDetector, PlaybackVisualFrameWriter } from '../playback';
@@ -121,6 +122,47 @@ export const FullAvatar = memo(function FullAvatar({ mode, className }: FullAvat
       setState(mood);
     });
     return unsub;
+  }, [setState]);
+
+  // Respond to AI completion — brief "happy" celebration synced with sound cue
+  useEffect(() => {
+    const el = ref.current;
+    const onCompleted = () => {
+      if (!el) return;
+      const apply = () => { el.setAttribute('data-state', 'happy'); setState('happy'); };
+      apply();
+      el.classList.add('is-celebrating'); // M2 G1-guard
+      setTimeout(apply, 0); // re-assert over isStreaming subscription
+      setTimeout(() => {
+        el.classList.remove('is-celebrating');
+        const streaming = useAiStore.getState().isStreaming;
+        const mood: AvatarStateId = streaming ? 'listening' : 'idle';
+        el.setAttribute('data-state', mood);
+        setState(mood);
+      }, 700);
+    };
+    aiHub.on(ASSISTANT_RESPONSE_COMPLETED, onCompleted);
+    return () => aiHub.off(ASSISTANT_RESPONSE_COMPLETED, onCompleted);
+  }, [setState]);
+
+  // M2: bind error к ошибке тула (window event 'avatar.tool-error')
+  useEffect(() => {
+    const el = ref.current;
+    const onToolError = () => {
+      if (!el) return;
+      if (el.classList.contains('is-celebrating')) return; // G1: happy wins
+      if (useAiStore.getState().isStreaming) return; // не бьём по текущему стриму
+      el.setAttribute('data-state', 'error');
+      setState('error');
+      setTimeout(() => {
+        const streaming = useAiStore.getState().isStreaming;
+        const mood: AvatarStateId = streaming ? 'listening' : 'idle';
+        el.setAttribute('data-state', mood);
+        setState(mood);
+      }, 700);
+    };
+    window.addEventListener('avatar.tool-error', onToolError);
+    return () => window.removeEventListener('avatar.tool-error', onToolError);
   }, [setState]);
 
   return (

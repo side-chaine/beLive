@@ -1,5 +1,4 @@
 import { aiHub } from '../ai/registry';
-import { streamOpenAI } from '../utils/stream-openai';
 import { VoiceInput } from '../utils/voice-input';
 import { parseTextCommand, stripTextCommands, executeToolCall } from '../../components/TrackInfoBoard/ai-tools';
 import { PerformanceMonitor } from '../utils/performance-monitor';
@@ -18,7 +17,7 @@ export class AIChatUI {
 
   private isOpen = false;
   private isStreaming = false;
-  private abortController: AbortController | null = null;
+  private wasAborted = false;
   private currentMessageElement: HTMLElement | null = null;
   private voiceInput: VoiceInput; // Тип VoiceInput уже определен
 
@@ -78,55 +77,53 @@ export class AIChatUI {
     const aiMessageEl = this.addMessage('', 'ai', true);
     this.currentMessageElement = aiMessageEl;
 
-    this.abortController = new AbortController();
+    this.wasAborted = false;
     performance.mark('message-sent');
 
     try {
       this.isStreaming = true;
 
-      const response = await fetch('/api/gateway/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: activeModel.id,
-          messages: [{ role: 'user', content: messageText }], // TODO: implement history
-          stream: true,
-        }),
-        signal: this.abortController.signal,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${this.mapError(response.status)} - ${errorText}`);
-      }
-
-      let fullText = '';
+      let currentText = '';
       let isFirstToken = true;
 
-      for await (const chunk of streamOpenAI(response.body!)) {
-        if (isFirstToken) {
-          PerformanceMonitor.measureFirstToken();
-          this.updateMessage(aiMessageEl, '', false); // Удаляем индикатор "думает" после первого токена
-          isFirstToken = false;
+      await aiHub.sendMessage(
+        {
+          model: activeModel.id,
+          messages: [{ role: 'user', content: messageText }], // TODO: history (паритет со старым vanilla-путём)
+          stream: true,
+        },
+        {
+          onToken: (token) => {
+            if (isFirstToken) {
+              PerformanceMonitor.measureFirstToken();
+              this.updateMessage(aiMessageEl, '', false);
+              isFirstToken = false;
+            }
+            currentText += token;
+            this.updateMessage(aiMessageEl, currentText, false);
+          },
+          onDone: (fullText) => {
+            if (this.wasAborted) return;
+            this.checkForToolCalls(fullText).catch((toolErr) => {
+              console.error('[ai-chat-ui] checkForToolCalls failed (non-fatal):', toolErr);
+              // Контракт 'avatar.tool-error': window-event без payload; writer только здесь; читатели — аватары.
+              window.dispatchEvent(new CustomEvent('avatar.tool-error'));
+            });
+          },
+          onError: (err) => {
+            if (this.wasAborted) return;
+            console.error('AI Chat Error:', err);
+            this.updateMessage(aiMessageEl, `❌ Ошибка: ${err.message}`, false);
+          },
         }
-        fullText += chunk;
-        this.updateMessage(aiMessageEl, fullText, false);
-      }
-
-      this.checkForToolCalls(fullText);
-
+      );
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        this.updateMessage(aiMessageEl, '❌ Генерация остановлена', false);
-      } else {
-        console.error('AI Chat Error:', error);
-        this.updateMessage(aiMessageEl, `❌ Ошибка: ${error.message}`, false);
-      }
+      console.error('AI Chat Error:', error);
+      this.updateMessage(aiMessageEl, `❌ Ошибка: ${error.message}`, false);
     } finally {
       this.isStreaming = false;
       this.sendButton.disabled = false;
       this.inputField.disabled = false;
-      this.abortController = null;
       this.currentMessageElement = null;
       this.inputField.focus();
     }
@@ -249,8 +246,9 @@ export class AIChatUI {
       this.appRoot.removeAttribute('inert'); // Снимаем блокировку фона
     }
 
-    if (this.isStreaming && this.abortController) {
-      this.abortController.abort();
+    if (this.isStreaming) {
+      this.wasAborted = true;
+      aiHub.stopAllProviders();
       this.isStreaming = false;
       this.sendButton.disabled = false;
       this.inputField.disabled = false;
@@ -352,12 +350,5 @@ export class AIChatUI {
       const emoji = result.success ? '✅' : '❌';
       this.addSystemMessage(`${emoji} ${result.message}`);
     }
-  }
-
-  private mapError(status: number): string {
-    if (status === 401 || status === 403) return "Нужно снова войти.";
-    if (status === 429) return "Слишком часто. Подождите несколько секунд…";
-    if (status >= 500) return "Сервер временно недоступен. Попробуйте позже.";
-    return "Не удалось получить ответ. Попробуйте ещё раз.";
   }
 }

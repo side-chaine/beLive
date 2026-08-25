@@ -3,6 +3,7 @@
 
 import { create } from 'zustand';
 
+// 'reactive' — reserved union-member (dormant): live path = data-reactive="beat" overlay.
 export type AvatarStateId = 'idle' | 'happy' | 'listening' | 'sing' | 'error' | 'reactive';
 export type AvatarMode = 'full' | 'compact' | 'micro';
 export type AvatarPresetId = 'default' | 'silhouette';
