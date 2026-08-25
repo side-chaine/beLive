@@ -155,3 +155,28 @@ Describe 10 (dual-mode H3.4, :445-511) — НЕ трогается: маршру
 ---
 *Статус: DRAFT, design-only, код не менялся. Коммит не выполнялся.*
 
+
+---
+
+## §7 КОНВЕРГЕНЦИЯ с Near Light (письма u/v, 002 adversarial Hub) · 25.08
+Статус исходного «10/10» уточнён: мои проверки подтверждали СУЩЕСТВОВАНИЕ site'ов,
+но пропустили два поведенческих дефекта, найденных 002 Виндe. Оба воспроизведены мной:
+
+### E5 CONFIRMED ✅ → принят вариант (a) Hub
+`main.tsx:237-238`: каскад __switchToV3 зовёт delegateSync('setInstrumentalVolume'/'setVocalsVolume',0)
+ДО взведения флага → после revival обнулил бы V3-бусы.
+ФИКС: в monkey-patch main.tsx ~131-151 ДО флаговой ветки безусловный блок:
+`if (method==='setInstrumentalVolume'||method==='setVocalsVolume'){ warn('[delegateSync] master-volume blocked'); return }`
+Авторизованные UI-master записи после E6 идут прямым ae.* (мимо канала) — не страдают. Закрывает R2, сохраняет «3× blocked».
+
+### E8 CONFIRMED ✅
+`StemChain.muteStem:74-77` и `setStemVolume:80-83` пишут raw `stem.volume` мимо _applyEffectiveGain (единственный writer HPS:631-638).
+ФИКС: оба → rejecting stub c warn '[StemChain] disabled (E8b): use pipeline.setStemVolume', сигнатуры сохранить.
+Доп.: в HPS.soloStem:552-556 задокументировать loop только chainA (до подключения _chainB.outputNode).
+
+### BusFader18.test.ts — +2 кейса (дизайн Hub)
+1. «master-zero через delegateSync при __v3Active=false НЕ достигает forwarder» (регрессия DEFECT-1/E5)
+2. «_busVolumes не меняются заблокированным cascade»
+
+### R1 → Ц3 (уточнение Hub принято)
+Фикс оборачивает ВЕСЬ catch V3DataInterceptor.ts:166-178 (там ещё pipeline.stop() + crash-событие), не только запись флага.
