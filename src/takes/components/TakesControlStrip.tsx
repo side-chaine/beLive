@@ -658,9 +658,10 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
     // Восстановление делает exercise-флоу (TakesPanel:901-913 savedPlaybackRate → setPlaybackRate(savedPlaybackRate)).
     if (timeCheckRef.current) { clearInterval(timeCheckRef.current); timeCheckRef.current = null; }
     if (stopTimerRef.current) { clearTimeout(stopTimerRef.current); stopTimerRef.current = null; }
-    const ae = (window as any).audioEngine;
     const recorder = recorderRef.current;
-    if (typeof ae?.pause === 'function') getTransport().pause();
+    // P1#6: транспорт-агностичная пауза; getTransport() может вернуть null (engine-v3/index.ts:36-41)
+    const transport = getTransport();
+    if (transport) void transport.pause();
     if (!recorder || !recorder.isRecording) {
       useTakesStore.getState().cancelRecording();
       return;
