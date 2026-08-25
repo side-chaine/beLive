@@ -19,6 +19,7 @@ const MIC_DEVICE_KEY = 'mic:deviceId'; // parity C11 (MicrophoneManager — фа
 export class MicSourceV3 {
   private _stream: MediaStream | null = null;
   private _refCount = 0;
+  private _inflight: Promise<MediaStream> | null = null;
   private _deviceId = '';
 
   constructor() {
@@ -32,13 +33,17 @@ export class MicSourceV3 {
   async acquire(): Promise<MediaStream> {
     this._refCount++;
     if (this._stream) return this._stream;
-    try {
-      this._stream = await this._open();
-      return this._stream;
-    } catch (e) {
-      this._refCount--;
+    if (this._inflight) return this._inflight; // делим in-flight между UI-входами (REC + 🎤)
+    this._inflight = this._open().then((stream) => {
+      this._stream = stream;
+      this._inflight = null;
+      return stream;
+    }).catch((e) => {
+      this._refCount = Math.max(0, this._refCount - 1);
+      this._inflight = null;
       throw e;
-    }
+    });
+    return this._inflight;
   }
 
   /** Отдать стрим. При refCount=0 — dispose-tracks. */
