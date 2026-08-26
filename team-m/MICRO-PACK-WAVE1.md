@@ -5,12 +5,12 @@
 ## ЦЕЛЬ
 Leaves-first, ДВА блока сразу (REGISTRY §7:29: глобалы + бутстрап = ПЕРВЫЕ):
 1. **Cut branch** V2-активации: `App.tsx:93–101 → featureFlag.ts → patchV1.ts → AudioEngineV2.ts` (Босс подтвердил CUT, не glush).
-2. **BAC-105:** ре-поинт 12 ридеров V2-глобалов (`window.audioEngine/.app/.trackCatalog/.liveMode/.lyricsDisplay/.markerManager/.waveformEditor`) на V3-state/E1-предикат — СРАЗУ после среза бутстрапа. Иначе после W1 глобалы `undefined` → краш boot-smoke волн 2–4.
+2. **BAC-105:** ре-поинт 12 ридеров V2-глобалов (`window.audioEngine/.app/.trackCatalog/.liveMode/.lyricsDisplay/.markerManager/.waveformEditor`) на V3-state/E1-предикат — СРАЗУ после среза бутстрапа. Иначе после W1 глобалы `undefined` → краш boot-smoke волн 2–4. (9 safe-файлов, live — см. WAVE-PREFLIP-BASELINE.md.)
 
 ## ПРАВИТЬ (SAFE)
 - `src/App.tsx:93–101` — убрать `tryActivateV2()`.
 - `src/audio/featureFlag.ts:6` — удалить импорт `→ patchV1`.
-- `src/audio/engine-v3/legacy/*` НЕТ — см. W4. 12 ридеров V2-глобалов (точный список grep'ом при исполнении; известные: `mode-switch.service`, `block-scene.service`, `track.actions`, `FullAvatar`, `useStemWaveform`, `useBackgroundManagers`, `trigger-visual`, `MonitorMixPanel`, `upload.service`, …) → заменить на V3-state/через `E1`-предикат/env, либо удалить чтение глобала.
+- `src/audio/engine-v3/legacy/*` НЕТ — см. W4. 12 ридеров (9 safe-файлов, live) V2-глобалов (точный список grep'ом при исполнении; известные: `mode-switch.service`, `block-scene.service`, `track.actions`, `FullAvatar`, `useStemWaveform`, `useBackgroundManagers`, `trigger-visual`, `MonitorMixPanel`, `upload.service`, …) → заменить на V3-state/через `E1`-предикат/env, либо удалить чтение глобала.
 
 ## НЕ ТРОГАТЬ (Frozen)
 `patchV1.ts`, `AudioEngineV2.ts`, `bridges/*`, `track.orchestrator.ts` — read-only.
