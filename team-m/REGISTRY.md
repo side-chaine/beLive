@@ -3,13 +3,13 @@
 ## 7. БАКТЕРИИ (Near-рекон, explore, 26.08)
 > СТОП снят по слову Босса («я разрешаю! нужно все исследовать!»). Полное исследование GO. BAC-001 чиним safe-side гейтом (frozen нетронут); root-фикс frozen — под формальный OVERRIDE Центра, если Босс позже захочет.
 
-### А. ВИДИМЫЕ (из 008 VISUAL-MAP) — ЗАПАКОВАНЫ (коммит 04ed754), frozen нетронут, канон 306/772
-- **BAC-001** FOUC лирики (P1, VMO-035): SAFE-side гейт `lyricsReady` (`lyrics.store.ts`+`RehearsalLyrics.tsx`) — ПАК ПРИМЕНЁН.
+### А. ВИДИМЫЕ (из 008 VISUAL-MAP) — ЗАПАКОВАНЫ, frozen нетронут, канон 306/772. BAC-002..005 = коммит 04ed754; **BAC-001 пере-гейтнут отдельно и лежит в рабочем дереве (НЕЗАКОММИЧЕНО)** — см. строку BAC-001 ниже.
+- **BAC-001** FOUC лирики (P1, VMO-035): SAFE-side гейт на уровне СТОРА (`lyrics.store.ts`): буферизация `lines` — ранние сырые строки (frozen lyrics.bridge пишет их на `lyrics-rendered`/шаг 8) прячутся в `_rawLyricsBuffer` и публикуются потребителям (RehearsalLyrics, NowPlaying, LiveSubtitle, KaraokeLyricsBoard, WagonTrain, TrackInfo, BlockScenesModal, …) ТОЛЬКО на поздний V3 `track-loaded` (V3DataInterceptor:241). Доп. от stress-test 002: удалён мёртвый слушатель `track-change`; добавлен watchdog 5s, форсирующий `lyricsReady` если `track-loaded` не пришёл (V2-only/boot race) — лирика не спрятана вечно. RehearsalLyrics.tsx:764 держит свой гейт `if (!lyricsReady || lines.length === 0) return null;`. Frozen нетронут. 009 verdict: РЕШЕНО.
 - **BAC-002** фейдер Other 5/6 (P1, VMO-005/036): SAFE `V3DataInterceptor.ts` — retry/backoff декода + не исключать стем + форма `track-stem-ready` loop по stemId — ПАК ПРИМЕНЁН.
 - **BAC-003** лирика под TrackMap (P1, VMO-009): SAFE css — `overflow:auto` + `align-content:flex-start`+ z-index — ПАК ПРИМЕНЁН.
 - **BAC-004** GetSongBPM крадёт Back (P2, VMO-018/019): SAFE `index.html` — `target=_blank rel=noopener` + z-index 80 — ПАК ПРИМЕНЁН.
 - **BAC-005** луп-линия выше (P2, VMO-008): SAFE css — тот же `align-content:flex-start` (объединён с BAC-003) — ПАК ПРИМЕНЁН.
-> Все 5 видимых багов закрыты в одном коммите; верификация tsc 306 / vitest 772 (2 legacy-файла вне канона = прежние, не наши).
+> BAC-002..005 закрыты в коммите 04ed754. BAC-001 (FOUC) пере-гейтнут ПОЗЖЕ: буферизация `lines` в `src/stores/lyrics.store.ts` + watchdog 5s (по стресс-тесту 002) + удалён мёртвый слушатель `track-change`. Это изменение **НЕЗАКОММИЧЕНО** — висит в рабочем дереве (Operator применил, коммит не делал). Верификация: tsc 306 / vitest 772 (2 legacy-файла вне канона = прежние, не наши). 009 verdict по BAC-001: **РЕШЕНО**.
 
 ### Б. СКРЫТАЯ ГНИЛЬ — угрозы флипа M3-ГО + tech-debt
 - **BAC-101** safe→FROZEN импорт `track.actions.ts:7` (`./track.orchestrator`) — hard break при флипе.
@@ -27,6 +27,13 @@
 
 ### СВЯЗЬ / ЯДРО ФЛИПА
 BAC-101..105 + BAC-107 = **реальная угроза флипа M3-ГО**. Сейчас safe-код прямо зовёт FROZEN (оркестратор/patchV1/bridge) и V2-глобалы. При переводе `engine-mode` в 'v3' и отключении V2-бутстрапа (`tryActivateV2`) эти связи рвутся → рантайм-ошибки. **Это И ЕСТЬ содержимое 5 волн срезки Легаси** (Far-дизайн Мака): разрыв = править SAFE-файлы (перестать звать frozen, переключить на V3/engine-mode), сами frozen-файлы НЕТРОНУТЫ. Порядок волн: сначала глобалы (BAC-105) + бутстрап (BAC-103/104), затем прямые импорты (BAC-101/102), затем stub-миграция (BAC-107), dead-code/legacy в конце (BAC-106/112).
+
+### СТАТУС WAVE-HANDOFF (Far-дизайн Мака, 26.08) — ДОСТАВЛЕНО
+- Мак сдал handoff 5 волн срезки Легаси (commits `eaecfc3` WAVE-HANDOFF 1-5 + `fc1f3fb` Frozen-guard): `team-m/MICRO-PACK-WAVE1..5.md` + `team-m/WAVE-HANDOFF-INDEX.md`. Статус = **design / pre-GO**, к исполнению только после GO Босса на флип (R6).
+- **Q2 ЗАКРЫТ (мой 26e → ответ Мака 26f):** V2-бутстрап (BAC-103/104) = **CUT branch** — Волна 1 режет `App.tsx:93–101 → featureFlag → patchV1 → AudioEngineV2` (frozen read-only). НЕ glush.
+- **Frozen-boundary guard v1** доставлен Маком: `team-m/bLb/frozen-guard.mjs` — read-only сканер new safe→frozen импортов (BAC-101..108). Pre-flip insurance; ждёт аппрува Босса как отдельная задача (запуск ДО флипа).
+- **Общий гейт каждой волны (по Маку):** канон 306/772 (актуально, НЕ 770 из его черновика) + PARITY PASS + boot-smoke CDP V1/V5 + SHA256 frozen ДО/ПОСЛЕ идентичен + ⛔-отчёт Ц3 + Frozen-guard GREEN.
+- Исполнение волн ведёт Hub (я) через цепь 001→002→009 ПОСЛЕ флип-GO. Сейчас — только дизайн/ревью/сканер.
  # 🤝 SHARED REGISTRY — beLive Mac↔PC (Hub: 007_Винда)
 
 > **Живой реестр координации.** Hub (PC/V007) владеет структурой; Mac-007 дописывает секцию «Mac-side» + ставит ack.
