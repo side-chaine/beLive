@@ -82,8 +82,16 @@ export class V3DataInterceptor {
       jobs.push({ id: 'vocals', data: record.vocalsData, type: record.vocalsType ?? 'audio/mpeg' });
     }
     if (hasStems) {
-      const entries = Object.entries(record.stemsData).slice(0, MAX_MUSIC_STEMS);
-      for (const [id, stem] of entries) jobs.push({ id, data: stem.data, type: stem.type });
+      const allEntries = Object.entries(record.stemsData);
+      // BAC-002 (VMO-005/036): «other» must never be silently dropped by slice(0,6)
+      // when a track exposes >6 music stems. Keep first MAX_MUSIC_STEMS, but if
+      // «other» was sliced off, swap it into the last slot (still bounded to 6).
+      let chosen = allEntries.slice(0, MAX_MUSIC_STEMS);
+      if (allEntries.some(([id]) => id === 'other') && !chosen.some(([id]) => id === 'other')) {
+        const other = allEntries.find(([id]) => id === 'other')!;
+        chosen = [...chosen.slice(0, MAX_MUSIC_STEMS - 1), other];
+      }
+      for (const [id, stem] of chosen) jobs.push({ id, data: stem.data, type: stem.type });
     }
 
     // 3. 🔄 ATOMIC: decode ВСЕ сначала (до pipeline.reset)
@@ -96,7 +104,17 @@ export class V3DataInterceptor {
           const buffer = await this.ctx.decodeAudioData(copy);
           return { id: job.id, ok: true, buffer };
         } catch (error) {
-          return { id: job.id, ok: false, error };
+          // BAC-002 (VMO-005/036): 1 retry with small backoff before giving up.
+          // Transient decode failures (e.g. the «other» 5/6 stem) get a second
+          // chance so the fader still renders; only a final failure is excluded.
+          try {
+            await new Promise<void>((r) => setTimeout(r, 120));
+            const retryCopy = job.data.slice(0);
+            const buffer = await this.ctx.decodeAudioData(retryCopy);
+            return { id: job.id, ok: true, buffer };
+          } catch {
+            return { id: job.id, ok: false, error };
+          }
         }
       }),
     );
@@ -225,8 +243,13 @@ export class V3DataInterceptor {
         console.warn('[V3DataInterceptor] track-loaded document dispatch failed:', e)
       }
       // B1: bridge-compat alias — track-stem-ready + track-fully-loaded (consumers: audio.bridge.ts:109,217)
+      // BAC-002 (VMO-005/036): emit ONE event per stem with `detail.stemId` so the
+      // frozen incremental addStem(stemId) consumer revives (was sending {stemIds:[...]}
+      // → addStem(undefined), dropping the «other» fader). Loop over loadedStemIds.
       try {
-        document.dispatchEvent(new CustomEvent('track-stem-ready', { detail: { stemIds: loadedStemIds } }));
+        for (const id of loadedStemIds) {
+          document.dispatchEvent(new CustomEvent('track-stem-ready', { detail: { stemId: id } }));
+        }
       } catch {}
       try {
         document.dispatchEvent(new CustomEvent('track-fully-loaded', { detail }));

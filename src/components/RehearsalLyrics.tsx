@@ -29,6 +29,7 @@ import { WordHighlightLine } from '../triggers/WordHighlightLine';
 export function RehearsalLyrics() {
   const lines = useLyricsStore(s => s.lines);
   const activeLineIndex = useLyricsStore(s => s.activeLineIndex);
+  const lyricsReady = useLyricsStore(s => s.lyricsReady);
   const blocks = useBlocksStore(s => s.blocks);
   const activeRef = useRef<HTMLDivElement>(null);
   const prevBlockRef = useRef<TextBlock | null>(null);
@@ -758,7 +759,9 @@ export function RehearsalLyrics() {
     }
   }, []);
 
-  if (lines.length === 0) return null;
+  // BAC-001 (VMO-035): hide until the late load signal flips lyricsReady true,
+  // so the early raw lyrics mirror from the frozen orchestrator never flashes.
+  if (!lyricsReady || lines.length === 0) return null;
 
   if (displayBlock) {
     const fontSize = getBlockFontSize(visibleLineIndices.length);

@@ -32,7 +32,7 @@
   max-width: 900px;
   flex: 1;
   margin-top: 0;
-  overflow: hidden;
+  overflow: auto;
   text-align: center;
 }
 
@@ -41,7 +41,7 @@
    Grid properties moved to .slotContainer (цветы)
    Flex from base class centers .slotContainer vertically */
 .activeBlock.slotMatrixActive {
-  overflow: hidden;
+  overflow: auto;
   
   /* Slot spacing vars (scoped for .slotContainer cascade) */
   --bl-slot-gap: 16px;
@@ -71,7 +71,7 @@
   /* grid-template-rows set via inline style from useSlotMatrix() */
   grid-template-rows: auto;
   gap: var(--bl-slot-gap, 16px);
-  align-content: center;
+  align-content: flex-start;
   justify-items: center;
   width: 100%;
   position: relative;
