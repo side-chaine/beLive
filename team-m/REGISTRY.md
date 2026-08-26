@@ -1,10 +1,31 @@
 - **2026-08-26 · HTML VISUAL-MAP (008 данные) собрана Hub → team-m/reports/008/VISUAL-MAP.html (коммит 0a40ca6); зеркало на Рабочий стол Босса (ДВЕ копии, т.к. Desktop зеркален в OneDrive): `C:\Users\nikit\Desktop\beLive-VISUAL-MAP.html` + `C:\Users\nikit\OneDrive\Desktop\beLive-VISUAL-MAP.html` (28KB, double-click). ПРАВИЛО: при каждом изменении repo-HTML — перелить копию в ОБЕ папки Desktop (cp x2). На Desktop кнопка «подгрузить design-refs» не резолвится (file://), поэтому рефы там = drag-drop / «выбрать папку» (указать repo/team-m/design-refs). Заметки Босса — localStorage браузера, не в файле.
 
-## 7. БАКТЕРИИ (Near-рекон, explore, 26.08 — СТОП по frozen-упоминанию)
-- **BAC-001 FOUC лирики (VMO-035, P1):** root = `src/services/track.orchestrator.ts:120-124` + `src/bridges/lyrics.bridge.ts:49-51,22-29` — **FROZEN**. Механизм: оркестратор кладёт сырые `track.lyrics` в legacy, bridge мгновенно зеркалит в React-стор ДО V3 `track-loaded` (~1.5с). Нет единого ready-гейта → UI показывает сырое/неполное. Пак: БЛОК (нужен GO анфриз) ИЛИ safe-side гейт `lyricsReady` (store `lyrics.store.ts` + `RehearsalLyrics.tsx`, НЕ трогая frozen) — прячет сырое до `track-fully-loaded`.
-- **BAC-002 фейдер Other 5/6 (VMO-005/036, P1):** root = `src/audio/engine-v3/integration/V3DataInterceptor.ts:92-102,134-136,229` — **SAFE** (плюс контракт: V3 шлёт `stemIds`[массив], потребители `audio.bridge.ts:155` FROZEN ждут `stemId` → `addStem(undefined)`, но ПРАВИМ ТОЛЬКО ИСТОЧНИК). Механизм: `decodeAudioData` упал → стем тихо в `failedStemIds`, навсегда вне `loadedStemIds`; инкрементальный `track-stem-ready` мёртв из-за несовпадения формы. Доп. риск: `MAX_MUSIC_STEMS=6`+`slice(0,6)` режет «other» при >6 муз.стемах. Пак SAFE: retry/backoff декода + не исключать декодированный стем + исправить форму `track-stem-ready` в V3DataInterceptor (loop по stemId) + проверить срез 6.
-- **СВЯЗЬ:** оба — симптомы отсутствия единого «track fully ready» гейта; UI-сторы наполняются из разнесённых по времени событий (лирика рано, стемы поздно). Корни разные (Б1=ранний рендер лирик/FROZEN; Б2=потеря стема/SAFE).
-- **СТОП-ТРИГГЕР:** BAC-001 упоминает FROZEN → эскалация Боссу (OVERRIDE на анфриз OR safe-side гейт). Без ответа паки не диспатчим.
+## 7. БАКТЕРИИ (Near-рекон, explore, 26.08)
+> СТОП снят по слову Босса («я разрешаю! нужно все исследовать!»). Полное исследование GO. BAC-001 чиним safe-side гейтом (frozen нетронут); root-фикс frozen — под формальный OVERRIDE Центра, если Босс позже захочет.
+
+### А. ВИДИМЫЕ (из 008 VISUAL-MAP) — готовы к микро-пакам
+- **BAC-001 FOUC лирики (P1, VMO-035):** root FROZEN (`track.orchestrator.ts:120-124`+`bridges/lyrics.bridge.ts`). Пак: safe-side гейт `lyricsReady` (`lyrics.store.ts`+`RehearsalLyrics.tsx`) — прячем сырое до `track-fully-loaded`.
+- **BAC-002 фейдер Other 5/6 (P1, VMO-005/036):** root SAFE (`engine-v3/integration/V3DataInterceptor.ts:92-102,134-136,229`). Пак: retry/backoff декода + не исключать декодированный стем + форма `track-stem-ready` loop по stemId (правим ИСТОЧНИК, frozen не трогаем) + проверить `MAX_MUSIC_STEMS=6` slice(0,6).
+- **BAC-003 лирика под TrackMap (P1, VMO-009):** SAFE (`RehearsalLyrics.module.css` центр+overflow:hidden, z-index 5 vs dock 999995). Пак: scroll/align-top при переполнении + поднять z-index + `--bl-deck-height` трекит раскрытый док.
+- **BAC-004 GetSongBPM крадёт Back (P2, VMO-018/019):** SAFE (`index.html:605-609` глобальная ссылка z-index 99999 поверх SyncEditorPanel Back z-index 90). Пак: `target=_blank rel=noopener` + вынести из зоны контролов.
+- **BAC-005 луп-линия выше (P2, VMO-008):** SAFE (`RehearsalLyrics.module.css .slotContainer align-content:center` vs top-down `slot.y`). Пак: `align-content:start` ИЛИ поправка на центрирование ИЛИ позиция по DOM-узлам.
+
+### Б. СКРЫТАЯ ГНИЛЬ — угрозы флипа M3-ГО + tech-debt
+- **BAC-101** safe→FROZEN импорт `track.actions.ts:7` (`./track.orchestrator`) — hard break при флипе.
+- **BAC-102** dynamic import FROZEN `QuickActions.tsx:214` + `MixerPanel.tsx:180` (`../services/track.orchestrator`).
+- **BAC-103** `featureFlag.ts:6`→`patchV1`→`AudioEngineV2`; вход `App.tsx:96 tryActivateV2()` — V2-бутстрап крутится при старте.
+- **BAC-104** `main.tsx:6,444`→`bridges/live-guard` (FROZEN).
+- **BAC-105** КЛАСТЕР V2-глобалов `window.audioEngine/.app/.trackCatalog/.liveMode/.lyricsDisplay/.markerManager/.waveformEditor` в ~12 safe-файлах (`mode-switch.service`,`block-scene.service`,`track.actions`,`FullAvatar`,`useStemWaveform`,`useBackgroundManagers`,`trigger-visual`,`MonitorMixPanel`,`upload.service`...) — при флипе (V2 не стартует) глобалы `undefined` → runtime-падения V3-кода.
+- **BAC-106** мёртвые FROZEN-bridge (`bridges/*` кроме live-guard) — dead code под замком, зачистить нельзя (FROZEN-БЛОК).
+- **BAC-107** Strangler-Fig не закрыт: `facade.ts:51` FIXME STUB-MIGRATION, живые `live-mode.stub`/`waveformEditor.stub` (`main.tsx:9-10`).
+- **BAC-108** `gateway-provider.ts:3` `GATEWAY_URL='http://localhost:8787'` + TODO Cloudflare — прод AI бьёт localhost.
+- **BAC-109** `console.*` вне `import.meta.env.DEV` (`useKeyboardShortcuts:74` и др.) — шум/утечка в прод.
+- **BAC-110** `V3StatePublisher.ts:129` placeholder «don't know what old wrapper listens» — риск контракта события.
+- **BAC-111** doc-debt: `avatar-visual-engine.md` STALE (2026-06, до avatar-реворка); `team-m-sync-proposal.md` untracked.
+- **BAC-112** мёртвый `src/legacy/engine-v3/*` (9 файлов) + `upload.service.ts:1053` TODO randomUUID.
+
+### СВЯЗЬ / ЯДРО ФЛИПА
+BAC-101..105 + BAC-107 = **реальная угроза флипа M3-ГО**. Сейчас safe-код прямо зовёт FROZEN (оркестратор/patchV1/bridge) и V2-глобалы. При переводе `engine-mode` в 'v3' и отключении V2-бутстрапа (`tryActivateV2`) эти связи рвутся → рантайм-ошибки. **Это И ЕСТЬ содержимое 5 волн срезки Легаси** (Far-дизайн Мака): разрыв = править SAFE-файлы (перестать звать frozen, переключить на V3/engine-mode), сами frozen-файлы НЕТРОНУТЫ. Порядок волн: сначала глобалы (BAC-105) + бутстрап (BAC-103/104), затем прямые импорты (BAC-101/102), затем stub-миграция (BAC-107), dead-code/legacy в конце (BAC-106/112).
  # 🤝 SHARED REGISTRY — beLive Mac↔PC (Hub: 007_Винда)
 
 > **Живой реестр координации.** Hub (PC/V007) владеет структурой; Mac-007 дописывает секцию «Mac-side» + ставит ack.
