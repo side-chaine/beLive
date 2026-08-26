@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>beLive · Migration Visual Map</title>
+<style>
+  :root{
+    --bg:#0a0e1a; --bg2:#0f1525; --glass:rgba(255,255,255,.04);
+    --glass-b:rgba(255,255,255,.09); --txt:#e8edf7; --mut:#8a94ad;
+    --c1:#6d8bff; --c2:#a06bff; --c3:#28e0c0; --warn:#ffb547; --bad:#ff5d6c; --ok:#3ddc84;
+    --r:16px; --sh:0 8px 40px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif; color:var(--txt);
+    background:
+      radial-gradient(1200px 600px at 12% -8%,rgba(109,139,255,.18),transparent 60%),
+      radial-gradient(1000px 520px at 92% 4%,rgba(160,107,255,.16),transparent 55%),
+      linear-gradient(160deg,var(--bg),var(--bg2));
+    background-attachment:fixed; min-height:100vh; overflow-x:hidden;
+  }
+  a{color:var(--c1);text-decoration:none}
+  .wrap{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+  /* ---- sidebar ---- */
+  aside{
+    position:sticky;top:0;height:100vh;padding:22px 16px;border-right:1px solid var(--glass-b);
+    background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);backdrop-filter:blur(8px);
+    display:flex;flex-direction:column;gap:6px;overflow:auto;
+  }
+  .logo{font-weight:800;font-size:19px;letter-spacing:.5px;margin:0 0 6px;display:flex;align-items:center;gap:9px}
+  .logo .dot{width:11px;height:11px;border-radius:50%;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 0 16px var(--c1);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:.55}}
+  .navbtn{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:12px;color:var(--mut);
+    cursor:pointer;font-size:14px;font-weight:600;transition:.22s;border:1px solid transparent}
+  .navbtn:hover{color:var(--txt);background:var(--glass)}
+  .navbtn.active{color:#fff;background:linear-gradient(135deg,rgba(109,139,255,.22),rgba(160,107,255,.18));border-color:var(--glass-b)}
+  .navbtn .ic{font-size:16px;width:20px;text-align:center}
+  .sidefoot{margin-top:auto;font-size:11px;color:var(--mut);line-height:1.5;border-top:1px solid var(--glass-b);padding-top:12px}
+  /* ---- main ---- */
+  main{padding:30px 38px 80px;max-width:1180px}
+  .hero{margin-bottom:26px}
+  .hero h1{font-size:30px;margin:0 0 6px;font-weight:800;
+    background:linear-gradient(120deg,#fff,#b9c4ff 40%,#d9b8ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{color:var(--mut);margin:0;font-size:14px}
+  .pills{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 28px}
+  .pill{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;background:var(--glass);
+    border:1px solid var(--glass-b);font-size:13px;font-weight:600;animation:fadeUp .5s both}
+  .pill .led{width:9px;height:9px;border-radius:50%}
+  .led.ok{background:var(--ok);box-shadow:0 0 10px var(--ok)}
+  .led.warn{background:var(--warn);box-shadow:0 0 10px var(--warn)}
+  .led.bad{background:var(--bad);box-shadow:0 0 10px var(--bad)}
+  .led.info{background:var(--c1);box-shadow:0 0 10px var(--c1)}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  section{display:none;animation:fadeUp .4s both}
+  section.show{display:block}
+  h2.sec{font-size:20px;margin:0 0 16px;display:flex;align-items:center;gap:10px}
+  h2.sec .bar{width:4px;height:20px;border-radius:3px;background:linear-gradient(var(--c1),var(--c2))}
+  .card{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r);padding:16px 18px;
+    box-shadow:var(--sh);transition:.25s;animation:fadeUp .5s both}
+  .card:hover{transform:translateY(-3px);border-color:rgba(160,107,255,.4);box-shadow:0 14px 50px rgba(109,139,255,.18)}
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)} @media(max-width:900px){.g2,.g3,.g4{grid-template-columns:1fr}}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;letter-spacing:.3px}
+  .t-ok{background:rgba(61,220,132,.15);color:var(--ok)}
+  .t-demo{background:rgba(255,181,71,.16);color:var(--warn)}
+  .t-fut{background:rgba(160,107,255,.18);color:#cbb0ff}
+  .t-p1{background:rgba(255,93,108,.16);color:var(--bad)}
+  .t-p2{background:rgba(255,181,71,.16);color:var(--warn)}
+  .t-p3{background:rgba(138,148,173,.18);color:var(--mut)}
+  .zm{font-size:12px;color:var(--mut);margin-top:4px}
+  .search{width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--glass-b);background:var(--glass);
+    color:var(--txt);font-size:14px;margin-bottom:14px;outline:none}
+  .search:focus{border-color:var(--c1)}
+  /* timeline */
+  .tl{display:flex;gap:0;flex-wrap:wrap;margin:8px 0 4px}
+  .step{flex:1;min-width:150px;padding:14px;border:1px solid var(--glass-b);border-right:none;position:relative;background:var(--glass)}
+  .step:last-child{border-right:1px solid var(--glass-b);border-radius:0 var(--r) var(--r) 0}
+  .step:first-child{border-radius:var(--r) 0 0 var(--r)}
+  .step .n{font-size:11px;color:var(--mut);font-weight:700}
+  .step .t{font-weight:700;margin:4px 0;font-size:14px}
+  .step .d{font-size:12px;color:var(--mut);line-height:1.4}
+  .step.done{background:linear-gradient(135deg,rgba(61,220,132,.14),transparent)}
+  .step.cur{background:linear-gradient(135deg,rgba(109,139,255,.2),transparent);border-color:var(--c1)}
+  /* pipeline flow */
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px}
+  .node{background:var(--glass);border:1px solid var(--glass-b);border-radius:12px;padding:10px 13px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.2s;max-width:160px}
+  .node:hover{border-color:var(--c2);transform:scale(1.04)}
+  .node small{display:block;color:var(--mut);font-weight:500;font-size:11px;margin-top:3px}
+  .arrow{display:flex;align-items:center;color:var(--mut);font-size:18px}
+  /* refs dropzone */
+  .drop{border:2px dashed var(--glass-b);border-radius:var(--r);padding:28px;text-align:center;color:var(--mut);
+    transition:.25s;cursor:pointer}
+  .drop.hot{border-color:var(--c1);background:rgba(109,139,255,.08);color:var(--txt)}
+  .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:14px}
+  .gal figure{margin:0;background:var(--glass);border:1px solid var(--glass-b);border-radius:12px;overflow:hidden}
+  .gal img{width:100%;height:110px;object-fit:cover;display:block}
+  .gal figcaption{font-size:11px;color:var(--mut);padding:6px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  textarea{width:100%;margin-top:9px;background:rgba(0,0,0,.25);border:1px solid var(--glass-b);border-radius:10px;
+    color:var(--txt);font-size:12.5px;padding:8px 10px;resize:vertical;min-height:46px;font-family:inherit}
+  textarea:focus{border-color:var(--c1);outline:none}
+  .note-saved{font-size:10.5px;color:var(--ok);opacity:0;transition:.3s}
+  .note-saved.show{opacity:1}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px}
+  .kv b{color:var(--mut);font-weight:600}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a2138;
+    border:1px solid var(--glass-b);padding:11px 18px;border-radius:12px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;box-shadow:var(--sh)}
+  .toast.show{opacity:1;transform:translateX(-50%)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin:4px 0 16px}
+  .legend span{display:flex;align-items:center;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside>
+    <div class="logo"><span class="dot"></span>beLive Map</div>
+    <div class="navbtn active" data-s="mig"><span class="ic">🚀</span>Миграция</div>
+    <div class="navbtn" data-s="zones"><span class="ic">🗺️</span>Зоны (22)</div>
+    <div class="navbtn" data-s="bugs"><span class="ic">🐞</span>Баг-лист</div>
+    <div class="navbtn" data-s="pipe"><span class="ic">🔌</span>Пайплайн</div>
+    <div class="navbtn" data-s="refs"><span class="ic">🎨</span>Референсы</div>
+    <div class="navbtn" data-s="gloss"><span class="ic">📖</span>Словарь</div>
+    <div class="navbtn" data-s="notes"><span class="ic">📝</span>Заметки</div>
+    <div class="sidefoot">
+      Источник: 008 VISUAL-MAP (40/40 скринов)<br>Контекст: Mac CONTEXT.md × design-refs<br>Канон: tsc 306 · vitest 772 · PARITY PASS<br>Сохранение заметок: localStorage (только твой браузер)
+    </div>
+  </aside>
+
+  <main>
+    <div class="hero">
+      <h1>beLive · Визуальная карта миграции</h1>
+      <p>Как есть → куда идём. Состояние V2→V3, зоны продукта, баги, пайплайн сервисов и дизайн-референсы в одном окне.</p>
+    </div>
+
+    <div class="pills" id="pills"></div>
+
+    <!-- MIGRATION -->
+    <section id="s-mig" class="show">
+      <h2 class="sec"><span class="bar"></span>Состояние миграции V2 → V3</h2>
+      <div class="card" style="margin-bottom:16px">
+        <div class="tl" id="timeline"></div>
+      </div>
+      <div class="grid g3">
+        <div class="card"><div class="zm">TypeScript (tsc --noEmit)</div><div style="font-size:26px;font-weight:800">306 <span class="tag t-ok">error</span></div><div class="zm">стабильно с этапа подготовки</div></div>
+        <div class="card"><div class="zm">Тесты (vitest)</div><div style="font-size:26px;font-weight:800">772 <span class="tag t-ok">passed</span></div><div class="zm">0 failed · +2 G3-теста</div></div>
+        <div class="card"><div class="zm">Паритет V2/V3 (verify:ci)</div><div style="font-size:26px;font-weight:800">PARITY <span class="tag t-ok">PASS</span></div><div class="zm">билды v2+v3 зелёные</div></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="kv">
+          <b>Engine-mode</b><span>централизованный резолв <code>src/engine-mode.ts</code>; сейчас <b style="color:var(--c1)">V2</b>; флип M3-GO = правка одной константы → V3</span>
+          <b>Push в main</b><span><span class="tag t-p1">ЗАКРЫТ</span> до prod-ready / E7 (по решению владельца). Локально 76 коммитов, 0 push. Страховка: git-bundle → OneDrive + тег pre-m3go</span>
+          <b>Гейт флипа</b><span>👂 уши владельца (чек-лист 26.08) → материал M3-GO (18 строк) → флип → 5 волн срезки Легаси</span>
+          <b>Замечание 008</b><span>питч НЕ подключён к V3 (ноты пусты) — <b>вопрос скоупа M3-ГО</b> у владельца</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ZONES -->
+    <section id="s-zones">
+      <h2 class="sec"><span class="bar"></span>Зоны продукта (22)</h2>
+      <div class="legend">
+        <span><span class="tag t-ok">работает</span> живой функционал</span>
+        <span><span class="tag t-demo">демо</span> набросок/частично</span>
+        <span><span class="tag t-fut">будущее</span> в планах</span>
+      </div>
+      <input class="search" id="zSearch" placeholder="🔍 фильтр зон… (напр. микшер, чат, ДНК)">
+      <div class="grid g3" id="zonesGrid"></div>
+    </section>
+
+    <!-- BUGS -->
+    <section id="s-bugs">
+      <h2 class="sec"><span class="bar"></span>Баг-лист (из 008)</h2>
+      <div class="grid g2" id="bugsGrid"></div>
+    </section>
+
+    <!-- PIPELINE -->
+    <section id="s-pipe">
+      <h2 class="sec"><span class="bar"></span>Пайплайн сервисов</h2>
+      <div class="card">
+        <div class="flow" id="flow"></div>
+        <p class="zm" style="margin-top:12px">Клик по узлу — детали. ⚠️ Cloudflare-воркеры ждут скринов владельца для полного аудита.</p>
+      </div>
+    </section>
+
+    <!-- REFS -->
+    <section id="s-refs">
+      <h2 class="sec"><span class="bar"></span>Дизайн-референсы</h2>
+      <div class="card">
+        <div class="drop" id="drop">📂 Перетащи PNG-референсы сюда &nbsp;·&nbsp; или <b>выбери папку/файлы</b><br><span class="zm">Загрузка только в твоём браузере (не уходит на сервер). Файлы из <code>team-m/design-refs/</code> можно подгрузить кнопкой.</span></div>
+        <input type="file" id="filePick" multiple accept="image/*" hidden>
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="pill" id="pickBtn" style="cursor:pointer"><span class="led info"></span>Выбрать файлы…</button>
+          <button class="pill" id="pickFolder" style="cursor:pointer"><span class="led info"></span>Выбрать папку…</button>
+          <button class="pill" id="loadRefs" style="cursor:pointer"><span class="led info"></span>Подгрузить team-m/design-refs</button>
+          <button class="pill" id="clearRefs" style="cursor:pointer"><span class="led warn"></span>Очистить</button>
+        </div>
+        <div class="gal" id="gal"></div>
+      </div>
+    </section>
+
+    <!-- GLOSSARY -->
+    <section id="s-gloss">
+      <h2 class="sec"><span class="bar"></span>Словарь владельца → код</h2>
+      <input class="search" id="gSearch" placeholder="🔍 поиск термина…">
+      <div class="card"><div class="kv" id="gloss"></div></div>
+    </section>
+
+    <!-- NOTES -->
+    <section id="s-notes">
+      <h2 class="sec"><span class="bar"></span>Заметки владельца</h2>
+      <div class="card">
+        <p class="zm">Все textarea в карточках зон/багов сохраняются в localStorage и подтягиваются здесь.</p>
+        <div id="notesLog" class="kv" style="margin-top:10px"></div>
+        <button class="pill" id="expNotes" style="cursor:pointer;margin-top:12px"><span class="led warn"></span>Экспорт заметок (copy)</button>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- DATA (from 008 VISUAL-MAP report) ---------- */
+const ZONES=[
+ ["Welcome/стартовая","001","работает","Пустой центр; план: динамика+видео «что мы и зачем» за 1-2 сек"],
+ ["Каталог (3 колонки)","002,024","работает","Поиск по TG-каталогу (бот), треки <FULL>, Publish"],
+ ["Загрузка: ПОРТ (zip)","024,028","работает","Дроп-зона «закинуть .ZIP»; поток Genius→чистка→блоки→lrclib"],
+ ["Загрузка: ручная (DUO)","033","работает","Instrumental (required) + Vocals + Lyrics"],
+ ["Studio: лирика+TrackMap","003,004","работает","Активная строка белая; цвета: куплет зел/пре-хорус жёлт/припев красн/бридж фиол"],
+ ["Studio: стемы (микшер)","005,036,037","работает","6 фейдеров Bas/Drm/Gtr/Key/Oth/Vox + M/S; Inst=мастер муз.стемов"],
+ ["Studio: Visual-стемы","036","работает","Карточки DRM/BAS/GTR/VOX/KEY с живыми волнами"],
+ ["Quest: волна+тейки","006","работает","Take 1/2/3 • RECORD; I/V/M; COMPARE тейк vs референс"],
+ ["Quest: лупы","007,008","работает","∞=луп; +у соседей=объединение; подблоки 2-3 по 3-4 строки"],
+ ["Quest: сценарии","015-017","демо","Echo Drill, 3-Take, A Cappella Boss, Tempo Ladder (+5 BPM), Trade v1"],
+ ["Show: презентация","009,010","работает","Конструктор шагов/суб-слайдов; запись урока; HTML-проекции"],
+ ["Split","011","работает","BT-наушники: вокал в уши, музыка на ПК; AUTO MIX; Back Vocal — будущее"],
+ ["Styles","012","работает","Font/Word(буд)/Line/Theme/Плашка; в репетиции текст не меняет"],
+ ["Notes (питч)","013","будущее","Пианино C2-C6; питч НЕ подключён к V3 (миграция)"],
+ ["Billy-чат","014","демо","Док; чипы-действия; цель — правое окно по реф 04/12/13"],
+ ["Hub/соцсеть","020","демо","Лента+профиль+комменты; юр.развилка соцсеть vs пейджер"],
+ ["Karaoke/Concert/Live","021-023","работает","Режимы вне фокуса миграции; акценты фиол/син/красн"],
+ ["Sync-редактор","018,019,040","работает","Маркеры строк «1», лупы Shift+клик, Lines(lrclib), ZIP/TG/Publish"],
+ ["Редактор блоков","038","работает","Текстовые блоки; легаси до lrclib; «не как надо» → аудит"],
+ ["User-меню","029","работает","Graphics Lite→Ultra; Toggle Stems; Show Cover; Background"],
+ ["Профиль","030","работает","MVSEP API Key (отложен); тема; будущее — «Комната»"],
+ ["AI Configuration","031","работает","Билли: Built-in AI + свой OpenRouter (ключ/модель/temp)"],
+ ["Комната ДНК (GTRACK)","034","работает","Structure I→A→P→B→C; KEY C#m/12A; BPM; данные GetSongBPM"],
+ ["Редактор фонов","032,039","работает","Сцена на строку; Upload Pack (аниме легло по ячейкам); HTML-проекции"]
+];
+const BUGS=[
+ ["1","FOUC: сырая лирика мигает при КАЖДОЙ загрузке трека (~1-1.5с; хуже после рестарта); пропадают TrackMap и Voc-фейдер","035","P1","Возможно симптом V3-boot. Рекон → микро-пак."],
+ ["2","Фейдер Other нестабилен: 5 вместо 6, появился после перезагрузки; повтор на Visual-стемах","005,036","P1","Стем иногда не грузится — гонка загрузки v3. Аудио-рекон."],
+ ["3","Лирика заезжает под TrackMap при выдвинутом доке + много строк","009","P1","CSS layout: z-index/высота дока. Far Light-пак."],
+ ["4","Ссылка GetSongBPM перехватывает клик Back в Sync → уход на внешний сайт","018,019","P2","Атрибуцию на свой сайт; target=_blank/preventDefault."],
+ ["5","Линия лупа поднимается на строку выше (визуально; воспроизведение верное)","008","P2","Canvas offset на 1 строку."],
+ ["6","Питч НЕ подключён к V3 (Notes пустой) + детекция ~80% нот, ложные октавы","013","P1","ВОПРОС СКОУПА M3-ГО у владельца. Оптимизация — пост-миграция."],
+ ["7","Редактор блоков «не работает как надо»","038","P2","Полный аудит (поддержка любых правок)."]
+];
+const PIPE=[
+ ["MVSEP","stem-sep; API отложен → свой ключ у юзера","warn"],
+ ["ПОРТ/DUO","загрузка zip / duo","ok"],
+ ["Genius","текст+секции → TrackMap авто","ok"],
+ ["lrclib","тайминги строк; кнопка Lines","ok"],
+ ["GetSongBPM","BPM/тональность/ДНК; атрибуция=баг","warn"],
+ ["gateway-align","пословная синхр (missing в UI)","info"],
+ ["Telegram","TG-каталог ботом; ZIP/TG/Publish","ok"],
+ ["OpenRouter","свой AI для Билли + Built-in","ok"],
+ ["Cloudflare","воркеры — АУДИТ ждёт скринов","warn"]
+];
+const GLOSS=[
+ ["Трек-мэп / вагоны / блоки","TrackMap — структура секций трека"],
+ ["Плашка","центральная панель лирики (док)"],
+ ["Фейдеры Inst/Voc","2 главных; Inst=мастер-группа муз.стемов"],
+ ["B/P/M","режимы темпа (P=проценты ±5; B/M уточнить)"],
+ ["I/V/M","Инструментал/Вокал/Микс в Quest-волне"],
+ ["FULL/DUO","zip 7 стемов / вокал+инст; Toggle Stems"],
+ ["ПОРТ","дроп-зона .zip в каталоге"],
+ ["Lines","модалка версий lrclib"],
+ ["Blocks","редактор блоков (легаси до lrclib)"],
+ ["Сценарий/Background","фон на строку; Upload Pack"],
+ ["Комната","будущий полный UI юзера"],
+ ["Квесты","упражнения; будущее — ИИ-тренер в чате"],
+ ["ДНК/GTRACK","комната трека (структура/жанр/BPM)"],
+ ["«Сосуд»","beLive подсвечивает трек; наполнение заливает сосуд"]
+];
+const PILL_STATE=[
+ ["tsc","306 error","info"],["vitest","772 passed","ok"],["parity","PASS","ok"],
+ ["engine","V2 (flip→V3)","warn"],["push","CLOSED","bad"],["ears","ждёт Босса","info"]
+];
+const TIMELINE=[
+ ["Этап 0","У1 SSOT + engine-mode(г)","done","ВЫПОЛНЕН ✅"],
+ ["Этап 1","👂 уши владельца","cur","чек-лист 26.08"],
+ ["Этап 2","M3-GO флип (1 буква)","","материал 18 строк"],
+ ["Этап 3-4","5 волн срезки Легаси","","до 0 runtime-импортов"]
+];
+
+/* ---------- RENDER ---------- */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+function t(s){return {ok:'t-ok',demo:'t-demo',fut:'t-fut',P1:'t-p1',P2:'t-p2',P3:'t-p3',info:'t-ok'}[s]||'t-ok'}
+function statusTag(st){return {работает:'t-ok',демо:'t-demo',будущее:'t-fut'}[st]||'t-ok'}
+
+$('#pills').innerHTML=PILL_STATE.map(([k,v,c])=>`<div class="pill"><span class="led ${c}"></span>${k}: <b style="margin-left:4px">${v}</b></div>`).join('');
+$('#timeline').innerHTML=TIMELINE.map(([n,tt,d,dd])=>`<div class="step ${d}"><div class="n">${n}</div><div class="t">${tt}</div><div class="d">${dd}</div></div>`).join('');
+
+$('#zonesGrid').innerHTML=ZONES.map(([z,v,st,d])=>`
+ <div class="card" data-z="${z.toLowerCase()}">
+   <div style="display:flex;justify-content:space-between;align-items:start;gap:8px">
+     <b style="font-size:14px">${z}</b><span class="tag ${statusTag(st)}">${st}</span></div>
+   <div class="zm">VMO ${v}</div><div class="zm" style="margin-top:6px">${d}</div>
+   <textarea data-note="z:${z}" placeholder="💬 заметка владельца…"></textarea>
+   <div class="note-saved">✓ сохранено</div>
+ </div>`).join('');
+
+$('#bugsGrid').innerHTML=BUGS.map(([id,title,v,p,d])=>`
+ <div class="card" data-b="${title.toLowerCase()}">
+   <div style="display:flex;justify-content:space-between"><b>#${id}</b><span class="tag ${t(p)}">${p}</span></div>
+   <div style="font-size:13.5px;margin:6px 0;line-height:1.45">${title}</div>
+   <div class="zm">VMO ${v} · ${d}</div>
+   <textarea data-note="b:${id}" placeholder="💬 заметка / решение…"></textarea>
+   <div class="note-saved">✓ сохранено</div>
+ </div>`).join('');
+
+$('#flow').innerHTML=PIPE.map(([n,d,c],i)=>`${i?'<div class="arrow">→</div>':''}<div class="node" data-flow="${n}"><b>${n}</b><small>${d}</small></div>`).join('')+
+ '<div class="arrow">→</div><div class="node" style="border-color:var(--c3)"><b>🎤 beLive</b><small>сосуд наполняется</small></div>';
+
+$('#gloss').innerHTML=GLOSS.map(([a,b])=>`<b>${a}</b><span>${b}</span>`).join('');
+
+/* ---------- notes (localStorage) ---------- */
+const LS='belive-vismap-notes';
+function loadNotes(){try{return JSON.parse(localStorage.getItem(LS)||'{}')}catch(e){return{}}}
+function saveNote(k,v){const o=loadNotes();if(v&&v.trim())o[k]=v;else delete o[k];localStorage.setItem(LS,JSON.stringify(o));renderNotesLog()}
+function renderNotesLog(){const o=loadNotes();const rows=Object.entries(o);
+ $$('textarea[data-note]').forEach(t=>{t.value=o[t.dataset.note]||''});
+ $('#notesLog').innerHTML=rows.length?rows.map(([k,v])=>`<b>${k}</b><span>${v}</span>`).join(''):'<b>—</b><span class="zm">пока пусто</span>'}
+$$('textarea[data-note]').forEach(ta=>{ta.addEventListener('input',()=>{saveNote(ta.dataset.note,ta.value);const s=ta.nextElementSibling;s.classList.add('show');setTimeout(()=>s.classList.remove('show'),900)})});
+renderNotesLog();
+
+/* ---------- nav ---------- */
+$$('.navbtn').forEach(b=>b.onclick=()=>{$$('.navbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+ $$('section').forEach(s=>s.classList.remove('show'));$('#s-'+b.dataset.s).classList.add('show')});
+
+/* ---------- filters ---------- */
+$('#zSearch').oninput=e=>{const q=e.target.value.toLowerCase();$$('#zonesGrid .card').forEach(c=>c.style.display=c.dataset.z.includes(q)?'':'none')};
+$('#gSearch').oninput=e=>{const q=e.target.value.toLowerCase();const rows=$$('#gloss b');rows.forEach((b,i)=>{const hit=b.textContent.toLowerCase().includes(q);b.parentElement.style.display=hit?'':'none'})};
+
+/* ---------- toast ---------- */
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)}
+
+/* ---------- refs loader ---------- */
+const gal=$('#gal');
+function addImg(name,url){const f=document.createElement('figure');f.innerHTML=`<img src="${url}" alt="${name}"><figcaption>${name}</figcaption>`;gal.appendChild(f)}
+function readFiles(files){[...files].forEach(f=>{if(f.type.startsWith('image')){const u=URL.createObjectURL(f);addImg(f.name,u)}});toast('Загружено: '+files.length+' изобр.')}
+$('#drop').ondragover=e=>{e.preventDefault();$('#drop').classList.add('hot')};
+$('#drop').ondragleave=()=>$('#drop').classList.remove('hot');
+$('#drop').ondrop=e=>{e.preventDefault();$('#drop').classList.remove('hot');readFiles(e.dataTransfer.files)};
+$('#pickBtn').onclick=()=>$('#filePick').click();
+$('#filePick').onchange=e=>readFiles(e.target.files);
+$('#pickFolder').onclick=()=>{const i=document.createElement('input');i.type='file';i.webkitdirectory=true;i.multiple=true;i.onchange=e=>readFiles(e.target.files);i.click()};
+$('#clearRefs').onclick=()=>{gal.innerHTML='';toast('Очищено')};
+$('#loadRefs').onclick=async()=>{
+  // попытка подгрузить team-m/design-refs если страница открыта из репо (file:// или сервер)
+  const base=['team-m/design-refs/','../team-m/design-refs/','design-refs/'];
+  let loaded=0;
+  for(const b of base){try{const r=await fetch(b+'MANIFEST.md');if(!r.ok)continue;
+    const txt=await r.text();const names=[...txt.matchAll(/(\d{2}-[^\s]+\.png)/g)].map(m=>m[1]);
+    for(const n of names){try{const im=new Image();im.onload=()=>addImg(n,im.src);im.src=b+n;loaded++}catch(e){}}
+    if(loaded)break}catch(e){}}
+  toast(loaded?`Подгружено из design-refs: ${loaded}`:'Открой страницу из папки репо, либо выбери файлы вручную');
+  if(!loaded)setTimeout(()=>$('#pickBtn').click(),400);
+};
+$('#expNotes').onclick=()=>{const o=loadNotes();navigator.clipboard.writeText(JSON.stringify(o,null,2));toast('Заметки скопированы в буфер')};
+
+/* boot animation stagger */
+$$('.card').forEach((c,i)=>c.style.animationDelay=(i%12*40)+'ms');
+</script>
+</body>
+</html>
