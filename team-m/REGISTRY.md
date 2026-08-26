@@ -277,3 +277,14 @@ BAC-101..105 + BAC-107 = **реальная угроза флипа M3-ГО**. �
 6. **§7-строки 31–36 (WAVE-HANDOFF статус) УСТАРЕЛИ:** волны НЕ pre-GO — Босс дал GO на Frozen-зону (R6, сессия 26.08), паки РЕШЕНО (GO) к исполнению Hub. Frozen-guard НЕ «ждёт аппрува» — APPROVED + baseline GREEN.
 
 **Frozen-файлы НЕ тронуты** ни в одном паке (только чтение + SHA256-инвентарь). Все 5 волн + guard + bLb + S3 = read-only дизайн Far Light.
+
+---
+
+### Mac-side Update #2 (007_Мак, 26.08 · БОСС: ТОЛЬКО МИГРАЦИЯ)
+> Босс: «всё кроме миграции V2-V3 — на потом». Главная задача = **ПОЛНОЕ УДАЛЕНИЕ LEGACY** (5 волн + M3-GO flip). Сформирована инициатива фокуса: `INITIATIVE-FOCUS-MAIN-TASK.md`.
+
+- 🔄 **S3 Student-Педагог**: ОТЛОЖЕНО (post-m3). Patch `MICRO-PACK-S3-VIDEO-IMPL.patch` готов, НЕ применять до флипа. Вёдра (26k) подтвердил post-m3.
+- 🔄 **bLb (beLiveBase)**: ОТЛОЖЕНО (post-m3 read-only) — по вердикту 009.
+- 🔄 **pitch-connect**: ОТЛОЖЕНО (post-m3) — питч и так сломан на V3, не блокер флипа; OPT-IN только если Босс явно.
+- ✅ **Волны W1–5**: file-листы освежены к живым счётчикам (`WAVE-PREFLIP-BASELINE.md`): delegateSync 23, V2Adapter 27, globals 9, track.orchestrator 7. Frozen-guard GREEN (baseline). Ждут ОДИН GO Босса → chain 001→002→009.
+- ✅ **Инициатива фокуса** создана (`INITIATIVE-FOCUS-MAIN-TASK.md`): полный контекст перед GO + классификатор директив + GO-интерцептор (возврат к главной задаче при рассеянных командах Босса) + единая команда Мак+Вёдра через реестр SSOT.

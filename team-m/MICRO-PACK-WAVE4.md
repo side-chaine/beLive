@@ -9,7 +9,7 @@
 - 6 потребителей `src/services/track.actions.ts:7` → re-point на V3 (engine-v3 surface), убрать импорт orchestrator.
 - `src/components/MixerPanel.tsx:180` + `src/components/QuickActions.tsx:214` dyn-import `track.orchestrator` → удалить/заменить на V3.
 - `src/services/track.actions.ts` — перестаёт звать orchestrator (frozen НЕ правим).
-- **V2Adapter.ts** — удалить ТОЛЬКО если `grep -rln "V2Adapter" src` → 0 (W2 ре-поинтила 17 импортёров). Иначе СТОП (tsc 306 упадёт). Гейт W4 обязан проверять этот grep.
+- **V2Adapter.ts** — удалить ТОЛЬКО если `grep -rln "V2Adapter" src` → 0 (W2 ре-поинтила 27 импортёров live). Иначе СТОП (tsc 306 упадёт). Гейт W4 обязан проверять этот grep.
 - **legacy (ИСПРАВЛЕН путь):** `src/legacy/engine-v3/*` (**9 файлов (вкл. 2 test в __tests__)**, BAC-112) — удалить. НЕ `src/audio/engine-v3/legacy/*` (такой директории НЕТ).
 
 ## НЕ ТРОГАТЬ (Frozen, byte-identical)

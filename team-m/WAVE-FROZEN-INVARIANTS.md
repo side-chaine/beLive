@@ -18,9 +18,9 @@
 - **Safe-scope:** `src/App.tsx` (93–101, `tryActivateV2`); `src/audio/featureFlag.ts` (6, импорт patchV1); **12 ридеров V2-глобалов** (точный список grep'ом; известные: mode-switch.service, block-scene.service, track.actions, FullAvatar, useStemWaveform, useBackgroundManagers, trigger-visual, MonitorMixPanel, upload.service, …) → V3-state/E1-предикат.
 - **Invariant:** `tryActivateV2`→0; `patchV1` в featureFlag→0; `window.<V2-global>` в SAFE → 0. frozen SHA256 неизменен.
 
-## WAVE 2 · delegateSync (21) + V2Adapter (17) re-point
+## WAVE 2 · delegateSync (23) + V2Adapter (27) re-point
 - **Frozen byte-identical:** `track.orchestrator.ts`.
-- **Safe-scope:** 21 caller `delegateSync` + 26 импортёров (факт grep -rln=26) `V2Adapter` (main.tsx:129–136, MonitorRouter.ts:266, DuckGuardV3.ts:27, foundation/*, components/*, hooks/*, takes.time, legacy/*, WaveformCanvas, …) → V3-surface. `V2Interceptor-wrap` + `V2Adapter.ts` НЕ удалять (до последнего caller).
+- **Safe-scope:** 23 caller `delegateSync` + 27 импортёров (live WAVE-PREFLIP-BASELINE.md; Mac grep=26, расхождение 1 — сверить при исполнении) `V2Adapter` (main.tsx:129–136, MonitorRouter.ts:266, DuckGuardV3.ts:27, foundation/*, components/*, hooks/*, takes.time, legacy/*, WaveformCanvas, …) → V3-surface. `V2Interceptor-wrap` + `V2Adapter.ts` НЕ удалять (до последнего caller).
 - **Invariant:** `delegateSync`→V3-surface (0 на V2-wrap кроме deprecated); `grep -rln "V2Adapter" src` → только сам файл (импортёров 0, готов к W4). frozen SHA256 неизменен.
 
 ## WAVE 3 · demolition

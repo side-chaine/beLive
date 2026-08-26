@@ -4,8 +4,9 @@
 // НЕ пишет в репо, НЕ коммитит, НЕ PR-ит. Только вывод. Запуск: node frozen-guard.mjs [repo-root]
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = process.argv[2] ? path.resolve(process.argv[2]) : path.resolve(__dirname, '..', '..');
+const ROOT = process.argv[2] ? path.resolve(process.argv[2]) : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SRC = path.join(ROOT, 'src');
 
 // --- FROZEN-граница (REGISTRY §1 Frozen Zone + §7) ---
@@ -28,7 +29,7 @@ const EXPECTED_IMPORT_OFFENDERS = new Set([
   'track.actions.ts', 'QuickActions.tsx', 'MixerPanel.tsx', 'featureFlag.ts',
   'App.tsx', 'main.tsx', 'facade.ts', 'gateway-provider.ts',
 ]);
-// Потребители V2-глобалов (BAC-105 ~12 safe-файлов):
+// Потребители V2-глобалов (BAC-105 ~9 safe-файлов, live):
 const EXPECTED_GLOBAL_OFFENDERS = new Set([
   'mode-switch.service.ts', 'block-scene.service.ts', 'track.actions.ts', 'FullAvatar.tsx',
   'useStemWaveform.ts', 'useBackgroundManagers.ts', 'trigger-visual.ts', 'MonitorMixPanel.tsx',
@@ -49,6 +50,13 @@ function districtOf(rel) {
 const IMPORT_RE = /import\s+(?:[^'"]*from\s+)?['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)/g;
 const GLOBAL_RE = new RegExp(`(${V2_GLOBALS.map(g => g.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g');
 
+// --- выкусываем комментарии ДО сканирования, чтобы не ловить window.* в JSDoc/комментах ---
+function stripComments(src) {
+  let s = src.replace(/\/\*[\s\S]*?\*\//g, '');       // блочные /* */ и JSDoc /** */
+  s = s.replace(/(^|[^:])\/\/.*/g, '$1');             // строчные // (но не http(s)://)
+  return s;
+}
+
 function walk(dir, out = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, e.name);
@@ -66,7 +74,7 @@ for (const f of files) {
   const base = path.basename(f);
   const isFrozenFile = /(track\.orchestrator|patchV1|AudioEngineV2|bridges\/|live-guard)/.test(rel);
   if (isFrozenFile) continue; // сами frozen-файлы не сканируем (Frozen=НИКТО, только чтение границы)
-  const src = fs.readFileSync(f, 'utf8');
+  const src = stripComments(fs.readFileSync(f, 'utf8'));
   const lines = src.split('\n');
   lines.forEach((line, i) => {
     let m;

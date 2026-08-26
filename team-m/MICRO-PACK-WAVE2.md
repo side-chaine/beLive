@@ -3,11 +3,11 @@
 > Якоря: канон 306/772; V2Interceptor-wrap + V2Adapter НЕ удалять, пока жив хоть один caller; Frozen-guard GREEN.
 
 ## ЦЕЛЬ
-Re-point ВСЕХ потребителей V2-поверхности на V3 (leaves-first). 009 нашёл: `delegateSync` в **21** файле, `V2Adapter` импортируют **17** файлов вне engine-v3 (не только delegateSync). Оба класса ре-поинтим здесь; удаляем V2Adapter только в W4 (после grep→0).
+Re-point ВСЕХ потребителей V2-поверхности на V3 (leaves-first). Live-счётчики (WAVE-PREFLIP-BASELINE.md): `delegateSync` в **23** файле, `V2Adapter` импортируют **27** файлов вне engine-v3 (Mac grep дал 26 — расхождение на 1, сверить при исполнении; критерий W2 = `grep -rln "V2Adapter" src` → 0). Оба класса ре-поинтим здесь; удаляем V2Adapter только в W4 (после grep→0).
 
 ## ПРАВИТЬ (SAFE)
-- **delegateSync** (21 caller, точный список grep'ом): заменить V2-delegateSync на V3-surface (сигнатура/поведение снаружи не меняются).
-- **V2Adapter** (26 импортёров (факт: grep -rln "V2Adapter" src = 26) вне engine-v3, известные: `main.tsx:129–136`, `MonitorRouter.ts:266`, `DuckGuardV3.ts:27`, `foundation/*`, `components/*`, `hooks/*`, `takes.time`, `legacy/*`, `WaveformCanvas`, …): ре-поинт `V2Adapter.getInstance()/getV2Engine()` на V3-эквивалент. Файл `V2Adapter.ts` НЕ удалять (удаление — в W4 после `grep -rln "V2Adapter" src` → 0).
+- **delegateSync** (23 caller, точный список grep'ом): заменить V2-delegateSync на V3-surface (сигнатура/поведение снаружи не меняются).
+- **V2Adapter** (27 импортёров (live WAVE-PREFLIP-BASELINE.md; Mac grep=26 — расхождение 1, сверить; критерий W2 = grep→0) вне engine-v3, известные: `main.tsx:129–136`, `MonitorRouter.ts:266`, `DuckGuardV3.ts:27`, `foundation/*`, `components/*`, `hooks/*`, `takes.time`, `legacy/*`, `WaveformCanvas`, …): ре-поинт `V2Adapter.getInstance()/getV2Engine()` на V3-эквивалент. Файл `V2Adapter.ts` НЕ удалять (удаление — в W4 после `grep -rln "V2Adapter" src` → 0).
 - `V2Interceptor-wrap`: пометить `@deprecated`, оставить до последнего caller.
 
 ## НЕ ТРОГАТЬ (Frozen)
