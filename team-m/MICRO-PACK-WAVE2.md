@@ -1,29 +1,30 @@
-# 🌊 MICRO-PACK-WAVE2 · delegateSync re-point · handoff (design)
-> Источник: FINAL-ROADMAP-draft.md §2 Этап 3 Волна 2 (001, вериф. 002/009). Применяет: Hub(007) post-M3-GO. Frozen: НЕ трогать.
-> Якоря: канон 306/770; V2Interceptor-wrap НЕ сносить, пока жив хоть один из 13 caller; после пака — Frozen-guard GREEN.
+# 🌊 MICRO-PACK-WAVE2 · delegateSync + V2Adapter re-point · handoff (design, FIXED per 009)
+> Источник: FINAL-ROADMAP-draft.md §2 + вериф. 009 (26h). Применяет: Hub(007) post-M3-GO. Frozen: НЕ трогать.
+> Якоря: канон 306/770; V2Interceptor-wrap + V2Adapter НЕ удалять, пока жив хоть один caller; Frozen-guard GREEN.
 
 ## ЦЕЛЬ
-Перенаправить `delegateSync` с V2-поверхности на V3 (leaves-first). 13 caller-файлов (инвентарь Волн 2 = 13, Д-5). Пока жив хоть один caller → V2Interceptor-wrap НЕ удалять (сохраняем совместимость до последнего потребителя).
+Re-point ВСЕХ потребителей V2-поверхности на V3 (leaves-first). 009 нашёл: `delegateSync` в **21** файле, `V2Adapter` импортируют **17** файлов вне engine-v3 (не только delegateSync). Оба класса ре-поинтим здесь; удаляем V2Adapter только в W4 (после grep→0).
 
-## ПРАВИТЬ (SAFE-файлы, 13 caller)
-- 13 caller-файлов delegateSync (точный список снять grep'ом `delegateSync` в src на момент исполнения; Д-5 координата birth-счётчика App.tsx:97/:99).
-- Каждый caller: заменить V2-delegateSync вызов на V3-эквивалент (engine-v3 surface) без изменения сигнатуры/поведения наружу.
-- V2Interceptor-wrap: помечать `@deprecated`, оставить до Волны 4 (после смерти последнего caller).
+## ПРАВИТЬ (SAFE)
+- **delegateSync** (21 caller, точный список grep'ом): заменить V2-delegateSync на V3-surface (сигнатура/поведение снаружи не меняются).
+- **V2Adapter** (17 импортёров вне engine-v3, известные: `main.tsx:129–136`, `MonitorRouter.ts:266`, `DuckGuardV3.ts:27`, `foundation/*`, `components/*`, `hooks/*`, `takes.time`, `legacy/*`, `WaveformCanvas`, …): ре-поинт `V2Adapter.getInstance()/getV2Engine()` на V3-эквивалент. Файл `V2Adapter.ts` НЕ удалять (удаление — в W4 после `grep -rln "V2Adapter" src` → 0).
+- `V2Interceptor-wrap`: пометить `@deprecated`, оставить до последнего caller.
 
 ## НЕ ТРОГАТЬ (Frozen)
-Все frozen-файлы; `track.orchestrator.ts` режется в Волне 4, не здесь.
+`track.orchestrator.ts` (режется в W4, не здесь). Все frozen read-only.
 
-## ГЕЙТ ВОЛНЫ
-1. канон-гейт 306/770 + PARITY PASS.
+## ГЕЙТ
+1. канон 306/770 + PARITY PASS.
 2. boot-smoke CDP V1/V5.
-3. SHA256-инвентарь frozen ДО/ПОСЛЕ идентичен.
+3. SHA256 frozen ДО/ПОСЛЕ идентичен.
 4. ⛔-отчёт Ц3.
-5. `grep -rn "delegateSync" src` → все оставшиеся вызовы указывают на V3-surface (0 на V2-interceptor-wrap, кроме осознанного deprecated).
+5. `grep -rln "delegateSync" src` → все вызовы на V3-surface (0 на V2-interceptor-wrap, кроме deprecated).
+6. `grep -rln "V2Adapter" src` → только `src/audio/engine-v3/V2Adapter.ts` (сам файл), импортёров 0 (готов к удалению в W4).
 
 ## ТЕСТЫ
-- delegateSync на V3-surface: интегра-смоук (синк state доезжает до V3).
-- Регресс: 13 caller не падают (зеркало потребителей из 002).
+- delegateSync/V2Adapter на V3: интегра-смоук (state доезжает).
+- Регресс: 21+17 caller не падают (зеркало потребителей из 009).
 - Frozen-guard: 0 новых.
 
 ## СТАТУС
-Дизайн готов. Применение — post-M3-GO (R6). До GO — подготовка.
+Дизайн (FIXED). Применение — post-M3-GO (R6).

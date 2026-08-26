@@ -1,31 +1,31 @@
-# 🌊 MICRO-PACK-WAVE3 · demolition · handoff (design)
-> Источник: FINAL-ROADMAP-draft.md §2 Этап 3 Волна 3 (001, вериф. 002/009). Применяет: Hub(007) post-M3-GO. Frozen: НЕ трогать.
-> Якоря: канон 306/770; restore-ветка НЕ добавляет поведения (страховка уже закрыта FALLBACK-pack b13de92); п.6 = аннотация, НЕ удаление (Д-4).
+# 🌊 MICRO-PACK-WAVE3 · demolition · handoff (design, FIXED per 009)
+> Источник: FINAL-ROADMAP-draft.md §2 + вериф. 009 (26h). Применяет: Hub(007) post-M3-GO. Frozen: НЕ трогать.
+> Якоря: канон 306/770; restore-ветка НЕ добавляет поведения (FALLBACK-pack b13de92 закрыл страховку); п.6 = аннотация, НЕ удаление (Д-4); ae-guard локацию подтвердить до правки.
 
 ## ЦЕЛЬ
-Снести V2-демо-классы/обёртки (leaves-first): `__switchToV3`, `wrap`, `V2AudioCage`, `ResurrectionDetector`, restore-ветку. Единственное поведенческое изменение — restore-ветка (`handleV3BootFailure` → crash-modal/reload вместо `__restoreV2Engine`), НЕ добавляет логики (страховка мертва на M3, закрыта FALLBACK-pack). `ae-guard` — перенести/заменить на V3-эквивалент.
+Снести V2-демо-классы/обёртки (leaves-first): `__switchToV3`, `wrap`, `V2AudioCage`, `ResurrectionDetector`, restore-ветку. `ae-guard` — переориентировать/удалить (НЕ внутри `bridges/*` — проверить локацию до правки!).
 
-## ПРАВИТЬ (SAFE-файлы)
-- `__switchToV3`, `wrap`, `V2AudioCage`, `ResurrectionDetector` — удалить (мертвый V2-код).
-- restore-ветка: `main.tsx:186` (фасад :8–10) → crash-modal/reload (A18). Только эта ветка меняет поведение деградации.
-- `ae-guard` — переориентировать на V3 (или удалить, если дублирует V3-guard).
-- **п.6 (Д-4):** аннотация «музейного» describe `BusFader18 §9` тем же паком — НЕ удаление (регресс-нетто pin-semantics остаётся живым). Тест после Волны 3 проверяет контракт-зеркало (полезный регресс).
+## ПРАВИТЬ (SAFE)
+- `__switchToV3`, `wrap`, `V2AudioCage`, `ResurrectionDetector` — удалить.
+- restore-ветка: `main.tsx:186` (фасад :8–10) → crash-modal/reload (А18). Зависит от FALLBACK-pack `b13de92` в baseline — подтвердить его наличие до W3.
+- `ae-guard` — найти литерал (grep), подтвердить НЕ в `bridges/*` (frozen); переориентировать на V3 или удалить.
+- **п.6 (Д-4):** аннотация «музейного» describe `BusFader18 §9` — НЕ удаление (регресс-нетто pin-semantics живой). Контракт-зеркало-тест после W3.
 
 ## НЕ ТРОГАТЬ (Frozen)
-Все frozen-файлы.
+Все frozen.
 
-## ГЕЙТ ВОЛНЫ
-1. канон-гейт 306/770 + PARITY PASS.
+## ГЕЙТ
+1. канон 306/770 + PARITY PASS.
 2. boot-smoke CDP V1/V5.
-3. SHA256-инвентарь frozen ДО/ПОСЛЕ идентичен.
+3. SHA256 frozen ДО/ПОСЛЕ идентичен.
 4. ⛔-отчёт Ц3.
 5. `grep -rnE "(__switchToV3|V2AudioCage|ResurrectionDetector)" src` → 0.
-6. BusFader18 §9 annotated (не удалён), контракт-зеркало-тест проходит.
+6. BusFader18 §9 annotated; контракт-зеркало-тест green.
 
 ## ТЕСТЫ
 - V3-boot failure → crash-modal (не тихий dead-zone, не restore V2).
-- Регресс-нетто BusFader18 сохранён (annotated test green).
+- Регресс-нетто BusFader18 сохранён.
 - Frozen-guard: 0 новых.
 
 ## СТАТУС
-Дизайн готов. Применение — post-M3-GO (R6). До GO — подготовка.
+Дизайн (FIXED). Применение — post-M3-GO (R6).
