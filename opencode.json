@@ -45,7 +45,7 @@
     "operator": {
       "description": "Исполнитель кода — применяет MICRO-PACK/патчи по dispatch Hub",
       "mode": "subagent",
-      "model": "opencode/big-pickle"
+      "model": "opencode/hy3-free"
     }
   },
   "model": "opencode/hy3-free"
