@@ -235,4 +235,8 @@ BAC-101..105 + BAC-107 = **реальная угроза флипа M3-ГО**. �
 | `reports/mac-007/proposal-notify-bridge.md` | ✅ сдан (ждёт диспатч) |
 | `reports/mac-007/go-chain-packet1.md` | ✅ инлайн-цепь A(001)→C(002)→A2(001)→009 GO |
 | `reports/mac-007/recon-d4-g3.md` | ✅ сдан |
+| `reports/mac-007/pitch-scope-chain.md` | ✅ сдан (GO_001 вердикт: ПОДКЛЮЧЕНИЕ РЕШЕНО/КАЧЕСТВО ОТЛОЖЕНО)
+| `reports/mac-007/fouc-stem-recon.md` | ✅ сдан (GROUP A/B микро-пак → Hub)
+| `reports/mac-007/student-pedagog-worker-hunt.md` | ✅ сдан (Rehearsal есть, видео unwired)
+| `MODEL-SWITCH-GUIDE.md` | ✅ сдан (процедура + CHAIN-SMOKE)
 | `AUDIT-mac-2026-08-25.md` + прочие reports | ✅ сданы |
