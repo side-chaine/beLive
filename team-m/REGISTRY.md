@@ -3,12 +3,13 @@
 ## 7. БАКТЕРИИ (Near-рекон, explore, 26.08)
 > СТОП снят по слову Босса («я разрешаю! нужно все исследовать!»). Полное исследование GO. BAC-001 чиним safe-side гейтом (frozen нетронут); root-фикс frozen — под формальный OVERRIDE Центра, если Босс позже захочет.
 
-### А. ВИДИМЫЕ (из 008 VISUAL-MAP) — готовы к микро-пакам
-- **BAC-001 FOUC лирики (P1, VMO-035):** root FROZEN (`track.orchestrator.ts:120-124`+`bridges/lyrics.bridge.ts`). Пак: safe-side гейт `lyricsReady` (`lyrics.store.ts`+`RehearsalLyrics.tsx`) — прячем сырое до `track-fully-loaded`.
-- **BAC-002 фейдер Other 5/6 (P1, VMO-005/036):** root SAFE (`engine-v3/integration/V3DataInterceptor.ts:92-102,134-136,229`). Пак: retry/backoff декода + не исключать декодированный стем + форма `track-stem-ready` loop по stemId (правим ИСТОЧНИК, frozen не трогаем) + проверить `MAX_MUSIC_STEMS=6` slice(0,6).
-- **BAC-003 лирика под TrackMap (P1, VMO-009):** SAFE (`RehearsalLyrics.module.css` центр+overflow:hidden, z-index 5 vs dock 999995). Пак: scroll/align-top при переполнении + поднять z-index + `--bl-deck-height` трекит раскрытый док.
-- **BAC-004 GetSongBPM крадёт Back (P2, VMO-018/019):** SAFE (`index.html:605-609` глобальная ссылка z-index 99999 поверх SyncEditorPanel Back z-index 90). Пак: `target=_blank rel=noopener` + вынести из зоны контролов.
-- **BAC-005 луп-линия выше (P2, VMO-008):** SAFE (`RehearsalLyrics.module.css .slotContainer align-content:center` vs top-down `slot.y`). Пак: `align-content:start` ИЛИ поправка на центрирование ИЛИ позиция по DOM-узлам.
+### А. ВИДИМЫЕ (из 008 VISUAL-MAP) — ЗАПАКОВАНЫ (коммит 04ed754), frozen нетронут, канон 306/772
+- **BAC-001** FOUC лирики (P1, VMO-035): SAFE-side гейт `lyricsReady` (`lyrics.store.ts`+`RehearsalLyrics.tsx`) — ПАК ПРИМЕНЁН.
+- **BAC-002** фейдер Other 5/6 (P1, VMO-005/036): SAFE `V3DataInterceptor.ts` — retry/backoff декода + не исключать стем + форма `track-stem-ready` loop по stemId — ПАК ПРИМЕНЁН.
+- **BAC-003** лирика под TrackMap (P1, VMO-009): SAFE css — `overflow:auto` + `align-content:flex-start`+ z-index — ПАК ПРИМЕНЁН.
+- **BAC-004** GetSongBPM крадёт Back (P2, VMO-018/019): SAFE `index.html` — `target=_blank rel=noopener` + z-index 80 — ПАК ПРИМЕНЁН.
+- **BAC-005** луп-линия выше (P2, VMO-008): SAFE css — тот же `align-content:flex-start` (объединён с BAC-003) — ПАК ПРИМЕНЁН.
+> Все 5 видимых багов закрыты в одном коммите; верификация tsc 306 / vitest 772 (2 legacy-файла вне канона = прежние, не наши).
 
 ### Б. СКРЫТАЯ ГНИЛЬ — угрозы флипа M3-ГО + tech-debt
 - **BAC-101** safe→FROZEN импорт `track.actions.ts:7` (`./track.orchestrator`) — hard break при флипе.
