@@ -3,13 +3,13 @@
 ## 7. БАКТЕРИИ (Near-рекон, explore, 26.08)
 > СТОП снят по слову Босса («я разрешаю! нужно все исследовать!»). Полное исследование GO. BAC-001 чиним safe-side гейтом (frozen нетронут); root-фикс frozen — под формальный OVERRIDE Центра, если Босс позже захочет.
 
-### А. ВИДИМЫЕ (из 008 VISUAL-MAP) — ЗАПАКОВАНЫ, frozen нетронут, канон 306/772. BAC-002..005 = коммит 04ed754; **BAC-001 пере-гейтнут отдельно и лежит в рабочем дереве (НЕЗАКОММИЧЕНО)** — см. строку BAC-001 ниже.
+### А. ВИДИМЫЕ (из 008 VISUAL-MAP) — ЗАПАКОВАНЫ, frozen нетронут, канон 306/772. BAC-002..005 = коммит 04ed754; **BAC-001 пере-гейтнут отдельно и ЗАКОММИЧЕН (184a3a3)** — см. строку BAC-001 ниже.
 - **BAC-001** FOUC лирики (P1, VMO-035): SAFE-side гейт на уровне СТОРА (`lyrics.store.ts`): буферизация `lines` — ранние сырые строки (frozen lyrics.bridge пишет их на `lyrics-rendered`/шаг 8) прячутся в `_rawLyricsBuffer` и публикуются потребителям (RehearsalLyrics, NowPlaying, LiveSubtitle, KaraokeLyricsBoard, WagonTrain, TrackInfo, BlockScenesModal, …) ТОЛЬКО на поздний V3 `track-loaded` (V3DataInterceptor:241). Доп. от stress-test 002: удалён мёртвый слушатель `track-change`; добавлен watchdog 5s, форсирующий `lyricsReady` если `track-loaded` не пришёл (V2-only/boot race) — лирика не спрятана вечно. RehearsalLyrics.tsx:764 держит свой гейт `if (!lyricsReady || lines.length === 0) return null;`. Frozen нетронут. 009 verdict: РЕШЕНО.
-- **BAC-002** фейдер Other 5/6 (P1, VMO-005/036): SAFE `V3DataInterceptor.ts` — retry/backoff декода + не исключать стем + форма `track-stem-ready` loop по stemId — ПАК ПРИМЕНЁН.
+- **BAC-002** Fader Order (6-й фейдер, «Other») — НЕ «5/6 нестабилен». По слову владельца: заявлено 6 стемов, загрузилось 5; на памяти владельца — ВПЕРВЫЕ. Одноразовая аномалия, подозрение на транзиентный дроп одного стема при загрузке. SAFE `V3DataInterceptor.ts` — retry/backoff декода + не исключать стем + форма `track-stem-ready` loop по stemId — ПАК ПРИМЕНЁН (защитная мера, НЕ доказывает решение). **СТАТУС: НАБЛЮДЕНИЕ + VERIFY** — проверить момент загрузки Fader Order (см. план верификации в чате 007). P1, VMO-005/036.
 - **BAC-003** лирика под TrackMap (P1, VMO-009): SAFE css — `overflow:auto` + `align-content:flex-start`+ z-index — ПАК ПРИМЕНЁН.
 - **BAC-004** GetSongBPM крадёт Back (P2, VMO-018/019): SAFE `index.html` — `target=_blank rel=noopener` + z-index 80 — ПАК ПРИМЕНЁН.
 - **BAC-005** луп-линия выше (P2, VMO-008): SAFE css — тот же `align-content:flex-start` (объединён с BAC-003) — ПАК ПРИМЕНЁН.
-> BAC-002..005 закрыты в коммите 04ed754. BAC-001 (FOUC) пере-гейтнут ПОЗЖЕ: буферизация `lines` в `src/stores/lyrics.store.ts` + watchdog 5s (по стресс-тесту 002) + удалён мёртвый слушатель `track-change`. Это изменение **НЕЗАКОММИЧЕНО** — висит в рабочем дереве (Operator применил, коммит не делал). Верификация: tsc 306 / vitest 772 (2 legacy-файла вне канона = прежние, не наши). 009 verdict по BAC-001: **РЕШЕНО**.
+> BAC-002..005 закрыты в коммите 04ed754. BAC-001 (FOUC) пере-гейтнут ПОЗЖЕ и **ЗАКОММИЧЕН в 184a3a3**: буферизация `lines` в `src/stores/lyrics.store.ts` + watchdog 5s (по стресс-тесту 002) + удалён мёртвый слушатель `track-change`. Верификация: tsc 306 / vitest 772 (2 legacy-файла вне канона = прежние, не наши). 009 verdict по BAC-001: **РЕШЕНО**.
 
 ### Б. СКРЫТАЯ ГНИЛЬ — угрозы флипа M3-ГО + tech-debt
 - **BAC-101** safe→FROZEN импорт `track.actions.ts:7` (`./track.orchestrator`) — hard break при флипе.
@@ -248,3 +248,32 @@ BAC-101..105 + BAC-107 = **реальная угроза флипа M3-ГО**. �
 | `reports/mac-007/student-pedagog-worker-hunt.md` | ✅ сдан (Rehearsal есть, видео unwired)
 | `MODEL-SWITCH-GUIDE.md` | ✅ сдан (процедура + CHAIN-SMOKE)
 | `AUDIT-mac-2026-08-25.md` + прочие reports | ✅ сданы |
+
+---
+
+### ⚙ ПРОТОКОЛ: диктовка Босса (STANDING, с 26.08)
+- Босс активно пользуется **голосовой диктовкой** → неизбежны опечатки/оговорки (примеры: «Fader Order» = «Fader Other»; «5 из 6 нестабилен» vs уточнение «заявлено 6 стемов, загрузилось 5, на памяти — впервые»).
+- **Правило для 007 (и Мака):** интерпретировать по **смыслу, сути, паттерну**, а не по точной букве. Самостоятельно объединять/додумывать слова к ближайшему по смыслу выражению, в каком Босс обычно формулирует. Не требовать уточнений по мелким опечаткам — брать суть дела.
+- При конфликте фактов (как с BAC-002) — **уточнение Босса есть истина**; сразу поправлять реестр под его версию.
+
+---
+
+### Mac-side update (007_Мак, 2026-08-26 · дозапись, ack)
+> Проверка реестра по команде Босса «проверь реестр». Факты сверены grep/эквивалентом node на Mac-маунте. Hub — владелец структуры; поправки ниже к сверке.
+
+**СТАТУС 26.08 (Far Light доставил, ждёт исполнения Hub post-M3-GO по санкции Босса R6):**
+- ✅ **WAVE-HANDOFF 1–5 ПЕРЕПИСАНЫ** (коммит `f47568d`): вердикт цепи 009 = РЕШЕНО. `V2Adapter` жив (факт: `grep -rln "V2Adapter" src` = **26 файлов**, не 17) → W2 ре-поинтит ВСЕ 26, W4 удаляет файл ТОЛЬКО по grep→0. BAC-105 → W1. legacy-путь `src/legacy/engine-v3/*` = **9 файлов** (вкл. 2 test в `__tests__`), не 8. BAC-107 (live-mode/waveformEditor stub + facade.ts:51) → W5. live-guard НЕ moved (сохраняет byte-identical SHA256).
+- ✅ **Frozen-boundary guard v1** (`team-m/bLb/frozen-guard.mjs`) — Босс APPROVED (GO). Baseline GREEN (Mac grep-эквивалент, node нет): новых safe→frozen импортов ВНЕ allowlist НЕТ. `frozen-guard-baseline-2026-08-26.md` + `WAVE-FROZEN-INVARIANTS.md` доставлены.
+- ✅ **bLb (beLiveBase):** цепь GO_005 (005→002→009) = РЕШЕНО post-m3 read-only (houses.yaml + city-gen.mjs; auto-PR отклонён). `BELIVEBASE-VISION-2026-08-26.md` + `belivebase-chain.md`.
+- ✅ **Student-Педагог S3 видео:** цепь 001→002→009 = MVP-1 GO (teacher→student one-way video, video-only, single-initiator — убирает glare). `MICRO-PACK-S3-VIDEO.md` (`413d8cc`).
+- ✅ **Pitch-connect:** GO_001 вердикт ПОДКЛЮЧЕНИЕ РЕШЕНО (guard, OPT-IN), КАЧЕСТВО ОТЛОЖЕНО. `MICRO-PACK-PITCH-CONNECT.md`.
+
+**РАСХОЖДЕНИЯ К СВЕРКЕ Hub (PC — авторитетен):**
+1. **МОДЕЛИ:** §4/§6 реестра пишут `opencode/x-preview-f-free`; фактически Босс перевёл ВСЕХ агентов на `opencode/hy3-free` (CHAIN-SMOKE GREEN 26.08, `.opencode/agent/*.md` + `opencode.json`). Обновить §4/§6 + строку PIVOT v2 (208).
+2. **КАНОН:** реестр §7-35 верно пишет **306/772** (PC). Мои паки WAVE*/S3 и SYNC-письма 26f/26h/26i/26j первично несли 306/770 — ВСЁ ПЕРЕПРАВЛЕНО на 772 (реестр прав). Hub при apply сверяет по 772.
+3. **BAC-112 счётчик:** реестр §7-26 верно = 9 файлов `src/legacy/engine-v3/*`. Мой WAVE4/инварианты первично писали 8 — ИСПРАВЛЕНО на 9 (вкл. 2 test).
+4. **V2Adapter счётчик:** реестр не фиксировал; 009 оценил 17, факт = **26**. WAVE2/инварианты/индекс ИСПРАВЛЕНЫ на 26.
+5. **Task Board §7 (Mac→Hub, строки 239–250) НЕ содержит 26.08 дропы** (waves/guard/bLb/S3/pitch/design-refs/CONTEXT.md). Добавить при следующем обновлении Hub.
+6. **§7-строки 31–36 (WAVE-HANDOFF статус) УСТАРЕЛИ:** волны НЕ pre-GO — Босс дал GO на Frozen-зону (R6, сессия 26.08), паки РЕШЕНО (GO) к исполнению Hub. Frozen-guard НЕ «ждёт аппрува» — APPROVED + baseline GREEN.
+
+**Frozen-файлы НЕ тронуты** ни в одном паке (только чтение + SHA256-инвентарь). Все 5 волн + guard + bLb + S3 = read-only дизайн Far Light.

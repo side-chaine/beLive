@@ -12,7 +12,7 @@
 - `WAVE-HANDOFF-INDEX.md` — сводная таблица + общий гейт + связь с Frozen-guard.
 
 ## ОБЩИЙ ГЕЙТ (каждой волны)
-канон 306/770 + PARITY PASS + boot-smoke CDP V1/V5 + SHA256 frozen ДО/ПОСЛЕ идентичен + ⛔-отчёт Ц3 + Frozen-guard GREEN.
+канон 306/772 + PARITY PASS + boot-smoke CDP V1/V5 + SHA256 frozen ДО/ПОСЛЕ идентичен + ⛔-отчёт Ц3 + Frozen-guard GREEN.
 
 ## КОНВЕЙЕР (твой)
 Можешь заводить per-wave исполнение через цепь 001/002/009 ПОСЛЕ GO Босса на флип (R6). Сейчас — только дизайн/подготовка/ревью. Frozen-guard (`team-m/bLb/frozen-guard.mjs`) — гоняй ДО флипа как pre-flip gate.

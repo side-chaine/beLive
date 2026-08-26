@@ -1,6 +1,6 @@
 # 🌊 MICRO-PACK-WAVE5 · finalization (+ BAC-107) · handoff (design, FIXED per 009)
 > Источник: FINAL-ROADMAP-draft.md §2 + вериф. 009 (26h). Применяет: Hub(007) post-M3-GO. Frozen: НЕ трогать.
-> Якоря: канон 306/770; фасад ОСТАЁТСЯ; __restoreV2Engine удаляется; BAC-105 ПЕРЕНЕСЁН в W1; BAC-107 ЗАКРЫТ здесь.
+> Якоря: канон 306/772; фасад ОСТАЁТСЯ; __restoreV2Engine удаляется; BAC-105 ПЕРЕНЕСЁН в W1; BAC-107 ЗАКРЫТ здесь.
 
 ## ЦЕЛЬ
 Финализация v3-only + закрыть BAC-107 (висел). BAC-105 (12 ридеров) уже закрыт в W1.
@@ -16,7 +16,7 @@
 Все frozen; комментарии-V2 в ≥13 файлах (`IV2PublicContract.ts:3/:11`, `MixerPanel.tsx:6`, …) = осознанный retain-класс, не блокер (критерий Этапа 4 = 0 runtime-imports).
 
 ## ГЕЙТ (Этап 4)
-1. канон 306/770 + PARITY PASS.
+1. канон 306/772 + PARITY PASS.
 2. boot-smoke CDP V1/V5.
 3. SHA256 frozen ДО/ПОСЛЕ идентичен.
 4. ⛔-отчёт Ц3.

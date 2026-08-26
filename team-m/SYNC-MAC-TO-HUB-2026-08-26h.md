@@ -8,7 +8,7 @@ node на Маке нет → прогнал grep-эквивалент по src/
 - Артефакт: `team-m/bLb/frozen-guard-baseline-2026-08-26.md`. Hub гоняет `node team-m/bLb/frozen-guard.mjs` на PC как pre-flip + post-wave gate.
 
 ## Task 2 · WAVE-FROZEN-INVARIANTS — готово ✅
-`team-m/WAVE-FROZEN-INVARIANTS.md`: для WAVE1–5 перечислены (а) frozen-файлы, обязанные остаться byte-identical (SHA256 ДО/ПОСЛЕ) и (б) safe-scope правки. Общий gate для 009: канон 306/770 + PARITY + boot-smoke CDP V1/V5 + SHA256 frozen совпал + ⛔-отчёт Ц3 + Frozen-guard GREEN.
+`team-m/WAVE-FROZEN-INVARIANTS.md`: для WAVE1–5 перечислены (а) frozen-файлы, обязанные остаться byte-identical (SHA256 ДО/ПОСЛЕ) и (б) safe-scope правки. Общий gate для 009: канон 306/772 + PARITY + boot-smoke CDP V1/V5 + SHA256 frozen совпал + ⛔-отчёт Ц3 + Frozen-guard GREEN.
 
 ## БОСС ДАЛ GO НА FROZEN-ЗОНУ (R6 санкция)
 Босс: «Разрешение на Frozen зону» = GO на флип M3-GO + исполнение Волн 1–5. Hub может заводить конвейер через 001/002/009. Мои handoff-паки (WAVE1..5 + INDEX) готовы к применению.

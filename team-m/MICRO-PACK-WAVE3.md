@@ -1,6 +1,6 @@
 # 🌊 MICRO-PACK-WAVE3 · demolition · handoff (design, FIXED per 009)
 > Источник: FINAL-ROADMAP-draft.md §2 + вериф. 009 (26h). Применяет: Hub(007) post-M3-GO. Frozen: НЕ трогать.
-> Якоря: канон 306/770; restore-ветка НЕ добавляет поведения (FALLBACK-pack b13de92 закрыл страховку); п.6 = аннотация, НЕ удаление (Д-4); ae-guard локацию подтвердить до правки.
+> Якоря: канон 306/772; restore-ветка НЕ добавляет поведения (FALLBACK-pack b13de92 закрыл страховку); п.6 = аннотация, НЕ удаление (Д-4); ae-guard локацию подтвердить до правки.
 
 ## ЦЕЛЬ
 Снести V2-демо-классы/обёртки (leaves-first): `__switchToV3`, `wrap`, `V2AudioCage`, `ResurrectionDetector`, restore-ветку. `ae-guard` — переориентировать/удалить (НЕ внутри `bridges/*` — проверить локацию до правки!).
@@ -15,7 +15,7 @@
 Все frozen.
 
 ## ГЕЙТ
-1. канон 306/770 + PARITY PASS.
+1. канон 306/772 + PARITY PASS.
 2. boot-smoke CDP V1/V5.
 3. SHA256 frozen ДО/ПОСЛЕ идентичен.
 4. ⛔-отчёт Ц3.

@@ -16,7 +16,7 @@
 
 ### ЯКОРЯ (9, обязательны)
 1. Frozen-стоп: `src/bridges/*` не трогать; `src/Rehearsal/bridge`, `camera.store.ts` — НЕ frozen, правим.
-2. Канон: tsc ≤306, vitest=770, `verify:ci` PARITY PASS (без прогона — не «готово»).
+2. Канон: tsc ≤306, vitest=772, `verify:ci` PARITY PASS (без прогона — не «готово»).
 3. single-mic-owner (MicSourceV3): НЕ трогаем; video-only ⇒ мик НЕ аттачим.
 4. reuse `useCameraStore` (video-only) — не плодим второй стрим.
 5. `peer-connection.ts` — single-initiator (teacher-only add), rollback НЕ нужен. Решение зафиксировано.

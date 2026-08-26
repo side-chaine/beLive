@@ -20,7 +20,7 @@
 
 ## WAVE 2 · delegateSync (21) + V2Adapter (17) re-point
 - **Frozen byte-identical:** `track.orchestrator.ts`.
-- **Safe-scope:** 21 caller `delegateSync` + 17 импортёров `V2Adapter` (main.tsx:129–136, MonitorRouter.ts:266, DuckGuardV3.ts:27, foundation/*, components/*, hooks/*, takes.time, legacy/*, WaveformCanvas, …) → V3-surface. `V2Interceptor-wrap` + `V2Adapter.ts` НЕ удалять (до последнего caller).
+- **Safe-scope:** 21 caller `delegateSync` + 26 импортёров (факт grep -rln=26) `V2Adapter` (main.tsx:129–136, MonitorRouter.ts:266, DuckGuardV3.ts:27, foundation/*, components/*, hooks/*, takes.time, legacy/*, WaveformCanvas, …) → V3-surface. `V2Interceptor-wrap` + `V2Adapter.ts` НЕ удалять (до последнего caller).
 - **Invariant:** `delegateSync`→V3-surface (0 на V2-wrap кроме deprecated); `grep -rln "V2Adapter" src` → только сам файл (импортёров 0, готов к W4). frozen SHA256 неизменен.
 
 ## WAVE 3 · demolition
@@ -30,7 +30,7 @@
 
 ## WAVE 4 · orchestrator re-point + legacy(8)/V2Adapter delete
 - **Frozen byte-identical:** `track.orchestrator.ts`, `patchV1.ts`, `AudioEngineV2.ts`, `src/bridges/**` (live-guard НА МЕСТЕ, не moved).
-- **Safe-scope:** 6 потребителей `track.actions.ts:7` (re-point); `MixerPanel.tsx:180` + `QuickActions.tsx:214` dyn-import orchestrator (удалить); `track.actions.ts` (перестаёт звать orchestrator); `V2Adapter.ts` УДАЛИТЬ ТОЛЬКО если `grep -rln "V2Adapter" src`→0; `src/legacy/engine-v3/*` (**8 файлов**, BAC-112) удалить.
+- **Safe-scope:** 6 потребителей `track.actions.ts:7` (re-point); `MixerPanel.tsx:180` + `QuickActions.tsx:214` dyn-import orchestrator (удалить); `track.actions.ts` (перестаёт звать orchestrator); `V2Adapter.ts` УДАЛИТЬ ТОЛЬКО если `grep -rln "V2Adapter" src`→0; `src/legacy/engine-v3/*` (**9 файлов (вкл. 2 test)**, BAC-112) удалить.
 - **Invariant:** safe→frozen импорты (track.orchestrator/patchV1) → 0; `V2Adapter` grep→0 (файл удалён); `src/legacy/engine-v3/*` удалён; frozen SHA256 неизменен (live-guard на месте).
 
 ## WAVE 5 · finalization + BAC-107
@@ -39,4 +39,4 @@
 - **Invariant (Этап 4):** runtime-imports frozen → 0; `__restoreV2Engine`→0; BAC-107 stubы удалены; frozen SHA256 неизменен; тег `v3-only`.
 
 ## ОБЩИЙ GATE (каждой волны)
-канон 306/770 + PARITY PASS + boot-smoke CDP V1/V5 + `sha256sum` frozen ДО/ПОСЛЕ совпал + ⛔-отчёт Ц3 + Frozen-guard GREEN (0 новых).
+канон 306/772 + PARITY PASS + boot-smoke CDP V1/V5 + `sha256sum` frozen ДО/ПОСЛЕ совпал + ⛔-отчёт Ц3 + Frozen-guard GREEN (0 новых).

@@ -1,6 +1,6 @@
 # 🌊 MICRO-PACK-WAVE1 · activation cut + V2-globals re-point · handoff (design, FIXED per 009)
 > Источник: FINAL-ROADMAP-draft.md §2 + вериф. 009 (26h). Применяет: Hub(007) post-M3-GO. Frozen: НЕ трогать.
-> Якоря: канон 306/770; frozen read-only; Frozen-guard GREEN после пака.
+> Якоря: канон 306/772; frozen read-only; Frozen-guard GREEN после пака.
 
 ## ЦЕЛЬ
 Leaves-first, ДВА блока сразу (REGISTRY §7:29: глобалы + бутстрап = ПЕРВЫЕ):
@@ -16,7 +16,7 @@ Leaves-first, ДВА блока сразу (REGISTRY §7:29: глобалы + б
 `patchV1.ts`, `AudioEngineV2.ts`, `bridges/*`, `track.orchestrator.ts` — read-only.
 
 ## ГЕЙТ
-1. канон 306/770 + PARITY PASS.
+1. канон 306/772 + PARITY PASS.
 2. boot-smoke CDP V1/V5 (V3 стартует, глобалы не читаются как undefined).
 3. SHA256 frozen ДО/ПОСЛЕ идентичен.
 4. ⛔-отчёт Ц3.

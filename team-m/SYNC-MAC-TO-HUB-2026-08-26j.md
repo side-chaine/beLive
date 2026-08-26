@@ -10,7 +10,7 @@
 - `CameraPreview.tsx:22-26`: гвард — не гасить камеру в `mode==='rehearsal'`.
 - `App.tsx` teardown: `disposeRehearsalSession` → bridge.dispose + pc.close + sc.leaveRoom + stopCamera.
 - `RehearsalVideoPanel.tsx` (новый): 2 <video> local/remote.
-- 9 якорей (Frozen не трогать; canon 306/770; single-mic-owner; reuse useCameraStore; single-initiator; единая точка; teardown; whiteboard=annotation; YT=+2 типа).
+- 9 якорей (Frozen не трогать; canon 306/772; single-mic-owner; reuse useCameraStore; single-initiator; единая точка; teardown; whiteboard=annotation; YT=+2 типа).
 
 ### БЛОКЕРЫ 002 ЗАКРЫТЫ
 glare → single-initiator (var 009: убрали glare из модели, не rollback-патч); CameraPreview-гасит → гвард; эхо → video-only; утечка → teardown; несущ. типы → только реальные; clock misuse → триггер-канал.
