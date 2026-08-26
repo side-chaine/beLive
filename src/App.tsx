@@ -1,4 +1,3 @@
-import { ENGINE_MODE } from './engine-mode';
 import { useEffect, useRef } from 'react';
 import { AudioCrashModal, useAudioContextHealth, getTransport } from './audio/engine-v3';
 // retired: audio.bridge → audio-events (main.tsx)
@@ -45,7 +44,6 @@ import { useModeStore } from './stores/mode.store';
 import { useBackgroundManagers } from './hooks/useBackgroundManagers';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { usePerformanceTier } from './hooks/usePerformanceTier';
-import { tryActivateV2 } from './audio/featureFlag';
 // retired: monitor.bridge → monitor-events (main.tsx)
 
 import { AiSettingsModal } from './components/AiSettingsModal';
@@ -90,15 +88,6 @@ export default function App() {
 
   useEffect(() => {
     if (surface !== 'app') return;
-    // M1 (342): No-Birth — в V3-режиме V2 не рождается (runtime death)
-    const engineMode = ENGINE_MODE;
-    if (engineMode !== 'v3') {
-      tryActivateV2();
-      // M2 (345): V2 birth counter — доказательство No-Birth
-      (window as any).__v2BirthCount = ((window as any).__v2BirthCount || 0) + 1;
-    } else {
-      (window as any).__v2BirthCount = 0;
-    }
     initTrackEventListeners();
     // const cleanupAudio = initAudioBridge();  // retired → audio-events in main.tsx
     // const cleanupLyrics = initLyricsBridge();  // retired → lyrics-events in main.tsx
