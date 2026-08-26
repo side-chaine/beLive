@@ -1,0 +1,182 @@
+diff --git a/src/App.tsx b/src/App.tsx
+index 99cd7ab..a925b9f 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -12,6 +12,7 @@ import { CatalogPanel } from './components/CatalogPanel';
+ import { Header } from './components/Header';
+ import { WagonTrain } from './components/WagonTrain';
+ import { RehearsalLyrics } from './components/RehearsalLyrics';
++import { S3VideoPanel } from './components/S3VideoPanel';
+ import { KaraokeLyricsBoard } from './components/KaraokeLyricsBoard';
+ import { LiveSubtitle } from './components/LiveSubtitle';
+ import { CameraPreview } from './components/CameraPreview';
+@@ -238,6 +239,7 @@ export default function App() {
+             <WagonTrain />
+           </div>
+           <RehearsalLyrics />
++          <S3VideoPanel />
+         </>
+       )}
+       {syncOpen && !showActive && !featureActive && <SyncLyrics />}
+diff --git a/src/Rehearsal/services/deep-link.service.ts b/src/Rehearsal/services/deep-link.service.ts
+index 7ac9105..302270b 100644
+--- a/src/Rehearsal/services/deep-link.service.ts
++++ b/src/Rehearsal/services/deep-link.service.ts
+@@ -71,23 +71,62 @@ export async function handleRehearsalDeepLink(): Promise<RehearsalLinkParams | n
+ }
+ 
+ /** Создаёт WebRTC bridge для репетиционной сессии. */
++let activePc: PeerConnectionManager | null = null;
++
++/** S3 MVP-1: teacher прикрепляет свой локальный video-поток к активному PC.
++ *  Поток НЕЗАВИСИМ от camera.store (CameraPreview) — чтобы не срабатывал
++ *  stopCamera() по mode!=='live' (блокер 002: «CameraPreview kills camera»). */
++let activeLocalStream: MediaStream | null = null;
++
++export function attachRehearsalLocalVideo(stream: MediaStream): void {
++  activePc?.attachLocalTracks(stream);
++}
++
++/** Открывает камеру teacher-а и аттачит к PC. Вызывается на peer-joined,
++ *  чтобы offer не потерялся до подключения student (perfect-negotiation). */
++async function startTeacherCamera(): Promise<void> {
++  try {
++    const stream = await navigator.mediaDevices.getUserMedia({
++      video: { facingMode: 'user' },
++      audio: false,
++    });
++    activeLocalStream = stream;
++    useRehearsalSessionStore.getState().setLocalStream(stream);
++    activePc?.attachLocalTracks(stream);
++  } catch (e) {
++    console.warn('[S3] teacher camera failed', e);
++  }
++}
++
+ export function connectRehearsalSession(link: RehearsalLinkParams): void {
+   const { roomId, role, ticket } = link;
+   useRehearsalSessionStore.getState().setRole(role, roomId);
+   const sc = new SignalingClient(roomId, role, ticket);
+   const pc = new PeerConnectionManager(sc, role);
++  activePc = pc;
+   sc.onOpen = () => {
+     useRehearsalSessionStore.getState().setConnectionState('connected');
+   };
+   sc.onClose = (code) => {
+     useRehearsalSessionStore.getState().setConnectionState(code === 4001 ? 'failed' : 'reconnecting');
++    if (activeLocalStream) {
++      activeLocalStream.getTracks().forEach((t) => t.stop());
++      activeLocalStream = null;
++      useRehearsalSessionStore.getState().setLocalStream(null);
++    }
+   };
+   sc.onPeerJoined = () => {
+-    if (role === 'teacher') pc.createDataChannels();
++    if (role === 'teacher') {
++      pc.createDataChannels();
++      void startTeacherCamera();
++    }
+   };
+   pc.onClockSynced = (offset, rtt) => {
+     useRehearsalSessionStore.getState().setClockSync(offset, rtt);
+   };
++  pc.onRemoteStream = (stream) => {
++    useRehearsalSessionStore.getState().setRemoteStream(stream);
++  };
+   const bridge = new RehearsalTriggerBridge(pc, role);
+   sc.connect();
+   (window as any).__pc = pc;
+diff --git a/src/Rehearsal/store/rehearsal-session.store.ts b/src/Rehearsal/store/rehearsal-session.store.ts
+index 3d816c2..f9b1e9e 100644
+--- a/src/Rehearsal/store/rehearsal-session.store.ts
++++ b/src/Rehearsal/store/rehearsal-session.store.ts
+@@ -7,6 +7,7 @@ interface RehearsalSessionState {
+   roomId: string | null;
+   connectionState: SessionConnectionState;
+   remoteStream: MediaStream | null;
++  localStream: MediaStream | null;
+   clockOffset: number;
+   rtt: number;
+   isResyncing: boolean;
+@@ -15,6 +16,7 @@ interface RehearsalSessionState {
+   setRole: (role: 'teacher' | 'student', roomId: string) => void;
+   setConnectionState: (s: SessionConnectionState) => void;
+   setRemoteStream: (s: MediaStream | null) => void;
++  setLocalStream: (s: MediaStream | null) => void;
+   setClockSync: (offset: number, rtt: number) => void;
+   setResyncing: (v: boolean) => void;
+   setRequiresUserInteraction: (v: boolean) => void;
+@@ -26,6 +28,7 @@ const initial = {
+   roomId: null as string | null,
+   connectionState: 'idle' as SessionConnectionState,
+   remoteStream: null as MediaStream | null,
++  localStream: null as MediaStream | null,
+   clockOffset: 0,
+   rtt: 0,
+   isResyncing: false,
+@@ -37,6 +40,7 @@ export const useRehearsalSessionStore = create<RehearsalSessionState>((set) => (
+   setRole: (role, roomId) => set({ role, roomId }),
+   setConnectionState: (connectionState) => set({ connectionState }),
+   setRemoteStream: (remoteStream) => set({ remoteStream }),
++  setLocalStream: (localStream) => set({ localStream }),
+   setClockSync: (clockOffset, rtt) => set({ clockOffset, rtt }),
+   setResyncing: (isResyncing) => set({ isResyncing }),
+   setRequiresUserInteraction: (requiresUserInteraction) => set({ requiresUserInteraction }),
+diff --git a/src/components/S3VideoPanel.tsx b/src/components/S3VideoPanel.tsx
+new file mode 100644
+index 0000000..9b4078a
+--- /dev/null
++++ b/src/components/S3VideoPanel.tsx
+@@ -0,0 +1,52 @@
++import { useEffect, useRef } from 'react';
++import { useRehearsalSessionStore } from '../Rehearsal/store/rehearsal-session.store';
++
++/**
++ * S3 MVP-1 (Student-Педагог): teacher→student ОДНОСТОРОННЕЕ видео.
++ * - teacher: показывает СВОЙ поток (открыт/отправлен в deep-link.service при peer-joined).
++ * - student: НЕ открывает камеру (recvonly) → нет self-kill, нет glare.
++ * Single-initiator: только teacher аттачит трек + создаёт data-каналы.
++ */
++export function S3VideoPanel() {
++  const role = useRehearsalSessionStore((s) => s.role);
++  const remoteStream = useRehearsalSessionStore((s) => s.remoteStream);
++  const localStream = useRehearsalSessionStore((s) => s.localStream);
++  const connectionState = useRehearsalSessionStore((s) => s.connectionState);
++  const localVideoRef = useRef<HTMLVideoElement>(null);
++  const remoteVideoRef = useRef<HTMLVideoElement>(null);
++
++  useEffect(() => {
++    if (localVideoRef.current && localStream) localVideoRef.current.srcObject = localStream;
++  }, [localStream]);
++  useEffect(() => {
++    if (remoteVideoRef.current && remoteStream) remoteVideoRef.current.srcObject = remoteStream;
++  }, [remoteStream]);
++
++  if (!role) return null;
++
++  return (
++    <div className="s3-video-panel">
++      <div className="s3-badge">S3 · {role} · {connectionState}</div>
++      {role === 'teacher' && (
++        <div className="s3-local">
++          {localStream ? (
++            <video ref={localVideoRef} autoPlay playsInline muted />
++          ) : (
++            <div>📷…</div>
++          )}
++          <span>вы транслируете</span>
++        </div>
++      )}
++      {role === 'student' && (
++        <div className="s3-remote">
++          {remoteStream ? (
++            <video ref={remoteVideoRef} autoPlay playsInline />
++          ) : (
++            <div>🎥 ожидание преподавателя…</div>
++          )}
++          <span>видео преподавателя</span>
++        </div>
++      )}
++    </div>
++  );
++}
