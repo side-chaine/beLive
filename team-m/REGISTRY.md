@@ -1,3 +1,4 @@
+- **2026-08-26 · HTML VISUAL-MAP (008 данные) собрана Hub → team-m/reports/008/VISUAL-MAP.html (коммит 0a40ca6); зеркало на Рабочий стол Босса: `C:\Users\nikit\Desktop\beLive-VISUAL-MAP.html` (28KB, double-click). ПРАВИЛО: при каждом изменении repo-HTML — перелить копию на Desktop (cp). На Desktop кнопка «подгрузить design-refs» не резолвится (file://), поэтому рефы там = drag-drop / «выбрать папку» (указать repo/team-m/design-refs). Заметки Босса — localStorage браузера, не в файле.
 # 🤝 SHARED REGISTRY — beLive Mac↔PC (Hub: 007_Винда)
 
 > **Живой реестр координации.** Hub (PC/V007) владеет структурой; Mac-007 дописывает секцию «Mac-side» + ставит ack.

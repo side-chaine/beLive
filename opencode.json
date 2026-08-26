@@ -10,37 +10,37 @@
     "001": {
       "description": "Со-Архитектор beLive — ищет элегантное/минимальное решение",
       "mode": "subagent",
-      "model": "opencode/x-preview-f-free"
+      "model": "opencode/hy3-free"
     },
     "002": {
       "description": "Стресс-тестер — атакует решения 001, ищет краевые случаи",
       "mode": "subagent",
-      "model": "opencode/x-preview-f-free"
+      "model": "opencode/hy3-free"
     },
     "005": {
       "description": "Усилитель — подключает Context7 для актуальных док/версий",
       "mode": "subagent",
-      "model": "opencode/x-preview-f-free"
+      "model": "opencode/hy3-free"
     },
     "008": {
       "description": "Утилитный сабагент — общая поддержка/связка",
       "mode": "subagent",
-      "model": "opencode/x-preview-f-free"
+      "model": "opencode/hy3-free"
     },
     "009": {
       "description": "Независимый эксперт — финальный вердикт по задаче",
       "mode": "subagent",
-      "model": "opencode/x-preview-f-free"
+      "model": "opencode/hy3-free"
     },
     "explore": {
       "description": "Read-only explorer (built-in override)",
       "mode": "subagent",
-      "model": "opencode/x-preview-f-free"
+      "model": "opencode/hy3-free"
     },
     "general": {
       "description": "General-purpose subagent (built-in override)",
       "mode": "subagent",
-      "model": "opencode/x-preview-f-free"
+      "model": "opencode/hy3-free"
     },
     "operator": {
       "description": "Исполнитель кода — применяет MICRO-PACK/патчи по dispatch Hub",
@@ -48,5 +48,5 @@
       "model": "opencode/big-pickle"
     }
   },
-  "model": "opencode/x-preview-f-free"
+  "model": "opencode/hy3-free"
 }
