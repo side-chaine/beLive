@@ -1,6 +1,6 @@
 # Mac Team — INBOX (авто, не редактировать вручную)
 
-_Обновлено: 2026-08-25T20:10:03Z_
+_Обновлено: 2026-08-26T05:35:44Z_
 
 | agent | task | status | updated |
 |--------|------|--------|---------|
@@ -40,6 +40,7 @@ _Обновлено: 2026-08-25T20:10:03Z_
 | mac-007 | go-001-full-run | — |  |
 | mac-007 | farlight-packs-bslice-e1 | — |  |
 | mac-007 | smoke-inbox-sound-protocol | — |  |
+| mac-007 | design-refs-analysis | — |  |
 | mac-007 | run3-m3-d3-d4 | — |  |
 | mac-007 | proposal-notify-bridge | — |  |
 | mac-007 | roadmap-master | — |  |
@@ -50,4 +51,4 @@ _Обновлено: 2026-08-25T20:10:03Z_
 | mac-007 | proposal-coachpanel-body | — |  |
 | mac-007 | MICRO-PACK-E1-PREDICATE-draft | — |  |
 
-_Всего отчётов: 45
+_Всего отчётов: 46
