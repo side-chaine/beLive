@@ -1,6 +1,6 @@
 import { AIProvider, ChatRequest, ModelInfo, StreamCallbacks, AIError, StreamEvent } from '../types';
 
-const GATEWAY_URL = 'http://localhost:8787'; // TODO: Replace with your Cloudflare Workers Gateway URL
+const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL;
 
 interface EphemeralToken {
   token: string;
@@ -80,9 +80,18 @@ export class GatewayProvider implements AIProvider {
 
   constructor(private gatewayUrl: string = GATEWAY_URL) {}
 
+  private resolveUrl(): string {
+    if (this.gatewayUrl) return this.gatewayUrl;
+    if (import.meta.env.DEV) {
+      console.warn('[BAC-108] VITE_GATEWAY_URL не задан — Gateway недоступен в dev.');
+      return '';
+    }
+    throw new Error('[BAC-108] VITE_GATEWAY_URL не задан — AI Gateway недоступен в проде.');
+  }
+
   async healthCheck(): Promise<boolean> {
     try {
-      const res = await fetch(`${this.gatewayUrl}/health`, {
+      const res = await fetch(`${this.resolveUrl()}/health`, {
         method: 'GET',
         signal: AbortSignal.timeout(5000),
       });
@@ -118,7 +127,7 @@ export class GatewayProvider implements AIProvider {
     }
 
     try {
-      const res = await fetch(`${this.gatewayUrl}/auth/ephemeral`, {
+      const res = await fetch(`${this.resolveUrl()}/auth/ephemeral`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -145,7 +154,7 @@ export class GatewayProvider implements AIProvider {
     const { signal } = this.currentAbortController;
 
     try {
-      const res = await fetch(`${this.gatewayUrl}/v1/chat/stream`, {
+      const res = await fetch(`${this.resolveUrl()}/v1/chat/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -779,9 +779,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // (openCatalog removed)
 
-  const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:8787'; // Use environment variable or default
-  const gatewayProvider = new GatewayProvider(GATEWAY_URL);
-  aiHub.register(gatewayProvider);
+  const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL;
+  if (GATEWAY_URL) {
+    const gatewayProvider = new GatewayProvider(GATEWAY_URL);
+    aiHub.register(gatewayProvider);
+  }
 
   // ── OpenRouter Direct Provider (works without localhost gateway) ──
   const orProvider = new OpenRouterDirectProvider();

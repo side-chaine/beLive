@@ -14,10 +14,16 @@ export class GatewayAlignProvider implements AlignmentProvider {
   readonly name = 'gateway-align';
   readonly version = 'stub-v1';
   readonly health: AlignmentProviderHealth = 'unknown';
-  readonly endpoint: string;
+
+  private options: GatewayAlignProviderOptions;
+  private _endpoint: string | null = null;
+  private get endpoint(): string {
+    if (this._endpoint === null) this._endpoint = this.options.endpoint ?? `${getGatewayUrl()}/v1/align`;
+    return this._endpoint;
+  }
 
   constructor(options: GatewayAlignProviderOptions = {}) {
-    this.endpoint = options.endpoint ?? `${getGatewayUrl()}/v1/align`;
+    this.options = options;
   }
 
   async align(request: AlignmentJobRequest): Promise<AlignmentProviderResponse> {
