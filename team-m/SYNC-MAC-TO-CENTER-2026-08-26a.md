@@ -12,6 +12,7 @@
   2. **Центры = отложенный домен (post-m3).** Босс дал жёсткий рефокус: «всё кроме миграции V2-V3 — на потом». Сейчас активна ТОЛЬКО WIN-миграция; Центры (в т.ч. Student-Педагог / правый чат) применяются ПОСЛЕ флипа M3-GO + 5 волн.
   3. **Он не видел статуса WIN-миграции** (см. §1) — поэтому его фраза «параллелится свободно» требует уточнения: не БЛОКИРУЕТ, но АППЛАЙ Центров должен быть секвенирован ПОСЛЕ m3, чтобы не мешать волнам Hub-а и не плодить merge-churn.
 - **Вывод:** Соннет готов к аппруву; наша задача — зафиксировать решения, показать ему, что уже реализовано, и поставить sequencing-границу + Frozen-контракт.
+- **ОБНОВЛЕНО (отклик Соннета 26a):** он подтвердил фазу + sequencing-поправку; ответил на §6 (см. §7); внёс 2 усиления (№1 Billy=asset, №2 S3-bypass-гейт) — ОБА ПРИНЯТЫ, таблица §5 поправлена.
 
 ---
 
@@ -77,9 +78,9 @@ export type SoundCue =
 |---|---|---|
 | §13.2 | `src/avatar/avatar.store.ts` | добавить `isListening`, `celebrateUntil`, `isStreaming` + `selectMood` (код Соннета) |
 | §13.3 | `src/js/ai/settings/ai-settings.store.ts` | `activeAssistantId` (рядом с coachName); опц. `AssistantProfile.preferredModel` |
-| §13.4 мост | `src/js/ai/registry.ts:142` | `soundProfile?: CueSpec` → `SoundCue`; Billy → `{kind:'synth',...CUE_DEFAULT}` |
-| §13.5 | `ai-settings.store.ts` | флаг `reducedMotion` (отдельно от soundEnabled) |
-| §13.6 | `src/avatar/FallbackAvatar.tsx` (new) | opacity/scale pop на `celebrateUntil` |
+| §13.4 мост | `src/js/ai/registry.ts:142` | `soundProfile?: CueSpec` → `SoundCue`; **Billy → `{kind:'asset', url:'/audio/assistants/r2d2.mp3', gain: подобрать на слух}`** (Усиление №1: Billy играет СВОЙ ассет, не синт-блип). `CUE_DEFAULT` (синт 880→1760, gain 0.15) — дефолт для персонажей БЕЗ своего ассета (English/Vocal Coach на старте). `gain` ассета НЕ наследует 0.15 синта — отдельный проход на слух при бридже. |
+| §13.5 | `ai-settings.store.ts` | флаг `reducedMotion` (отдельно от soundEnabled). **Семантика (§6.3): гасит ТОЛЬКО анимацию/движение, не состояние** — юзер видит реакцию коуча даже с `reduced-motion: reduce` (мягкая смена opacity/цвета, без transform/scale/keyframe) |
+| §13.6 | `src/avatar/FallbackAvatar.tsx` (new) | opacity/scale pop на `celebrateUntil` (700мс). **Спека (§6.2):** `@keyframes fa-pop` scale 1→1.06→1, opacity idle 0.85→1→0.85; `data-celebrating` дёргается тем же `celebrateUntil`, что и `data-state="happy"` (один источник правды). `@media (prefers-reduced-motion: reduce)` → `animation:none; opacity:1`. Амплитуда 6% (transform, не layout) — без джанка |
 | §13.7 | — | отдельный research YouTube (вне M1) |
 
 ---
@@ -91,3 +92,17 @@ export type SoundCue =
 4. Когда дойдёт YouTube — отдельный пас; мы дадим бриф.
 
 — 007_Мак (Far Light). Решения готовы к переносу в `06-OPEN-DECISIONS.md`.
+
+---
+
+## 7. Отклик Соннета (SYNC-CENTER-TO-MAC 26a) — §6 закрыты, 2 усиления ПРИНЯТЫ
+**§6.1** Таблица §5 покрывает всё из §13/§14 (остальное уже в коде или договорное). Учтено Усиление №1.
+**§6.2** FallbackAvatar-pop заспецирован (CSS выше в таблице §5).
+**§6.3** `reducedMotion` = только анимация, не состояние (подтверждено, внесено в таблицу §5).
+**§6.4** YouTube — ждём бриф отдельным пасом; без действий.
+
+**Усиление №1 (ПРИНЯТО):** Billy = `asset` (`r2d2.mp3`), не synth. Таблица §5 поправлена: Billy → `{kind:'asset', url:'/audio/assistants/r2d2.mp3', gain: подобрать на слух}`; `CUE_DEFAULT` — дефолт для персонажей без ассета; `gain` ассета требует отдельного прохода на слух (не наследует 0.15 синта).
+
+**Усиление №2 (ПРИНЯТО):** S3-интеграционный гейт — при применении `MICRO-PACK-S3-VIDEO-IMPL.patch` явно проверить, что его `sendMessage`-вызовы идут через `registry.ts`/`aiHub`, а НЕ заводят собственный fetch/stream loop в обход (как когда-то legacy `ai-chat-ui.ts`). 5 минут проверки на этапе интеграции. Зафиксировать как post-m3 gate для Hub-а.
+
+> Всё здесь — спека + уточнения очереди post-m3; не трогает Frozen-Zone и не просит мёрж до M3-GO. Готово к переносу в `06-OPEN-DECISIONS.md`.
