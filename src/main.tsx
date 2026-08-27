@@ -12,7 +12,7 @@ import { registerWaveformEditorStub } from './services/waveform-editor.stub';
 import { patchLyricsDisplaySlimMethods } from './services/lyrics.service';
 import { initBlockEditorService } from './blocks/bridge/blockEditor.service';
 import { bridgeFacade } from './foundation/event-bus';
-import { V3StatePublisher, V3DataInterceptor, getTransport, V2Adapter, setStatePublisher, MonitorRouter } from './audio/engine-v3';
+import { V3StatePublisher, V3DataInterceptor, getTransport, setStatePublisher, MonitorRouter } from './audio/engine-v3';
 import type { HybridPipelineService as HybridPipelineServiceType } from './audio/engine-v3/pipeline/HybridPipelineService';
 import { V2AudioCage } from './audio/engine-v3/integration/V2AudioCage';
 import { MonitorEngine } from './audio/engine-v3/monitor/MonitorEngine';
@@ -125,38 +125,6 @@ function bootAether(): void {
     interceptor.attachCage(v2Cage)
     ;(window as any).__v2Cage = v2Cage
 
-    // 🛡️ MP-18: V2 Interceptor — блокируем V2.play() пока V3 активен
-    // Monkey-patch на V2Adapter.delegateSync. Это защита от:
-    //   - V2 autoplay timer (track.orchestrator.ts:474 ae.play() — но это
-    //     НЕ через V2Adapter, блокируем на уровне API для всех остальных)
-    //   - Keyboard Space fallback на V2 (useKeyboardShortcuts.ts:88)
-    //   - Любого другого кода, пытающегося ре-активировать V2
-    let _v3Active = false
-    ;(window as any).__v3Active = false
-    const _adapter = V2Adapter.getInstance()
-    const _originalDelegate = _adapter.delegateSync.bind(_adapter)
-    _adapter.delegateSync = ((method: string, ...args: any[]): any => {
-      if (method === 'play' && _v3Active) {
-        console.log('[V2Interceptor] 🚫 V2.play() blocked — V3 is active')
-        return
-      }
-      if ((method === 'seekTo' || method === 'setCurrentTime') && _v3Active) {
-        console.log(`[V2Interceptor] 🚫 V2.${method}() blocked — V3 is active`)
-        return
-      }
-      if (method === 'setInstrumentalVolume' || method === 'setVocalsVolume') {
-        console.warn('[delegateSync] master-volume blocked')
-        return
-      }
-      return _originalDelegate(method, ...args)
-    }) as typeof _adapter.delegateSync
-
-    // Экспортируем функцию для установки флага из V3DataInterceptor
-    ;(window as any).__setV3Active = (active: boolean) => {
-      _v3Active = active
-      ;(window as any).__v3Active = active
-    }
-
     // 🟢 Phase F: HybridPipelineService — retry/re-entry + explicit fail-state
     const initV3Pipeline = async (attempt = 0): Promise<HybridPipelineServiceType | null> => {
       const MAX = 3
@@ -229,7 +197,7 @@ function bootAether(): void {
     // 🎮 Консольные команды для управления V3 (Phase F)
     ;(window as any).__tp = transport  // быстрая ссылка
     ;(window as any).__v3play = async (offset?: number) => {
-      try { V2Adapter.getInstance().delegateSync('stop') } catch {}
+      try { getTransport()?.stop() } catch {}
       transport.play(offset);
       console.log('[🎮] play', offset ?? 0, '🔇 V3')
     }
@@ -254,7 +222,7 @@ function bootAether(): void {
         }
 
         // 1. Читаем время V2 через V2Adapter (MP-18: delegateSync, не getSync — currentTime не геттер!)
-        const offset = (V2Adapter.getInstance().delegateSync('getCurrentTime') as number) ?? 0
+        const offset = getTransport()?.currentTime ?? 0
 
         // 2. 🔧 FIX Double Playback: multi-layer V2 shutdown
         //    setStemMute + setStemVolume + setStemsEnabled + setInstrumentalVolume/setVocalsVolume + stop
@@ -262,13 +230,13 @@ function bootAether(): void {
         //    Каскадное обнуление gain на всех уровнях V2 гарантирует тишину.
         const stemIds = ['instrumental', 'vocals', 'drums', 'bass', 'keys', 'guitar', 'backing', 'other']
         stemIds.forEach(id => {
-          V2Adapter.getInstance().delegateSync('setStemMute', id, true)
-          V2Adapter.getInstance().delegateSync('setStemVolume', id, 0)
+          useStemStore.getState().setStemMute(id, true)
+          useStemStore.getState().setStemVolume(id, 0)
         })
-        V2Adapter.getInstance().delegateSync('setInstrumentalVolume', 0)
-        V2Adapter.getInstance().delegateSync('setVocalsVolume', 0)
-        V2Adapter.getInstance().delegateSync('setStemsEnabled', false)
-        V2Adapter.getInstance().delegateSync('stop')
+        useStemStore.getState().setStemVolume('instrumental', 0)
+        useStemStore.getState().setStemVolume('vocals', 0)
+        stemIds.forEach(id => useStemStore.getState().setStemMute(id, true))
+        getTransport()?.stop()
 
         // 🔧 FIX Gate квадратной формы: V3 играет ВСЕ стемы (включая instrumental),
         //    но FR-014 (audio-events.ts) ставит instrumental=0 при наличии music стемов.

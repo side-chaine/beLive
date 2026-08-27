@@ -6,7 +6,6 @@ import { CalibrationDrum } from './monitor/CalibrationDrum';
 import { DualAutoMixRow } from './monitor/DualAutoMixRow';
 import { ToggleSliderRow } from './monitor/ToggleSliderRow';
 import s from './MonitorMixPanel.module.css';
-import { V2Adapter } from '../audio/engine-v3/V2Adapter';
 import { getTransport } from '../audio/engine-v3';
 
 export function MonitorMixPanel() {
@@ -407,7 +406,7 @@ export function MonitorMixPanel() {
                     
                     // HOTFIX FM-9: Всегда паузим V2 — он мог играть в фоне
                     // V3 паузим только если он реально активен (не idle)
-                    try { V2Adapter.getInstance().delegateSync('pause') } catch {}
+                    try { getTransport()?.pause() } catch {}
                     const t3 = getTransport();
                     if (t3 && t3.state !== 'idle' && t3.orchestrator.all().length > 0) {
                       t3.pause();
@@ -561,9 +560,9 @@ export function MonitorMixPanel() {
                           // HOTFIX FM-9 + Sonnet fix: double guard перед play()
                           const t3 = getTransport();
                           const v3Active = t3 && t3.state !== 'idle' && t3.orchestrator.all().length > 0;
-                          try { V2Adapter.getInstance().delegateSync('seekTo', savedPositionRef.current || 0) } catch {}
+                          try { getTransport()?.seek(savedPositionRef.current || 0) } catch {}
                           if (!v3Active) {
-                            try { V2Adapter.getInstance().delegateSync('play') } catch {}
+                            try { getTransport()?.play() } catch {}
                           }
                           if (v3Active) {
                             void t3!.play(savedPositionRef.current || 0);
@@ -623,9 +622,9 @@ export function MonitorMixPanel() {
                           // HOTFIX FM-9 + Sonnet fix: double guard перед play()
                           const t3 = getTransport();
                           const v3Active = t3 && t3.state !== 'idle' && t3.orchestrator.all().length > 0;
-                          try { V2Adapter.getInstance().delegateSync('seekTo', savedPositionRef.current || 0) } catch {}
+                          try { getTransport()?.seek(savedPositionRef.current || 0) } catch {}
                           if (!v3Active) {
-                            try { V2Adapter.getInstance().delegateSync('play') } catch {}
+                            try { getTransport()?.play() } catch {}
                           }
                           if (v3Active) {
                             void t3!.play(savedPositionRef.current || 0);

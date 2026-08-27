@@ -11,7 +11,7 @@ import { eventBus } from '../event-bus'
 import { EventBusChannel } from '../types'
 import { useAudioStore } from '../../../stores/audio.store'
 import { useLyricsStore } from '../../../stores/lyrics.store'
-import { V2Adapter, getTransport } from '../../../audio/engine-v3'
+import { getTransport } from '../../../audio/engine-v3'
 
 const POLL_INTERVAL_MS = 100 // 10Hz
 
@@ -34,7 +34,6 @@ function resolveLineByTime(t: number): number {
 
 export function initPositionSync(): () => void {
   let intervalId: ReturnType<typeof setInterval> | null = null
-  const v2 = V2Adapter.getInstance()
 
   /** Обновить currentTime из V2Adapter (AudioEngineV2 имеет getCurrentTime(), НЕ свойство currentTime) */
   const syncCurrentTime = () => {
@@ -43,7 +42,7 @@ export function initPositionSync(): () => void {
     // Без state-проверки V2 polling сломается для всех V2-пользователей.
     const t3 = getTransport()
     if (t3 && ((window as any).__v3Active || (t3.state !== 'idle' && t3.orchestrator.all().length > 0))) return
-    const t = v2.getV2Engine()?.getCurrentTime?.() ?? -1
+    const t = getTransport()?.currentTime ?? -1
     if (t >= 0) {
       useAudioStore.setState({ currentTime: t })
     }

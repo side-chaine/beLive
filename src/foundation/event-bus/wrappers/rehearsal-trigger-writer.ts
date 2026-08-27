@@ -7,7 +7,8 @@
 // Bridge НЕ ТРОГАЕТСЯ — этот wrapper используется когда Facade отключается.
 // ============================================================
 
-import { V2Adapter } from '../../../audio/engine-v3/V2Adapter'
+import { getTransport } from '../../../audio/engine-v3'
+import { useStemStore } from '../../../stem/stem.store'
 import { eventBus } from '../event-bus'
 import { EventBusChannel, Subscription } from '../types'
 
@@ -19,47 +20,45 @@ export interface RehearsalTriggerState {
 }
 
 export class RehearsalTriggerWriter {
-  private _v2: V2Adapter
   private _subs: Subscription[] = []
 
   constructor() {
-    this._v2 = V2Adapter.getInstance()
   }
 
   /** Получить текущее время (замена ae.getCurrentTime()) */
   getCurrentTime(): number {
-    return this._v2.getSync<number>('currentTime') ?? 0
+    return getTransport()?.currentTime ?? 0
   }
 
   /** Получить playback rate (замена ae.playbackRate) */
   getPlaybackRate(): number {
-    return this._v2.getSync<number>('playbackRate') ?? 1
+    return getTransport()?.playbackRate ?? 1
   }
 
   /** Play (замена ae.play()) */
   async play(): Promise<void> {
-    try { this._v2.delegateSync('play') } catch {}
+    try { getTransport()?.play() } catch {}
   }
 
   /** Pause (замена ae.pause()) */
   pause(): void {
-    try { this._v2.delegateSync('pause') } catch {}
+    try { getTransport()?.pause() } catch {}
   }
 
   /** Seek (замена ae.seekTo() / ae.setCurrentTime()) */
   seekTo(time: number): void {
-    try { this._v2.delegateSync('seekTo', time) } catch {}
-    try { this._v2.delegateSync('setCurrentTime', time) } catch {}
+    try { getTransport()?.seek(time) } catch {}
+    try { getTransport()?.seek(time) } catch {}
   }
 
   /** Set stem volume (замена ae.setStemVolume()) */
   setStemVolume(id: string, vol: number): void {
-    try { this._v2.delegateSync('setStemVolume', id, vol) } catch {}
+    try { useStemStore.getState().setStemVolume(id, vol) } catch {}
   }
 
   /** Set playback rate (замена ae.setPlaybackRate()) */
   setPlaybackRate(rate: number): void {
-    try { this._v2.delegateSync('setPlaybackRate', rate) } catch {}
+    try { getTransport()?.setPlaybackRate(rate) } catch {}
   }
 
   /** Получить snapshot состояния (замена sendSnapshot) */
@@ -67,7 +66,7 @@ export class RehearsalTriggerWriter {
     return {
       currentTime: this.getCurrentTime(),
       playbackRate: this.getPlaybackRate(),
-      isPlaying: this._v2.getSync<boolean>('isPlaying') ?? false,
+      isPlaying: getTransport()?.state === 'playing',
       stemVolumes: {},
     }
   }

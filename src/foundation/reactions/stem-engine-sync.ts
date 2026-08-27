@@ -10,7 +10,7 @@
 
 import { useStemStore } from '../../stem/stem.store'
 import { useAudioStore } from '../../stores/audio.store'
-import { V2Adapter, getTransport } from '../../audio/engine-v3'
+import { getTransport } from '../../audio/engine-v3'
 
 const V2_POLL_INTERVAL = 200 // ms — как часто проверять готовность V2
 
@@ -60,7 +60,6 @@ interface EngineStateSnapshot {
  * - Silent catch c console.warn (не пустой catch)
  */
 export function initStemEngineSync(): () => void {
-  const v2 = V2Adapter.getInstance()
   _prevSnapshot = snapshot() // инициализация module-level ref
   let pollTimer: ReturnType<typeof setInterval> | null = null
 
@@ -79,23 +78,21 @@ export function initStemEngineSync(): () => void {
 
   const unsubRate = useAudioStore.subscribe((state, prev) => {
     if (state.playbackRate === prev.playbackRate) return
-    const t3 = isV3Master() ? getTransport() : null
-    if (t3) {
+    const t3 = getTransport()
+    if (t3 && isV3Master()) {
       t3.setPlaybackRate(state.playbackRate)
-    } else if (isV2Ready(v2)) {
-      safeDelegate(v2, 'setPlaybackRate', state.playbackRate)
     }
   })
 
-  if (!isV2Ready(v2)) {
+  if (!isV3Master()) {
     pollTimer = setInterval(() => {
-      if (isV2Ready(v2)) {
-        coldSync(v2)
+      if (isV3Master()) {
+        coldSync()
         if (pollTimer) { clearInterval(pollTimer); pollTimer = null }
       }
     }, V2_POLL_INTERVAL)
   } else {
-    coldSync(v2)
+    coldSync()
   }
 
   return () => {
@@ -107,11 +104,7 @@ export function initStemEngineSync(): () => void {
 
 // ─── Private ───────────────────────────────────────────────
 
-function isV2Ready(v2: V2Adapter): boolean {
-  return v2.getV2Engine() !== null
-}
-
-function coldSync(v2: V2Adapter): void {
+function coldSync(): void {
   const state = useStemStore.getState()
   const current: EngineStateSnapshot = {
     stemVolumes: { ...state.stemVolumes },
@@ -121,15 +114,13 @@ function coldSync(v2: V2Adapter): void {
     busVolumes: { ...state.busVolumes },
     stemsEnabled: state.stemsEnabled,
   }
-  applyAll(v2, current)
+  applyAll(current)
   _prevSnapshot = current
 }
 
 function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): void {
   // Определяем активный engine
   const t3 = isV3Master() ? getTransport() : null
-  const v2 = V2Adapter.getInstance()
-  const isV2 = !t3 && isV2Ready(v2)
 
   // StemVolumes
   for (const id of Object.keys(current.stemVolumes)) {
@@ -146,8 +137,6 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
         const stem = t3.orchestrator.get(id)
         // ⚠️ fallback-путь: no-op в V3 (orchestrator пуст, MP-23). Защита гейна — в pipeline single-writer (пак A).
         if (stem) stem.volume = current.stemVolumes[id]
-      } else if (isV2) {
-        safeDelegate(v2, 'setStemVolume', id, current.stemVolumes[id])
       }
     }
   }
@@ -158,8 +147,6 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
       if (t3) {
         const pipeline = (window as any).__belive?.pipeline
         if (pipeline?.setBusVolume) pipeline.setBusVolume(busId, current.busVolumes[busId])
-      } else if (isV2) {
-        safeDelegate(v2, 'setBusVolume', busId, current.busVolumes[busId])
       }
     }
   }
@@ -171,8 +158,6 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
         // V3: mute через pipeline.muteStem() (359: ветка была пустой — mute не доходил)
         const pipeline = (window as any).__belive?.pipeline
         if (pipeline?.muteStem) pipeline.muteStem(id, current.stemMutes[id])
-      } else if (isV2) {
-        safeDelegate(v2, 'setStemMute', id, current.stemMutes[id])
       }
     }
   }
@@ -188,19 +173,13 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
         }
       }
       // Solo-маска применяется в pipeline (single-writer effectiveGain, пак A) — re-apply не нужен
-    } else if (isV2) {
-      for (const id of Object.keys(current.stemSolos)) {
-        if (current.stemSolos[id] !== prev.stemSolos[id]) {
-          safeDelegate(v2, 'setStemSolo', id, current.stemSolos[id])
-        }
-      }
     }
   }
 
   // StemPans — FR-007: pan not supported by any engine — warn once (E11/SURFACE)
   for (const id of Object.keys(current.stemPans)) {
     if (current.stemPans[id] !== prev.stemPans[id]) {
-      if (isV2) warnPanUnsupported()
+      warnPanUnsupported()
     }
   }
 
@@ -215,8 +194,6 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
           if (MUSIC_STEMS.has(id)) pipeline.setStemMuted(id, !current.stemsEnabled)
         }
       }
-    } else if (isV2) {
-      safeDelegate(v2, 'setStemsEnabled', current.stemsEnabled)
     }
   }
 }
@@ -231,7 +208,7 @@ function hasSoloChange(current: EngineStateSnapshot, prev: EngineStateSnapshot):
   return false
 }
 
-function applyAll(v2: V2Adapter, state: EngineStateSnapshot): void {
+function applyAll(state: EngineStateSnapshot): void {
   const t3 = isV3Master() ? getTransport() : null
 
   if (t3) {
@@ -252,20 +229,6 @@ function applyAll(v2: V2Adapter, state: EngineStateSnapshot): void {
         if (MUSIC_STEMS.has(id)) pipeline.setStemMuted(id, !state.stemsEnabled)
       }
     }
-  } else {
-    // V2 path — оригинальная логика
-    for (const [id, vol] of Object.entries(state.stemVolumes)) {
-      safeDelegate(v2, 'setStemVolume', id, vol)
-    }
-    for (const [id, mute] of Object.entries(state.stemMutes)) {
-      safeDelegate(v2, 'setStemMute', id, mute)
-    }
-    for (const [id, solo] of Object.entries(state.stemSolos)) {
-      safeDelegate(v2, 'setStemSolo', id, solo)
-    }
-    // E12 (SURFACE): FR-007 pan not supported — warn once
-    if (Object.keys(state.stemPans).length > 0) warnPanUnsupported()
-    safeDelegate(v2, 'setStemsEnabled', state.stemsEnabled)
   }
 }
 
@@ -278,14 +241,6 @@ function snapshot(): EngineStateSnapshot {
     stemPans: { ...s.stemPans },
     busVolumes: { ...s.busVolumes },
     stemsEnabled: s.stemsEnabled,
-  }
-}
-
-function safeDelegate(v2: V2Adapter, method: string, ...args: unknown[]): void {
-  try {
-    v2.delegateSync(method, ...args)
-  } catch (e) {
-    console.warn(`[StemEngineSync] delegateSync('${method}') failed:`, e)
   }
 }
 
