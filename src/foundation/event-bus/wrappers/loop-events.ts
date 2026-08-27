@@ -1,7 +1,7 @@
 import { eventBus } from '../event-bus'
 import { EventBusChannel, Subscription } from '../types'
 import { useLoopStore } from '../../../stores/loop.store'
-import { V2Adapter, getTransport } from '../../../audio/engine-v3'
+import { getTransport } from '../../../audio/engine-v3'
 
 export function initLoopEvents(): () => void {
   const subs: Subscription[] = []
@@ -32,7 +32,7 @@ export function initLoopEvents(): () => void {
     }
     const t = ae.getCurrentTime?.() ?? 0
     if (t >= loopEndTime - 0.05 && Date.now() - lastJumpTime > 1200) {
-      V2Adapter.getInstance().delegateSync('seekTo', loopStartTime + 0.01)
+      getTransport()?.seek(loopStartTime + 0.01)
       lastJumpTime = Date.now()
     }
     rafId = requestAnimationFrame(check)

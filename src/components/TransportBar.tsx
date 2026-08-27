@@ -2,7 +2,7 @@ import React, { useCallback, useRef } from 'react';
 import { useAudioStore } from '../stores/audio.store';
 import { useModeStore } from '../stores/mode.store';
 import { interruptPracticeSession } from '../exercises/exercise.interruption';
-import { V2Adapter, getTransport } from '../audio/engine-v3';
+import { getTransport } from '../audio/engine-v3';
 import { eventBus } from '../foundation/event-bus/event-bus';
 import { EventBusChannel } from '../foundation/event-bus/types';
 
@@ -46,7 +46,7 @@ export function TransportBar() {
           // V2 fallback — байт-идентичен оригиналу (001 требование)
           // eventBus.publish тут ОСТАЁТСЯ — position-sync.seekSub подписан на него
           try {
-            V2Adapter.getInstance().delegateSync('seekTo', newTime)
+            getTransport()?.seek(newTime)
             eventBus.publish(EventBusChannel.Audio, 'seek-position-changed', {
               currentTime: newTime, duration,
             })

@@ -5,7 +5,6 @@
  * seek через TransportV3 (паттерн C21 / WaveformCanvas:438-446).
  */
 import { getTransport } from '../audio/engine-v3';
-import { V2Adapter } from '../audio/engine-v3/V2Adapter';
 
 /** Текущее время воспроизведения: свежее V3-clock при активном V3, иначе V2. */
 export function getPlaybackTime(): number {
@@ -26,7 +25,7 @@ export function seekTo(t: number): void {
     try { void getTransport()?.seek(Math.max(0, t)); } catch {}
     return;
   }
-  try { V2Adapter.getInstance().delegateSync('seekTo', t); } catch {}
+  try { getTransport()?.seek(t); } catch {}
 }
 
 /** Идёт ли воспроизведение: V3-state при активном V3, иначе V2.isPlaying. */

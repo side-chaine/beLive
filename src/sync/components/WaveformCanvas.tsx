@@ -5,7 +5,6 @@ import { useMarkersStore } from '../../stores/markers.store';
 import { useWaveformRender } from '../hooks/useWaveformRender';
 import { useWaveformViewport } from '../hooks/useWaveformViewport';
 import { findNearestMarker, detectLoopHandle } from '../canvas/hit-testing';
-import { V2Adapter } from '../../audio/engine-v3/V2Adapter';
 import { getTransport } from '../../audio/engine-v3';
 import { useLoopStore } from '../../stores/loop.store';
 import { eventBus } from '../../foundation/event-bus/event-bus';
@@ -442,7 +441,7 @@ export function WaveformCanvas() {
               void t3.seek(clampedTime)
               // V3: seek-position-changed публикует _onSeek (V3StatePublisher) — не дублируем (#TASK-013.4)
             } else {
-              V2Adapter.getInstance().delegateSync('seekTo', clampedTime)
+              getTransport()?.seek(clampedTime)
               // V2 fallback: публикуем вручную (иначе никто не узнает о seek)
               eventBus.publish(EventBusChannel.Audio, 'seek-position-changed', {
                 currentTime: clampedTime, duration,

@@ -17,7 +17,7 @@ import { usePracticeStore } from '../../stores/practice-session.store';
 import { getBlockTimeRange } from '../../utils/block-time-range';
 import { getStructureFormula } from '../../utils/structure-formula';
 import { BLOCK_TYPE_NAMES } from '../../blocks/parser/block-taxonomy';
-import { V2Adapter } from '../../audio/engine-v3/V2Adapter';
+import { getTransport } from '../../audio/engine-v3';
 
 /* ═══ Interfaces ═══ */
 export interface ToolCall {
@@ -237,7 +237,7 @@ async function executeSeekToSection(args: Record<string, unknown>): Promise<Tool
       };
     }
 
-    try { V2Adapter.getInstance().delegateSync('seekTo', range.startTime) } catch {}
+    try { getTransport()?.seek(range.startTime) } catch {}
     return {
       tool: 'seek_to_section',
       success: true,

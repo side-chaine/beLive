@@ -3,7 +3,7 @@ import { useBlocksStore } from '../stores/blocks.store';
 import { useMarkersStore } from '../stores/markers.store';
 import { useLyricsStore } from '../stores/lyrics.store';
 import { getActiveBlock, createSubBlocks, getActiveSubBlockIndex } from '../utils/block-utils';
-import { V2Adapter, getTransport } from '../audio/engine-v3';
+import { getTransport } from '../audio/engine-v3';
 import { useLoopStore } from '../stores/loop.store';
 import { useDeckStore } from '../stores/deck.store';
 import { useTakesStore } from '../takes/takes.store';
@@ -108,7 +108,7 @@ export function WagonTrain() {
         void transport.seek(marker.time);
         // publishSeek идёт через _onSeek (V3StatePublisher) — не дублируем (#TASK-013.4)
       } else {
-        try { V2Adapter.getInstance().delegateSync('seekTo', marker.time) } catch {}
+        try { getTransport()?.seek(marker.time) } catch {}
       }
 
       // If Takes panel is active (open and selected), select this block for recording
@@ -133,7 +133,7 @@ export function WagonTrain() {
         void transport.seek(marker.time);
         // publishSeek идёт через _onSeek (V3StatePublisher) — не дублируем (#TASK-013.4)
       } else {
-        try { V2Adapter.getInstance().delegateSync('seekTo', marker.time) } catch {}
+        try { getTransport()?.seek(marker.time) } catch {}
       }
 
       // TASK-011 / №17-H: клик по субблоку тоже выбирает блок панели тейков
