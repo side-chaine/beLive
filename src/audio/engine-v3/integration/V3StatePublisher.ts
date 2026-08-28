@@ -125,10 +125,7 @@ export class V3StatePublisher {
       }
     } catch {}
 
-    // Legacy bridge for wrapper code not yet migrated onto the EventBus. Event NAME
-    // here is a placeholder — I don't know what old wrapper code actually listens
-    // for on window; grep for existing `window.addEventListener` calls related to
-    // playback before relying on this, otherwise nothing is actually listening.
+    // playback-state-changed потребляют: 7 window-листенеров — 4 FROZEN (lyrics.bridge:171, audio.bridge:149, audio-reactive.bridge:132, stem-reactive.bridge:251) + 3 safe (PitchTab:277, trigger-visual.service:208, stem-reactive.ts:167); dual-dispatcher: V3StatePublisher:133 (V3) + AudioEngineV2.ts:1962 (FROZEN V2); facade.ts:21 dual-publish в eventBus → 6 подписчиков (audio-events:28, takes-events:26, position-sync:51, lyrics-events:166, audio-reactive:138, rehearsal-trigger-writer:76).
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('playback-state-changed', { detail: { isPlaying, currentTime, duration } }));
     }

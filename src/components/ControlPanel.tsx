@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { openBlockEditor } from '../blocks/bridge/blockEditor.service';
 import { useModeStore } from '../stores/mode.store';
 import { usePianoStore } from '../stores/piano.store';
 import { useMonitorStore } from '../stores/monitor.store';
@@ -26,7 +27,7 @@ export function ControlPanel() {
       console.warn('[ControlPanel] No lyrics loaded — cannot open Block Editor');
       return;
     }
-    w.waveformEditor?._openNewBlockEditor?.();
+    openBlockEditor();
   }, []);
 
   if (mode === 'live') return null;

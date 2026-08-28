@@ -1,169 +1,125 @@
-// beLive — Block Editor Service (ex-Bridge)
-// Sprint 36 | Intercepts legacy ModalBlockEditor callers
-// Retired: bridge → service (2026-07-17)
-// Pattern: Bridge Interception (same as sync.bridge, live-guard)
-//
-// Legacy callers:
-//   SyncEditorPanel.tsx:348  → window.modalBlockEditorInstance.show()
-//   ControlPanel.tsx:29      → new window.ModalBlockEditor()
-// Both do: init(text, trackInfo, onSave, onCancel) → show()
+// beLive — Block Editor Service
+// W5 (MICRO-PACK-WAVE5, ПРАВКА-3): прямой терминальный вход в BlockEditorModal.
+// вызов — напрямую useBlockEditorStore.getState().open(...), без Proxy.
 
 import { useBlockEditorStore } from '../store/blockEditor.store';
-import { getTrack, updateTrackField } from '../../services/idb.service';
-import { useTrackStore } from '../../stores/track.store';
+import { saveLyricsBlocks } from '../../services/track.actions';
 
 /**
- * Proxy class that replaces legacy ModalBlockEditor.
- * init() stores args, show() opens React modal via store.
+ * openBlockEditor — единственный вход в живой BlockEditorModal.
+ * Логика перенесена 1:1 из удалённого WaveformEditor stub:
+ * guard'ы (нет трека/каталога → error-нотификация), RTF-парс,
+ * авто-нарезка блоков (boundary припев|проигрыш + аккумулятор 2 строк),
+ * save-колбэк (saveLyricsBlocks + loadImportedBlocks + updateMarkerColors
+ * + success/error-нотификации).
  */
-class BlockEditorProxy {
-  private _text = '';
-  private _trackInfo: any = null;
-  private _onSave: any = null;
-  private _onCancel: any = null;
-  private _wasInit = false;
-
-  init(
-    lyricsText: string,
-    trackInfo: any,
-    onSaveCallback?: any,
-    onCancelCallback?: any
-  ) {
-    this._text = lyricsText || '';
-    this._trackInfo = trackInfo;
-    this._onSave = onSaveCallback || null;
-    this._onCancel = onCancelCallback || null;
-    this._wasInit = true;
-  }
-
-  async show() {
-    // If show() called without init() — pull current track data from IDB
-    if (!this._wasInit || !this._text) {
-      await this._loadCurrentTrack();
-    }
-
-    useBlockEditorStore.getState().open(
-      this._text,
-      this._trackInfo,
-      this._onSave,
-      this._onCancel
-    );
-
-    // Reset init flag so next show() without init() re-loads
-    this._wasInit = false;
-  }
-
-  hide() {
-    useBlockEditorStore.getState().close();
-  }
-
-  /** Pull current track data from legacy globals */
-  private async _loadCurrentTrack() {
-    const w = window as any;
-    const ld = w.lyricsDisplay;
-
-    // Get current track from React store + IDB
-    const meta = useTrackStore.getState().currentTrack;
-    const trackId = meta ? Number(meta.id) : null;
-    const track = trackId ? await getTrack(trackId) : null;
-
-    this._trackInfo = track || { id: trackId };
-
-    // Get lyrics text — try multiple sources
-    if (track?.lyricsOriginalContent) {
-      this._text = track.lyricsOriginalContent;
-    } else if (track?.lyrics) {
-      this._text = track.lyrics;
-    } else if (ld?.lyrics && Array.isArray(ld.lyrics)) {
-      this._text = ld.lyrics.join('\n');
-    } else if (ld?.fullText) {
-      this._text = ld.fullText;
-    } else {
-      this._text = '';
-    }
-
-    // Build save callback that matches waveform-editor pattern
-    this._onSave = async (editedBlocks: any, newLyricsText: string) => {
-      if (trackId) {
-        await updateTrackField(Number(trackId), { blocksData: editedBlocks, lyrics: newLyricsText });
-        document.dispatchEvent(new CustomEvent('blocks-applied', { detail: { trackId, blocksCount: editedBlocks?.length || 0 } }));
-        if (ld?.loadImportedBlocks) {
-          ld.loadImportedBlocks(editedBlocks, newLyricsText, true);
-        }
-        if (w.markerManager?.updateMarkerColors) {
-          w.markerManager.updateMarkerColors();
-        }
-      }
-    };
-
-    this._onCancel = null;
-  }
-}
-
-// ── Patch waveformEditor ──────────────────────────────────────
-
-function patchWaveformEditor(): void {
+export function openBlockEditor(): void {
   const w = window as any;
-  const we = w.waveformEditor;
-  if (!we) {
-    setTimeout(patchWaveformEditor, 300);
+
+  const tc = w.trackCatalog;
+  if (!tc) {
+    w.showAppNotification?.('Ошибка: Каталог треков недоступен', 'error');
     return;
   }
 
-  // Pre-set modalBlockEditor to our proxy
-  // → _openNewBlockEditor's guard `if (!this.modalBlockEditor)` will skip
-  //   creating the original instance from lexical scope
-  we.modalBlockEditor = new BlockEditorProxy();
+  const idx = tc.currentTrackIndex;
+  const track = (idx >= 0 && idx < tc.tracks.length) ? tc.tracks[idx] : null;
+  const currentTrackId = track?.id ?? null;   // нативный тип из каталога, НЕ String()
 
-  // Belt-and-suspenders: wrap _openNewBlockEditor to force proxy
-  // even if something clears the cached instance
-  const orig = we._openNewBlockEditor;
-  if (typeof orig === 'function') {
-    we._openNewBlockEditor = async function (this: any, ...args: any[]) {
-      this.modalBlockEditor = new BlockEditorProxy();
-      return orig.apply(this, args);
-    };
+  if (!currentTrackId) {
+    w.showAppNotification?.('Ошибка: Трек не выбран', 'error');
+    return;
   }
 
-  // W11: wrap we.show() — пропускаем Sync Editor если auto-sync применён для этого трека
-  if (!(we as any).__autoLyricsPatchedShow) {
-    const _origShow = we.show?.bind(we);
-    we.show = function () {
-      import('../../services/auto-lyrics.service')
-        .then(({ shouldSkipEditorsForTrack }) => {
-          const trackId = we.currentTrackId;
-          if (trackId && shouldSkipEditorsForTrack(trackId)) {
-            if (import.meta.env.DEV) {
-              if (import.meta.env.DEV) console.log('[AutoLyrics] Sync Editor skipped — auto-sync applied for track', trackId);
-            }
-            return;
+  let currentLyrics = '';
+
+  if (track.lyricsOriginalContent) {
+    if (track.lyricsOriginalContent.trim().startsWith('{\\rtf')) {
+      try {
+        const raw = String(track.lyricsOriginalContent);
+        const svc = w.parsingService;
+        let txt = svc?.rtfToText ? svc.rtfToText(raw) : raw;
+        txt = txt
+          .replace(/\r\n|\r/g, '\n')
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
+        currentLyrics = txt;
+      } catch {
+        currentLyrics = track.lyricsOriginalContent;
+      }
+    } else {
+      currentLyrics = track.lyricsOriginalContent;
+    }
+  } else if (track.lyrics) {
+    currentLyrics = track.lyrics;
+  } else if (w.lyricsDisplay?.fullText) {
+    currentLyrics = w.lyricsDisplay.fullText;
+  }
+
+  try {
+    const hasDoubleNewlines = /\n\s*\n/.test(currentLyrics || '');
+    if (
+      !hasDoubleNewlines &&
+      w.lyricsDisplay &&
+      Array.isArray(w.lyricsDisplay.lyrics) &&
+      w.lyricsDisplay.lyrics.length > 0
+    ) {
+      const lines = w.lyricsDisplay.lyrics
+        .map((l: any) => String(l || '').trim())
+        .filter(Boolean);
+      const blocks: string[] = [];
+      const boundary = /(\[?\s*(припев|проигрыш)\s*\]?)/i;
+      let acc: string[] = [];
+      for (const line of lines) {
+        if (boundary.test(line)) {
+          if (acc.length) {
+            blocks.push(acc.join('\n'));
+            acc = [];
           }
-          _origShow?.();
-        })
-        .catch(() => {
-          // Импорт упал — открываем как обычно
-          _origShow?.();
-        });
-    };
-    (we as any).__autoLyricsPatchedShow = true;
+          blocks.push(line);
+          continue;
+        }
+        acc.push(line);
+        if (acc.length >= 2) {
+          blocks.push(acc.join('\n'));
+          acc = [];
+        }
+      }
+      if (acc.length) blocks.push(acc.join('\n'));
+      if (blocks.length > 0) currentLyrics = blocks.join('\n\n');
+    }
+  } catch (e) {
+    console.warn('WaveformEditor: LyricsDisplay fallback failed', e);
   }
-}
 
-// ── Init ─────────────────────────────────────────────────────
-
-let initialized = false;
-
-export function initBlockEditorService(): void {
-  if (initialized) return;
-  initialized = true;
-
-  const w = window as any;
-
-  // Replace constructor globally — any future `new ModalBlockEditor()` gets Proxy
-  w.ModalBlockEditor = BlockEditorProxy;
-
-  // NOTE: modalBlockEditorInstance удалён — 0 callers в коде
-
-  // Patch waveformEditor (may need to poll if not ready yet)
-  patchWaveformEditor();
+  useBlockEditorStore.getState().open(
+    currentLyrics,
+    track,
+    async (editedBlocks: any, newLyricsText: string) => {
+      if (w.trackCatalog && currentTrackId) {
+        try {
+          saveLyricsBlocks(currentTrackId, editedBlocks, newLyricsText);
+          if (w.lyricsDisplay?.loadImportedBlocks) {
+            w.lyricsDisplay.loadImportedBlocks(
+              editedBlocks,
+              newLyricsText,
+              true
+            );
+          }
+          if (w.markerManager?.updateMarkerColors) {
+            w.markerManager.updateMarkerColors();
+          }
+          w.showAppNotification?.('Текст и блоки сохранены успешно!', 'success');
+        } catch (error: any) {
+          w.showAppNotification?.(
+            `Ошибка сохранения: ${error?.message || error}`,
+            'error'
+          );
+        }
+      }
+    },
+    () => {
+      w.showAppNotification?.('Редактирование блоков отменено.', 'info');
+    }
+  );
 }

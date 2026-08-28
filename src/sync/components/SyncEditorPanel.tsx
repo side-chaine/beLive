@@ -13,6 +13,7 @@ import { lyricsAlignService } from '../word-sync/services/lyrics-align.service';
 import { buildAlignmentJobRequest } from '../word-sync/services/alignment-request.builder';
 import { fetchLrcVersions, parseLrcVersion } from '../../services/auto-lyrics.service';
 import type { LrcVersion } from '../../services/auto-lyrics.service';
+import { openBlockEditor } from '../../blocks/bridge/blockEditor.service';
 import { uploadBlobToTelegram } from '../../services/tg-upload.service';
 import { generateTrackZip } from '../../sync/services/zip-export.service';
 
@@ -899,7 +900,7 @@ export default function SyncEditorPanel() {
             fontSize: '11px',
           }}
           onClick={() => {
-            (window as any).waveformEditor?._openNewBlockEditor?.();
+            openBlockEditor();
           }}
           title="Open Block Editor"
         >

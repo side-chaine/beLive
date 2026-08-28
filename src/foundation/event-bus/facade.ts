@@ -48,8 +48,7 @@ export const LEGACY_EVENT_MAP: Record<string, { channel: EventBusChannel; event:
   // UI (3)
   'mode-changed':              { channel: EventBusChannel.UI, event: 'mode-changed' },
   'block-scenes-loaded':       { channel: EventBusChannel.UI, event: 'block-scenes-loaded' },
-  // FIXME(STUB-MIGRATION): live-mode.stub.ts ещё шлёт CustomEvent.
-  // Удалить, когда stub заменится на typed publisher.
+  // camera-permission-resolved: мёртво с W5 (0 dispatchers / 0 subscribers); mapping сохранён для UI-поверхности eventBus.
   'camera-permission-resolved':{ channel: EventBusChannel.UI, event: 'camera-permission-resolved' },
 
   // PRACTICE (6 → 1 объединённое)

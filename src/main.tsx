@@ -6,11 +6,8 @@ import { ThemeProvider } from './theme/components/ThemeProvider';
 import { installLiveGuard } from './bridges/live-guard';
 // retired: loop.bridge → loop-events
 import { initLoopEvents } from './foundation/event-bus/wrappers/loop-events';
-import { registerLiveModeStub } from './services/live-mode.stub';
-import { registerWaveformEditorStub } from './services/waveform-editor.stub';
 // import { initAudioReactiveBridge } from './bridges/audio-reactive.bridge';  // retired → audio-reactive wrapper
 import { patchLyricsDisplaySlimMethods } from './services/lyrics.service';
-import { initBlockEditorService } from './blocks/bridge/blockEditor.service';
 import { bridgeFacade } from './foundation/event-bus';
 import { V3StatePublisher, V3DataInterceptor, getTransport, setStatePublisher, MonitorRouter } from './audio/engine-v3';
 import type { HybridPipelineService as HybridPipelineServiceType } from './audio/engine-v3/pipeline/HybridPipelineService';
@@ -315,12 +312,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   }
 
-  registerLiveModeStub();
-  registerWaveformEditorStub();
   installLiveGuard();
   // initLoopBridge();  // retired → loop-events in initRegistry
   // initAudioReactiveBridge();  // retired → audio-reactive wrapper in registerInit
-  initBlockEditorService();
   // Phase 5.1: cleanup bridgeFacade on page unload
   window.addEventListener('beforeunload', () => { bridgeFacade.destroy() })
 
