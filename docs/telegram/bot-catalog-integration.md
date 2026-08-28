@@ -62,6 +62,8 @@ Telegram Bot (belive-feed-bot)        beLive PWA (app.mybelive.com)
 }
 ```
 
+> **FOLLOW-UP 006 (RESOLVED, 2026-08-28):** `GET /tracks` читает ОБА KV-пути: `track_data:t:*` (app-Publish, prefix-list) И `track_data:catalog` (bot-upload, single key). `Array.isArray`-гвард на `track_data:catalog` + try/catch убирают 500 при повреждённом/не-массивном KV. Слияние — по Map `slug`+`title` (без includes-цикла): kv-трек дополняет hardTrack полями `fileIds`/`type`/`fileName`, метаданные 52 LP остаются эталонными. Форма ответа `{updatedAt,total,tracks}` неизменна.
+
 ### `GET /download/:fileId`
 Прокси-скачивание ZIP файла из Telegram. CORS: `https://app.mybelive.com`.
 - TG file_path TTL: ~1 час
@@ -97,7 +99,7 @@ npx esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/wo
 
 ### KV Namespace
 - **ID:** `bd9b1fdbafd64d9d9018da2aa478d99c`
-- **Содержит:** file_id → track metadata (title, artist, slug, type, fileIds, fileSize, fileName)
+- **Содержит:** file_id → track metadata (title, artist, slug, type, fileIds, fileSize, fileName); ключ `track_data:catalog` — массив треков от bot-upload (fileIds/type/fileName), читается в `GET /tracks` вместе с префиксом `track_data:t:`.
 
 ### Secrets
 - `BOT_TOKEN`: `8506268729:AAF_4gkscFhHUTGdEJUeFNVKoWSaYsNgHiA`

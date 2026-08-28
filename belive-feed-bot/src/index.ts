@@ -45,12 +45,32 @@ export default {
       if (url.pathname === "/tracks") {
         const trackList = await env.EPHEMERAL_KV.list({ prefix: "track_data:t:", limit: 200 });
         const entries = await Promise.all(trackList.keys.map((k) => env.EPHEMERAL_KV.get(k.name, { type: "json" })));
-        const kvTracks: any[] = entries.filter(Boolean);
+        const tTracks: any[] = entries.filter(Boolean);
+        let rawCatalog: any = null;
+        try { rawCatalog = await env.EPHEMERAL_KV.get('track_data:catalog', { type: 'json' }); } catch { rawCatalog = null; }
+        const cTracks: any[] = Array.isArray(rawCatalog) ? rawCatalog : [];
+        const kvTracks: any[] = [...tTracks, ...cTracks];
         const hardTracks: any[] = TRACKS.map((t: any) => ({ id: t.id, title: t.title, artist: t.artist, slug: t.slug, album: t.album, year: t.year, fileName: t.fileName, fileIds: {}, type: undefined }));
+        const normSlug = (s: string) => (s || '').toLowerCase().replace(/[-_]/g, ' ').replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+        const knownArtists = [...new Set(hardTracks.map((t: any) => (t.artist || '').toLowerCase().trim()).filter(Boolean))];
+        const titleCore = (t: any) => {
+          let s = (t.title || '').toLowerCase().trim();
+          const art = (t.artist || '').toLowerCase().trim();
+          const strip = (a: string) => { if (a && s.startsWith(a)) s = s.slice(a.length).replace(/^[\s\-–—:]+/, ''); };
+          if (art) strip(art);
+          else for (const ka of knownArtists) { const before = s; strip(ka); if (s !== before) break; }
+          return s.replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+        };
         const bySlug = new Map<string, any>();
-        const norm = (s: string) => (s || '').toLowerCase().replace(/-(full|2stem|duo)$/, '');
-        for (const t of hardTracks) bySlug.set(norm(t.slug), t);
-        for (const t of kvTracks) bySlug.set(norm(t.slug), t);
+        const byTitle = new Map<string, any>();
+        for (const t of hardTracks) { const ks = normSlug(t.slug), kt = titleCore(t); bySlug.set(ks, t); byTitle.set(kt, t); }
+        for (const t of kvTracks) {
+          if (!t || typeof t !== 'object') continue;
+          const ks = normSlug(t.slug), kt = titleCore(t);
+          const hit = bySlug.get(ks) || byTitle.get(kt);
+          if (hit) { hit.fileIds = { ...(hit.fileIds || {}), ...(t.fileIds || {}) }; if (t.type) hit.type = t.type; if (t.fileName) hit.fileName = t.fileName; }
+          else { bySlug.set(ks, t); byTitle.set(kt, t); }
+        }
         const catalog = Array.from(bySlug.values()).sort((a: any, b: any) => (a.title || '').localeCompare(b.title || ''));
         return new Response(JSON.stringify({ updatedAt: Date.now(), total: catalog.length, tracks: catalog }), {
           headers: { 'Content-Type': 'application/json', ...corsHeaders(reqOrigin) }
