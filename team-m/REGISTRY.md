@@ -286,5 +286,5 @@ BAC-101..105 + BAC-107 = **реальная угроза флипа M3-ГО**. �
 - 🔄 **S3 Student-Педагог**: ОТЛОЖЕНО (post-m3). Patch `MICRO-PACK-S3-VIDEO-IMPL.patch` готов, НЕ применять до флипа. Вёдра (26k) подтвердил post-m3.
 - 🔄 **bLb (beLiveBase)**: ОТЛОЖЕНО (post-m3 read-only) — по вердикту 009.
 - 🔄 **pitch-connect**: ОТЛОЖЕНО (post-m3) — питч и так сломан на V3, не блокер флипа; OPT-IN только если Босс явно.
-- ✅ **Волны W1–5**: file-листы освежены к живым счётчикам (`WAVE-PREFLIP-BASELINE.md`): delegateSync 23, V2Adapter 27, globals 9, track.orchestrator 7. Frozen-guard GREEN (baseline). Ждут ОДИН GO Босса → chain 001→002→009.
+- ✅ **Волны W1–5**: file-листы освежены к живым счётчикам (аудит 26.08): delegateSync 11 (non-test), V2Adapter 18, globals **62 файла/~250+ точек чтения**, track.orchestrator 3 живых импортёра (старые 23/27/9/7 = grep-артефакт). Frozen-guard GREEN (baseline). **Гейт волн = `grep → 0`** (не точное число). Ждут ОДИН GO Босса → chain 001→002→009. Исправленные гейты — единственный критерий завершения (иначе False-Green).
 - ✅ **Инициатива фокуса** создана (`INITIATIVE-FOCUS-MAIN-TASK.md`): полный контекст перед GO + классификатор директив + GO-интерцептор (возврат к главной задаче при рассеянных командах Босса) + единая команда Мак+Вёдра через реестр SSOT.

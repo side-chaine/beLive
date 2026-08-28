@@ -5,7 +5,7 @@
 
 ## 0. ПРЕ-ФЛАЙТ (один раз, ДО флипа)
 ```
-npm run typecheck && npx vitest run && npm run verify:ci   # MUST BE GREEN (канон 306/772 + PARITY)
+npm run typecheck && npx vitest run && npm run verify:ci   # MUST BE GREEN (канон 306/767+5int+2load + PARITY)
 node team-m/bLb/frozen-guard.mjs                            # 🟢 GREEN (0 new safe→frozen). RED → СТОП + реестр.
 find src/audio/core/AudioEngineV2.ts src/audio/compat/patchV1.ts src/services/track.orchestrator.ts src/bridges -type f | xargs sha256sum > /tmp/frozen-pre.sha
 ```
@@ -16,7 +16,7 @@ find src/audio/core/AudioEngineV2.ts src/audio/compat/patchV1.ts src/services/tr
 - Гейт: `grep -rn "import.meta.env.VITE_ENGINE" src` → ровно 1 файл (`engine-mode.ts`); `npm run dev` → V3 по умолчанию; `VITE_ENGINE=v2` даёт legacy. canon GREEN.
 
 ## 2. ВОЛНЫ (leaves-first, ПО ОДНОЙ; между волнами — Frozen-guard GREEN + SHA256 совпал)
-Живые счётчики (`WAVE-PREFLIP-BASELINE.md`): **delegateSync 23**, **V2Adapter 27**, **globals 9 safe-файлов (12 reader-сайтов)**, **track.orchestrator 7**.
+Живые счётчики (аудит 26.08): **delegateSync 11** (non-test), **V2Adapter 18** (после def/barrel), **globals 62 файла / ~250+ точек чтения**, **track.orchestrator 3** живых импортёра (старые 23/27/9/7 = grep-артефакт). **Гейт = `grep → 0`.**
 
 ### W1 — activation cut + BAC-105 (V2-globals re-point)
 - **Safe:** 9 файлов с `window.audioEngine/.app/.trackCatalog/.liveMode/.lyricsDisplay/.markerManager/.waveformEditor` (`mode-switch.service`,`block-scene.service`,`track.actions`,`FullAvatar`,`useStemWaveform`,`useBackgroundManagers`,`trigger-visual`,`MonitorMixPanel`,`upload.service`, …) → V3-state / E1-предикат / удалить чтение глобала.
@@ -44,7 +44,7 @@ find src/audio/core/AudioEngineV2.ts src/audio/compat/patchV1.ts src/services/tr
 ## 3. ФИНАЛЬНЫЙ ГЕЙТ (после W5)
 ```
 npm run typecheck      # 306
-npx vitest run          # 772
+npx vitest run          # 767 passed + 5 intentional fail + 2 load-fail pre-existing
 npm run verify:ci       # PARITY PASS
 # dist/ не содержит V2-символы:
 grep -rlE "AudioEngineV2|patchV1|track\.orchestrator|V2Adapter" dist 2>/dev/null || echo "CLEAN"
