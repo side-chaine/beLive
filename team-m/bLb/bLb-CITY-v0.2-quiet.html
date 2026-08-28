@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>beLiveBase · город репозитория</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05070D; --panel:#10131A; --line:#1A2130; --line2:#242B38;
+  --ink:#E9E4DC; --ink2:#A39E95; --ink3:#6D6860; --ink4:#46423A;
+  --live:#FFB33B; --liveHot:#FFE29A; --liveDeep:#B26417; --frost:#B2DFF4; --hazard:#E85433;
+  --ease:cubic-bezier(0.16,1,0.3,1);
+}
+*{box-sizing:border-box} html,body{height:100%}
+body{margin:0;background:radial-gradient(circle at 50% 16%, rgba(204,125,30,.08), transparent 26%),var(--bg);color:var(--ink);font:16px/1.45 "IBM Plex Mono",monospace;overflow:hidden}
+button{font:inherit}
+
+/* ── сцена на весь экран ── */
+#stage{position:fixed;inset:0;overflow:hidden;background:linear-gradient(180deg,#070A11,#05070D 24%,#05070D)}
+#svgHold{position:absolute;inset:0;display:grid;place-items:center;transition:filter .5s var(--ease)}
+svg#citySvg{width:100%;height:100%;display:block;cursor:grab}
+svg#citySvg.drag{cursor:grabbing}
+svg text{font-family:"IBM Plex Mono",monospace}
+
+#brand{position:absolute;top:26px;left:32px;z-index:5;pointer-events:none}
+#brand h1{margin:0;font:700 21px/1 "Syne",system-ui;color:var(--ink);letter-spacing:.02em}
+#brand .sub{font-size:11px;color:var(--ink3);margin-top:7px;letter-spacing:.06em}
+
+#modes{position:absolute;top:22px;right:28px;z-index:5;display:flex;gap:6px;align-items:center}
+.mBtn{background:rgba(16,19,26,.55);border:1px solid var(--line2);color:var(--ink3);padding:8px 13px;border-radius:999px;cursor:pointer;font-size:12px;letter-spacing:.05em;backdrop-filter:blur(6px);transition:.18s var(--ease)}
+.mBtn:hover{color:var(--ink);border-color:#3A4352}
+.mBtn.on{color:var(--live);border-color:rgba(255,179,59,.5)}
+#tourBtn{width:37px;display:grid;place-items:center;padding:8px 0}
+#tourBtn.on{color:var(--liveHot);border-color:rgba(255,226,154,.55);background:rgba(255,179,59,.1)}
+
+/* ── шёпот города ── */
+#whisper{position:absolute;left:32px;bottom:26px;z-index:5;display:flex;align-items:center;gap:9px;opacity:0;transition:opacity .6s var(--ease);pointer-events:none;max-width:52ch}
+#whisper.show{opacity:1}
+#whisper i{width:5px;height:5px;border-radius:50%;background:var(--live);flex:none}
+#whisper span{font-size:12px;color:var(--ink3)}
+
+#hint{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:5;font-size:12px;color:var(--ink4);letter-spacing:.08em;pointer-events:none;transition:opacity 1s var(--ease)}
+#hint.gone{opacity:0}
+
+/* ── тег при наведении ── */
+#hoverTag{position:fixed;z-index:20;pointer-events:none;opacity:0;transition:opacity .14s;padding:10px 13px 9px;background:rgba(10,12,18,.9);border-left:2px solid var(--live);border-radius:0 12px 12px 0;max-width:280px;backdrop-filter:blur(4px)}
+#hoverTag.show{opacity:1}
+.ht1{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink);letter-spacing:.03em}
+.ht1 i{width:6px;height:6px;border-radius:50%;flex:none}
+.ht2{font-size:11px;color:var(--ink3);margin-top:5px;line-height:1.4}
+
+/* ── титры тура ── */
+#lower{position:absolute;left:34px;bottom:64px;z-index:6;display:none;gap:12px;align-items:flex-end}
+#lower.show{display:flex}
+#lower .bar{width:5px;height:58px;background:var(--live)}
+#lower .copy{padding:13px 18px;border:1px solid rgba(255,179,59,.35);background:rgba(14,16,22,.85);backdrop-filter:blur(8px);border-radius:2px 14px 14px 2px;max-width:46ch}
+#lower .copy b{display:block;font:700 21px/1.05 "Syne",system-ui;margin-bottom:5px}
+#lower .copy span{font-size:12.5px;color:var(--ink2)}
+
+/* ── осмотр здания ── */
+#veil{position:fixed;inset:0;z-index:30;background:rgba(4,5,9,.6);backdrop-filter:blur(10px) saturate(.85);opacity:0;pointer-events:none;transition:opacity .45s var(--ease)}
+body.inspect #veil{opacity:1;pointer-events:auto}
+body.inspect #svgHold{filter:brightness(.55)}
+body.inspect #modes,body.inspect #hint,body.inspect #whisper{opacity:0;pointer-events:none}
+#inspect{position:fixed;inset:0;z-index:31;display:grid;grid-template-columns:minmax(340px,1fr) minmax(360px,460px);opacity:0;pointer-events:none;transition:opacity .45s var(--ease)}
+body.inspect #inspect{opacity:1;pointer-events:auto}
+#inStage{position:relative;display:grid;place-items:center;padding:30px 10px 30px 40px}
+#inSvg{width:100%;height:100%;max-height:78vh}
+#inPanel{align-self:center;padding:34px 46px 34px 26px;overflow:auto;max-height:100vh}
+.inStatus{display:flex;align-items:center;gap:9px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink3)}
+.inStatus i{width:7px;height:7px;border-radius:50%}
+#inPanel h2{margin:14px 0 4px;font:700 34px/1 "Syne",system-ui}
+.inDist{font-size:12px;color:var(--ink3)}
+.inWhat{font:500 19px/1.4 "IBM Plex Mono",monospace;color:var(--ink);margin:24px 0 0;max-width:34ch}
+.inLbl{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink3);margin:30px 0 12px}
+.give{display:grid;grid-template-columns:18px 1fr;gap:10px;font-size:13.5px;color:var(--ink2);padding:6px 0;align-items:start}
+.give svg{margin-top:2px;color:var(--live)}
+.room{display:grid;grid-template-columns:14px 1fr;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;transition:.18s var(--ease)}
+.room:hover{background:rgba(255,179,59,.06)}
+.room i{width:6px;height:6px;border-radius:50%;background:var(--ink4);margin-top:6px;transition:.2s}
+.room:hover i{background:var(--liveHot);box-shadow:0 0 8px rgba(255,226,154,.7)}
+.room b{font-size:13px;font-weight:500;color:var(--ink)}
+.room span{font-size:11.5px;color:var(--ink3);display:block;margin-top:2px}
+details.inTech{margin-top:26px;border-top:1px solid var(--line);padding-top:14px}
+details.inTech summary{cursor:pointer;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink4);list-style:none}
+details.inTech summary::-webkit-details-marker{display:none}
+details.inTech summary:hover{color:var(--ink3)}
+.inTechGrid{display:grid;gap:7px;margin-top:14px;font-size:11.5px;color:var(--ink3)}
+.inTechGrid b{color:var(--ink2);font-weight:400}
+.inMods{margin-top:10px;font-size:11px;color:var(--ink4);line-height:1.7}
+.inActs{display:flex;gap:8px;flex-wrap:wrap;margin-top:30px}
+.act{display:inline-flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--line2);color:var(--ink2);padding:9px 13px;border-radius:999px;cursor:pointer;font-size:12px;transition:.18s var(--ease)}
+.act:hover{color:var(--ink);border-color:#3A4352;transform:translateY(-1px)}
+.act.danger:hover{color:var(--hazard);border-color:rgba(232,84,51,.5)}
+#inClose{position:absolute;top:24px;right:28px;z-index:32;width:38px;height:38px;border-radius:12px;border:1px solid var(--line2);background:rgba(16,19,26,.7);color:var(--ink3);cursor:pointer;display:grid;place-items:center;transition:.18s}
+#inClose:hover{color:var(--ink);border-color:#3A4352}
+body:not(.inspect) #inClose{display:none}
+
+/* ── город: тихая жизнь ── */
+.bld{cursor:pointer;transition:filter .3s var(--ease)}
+.bld.hov{filter:brightness(1.3) drop-shadow(0 0 10px rgba(255,179,59,.25))}
+.bld.hot{filter:brightness(1.5) drop-shadow(0 0 10px rgba(255,226,154,.4))}
+.bld.peer{filter:brightness(1.3)}
+.beacon{animation:bk 4.2s infinite}
+@keyframes bk{0%,100%{opacity:.5}50%{opacity:1}}
+.breath{animation:br 5s infinite}
+@keyframes br{0%,100%{opacity:.5}50%{opacity:.95}}
+.smoke{transform-box:fill-box;transform-origin:center;animation:sm 6s var(--d,0s) infinite}
+@keyframes sm{0%{transform:translateY(0) scale(.8);opacity:.3}100%{transform:translateY(-10px) scale(1.5);opacity:0}}
+.standby{animation:st 3.6s infinite}
+@keyframes st{0%,100%{opacity:.2}50%{opacity:.6}}
+.spark{animation:sp 1.6s infinite}
+@keyframes sp{0%,100%{opacity:0}45%{opacity:.9}60%{opacity:.2}75%{opacity:.8}}
+.tape{animation:tp 16s linear infinite}
+@keyframes tp{to{stroke-dashoffset:-60}}
+.crane{animation:cr 11s ease-in-out infinite}
+@keyframes cr{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+.column{animation:cp 2.4s infinite}
+@keyframes cp{0%,100%{opacity:.45}50%{opacity:.8}}
+#metro path{transition:stroke .3s,stroke-opacity .3s}
+#metro path.ln-on{stroke:#D8EDFA!important;stroke-opacity:.9!important;stroke-width:2.6!important}
+body.tour .bld{transition:opacity .8s var(--ease),filter .8s var(--ease)}
+body.tour .bld:not(.spot){opacity:.28}
+body.tour .bld.spot{filter:brightness(1.35) drop-shadow(0 0 14px rgba(255,179,59,.35))}
+
+/* интерьер */
+.roomSpot{transition:.3s var(--ease)}
+.roomSpot.on{filter:brightness(1.6) drop-shadow(0 0 12px rgba(255,226,154,.55))}
+#inSvg .rLight{animation:br 5.4s infinite}
+
+@media (max-width:900px){
+  #inspect{grid-template-columns:1fr;grid-template-rows:38vh 1fr}
+  #inStage{padding:60px 20px 0}
+  #inPanel{padding:10px 26px 40px;max-height:none}
+  #inSvg{max-height:36vh}
+}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="svgHold"><svg id="citySvg" viewBox="0 0 1320 700"></svg></div>
+
+  <div id="brand"><h1>beLiveBase</h1><div class="sub" id="brandSub"></div></div>
+
+  <div id="modes">
+    <button class="mBtn" data-app="rehearsal">Rehearsal</button>
+    <button class="mBtn" data-app="karaoke">Karaoke</button>
+    <button class="mBtn" data-app="concert">Concert</button>
+    <button class="mBtn" data-app="live">Live</button>
+    <button class="mBtn" id="tourBtn" title="Тур по городу"></button>
+  </div>
+
+  <div id="whisper"><i></i><span></span></div>
+  <div id="hint">наведи — узнаешь в двух словах · клик — заглянешь внутрь · колесо и мышка — приблизить и осмотреться</div>
+
+  <div id="lower"><div class="bar"></div><div class="copy"><b id="ltT"></b><span id="ltS"></span></div></div>
+</div>
+
+<div id="veil"></div>
+<div id="inspect">
+  <div id="inStage"><svg id="inSvg" viewBox="0 0 560 560"></svg></div>
+  <div id="inPanel">
+    <div class="inStatus"><i id="inDot"></i><span id="inSt"></span><span style="opacity:.4">·</span><span id="inDist"></span></div>
+    <h2 id="inName"></h2>
+    <p class="inWhat" id="inWhat"></p>
+    <div class="inLbl">что даёт тебе</div>
+    <div id="inGives"></div>
+    <div class="inLbl">что внутри</div>
+    <div id="inRooms"></div>
+    <details class="inTech" id="inTech"><summary>техника</summary>
+      <div class="inTechGrid" id="inTechGrid"></div>
+      <div class="inMods" id="inMods"></div>
+    </details>
+    <div class="inActs" id="inActs"></div>
+  </div>
+</div>
+<button id="inClose" title="Назад к городу (Esc)"></button>
+
+<div id="hoverTag"><div class="ht1"><i></i><span id="htN"></span></div><div class="ht2" id="htW"></div></div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   beLiveBase · город репозитория
+   Принцип: город молчит. Говорит только то, на что указали.
+   Наведение → шёпот. Клик → раскрытие здания с интерьером.
+   ════════════════════════════════════════════════════════════ */
+const PAL = {
+  void:'#05070D', plate:'#10131A', plate2:'#151820', slab:'#030408',
+  live:'#FFB33B', liveHot:'#FFE29A', liveDeep:'#B26417', ember:'#CC7D1E',
+  frost:'#B2DFF4', frostDeep:'#4B6E81', chalk:'#BECCDD',
+  hazard:'#E85433', standby:'#66667D', outer:'#484D59',
+  ink:'#E9E4DC', ink2:'#A39E95', ink3:'#6D6860', ink4:'#46423A',
+  hue:{verse:'#3B9696',gold:'#B59D51',chorus:'#C54C4F',bridge:'#8D6CC2',core:'#D7944C',waste:'#434853'},
+  floor:{verse:'#08191B',gold:'#201A08',chorus:'#241212',bridge:'#191428',core:'#241706',waste:'#11141A'},
+  mass:{
+    alive:{top:'#30333A',l:'#1D1F26',r:'#111419'},
+    demo:{top:'#292B30',l:'#191B1F',r:'#0E0F13'},
+    frozen:{top:'#3C515A',l:'#263841',r:'#1A2930'},
+    trash:{top:'#2A1B18',l:'#1A0E0C',r:'#100706'},
+    conserved:{top:'#252530',l:'#171720',r:'#0F0E16'},
+    external:{top:'#2A2E36',l:'#1C1F25',r:'#14161B'}
+  }, tarp:'#34353B'
+};
+const BPM=84, BEAT=60/BPM;
+const TW=64, TH=32, OX=616, OY=152;
+const iso=(gx,gy)=>({x:OX+(gx-gy)*TW/2, y:OY+(gx+gy)*TH/2});
+const $=id=>document.getElementById(id);
+const r2=n=>Math.round(n*10)/10;
+const pts=a=>a.map(p=>r2(p.x)+','+r2(p.y)).join(' ');
+const up=(p,h)=>({x:p.x,y:p.y-h});
+const cen=(gx,gy,w,d)=>iso(gx+w/2,gy+d/2);
+const fmtN=n=>n.toLocaleString('ru-RU');
+function seed(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+/* ── кадастр: теперь каждое здание говорит по-человечески ──
+   what — что делает, простыми словами
+   gives — что даёт тебе как инструмент
+   rooms — что внутри (комнаты = смысловые модули)
+   Это контракт для 007: setCadastre принимает тот же формат. */
+const CITY={
+  meta:{city:'beLiveBase',phase:'Phase 0',updated:'2026-08-28',cadastre:'houses.yaml v0.2'},
+  districts:[
+    {id:'billy',name:'квартал Билли',hue:'bridge',gx:3,gy:0,w:5,d:3},
+    {id:'stage',name:'сцена',hue:'chorus',gx:8,gy:0,w:7,d:5},
+    {id:'core',name:'ядро',hue:'core',gx:4,gy:4,w:6,d:4},
+    {id:'forum',name:'форум',hue:'gold',gx:6,gy:9,w:6,d:4},
+    {id:'atelier',name:'ателье',hue:'verse',gx:0,gy:4,w:4,d:5},
+    {id:'campus',name:'кампус',hue:'verse',gx:1,gy:10,w:5,d:4},
+    {id:'waste',name:'пустырь',hue:'waste',gx:12,gy:6,w:3,d:3}
+  ],
+  buildings:[
+    {id:'billy',name:'Башня Билли',dist:'billy',arch:'tower',st:'alive',gx:4,gy:0,w:2,d:2,loc:4200,files:38,t30:34,route:'live',
+     what:'Твой наставник в городе. Слушает, как ты поёшь, и отвечает по-человечески.',
+     gives:['Живой отклик на каждую фразу','Подсказки вместо скучных таблиц','Хвалит за прогресс — честно'],
+     rooms:[{n:'Голос',d:'говорит, хвалит, подбадривает'},{n:'Характер',d:'помнит твоё настроение'},{n:'Реакция',d:'включается в любую сцену'}],
+     mods:['src/billy','src/character']},
+    {id:'aiconfig',name:'AI Подстанция',dist:'billy',arch:'archive',st:'conserved',gx:7,gy:1,w:1,d:1,loc:700,files:9,t30:0,route:null,
+     what:'Старый блок настроек. Спит под тентом и никому не мешает.',
+     gives:['Тихое место, когда понадобятся новые настройки'],
+     rooms:[{n:'Вентиль',d:'перекрыт до времени'},{n:'Щиток',d:'параметры прошлой версии'}],
+     mods:['src/js/ai','src/components/AiSettingsModal']},
+    {id:'live',name:'Арена Live',dist:'stage',arch:'arena',st:'alive',gx:9,gy:0,w:3,d:3,loc:2600,files:21,t30:9,route:'live',
+     what:'Сцена прямого эфира. Отсюда твой голос уходит в мир.',
+     gives:['Субтитры прямо в кадре','Весь контроль эфира на одной панели','Чувство настоящего выступления'],
+     rooms:[{n:'Эфир',d:'прямой выход в мир'},{n:'Субтитры',d:'слова видят все зрители'},{n:'Пульт сцены',d:'всё под рукой'}],
+     mods:['src/components/LiveControls','src/components/LiveSubtitle']},
+    {id:'arenas',name:'Арены Karaoke и Concert',dist:'stage',arch:'arena',st:'planned',gx:12,gy:1,w:3,d:3,loc:1400,files:11,t30:0,route:'karaoke',
+     what:'Два больших зала будущего. Пока их нет — только чертёж на земле.',
+     gives:['Караоке-вечер с друзьями','Полный концерт со светом и залом'],
+     rooms:[{n:'Зал караоке',d:'лёгкий и шумный'},{n:'Концертный зал',d:'большая сцена и свет'},{n:'Переходы',d:'из зала в зал без пауз'}],
+     mods:['src/Karaoke','src/Concert','src/transitions']},
+    {id:'show',name:'Театр Show',dist:'stage',arch:'lab',st:'alive',gx:8,gy:3,w:2,d:2,loc:3000,files:26,t30:12,route:'concert',
+     what:'Режиссёр твоего выступления. Собирает номер из готовых сцен.',
+     gives:['Сценарии номеров на выбор','Картина меняется за один клик'],
+     rooms:[{n:'Сцены',d:'готовые картинки номера'},{n:'Сценарии',d:'что за чем идёт'}],
+     mods:['src/components/Show','src/services/show.html.ts']},
+    {id:'studio',name:'Завод Studio',dist:'core',arch:'factory',st:'alive',gx:5,gy:4,w:3,d:2,loc:9800,files:94,t30:61,route:'rehearsal',frozen:'sealed',
+     what:'Главная фабрика звука. Слышит каждую твою ноту и держит темп.',
+     gives:['Показывает, где взял верно, а где мимо','Держит ритм, не даёт сбиться','Разделяет голос и музыку'],
+     rooms:[{n:'Движок v3',d:'считает звук вживую'},{n:'Ядро v2',d:'старый мотор, под пломбой'},{n:'Стемы',d:'голос отдельно от музыки'}],
+     mods:['src/audio/core','src/audio/engine-v3','src/stem']},
+    {id:'split',name:'Башня Split',dist:'core',arch:'tower',st:'alive',gx:9,gy:5,w:1,d:2,loc:900,files:8,t30:4,route:'rehearsal',
+     what:'Смотровая башня. Видит весь звук города сразу.',
+     gives:['Понятно, что перевешивает в миксе','Громкость под контролем'],
+     rooms:[{n:'Монитор',d:'уровни звука на виду'},{n:'Микшер',d:'баланс голоса и музыки'}],
+     mods:['src/components/monitor']},
+    {id:'sync',name:'Мастерская Sync',dist:'core',arch:'lab',st:'alive',gx:4,gy:6,w:2,d:2,loc:2200,files:19,t30:22,route:'rehearsal',frozen:'read',
+     what:'Здесь рождается свет слова: текст загорается точно в такт песне.',
+     gives:['Не нужно следить глазами за строчкой','Слово подсвечивается вовремя'],
+     rooms:[{n:'Маркеры слов',d:'каждое слово на своём месте'},{n:'Тактовый свет',d:'подсветка дышит с ритмом'}],
+     mods:['src/sync']},
+    {id:'notes',name:'Лаб Notes',dist:'core',arch:'lab',st:'alive',gx:7,gy:6,w:2,d:2,loc:1800,files:16,t30:3,route:'rehearsal',
+     what:'Слышит, какую ноту ты взял, и показывает на пианино.',
+     gives:['Видно, выше или ниже взял','Пианино прямо на экране'],
+     rooms:[{n:'Питч',d:'оценивает высоту ноты'},{n:'Клавиатура',d:'ноты под пальцами'}],
+     mods:['src/audio/pitch','src/components/PianoKeyboard']},
+    {id:'catalog',name:'Площадь Каталог',dist:'forum',arch:'plaza',st:'alive',gx:7,gy:9,w:3,d:3,loc:2000,files:17,t30:15,route:'catalog',
+     what:'Главная площадь: здесь лежат все треки и сюда приносишь свои.',
+     gives:['Все треки под рукой','Перетащил файл — и уже поёшь'],
+     rooms:[{n:'Витрина',d:'все треки города'},{n:'Дропзона',d:'свой файл — за секунду'}],
+     mods:['src/catalog']},
+    {id:'hub',name:'Площадь Hub',dist:'forum',arch:'plaza',st:'demo',gx:10,gy:9,w:2,d:2,loc:1100,files:12,t30:2,route:'feed',
+     what:'Лента города: кто что поёт и что говорят люди.',
+     gives:['Посты и реакции рядом','Видно, что происходит сейчас'],
+     rooms:[{n:'Лента',d:'свежие выступления'},{n:'Профили',d:'люди города'}],
+     mods:['src/feed']},
+    {id:'gates',name:'Врата',dist:'forum',arch:'gate',st:'alive',gx:7,gy:12,w:3,d:1,loc:600,files:7,t30:5,route:'welcome',
+     what:'Вход без забора. Зашёл — и сразу поёшь.',
+     gives:['Первый трек за 30 секунд','Никаких лишних экранов'],
+     rooms:[{n:'Приветствие',d:'город встречает тепло'},{n:'Первый шаг',d:'один клик до пения'}],
+     mods:['src/components/welcome','src/components/onboarding']},
+    {id:'styles',name:'Ателье Styles',dist:'atelier',arch:'lab',st:'alive',gx:1,gy:4,w:2,d:2,loc:1200,files:22,t30:8,route:'rehearsal',
+     what:'Мастерская внешнего вида. Красит город под тебя.',
+     gives:['Темы одним касанием','Свой стиль текста и фона'],
+     rooms:[{n:'Темы',d:'настроение города'},{n:'Пресеты',d:'готовые сочетания'}],
+     mods:['src/theme','src/styles','src/data']},
+    {id:'scenes',name:'Киностудия фонов',dist:'atelier',arch:'archive',st:'alive',gx:1,gy:6,w:2,d:2,loc:1500,files:14,t30:2,route:'concert',
+     what:'Рисует миры позади тебя. Сцена за спиной — её работа.',
+     gives:['Фоны под настроение песни','Картинка меняется вместе со сценой'],
+     rooms:[{n:'Фоны',d:'города, залы, космос'},{n:'Блочные сцены',d:'сборка миров из блоков'}],
+     mods:['src/backgrounds','src/services/block-scene.service.ts']},
+    {id:'dna',name:'Архив ДНК',dist:'atelier',arch:'archive',st:'alive',gx:3,gy:6,w:1,d:2,loc:800,files:9,t30:0,route:'catalog',
+     what:'Паспорт трека: куплеты, припевы, темп — вся суть песни.',
+     gives:['Видно, где ты сейчас в песне','К припеву — в один прыжок'],
+     rooms:[{n:'Структура',d:'карта песни'},{n:'Метаданные',d:'темп, тональность, слова'}],
+     mods:['src/components/TrackInfoBoard','src/structure']},
+    {id:'academy',name:'Академия Quest',dist:'campus',arch:'campus',st:'alive',gx:2,gy:10,w:3,d:2,loc:3400,files:31,t30:5,route:'rehearsal',
+     what:'Школа пения. Тейки, упражнения, маленькие победы.',
+     gives:['Упражнения по чуть-чуть','Рост видно по тейкам'],
+     rooms:[{n:'Упражнения',d:'короткие и по делу'},{n:'Тейки',d:'твои записи и прогресс'},{n:'Практика',d:'сценарии занятий'}],
+     mods:['src/exercises','src/practice','src/takes']},
+    {id:'profile',name:'Дом профиля',dist:'campus',arch:'house',st:'alive',gx:2,gy:12,w:2,d:1,loc:500,files:6,t30:1,route:'profile',
+     what:'Твой дом в городе. Имя, аватар, история выступлений.',
+     gives:['Своя страница и архив','Аватар на любой вкус'],
+     rooms:[{n:'Профиль',d:'кто ты в городе'},{n:'Аватар',d:'твоё лицо'}],
+     mods:['src/components/profile','src/avatar']},
+    {id:'blocks-old',name:'Старая мастерская',dist:'waste',arch:'lab',st:'trash',gx:12,gy:6,w:2,d:2,loc:1900,files:23,t30:0,route:null,
+     what:'Прошлый век. Решено: снести и освободить место новому.',
+     gives:['Землю под будущую арену'],
+     rooms:[{n:'Остатки',d:'ждут сноса'}],
+     mods:['src/blocks']}
+  ],
+  metro:[
+    {id:'m1',from:'studio',to:'sync',ev:'audio:frame',pulse:1},
+    {id:'m2',from:'studio',to:'notes',ev:'audio:pitch',pulse:1},
+    {id:'m3',from:'studio',to:'live',ev:'transport:beat',pulse:1,via:[[8.6,3.4]]},
+    {id:'m4',from:'sync',to:'show',ev:'word:active',pulse:1,via:[[6.6,3.6]]},
+    {id:'m5',from:'billy',to:'catalog',ev:'billy:say',pulse:1,via:[[6.2,3.2],[6.6,8.6]]},
+    {id:'m6',from:'catalog',to:'gates',ev:'track:load',pulse:1},
+    {id:'m7',from:'catalog',to:'hub',ev:'feed:post',pulse:0},
+    {id:'m8',from:'catalog',to:'academy',ev:'take:saved',pulse:0,via:[[5.6,10.2]]},
+    {id:'m9',from:'styles',to:'catalog',ev:'theme:apply',pulse:0,via:[[3.2,8.6]]},
+    {id:'m10',from:'dna',to:'catalog',ev:'track:meta',pulse:0},
+    {id:'cut',from:'blocks-old',to:null,ev:'severed',pulse:0,via:[[11.4,8.2]]}
+  ]
+};
+
+const ARCH={
+  tower:{base:20,k:1.50,inset:0.16}, factory:{base:14,k:0.35,inset:0.10},
+  arena:{base:12,k:0.30,inset:0.08}, lab:{base:12,k:0.60,inset:0.14},
+  archive:{base:10,k:0.40,inset:0.16}, campus:{base:8,k:0.35,inset:0.10},
+  house:{base:10,k:0.45,inset:0.20}, plaza:{base:4,k:0.05,inset:0.06}, gate:{base:22,k:0,inset:0.18}
+};
+const heightOf=b=>Math.round(ARCH[b.arch].base+ARCH[b.arch].k*Math.sqrt(b.loc));
+const freshOf=b=>Math.max(0,Math.min(1,b.t30/30));
+function corners(gx,gy,w,d,i){return{T:iso(gx+i,gy+i),R:iso(gx+w-i,gy+i),B:iso(gx+w-i,gy+d-i),L:iso(gx+i,gy+d-i)};}
+function faces(gx,gy,w,d,h,i,skew,z){
+  const c0=corners(gx,gy,w,d,i), sh=skew||0, zo=z||0;
+  const c={T:up(c0.T,zo),R:up(c0.R,zo),B:up(c0.B,zo),L:up(c0.L,zo)};
+  const T=up(c0.T,h),R=up(c0.R,h),B=up(c0.B,h),L=up(c0.L,h);
+  if(sh){[T,R,B,L].forEach(p=>{p.x+=sh;});}
+  return {c,top:[T,R,B,L],lw:[L,B,c.B,c.L],rw:[B,R,c.R,c.B]};
+}
+function windows(A,B0,h,cols,rows,rand,litFrac,warm,cold){
+  const U={x:B0.x-A.x,y:B0.y-A.y}, out=[];
+  const P=(u,v)=>({x:A.x+U.x*u,y:A.y+U.y*u+h*v});
+  for(let c=0;c<cols;c++)for(let r=0;r<rows;r++){
+    const u0=(c+0.30)/cols,u1=(c+0.70)/cols,v0=(r+0.28)/rows,v1=(r+0.66)/rows;
+    const lit=rand()<litFrac, col=lit?warm:cold;
+    out.push('<polygon points="'+pts([P(u0,v0),P(u1,v0),P(u1,v1),P(u0,v1)])+'" fill="'+col+'"/>');
+  }
+  return out.join('');
+}
+function seal(x,y,s){
+  const k=(s||1)*6,p=[];
+  for(let i=0;i<6;i++){const a=Math.PI/6+i*Math.PI/3;p.push({x:x+Math.cos(a)*k,y:y+Math.sin(a)*k*0.62});}
+  return '<polygon points="'+pts(p)+'" fill="#0C1A22" stroke="'+PAL.frost+'" stroke-width="1.3"/><line x1="'+r2(x-k*0.5)+'" y1="'+r2(y)+'" x2="'+r2(x+k*0.5)+'" y2="'+r2(y)+'" stroke="'+PAL.frost+'" stroke-width="1.3"/>';
+}
+function scaffold(b,h){
+  const c=corners(b.gx,b.gy,b.w,b.d,ARCH[b.arch].inset-0.02), H=Math.max(h,14)+6, o=[], a=c.L, z=c.B;
+  for(let k=0;k<=3;k++){const t=k/3,p={x:a.x+(z.x-a.x)*t,y:a.y+(z.y-a.y)*t};
+    o.push('<line x1="'+r2(p.x)+'" y1="'+r2(p.y)+'" x2="'+r2(p.x)+'" y2="'+r2(p.y-H)+'" stroke="'+PAL.ink4+'" stroke-width="1"/>');}
+  for(let k=1;k<=2;k++){const yy=H*k/3;
+    o.push('<line x1="'+r2(a.x)+'" y1="'+r2(a.y-yy)+'" x2="'+r2(z.x)+'" y2="'+r2(z.y-yy)+'" stroke="'+PAL.ink4+'" stroke-width="1"/>');}
+  return o.join('');
+}
+function fence(b){
+  const c=corners(b.gx,b.gy,b.w,b.d,-0.06), o=[], ring=[c.T,c.R,c.B,c.L];
+  o.push('<polygon points="'+pts(ring)+'" fill="none" stroke="'+PAL.hazard+'" stroke-width="1.6" stroke-dasharray="9 6" opacity="0.8" class="tape"/>');
+  ring.forEach(p=>o.push('<line x1="'+r2(p.x)+'" y1="'+r2(p.y)+'" x2="'+r2(p.x)+'" y2="'+r2(p.y-9)+'" stroke="'+PAL.hazard+'" stroke-width="1.4" opacity="0.7"/>'));
+  return o.join('');
+}
+function build(b){
+  const A=ARCH[b.arch], h=heightOf(b), fresh=freshOf(b), rand=rng(seed(b.id));
+  const st=b.st, m=PAL.mass[st]||PAL.mass.alive, C=cen(b.gx,b.gy,b.w,b.d), g=[];
+  const bloom=Math.max(b.w,b.d)*44;
+  if(st==='alive'||st==='demo') g.push('<ellipse cx="'+r2(C.x)+'" cy="'+r2(C.y)+'" rx="'+r2(bloom)+'" ry="'+r2(bloom*0.5)+'" fill="url(#bloomWarm)" opacity="'+r2(0.10+fresh*0.30)+'"/>');
+  else if(st==='trash') g.push('<ellipse cx="'+r2(C.x)+'" cy="'+r2(C.y)+'" rx="'+r2(bloom*0.8)+'" ry="'+r2(bloom*0.4)+'" fill="url(#bloomHazard)" opacity="0.35"/>');
+
+  if(st==='cleared'){
+    const c=corners(b.gx,b.gy,b.w,b.d,0.08);
+    g.push('<polygon points="'+pts([c.T,c.R,c.B,c.L])+'" fill="#0A0D13" stroke="'+PAL.ink4+'" stroke-width="1" stroke-dasharray="3 8" opacity="0.5"/>');
+    return g.join('');
+  }
+  if(st==='planned'){
+    const c=corners(b.gx,b.gy,b.w,b.d,0.06), cH=h;
+    const T=up(c.T,cH),R=up(c.R,cH),B=up(c.B,cH),L=up(c.L,cH);
+    g.push('<polygon points="'+pts([c.T,c.R,c.B,c.L])+'" fill="#0E1520" stroke="'+PAL.chalk+'" stroke-width="1" stroke-dasharray="7 5" opacity="0.5"/>');
+    g.push('<polygon points="'+pts([T,R,B,L])+'" fill="none" stroke="'+PAL.chalk+'" stroke-width="1" stroke-dasharray="4 6" opacity="0.62"/>');
+    [[c.L,L],[c.B,B],[c.R,R]].forEach(function(e){g.push('<line x1="'+r2(e[0].x)+'" y1="'+r2(e[0].y)+'" x2="'+r2(e[1].x)+'" y2="'+r2(e[1].y)+'" stroke="'+PAL.chalk+'" stroke-width="1" stroke-dasharray="3 5" opacity="0.4"/>');});
+    const base=iso(b.gx+0.3,b.gy+0.3), mh=h+52;
+    g.push('<line x1="'+r2(base.x)+'" y1="'+r2(base.y)+'" x2="'+r2(base.x)+'" y2="'+r2(base.y-mh)+'" stroke="'+PAL.ink4+'" stroke-width="2"/>');
+    g.push('<g class="crane" style="transform-origin:'+r2(base.x)+'px '+r2(base.y-mh)+'px">'+
+      '<line x1="'+r2(base.x-26)+'" y1="'+r2(base.y-mh)+'" x2="'+r2(base.x+40)+'" y2="'+r2(base.y-mh)+'" stroke="'+PAL.ink4+'" stroke-width="2"/>'+
+      '<line x1="'+r2(base.x+28)+'" y1="'+r2(base.y-mh)+'" x2="'+r2(base.x+28)+'" y2="'+r2(base.y-mh+16)+'" stroke="'+PAL.ink4+'" stroke-width="1"/>'+
+      '<rect x="'+r2(base.x+24)+'" y="'+r2(base.y-mh+16)+'" width="8" height="6" fill="'+PAL.ink4+'"/>'+
+      '<circle cx="'+r2(base.x-26)+'" cy="'+r2(base.y-mh)+'" r="2.5" fill="'+PAL.live+'" class="beacon"/></g>');
+    return g.join('');
+  }
+  if(b.arch==='plaza'){
+    const c=corners(b.gx,b.gy,b.w,b.d,0.05), sunk=corners(b.gx,b.gy,b.w,b.d,0.20), on=st==='alive';
+    g.push('<polygon points="'+pts([c.T,c.R,c.B,c.L])+'" fill="'+PAL.plate2+'"/>');
+    g.push('<polygon points="'+pts([sunk.T,sunk.R,sunk.B,sunk.L])+'" fill="#0C1018" stroke="'+(on?PAL.live:PAL.standby)+'" stroke-width="'+(on?1.6:1)+'" '+(on?'':'stroke-dasharray="6 5"')+' opacity="'+(on?0.95:0.6)+'"/>');
+    const cc=cen(b.gx,b.gy,b.w,b.d);
+    if(on) g.push('<ellipse cx="'+r2(cc.x)+'" cy="'+r2(cc.y)+'" rx="'+r2(b.w*26)+'" ry="'+r2(b.w*13)+'" fill="url(#bloomWarm)" opacity="0.5" class="breath"/>');
+    [c.T,c.R,c.B,c.L].forEach(function(p){
+      g.push('<line x1="'+r2(p.x)+'" y1="'+r2(p.y)+'" x2="'+r2(p.x)+'" y2="'+r2(p.y-18)+'" stroke="'+PAL.ink4+'" stroke-width="1.2"/>');
+      g.push('<circle cx="'+r2(p.x)+'" cy="'+r2(p.y-19)+'" r="2" fill="'+(on?PAL.liveHot:PAL.standby)+'"/>');});
+    if(on){
+      const mc=corners(b.gx+b.w/2-0.3,b.gy+b.d/2-0.3,0.6,0.6,0);
+      g.push('<polygon points="'+pts([mc.T,mc.R,mc.B,mc.L])+'" fill="'+PAL.liveHot+'" opacity="0.85" class="breath"/>');
+    }
+    if(b.id==='catalog'){
+      const cp=corners(b.gx,b.gy,b.w,b.d,0.30), H=27;
+      g.push('<polygon points="'+pts([up(cp.T,H),up(cp.R,H),up(cp.B,H),up(cp.L,H)])+'" fill="#181C24" stroke="'+PAL.live+'" stroke-width="0.8" opacity="0.92"/>');
+      [cp.T,cp.R,cp.B,cp.L].forEach(p=>g.push('<line x1="'+r2(p.x)+'" y1="'+r2(p.y)+'" x2="'+r2(p.x)+'" y2="'+r2(p.y-H)+'" stroke="'+PAL.ink4+'" stroke-width="1.4"/>'));
+    }
+    if(st==='demo') g.push('<g class="scaff">'+scaffold(b,10)+'</g>');
+    return g.join('');
+  }
+  if(b.arch==='gate'){
+    const c=corners(b.gx,b.gy,b.w,b.d,0.14), H=h+4, pw=0.34;
+    [[b.gx+0.14,b.gy+0.14],[b.gx+b.w-0.14-pw,b.gy+0.14]].forEach(function(e){
+      const ff=faces(e[0],e[1],pw,b.d-0.28,H,0,0);
+      g.push('<polygon points="'+pts(ff.lw)+'" fill="'+m.l+'"/><polygon points="'+pts(ff.rw)+'" fill="'+m.r+'"/><polygon points="'+pts(ff.top)+'" fill="'+m.top+'"/>');});
+    const lin=faces(b.gx+0.14,b.gy+0.2,b.w-0.28,b.d-0.4,H+10,0,0);
+    g.push('<polygon points="'+pts(lin.lw)+'" fill="'+m.l+'"/><polygon points="'+pts(lin.rw)+'" fill="'+m.r+'"/><polygon points="'+pts(lin.top)+'" fill="'+m.top+'"/>');
+    g.push('<polygon points="'+pts([c.T,c.R,c.B,c.L])+'" fill="url(#thresh)" opacity="0.55" class="breath"/>');
+    const cc=cen(b.gx,b.gy,b.w,b.d);
+    g.push('<polygon points="'+pts([{x:cc.x-34,y:cc.y-2},{x:cc.x+34,y:cc.y-2},{x:cc.x+74,y:cc.y-56},{x:cc.x-74,y:cc.y-56}])+'" fill="url(#gateBeam)" opacity="0.32"/>');
+    return g.join('');
+  }
+  const skew=st==='trash'?3:0, f=faces(b.gx,b.gy,b.w,b.d,h,A.inset,skew);
+  g.push('<polygon points="'+pts(f.lw)+'" fill="'+m.l+'"/>');
+  g.push('<polygon points="'+pts(f.rw)+'" fill="'+m.r+'"/>');
+  g.push('<polygon points="'+pts(f.top)+'" fill="'+m.top+'"/>');
+  if(st!=='conserved'){
+    const lw=f.lw, rw=f.rw;
+    const wl=Math.hypot(lw[1].x-lw[0].x,lw[1].y-lw[0].y), wr=Math.hypot(rw[1].x-rw[0].x,rw[1].y-rw[0].y);
+    const rows=Math.max(1,Math.floor(h/16));
+    const litFrac=st==='trash'?0.04:st==='demo'?Math.max(0.12,fresh*0.4):Math.max(0.10,fresh);
+    const warm=st==='trash'?PAL.hazard:PAL.liveHot, cold=st==='trash'?'#0E0705':'#131318';
+    if(b.arch!=='archive'){
+      g.push(windows(lw[0],lw[1],h,Math.max(1,Math.round(wl/14)),rows,rand,litFrac,warm,cold));
+      g.push(windows(rw[0],rw[1],h,Math.max(1,Math.round(wr/14)),rows,rand,litFrac,warm,cold));
+    } else {
+      const slit=function(A0,B0){const U={x:B0.x-A0.x,y:B0.y-A0.y},o=[];
+        for(let k=0;k<2;k++){const v=0.22+k*0.30;
+          o.push('<polygon points="'+pts([{x:A0.x+U.x*0.2,y:A0.y+U.y*0.2+h*v},{x:A0.x+U.x*0.8,y:A0.y+U.y*0.8+h*v},{x:A0.x+U.x*0.8,y:A0.y+U.y*0.8+h*(v+0.05)},{x:A0.x+U.x*0.2,y:A0.y+U.y*0.2+h*(v+0.05)}])+'" fill="'+(fresh>0.05?PAL.liveDeep:'#101014')+'"/>');}
+        return o.join('');};
+      g.push(slit(lw[0],lw[1])+slit(rw[0],rw[1]));
+    }
+  }
+  const top=f.top, T=top[0],R=top[1],B=top[2],L=top[3];
+  if(b.arch==='tower'){
+    const f2=faces(b.gx,b.gy,b.w,b.d,h+14,A.inset+0.14,0,h);
+    g.push('<polygon points="'+pts(f2.lw)+'" fill="'+m.l+'"/><polygon points="'+pts(f2.rw)+'" fill="'+m.r+'"/><polygon points="'+pts(f2.top)+'" fill="'+m.top+'"/>');
+    const ap=cen(b.gx,b.gy,b.w,b.d), ty=ap.y-h-14;
+    g.push('<line x1="'+r2(ap.x)+'" y1="'+r2(ty)+'" x2="'+r2(ap.x)+'" y2="'+r2(ty-22)+'" stroke="'+PAL.ink4+'" stroke-width="1.5"/>');
+    g.push('<circle cx="'+r2(ap.x)+'" cy="'+r2(ty-24)+'" r="13" fill="url(#bloomWarm)" class="beacon"/>');
+    g.push('<circle cx="'+r2(ap.x)+'" cy="'+r2(ty-24)+'" r="3.2" fill="'+PAL.live+'" class="beacon"/>');
+  }
+  if(b.arch==='factory'){
+    const n=3, W=b.w-2*A.inset, rH=11, ridge=fresh>0.3?PAL.live:PAL.ink4;
+    for(let k=0;k<n;k++){
+      const u0=A.inset+W*(k+0.06)/n, u1=A.inset+W*(k+0.94)/n, um=(u0+u1)/2;
+      const a1=iso(b.gx+u0,b.gy+A.inset), a2=iso(b.gx+u1,b.gy+A.inset);
+      const b1=iso(b.gx+u0,b.gy+b.d-A.inset), b2=iso(b.gx+u1,b.gy+b.d-A.inset);
+      const r1=iso(b.gx+um,b.gy+A.inset), r2p=iso(b.gx+um,b.gy+b.d-A.inset);
+      g.push('<polygon points="'+pts([up(a1,h),up(r1,h+rH),up(r2p,h+rH),up(b1,h)])+'" fill="#0E1219"/>');
+      g.push('<polygon points="'+pts([up(a2,h),up(r1,h+rH),up(r2p,h+rH),up(b2,h)])+'" fill="#1B222E"/>');
+      if(fresh>0.25){
+        const lp=(p,q,t)=>({x:p.x+(q.x-p.x)*t,y:p.y+(q.y-p.y)*t});
+        const R1=up(r1,h+rH), R2=up(r2p,h+rH);
+        g.push('<polygon points="'+pts([R1,R2,lp(R2,up(b2,h),0.46),lp(R1,up(a2,h),0.46)])+'" fill="'+PAL.liveDeep+'" opacity="'+r2(0.42+fresh*0.35)+'"/>');
+      }
+      g.push('<line x1="'+r2(r1.x)+'" y1="'+r2(r1.y-h-rH)+'" x2="'+r2(r2p.x)+'" y2="'+r2(r2p.y-h-rH)+'" stroke="'+ridge+'" stroke-width="1.4" stroke-opacity="0.85"/>');
+    }
+    [[0.16,0.86],[0.9,0.2]].forEach(function(e,k){
+      const p=iso(b.gx+b.w*e[0],b.gy+b.d*e[1]), ch=30+k*10;
+      g.push('<rect x="'+r2(p.x-2.5)+'" y="'+r2(p.y-h-ch)+'" width="5" height="'+ch+'" fill="'+m.r+'"/>');
+      g.push('<rect x="'+r2(p.x-2.5)+'" y="'+r2(p.y-h-ch)+'" width="5" height="2" fill="'+PAL.ember+'"/>');
+      if(fresh>0.3) for(let q=0;q<3;q++) g.push('<circle cx="'+r2(p.x)+'" cy="'+r2(p.y-h-ch-4)+'" r="'+(2.5+q)+'" fill="'+PAL.outer+'" class="smoke" style="--d:'+(q*2.4)+'s" opacity="0.4"/>');
+    });
+  }
+  if(b.arch==='arena'){
+    const f2=faces(b.gx,b.gy,b.w,b.d,h+13,A.inset+0.13,0), H=h+13;
+    g.push('<polygon points="'+pts(f2.lw)+'" fill="'+m.l+'"/><polygon points="'+pts(f2.rw)+'" fill="'+m.r+'"/><polygon points="'+pts(f2.top)+'" fill="'+m.top+'"/>');
+    const o=corners(b.gx,b.gy,b.w,b.d,A.inset+0.30);
+    g.push('<polygon points="'+pts([up(o.T,H),up(o.R,H),up(o.B,H),up(o.L,H)])+'" fill="#0B0D12" stroke="'+PAL.live+'" stroke-width="1.5"/>');
+    const cc=cen(b.gx,b.gy,b.w,b.d);
+    g.push('<polygon points="'+pts([{x:cc.x-11,y:cc.y-H},{x:cc.x+11,y:cc.y-H},{x:cc.x+22,y:cc.y-H-118},{x:cc.x-22,y:cc.y-H-118}])+'" fill="url(#column)" class="column"/>');
+  }
+  if(b.arch==='lab'){
+    const rH=11, rid1=iso(b.gx+b.w/2,b.gy+A.inset), rid2=iso(b.gx+b.w/2,b.gy+b.d-A.inset);
+    g.push('<polygon points="'+pts([L,up(rid2,h+rH),up(rid1,h+rH),T])+'" fill="#141922"/>');
+    g.push('<polygon points="'+pts([up(rid1,h+rH),up(rid2,h+rH),B,R])+'" fill="#0F131A"/>');
+    if(fresh>0.15){
+      const gl=[up(rid1,h+rH),up(rid2,h+rH),{x:rid2.x-9,y:rid2.y-h-rH+5},{x:rid1.x-9,y:rid1.y-h-rH+5}];
+      g.push('<polygon points="'+pts(gl)+'" fill="'+PAL.liveDeep+'" opacity="'+r2(0.35+fresh*0.5)+'"/>');
+    }
+    g.push('<line x1="'+r2(rid1.x)+'" y1="'+r2(rid1.y-h-rH)+'" x2="'+r2(rid2.x)+'" y2="'+r2(rid2.y-h-rH)+'" stroke="'+(fresh>0.15?PAL.live:PAL.ink4)+'" stroke-width="'+(fresh>0.15?1.6:1)+'"/>');
+  }
+  if(b.arch==='archive') g.push('<polygon points="'+pts(top)+'" fill="none" stroke="'+PAL.frostDeep+'" stroke-width="1" opacity="0.5"/>');
+  if(b.arch==='campus'){
+    [[0.08,0.12,0.34,0.76,26],[0.44,0.10,0.24,0.44,34],[0.44,0.58,0.48,0.30,18]].forEach(function(s){
+      const gx=b.gx+b.w*s[0], gy=b.gy+b.d*s[1], w=b.w*s[2], d=b.d*s[3];
+      const ff=faces(gx,gy,w,d,h+s[4],0.04,0,h);
+      g.push('<polygon points="'+pts(ff.lw)+'" fill="'+m.l+'"/><polygon points="'+pts(ff.rw)+'" fill="'+m.r+'"/><polygon points="'+pts(ff.top)+'" fill="'+m.top+'"/>');
+      const lw=ff.lw;
+      g.push(windows(lw[0],lw[1],s[4],Math.max(1,Math.round(Math.hypot(lw[1].x-lw[0].x,lw[1].y-lw[0].y)/14)),Math.max(1,Math.floor(s[4]/15)),rand,Math.max(0.12,fresh),PAL.liveHot,'#131318'));
+    });
+  }
+  if(b.arch==='house'){
+    const rH=12, rid1=iso(b.gx+b.w/2,b.gy+A.inset), rid2=iso(b.gx+b.w/2,b.gy+b.d-A.inset);
+    g.push('<polygon points="'+pts([L,up(rid2,h+rH),up(rid1,h+rH),T])+'" fill="'+m.top+'"/>');
+    g.push('<polygon points="'+pts([up(rid1,h+rH),up(rid2,h+rH),B,R])+'" fill="'+m.l+'"/>');
+  }
+  if(b.frozen==='sealed'){
+    const vx=b.gx+b.w*0.58, vy=b.gy+b.d*0.16, vh=h+17;
+    const ff=faces(vx,vy,b.w*0.34,b.d*0.5,vh,0.02,0,h), fm=PAL.mass.frozen;
+    g.push('<polygon points="'+pts(ff.lw)+'" fill="'+fm.l+'"/><polygon points="'+pts(ff.rw)+'" fill="'+fm.r+'"/><polygon points="'+pts(ff.top)+'" fill="'+fm.top+'"/>');
+    g.push('<polygon points="'+pts(ff.top)+'" fill="none" stroke="'+PAL.frost+'" stroke-width="1.2" opacity="0.9"/>');
+    const cv=cen(vx,vy,b.w*0.34,b.d*0.5);
+    g.push('<circle cx="'+r2(cv.x)+'" cy="'+r2(cv.y-vh-5)+'" r="20" fill="url(#bloomCold)" opacity="0.5"/>');
+    g.push(seal(cv.x,cv.y-vh-5));
+  }
+  if(b.frozen==='read'){
+    g.push('<polyline points="'+pts([f.lw[3],f.lw[2]])+'" fill="none" stroke="'+PAL.frost+'" stroke-width="2" opacity="0.5"/>');
+    const cc=cen(b.gx,b.gy,b.w,b.d);
+    g.push(seal(cc.x,cc.y-h-24,0.75));
+  }
+  if(st==='conserved'){
+    const c=corners(b.gx,b.gy,b.w,b.d,A.inset-0.04), H=h+6;
+    g.push('<polygon points="'+pts([up(c.T,H),up(c.R,H),up(c.B,H),up(c.L,H)])+'" fill="'+PAL.tarp+'"/>');
+    g.push('<line x1="'+r2(up(c.T,H).x)+'" y1="'+r2(up(c.T,H).y)+'" x2="'+r2(up(c.B,H).x)+'" y2="'+r2(up(c.B,H).y)+'" stroke="'+PAL.void+'" stroke-width="1" stroke-dasharray="4 4" opacity="0.8"/>');
+    const cc=cen(b.gx,b.gy,b.w,b.d);
+    g.push('<circle cx="'+r2(cc.x)+'" cy="'+r2(cc.y-H-3)+'" r="2.4" fill="'+PAL.standby+'" class="standby"/>');
+  }
+  if(st==='trash'){
+    g.push(fence(b));
+    const cc=cen(b.gx,b.gy,b.w,b.d);
+    for(let k=0;k<5;k++){const rr=rng(seed(b.id+k))();
+      g.push('<polygon points="'+pts([{x:cc.x-30+rr*60,y:cc.y+6+rr*8},{x:cc.x-24+rr*60,y:cc.y+2+rr*8},{x:cc.x-18+rr*60,y:cc.y+8+rr*8}])+'" fill="'+PAL.mass.trash.top+'"/>');}
+    g.push('<circle cx="'+r2(cc.x)+'" cy="'+r2(cc.y-h-10)+'" r="2" fill="'+PAL.hazard+'" class="spark"/>');
+  }
+  if(st==='demo') g.push('<g class="scaff">'+scaffold(b,h)+'</g>');
+  return g.join('');
+}
+function metroPath(m){
+  const B=id=>CITY.buildings.find(x=>x.id===id);
+  const a=B(m.from), pA=cen(a.gx,a.gy,a.w,a.d);
+  let p='M '+r2(pA.x)+' '+r2(pA.y);
+  (m.via||[]).forEach(function(v){const q=iso(v[0],v[1]);p+=' L '+r2(q.x)+' '+r2(q.y);});
+  if(m.to){const z=B(m.to),pZ=cen(z.gx,z.gy,z.w,z.d);p+=' L '+r2(pZ.x)+' '+r2(pZ.y);}
+  else{const l=(m.via||[]).slice(-1)[0],q=iso(l[0]+0.9,l[1]+0.6);p+=' L '+r2(q.x)+' '+r2(q.y);}
+  return p;
+}
+function buildSVG(){
+  const s=[];
+  s.push('<defs>'+
+  '<radialGradient id="bloomWarm"><stop offset="0" stop-color="'+PAL.live+'" stop-opacity="0.55"/><stop offset="0.45" stop-color="'+PAL.liveDeep+'" stop-opacity="0.22"/><stop offset="1" stop-color="'+PAL.liveDeep+'" stop-opacity="0"/></radialGradient>'+
+  '<radialGradient id="bloomCold"><stop offset="0" stop-color="'+PAL.frost+'" stop-opacity="0.6"/><stop offset="1" stop-color="'+PAL.frost+'" stop-opacity="0"/></radialGradient>'+
+  '<radialGradient id="bloomHazard"><stop offset="0" stop-color="'+PAL.hazard+'" stop-opacity="0.45"/><stop offset="1" stop-color="'+PAL.hazard+'" stop-opacity="0"/></radialGradient>'+
+  '<radialGradient id="cityGlow"><stop offset="0" stop-color="'+PAL.ember+'" stop-opacity="0.16"/><stop offset="1" stop-color="'+PAL.ember+'" stop-opacity="0"/></radialGradient>'+
+  '<linearGradient id="column" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="'+PAL.live+'" stop-opacity="0.18"/><stop offset="1" stop-color="'+PAL.live+'" stop-opacity="0"/></linearGradient>'+
+  '<linearGradient id="gateBeam" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="'+PAL.live+'" stop-opacity="0.18"/><stop offset="1" stop-color="'+PAL.live+'" stop-opacity="0"/></linearGradient>'+
+  '<radialGradient id="thresh"><stop offset="0" stop-color="'+PAL.liveHot+'" stop-opacity="0.42"/><stop offset="1" stop-color="'+PAL.live+'" stop-opacity="0.15"/></radialGradient>'+
+  '<linearGradient id="roadOut" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="'+PAL.outer+'" stop-opacity="0.7"/><stop offset="1" stop-color="'+PAL.outer+'" stop-opacity="0.05"/></linearGradient>'+
+  '</defs>');
+  const GX=15,GY=14,e=28;
+  const P0=iso(0,0),P1=iso(GX,0),P2=iso(GX,GY),P3=iso(0,GY);
+  s.push('<g id="ground">');
+  s.push('<ellipse cx="'+r2(iso(7,7).x)+'" cy="'+r2(iso(7,7).y)+'" rx="560" ry="300" fill="url(#cityGlow)"/>');
+  s.push('<polygon points="'+pts([{x:P3.x,y:P3.y+e},{x:P2.x,y:P2.y+e},P2,P3])+'" fill="'+PAL.slab+'"/>');
+  s.push('<polygon points="'+pts([{x:P2.x,y:P2.y+e},{x:P1.x,y:P1.y+e},P1,P2])+'" fill="#06080C"/>');
+  s.push('<polygon points="'+pts([P0,P1,P2,P3])+'" fill="'+PAL.plate+'"/>');
+  s.push('<g id="grid">');
+  for(let i=0;i<=GX;i++){const a=iso(i,0),b=iso(i,GY);s.push('<line x1="'+r2(a.x)+'" y1="'+r2(a.y)+'" x2="'+r2(b.x)+'" y2="'+r2(b.y)+'" stroke="#151A25" stroke-width="0.6"/>');}
+  for(let i=0;i<=GY;i++){const a=iso(0,i),b=iso(GX,i);s.push('<line x1="'+r2(a.x)+'" y1="'+r2(a.y)+'" x2="'+r2(b.x)+'" y2="'+r2(b.y)+'" stroke="#151A25" stroke-width="0.6"/>');}
+  s.push('</g>');
+  CITY.districts.forEach(function(d){
+    const c=corners(d.gx,d.gy,d.w,d.d,0.10);
+    s.push('<polygon class="dfloor" data-d="'+d.id+'" points="'+pts([c.T,c.R,c.B,c.L])+'" fill="'+PAL.floor[d.hue]+'" stroke="'+PAL.hue[d.hue]+'" stroke-width="0.8" stroke-opacity="0.16"/>');
+  });
+  s.push('</g><g id="metro">');
+  CITY.metro.forEach(function(m){
+    const p=metroPath(m), cut=m.id==='cut';
+    s.push('<path id="r-'+m.id+'" d="'+p+'" fill="none" stroke="'+(cut?PAL.hazard:PAL.frostDeep)+'" stroke-width="'+(cut?1.2:2.2)+'" stroke-opacity="'+(cut?0.4:0.28)+'" '+(cut?'stroke-dasharray="3 7"':'')+'/>');
+  });
+  s.push('</g>');
+  const rp=iso(14.6,7.2), rq={x:rp.x+196,y:rp.y-116};
+  s.push('<g id="outroad"><line x1="'+r2(rp.x)+'" y1="'+r2(rp.y)+'" x2="'+r2(rq.x)+'" y2="'+r2(rq.y)+'" stroke="url(#roadOut)" stroke-width="3" stroke-dasharray="10 8"/>'+
+  '<g class="bld" data-id="__ext">'+
+  '<polygon points="'+pts([{x:rq.x,y:rq.y-13},{x:rq.x+30,y:rq.y+2},{x:rq.x,y:rq.y+17},{x:rq.x-30,y:rq.y+2}])+'" fill="'+PAL.mass.external.top+'"/>'+
+  '<polygon points="'+pts([{x:rq.x-30,y:rq.y+2},{x:rq.x,y:rq.y+17},{x:rq.x,y:rq.y+25},{x:rq.x-30,y:rq.y+10}])+'" fill="'+PAL.mass.external.l+'"/>'+
+  '<polygon points="'+pts([{x:rq.x,y:rq.y+17},{x:rq.x+30,y:rq.y+2},{x:rq.x+30,y:rq.y+10},{x:rq.x,y:rq.y+25}])+'" fill="'+PAL.mass.external.r+'"/>'+
+  '</g></g>');
+  s.push('<g id="city">');
+  CITY.buildings.slice().sort((a,b)=>(a.gx+a.gy)-(b.gx+b.gy)||a.gx-b.gx).forEach(function(b){
+    s.push('<g class="bld st-'+b.st+'" data-id="'+b.id+'">'+build(b)+'</g>');
+  });
+  s.push('</g>');
+  return s.join('');
+}
+
+/* ── иконки ── */
+const IC={
+  play:'<path d="M5 2.5 L13 8 L5 13.5 Z" fill="currentColor" stroke="none"/>',
+  stop:'<rect x="3.5" y="3.5" width="9" height="9" rx="1.5"/>',
+  cross:'<path d="M3 3 L13 13 M13 3 L3 13"/>',
+  check:'<path d="M2.5 8.5 L6 12 L13.5 4.5"/>',
+  freeze:'<path d="M8 1.5 V14.5 M2.4 4.8 L13.6 11.2 M13.6 4.8 L2.4 11.2"/>',
+  sun:'<circle cx="8" cy="8" r="3"/><path d="M8 1v2 M8 13v2 M1 8h2 M13 8h2 M3 3l1.4 1.4 M11.6 11.6L13 13 M13 3l-1.4 1.4 M4.4 11.6L3 13"/>',
+  crane:'<path d="M2 13.5 h12 M4 13.5 V3 h9 M4 6 h5 M9 3 v3"/>',
+  open:'<path d="M6 3 h8 v8 M14 3 L4.5 12.5"/>',
+  home:'<path d="M2.5 8 L8 2.5 13.5 8 M4.5 7 v6.5 h7 V7"/>'
+};
+function ic(n,s){return '<svg width="'+(s||14)+'" height="'+(s||14)+'" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">'+IC[n]+'</svg>'}
+
+/* ── DOM ── */
+const svg=$('citySvg'), body=document.body;
+svg.innerHTML=buildSVG();
+ $('brandSub').textContent=CITY.meta.phase+' · обновлено '+CITY.meta.updated;
+ $('inClose').innerHTML=ic('cross',15);
+ $('tourBtn').innerHTML=ic('play',13);
+const statusMeta={alive:['живой','#FFB33B'],demo:['demo','#B59D51'],planned:['чертёж','#BECCDD'],conserved:['спит','#66667D'],trash:['под снос','#E85433'],cleared:['земля чиста','#5C574F']};
+
+/* ══════════ шёпот города ══════════ */
+let whT=0;
+function whisper(t){
+  const w=$('whisper');
+  w.querySelector('span').textContent=t;
+  w.classList.add('show');
+  clearTimeout(whT); whT=setTimeout(()=>w.classList.remove('show'),4200);
+}
+
+/* ══════════ шина событий: тихий ум ══════════ */
+const CityBus={
+  emit(e){
+    CITY.metro.forEach(m=>{ if(m.ev===e.type) pulseMetro(m); });
+    flashB(e.from); flashB(e.to);
+    if(e.text) whisper(e.text);
+  }
+};
+function pulseMetro(m){
+  const p=svg.querySelector('#r-'+m.id); if(!p)return;
+  try{
+    const len=p.getTotalLength(); if(!len||!isFinite(len))return;
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('r','2.2'); c.setAttribute('fill','#FFE29A');
+    svg.querySelector('#metro').appendChild(c);
+    const t0=performance.now(), dur=Math.max(700,len*1.9);
+    const ease=k=>1-Math.pow(1-k,3);
+    (function step(n){ const k=(n-t0)/dur;
+      if(k>=1||!c.isConnected){ c.remove(); return; }
+      const pt=p.getPointAtLength(len*ease(k));
+      c.setAttribute('cx',pt.x); c.setAttribute('cy',pt.y);
+      requestAnimationFrame(step);
+    })(t0);
+  }catch(err){}
+}
+function flashB(id){
+  if(!id||id.substr(0,2)==='__')return;
+  const n=svg.querySelector('.bld[data-id="'+id+'"]'); if(!n)return;
+  n.classList.add('hot'); setTimeout(()=>n.classList.remove('hot'),650);
+}
+
+/* ══════════ камера: зум колесом, перетаскивание мышью ══════════ */
+let cam={x:0,y:0,s:1};
+function camApply(anim){
+  svg.style.transition=anim?'transform .8s cubic-bezier(.22,1,.36,1)':'none';
+  svg.style.transform='translate('+cam.x+'px,'+cam.y+'px) scale('+cam.s+')';
+}
+camApply(false);
+const stage=$('stage');
+stage.addEventListener('wheel',e=>{
+  if(body.classList.contains('inspect'))return;
+  e.preventDefault();
+  const k=e.deltaY<0?1.12:0.89;
+  const ns=Math.min(2.4,Math.max(0.75,cam.s*k));
+  const r=svg.getBoundingClientRect();
+  const mx=e.clientX-r.left-r.width/2, my=e.clientY-r.top-r.height/2;
+  const f=ns/cam.s;
+  cam.x=mx-(mx-cam.x)*f; cam.y=my-(my-cam.y)*f; cam.s=ns;
+  camApply(false);
+},{passive:false});
+let drag=null;
+svg.addEventListener('mousedown',e=>{ if(body.classList.contains('inspect'))return; drag={x:e.clientX,y:e.clientY,cx:cam.x,cy:cam.y,moved:0}; svg.classList.add('drag'); });
+window.addEventListener('mousemove',e=>{
+  if(!drag)return;
+  const dx=e.clientX-drag.x, dy=e.clientY-drag.y;
+  drag.moved=Math.max(drag.moved,Math.abs(dx)+Math.abs(dy));
+  cam.x=drag.cx+dx; cam.y=drag.cy+dy; camApply(false);
+});
+window.addEventListener('mouseup',()=>{ drag=null; svg.classList.remove('drag'); });
+
+/* ══════════ наведение: шёпот, две строки ══════════ */
+const tag=$('hoverTag');
+function litLinks(id,on){
+  CITY.metro.forEach(m=>{
+    if(m.from===id||m.to===id){
+      const p=svg.querySelector('#r-'+m.id); if(p)p.classList.toggle('ln-on',on);
+      const other=m.from===id?m.to:m.from;
+      if(other){ const n=svg.querySelector('.bld[data-id="'+other+'"]'); if(n)n.classList.toggle('peer',on); }
+    }
+  });
+}
+let hovId=null;
+function clearHov(){
+  if(hovId){
+    const n=svg.querySelector('.bld[data-id="'+hovId+'"]'); if(n)n.classList.remove('hov');
+    litLinks(hovId,false);
+  }
+  hovId=null; tag.classList.remove('show');
+}
+svg.addEventListener('mousemove',e=>{
+  if(body.classList.contains('inspect')){ clearHov(); return; }
+  const g=e.target&&e.target.closest?e.target.closest('.bld'):null;
+  const id=g?g.dataset.id:null;
+  if(id!==hovId){
+    clearHov(); hovId=id;
+    if(id&&id!=='__ext'){
+      const b=CITY.buildings.find(x=>x.id===id); if(!b)return;
+      g.classList.add('hov'); litLinks(id,true);
+      const st=statusMeta[b.st]||statusMeta.alive;
+      tag.querySelector('.ht1 i').style.background=st[1];
+      $('htN').textContent=b.name;
+      $('htW').textContent=b.what;
+      tag.classList.add('show');
+    }
+  }
+  if(hovId){
+    let x=e.clientX+16, y=e.clientY+18;
+    if(x+290>innerWidth) x=e.clientX-296;
+    if(y+110>innerHeight) y=e.clientY-116;
+    tag.style.left=Math.max(8,x)+'px'; tag.style.top=Math.max(8,y)+'px';
+  }
+});
+svg.addEventListener('mouseleave',clearHov);
+
+/* ══════════ клик → осмотр: здание крупно и изнутри ══════════ */
+let selected=null;
+svg.addEventListener('click',e=>{
+  if(drag&&drag.moved>6)return;
+  if(body.classList.contains('tour')){ stopTour(); return; }
+  const g=e.target.closest('.bld'); if(!g)return;
+  const id=g.dataset.id; if(id==='__ext')return;
+  openInspect(id);
+});
+ $('inClose').addEventListener('click',closeInspect);
+ $('veil').addEventListener('click',closeInspect);
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if(body.classList.contains('inspect')) closeInspect();
+    else if(body.classList.contains('tour')) stopTour();
+  }
+});
+
+/* интерьер: дом с открытой передней стеной, комнаты — этажи со светом */
+function roomScene(b){
+  const rooms=(b.rooms&&b.rooms.length)?b.rooms:[{n:'—',d:''}];
+  const perFloor=rooms.length>4?2:1;
+  const floors=Math.min(5,Math.ceil(rooms.length/perFloor));
+  const FH=88, S=1.15;
+  const cx=270, cy0=452;
+  const P=(gx,gy)=>({x:cx+(gx-gy)*76*S/2*0? 0:cx+(gx-gy)*76/2, y:cy0+(gx+gy)*38/2});
+  const W=2.6, D=1.9;
+  const T=P(0,0),R=P(W,0),B=P(W,D),L=P(0,D);
+  const H=floors*FH+34;
+  const stCol=(statusMeta[b.st]||statusMeta.alive)[1];
+  const lit=b.st==='alive'||b.st==='demo';
+  const g=[];
+  /* корпус: задние стены + пол */
+  g.push('<polygon points="'+pts([L,T,up(T,H),up(L,H)])+'" fill="#161920"/>');
+  g.push('<polygon points="'+pts([T,R,up(R,H),up(T,H)])+'" fill="#0E1116"/>');
+  g.push('<polygon points="'+pts([T,R,B,L])+'" fill="#0A0D12"/>');
+  g.push('<polygon points="'+pts([L,T,up(T,H),up(L,H)])+'" fill="none" stroke="#222835" stroke-width="1"/>');
+  g.push('<polygon points="'+pts([T,R,up(R,H),up(T,H)])+'" fill="none" stroke="#1A2029" stroke-width="1"/>');
+  /* этажи и комнаты */
+  let ri=0;
+  for(let fl=0; fl<floors; fl++){
+    const y=(fl+1)*FH;
+    const fp=[up(T,y),up(R,y),up(B,y),up(L,y)];
+    g.push('<polygon points="'+pts(fp)+'" fill="#12151C" stroke="#1E242F" stroke-width="1"/>');
+    for(let k=0;k<perFloor&&ri<rooms.length;k++,ri++){
+      const u0=k===0?0.12:0.55, u1=k===0?0.48:0.9;
+      const a={x:fp[0].x+(fp[3].x-fp[0].x)*u0, y:fp[0].y+(fp[3].y-fp[0].y)*u0};
+      const bb={x:fp[0].x+(fp[3].x-fp[0].x)*u1, y:fp[0].y+(fp[3].y-fp[0].y)*u1};
+      const c={x:fp[2].x+(fp[3].x-fp[2].x)*u1, y:fp[2].y+(fp[3].y-fp[2].y)*u1};
+      const d2={x:fp[2].x+(fp[3].x-fp[2].x)*u0, y:fp[2].y+(fp[3].y-fp[2].y)*u0};
+      const ccx=(a.x+c.x)/2, ccy=(a.y+c.y)/2+6;
+      const rrr=rng(seed(b.id+rooms[ri].n));
+      const on=lit||b.st==='planned';
+      g.push('<g class="roomSpot" data-r="'+ri+'">');
+      g.push('<polygon points="'+pts([a,bb,c,d2])+'" fill="'+(on?PAL.liveDeep:'#16181E')+'" opacity="'+(on?0.3:0.5)+'"/>');
+      if(on) g.push('<ellipse class="rLight" cx="'+r2(ccx)+'" cy="'+r2(ccy)+'" rx="34" ry="16" fill="url(#rGlow)"/>');
+      /* предмет комнаты: маленький куб со своим характером */
+      const px=ccx-8+rrr()*16, py=ccy+4;
+      const cw=9,ch=5,chh=8+Math.round(rrr()*7);
+      g.push('<polygon points="'+pts([{x:px-cw,y:py},{x:px,y:py+ch},{x:px,y:py+ch+chh},{x:px-cw,y:py+chh}])+'" fill="#1C212B"/>');
+      g.push('<polygon points="'+pts([{x:px,y:py+ch},{x:px+cw,y:py},{x:px+cw,y:py+chh},{x:px,y:py+ch+chh}])+'" fill="#141821"/>');
+      g.push('<polygon points="'+pts([{x:px-cw,y:py},{x:px,y:py+ch},{x:px+cw,y:py},{x:px,y:py-ch}])+'" fill="#252B36"/>');
+      if(on) g.push('<circle cx="'+r2(px)+'" cy="'+r2(py-ch)+'" r="2" fill="'+PAL.liveHot+'" opacity=".9"/>');
+      g.push('</g>');
+    }
+  }
+  /* верх: рамка крыши + маячок */
+  const top=[up(T,H),up(R,H),up(B,H),up(L,H)];
+  g.push('<polygon points="'+pts(top)+'" fill="none" stroke="'+(lit?PAL.live:'#2A2F3A')+'" stroke-width="1.4" stroke-opacity="'+(lit?0.8:0.6)+'" '+(b.st==='planned'?'stroke-dasharray="5 5"':'')+'/>');
+  if(lit){
+    const mc={x:(top[0].x+top[2].x)/2,y:(top[0].y+top[2].y)/2};
+    g.push('<circle cx="'+r2(mc.x)+'" cy="'+r2(mc.y)+'" r="16" fill="url(#rGlow2)"/>');
+    g.push('<circle cx="'+r2(mc.x)+'" cy="'+r2(mc.y)+'" r="3" fill="'+stCol+'" class="beacon"/>');
+  }
+  return '<defs>'+
+    '<radialGradient id="rGlow"><stop offset="0" stop-color="'+PAL.live+'" stop-opacity=".5"/><stop offset="1" stop-color="'+PAL.live+'" stop-opacity="0"/></radialGradient>'+
+    '<radialGradient id="rGlow2"><stop offset="0" stop-color="'+PAL.liveHot+'" stop-opacity=".4"/><stop offset="1" stop-color="'+PAL.liveHot+'" stop-opacity="0"/></radialGradient>'+
+  '</defs>'+g.join('');
+}
+function actionsFor(b){
+  const A={
+    alive:[['conserved','freeze','Усыпить',0],['demo','sun','В демо',0]],
+    demo:[['alive','sun','Сдать в строй',0]],
+    planned:[['alive','crane','Начать стройку',0]],
+    conserved:[['alive','sun','Разбудить',0]],
+    trash:[['cleared','cross','Снести',1]],
+    cleared:[['planned','crane','Начертить новое',0]]
+  }[b.st]||[];
+  return A.map(a=>'<button class="act'+(a[3]?' danger':'')+'" data-st="'+a[0]+'">'+ic(a[1],13)+'<span>'+a[2]+'</span></button>').join('');
+}
+function openInspect(id){
+  clearHov();
+  selected=id;
+  const b=CITY.buildings.find(x=>x.id===id); if(!b)return;
+  const st=statusMeta[b.st]||statusMeta.alive;
+  const d=CITY.districts.find(x=>x.id===b.dist);
+  $('inDot').style.background=st[1];
+  $('inSt').textContent=st[0]; $('inSt').style.color=st[1];
+  $('inDist').textContent=(d?d.name:'')+' · квартал';
+  $('inName').textContent=b.name;
+  $('inWhat').textContent=b.what;
+  $('inGives').innerHTML=(b.gives||[]).map(t=>'<div class="give">'+ic('check',14)+'<span>'+t+'</span></div>').join('');
+  $('inRooms').innerHTML=(b.rooms||[]).map((r,i)=>'<div class="room" data-r="'+i+'"><i></i><div><b>'+r.n+'</b><span>'+r.d+'</span></div></div>').join('');
+  $('inTechGrid').innerHTML=
+    '<div>масштаб: <b>'+fmtN(b.loc)+' строк · '+b.files+' файлов</b></div>'+
+    '<div>активность: <b>'+b.t30+' касаний за 30 дней</b></div>'+
+    (b.route?'<div>маршрут приложения: <b>'+b.route+'</b></div>':'');
+  $('inMods').textContent=(b.mods||[]).join('  ·  ');
+  $('inActs').innerHTML=actionsFor(b)+(b.route?'<button class="act" data-app="1">'+ic('open',13)+'<span>Открыть в приложении</span></button>':'');
+  $('inSvg').innerHTML=roomScene(b);
+  /* ховер по комнате слева ↔ свет справа и наоборот */
+  $('inSvg').querySelectorAll('.roomSpot').forEach(sp=>{
+    const item=$('inRooms').querySelector('.room[data-r="'+sp.dataset.r+'"]');
+    if(!item)return;
+    const on=v=>{ sp.classList.toggle('on',v); item.style.background=v?'rgba(255,179,59,.06)':''; };
+    item.addEventListener('mouseenter',()=>on(true));
+    item.addEventListener('mouseleave',()=>on(false));
+  });
+  body.classList.add('inspect');
+  $('hint').classList.add('gone');
+}
+function closeInspect(){ body.classList.remove('inspect'); }
+
+/* действия в осмотре */
+ $('inActs').addEventListener('click',e=>{
+  const btn=e.target.closest('button'); if(!btn)return;
+  const b=CITY.buildings.find(x=>x.id===selected); if(!b)return;
+  if(btn.dataset.app){
+    whisper('маршрут «'+b.route+'» — проводку подключит 007');
+    return;
+  }
+  const ns=btn.dataset.st;
+  b.st=ns;
+  svg.innerHTML=buildSVG(); applyLit();
+  if(ns==='cleared'){
+    closeInspect();
+    whisper(b.name+': снесено. Земля чиста — можно чертить новое');
+  } else {
+    openInspect(b.id);
+    whisper(b.name+': '+(statusMeta[ns]||[ns])[0]);
+  }
+  CityBus.emit({type:'city:plan',from:b.id});
+});
+
+/* ══════════ режимы приложения = свет города ══════════ */
+const APPMODES={
+  rehearsal:{ids:['studio','sync','notes','show','split','academy','styles'],say:'репетиция: студия и мастерские греются'},
+  karaoke:{ids:['catalog','gates','academy','styles'],say:'караоке: витрина и академия в деле'},
+  concert:{ids:['show','arenas','scenes','catalog','billy'],say:'концерт: театр и киностудия за работой'},
+  live:{ids:['live','studio','sync','billy','split'],say:'эфир: арена даёт луч, город притемнён'}
+};
+let appMode='rehearsal';
+function applyLit(){
+  const set=new Set(APPMODES[appMode].ids);
+  [...svg.querySelectorAll('.bld')].forEach(n=>n.classList.toggle('lit',set.has(n.dataset.id)));
+  [...svg.querySelectorAll('.bld.lit .win, .bld.lit polygon[fill="#FFE29A"]')].forEach(()=>{});
+}
+/* тёплое усиление света: через css-переменную нельзя (svg fill задан), поэтому класс .lit слегка поднимает фильтр */
+document.querySelectorAll('[data-app]').forEach(btn=>btn.addEventListener('click',()=>{
+  appMode=btn.dataset.app;
+  document.querySelectorAll('[data-app]').forEach(x=>x.classList.toggle('on',x===btn));
+  applyLit();
+  whisper(APPMODES[appMode].say);
+  CityBus.emit({type:'app:mode',from:'__app'});
+}));
+document.querySelector('[data-app="rehearsal"]').classList.add('on');
+
+/* ══════════ тур по городу ══════════ */
+const TOUR=[
+  {id:'gates',say:'Вход без забора. Зашёл — и сразу поёшь.'},
+  {id:'catalog',say:'Главная площадь: все треки города лежат здесь.'},
+  {id:'studio',say:'Фабрика звука. Слышит каждую ноту.'},
+  {id:'sync',say:'Здесь рождается свет слова.'},
+  {id:'show',say:'Режиссёр твоего выступления.'},
+  {id:'live',say:'Отсюда твой голос уходит в мир.'},
+  {id:'billy',say:'И за всем этим следит Билли.'},
+  {id:'arenas',say:'А это будущее: два новых зала. Пока — чертёж.'}
+];
+let tourT=[];
+function flyTo(x,y,s,dur){
+  svg.style.transition='transform '+dur+'ms cubic-bezier(.22,1,.36,1)';
+  svg.style.transform='translate('+(660-x*s)+'px,'+(350-y*s)+'px) scale('+s+')';
+}
+function startTour(){
+  closeInspect();
+  body.classList.add('tour');
+  $('tourBtn').classList.add('on');
+  $('tourBtn').innerHTML=ic('stop',13);
+  $('hint').classList.add('gone');
+  let i=0;
+  const step=()=>{
+    if(i>=TOUR.length){ stopTour(); return; }
+    const b=CITY.buildings.find(x=>x.id===TOUR[i].id); if(!b){i++;step();return;}
+    [...svg.querySelectorAll('.bld')].forEach(n=>n.classList.toggle('spot',n.dataset.id===b.id));
+    const c=cen(b.gx,b.gy,b.w,b.d);
+    flyTo(c.x,c.y,1.5,1400);
+    $('ltT').textContent=b.name;
+    $('ltS').textContent=TOUR[i].say;
+    $('lower').classList.add('show');
+    CityBus.emit({type:'tour:step',from:b.id});
+    i++;
+    tourT=[setTimeout(step,4200)];
+  };
+  step();
+}
+function stopTour(){
+  tourT.forEach(clearTimeout); tourT=[];
+  body.classList.remove('tour');
+  $('tourBtn').classList.remove('on');
+  $('tourBtn').innerHTML=ic('play',13);
+  $('lower').classList.remove('show');
+  [...svg.querySelectorAll('.bld')].forEach(n=>n.classList.remove('spot'));
+  cam={x:0,y:0,s:1}; camApply(true);
+}
+ $('tourBtn').addEventListener('click',()=>body.classList.contains('tour')?stopTour():startTour());
+
+/* ══════════ тихая жизнь: редкие события ══════════ */
+const IDLE=[
+  {type:'feed:post',from:'catalog',to:'hub',say:'лента: новый пост'},
+  {type:'take:saved',from:'catalog',to:'academy',say:'академия: тейк сохранён'},
+  {type:'theme:apply',from:'styles',to:'catalog',say:'ателье: городу сменили тему'},
+  {type:'track:meta',from:'dna',to:'catalog',say:'архив: обновил карту трека'},
+  {type:'billy:say',from:'billy',to:'catalog',say:'Билли подбодрил новичка'},
+  {type:'audio:pitch',from:'studio',to:'notes',say:'лаб Notes: услышал ноту'}
+];
+(function idle(){
+  setTimeout(()=>{
+    if(!body.classList.contains('inspect')&&!body.classList.contains('tour')){
+      const e=IDLE[Math.floor(Math.random()*IDLE.length)];
+      CityBus.emit({type:e.type,from:e.from,to:e.to,text:e.say});
+    }
+    idle();
+  },9000+Math.random()*9000);
+})();
+
+/* ══════════ API для 007 ══════════
+   beLiveBase.emit({type:'word:active',from:'sync',to:'show',text:'свет слова пошёл'})
+   — type совпадает с именем линии метро: импульс едет, город вспыхивает, шёпот говорит.
+   beLiveBase.setCadastre({districts,buildings,metro,meta})
+   — полная замена кадастра; формат зданий теперь содержит what / gives / rooms. */
+window.beLiveBase={
+  emit:e=>CityBus.emit(e),
+  setCadastre(json){
+    ['districts','buildings','metro'].forEach(k=>{ if(json[k])CITY[k]=json[k]; });
+    if(json.meta)Object.assign(CITY.meta,json.meta);
+    svg.innerHTML=buildSVG(); applyLit();
+    whisper('кадастр обновлён: '+CITY.buildings.length+' зданий');
+  },
+  inspect:id=>openInspect(id),
+  tour:()=>startTour(),
+  state:()=>({appMode,selected})
+};
+
+applyLit();
+setTimeout(()=>whisper('город на связи. наводи на здания — они расскажут о себе'),900);
+</script>
+</body>
+</html>
