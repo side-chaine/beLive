@@ -173,6 +173,8 @@ export class V3DataInterceptor {
           setTimeout(() => reject(new Error('V3 play timeout')), PLAY_TIMEOUT_MS)
         )
         await Promise.race([this.transport.play(offset), timeoutPromise])
+        // P1: тихий возврат play() без 'playing' (TransportV3.ts:135-155) = фейл → catch :177 → rollback
+        if (this.transport.state !== 'playing') throw new Error('V3 play() resolved without playing state')
         console.log('[V3DataInterceptor] 🎯 Auto-play V3 at', offset.toFixed(1) + 's')
       } catch (error) {
         // R1: generation-check — stale rollback не гасит флаг/пайплайн нового трека

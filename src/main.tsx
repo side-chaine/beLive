@@ -88,6 +88,9 @@ let _aetherPublisher: V3StatePublisher | undefined
 
 function bootAether(): void {
   try {
+    // 009-W2b-restore: единственный writer флага V3 (удалён в W2b, d0e31af)
+    ;(window as any).__v3Active = false
+    ;(window as any).__setV3Active = (active: boolean) => { (window as any).__v3Active = active === true }
     const transport = getTransport()
     if (!transport) return // V2 not available
 
