@@ -19,71 +19,69 @@ interface TgTrack {
   fileSize: number; fileName: string;
 }
 
-async function downloadTgTrack(
+const TG_DL_MAX_ATTEMPTS = 3;
+const TG_DL_MIN_BPS = 300_000;
+const TG_DL_TIMEOUT_SAFETY = 2;
+
+export function isTransient(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const e = err as { name?: string; message?: string };
+  if (e.name === 'AbortError') return true;
+  if (e.message && ['server5xx', 'truncated', 'no-reader'].includes(e.message)) return true;
+  return /fetch|network|timeout|stream/i.test(e.message || '');
+}
+
+export async function downloadTgTrack(
   t: TgTrack,
   handleZip: (file: File, onProgress?: (pct: number) => void) => Promise<void>,
-  setSearchQuery: (q: string) => void
+  setSearchQuery: (q: string) => void,
+  fetcher: typeof fetch = fetch,
 ): Promise<void> {
   const fileId = t.fileIds?.instrumental || t.fileIds?.full;
   if (!fileId) return;
   setSearchQuery('');
   const gid = 'ghost_' + Date.now();
-  useGhostStore.getState().addGhost({
-    id: gid, title: t.title, artist: t.artist,
-    phase: 'download', progress: 0,
-  });
-
+  useGhostStore.getState().addGhost({ id: gid, title: t.title, artist: t.artist, phase: 'download', progress: 0 });
   const baseUrl = TG_API_URL.replace('/tracks', '');
-  if (baseUrl === TG_API_URL) {
-    useGhostStore.getState().updateGhost(gid, { phase: 'error' });
-    return;
-  }
-
-  try {
-    const resp = await fetch(baseUrl + '/download/' + fileId);
-    if (!resp.ok) {
-      useGhostStore.getState().updateGhost(gid, { phase: 'error' });
-      return;
-    }
-
-    const contentLength = resp.headers.get('Content-Length');
-    const reader = resp.body?.getReader();
-    if (!reader) {
-      useGhostStore.getState().updateGhost(gid, { phase: 'error' });
-      return;
-    }
-
-    const chunks: Uint8Array[] = [];
-    let received = 0;
-    const total = contentLength ? parseInt(contentLength) : 0;
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (value) {
-        chunks.push(value);
-        received += value.length;
-        if (total > 0) {
-          useGhostStore.getState().updateGhost(gid, {
-            progress: Math.round((received / total) * 100),
-          });
-        }
+  if (baseUrl === TG_API_URL) { useGhostStore.getState().updateGhost(gid, { phase: 'error' }); return; }
+  const timeoutMs = Math.max(30_000, ((t.fileSize || 0) / TG_DL_MIN_BPS) * TG_DL_TIMEOUT_SAFETY);
+  let attempt = 0;
+  while (attempt < TG_DL_MAX_ATTEMPTS) {
+    attempt++;
+    const ac = new AbortController();
+    const to = setTimeout(() => ac.abort(), timeoutMs);
+    try {
+      const resp = await fetcher(baseUrl + '/download/' + fileId, { signal: ac.signal });
+      if (!resp.ok) {
+        if (resp.status >= 500) throw new Error('server5xx');
+        useGhostStore.getState().updateGhost(gid, { phase: 'error' }); return;
       }
+      const reader = resp.body?.getReader();
+      if (!reader) throw new Error('no-reader');
+      const chunks: Uint8Array[] = [];
+      let received = 0;
+      const contentLength = resp.headers.get('Content-Length');
+      const total = contentLength ? parseInt(contentLength, 10) : 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) { chunks.push(value); received += value.length; if (total > 0) useGhostStore.getState().updateGhost(gid, { progress: Math.round((received / total) * 100) }); }
+      }
+      if (total > 0 && received < total) throw new Error('truncated');
+      clearTimeout(to);
+      const blob = new Blob(chunks as BlobPart[], { type: resp.headers.get('Content-Type') || 'application/zip' });
+      useGhostStore.getState().updateGhost(gid, { phase: 'extract', progress: 0 });
+      const fn = t.artist ? `${t.artist} - ${t.title}.zip` : `${t.title}.zip`;
+      await handleZip(new File([blob], fn, { type: 'application/zip' }), (pct) => useGhostStore.getState().updateGhost(gid, { progress: pct }));
+      useGhostStore.getState().updateGhost(gid, { phase: 'done', progress: 100 });
+      break;
+    } catch (err) {
+      clearTimeout(to);
+      if (attempt < TG_DL_MAX_ATTEMPTS && isTransient(err)) { useGhostStore.getState().updateGhost(gid, { phase: 'download', progress: 0 }); continue; }
+      console.error('[TG] Download failed:', err);
+      useGhostStore.getState().updateGhost(gid, { phase: 'error' });
+      return;
     }
-
-    const blob = new Blob(chunks as BlobPart[], { type: resp.headers.get('Content-Type') || 'application/zip' });
-    useGhostStore.getState().updateGhost(gid, { phase: 'extract', progress: 0 });
-
-    const fn = t.artist ? `${t.artist} - ${t.title}.zip` : `${t.title}.zip`;
-    await handleZip(
-      new File([blob], fn, { type: 'application/zip' }),
-      (pct) => useGhostStore.getState().updateGhost(gid, { progress: pct })
-    );
-    useGhostStore.getState().updateGhost(gid, { phase: 'done', progress: 100 });
-
-  } catch (err) {
-    console.error('[TG] Download failed:', err);
-    useGhostStore.getState().updateGhost(gid, { phase: 'error' });
   }
 }
 

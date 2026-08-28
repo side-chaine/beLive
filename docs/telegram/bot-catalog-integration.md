@@ -185,7 +185,8 @@ SyncEditorPanel.tsx
 - Событие `tg-upload-complete` для CatalogContent
 
 ## Known Limitations
-- **TG file_path TTL:** ~1 час — после этого ссылка умирает, retry бесполезен
+- **TG file_path TTL:** ~1 час — после этого ссылка умирает, retry бесполезен (это НЕ transient-обрыв, а протухший file_id → сразу `error`)
+- **Download retry (CatalogContent.downloadTgTrack):** retry (до 3 попыток) применяется ТОЛЬКО на **транзитный mid-transfer обрыв** — network/CDN drop, 5xx, `AbortError` (timeout), `no-reader`, `truncated` stream. **НЕ** применяется на отсутствующий/протухший `file_id`: ответ 4xx → сразу `error`, повтор бесполезен (см. TG file_path TTL выше).
 - **No webhook retry:** бот не переотправляет webhook при падении Worker
 - **Manual deploy:** только через CF Dashboard (wrangler падает на macOS 12.6)
 - **6 треков >50MB:** ждут ffmpeg сжатия перед bulk upload
