@@ -14,7 +14,7 @@
 
 ## Фаза B — Мак параллельно гонит задачи (runs, пока Босс тестирует)
 - **Инициатива 1 — W6 JS→React purge design:** read-only проработка переписи `src/js/*` на React-хуки/модули → `MICRO-PACK-W6-JS-PURGE-draft.md`. Не применять до завершения W1–W5.
-- **Инициатива 2 — bLb (beLiveBase) город будущего:** GO_005 РЕШЕНО post-m3 read-only. Детализация кварталов/houses (`houses.yaml` + `city-gen.mjs` есть) — Starbase-подобная архитектура, свой дизайн-язык beLive. `BELIVEBASE-VISION-2026-08-26.md` базис.
+- **Инициатива 2 — bLb (beLiveBase) город будущего:** GO_005 РЕШЕНО post-m3 read-only. Детализация кварталов/houses: `houses.yaml` — DRAFT v0.1 (`team-m/bLb/houses.yaml`, 2026-08-28, Мак); `city-gen.mjs` — НЕ существует, план MVP-1 post-M3 (`team-m/REPO-TO-CITY-MIGRATION-PLAN-2026-08-28.md`). Starbase-подобная архитектура, свой дизайн-язык beLive. `BELIVEBASE-VISION-2026-08-26.md` базис.
 - **Инициатива 3 — Agent-system оптимизация:** §10 закреплён; предложить §11 (auto-post найденных инициатив в REGISTRY §7) для непрерывной синхронизации Мак↔Вёдра без ручного копипаста.
 - **Инициатива 4 — DOC-CHECK apply (sync-точки 1–4 выше):** подготовить патч поправок REGISTRY/WAVE-PREFLIP-BASELINE (globals 9→62/~250, V2Adapter, model hy3-free) — ждёт коммита Вёдры его рабочего дерева, затем применяю (коорд-доки = зона Hub, не трогаю без санкции).
 

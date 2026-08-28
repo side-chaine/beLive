@@ -134,6 +134,49 @@ domains:
     keeper: "007"
     doc_tc_initiator: "007"
 
+  # ── CITY (закрыто по houses.yaml v0.1, 2026-08-28, решение Босса: дефолт center/007) ──
+  - domain: catalog
+    path: docs/architecture/track-loading-pipeline.md   # umbrella-док каталога TBD; квартал 002
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: character
+    path: docs/architecture/character-layer.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: avatar
+    path: docs/architecture/avatar-visual-engine.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: feed
+    path: docs/architecture/feed-social-v2.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: foundation
+    path: docs/architecture/eventbus-v2.md   # + central-bridge.md, init-registry.md
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: bridges
+    path: docs/architecture/frozen-zones-v2.md   # FROZEN-зона, не трогать
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
+  - domain: arenas
+    path: docs/architecture/architecture-doctrine.md   # Karaoke/Concert/Live — планируемые здания; домен-док TBD
+    owner: center
+    keeper: "007"
+    doc_tc_initiator: "007"
+
   # ── GOVERNANCE ──
   - domain: governance
     path: "~/Desktop/Belive-Agents/"

@@ -1,5 +1,11 @@
 # Архитектурная Карта beLive 2.2
 
+> 🕰️ **SUPERSEDED — frozen as historical record (2026-08-28).**
+> Доктрина и инварианты извлечены в `architecture-doctrine.md` (version-independent, без путей/строк).
+> Факты (мосты, события, boot, frozen-зоны) — в v3-наборе: `eventbus-v2.md`, `central-bridge.md`, `init-registry.md`, `transport-v3.md`, `frozen-zones-v2.md`.
+> Известные дрейфы этого файла: §4 дерево проекта не содержит новых доменов (avatar/character/feed/foundation/...); §14 «✅ Working» у трёх отсутствующих скриптов пайплайна (prepare_batch.sh, fix_artifacts.js, kaggle_batch_notebook.py — преемники в `research/scripts/`, `research/mms-workbench-01/`); битые ссылки :1338, :1363; §37.1 URL воркеров plaintext (деплейсхолдеризация при Gate S).
+> Использовать как археологию решений; новые факты сюда НЕ вносить.
+
 **Status:** Master Architecture Map — Complete (merged v2.1 + v2.2 delta)
 **Version:** 2.2
 **Date:** 2026-07-17 (updated by 007_1.4: numeric drifts fixed, bridge layer retired, EngineV3 active)

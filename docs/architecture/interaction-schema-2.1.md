@@ -1,5 +1,11 @@
 # Interaction Schema 2.2
 
+> 🕰️ **SUPERSEDED — frozen as historical record (2026-08-28).**
+> Доктрина взаимодействий (authority/mirror/publication, split models, misconceptions) извлечена в `architecture-doctrine.md`.
+> Факты (события, мосты) — в `eventbus-v2.md`, `central-bridge.md`, `init-registry.md`.
+> Известные дрейфы: таблица §18.1 содержит фантомные файлы (sync.bridge, takes.bridge, billy.bridge, exercise.bridge — помечены ⚠️ inline); файл сшит из трёх частей (дельта v2.2 §18bis/§26–32 конфликтует нумерацией с §18 «Open Seams»); «Last updated 2026-06-10» старше фактического содержимого.
+> Использовать как археологию решений; новые факты сюда НЕ вносить.
+
 **Status:** Primary interaction handoff / onboarding schema — Complete (merged v2.1 + v2.2 delta)  
 **Owner:** Center1.3 / Agent 007  
 **Last updated:** 2026-06-10  
@@ -2554,10 +2560,10 @@ not achieved by resetting it.
 | Loop | `src/bridges/loop.bridge.ts` | ✅ Был |
 | Track | `src/bridges/track.bridge.ts` | ✅ Был |
 | Monitor | `src/bridges/monitor.bridge.ts` | ✅ Был |
-| Sync | `src/sync/bridge/sync.bridge.ts` | ✅ Был |
+| Sync | `src/sync/bridge/sync.bridge.ts` | ⚠️ Фантом: файла не существует; sync-слой живёт в `src/sync/store/`, `src/sync/word-sync/` (уточнено 2026-08-28) |
 | Trigger | `src/triggers/trigger.bridge.ts` | ✅ Был |
 | Performance | `src/performance/performance.bridge.ts` | ✅ Был |
-| Takes | `src/takes/takes.bridge.ts` | ✅ Был |
+| Takes | `src/takes/takes.bridge.ts` | ⚠️ Фантом: файла нет; логика в `src/takes/` (store/duck/recorder) |
 | **Mode Switch** | `src/bridges/mode-switch.bridge.ts` | 🆕 Не был |
 | **Mode Mirror** | `src/bridges/mode.bridge.ts` | 🆕 Не был |
 | **Blocks** | `src/bridges/blocks.bridge.ts` | 🆕 Не был |
@@ -2566,8 +2572,8 @@ not achieved by resetting it.
 | **Plate** | `src/bridges/plate.bridge.ts` | 🆕 Не был |
 | **Stem Reactive** | `src/bridges/stem-reactive.bridge.ts` | 🆕 Не был |
 | **Audio Reactive** | `src/bridges/audio-reactive.bridge.ts` | 🆕 Не был |
-| **Billy** | `src/billy/billy.bridge.ts` | 🆕 Не был |
-| **Exercise** | `src/exercises/exercise.bridge.ts` | 🆕 Не был |
+| **Billy** | `src/billy/billy.bridge.ts` | ⚠️ Фантом: файла нет; били перестроен в `billy-controller.ts`/`billy-runtime.ts`/`skill-registry.ts` |
+| **Exercise** | `src/exercises/exercise.bridge.ts` | ⚠️ Фантом: файла нет; логика в store/runtime `src/exercises/` |
 | **Pitch Visual** | `src/audio/pitch/pitch-visual-bridge.ts` | 🆕 Не был |
 | **Block Editor** | `src/blocks/bridge/blockEditor.bridge.ts` | 🆕 Не был |
 
