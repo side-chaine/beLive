@@ -306,16 +306,24 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
                 В Telegram
               </div>
             )}
-            {tgMatches.map(t => (
-              <div
-                key={t.id}
-                onClick={() => downloadTgTrack(t, handleZip, setSearchQuery)}
-                style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', cursor: 'pointer', borderBottom: `1px solid ${T.border}` }}
-              >
-                <div style={{ width: 28, height: 28, borderRadius: 5, background: `${T.orange}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: T.orange, flexShrink: 0 }}>☁</div>
-                <span style={{ flex: 1, fontSize: 12, marginLeft: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: T.text }}>{t.title}</span>
-              </div>
-            ))}
+            {tgMatches.map(t => {
+              const hasFile = !!(t.fileIds?.instrumental || t.fileIds?.full);
+              const label = (t.artist?.trim() && t.title?.trim())
+                ? `${t.artist.trim()} — ${t.title.trim()}`
+                : (t.title?.trim() || t.artist?.trim() || t.slug || t.id);
+              return (
+                <div
+                  key={t.id}
+                  onClick={hasFile ? () => downloadTgTrack(t, handleZip, setSearchQuery) : undefined}
+                  title={hasFile ? undefined : 'файл недоступен'}
+                  style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', cursor: hasFile ? 'pointer' : 'help', borderBottom: `1px solid ${T.border}`, opacity: hasFile ? 1 : 0.7 }}
+                >
+                  <div style={{ width: 28, height: 28, borderRadius: 5, background: `${T.orange}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: T.orange, flexShrink: 0 }}>☁</div>
+                  <span style={{ flex: 1, fontSize: 12, marginLeft: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: T.text }}>{label}</span>
+                  {!hasFile && <span style={{ fontSize: 9, color: T.dim, marginLeft: 6, flexShrink: 0 }}>нет файла</span>}
+                </div>
+              );
+            })}
           </div>,
           document.body
         )}
