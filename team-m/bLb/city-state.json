@@ -1,0 +1,38 @@
+{
+  "meta": {
+    "city": "beLiveBase",
+    "title": "Город будущего",
+    "phase": "Phase 0 — чертежи",
+    "updated": "2026-08-28",
+    "source": "houses.yaml v0.1 (hand-derived; city-gen.mjs will sync)",
+    "style": "warcraft-dune-skeleton"
+  },
+  "goals": [
+    { "icon": "🏗", "text": "ПК сносит мусор (W4/W5) — расчищаем кварталы" },
+    { "icon": "🎤", "text": "Репетиция → прод — первое здание на полную мощность" },
+    { "icon": "🎭", "text": "Потом — стройка Арен: Karaoke / Concert / Live" },
+    { "icon": "🗺", "text": "MVP-1 города: кадастр + генератор + карта" }
+  ],
+  "buildings": [
+    { "id": "gates", "name": "Врата", "quarter": "001", "status": "alive", "gx": 4, "gy": 7, "h": 26, "human": "Вход в город. Гость заходит без забора и сразу начинает творить.", "modules": ["src/components/welcome", "src/components/onboarding"], "owner": "center/007" },
+    { "id": "catalog", "name": "Площадь Каталог", "quarter": "002", "status": "alive", "gx": 4, "gy": 5, "h": 30, "human": "Центральная площадь: витрина треков и PORT-дропзона.", "modules": ["src/catalog"], "owner": "center/007" },
+    { "id": "studio", "name": "Завод Studio", "quarter": "003-005", "status": "alive", "gx": 6, "gy": 5, "h": 40, "human": "Здесь рождаются треки: аудио-движок и стем-микшер. Ядро заморожено (охраняется).", "modules": ["src/audio/core", "src/audio/engine-v3", "src/stem"], "owner": "center/007", "note": "frozen: AudioEngineV2, patchV1" },
+    { "id": "academy", "name": "Академия Quest", "quarter": "006-008", "status": "alive", "gx": 2, "gy": 6, "h": 34, "human": "Кампус практики: тейки, упражнения, сценарии.", "modules": ["src/exercises", "src/practice", "src/takes"], "owner": "center/007" },
+    { "id": "show", "name": "Театр Show", "quarter": "009-010", "status": "alive", "gx": 3, "gy": 4, "h": 36, "human": "Театр выступлений: движок историй и сцены.", "modules": ["src/components/Show", "src/services/show.html.ts"], "owner": "center/007" },
+    { "id": "split", "name": "Башня Split", "quarter": "011", "status": "alive", "gx": 6, "gy": 3, "h": 44, "human": "Башня мониторинга и микса.", "modules": ["src/components/monitor"], "owner": "center/007" },
+    { "id": "styles", "name": "Ателье Styles", "quarter": "012", "status": "alive", "gx": 2, "gy": 4, "h": 30, "human": "Ателье стиля: темы, текстовые стили, пресеты.", "modules": ["src/theme", "src/styles", "src/data"], "owner": "center/007" },
+    { "id": "notes", "name": "Лаб Notes", "quarter": "013", "status": "alive", "gx": 7, "gy": 4, "h": 32, "human": "Лаборатория нот: детекция питча, пианино.", "modules": ["src/audio/pitch", "src/components/PianoKeyboard"], "owner": "center/007" },
+    { "id": "billy", "name": "Башня Билли", "quarter": "014", "status": "alive", "gx": 5, "gy": 3, "h": 56, "human": "Башня Билли: мозг AI-персонажа, его голос и эмоции.", "modules": ["src/billy", "src/character"], "owner": "center/007" },
+    { "id": "sync", "name": "Мастерская Sync", "quarter": "018-019", "status": "alive", "gx": 3, "gy": 6, "h": 34, "human": "Мастерская синхронизации лирики: маркеры и word-sync.", "modules": ["src/sync"], "owner": "center/007", "note": "FROZEN-READ: wordSync/markers stores" },
+    { "id": "hub", "name": "Площадь Hub", "quarter": "020", "status": "alive-demo", "gx": 5, "gy": 5, "h": 28, "human": "Площадь ленты: фид и профили (демо-режим).", "modules": ["src/feed"], "owner": "center/007" },
+    { "id": "arenas", "name": "Арены Karaoke/Concert", "quarter": "021-022", "status": "planned", "gx": 3, "gy": 2, "h": 38, "human": "Арены будущего: караоке и концерт. Чертёж готов — стройка после Репетиции.", "modules": ["src/Karaoke (.gitkeep)", "src/Concert (.gitkeep)", "src/components/KaraokeLyricsBoard", "src/transitions"], "owner": "center/007" },
+    { "id": "live", "name": "Арена Live", "quarter": "023", "status": "alive", "gx": 4, "gy": 2, "h": 36, "human": "Живая арена: субтитры и live-контролы.", "modules": ["src/components/LiveControls", "src/components/LiveSubtitle"], "owner": "center/007" },
+    { "id": "profile", "name": "Дом профиля", "quarter": "029-030", "status": "alive", "gx": 1, "gy": 5, "h": 30, "human": "Дом жителя: профиль и аватар.", "modules": ["src/components/profile", "src/avatar"], "owner": "center/007" },
+    { "id": "aiconfig", "name": "AI Подстанция", "quarter": "031", "status": "conserved", "gx": 6, "gy": 2, "h": 26, "human": "AI-подстанция: законсервирована до лучших времён.", "modules": ["src/js/ai", "src/components/AiSettingsModal"], "owner": "center/007" },
+    { "id": "scenes", "name": "Киностудия фонов", "quarter": "032", "status": "alive", "gx": 1, "gy": 3, "h": 30, "human": "Киностудия: фоны режимов и блочные сцены.", "modules": ["src/backgrounds", "src/services/block-scene.service.ts"], "owner": "center/007" },
+    { "id": "dna", "name": "Архив ДНК", "quarter": "034", "status": "alive", "gx": 1, "gy": 4, "h": 28, "human": "Архив ДНК треков: метаданные и структура.", "modules": ["src/components/TrackInfoBoard", "src/structure"], "owner": "center/007" },
+    { "id": "blocks-old", "name": "Старая мастерская", "quarter": "038", "status": "trash-w5", "gx": 7, "gy": 2, "h": 24, "human": "Старая мастерская блоков: огорожена, под снос (W5, BAC-107).", "modules": ["src/blocks"], "owner": "center/007" },
+    { "id": "infra", "name": "Подземка", "quarter": "infra", "status": "alive", "gx": 0, "gy": 0, "h": 0, "human": "Подземка города: EventBus-станция, старые мосты (исторические), scheduler-доставка.", "modules": ["src/foundation", "src/bridges (FROZEN)", "src/playback", "src/stores", "src/triggers"], "owner": "center/007" },
+    { "id": "external", "name": "За городом", "quarter": "external", "status": "external", "gx": 0, "gy": 0, "h": 0, "human": "За горизонтом: склад Bank_beLive и облачные электростанции CF Workers.", "modules": ["Bank_beLive", "kaggle-mms", "cf-workers"], "owner": "Босс/оператор" }
+  ]
+}
