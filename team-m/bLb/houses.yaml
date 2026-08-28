@@ -18,18 +18,21 @@ meta:
 
 houses:
   - id: 001
+    grid: {x: 4, y: 7}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Врата
     modules: [src/components/welcome, src/components/onboarding]
     owner: center/007 (governance-default)
     status: alive
 
   - id: 002
+    grid: {x: 4, y: 5}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Площадь Каталог
     modules: [src/catalog]
     owner: center/007 (новый домен catalog — закрыть в DOMAIN-OWNERSHIP.yaml)
     status: alive
 
   - id: 003-005
+    grid: {x: 6, y: 5}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Завод Studio
     modules: [src/audio/core, src/audio/compat, src/audio/engine-v3, src/stem]
     owner: center/007 (audio-engine, stem)
@@ -38,30 +41,35 @@ houses:
     trash-w4: [src/audio/engine-v3/V2Adapter.ts, src/audio/engine-v3/IV2PublicContract.ts, src/audio/engine-v3/SignalsmithAdapterService.bak.ts]
 
   - id: 006-008
+    grid: {x: 2, y: 6}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Академия Quest
     modules: [src/exercises, src/practice, src/takes]
     owner: center/007 (exercises, practice, takes)
     status: alive
 
   - id: 009-010
+    grid: {x: 3, y: 4}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Театр Show
     modules: [src/components/Show, src/services/show.html.ts, src/services/show.image.ts]
     owner: center/007 (show)
     status: alive
 
   - id: 011
+    grid: {x: 6, y: 3}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Башня Split
     modules: [src/components/monitor]
     owner: center/007 (monitor)
     status: alive
 
   - id: 012
+    grid: {x: 2, y: 4}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Ателье Styles
     modules: [src/theme, src/styles, src/data/textStylePresets, src/components/StylesDeck]
     owner: center/007 (theme); styles/data — center/007 (под theme, полудыра закрыта)
     status: alive
 
   - id: 013
+    grid: {x: 7, y: 4}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Лаб Notes
     modules: [src/audio/pitch, src/components/PianoKeyboard, src/js/main.js]
     owner: center/007 (audio-engine, частично)
@@ -69,6 +77,7 @@ houses:
     note: src/js/main.js — legacy PitchDetectionEngine, кандидат W6
 
   - id: 014
+    grid: {x: 5, y: 3}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Башня Билли
     modules: [src/billy, src/character]
     owner: center/007 (billi-ai); character — center/007 (под billi-ai; паспорт здания написать до final)
@@ -76,6 +85,7 @@ houses:
     risk: character саморегистрируется в initRegistry, но без паспорта здания
 
   - id: 018-019
+    grid: {x: 3, y: 6}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Мастерская Sync
     modules: [src/sync, src/stores/wordSync.store.ts, src/stores/markers.store.ts]
     owner: center/007 (sync-system, markers)
@@ -83,12 +93,14 @@ houses:
     frozen: [wordSync.store.ts (FROZEN-READ), markers.store.ts (FROZEN-READ)]
 
   - id: 020
+    grid: {x: 5, y: 5}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Площадь Hub
     modules: [src/feed]
     owner: center/007 (feed)
     status: alive-demo
 
   - id: 021-022
+    grid: {x: 3, y: 2}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Арены Karaoke/Concert
     modules: [src/components/KaraokeLyricsBoard, src/transitions, src/backgrounds]
     owner: center/007 (arenas; transitions/backgrounds под arenas)
@@ -96,42 +108,49 @@ houses:
     placeholder: [src/Karaoke, src/Concert]   # ПЛАНИРУЕМЫЕ здания (Босс 28.08): сначала Репетиция к проду, потом режимы включая Live
 
   - id: 023
+    grid: {x: 4, y: 2}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Арена Live
     modules: [src/components/LiveControls, src/components/LiveSubtitle]
     owner: center/007 (live)
     status: alive
 
   - id: 029-030
+    grid: {x: 1, y: 5}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Дом профиля
     modules: [src/components/profile, src/avatar]
     owner: center/007 (avatar+profile; дыра закрыта)
     status: alive
 
   - id: 031
+    grid: {x: 6, y: 2}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: AI Config
     modules: [src/js/ai, src/components/AiSettingsModal]
     owner: center/007 (ai-config)
     status: conserved   # AI deferred, инфраструктура законсервирована
 
   - id: 032
+    grid: {x: 1, y: 3}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Киностудия фонов
     modules: [src/backgrounds, src/services/block-scene.service.ts]
     owner: center/007 (scenes, частично)
     status: alive
 
   - id: 034
+    grid: {x: 1, y: 4}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Архив ДНК
     modules: [src/components/TrackInfoBoard, src/services/metadata-backfill.ts, src/structure]
     owner: center/007 (track-meta); structure — center/007 (под track-meta)
     status: alive
 
   - id: 038
+    grid: {x: 7, y: 2}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Старая мастерская блоков
     modules: [src/blocks]
     owner: center/007 (blocks, снос W5)
     status: trash-w5   # BAC-107, ещё смонтирована в App/main
 
   - id: infra
+    grid: {x: 0, y: 0}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Вне кварталов — инфраструктура города
     modules: [src/foundation, src/bridges, src/playback, src/runtime, src/deck, src/performance, src/stores, src/hooks, src/triggers, src/services, src/types, src/utils, src/config, src/test, src/__smoke__, src/App.tsx, src/main.tsx]
     owner: >
@@ -142,6 +161,7 @@ houses:
     frozen: [src/bridges/*, src/services/track.orchestrator.ts]
 
   - id: external
+    grid: {x: 0, y: 0}   # позиция на карте города (перенесено из LAYOUT city-gen, 28.08)
     quarter: Внешние ресурсы (вне репо)
     modules: [Bank_beLive, kaggle-mms-notebook, cf-workers]
     owner: Босс/оператор

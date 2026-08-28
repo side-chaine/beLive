@@ -104,6 +104,10 @@ const buildings = LAYOUT.map(l => {
   b.modules = Array.isArray(src.modules) ? src.modules : [];
   if (src.owner) b.owner = String(src.owner).slice(0, 80);
   if (src.status && !l.status) b.status = normStatus(src.status);
+  if (src.grid) {
+    const gm = String(src.grid).match(/x:\s*(\d+).*?y:\s*(\d+)/);
+    if (gm) { b.gx = Number(gm[1]); b.gy = Number(gm[2]); }
+  }
   return b;
 });
 
