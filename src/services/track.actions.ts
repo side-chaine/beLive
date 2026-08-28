@@ -1,10 +1,10 @@
 /**
  * Track Actions — isolation layer for legacy trackCatalog calls
  * F29: All React components call these instead of window.trackCatalog directly
- * F40: loadTrack delegates to track.orchestrator.ts
+ * F40: loadTrack delegates to track.loader.ts
  */
 
-import { loadTrack as orchestrateLoadTrack } from './track.orchestrator';
+import { loadTrack as orchestrateLoadTrack } from './track.loader';
 import { parseTrackName } from '../catalog/types';
 import { useTrackStore } from '../stores/track.store';
 

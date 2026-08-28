@@ -177,7 +177,7 @@ export function MixerPanel() {
         // Загрузить стемы on-demand
         useStemStore.getState().setStemsLoading(true);
         try {
-          const { loadStemsOnDemand } = await import('../services/track.orchestrator');
+          const { loadStemsOnDemand } = await import('../services/track.loader');
           await loadStemsOnDemand();
           return; // loadStemsOnDemand handles mute/unmute
         } catch (e) {

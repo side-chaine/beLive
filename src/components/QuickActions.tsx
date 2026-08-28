@@ -211,7 +211,7 @@ const StemsToggle: React.FC<StemsToggleProps> = ({ menuItemStyle, accentColor, o
         // Загрузить стемы on-demand
         useStemStore.getState().setStemsLoading(true);
         try {
-          const { loadStemsOnDemand } = await import('../services/track.orchestrator');
+          const { loadStemsOnDemand } = await import('../services/track.loader');
           await loadStemsOnDemand();
         } catch (e) {
           console.warn('[QuickActions] On-demand load failed:', e);
