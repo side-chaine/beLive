@@ -48,6 +48,7 @@ export class StretchInstance {
 
   async init(): Promise<void> {
     try {
+      ;(SignalsmithStretch as any).moduleUrl = import.meta.env.BASE_URL + 'vendor/SignalsmithStretch.mjs'
       this._node = await SignalsmithStretch(this._ctx, {
         numberOfInputs: 0,    // 🎯 REGIME 3: NO live input — uses addBuffers() + schedule() only
         outputChannelCount: [2]

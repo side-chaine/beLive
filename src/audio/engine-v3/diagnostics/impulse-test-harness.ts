@@ -40,6 +40,7 @@ export async function runImpulseTest(options: ImpulseTestOptions = {}): Promise<
   const ctx = new AudioContext({ sampleRate: 44100 })
 
   try {
+    ;(SignalsmithStretch as any).moduleUrl = import.meta.env.BASE_URL + 'vendor/SignalsmithStretch.mjs'
     // 1. Создаём stretch ноду
     const stretchNode = await SignalsmithStretch(ctx, {
       numberOfInputs: 0,

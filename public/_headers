@@ -16,3 +16,6 @@
 
 /index.html
   Cache-Control: public, max-age=60, stale-while-revalidate=300
+
+/vendor/*.mjs
+  Content-Type: text/javascript

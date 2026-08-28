@@ -2,6 +2,7 @@ import { defineConfig, type Plugin } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { resolve } from 'path'
+import * as fs from 'node:fs'
 
 /**
  * @TC-088: Mock feed API for local dev
@@ -60,6 +61,21 @@ function feedMockPlugin(): Plugin {
   };
 }
 
+/**
+ * @S1-1: Копирует vendor worklet (SignalsmithStretch.mjs) в public/vendor/ как
+ * статический файл — escape-hatch библиотеки (moduleUrl). Без этого минификатор
+ * ломает замыкание worklet (function.toString() → ReferenceError → тишина в проде).
+ */
+function copySignalsmithWorklet(): Plugin {
+  return {
+    name: 'copy-signalsmith-worklet',
+    buildStart() {
+      fs.mkdirSync('public/vendor', { recursive: true })
+      fs.cpSync('src/audio/engine-v3/vendor/SignalsmithStretch.mjs', 'public/vendor/SignalsmithStretch.mjs')
+    },
+  }
+}
+
 export default defineConfig({
   root: './',
   base: process.env.CF_PAGES ? '/' : '/beLive/',
@@ -86,6 +102,7 @@ export default defineConfig({
   plugins: [
     tsconfigPaths(),
     feedMockPlugin(), // @TC-088: Remove for production
+    copySignalsmithWorklet(),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
