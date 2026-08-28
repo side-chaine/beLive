@@ -102,7 +102,7 @@ npx esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/wo
 - **Содержит:** file_id → track metadata (title, artist, slug, type, fileIds, fileSize, fileName); ключ `track_data:catalog` — массив треков от bot-upload (fileIds/type/fileName), читается в `GET /tracks` вместе с префиксом `track_data:t:`.
 
 ### Secrets
-- `BOT_TOKEN`: `8506268729:AAF_4gkscFhHUTGdEJUeFNVKoWSaYsNgHiA`
+- `BOT_TOKEN`: `8506268729:AAHWkRIA6MxGsds44Q6BPj9MlH2pDWpMxLo`
 
 ## Файловая структура бота
 
