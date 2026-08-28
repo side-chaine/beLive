@@ -8,7 +8,7 @@ import {
   cmdStart, cmdCancel, cmdCatalog, cmdTrack,
   cmdUploadDoc, cmdUploadType,
 } from './commands';
-import { getTrackBySlug } from './data/tracks';
+import { getTrackBySlug, TRACKS } from './data/tracks';
 
 interface Env {
   BOT_TOKEN: string;
@@ -22,57 +22,53 @@ interface Env {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    const reqOrigin = request.headers.get('Origin') || '';
+    const corsHeaders = (origin: string) => {
+      const allow = ['https://app.mybelive.com', 'http://localhost:5173', 'http://127.0.0.1:5173', 'http://0.0.0.0:5173'];
+      const allowed = allow.includes(origin) || origin.startsWith('http://192.168.')
+        ? origin : 'https://app.mybelive.com';
+      return {
+        'Access-Control-Allow-Origin': allowed,
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
+      };
+    };
     // ── CORS preflight ──
-    if (request.method === 'OPTIONS') {
-      const reqOrigin = request.headers.get('Origin') || '';
-      const allowedOrigin = ['https://app.mybelive.com', 'http://localhost:5173', 'http://127.0.0.1:5173', 'http://0.0.0.0:5173']
-        .find(o => reqOrigin.startsWith('http://192.168.') ? true : o === reqOrigin) ? reqOrigin : 'https://app.mybelive.com';
-      return new Response(null, {
-        headers: {
-          'Access-Control-Allow-Origin': allowedOrigin,
-          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
-        }
-      });
+    if (request.method === "OPTIONS") {
+      return new Response(null, { headers: corsHeaders(reqOrigin) });
     }
 
     // ── GET /tracks (API) + /download/<file_id> + health ──
     if (request.method === 'GET') {
       const url = new URL(request.url);
 
-      if (url.pathname === '/tracks') {
-        // Build catalog from per-track records (race-free append-only)
-        const trackList = await env.EPHEMERAL_KV.list({ prefix: 'track_data:t:', limit: 200 });
-        const entries = await Promise.all(
-          trackList.keys.map(k => env.EPHEMERAL_KV.get(k.name, { type: 'json' }))
-        );
-        const catalog = entries.filter(Boolean).sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0));
-        return new Response(JSON.stringify({
-          updatedAt: Date.now(),
-          total: catalog.length,
-          tracks: catalog
-        }), {
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': 'https://app.mybelive.com',
-            'Access-Control-Allow-Methods': 'GET, OPTIONS',
-          }
+      if (url.pathname === "/tracks") {
+        const trackList = await env.EPHEMERAL_KV.list({ prefix: "track_data:t:", limit: 200 });
+        const entries = await Promise.all(trackList.keys.map((k) => env.EPHEMERAL_KV.get(k.name, { type: "json" })));
+        const kvTracks: any[] = entries.filter(Boolean);
+        const hardTracks: any[] = TRACKS.map((t: any) => ({ id: t.id, title: t.title, artist: t.artist, slug: t.slug, album: t.album, year: t.year, fileName: t.fileName, fileIds: {}, type: undefined }));
+        const bySlug = new Map<string, any>();
+        const norm = (s: string) => (s || '').toLowerCase().replace(/-(full|2stem|duo)$/, '');
+        for (const t of hardTracks) bySlug.set(norm(t.slug), t);
+        for (const t of kvTracks) bySlug.set(norm(t.slug), t);
+        const catalog = Array.from(bySlug.values()).sort((a: any, b: any) => (a.title || '').localeCompare(b.title || ''));
+        return new Response(JSON.stringify({ updatedAt: Date.now(), total: catalog.length, tracks: catalog }), {
+          headers: { 'Content-Type': 'application/json', ...corsHeaders(reqOrigin) }
         });
       }
 
-      if (url.pathname.startsWith('/download/')) {
-        const fileId = url.pathname.replace('/download/', '');
-        if (!fileId) return new Response('Missing file_id', { status: 400 });
+      if (url.pathname.startsWith("/download/")) {
+        const fileId = url.pathname.replace("/download/", "");
+        if (!fileId) return new Response("Missing file_id", { status: 400, headers: corsHeaders(reqOrigin) });
         const tgFile = await getFile(env.BOT_TOKEN, fileId);
-        if (!tgFile.file_path) return new Response('File not found', { status: 404 });
+        if (!tgFile.file_path) return new Response("File not found", { status: 404, headers: corsHeaders(reqOrigin) });
         const fileRes = await fetch(fileUrl(env.BOT_TOKEN, tgFile.file_path));
-        if (!fileRes.ok) return new Response('Download failed', { status: 502 });
+        if (!fileRes.ok) return new Response("Download failed", { status: 502, headers: corsHeaders(reqOrigin) });
         return new Response(fileRes.body, {
           headers: {
-            'Content-Disposition': 'attachment',
-            'Content-Type': fileRes.headers.get('Content-Type') || 'application/octet-stream',
-            'Access-Control-Allow-Origin': 'https://app.mybelive.com',
-            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            "Content-Disposition": "attachment",
+            "Content-Type": fileRes.headers.get("Content-Type") || "application/octet-stream",
+            ...corsHeaders(reqOrigin)
           }
         });
       }
