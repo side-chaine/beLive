@@ -28,9 +28,8 @@ find src/audio/core/AudioEngineV2.ts src/audio/compat/patchV1.ts src/services/tr
 - **Гейт:** `grep -rln "delegateSync" src` → все на V3-surface; `grep -rln "V2Adapter" src` → ТОЛЬКО `src/audio/engine-v3/V2Adapter.ts` (импортёров 0). canon GREEN.
 - ⚠️ Расхождение V2Adapter: Mac grep 26 vs baseline 27 — критерий = `grep→0`, не число; сверить при apply.
 
-### W3 — stub-миграция (BAC-107)
-- **Safe:** live-mode / waveformEditor stub + `facade.ts:51` → V3 или удалить dead-stub.
-- **Гейт:** canon GREEN; boot-smoke.
+### W3 — ~~stub-миграция (BAC-107)~~ SUPERSEDED (применено 28.08, `02e3ac9`)
+- ⚠️ **Секция устарела** (дизайн до 009 re-verify 26h). W3 исполнен как **demolition** per `MICRO-PACK-WAVE3.md` FINAL v2 (SSOT): `__switchToV3`/ae-guard/`V2AudioCage`/`V2ResurrectionDetector` DELETE + `DuckGuardV3`+`duck-guard.test.ts` DELETE + 5 комментов; BAC-107 уехал в W5. Применено 28.08 Hub→Operator, commit `02e3ac9`, 8 гейтов GREEN, канон 302/761+5int+2load.
 
 ### W4 — orchestrator re-point + legacy/V2Adapter delete
 - **Safe:** 6 потребителей `track.actions.ts:7` re-point; `MixerPanel.tsx:180`+`QuickActions.tsx:214` dyn-import orchestrator удалить; `V2Adapter.ts` УДАЛИТЬ ТОЛЬКО если `grep -rln "V2Adapter" src` → 0; `src/legacy/engine-v3/*` (**9 файлов, вкл. 2 test**) удалить.
