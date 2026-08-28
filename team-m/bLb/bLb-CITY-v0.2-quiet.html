@@ -222,121 +222,942 @@ function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15
    rooms — что внутри (комнаты = смысловые модули)
    Это контракт для 007: setCadastre принимает тот же формат. */
 /*CITY-STATE-START*/
-const CITY={
-  meta:{city:'beLiveBase',phase:'Phase 0',updated:'2026-08-28',cadastre:'houses.yaml v0.2'},
-  districts:[
-    {id:'billy',name:'квартал Билли',hue:'bridge',gx:3,gy:0,w:5,d:3},
-    {id:'stage',name:'сцена',hue:'chorus',gx:8,gy:0,w:7,d:5},
-    {id:'core',name:'ядро',hue:'core',gx:4,gy:4,w:6,d:4},
-    {id:'forum',name:'форум',hue:'gold',gx:6,gy:9,w:6,d:4},
-    {id:'atelier',name:'ателье',hue:'verse',gx:0,gy:4,w:4,d:5},
-    {id:'campus',name:'кампус',hue:'verse',gx:1,gy:10,w:5,d:4},
-    {id:'waste',name:'пустырь',hue:'waste',gx:12,gy:6,w:3,d:3}
+const CITY = {
+  "meta": {
+    "city": "beLiveBase",
+    "phase": "Phase 0 · чертежи",
+    "updated": "2026-08-28",
+    "cadastre": "houses.yaml 0.2",
+    "gates": {
+      "W5": "open",
+      "rehearsal-prod": "open"
+    }
+  },
+  "districts": [
+    {
+      "id": "billy",
+      "name": "квартал Билли",
+      "hue": "bridge",
+      "gx": 3,
+      "gy": 0,
+      "w": 5,
+      "d": 3
+    },
+    {
+      "id": "stage",
+      "name": "сцена",
+      "hue": "chorus",
+      "gx": 8,
+      "gy": 0,
+      "w": 7,
+      "d": 5
+    },
+    {
+      "id": "core",
+      "name": "ядро",
+      "hue": "core",
+      "gx": 4,
+      "gy": 4,
+      "w": 6,
+      "d": 4
+    },
+    {
+      "id": "forum",
+      "name": "форум",
+      "hue": "gold",
+      "gx": 6,
+      "gy": 9,
+      "w": 6,
+      "d": 4
+    },
+    {
+      "id": "atelier",
+      "name": "ателье",
+      "hue": "verse",
+      "gx": 0,
+      "gy": 4,
+      "w": 4,
+      "d": 5
+    },
+    {
+      "id": "campus",
+      "name": "кампус",
+      "hue": "verse",
+      "gx": 1,
+      "gy": 10,
+      "w": 5,
+      "d": 4
+    },
+    {
+      "id": "waste",
+      "name": "пустырь",
+      "hue": "waste",
+      "gx": 12,
+      "gy": 6,
+      "w": 3,
+      "d": 3
+    }
   ],
-  buildings:[
-    {id:'billy',name:'Башня Билли',dist:'billy',arch:'tower',st:'alive',gx:4,gy:0,w:2,d:2,loc:4200,files:38,t30:34,route:'live',
-     what:'Твой наставник в городе. Слушает, как ты поёшь, и отвечает по-человечески.',
-     gives:['Живой отклик на каждую фразу','Подсказки вместо скучных таблиц','Хвалит за прогресс — честно'],
-     rooms:[{n:'Голос',d:'говорит, хвалит, подбадривает'},{n:'Характер',d:'помнит твоё настроение'},{n:'Реакция',d:'включается в любую сцену'}],
-     mods:['src/billy','src/character']},
-    {id:'aiconfig',name:'AI Подстанция',dist:'billy',arch:'archive',st:'conserved',gx:7,gy:1,w:1,d:1,loc:700,files:9,t30:0,route:null,
-     what:'Старый блок настроек. Спит под тентом и никому не мешает.',
-     gives:['Тихое место, когда понадобятся новые настройки'],
-     rooms:[{n:'Вентиль',d:'перекрыт до времени'},{n:'Щиток',d:'параметры прошлой версии'}],
-     mods:['src/js/ai','src/components/AiSettingsModal']},
-    {id:'live',name:'Арена Live',dist:'stage',arch:'arena',st:'alive',gx:9,gy:0,w:3,d:3,loc:2600,files:21,t30:9,route:'live',
-     what:'Сцена прямого эфира. Отсюда твой голос уходит в мир.',
-     gives:['Субтитры прямо в кадре','Весь контроль эфира на одной панели','Чувство настоящего выступления'],
-     rooms:[{n:'Эфир',d:'прямой выход в мир'},{n:'Субтитры',d:'слова видят все зрители'},{n:'Пульт сцены',d:'всё под рукой'}],
-     mods:['src/components/LiveControls','src/components/LiveSubtitle']},
-    {id:'arenas',name:'Арены Karaoke и Concert',dist:'stage',arch:'arena',st:'planned',gx:12,gy:1,w:3,d:3,loc:1400,files:11,t30:0,route:'karaoke',
-     what:'Два больших зала будущего. Пока их нет — только чертёж на земле.',
-     gives:['Караоке-вечер с друзьями','Полный концерт со светом и залом'],
-     rooms:[{n:'Зал караоке',d:'лёгкий и шумный'},{n:'Концертный зал',d:'большая сцена и свет'},{n:'Переходы',d:'из зала в зал без пауз'}],
-     mods:['src/Karaoke','src/Concert','src/transitions']},
-    {id:'show',name:'Театр Show',dist:'stage',arch:'lab',st:'alive',gx:8,gy:3,w:2,d:2,loc:3000,files:26,t30:12,route:'concert',
-     what:'Режиссёр твоего выступления. Собирает номер из готовых сцен.',
-     gives:['Сценарии номеров на выбор','Картина меняется за один клик'],
-     rooms:[{n:'Сцены',d:'готовые картинки номера'},{n:'Сценарии',d:'что за чем идёт'}],
-     mods:['src/components/Show','src/services/show.html.ts']},
-    {id:'studio',name:'Завод Studio',dist:'core',arch:'factory',st:'alive',gx:5,gy:4,w:3,d:2,loc:9800,files:94,t30:61,route:'rehearsal',frozen:'sealed',
-     what:'Главная фабрика звука. Слышит каждую твою ноту и держит темп.',
-     gives:['Показывает, где взял верно, а где мимо','Держит ритм, не даёт сбиться','Разделяет голос и музыку'],
-     rooms:[{n:'Движок v3',d:'считает звук вживую'},{n:'Ядро v2',d:'старый мотор, под пломбой'},{n:'Стемы',d:'голос отдельно от музыки'}],
-     mods:['src/audio/core','src/audio/engine-v3','src/stem']},
-    {id:'split',name:'Башня Split',dist:'core',arch:'tower',st:'alive',gx:9,gy:5,w:1,d:2,loc:900,files:8,t30:4,route:'rehearsal',
-     what:'Смотровая башня. Видит весь звук города сразу.',
-     gives:['Понятно, что перевешивает в миксе','Громкость под контролем'],
-     rooms:[{n:'Монитор',d:'уровни звука на виду'},{n:'Микшер',d:'баланс голоса и музыки'}],
-     mods:['src/components/monitor']},
-    {id:'sync',name:'Мастерская Sync',dist:'core',arch:'lab',st:'alive',gx:4,gy:6,w:2,d:2,loc:2200,files:19,t30:22,route:'rehearsal',frozen:'read',
-     what:'Здесь рождается свет слова: текст загорается точно в такт песне.',
-     gives:['Не нужно следить глазами за строчкой','Слово подсвечивается вовремя'],
-     rooms:[{n:'Маркеры слов',d:'каждое слово на своём месте'},{n:'Тактовый свет',d:'подсветка дышит с ритмом'}],
-     mods:['src/sync']},
-    {id:'notes',name:'Лаб Notes',dist:'core',arch:'lab',st:'alive',gx:7,gy:6,w:2,d:2,loc:1800,files:16,t30:3,route:'rehearsal',
-     what:'Слышит, какую ноту ты взял, и показывает на пианино.',
-     gives:['Видно, выше или ниже взял','Пианино прямо на экране'],
-     rooms:[{n:'Питч',d:'оценивает высоту ноты'},{n:'Клавиатура',d:'ноты под пальцами'}],
-     mods:['src/audio/pitch','src/components/PianoKeyboard']},
-    {id:'catalog',name:'Площадь Каталог',dist:'forum',arch:'plaza',st:'alive',gx:7,gy:9,w:3,d:3,loc:2000,files:17,t30:15,route:'catalog',
-     what:'Главная площадь: здесь лежат все треки и сюда приносишь свои.',
-     gives:['Все треки под рукой','Перетащил файл — и уже поёшь'],
-     rooms:[{n:'Витрина',d:'все треки города'},{n:'Дропзона',d:'свой файл — за секунду'}],
-     mods:['src/catalog']},
-    {id:'hub',name:'Площадь Hub',dist:'forum',arch:'plaza',st:'demo',gx:10,gy:9,w:2,d:2,loc:1100,files:12,t30:2,route:'feed',
-     what:'Лента города: кто что поёт и что говорят люди.',
-     gives:['Посты и реакции рядом','Видно, что происходит сейчас'],
-     rooms:[{n:'Лента',d:'свежие выступления'},{n:'Профили',d:'люди города'}],
-     mods:['src/feed']},
-    {id:'gates',name:'Врата',dist:'forum',arch:'gate',st:'alive',gx:7,gy:12,w:3,d:1,loc:600,files:7,t30:5,route:'welcome',
-     what:'Вход без забора. Зашёл — и сразу поёшь.',
-     gives:['Первый трек за 30 секунд','Никаких лишних экранов'],
-     rooms:[{n:'Приветствие',d:'город встречает тепло'},{n:'Первый шаг',d:'один клик до пения'}],
-     mods:['src/components/welcome','src/components/onboarding']},
-    {id:'styles',name:'Ателье Styles',dist:'atelier',arch:'lab',st:'alive',gx:1,gy:4,w:2,d:2,loc:1200,files:22,t30:8,route:'rehearsal',
-     what:'Мастерская внешнего вида. Красит город под тебя.',
-     gives:['Темы одним касанием','Свой стиль текста и фона'],
-     rooms:[{n:'Темы',d:'настроение города'},{n:'Пресеты',d:'готовые сочетания'}],
-     mods:['src/theme','src/styles','src/data']},
-    {id:'scenes',name:'Киностудия фонов',dist:'atelier',arch:'archive',st:'alive',gx:1,gy:6,w:2,d:2,loc:1500,files:14,t30:2,route:'concert',
-     what:'Рисует миры позади тебя. Сцена за спиной — её работа.',
-     gives:['Фоны под настроение песни','Картинка меняется вместе со сценой'],
-     rooms:[{n:'Фоны',d:'города, залы, космос'},{n:'Блочные сцены',d:'сборка миров из блоков'}],
-     mods:['src/backgrounds','src/services/block-scene.service.ts']},
-    {id:'dna',name:'Архив ДНК',dist:'atelier',arch:'archive',st:'alive',gx:3,gy:6,w:1,d:2,loc:800,files:9,t30:0,route:'catalog',
-     what:'Паспорт трека: куплеты, припевы, темп — вся суть песни.',
-     gives:['Видно, где ты сейчас в песне','К припеву — в один прыжок'],
-     rooms:[{n:'Структура',d:'карта песни'},{n:'Метаданные',d:'темп, тональность, слова'}],
-     mods:['src/components/TrackInfoBoard','src/structure']},
-    {id:'academy',name:'Академия Quest',dist:'campus',arch:'campus',st:'alive',gx:2,gy:10,w:3,d:2,loc:3400,files:31,t30:5,route:'rehearsal',
-     what:'Школа пения. Тейки, упражнения, маленькие победы.',
-     gives:['Упражнения по чуть-чуть','Рост видно по тейкам'],
-     rooms:[{n:'Упражнения',d:'короткие и по делу'},{n:'Тейки',d:'твои записи и прогресс'},{n:'Практика',d:'сценарии занятий'}],
-     mods:['src/exercises','src/practice','src/takes']},
-    {id:'profile',name:'Дом профиля',dist:'campus',arch:'house',st:'alive',gx:2,gy:12,w:2,d:1,loc:500,files:6,t30:1,route:'profile',
-     what:'Твой дом в городе. Имя, аватар, история выступлений.',
-     gives:['Своя страница и архив','Аватар на любой вкус'],
-     rooms:[{n:'Профиль',d:'кто ты в городе'},{n:'Аватар',d:'твоё лицо'}],
-     mods:['src/components/profile','src/avatar']},
-    {id:'blocks-old',name:'Старая мастерская',dist:'waste',arch:'lab',st:'trash',gx:12,gy:6,w:2,d:2,loc:1900,files:23,t30:0,route:null,
-     what:'Прошлый век. Решено: снести и освободить место новому.',
-     gives:['Землю под будущую арену'],
-     rooms:[{n:'Остатки',d:'ждут сноса'}],
-     mods:['src/blocks']}
+  "buildings": [
+    {
+      "id": "gates",
+      "name": "Врата",
+      "vmo": "001",
+      "dist": "forum",
+      "arch": "gate",
+      "st": "alive",
+      "gx": 7,
+      "gy": 12,
+      "w": 3,
+      "d": 1,
+      "loc": 716,
+      "files": 6,
+      "t30": -1,
+      "route": "welcome",
+      "what": "Вход без забора. Зашёл — и сразу поёшь.",
+      "gives": [
+        "Первый трек за 30 секунд",
+        "Никаких лишних экранов"
+      ],
+      "rooms": [
+        {
+          "n": "Приветствие",
+          "d": "город встречает тепло"
+        },
+        {
+          "n": "Первый шаг",
+          "d": "один клик до пения"
+        }
+      ],
+      "mods": [
+        "src/components/welcome",
+        "src/components/onboarding"
+      ],
+      "owner": "center/007"
+    },
+    {
+      "id": "catalog",
+      "name": "Площадь Каталог",
+      "vmo": "002",
+      "dist": "forum",
+      "arch": "plaza",
+      "st": "alive",
+      "gx": 7,
+      "gy": 9,
+      "w": 3,
+      "d": 3,
+      "loc": 4476,
+      "files": 24,
+      "t30": -1,
+      "route": "catalog",
+      "what": "Главная площадь: здесь лежат все треки и сюда приносишь свои.",
+      "gives": [
+        "Все треки под рукой",
+        "Перетащил файл — и уже поёшь"
+      ],
+      "rooms": [
+        {
+          "n": "Витрина",
+          "d": "все треки города"
+        },
+        {
+          "n": "Дропзона",
+          "d": "свой файл — за секунду"
+        }
+      ],
+      "mods": [
+        "src/catalog"
+      ],
+      "owner": "center/007"
+    },
+    {
+      "id": "studio",
+      "name": "Завод Studio",
+      "vmo": "003-005",
+      "dist": "core",
+      "arch": "factory",
+      "st": "alive",
+      "gx": 5,
+      "gy": 4,
+      "w": 3,
+      "d": 2,
+      "loc": 21199,
+      "files": 65,
+      "t30": -1,
+      "route": "rehearsal",
+      "what": "Главная фабрика звука. Слышит каждую твою ноту и держит темп.",
+      "gives": [
+        "Показывает, где взял верно, а где мимо",
+        "Держит ритм, не даёт сбиться",
+        "Разделяет голос и музыку"
+      ],
+      "rooms": [
+        {
+          "n": "Движок v3",
+          "d": "считает звук вживую"
+        },
+        {
+          "n": "Ядро v2",
+          "d": "старый мотор, под пломбой"
+        },
+        {
+          "n": "Стемы",
+          "d": "голос отдельно от музыки"
+        }
+      ],
+      "mods": [
+        "src/audio/core",
+        "src/audio/compat",
+        "src/audio/engine-v3",
+        "src/stem"
+      ],
+      "owner": "center/007",
+      "frozen": "sealed"
+    },
+    {
+      "id": "academy",
+      "name": "Академия Quest",
+      "vmo": "006-008",
+      "dist": "campus",
+      "arch": "campus",
+      "st": "alive",
+      "gx": 2,
+      "gy": 10,
+      "w": 3,
+      "d": 2,
+      "loc": 10665,
+      "files": 57,
+      "t30": -1,
+      "route": "rehearsal",
+      "what": "Школа пения. Тейки, упражнения, маленькие победы.",
+      "gives": [
+        "Упражнения по чуть-чуть",
+        "Рост видно по тейкам"
+      ],
+      "rooms": [
+        {
+          "n": "Упражнения",
+          "d": "короткие и по делу"
+        },
+        {
+          "n": "Тейки",
+          "d": "твои записи и прогресс"
+        },
+        {
+          "n": "Практика",
+          "d": "сценарии занятий"
+        }
+      ],
+      "mods": [
+        "src/exercises",
+        "src/practice",
+        "src/takes"
+      ],
+      "owner": "center/007"
+    },
+    {
+      "id": "show",
+      "name": "Театр Show",
+      "vmo": "009-010",
+      "dist": "stage",
+      "arch": "lab",
+      "st": "alive",
+      "gx": 8,
+      "gy": 3,
+      "w": 2,
+      "d": 2,
+      "loc": 4572,
+      "files": 13,
+      "t30": -1,
+      "route": "concert",
+      "what": "Режиссёр твоего выступления. Собирает номер из готовых сцен.",
+      "gives": [
+        "Сценарии номеров на выбор",
+        "Картина меняется за один клик"
+      ],
+      "rooms": [
+        {
+          "n": "Сцены",
+          "d": "готовые картинки номера"
+        },
+        {
+          "n": "Сценарии",
+          "d": "что за чем идёт"
+        }
+      ],
+      "mods": [
+        "src/components/Show",
+        "src/services/show.html.ts",
+        "src/services/show.image.ts"
+      ],
+      "owner": "center/007"
+    },
+    {
+      "id": "split",
+      "name": "Башня Split",
+      "vmo": "011",
+      "dist": "core",
+      "arch": "tower",
+      "st": "alive",
+      "gx": 9,
+      "gy": 5,
+      "w": 1,
+      "d": 2,
+      "loc": 167,
+      "files": 3,
+      "t30": -1,
+      "route": "rehearsal",
+      "what": "Смотровая башня. Видит весь звук города сразу.",
+      "gives": [
+        "Понятно, что перевешивает в миксе",
+        "Громкость под контролем"
+      ],
+      "rooms": [
+        {
+          "n": "Монитор",
+          "d": "уровни звука на виду"
+        },
+        {
+          "n": "Микшер",
+          "d": "баланс голоса и музыки"
+        }
+      ],
+      "mods": [
+        "src/components/monitor"
+      ],
+      "owner": "center/007"
+    },
+    {
+      "id": "styles",
+      "name": "Ателье Styles",
+      "vmo": "012",
+      "dist": "atelier",
+      "arch": "lab",
+      "st": "alive",
+      "gx": 1,
+      "gy": 4,
+      "w": 2,
+      "d": 2,
+      "loc": 2344,
+      "files": 17,
+      "t30": -1,
+      "route": "rehearsal",
+      "what": "Мастерская внешнего вида. Красит город под тебя.",
+      "gives": [
+        "Темы одним касанием",
+        "Свой стиль текста и фона"
+      ],
+      "rooms": [
+        {
+          "n": "Темы",
+          "d": "настроение города"
+        },
+        {
+          "n": "Пресеты",
+          "d": "готовые сочетания"
+        }
+      ],
+      "mods": [
+        "src/theme",
+        "src/styles",
+        "src/data/textStylePresets",
+        "src/components/StylesDeck"
+      ],
+      "owner": "center/007"
+    },
+    {
+      "id": "notes",
+      "name": "Лаб Notes",
+      "vmo": "013",
+      "dist": "core",
+      "arch": "lab",
+      "st": "alive",
+      "gx": 7,
+      "gy": 6,
+      "w": 2,
+      "d": 2,
+      "loc": 1528,
+      "files": 11,
+      "t30": -1,
+      "route": "rehearsal",
+      "what": "Слышит, какую ноту ты взял, и показывает на пианино.",
+      "gives": [
+        "Видно, выше или ниже взял",
+        "Пианино прямо на экране"
+      ],
+      "rooms": [
+        {
+          "n": "Питч",
+          "d": "оценивает высоту ноты"
+        },
+        {
+          "n": "Клавиатура",
+          "d": "ноты под пальцами"
+        }
+      ],
+      "mods": [
+        "src/audio/pitch",
+        "src/components/PianoKeyboard",
+        "src/js/main.js"
+      ],
+      "owner": "center/007"
+    },
+    {
+      "id": "billy",
+      "name": "Башня Билли",
+      "vmo": "014",
+      "dist": "billy",
+      "arch": "tower",
+      "st": "alive",
+      "gx": 4,
+      "gy": 0,
+      "w": 2,
+      "d": 2,
+      "loc": 1707,
+      "files": 18,
+      "t30": -1,
+      "route": "live",
+      "what": "Твой наставник в городе. Слушает, как ты поёшь, и отвечает по-человечески.",
+      "gives": [
+        "Живой отклик на каждую фразу",
+        "Подсказки вместо скучных таблиц",
+        "Хвалит за прогресс — честно"
+      ],
+      "rooms": [
+        {
+          "n": "Голос",
+          "d": "говорит, хвалит, подбадривает"
+        },
+        {
+          "n": "Характер",
+          "d": "помнит твоё настроение"
+        },
+        {
+          "n": "Реакция",
+          "d": "включается в любую сцену"
+        }
+      ],
+      "mods": [
+        "src/billy",
+        "src/character"
+      ],
+      "owner": "center/007"
+    },
+    {
+      "id": "sync",
+      "name": "Мастерская Sync",
+      "vmo": "018-019",
+      "dist": "core",
+      "arch": "lab",
+      "st": "alive",
+      "gx": 4,
+      "gy": 6,
+      "w": 2,
+      "d": 2,
+      "loc": 4843,
+      "files": 35,
+      "t30": -1,
+      "route": "rehearsal",
+      "what": "Здесь рождается свет слова: текст загорается точно в такт песне.",
+      "gives": [
+        "Не нужно следить глазами за строчкой",
+        "Слово подсвечивается вовремя"
+      ],
+      "rooms": [
+        {
+          "n": "Маркеры слов",
+          "d": "каждое слово на своём месте"
+        },
+        {
+          "n": "Тактовый свет",
+          "d": "подсветка дышит с ритмом"
+        }
+      ],
+      "mods": [
+        "src/sync",
+        "src/stores/wordSync.store.ts",
+        "src/stores/markers.store.ts"
+      ],
+      "owner": "center/007",
+      "frozen": "read"
+    },
+    {
+      "id": "hub",
+      "name": "Площадь Hub",
+      "vmo": "020",
+      "dist": "forum",
+      "arch": "plaza",
+      "st": "demo",
+      "gx": 10,
+      "gy": 9,
+      "w": 2,
+      "d": 2,
+      "loc": 762,
+      "files": 7,
+      "t30": -1,
+      "route": "feed",
+      "what": "Лента города: кто что поёт и что говорят люди.",
+      "gives": [
+        "Посты и реакции рядом",
+        "Видно, что происходит сейчас"
+      ],
+      "rooms": [
+        {
+          "n": "Лента",
+          "d": "свежие выступления"
+        },
+        {
+          "n": "Профили",
+          "d": "люди города"
+        }
+      ],
+      "mods": [
+        "src/feed"
+      ],
+      "owner": "center/007"
+    },
+    {
+      "id": "karaoke",
+      "name": "Арена Karaoke",
+      "vmo": "021",
+      "dist": "stage",
+      "arch": "arena",
+      "st": "planned",
+      "gx": 11.6,
+      "gy": 1,
+      "w": 1.6,
+      "d": 3,
+      "loc": 871,
+      "files": 3,
+      "t30": -1,
+      "route": "karaoke",
+      "what": "Зал для вечера с друзьями. Стройка впереди — первые песни ещё не спеты.",
+      "gives": [
+        "Караоке-вечер с друзьями",
+        "Быстрый старт: выбрал песню — поёшь"
+      ],
+      "rooms": [
+        {
+          "n": "Зал",
+          "d": "лёгкий и шумный"
+        },
+        {
+          "n": "Табло",
+          "d": "кто поёт сейчас"
+        }
+      ],
+      "mods": [
+        "src/Karaoke",
+        "src/components/KaraokeLyricsBoard",
+        "src/transitions"
+      ],
+      "owner": "center/007",
+      "gate": "rehearsal-prod"
+    },
+    {
+      "id": "concert",
+      "name": "Арена Concert",
+      "vmo": "022",
+      "dist": "stage",
+      "arch": "arena",
+      "st": "planned",
+      "gx": 13.4,
+      "gy": 1,
+      "w": 1.6,
+      "d": 3,
+      "loc": 0,
+      "files": 0,
+      "t30": -1,
+      "route": "concert",
+      "what": "Большая сцена со светом и залом. Главная арена города — пока чертёж.",
+      "gives": [
+        "Полный концерт со светом и залом",
+        "Сцена как у больших артистов"
+      ],
+      "rooms": [
+        {
+          "n": "Сцена",
+          "d": "большая сцена и свет"
+        },
+        {
+          "n": "Зал",
+          "d": "ряды и огни"
+        }
+      ],
+      "mods": [
+        "src/Concert"
+      ],
+      "owner": "center/007",
+      "gate": "rehearsal-prod"
+    },
+    {
+      "id": "live",
+      "name": "Арена Live",
+      "vmo": "023",
+      "dist": "stage",
+      "arch": "arena",
+      "st": "alive",
+      "gx": 9,
+      "gy": 0,
+      "w": 3,
+      "d": 3,
+      "loc": 126,
+      "files": 4,
+      "t30": -1,
+      "route": "live",
+      "what": "Сцена прямого эфира. Отсюда твой голос уходит в мир.",
+      "gives": [
+        "Субтитры прямо в кадре",
+        "Весь контроль эфира на одной панели",
+        "Чувство настоящего выступления"
+      ],
+      "rooms": [
+        {
+          "n": "Эфир",
+          "d": "прямой выход в мир"
+        },
+        {
+          "n": "Субтитры",
+          "d": "слова видят все зрители"
+        },
+        {
+          "n": "Пульт сцены",
+          "d": "всё под рукой"
+        }
+      ],
+      "mods": [
+        "src/components/LiveControls.tsx",
+        "src/components/LiveSubtitle.tsx"
+      ],
+      "owner": "center/007"
+    },
+    {
+      "id": "profile",
+      "name": "Дом профиля",
+      "vmo": "029-030",
+      "dist": "campus",
+      "arch": "house",
+      "st": "alive",
+      "gx": 2,
+      "gy": 12,
+      "w": 2,
+      "d": 1,
+      "loc": 1127,
+      "files": 8,
+      "t30": -1,
+      "route": "profile",
+      "what": "Твой дом в городе. Имя, аватар, история выступлений.",
+      "gives": [
+        "Своя страница и архив",
+        "Аватар на любой вкус"
+      ],
+      "rooms": [
+        {
+          "n": "Профиль",
+          "d": "кто ты в городе"
+        },
+        {
+          "n": "Аватар",
+          "d": "твоё лицо"
+        }
+      ],
+      "mods": [
+        "src/components/profile",
+        "src/avatar"
+      ],
+      "owner": "center/007"
+    },
+    {
+      "id": "aiconfig",
+      "name": "AI Подстанция",
+      "vmo": "031",
+      "dist": "billy",
+      "arch": "archive",
+      "st": "conserved",
+      "gx": 7,
+      "gy": 1,
+      "w": 1,
+      "d": 1,
+      "loc": 1645,
+      "files": 8,
+      "t30": -1,
+      "route": null,
+      "what": "Старый блок настроек. Спит под тентом и никому не мешает.",
+      "gives": [
+        "Тихое место, когда понадобятся новые настройки"
+      ],
+      "rooms": [
+        {
+          "n": "Вентиль",
+          "d": "перекрыт до времени"
+        },
+        {
+          "n": "Щиток",
+          "d": "параметры прошлой версии"
+        }
+      ],
+      "mods": [
+        "src/js/ai",
+        "src/components/AiSettingsModal.tsx"
+      ],
+      "owner": "center/007"
+    },
+    {
+      "id": "scenes",
+      "name": "Киностудия фонов",
+      "vmo": "032",
+      "dist": "atelier",
+      "arch": "archive",
+      "st": "alive",
+      "gx": 1,
+      "gy": 6,
+      "w": 2,
+      "d": 2,
+      "loc": 1164,
+      "files": 5,
+      "t30": -1,
+      "route": "concert",
+      "what": "Рисует миры позади тебя. Сцена за спиной — её работа.",
+      "gives": [
+        "Фоны под настроение песни",
+        "Картинка меняется вместе со сценой"
+      ],
+      "rooms": [
+        {
+          "n": "Фоны",
+          "d": "города, залы, космос"
+        },
+        {
+          "n": "Блочные сцены",
+          "d": "сборка миров из блоков"
+        }
+      ],
+      "mods": [
+        "src/backgrounds",
+        "src/services/block-scene.service.ts"
+      ],
+      "owner": "center/007"
+    },
+    {
+      "id": "dna",
+      "name": "Архив ДНК",
+      "vmo": "034",
+      "dist": "atelier",
+      "arch": "archive",
+      "st": "alive",
+      "gx": 3,
+      "gy": 6,
+      "w": 1,
+      "d": 2,
+      "loc": 4177,
+      "files": 8,
+      "t30": -1,
+      "route": "catalog",
+      "what": "Паспорт трека: куплеты, припевы, темп — вся суть песни.",
+      "gives": [
+        "Видно, где ты сейчас в песне",
+        "К припеву — в один прыжок"
+      ],
+      "rooms": [
+        {
+          "n": "Структура",
+          "d": "карта песни"
+        },
+        {
+          "n": "Метаданные",
+          "d": "темп, тональность, слова"
+        }
+      ],
+      "mods": [
+        "src/components/TrackInfoBoard",
+        "src/services/metadata-backfill.ts",
+        "src/structure"
+      ],
+      "owner": "center/007"
+    },
+    {
+      "id": "blocks-old",
+      "name": "Старая мастерская",
+      "vmo": "038",
+      "dist": "waste",
+      "arch": "lab",
+      "st": "trash",
+      "gx": 12,
+      "gy": 6,
+      "w": 2,
+      "d": 2,
+      "loc": 1956,
+      "files": 9,
+      "t30": -1,
+      "route": null,
+      "what": "Прошлый век. Решено: снести и освободить место новому.",
+      "gives": [
+        "Землю под будущую арену"
+      ],
+      "rooms": [
+        {
+          "n": "Остатки",
+          "d": "ждут сноса"
+        }
+      ],
+      "mods": [
+        "src/blocks"
+      ],
+      "owner": "center/007",
+      "gate": "W5"
+    }
   ],
-  metro:[
-    {id:'m1',from:'studio',to:'sync',ev:'audio:frame',pulse:1},
-    {id:'m2',from:'studio',to:'notes',ev:'audio:pitch',pulse:1},
-    {id:'m3',from:'studio',to:'live',ev:'transport:beat',pulse:1,via:[[8.6,3.4]]},
-    {id:'m4',from:'sync',to:'show',ev:'word:active',pulse:1,via:[[6.6,3.6]]},
-    {id:'m5',from:'billy',to:'catalog',ev:'billy:say',pulse:1,via:[[6.2,3.2],[6.6,8.6]]},
-    {id:'m6',from:'catalog',to:'gates',ev:'track:load',pulse:1},
-    {id:'m7',from:'catalog',to:'hub',ev:'feed:post',pulse:0},
-    {id:'m8',from:'catalog',to:'academy',ev:'take:saved',pulse:0,via:[[5.6,10.2]]},
-    {id:'m9',from:'styles',to:'catalog',ev:'theme:apply',pulse:0,via:[[3.2,8.6]]},
-    {id:'m10',from:'dna',to:'catalog',ev:'track:meta',pulse:0},
-    {id:'cut',from:'blocks-old',to:null,ev:'severed',pulse:0,via:[[11.4,8.2]]}
+  "metro": [
+    {
+      "id": "m-play",
+      "from": "studio",
+      "to": "sync",
+      "ev": "audio:playback-state-changed",
+      "pulse": 1
+    },
+    {
+      "id": "m-stem",
+      "from": "studio",
+      "to": "notes",
+      "ev": "audio:track-stem-ready",
+      "pulse": 1
+    },
+    {
+      "id": "m-mic",
+      "from": "studio",
+      "to": "live",
+      "ev": "audio:microphone-state-changed",
+      "pulse": 1,
+      "via": [
+        [
+          8.6,
+          3.4
+        ]
+      ]
+    },
+    {
+      "id": "m-mix",
+      "from": "studio",
+      "to": "split",
+      "ev": "audio:vocalmix-state-changed",
+      "pulse": 1
+    },
+    {
+      "id": "m-line",
+      "from": "sync",
+      "to": "show",
+      "ev": "sync:active-line-changed",
+      "pulse": 1,
+      "via": [
+        [
+          6.6,
+          3.6
+        ]
+      ]
+    },
+    {
+      "id": "m-loop",
+      "from": "sync",
+      "to": "academy",
+      "ev": "sync:loop-set",
+      "pulse": 0,
+      "via": [
+        [
+          5,
+          8.5
+        ]
+      ]
+    },
+    {
+      "id": "m-load",
+      "from": "catalog",
+      "to": "studio",
+      "ev": "audio:track-loaded",
+      "pulse": 1,
+      "via": [
+        [
+          6,
+          7
+        ]
+      ]
+    },
+    {
+      "id": "m-saved",
+      "from": "catalog",
+      "to": "hub",
+      "ev": "catalog:track-saved",
+      "pulse": 0
+    },
+    {
+      "id": "m-take",
+      "from": "academy",
+      "to": "hub",
+      "ev": "practice:state-changed",
+      "pulse": 0,
+      "via": [
+        [
+          5.6,
+          10.2
+        ]
+      ]
+    },
+    {
+      "id": "m-scenes",
+      "from": "scenes",
+      "to": "show",
+      "ev": "ui:block-scenes-loaded",
+      "pulse": 0,
+      "via": [
+        [
+          4.5,
+          4.8
+        ]
+      ]
+    },
+    {
+      "id": "m-sect",
+      "from": "dna",
+      "to": "catalog",
+      "ev": "sync:sections-updated",
+      "pulse": 0
+    },
+    {
+      "id": "m-mode",
+      "from": "gates",
+      "to": "catalog",
+      "ev": "ui:mode-changed",
+      "pulse": 0
+    },
+    {
+      "id": "m-billy",
+      "from": "billy",
+      "to": "catalog",
+      "ev": "city:billy-say",
+      "pulse": 1,
+      "via": [
+        [
+          6.2,
+          3.2
+        ],
+        [
+          6.6,
+          8.6
+        ]
+      ]
+    },
+    {
+      "id": "cut",
+      "from": "blocks-old",
+      "to": null,
+      "ev": "city:severed",
+      "pulse": 0,
+      "via": [
+        [
+          11.4,
+          8.2
+        ]
+      ]
+    }
   ]
 };
 /*CITY-STATE-END*/
@@ -948,15 +1769,54 @@ document.querySelector('[data-app="rehearsal"]').classList.add('on');
 
 /* ══════════ тур по городу ══════════ */
 /*TOUR-START*/
-const TOUR=[
-  {id:'gates',say:'Вход без забора. Зашёл — и сразу поёшь.'},
-  {id:'catalog',say:'Главная площадь: все треки города лежат здесь.'},
-  {id:'studio',say:'Фабрика звука. Слышит каждую ноту.'},
-  {id:'sync',say:'Здесь рождается свет слова.'},
-  {id:'show',say:'Режиссёр твоего выступления.'},
-  {id:'live',say:'Отсюда твой голос уходит в мир.'},
-  {id:'billy',say:'И за всем этим следит Билли.'},
-  {id:'karaoke',say:'А это будущее: новые залы. Пока — чертёж.'}
+const TOUR = [
+  {
+    "building": "gates",
+    "dur": 4.2,
+    "say": "Вход без забора. Зашёл — и сразу поёшь."
+  },
+  {
+    "building": "catalog",
+    "dur": 4.2,
+    "say": "Главная площадь: все треки города лежат здесь."
+  },
+  {
+    "building": "studio",
+    "dur": 5,
+    "say": "Фабрика звука. Слышит каждую ноту."
+  },
+  {
+    "building": "sync",
+    "dur": 4.2,
+    "say": "Здесь рождается свет слова."
+  },
+  {
+    "building": "show",
+    "dur": 4.2,
+    "say": "Режиссёр твоего выступления."
+  },
+  {
+    "building": "live",
+    "dur": 4.2,
+    "say": "Отсюда твой голос уходит в мир."
+  },
+  {
+    "building": "billy",
+    "dur": 4.6,
+    "say": "И за всем этим следит Билли."
+  },
+  {
+    "building": "karaoke",
+    "dur": 4.2,
+    "say": "А это будущее: новые залы. Пока — чертёж.",
+    "zoom": 1.7
+  },
+  {
+    "building": "center",
+    "dur": 5,
+    "zoom": 1,
+    "say": "Вот так звучит город. Подписывайся — дальше строим."
+  }
 ];
 /*TOUR-END*/
 let tourT=[];
