@@ -268,7 +268,7 @@ export class MonitorEngine {
     return this._legacy?.listOutputs?.() ?? []
   }
 
-  /** Для __switchToV3 — принять состояние от legacy */
+  /** Принять состояние от legacy-микшера (зарезервировано: единственный вызывающий удалён в W3, кандидат W4/W5). */
   adoptState(legacy: any): void {
     if (!legacy) return
     this._state.enabled = legacy.enabled ?? false

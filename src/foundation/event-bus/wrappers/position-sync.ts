@@ -38,7 +38,7 @@ export function initPositionSync(): () => void {
   /** Обновить currentTime из V2Adapter (AudioEngineV2 имеет getCurrentTime(), НЕ свойство currentTime) */
   const syncCurrentTime = () => {
     // Double guard: И state !== 'idle' И стемы есть. Одного условия мало —
-    // V3DataInterceptor грузит стемы до __switchToV3(), state остаётся 'idle'.
+    // V3DataInterceptor грузит стемы до авто-старта V3, state остаётся 'idle'.
     // Без state-проверки V2 polling сломается для всех V2-пользователей.
     const t3 = getTransport()
     if (t3 && ((window as any).__v3Active || (t3.state !== 'idle' && t3.orchestrator.all().length > 0))) return

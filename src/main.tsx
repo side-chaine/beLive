@@ -14,7 +14,6 @@ import { initBlockEditorService } from './blocks/bridge/blockEditor.service';
 import { bridgeFacade } from './foundation/event-bus';
 import { V3StatePublisher, V3DataInterceptor, getTransport, setStatePublisher, MonitorRouter } from './audio/engine-v3';
 import type { HybridPipelineService as HybridPipelineServiceType } from './audio/engine-v3/pipeline/HybridPipelineService';
-import { V2AudioCage } from './audio/engine-v3/integration/V2AudioCage';
 import { MonitorEngine } from './audio/engine-v3/monitor/MonitorEngine';
 import { DeviceManager } from './audio/engine-v3/monitor/DeviceManager';
 import { getAudioContext } from './audio/core/audioContext';
@@ -41,7 +40,6 @@ import { SignalingClient } from './Rehearsal/services/signaling-client';
 import { PeerConnectionManager } from './Rehearsal/services/peer-connection';
 import { RehearsalTriggerBridge } from './Rehearsal/bridge/rehearsal-trigger.bridge';
 import { useRehearsalSessionStore } from './Rehearsal/store/rehearsal-session.store';
-import { useStemStore } from './stem/stem.store';
 import { useAudioStore } from './stores/audio.store';
 import { useNotifyStore } from './stores/notify.store';
 import { MicSourceV3 } from './audio/engine-v3/services/MicSourceV3';
@@ -118,13 +116,6 @@ function bootAether(): void {
     // 2. Interceptor — получение треков из IDB параллельно V2 (СТРОГО ПОСЛЕ Router)
     const interceptor = new V3DataInterceptor(ctx, transport.orchestrator, transport)
 
-    // 🧟 MP-18: V2AudioCage — внешняя клетка для подавления V2
-    // Создаётся синхронно, не зависит от pipeline. Attach к interceptor
-    // для активации при V3 auto-play.
-    const v2Cage = new V2AudioCage()
-    interceptor.attachCage(v2Cage)
-    ;(window as any).__v2Cage = v2Cage
-
     // 🟢 Phase F: HybridPipelineService — retry/re-entry + explicit fail-state
     const initV3Pipeline = async (attempt = 0): Promise<HybridPipelineServiceType | null> => {
       const MAX = 3
@@ -151,7 +142,6 @@ function bootAether(): void {
         title: 'V3 engine unavailable',
         message: 'Audio running in degraded mode — reload to restore V3.',
       })
-      ;(window as any).__restoreV2Engine?.()
       ;(window as any).__setV3Active?.(false)
       console.error('[AETHER] ❌ V3 boot failed after retries — V2 restored, user notified')
     }
@@ -211,86 +201,6 @@ function bootAether(): void {
       console.log(`[🎮] state:${transport.state} rate:${transport.playbackRate.toFixed(2)} stems:${stems.length} pipeline:${p ? '✅' : '❌'}`)
     }
 
-    // ⚡ Функция переключения V3 в master (вызывается из консоли или автоматически)
-    ;(window as any).__switchToV3 = async () => {
-      try {
-        // Проверяем что стемы есть
-        const stems = transport.orchestrator.all()
-        if (stems.length === 0) {
-          console.warn('[AETHER] Нет стемов — подожди загрузки трека')
-          return
-        }
-
-        // 1. Читаем время V2 через V2Adapter (MP-18: delegateSync, не getSync — currentTime не геттер!)
-        const offset = getTransport()?.currentTime ?? 0
-
-        // 2. 🔧 FIX Double Playback: multi-layer V2 shutdown
-        //    setStemMute + setStemVolume + setStemsEnabled + setInstrumentalVolume/setVocalsVolume + stop
-        //    Каскадное обнуление gain на всех уровнях V2 гарантирует тишину,
-        //    Каскадное обнуление gain на всех уровнях V2 гарантирует тишину.
-        const stemIds = ['instrumental', 'vocals', 'drums', 'bass', 'keys', 'guitar', 'backing', 'other']
-        stemIds.forEach(id => {
-          useStemStore.getState().setStemMute(id, true)
-          useStemStore.getState().setStemVolume(id, 0)
-        })
-        useStemStore.getState().setStemVolume('instrumental', 0)
-        useStemStore.getState().setStemVolume('vocals', 0)
-        stemIds.forEach(id => useStemStore.getState().setStemMute(id, true))
-        getTransport()?.stop()
-
-        // 🔧 FIX Gate квадратной формы: V3 играет ВСЕ стемы (включая instrumental),
-        //    но FR-014 (audio-events.ts) ставит instrumental=0 при наличии music стемов.
-        //    Восстанавливаем instrumental volume в store, чтобы stem-engine-sync
-        //    применял к V3 корректный gain, а не 0.
-        // №18-BUS H2.4: instrumental: значимо только в no-stems режиме
-        useStemStore.getState().setStemVolume('instrumental', 1)
-
-        // 3. ИСПОЛЬЗУЕМ ТРАНСПОРТ (Фикс Sonnet): play(initialOffset) — старт с позиции в один вызов!
-        //    Стемы уже подключены к MonitorRouter (ProgramMixGain → DefaultBranch → destination)
-        await transport.play(offset)
-        if (monitorEngine) {
-          monitorEngine.setBackendMode('v3')
-          // Перенос state от legacy если V3 только что активирован
-          if ((window as any).__legacyMonitorMix) {
-            monitorEngine.adoptState((window as any).__legacyMonitorMix)
-          }
-        }
-        const route = router ? '→ Router' : '→ destination'
-        console.log('[AETHER] ✅ V3 ACTIVE — V2 stopped & killed', offset.toFixed(1) + 's', stems.length + ' stems', route)
-      } catch (e) {
-        console.warn('[AETHER] Switch failed:', e)
-      }
-    }
-
-    // 🛡️ №18-BUS H4.1: mini-gard на ae.* volume-surface при активном V3.
-    // Обёртка 4 методов: __v3Active → DEV-warn+return, иначе оригинал.
-    // Self-contained: под обёрткой в v3-env фасад-no-op (js/audio-facade-v3.js);
-    // cage идёт через V2Adapter (main.tsx V2Interceptor/V2AudioCage) — не задевается.
-    // assumes VITE_ENGINE=v3; в v2-конфиге patchV1WithV2 перезапишет обёртку позже — принято
-    {
-      const __ae = (window as any).audioEngine as Record<string, any> | undefined
-      if (__ae) {
-        const __warnedAeMethods = new Set<string>()
-        const __guardAeMethod = (name: string): void => {
-          const orig = typeof __ae[name] === 'function' ? __ae[name].bind(__ae) : null
-          if (!orig) return
-          __ae[name] = (...args: unknown[]): void => {
-            if ((window as any).__v3Active) {
-              // №17-K-fix: warn ОДИН раз на метод — cage-watchdog зовёт каждый тик, спам не нужен
-              if (import.meta.env.DEV && !__warnedAeMethods.has(name)) {
-                __warnedAeMethods.add(name)
-                console.warn(`[№18-BUS] ae.${name}() ignored — V3 active (далее тихо)`)
-              }
-              return
-            }
-            orig(...args)
-          }
-        }
-        __guardAeMethod('setStemVolume')
-        __guardAeMethod('setStemsEnabled')
-      }
-    }
-
     // Подписка на before-track-change (V3 pipeline — единственный путь)
     document.addEventListener('before-track-change', async (event) => {
       console.log('[TRACE] 🎯 before-track-change HANDLER FIRED', (event as CustomEvent).detail)
@@ -329,11 +239,6 @@ function bootAether(): void {
               state: transport.state 
             })
             
-            // 🧟 MP-18: V2 silencing теперь ВНУТРИ loadTrack() через V2AudioCage.activate()
-            //    pause() вместо stop() — не триггерит _restoreSilencedStems()
-            //    watchdog 100ms удерживает gain=0
-            //    V2Interceptor блокирует V2.play() пока __v3Active=true
-            //
             // №18-BUS H2.3: блок «gains restored to 1.0» УДАЛЁН — четвёртый отравитель raw-слота.
             // pipeline сам восстанавливает effective gains из RAW (_stemRawVolumes переживают reset).
             if (monitorEngine) monitorEngine.setBackendMode('v3')

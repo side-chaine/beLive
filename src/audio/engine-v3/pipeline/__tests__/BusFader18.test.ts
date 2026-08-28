@@ -358,6 +358,7 @@ describe('№18-BUS: store NaN guards', () => {
 
 // ═══════════════════════════════════════════════════════════
 // 9. cage-инвариант H4.1 (контракт-зеркало гарда из bootAether)
+// contract-mirror, intentionally retained (museum) — регресс-нетто pin-semantics; ae-guard удалён из прод-кода W3, тест self-contained
 // ═══════════════════════════════════════════════════════════
 
 describe('№18-BUS H4.1: ae.* mini-gard (__v3Active) + cage-инвариант', () => {

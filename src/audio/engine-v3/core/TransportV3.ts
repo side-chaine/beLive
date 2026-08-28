@@ -122,7 +122,7 @@ export class TransportV3 extends EventTarget {
    * `initialOffset` only applies when starting fresh from 'idle'/'ended' — a plain
    * resume from 'paused' always continues from wherever it was paused, regardless
    * of what's passed here. This exists specifically so a first-activation caller
-   * (e.g. __switchToV3) can start-at-position in one call instead of playing from
+   * can start-at-position in one call instead of playing from
    * 0 and immediately reseeking — the reseek dance technically worked (StemPlayerV3's
    * kill-safe already tolerates stopping a not-yet-audible scheduled source), but it
    * was a wasted schedule-then-cancel round trip for something that has a direct fix.

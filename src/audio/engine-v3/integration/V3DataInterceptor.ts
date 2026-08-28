@@ -1,7 +1,6 @@
 import type { StemOrchestrator } from '../core/StemOrchestrator';
 import type { TransportV3 } from '../core/TransportV3';
 import type { HybridPipelineService } from '../pipeline/HybridPipelineService';
-import type { V2AudioCage } from './V2AudioCage';
 
 /**
  * Matches the IDB TrackRecord schema established earlier in this project's own recon
@@ -40,7 +39,6 @@ export interface LoadResult {
 export class V3DataInterceptor {
   private _loadGeneration = 0;
   private _pipeline: HybridPipelineService | null = null;
-  private _cage: V2AudioCage | null = null;
 
   constructor(
     private readonly ctx: AudioContext,
@@ -52,12 +50,6 @@ export class V3DataInterceptor {
   attachPipeline(pipeline: HybridPipelineService): void {
     this._pipeline = pipeline
     console.log('[V3DataInterceptor] ✅ Pipeline attached')
-  }
-
-  /** MP-18: Подключить V2AudioCage для блокировки V2 при активации V3 */
-  attachCage(cage: V2AudioCage): void {
-    this._cage = cage
-    console.log('[V3DataInterceptor] ✅ V2AudioCage attached')
   }
 
   async loadTrack(record: TrackRecord): Promise<LoadResult> {
@@ -168,15 +160,10 @@ export class V3DataInterceptor {
 
     // 8. 🎯 Zombie Kill Switch — заглушить V2 + запуск V3 с offset + safety net 🔴
     if (this._pipeline && loadedStemIds.length > 0) {
-      // 8a. Активируем клетку V2: pause (НЕ stop — избегаем _restoreSilencedStems)
-      //     + zero all gains + watchdog
-      this._cage?.activate()
-
       // 8b. Помечаем V3 активным — блокируем V2.play() через interceptor
       try { (window as any).__setV3Active(true) } catch { /* ignore */ }
 
-      // 8c. M2 (P1-b): offset-continuity V2→V3 удалён — при No-Birth V2 не существует,
-      // новый трек всегда стартует с 0. (Хендофф был легален только в __switchToV3.)
+      // новый трек всегда стартует с 0. (Хендофф был легален только в консольном переключателе — удалён в W3.)
       const offset = 0
 
       // 8d. 🛡️ MP-28: safety net — запуск с timeout и rollback
