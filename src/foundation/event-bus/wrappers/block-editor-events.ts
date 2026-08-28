@@ -15,7 +15,7 @@ export function initBlockEditorEvents(): () => void {
   const subs: Subscription[] = []
 
   subs.push(eventBus.subscribe(EventBusChannel.Sync, 'blocks-applied', (_payload) => {
-    // TODO: IDB write, global constructor ModalBlockEditor
+    // no-op placeholder: IDB-запись идёт через saveLyricsBlocks/blockEditor.service; ModalBlockEditor удалён в W5
   }))
 
   return () => subs.forEach(s => s.unsubscribe())

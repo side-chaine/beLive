@@ -1,5 +1,5 @@
 // src/services/track.loader.ts — SAFE-перенос loadTrack/loadStemsOnDemand/queueTrackJump (W4).
-// 1:1 копия src/services/track.orchestrator.ts:5-592 (FROZEN первоисточник, byte-identical). НЕ импортирует frozen.
+// 1:1 копия track.orchestrator.ts:5-592 (FROZEN), кроме Step-6/Step-14 WE-refs (мёртво с W6). НЕ импортирует frozen.
 
 import {
   clearWordSyncLayer,
@@ -83,13 +83,6 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
   if (ov) ov.classList.remove('hidden');
 
   try {
-    // Step 6: WE refs (stub properties)
-    const we = (window as any).waveformEditor;
-    if (we) {
-      we.currentTrackId = track.id;
-      we.lastLoadedFile = track.lyricsFileName || track.title;
-    }
-
     // Step 7: RTF parsing via rtfService
     const raw = track.lyricsOriginalContent || track.lyrics;
     let lyrics = track.lyrics || track.lyricsOriginalContent;
@@ -477,13 +470,6 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
       }, 200);
     }
 
-    // Step 14: sync editor (default: OPEN unless explicitly false)
-    if (opts.openSyncEditor !== false && we) {
-      we.show();
-      const iEd = ae?.hybridEngine?.instrumentalUrl || track.instrumentalUrl || track.audioUrl;
-      const vEd = ae?.hybridEngine?.vocalsUrl || track.vocalsUrl;
-      if (iEd || vEd) we.loadDualWaveforms(iEd, vEd).catch(() => {});
-    }
     _mark('Steps 12-14: Autoplay + SyncEditor');
   } catch (e: unknown) {
     if ((e as { name?: string })?.name === 'AbortError') return;

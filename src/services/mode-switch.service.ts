@@ -232,9 +232,6 @@ export function switchMode(mode: AppMode): void {
     saveRehearsalVolumesToStorage();
   }
 
-  const we = (window as any).waveformEditor;
-  if (we?.isVisible) we.hide();
-
   saveCurrentMode(mode);
 
   switch (mode) {

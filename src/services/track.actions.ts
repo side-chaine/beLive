@@ -68,11 +68,6 @@ export async function deleteTrack(id: number): Promise<void> {
           tc.currentTrackIndex--;
         }
 
-        if (w.waveformEditor && w.waveformEditor.currentTrackId === id) {
-          w.waveformEditor.currentTrackId = null;
-          w.waveformEditor.lastLoadedFile = null;
-        }
-
         if (tc.tracks.length === 0 && w.idbService?.setCatalogCleared) {
           w.idbService.setCatalogCleared();
         }
@@ -168,11 +163,6 @@ export async function clearAllTracks(): Promise<boolean> {
     if (tc) {
       tc.tracks = [];
       tc.currentTrackIndex = -1;
-    }
-
-    if (w.waveformEditor) {
-      w.waveformEditor.currentTrackId = null;
-      w.waveformEditor.lastLoadedFile = null;
     }
 
     if (w.lyricsDisplay) {

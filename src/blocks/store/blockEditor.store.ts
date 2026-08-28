@@ -363,14 +363,6 @@ export const useBlockEditorStore = create<BlockEditorState>((set, get) => ({
 
       set(EMPTY);
 
-      // Auto-open Sync Editor (intercepted by sync.bridge)
-      try {
-        const w = window as any;
-        w.waveformEditor?.show?.();
-      } catch (e) {
-        console.warn('[BlockEditor] Could not auto-open Sync Editor:', e);
-      }
-
     } catch (error) {
       console.error('[BlockEditor] Save failed:', error);
       set({ isSaving: false });
