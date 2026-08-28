@@ -221,6 +221,7 @@ function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15
    gives — что даёт тебе как инструмент
    rooms — что внутри (комнаты = смысловые модули)
    Это контракт для 007: setCadastre принимает тот же формат. */
+/*CITY-STATE-START*/
 const CITY={
   meta:{city:'beLiveBase',phase:'Phase 0',updated:'2026-08-28',cadastre:'houses.yaml v0.2'},
   districts:[
@@ -338,6 +339,7 @@ const CITY={
     {id:'cut',from:'blocks-old',to:null,ev:'severed',pulse:0,via:[[11.4,8.2]]}
   ]
 };
+/*CITY-STATE-END*/
 
 const ARCH={
   tower:{base:20,k:1.50,inset:0.16}, factory:{base:14,k:0.35,inset:0.10},
@@ -346,7 +348,7 @@ const ARCH={
   house:{base:10,k:0.45,inset:0.20}, plaza:{base:4,k:0.05,inset:0.06}, gate:{base:22,k:0,inset:0.18}
 };
 const heightOf=b=>Math.round(ARCH[b.arch].base+ARCH[b.arch].k*Math.sqrt(b.loc));
-const freshOf=b=>Math.max(0,Math.min(1,b.t30/30));
+const freshOf=b=>b.t30<0?0.35:Math.max(0,Math.min(1,b.t30/30));
 function corners(gx,gy,w,d,i){return{T:iso(gx+i,gy+i),R:iso(gx+w-i,gy+i),B:iso(gx+w-i,gy+d-i),L:iso(gx+i,gy+d-i)};}
 function faces(gx,gy,w,d,h,i,skew,z){
   const c0=corners(gx,gy,w,d,i), sh=skew||0, zo=z||0;
@@ -721,6 +723,7 @@ function litLinks(id,on){
   });
 }
 let hovId=null;
+let hovDist=null;
 function clearHov(){
   if(hovId){
     const n=svg.querySelector('.bld[data-id="'+hovId+'"]'); if(n)n.classList.remove('hov');
@@ -749,6 +752,15 @@ svg.addEventListener('mousemove',e=>{
     if(x+290>innerWidth) x=e.clientX-296;
     if(y+110>innerHeight) y=e.clientY-116;
     tag.style.left=Math.max(8,x)+'px'; tag.style.top=Math.max(8,y)+'px';
+  }
+  /* шёпот квартала: только если не наведено здание */
+  if(!hovId){
+    const df=e.target&&e.target.closest?e.target.closest('.dfloor'):null;
+    const did=df?df.dataset.d:null;
+    if(did!==hovDist){
+      hovDist=did;
+      if(did){ const d=CITY.districts.find(x=>x.id===did); if(d) whisper(d.name); }
+    }
   }
 });
 svg.addEventListener('mouseleave',clearHov);
@@ -858,7 +870,8 @@ function openInspect(id){
   $('inRooms').innerHTML=(b.rooms||[]).map((r,i)=>'<div class="room" data-r="'+i+'"><i></i><div><b>'+r.n+'</b><span>'+r.d+'</span></div></div>').join('');
   $('inTechGrid').innerHTML=
     '<div>масштаб: <b>'+fmtN(b.loc)+' строк · '+b.files+' файлов</b></div>'+
-    '<div>активность: <b>'+b.t30+' касаний за 30 дней</b></div>'+
+    '<div>активность: <b>'+(b.t30<0?'считается на ПК':b.t30+' касаний за 30 дней')+'</b></div>'+
+    (b.gate?'<div>гейт: <b>'+b.gate+'</b> · '+(gatePassed(b.gate)?'пройден':'ждёт')+'</div>':'')+
     (b.route?'<div>маршрут приложения: <b>'+b.route+'</b></div>':'');
   $('inMods').textContent=(b.mods||[]).join('  ·  ');
   $('inActs').innerHTML=actionsFor(b)+(b.route?'<button class="act" data-app="1">'+ic('open',13)+'<span>Открыть в приложении</span></button>':'');
@@ -876,7 +889,10 @@ function openInspect(id){
 }
 function closeInspect(){ body.classList.remove('inspect'); }
 
-/* действия в осмотре */
+/* действия в осмотре: гейты, подтверждение сноса, журнал города */
+const JOURNAL=[];
+const gatePassed=g=>!g||(CITY.meta.gates&&CITY.meta.gates[g]==='passed');
+let armed=null, armedT=0;
  $('inActs').addEventListener('click',e=>{
   const btn=e.target.closest('button'); if(!btn)return;
   const b=CITY.buildings.find(x=>x.id===selected); if(!b)return;
@@ -885,7 +901,19 @@ function closeInspect(){ body.classList.remove('inspect'); }
     return;
   }
   const ns=btn.dataset.st;
+  if(!gatePassed(b.gate)){
+    whisper('рано: гейт «'+b.gate+'» ещё не пройден — город бережёт план миграции');
+    return;
+  }
+  if(ns==='cleared'&&armed!==b.id){
+    armed=b.id; clearTimeout(armedT); armedT=setTimeout(()=>armed=null,4000);
+    whisper(b.name+': нажми ещё раз, чтобы подтвердить снос');
+    return;
+  }
+  armed=null;
+  const old=b.st;
   b.st=ns;
+  JOURNAL.push({date:new Date().toISOString(),actor:'boss',building:b.id,from:old,to:ns,gate:b.gate||null});
   svg.innerHTML=buildSVG(); applyLit();
   if(ns==='cleared'){
     closeInspect();
@@ -900,17 +928,15 @@ function closeInspect(){ body.classList.remove('inspect'); }
 /* ══════════ режимы приложения = свет города ══════════ */
 const APPMODES={
   rehearsal:{ids:['studio','sync','notes','show','split','academy','styles'],say:'репетиция: студия и мастерские греются'},
-  karaoke:{ids:['catalog','gates','academy','styles'],say:'караоке: витрина и академия в деле'},
-  concert:{ids:['show','arenas','scenes','catalog','billy'],say:'концерт: театр и киностудия за работой'},
+  karaoke:{ids:['catalog','gates','academy','styles','karaoke'],say:'караоке: витрина и академия в деле'},
+  concert:{ids:['show','concert','scenes','catalog','billy'],say:'концерт: театр и киностудия за работой'},
   live:{ids:['live','studio','sync','billy','split'],say:'эфир: арена даёт луч, город притемнён'}
 };
 let appMode='rehearsal';
 function applyLit(){
   const set=new Set(APPMODES[appMode].ids);
   [...svg.querySelectorAll('.bld')].forEach(n=>n.classList.toggle('lit',set.has(n.dataset.id)));
-  [...svg.querySelectorAll('.bld.lit .win, .bld.lit polygon[fill="#FFE29A"]')].forEach(()=>{});
 }
-/* тёплое усиление света: через css-переменную нельзя (svg fill задан), поэтому класс .lit слегка поднимает фильтр */
 document.querySelectorAll('[data-app]').forEach(btn=>btn.addEventListener('click',()=>{
   appMode=btn.dataset.app;
   document.querySelectorAll('[data-app]').forEach(x=>x.classList.toggle('on',x===btn));
@@ -921,6 +947,7 @@ document.querySelectorAll('[data-app]').forEach(btn=>btn.addEventListener('click
 document.querySelector('[data-app="rehearsal"]').classList.add('on');
 
 /* ══════════ тур по городу ══════════ */
+/*TOUR-START*/
 const TOUR=[
   {id:'gates',say:'Вход без забора. Зашёл — и сразу поёшь.'},
   {id:'catalog',say:'Главная площадь: все треки города лежат здесь.'},
@@ -929,12 +956,19 @@ const TOUR=[
   {id:'show',say:'Режиссёр твоего выступления.'},
   {id:'live',say:'Отсюда твой голос уходит в мир.'},
   {id:'billy',say:'И за всем этим следит Билли.'},
-  {id:'arenas',say:'А это будущее: два новых зала. Пока — чертёж.'}
+  {id:'karaoke',say:'А это будущее: новые залы. Пока — чертёж.'}
 ];
+/*TOUR-END*/
 let tourT=[];
+function viewK(){
+  const r=svg.getBoundingClientRect();
+  return Math.min(r.width/1320,r.height/700)||1;
+}
 function flyTo(x,y,s,dur){
+  const k=viewK();
+  cam={x:-(x-660)*k*s,y:-(y-350)*k*s,s};
   svg.style.transition='transform '+dur+'ms cubic-bezier(.22,1,.36,1)';
-  svg.style.transform='translate('+(660-x*s)+'px,'+(350-y*s)+'px) scale('+s+')';
+  svg.style.transform='translate('+cam.x+'px,'+cam.y+'px) scale('+s+')';
 }
 function startTour(){
   closeInspect();
@@ -945,16 +979,25 @@ function startTour(){
   let i=0;
   const step=()=>{
     if(i>=TOUR.length){ stopTour(); return; }
-    const b=CITY.buildings.find(x=>x.id===TOUR[i].id); if(!b){i++;step();return;}
+    const t=TOUR[i], bid=t.building||t.id, dur=(t.dur||4.2)*1000;
+    if(bid==='center'){
+      [...svg.querySelectorAll('.bld')].forEach(n=>n.classList.remove('spot'));
+      flyTo(616,376,t.zoom||1.0,1400);
+      $('ltT').textContent='beLiveBase';
+      $('ltS').textContent=t.say||'';
+      $('lower').classList.add('show');
+      i++; tourT=[setTimeout(step,dur)]; return;
+    }
+    const b=CITY.buildings.find(x=>x.id===bid); if(!b){i++;step();return;}
     [...svg.querySelectorAll('.bld')].forEach(n=>n.classList.toggle('spot',n.dataset.id===b.id));
     const c=cen(b.gx,b.gy,b.w,b.d);
-    flyTo(c.x,c.y,1.5,1400);
+    flyTo(c.x,c.y,t.zoom||1.5,1400);
     $('ltT').textContent=b.name;
-    $('ltS').textContent=TOUR[i].say;
+    $('ltS').textContent=t.say||'';
     $('lower').classList.add('show');
     CityBus.emit({type:'tour:step',from:b.id});
     i++;
-    tourT=[setTimeout(step,4200)];
+    tourT=[setTimeout(step,dur)];
   };
   step();
 }
@@ -989,10 +1032,12 @@ const IDLE=[
 })();
 
 /* ══════════ API для 007 ══════════
-   beLiveBase.emit({type:'word:active',from:'sync',to:'show',text:'свет слова пошёл'})
-   — type совпадает с именем линии метро: импульс едет, город вспыхивает, шёпот говорит.
+   beLiveBase.emit({type:'sync:active-line-changed',from:'sync',to:'show',text:'свет слова пошёл'})
+   — type = реальное событие EventBus v2 (канал:событие) = имя линии метро.
    beLiveBase.setCadastre({districts,buildings,metro,meta})
-   — полная замена кадастра; формат зданий теперь содержит what / gives / rooms. */
+   — полная замена кадастра; формат зданий содержит what / gives / rooms.
+   beLiveBase.exportCadastre() — текущее состояние статусов (дифф для записи в houses.yaml).
+   beLiveBase.journal() — журнал действий пульта (кто/когда/что сменил). */
 window.beLiveBase={
   emit:e=>CityBus.emit(e),
   setCadastre(json){
@@ -1003,7 +1048,10 @@ window.beLiveBase={
   },
   inspect:id=>openInspect(id),
   tour:()=>startTour(),
-  state:()=>({appMode,selected})
+  state:()=>({appMode,selected}),
+  exportCadastre:()=>({meta:CITY.meta,districts:CITY.districts,
+    buildings:CITY.buildings.map(b=>({id:b.id,st:b.st,gate:b.gate||null})),metro:CITY.metro}),
+  journal:()=>JOURNAL.slice()
 };
 
 applyLit();

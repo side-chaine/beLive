@@ -1,142 +1,278 @@
 #!/usr/bin/env node
-// beLiveBase city-gen: houses.yaml + LAYOUT -> city-state.json + bLb-SNAPSHOT.html
+// beLiveBase city-gen v2: houses.yaml (v0.2) -> city-state.json + инъекция CITY/TOUR в bLb-CITY-v0.2-quiet.html
 // Запуск на ПК (есть node): node team-m/bLb/city-gen.mjs
-// Без внешних зависимостей: парсер houses.yaml минимальный, под известную структуру файла.
+// Если рядом есть city-metrics.json (даёт city-metrics.mjs) — перекрывает loc/files/t30 из yaml.
+// Без внешних зависимостей: парсер yaml минимальный, под известный формат houses.yaml v0.2.
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const DIR = dirname(fileURLToPath(import.meta.url));
 const YAML_PATH = join(DIR, 'houses.yaml');
+const METRICS_PATH = join(DIR, 'city-metrics.json');
+const TOUR_PATH = join(DIR, 'tour.yaml');
 const JSON_PATH = join(DIR, 'city-state.json');
-const HTML_PATH = join(DIR, 'bLb-SNAPSHOT.html');
+const HTML_PATH = join(DIR, 'bLb-CITY-v0.2-quiet.html');
 
-const LAYOUT = [
-  { id: 'gates', name: 'Врата', quarter: '001', gx: 4, gy: 7, h: 26, human: 'Вход в город. Гость заходит без забора и сразу начинает творить.' },
-  { id: 'catalog', name: 'Площадь Каталог', quarter: '002', gx: 4, gy: 5, h: 30, human: 'Центральная площадь: витрина треков и PORT-дропзона.' },
-  { id: 'studio', name: 'Завод Studio', quarter: '003-005', gx: 6, gy: 5, h: 40, human: 'Здесь рождаются треки: аудио-движок и стем-микшер. Ядро заморожено (охраняется).', note: 'frozen: AudioEngineV2, patchV1' },
-  { id: 'academy', name: 'Академия Quest', quarter: '006-008', gx: 2, gy: 6, h: 34, human: 'Кампус практики: тейки, упражнения, сценарии.' },
-  { id: 'show', name: 'Театр Show', quarter: '009-010', gx: 3, gy: 4, h: 36, human: 'Театр выступлений: движок историй и сцены.' },
-  { id: 'split', name: 'Башня Split', quarter: '011', gx: 6, gy: 3, h: 44, human: 'Башня мониторинга и микса.' },
-  { id: 'styles', name: 'Ателье Styles', quarter: '012', gx: 2, gy: 4, h: 30, human: 'Ателье стиля: темы, текстовые стили, пресеты.' },
-  { id: 'notes', name: 'Лаб Notes', quarter: '013', gx: 7, gy: 4, h: 32, human: 'Лаборатория нот: детекция питча, пианино.' },
-  { id: 'billy', name: 'Башня Билли', quarter: '014', gx: 5, gy: 3, h: 56, human: 'Башня Билли: мозг AI-персонажа, его голос и эмоции.' },
-  { id: 'sync', name: 'Мастерская Sync', quarter: '018-019', gx: 3, gy: 6, h: 34, human: 'Мастерская синхронизации лирики: маркеры и word-sync.', note: 'FROZEN-READ: wordSync/markers stores' },
-  { id: 'hub', name: 'Площадь Hub', quarter: '020', gx: 5, gy: 5, h: 28, human: 'Площадь ленты: фид и профили (демо-режим).', status: 'alive-demo' },
-  { id: 'arenas', name: 'Арены Karaoke/Concert', quarter: '021-022', gx: 3, gy: 2, h: 38, human: 'Арены будущего: караоке и концерт. Чертёж готов — стройка после Репетиции.', status: 'planned' },
-  { id: 'live', name: 'Арена Live', quarter: '023', gx: 4, gy: 2, h: 36, human: 'Живая арена: субтитры и live-контролы.' },
-  { id: 'profile', name: 'Дом профиля', quarter: '029-030', gx: 1, gy: 5, h: 30, human: 'Дом жителя: профиль и аватар.' },
-  { id: 'aiconfig', name: 'AI Подстанция', quarter: '031', gx: 6, gy: 2, h: 26, human: 'AI-подстанция: законсервирована до лучших времён.', status: 'conserved' },
-  { id: 'scenes', name: 'Киностудия фонов', quarter: '032', gx: 1, gy: 3, h: 30, human: 'Киностудия: фоны режимов и блочные сцены.' },
-  { id: 'dna', name: 'Архив ДНК', quarter: '034', gx: 1, gy: 4, h: 28, human: 'Архив ДНК треков: метаданные и структура.' },
-  { id: 'blocks-old', name: 'Старая мастерская', quarter: '038', gx: 7, gy: 2, h: 24, human: 'Старая мастерская блоков: огорожена, под снос (W5, BAC-107).', status: 'trash-w5' },
-  { id: 'infra', name: 'Подземка', quarter: 'infra', gx: 0, gy: 0, h: 0, human: 'Подземка города: EventBus-станция, старые мосты (исторические), scheduler-доставка.' },
-  { id: 'external', name: 'За городом', quarter: 'external', gx: 0, gy: 0, h: 0, human: 'За горизонтом: склад Bank_beLive и облачные электростанции CF Workers.', status: 'external' }
-];
+// Реестр реальных событий EventBus v2 (src/foundation/event-bus/types.ts, 28 шт.) + служебные city:*
+const REAL_EVENTS = new Set([
+  'audio:track-loaded', 'audio:track-fully-loaded', 'audio:track-stem-ready',
+  'audio:playback-state-changed', 'audio:playback-rate-changed', 'audio:vocalmix-state-changed',
+  'audio:microphone-state-changed', 'audio:monitor-state-changed', 'audio:monitor-route-changed',
+  'audio:seek-position-changed',
+  'track:before-change', 'track:load-failed',
+  'catalog:track-saved', 'catalog:tracks-changed', 'catalog:catalog-close', 'catalog:catalog-cleared',
+  'sync:blocks-applied', 'sync:active-line-changed', 'sync:lyrics-rendered', 'sync:save-track-markers',
+  'sync:loop-set', 'sync:loop-cleared', 'sync:loopcompleted', 'sync:sections-updated',
+  'ui:mode-changed', 'ui:block-scenes-loaded', 'ui:camera-permission-resolved',
+  'practice:state-changed'
+]);
+const STATUSES = new Set(['alive', 'demo', 'planned', 'conserved', 'trash', 'cleared', 'external']);
+const ARCHS = new Set(['tower', 'factory', 'arena', 'lab', 'archive', 'campus', 'house', 'plaza', 'gate', 'none']);
+const GRID_W = 15, GRID_D = 14;
 
-const GOALS = [
-  { icon: '🏗', text: 'ПК сносит мусор (W4/W5) — расчищаем кварталы' },
-  { icon: '🎤', text: 'Репетиция → прод — первое здание на полную мощность' },
-  { icon: '🎭', text: 'Потом — стройка Арен: Karaoke / Concert / Live' },
-  { icon: '🗺', text: 'MVP-1 города: кадастр + генератор + карта' }
-];
-
+// ── парсер houses.yaml v0.2 (секции: meta/districts/houses/metro/open-seams) ──
 function parseInlineArray(s) {
   const inner = s.trim().replace(/^\[/, '').replace(/\]$/, '');
   if (!inner.trim()) return [];
   return inner.split(',').map(x => x.trim().replace(/^["']|["']$/g, ''));
 }
-
-function parseHousesYaml(text) {
-  const houses = [];
-  let cur = null;
-  let blockKey = null;
-  let blockBuf = [];
-  const flushBlock = () => {
-    if (cur && blockKey) cur[blockKey] = blockBuf.join(' ').replace(/\s+/g, ' ').trim();
-    blockKey = null; blockBuf = [];
-  };
+function parseYaml(text) {
+  const out = { meta: {}, districts: [], houses: [], metro: [], openSeams: [] };
+  let section = null;      // meta | districts | houses | metro | open-seams
+  let cur = null;          // текущий элемент списка
+  let listKey = null;      // текущий блочный список (gives/rooms/...)
   for (const raw of text.split('\n')) {
     const line = raw.replace(/\t/g, '  ');
     const noComment = line.replace(/#.*$/, '').replace(/\s+$/, '');
     if (!noComment.trim()) continue;
-    const item = noComment.match(/^\s*-\s+id:\s*(.+)$/);
+    const top = noComment.match(/^([A-Za-z-]+):\s*(.*)$/);
+    if (top && !line.startsWith(' ')) {
+      section = top[1]; cur = null; listKey = null;
+      continue;
+    }
+    if (section === 'open-seams') {
+      const it = noComment.match(/^\s*-\s+(.+)$/);
+      if (it) out.openSeams.push(it[1].trim().replace(/^["']|["']$/g, ''));
+      continue;
+    }
+    if (section === 'meta') {
+      // meta упрощённо: только скалярные kv верхнего уровня meta (version/date/author/layout)
+      const kv = noComment.match(/^\s{2}([A-Za-z0-9_-]+):\s*(.+)$/);
+      if (kv && !kv[2].startsWith('[')) out.meta[kv[1]] = kv[2].trim().replace(/^["']|["']$/g, '');
+      continue;
+    }
+    if (!['districts', 'houses', 'metro'].includes(section)) continue;
+    const item = noComment.match(/^\s{2}-\s+id:\s*(.+)$/);
     if (item) {
-      flushBlock();
-      cur = { id: item[1].trim().replace(/^["']|["']$/g, ''), modules: [] };
-      houses.push(cur);
+      cur = { id: item[1].trim().replace(/^["']|["']$/g, '') };
+      out[section].push(cur);
+      listKey = null;
       continue;
     }
     if (!cur) continue;
-    const kv = noComment.match(/^\s{4,}([A-Za-z0-9_-]+):\s*(.*)$/);
-    if (!kv) {
-      if (blockKey) blockBuf.push(noComment.trim());
+    // блочный список: "    key:" затем "      - значение"
+    const listStart = noComment.match(/^\s{4}([A-Za-z0-9_-]+):\s*$/);
+    if (listStart) { cur[listStart[1]] = []; listKey = listStart[1]; continue; }
+    const listItem = noComment.match(/^\s{6}-\s+(.+)$/);
+    if (listItem && listKey) {
+      cur[listKey].push(listItem[1].trim().replace(/^["']|["']$/g, ''));
       continue;
     }
-    flushBlock();
-    const [, key, valRaw] = kv;
-    const val = valRaw.trim();
-    if (val === '>' || val === '|') { blockKey = key; continue; }
-    if (val.startsWith('[')) { cur[key] = parseInlineArray(val); continue; }
-    cur[key] = val.replace(/^["']|["']$/g, '');
+    const kv = noComment.match(/^\s{4}([A-Za-z0-9_-]+):\s*(.*)$/);
+    if (kv) {
+      listKey = null;
+      const [, key, valRaw] = kv;
+      const val = valRaw.trim();
+      if (val.startsWith('[')) { cur[key] = parseInlineArray(val); continue; }
+      cur[key] = val.replace(/^["']|["']$/g, '');
+    }
   }
-  flushBlock();
-  return houses;
+  return out;
+}
+function parseGrid(s) {
+  if (!s) return null;
+  const m = String(s).match(/gx:\s*([\d.]+).*?gy:\s*([\d.]+).*?w:\s*([\d.]+).*?d:\s*([\d.]+)/);
+  if (!m) return null;
+  return { gx: Number(m[1]), gy: Number(m[2]), w: Number(m[3]), d: Number(m[4]) };
+}
+function parseMetrics(s) {
+  if (!s) return null;
+  const m = String(s).match(/loc:\s*(-?[\d.]+).*?files:\s*(-?[\d.]+).*?t30:\s*(-?[\d.]+)/);
+  if (!m) return null;
+  return { loc: Number(m[1]), files: Number(m[2]), t30: Number(m[3]) };
+}
+function parseVia(s) {
+  if (!s) return undefined;
+  return String(s).split(';').map(p => p.split(',').map(Number));
 }
 
-function normStatus(s) {
-  if (!s) return 'alive';
-  if (s.startsWith('trash')) return s;
-  if (['alive', 'alive-demo', 'planned', 'conserved', 'external', 'placeholder'].includes(s)) return s;
-  return 'alive';
+// ── tour.yaml (минимальный парсер: stops как блочный список kv) ──
+function parseTour(text) {
+  const stops = [];
+  let cur = null;
+  for (const raw of text.split('\n')) {
+    const line = raw.replace(/\t/g, '  ').replace(/#.*$/, '').replace(/\s+$/, '');
+    if (!line.trim()) continue;
+    const item = line.match(/^\s{2}-\s+building:\s*(.+)$/);
+    if (item) { cur = { building: item[1].trim() }; stops.push(cur); continue; }
+    if (!cur) continue;
+    const kv = line.match(/^\s{4}([A-Za-z0-9_-]+):\s*(.+)$/);
+    if (kv) {
+      const v = kv[2].trim().replace(/^["']|["']$/g, '');
+      cur[kv[1]] = kv[1] === 'dur' || kv[1] === 'zoom' ? Number(v) : v;
+    }
+  }
+  return stops;
 }
 
 const yamlText = readFileSync(YAML_PATH, 'utf8');
-const houses = parseHousesYaml(yamlText);
-const byQuarter = new Map(houses.map(h => [h.id, h]));
-
+const parsed = parseYaml(yamlText);
 const warnings = [];
-const buildings = LAYOUT.map(l => {
-  const src = byQuarter.get(l.quarter);
-  const b = { ...l, status: l.status || normStatus(src && src.status), modules: [], owner: 'center/007' };
-  if (!src) { warnings.push(`layout ${l.id}: квартал ${l.quarter} не найден в houses.yaml`); return b; }
-  b.modules = Array.isArray(src.modules) ? src.modules : [];
-  if (src.owner) b.owner = String(src.owner).slice(0, 80);
-  if (src.status && !l.status) b.status = normStatus(src.status);
-  if (src.grid) {
-    const gm = String(src.grid).match(/x:\s*(\d+).*?y:\s*(\d+)/);
-    if (gm) { b.gx = Number(gm[1]); b.gy = Number(gm[2]); }
-  }
-  return b;
-});
+const errors = [];
 
-const layoutQuarters = new Set(LAYOUT.map(l => l.quarter));
-for (const h of houses) if (!layoutQuarters.has(h.id)) warnings.push(`houses.yaml: квартал ${h.id} не на карте — добавить в LAYOUT`);
+// ── гейты ──
+const gates = {};
+{
+  const gBlock = yamlText.match(/gates:\n((?:\s{4,}-.*|\s{6,}\S.*)*)/);
+  if (gBlock) {
+    let gm;
+    const re1 = /id:\s*(\S+)/g;
+    while ((gm = re1.exec(gBlock[1]))) gates[gm[1]] = 'open';
+    const re2 = /id:\s*(\S+)[\s\S]*?state:\s*(\S+)/g;
+    while ((gm = re2.exec(gBlock[1]))) gates[gm[1]] = gm[2];
+  }
+}
+
+// ── кварталы ──
+const districts = parsed.districts.map(d => {
+  const g = parseGrid(d.grid) || { gx: 0, gy: 0, w: 1, d: 1 };
+  return { id: d.id, name: d.name || d.id, hue: d.hue || 'core', ...g };
+});
+const districtIds = new Set(districts.map(d => d.id));
+
+// ── метрики ПК (если есть) ──
+let pcMetrics = {};
+if (existsSync(METRICS_PATH)) {
+  try { pcMetrics = JSON.parse(readFileSync(METRICS_PATH, 'utf8')); } catch (e) {
+    warnings.push('city-metrics.json не парсится: ' + e.message);
+  }
+}
+
+// ── здания ──
+const buildings = [];
+for (const h of parsed.houses) {
+  // render:none (подземка) и render:external (за городом) рисуются отдельно, не здания
+  if (h.render === 'none' || h.render === 'external') continue;
+  const key = h.key || h.id;
+  const g = parseGrid(h.grid);
+  const m = parseMetrics(h.metrics);
+  const pc = pcMetrics[key];
+  const b = {
+    id: key,
+    name: h.quarter || key,
+    vmo: h.id,
+    dist: h.district,
+    arch: h.arch || 'lab',
+    st: h.status || 'alive',
+    ...(g || { gx: 0, gy: 0, w: 1, d: 1 }),
+    loc: pc ? pc.loc : (m ? m.loc : 0),
+    files: pc ? pc.files : (m ? m.files : 0),
+    t30: pc ? pc.t30 : (m ? m.t30 : -1),
+    route: h.route || null,
+    what: h.what || '',
+    gives: Array.isArray(h.gives) ? h.gives : [],
+    rooms: (Array.isArray(h.rooms) ? h.rooms : []).map(r => {
+      const i = String(r).indexOf('|');
+      return i === -1 ? { n: String(r), d: '' } : { n: r.slice(0, i), d: r.slice(i + 1) };
+    }),
+    mods: Array.isArray(h.modules) ? h.modules : [],
+    owner: h.owner || 'center/007'
+  };
+  if (h.frozen) b.frozen = h.frozen;
+  if (h.gate) b.gate = h.gate;
+  buildings.push(b);
+}
+const buildingIds = new Set(buildings.map(b => b.id));
+
+// ── метро ──
+const metro = parsed.metro.map(m => ({
+  id: m.id, from: m.from, to: m.to === 'none' ? null : m.to,
+  ev: m.ev, pulse: Number(m.pulse || 0), via: parseVia(m.via)
+}));
+
+// ── валидация (дисциплина frozen-guard для города) ──
+for (const b of buildings) {
+  if (!b.what) errors.push(`${b.id}: нет what (здание должно говорить по-человечески)`);
+  if (!b.gives.length) errors.push(`${b.id}: нет gives (что даёт пользователю)`);
+  if (!b.rooms.length) errors.push(`${b.id}: нет rooms (что внутри)`);
+  if (!STATUSES.has(b.st)) errors.push(`${b.id}: неизвестный статус ${b.st}`);
+  if (!ARCHS.has(b.arch)) errors.push(`${b.id}: неизвестный архетип ${b.arch}`);
+  if (!districtIds.has(b.dist)) errors.push(`${b.id}: квартал ${b.dist} не найден`);
+  if (b.gx < 0 || b.gy < 0 || b.gx + b.w > GRID_W || b.gy + b.d > GRID_D)
+    errors.push(`${b.id}: grid вне границ города (15x14)`);
+  if (b.gate && !(b.gate in gates)) errors.push(`${b.id}: гейт ${b.gate} не объявлен в meta.gates`);
+  if (b.t30 === -1) warnings.push(`${b.id}: t30 не посчитан — ПК: node team-m/bLb/city-metrics.mjs`);
+}
+for (const m of metro) {
+  if (!buildingIds.has(m.from)) errors.push(`metro ${m.id}: from=${m.from} нет среди зданий`);
+  if (m.to && !buildingIds.has(m.to)) errors.push(`metro ${m.id}: to=${m.to} нет среди зданий`);
+  if (!REAL_EVENTS.has(m.ev) && !m.ev.startsWith('city:'))
+    errors.push(`metro ${m.id}: событие ${m.ev} не в реестре EventBus v2 и не city:*`);
+}
+// здания без линий метро (информационно)
+for (const b of buildings) {
+  const linked = metro.some(m => m.from === b.id || m.to === b.id);
+  if (!linked) warnings.push(`${b.id}: нет ни одной линии метро — здание молчит в эфире событий`);
+}
+
+// ── тур ──
+let tour = [];
+if (existsSync(TOUR_PATH)) {
+  tour = parseTour(readFileSync(TOUR_PATH, 'utf8'));
+  for (const t of tour) if (!buildingIds.has(t.building) && t.building !== 'center')
+    errors.push(`tour: остановка ${t.building} не найдена среди зданий`);
+} else warnings.push('tour.yaml отсутствует — тур останется хардкодом HTML');
+
+// ── итог ──
+if (errors.length) {
+  console.error('ОШИБКИ КАДАСТРА:');
+  errors.forEach(e => console.error('  ✗ ' + e));
+  process.exit(1);
+}
 
 const state = {
   meta: {
     city: 'beLiveBase',
-    title: 'Город будущего',
-    phase: 'Phase 0 — чертежи',
+    phase: 'Phase 0 · чертежи',
     updated: new Date().toISOString().slice(0, 10),
-    source: 'city-gen.mjs из houses.yaml',
-    style: 'warcraft-dune-skeleton'
+    cadastre: `houses.yaml ${parsed.meta.version || '?'}`,
+    gates
   },
-  goals: GOALS,
-  buildings
+  districts,
+  buildings,
+  metro
 };
 
 writeFileSync(JSON_PATH, JSON.stringify(state, null, 2) + '\n');
 
+// ── инъекция в тихий город ──
 const html = readFileSync(HTML_PATH, 'utf8');
-const START = '/*CITY-STATE-START*/', END = '/*CITY-STATE-END*/';
-const i0 = html.indexOf(START), i1 = html.indexOf(END);
-if (i0 === -1 || i1 === -1) throw new Error('в bLb-SNAPSHOT.html нет маркеров CITY-STATE');
-const injected = `${START}\nconst CITY_STATE = ${JSON.stringify(state, null, 2)};\n${END}`;
-writeFileSync(HTML_PATH, html.slice(0, i0) + injected + html.slice(i1 + END.length));
+function inject(htmlText, start, end, body) {
+  const i0 = htmlText.indexOf(start), i1 = htmlText.indexOf(end);
+  if (i0 === -1 || i1 === -1) throw new Error(`в HTML нет маркеров ${start}`);
+  return htmlText.slice(0, i0) + start + '\n' + body + '\n' + htmlText.slice(i1);
+}
+let out = inject(html, '/*CITY-STATE-START*/', '/*CITY-STATE-END*/',
+  `const CITY = ${JSON.stringify(state, null, 2)};`);
+if (tour.length) {
+  out = inject(out, '/*TOUR-START*/', '/*TOUR-END*/',
+    `const TOUR = ${JSON.stringify(tour, null, 2)};`);
+}
+writeFileSync(HTML_PATH, out);
 
-console.log(`city-gen: ${buildings.length} зданий, houses.yaml кварталов: ${houses.length}`);
-if (warnings.length) { console.log('DRIFT:'); warnings.forEach(w => console.log('  ⚠ ' + w)); }
+console.log(`city-gen: ${buildings.length} зданий, ${districts.length} кварталов, ${metro.length} линий метро, тур: ${tour.length} остановок`);
+if (warnings.length) { console.log('ПРЕДУПРЕЖДЕНИЯ:'); warnings.forEach(w => console.log('  ⚠ ' + w)); }
 else console.log('drift: нет');
 console.log(`записано: ${JSON_PATH}, ${HTML_PATH}`);

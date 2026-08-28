@@ -1,0 +1,23 @@
+# city-journal.yaml · beLiveBase · аудит действий пульта города
+# Формат записи: date, actor, building, from, to, gate, ref (опционально)
+# Пишет 007 по итогам сессий; источник — beLiveBase.journal() + решения Босса.
+
+entries:
+  - date: 2026-08-28
+    actor: boss
+    building: city
+    from: mvp1-skeleton
+    to: v0.2-quiet
+    ref: "Босс утвердил GLM v0.2 quiet city как базу: шума нет, всё по факту"
+  - date: 2026-08-28
+    actor: mac
+    building: arenas
+    from: merged (GLM)
+    to: karaoke + concert (два здания)
+    ref: "решение Босса 28.08: Karaoke/Concert — планируемые здания; разделение по houses.yaml"
+  - date: 2026-08-28
+    actor: mac
+    building: city
+    from: glm-hardcoded-cadastre
+    to: houses.yaml v0.2 (единый источник)
+    ref: "реальные метрики loc/files замерены 28.08; t30 ждёт city-metrics.mjs на ПК"
