@@ -8,12 +8,14 @@
 
 ## 1. Фазы
 
+**Принцип (Босс 28.08):** фазы НЕ должны перегружать финиш v2→v3. Всё, что может повредить миграции v2→v3 — не делаем; всё, что не мешает — делаем. Продуктовый приоритет: сначала Репетиция (главный режим) к проду, потом остальные режимы включая Live.
+
 | Фаза | Что | Когда |
 |------|-----|-------|
-| **Phase 0 (сейчас)** | read-only подготовка: аудит, доки, houses.yaml draft, план. Без коммитов городских файлов | до M3 |
-| **Phase 1** | M3-победа: W4/W5 снос мусора (PC), канон GREEN, секреты ротированы | M3 |
-| **Phase 2** | MVP-1 города: `houses.yaml` (final) + `city-gen.mjs` + `bLb-SNAPSHOT.html` | post-M3 |
-| **Phase 3** | Физический переезд: fs-копия/клон → город, внешние ресурсы остаются внешними | post-MVP-1 |
+| **Phase 0 (сейчас)** | read-only подготовка: аудит, доки, houses.yaml draft, план. Без коммитов городских файлов, без нагрузки на PC | до M3 |
+| **Phase 1** | M3-победа: W4/W5 снос мусора (PC), канон GREEN. Секреты НЕ блокируют (ротация — после настройки, решение Босса) | M3 |
+| **Phase 2** | MVP-1 города: `houses.yaml` (final) + `city-gen.mjs` + `bLb-SNAPSHOT.html`; Репетиция к проду | post-M3 |
+| **Phase 3** | Физический переезд: fs-копия/клон → город; внешние ресурсы остаются внешними; режимы Karaoke/Concert/Live достраиваются как здания города | post-MVP-1 |
 
 ## 2. Что едет в город
 
@@ -34,7 +36,7 @@
 - `js/audio-facade-v3.js` def `__restoreV2Engine`, `src/blocks/bridge/blockEditor.service.ts` patchWaveformEditor, FIXME facade.ts:51, placeholder V3StatePublisher:129 (W5)
 - доп.: `RehearsalLyrics.module.css.bak`, `src/stores/app.store.ts` (@deprecated), `src/components/landing/` (пусто)
 - кандидат W6: `src/js/` legacy-слой (main.js PitchDetectionEngine, законсервированный ai/)
-- пустышки: 7 `.gitkeep`-зон (assets/backend/css/gateway/img/Json/resources) + `Karaoke/`/`Concert/` (реальная функциональность в components/) — решение: delete или «планируемые здания» города
+- пустышки: 7 `.gitkeep`-зон (assets/backend/css/gateway/img/Json/resources) — решение при переезде; `Karaoke/`/`Concert/` — **ПЛАНИРУЕМЫЕ здания города** (Босс 28.08), не delete: сначала Репетиция к проду, потом остальные режимы включая Live
 
 ## 4. Что остаётся ВНЕ города (внешние ресурсы)
 
@@ -45,19 +47,15 @@
 
 ## 5. Гейты ПЕРЕД fs-переездом (обязательные)
 
-**Gate S (secrets, по S4) — нельзя везти в город как есть:**
+**Gate S (secrets, по S4) — ОТЛОЖЕН (Босс 28.08: не приоритет, разберёмся когда всё настроим).** Список для исполнения зафиксирован, не блокирует фазы:
 1. Ротировать MVSEP API-key (`belive-mvsep/DEPLOY.md:21`, tracked) + замазать в файле
 2. Ротировать TokenRouter key; `opencode.json` — `git rm --cached` (tracked вопреки .gitignore)
 3. Замазать цитату Last.fm key в `docs/sync/reports/SYNC-REPORTS/SYNC-CANON-01.md:74`
 4. `deploy.yml:40` — hardcoded `VITE_REHEARSAL_SIGNALING_URL` → secrets/vars
 5. Деплейсхолдеризация URL воркеров в map 2.1 §37.1 (1806-1807), `auth-system.md:291`
-6. Помнить: `.gitignore` НЕ защищает при fs-копировании — `.env*`, `docs/sync/`, `opencode.json` едут с fs
+6. Помнить: `.gitignore` НЕ защищает при fs-копировании — `.env*`, `docs/sync/`, `opencode.json` едут с fs → исполнить ДО Phase 3
 
-**Gate O (ownership, по S1) — закрыть дыры до houses.yaml final:**
-- Критичные: `catalog/` (квартал без владельца), `foundation/` (EventBus-хребет), `bridges/` (frozen-зона без владельца)
-- Полные: avatar, feed, stores, hooks, triggers, playback, runtime, data, transitions, structure, types, js, character
-- Полудыры: backgrounds, styles, config, utils
-- Решение за Боссом: владельцы = center/007 по умолчанию или распределение
+**Gate O (ownership, по S1) — ЗАКРЫТ (Босс 28.08: Мак решает сам):** все дыры закрыты дефолтом `center/007` в `team-m/bLb/houses.yaml` v0.1. Остаток: перенести домен `catalog` (+ при желании `avatar`, `feed`, `arenas`, `live`) в `docs/governance/DOMAIN-OWNERSHIP.yaml` — делает Мак в Track B, низкий риск.
 
 **Gate D (docs, по S2/S3) — доки не должны врать на въезде:**
 - SUPERSEDED-баннеры на `architecture-map-2.1.md` + `interaction-schema-2.1.md`
@@ -79,10 +77,10 @@
 
 ## 7. Следующие шаги
 
-1. Босс: решение по владельцам дыр (Gate O) + судьба Bank_beLive + пустышки Karaoke/Concert
-2. Мак: Track B — фикс дрейфов + SUPERSEDED-баннеры + паспорт character/ (docs only)
-3. Мак: `houses.yaml` final после Gate O
-4. PC: W4/W5 + точечный git log по prepare_batch/fix_artifacts
-5. Команда (PC, есть node): `verify-event-map.ts` + `verify-bridge-parity.ts` + канон-гейты после Track B
+1. Мак: Track B — фикс дрейфов D1/D9/D12/D13 + SUPERSEDED-баннеры на map/schema 2.1 + паспорт `character/` + домен `catalog` в DOMAIN-OWNERSHIP.yaml (docs only, без src/)
+2. PC: W4/W5 в своём темпе + точечный `git log -- scripts/prepare_batch.sh scripts/fix_artifacts.js`
+3. Команда (PC, есть node): `verify-event-map.ts` + `verify-bridge-parity.ts` + канон-гейты после Track B
+4. Post-M3: houses.yaml final + city-gen.mjs + bLb-SNAPSHOT.html (MVP-1), Репетиция к проду
+5. Отложено: Gate S (ротация ключей) — после настройки всего
 
 _Мак, 2026-08-28. Источники: S1 (инвентарь src), S2 (покрытие доками), S3 (археология пайплайна), S4 (аудит секретов), census 2026-08-28, PLAN-v3.3-CANONICAL._

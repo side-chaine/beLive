@@ -5,9 +5,13 @@
 # Дыры ownership помечены owner: TODO-BOSS
 
 meta:
-  version: 0-draft
+  version: 0.1-draft
   date: 2026-08-28
   author: mac
+  decisions:
+    - "Босс 28.08: дыры ownership — решает Мак; дефолт center/007 (keeper 007)"
+    - "Босс 28.08: Karaoke/Concert — ПЛАНИРУЕМЫЕ здания, не delete; сначала Репетиция к проду, потом остальные режимы включая Live"
+    - "Босс 28.08: фазы не должны перегружать финиш v2→v3; ротация ключей — не приоритет, после настройки"
   note: >
     Census заявляет 17 кварталов, строк фактически 18 (Арены внахлёст) —
     счёт уточнить перед final (Gate D).
@@ -16,13 +20,13 @@ houses:
   - id: 001
     quarter: Врата
     modules: [src/components/welcome, src/components/onboarding]
-    owner: TODO-BOSS
+    owner: center/007 (governance-default)
     status: alive
 
   - id: 002
     quarter: Площадь Каталог
     modules: [src/catalog]
-    owner: TODO-BOSS   # крупнейшая дыра: целый квартал без домена в DOMAIN-OWNERSHIP.yaml
+    owner: center/007 (новый домен catalog — закрыть в DOMAIN-OWNERSHIP.yaml)
     status: alive
 
   - id: 003-005
@@ -48,13 +52,13 @@ houses:
   - id: 011
     quarter: Башня Split
     modules: [src/components/monitor]
-    owner: TODO-BOSS
+    owner: center/007 (monitor)
     status: alive
 
   - id: 012
     quarter: Ателье Styles
     modules: [src/theme, src/styles, src/data/textStylePresets, src/components/StylesDeck]
-    owner: center/007 (theme); styles/data — TODO-BOSS (полудыра)
+    owner: center/007 (theme); styles/data — center/007 (под theme, полудыра закрыта)
     status: alive
 
   - id: 013
@@ -67,7 +71,7 @@ houses:
   - id: 014
     quarter: Башня Билли
     modules: [src/billy, src/character]
-    owner: center/007 (billi-ai); character — TODO-BOSS (принадлежность неясна, доков НОЛЬ)
+    owner: center/007 (billi-ai); character — center/007 (под billi-ai; паспорт здания написать до final)
     status: alive
     risk: character саморегистрируется в initRegistry, но без паспорта здания
 
@@ -81,32 +85,32 @@ houses:
   - id: 020
     quarter: Площадь Hub
     modules: [src/feed]
-    owner: TODO-BOSS
+    owner: center/007 (feed)
     status: alive-demo
 
   - id: 021-022
     quarter: Арены Karaoke/Concert
     modules: [src/components/KaraokeLyricsBoard, src/transitions, src/backgrounds]
-    owner: TODO-BOSS (transitions, backgrounds — полудыра через scenes)
+    owner: center/007 (arenas; transitions/backgrounds под arenas)
     status: alive
-    placeholder: [src/Karaoke, src/Concert]   # только .gitkeep; решение: delete или планируемые здания
+    placeholder: [src/Karaoke, src/Concert]   # ПЛАНИРУЕМЫЕ здания (Босс 28.08): сначала Репетиция к проду, потом режимы включая Live
 
   - id: 023
     quarter: Арена Live
     modules: [src/components/LiveControls, src/components/LiveSubtitle]
-    owner: TODO-BOSS
+    owner: center/007 (live)
     status: alive
 
   - id: 029-030
     quarter: Дом профиля
     modules: [src/components/profile, src/avatar]
-    owner: TODO-BOSS (avatar — полная дыра)
+    owner: center/007 (avatar+profile; дыра закрыта)
     status: alive
 
   - id: 031
     quarter: AI Config
     modules: [src/js/ai, src/components/AiSettingsModal]
-    owner: TODO-BOSS
+    owner: center/007 (ai-config)
     status: conserved   # AI deferred, инфраструктура законсервирована
 
   - id: 032
@@ -118,22 +122,22 @@ houses:
   - id: 034
     quarter: Архив ДНК
     modules: [src/components/TrackInfoBoard, src/services/metadata-backfill.ts, src/structure]
-    owner: center/007 (track-meta, частично); structure — TODO-BOSS
+    owner: center/007 (track-meta); structure — center/007 (под track-meta)
     status: alive
 
   - id: 038
     quarter: Старая мастерская блоков
     modules: [src/blocks]
-    owner: TODO-BOSS (снос без владельца)
+    owner: center/007 (blocks, снос W5)
     status: trash-w5   # BAC-107, ещё смонтирована в App/main
 
   - id: infra
     quarter: Вне кварталов — инфраструктура города
     modules: [src/foundation, src/bridges, src/playback, src/runtime, src/deck, src/performance, src/stores, src/hooks, src/triggers, src/services, src/types, src/utils, src/config, src/test, src/__smoke__, src/App.tsx, src/main.tsx]
     owner: >
-      foundation/bridges/playback/runtime/stores/hooks/triggers/types — TODO-BOSS
-      (критично: foundation = EventBus-хребет, bridges = FROZEN-зона без владельца);
-      deck/performance — center/007
+      center/007 — все инфраструктурные домены (foundation/bridges/playback/runtime/stores/
+      hooks/triggers/types/utils/config/test); deck/performance — center/007 (явно).
+      Критично держать в реестре: foundation = EventBus-хребет, bridges = FROZEN-зона.
     status: alive
     frozen: [src/bridges/*, src/services/track.orchestrator.ts]
 
