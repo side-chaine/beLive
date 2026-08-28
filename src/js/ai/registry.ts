@@ -1,5 +1,8 @@
 import { AIProvider, ChatRequest, ModelInfo, StreamCallbacks, AIError } from './types';
 
+/** Каноническое событие завершения AI-ответа. Единая точка для звука и аватара. */
+export const ASSISTANT_RESPONSE_COMPLETED = 'assistant.response.completed';
+
 export class AIHub extends EventTarget {
   private providers = new Map<string, AIProvider>();
   private models: ModelInfo[] = [];
@@ -101,7 +104,21 @@ export class AIHub extends EventTarget {
       callbacks?.onError?.(new AIError('PROVIDER_NOT_FOUND', `AI provider ${model.provider} not found.`));
       return;
     }
-    return provider.sendChat(request, callbacks);
+
+    // ▼ Единый контракт завершения для ВСЕХ провайдерских стримов (React-пути).
+    let completionHandled = false;
+    const wrapped: StreamCallbacks = {
+      ...callbacks,
+      onDone: (fullText, usage) => {
+        if (completionHandled) return;
+        completionHandled = true;
+        this.dispatchEvent(new CustomEvent(ASSISTANT_RESPONSE_COMPLETED, {
+          detail: { fullText, source: 'aiHub' },
+        }));
+        callbacks?.onDone?.(fullText, usage);
+      },
+    };
+    return provider.sendChat(request, wrapped);
   }
 
   stopAllProviders(): void {
@@ -114,3 +131,30 @@ export class AIHub extends EventTarget {
 }
 
 export const aiHub = new AIHub();
+
+// === Character-AI: data-driven assistant profiles (M3) ===
+import type { CueSpec } from '../../character/sound/CharacterSoundManager';
+
+export interface AssistantProfile {
+  id: string;
+  name: string;
+  systemPrompt: string;
+  soundProfile?: CueSpec;
+  guestGate?: boolean; // true → гость НЕ допускается в платный чат (D4)
+}
+
+// Литерал (НЕ импорт значения CUE_DEFAULT — избегаем runtime-цикла registry↔CharacterSoundManager)
+export const ASSISTANT_PROFILES: AssistantProfile[] = [
+  {
+    id: 'billy',
+    name: 'Билли',
+    systemPrompt: 'Ты — Билли, дружелюбный ИИ-помощник beLive.',
+    soundProfile: { wave: 'sine', gain: 0.15, dur: 0.2, points: [[880, 0], [1760, 0.2]] },
+    guestGate: false,
+  },
+  // TODO(M007/Mac, GPT A–E): English / Vocal Coach / Hero — реальные soundProfile
+];
+
+export function getProfileSound(id: string): CueSpec | undefined {
+  return ASSISTANT_PROFILES.find((p) => p.id === id)?.soundProfile;
+}

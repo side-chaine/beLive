@@ -39,4 +39,4 @@
 - **Invariant (Этап 4):** runtime-imports frozen → 0; `__restoreV2Engine`→0; BAC-107 stubы удалены; frozen SHA256 неизменен; тег `v3-only`.
 
 ## ОБЩИЙ GATE (каждой волны)
-канон 306/772 + PARITY PASS + boot-smoke CDP V1/V5 + `sha256sum` frozen ДО/ПОСЛЕ совпал + ⛔-отчёт Ц3 + Frozen-guard GREEN (0 новых).
+канон 306/767+5int+2load + PARITY PASS + boot-smoke CDP V1/V5 + `sha256sum` frozen ДО/ПОСЛЕ совпал + ⛔-отчёт Ц3 + Frozen-guard GREEN (0 новых).

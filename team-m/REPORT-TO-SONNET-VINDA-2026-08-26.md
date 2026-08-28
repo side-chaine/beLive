@@ -6,7 +6,7 @@
 ---
 
 ## 0. Главное (TL;DR)
-- **WIN-миграция v2→v3 (полное удаление Legacy + M3-GO flip) — execution-ready.** Hub (007_Винда) исполняет по `WAVE-EXEC-PLAYBOOK.md` одним GO → цепь 001→002→009. Frozen-guard 🟢 GREEN. Канон 306/772/PARITY.
+- **WIN-миграция v2→v3 (полное удаление Legacy + M3-GO flip) — execution-ready.** Hub (007_Винда) исполняет по `WAVE-EXEC-PLAYBOOK.md` одним GO → цепь 001→002→009. Frozen-guard 🟢 GREEN. Канон 306/767+5int+2load/PARITY.
 - **Центры / Student-Педагог / AI-ассистент / bLb / pitch — ОТЛОЖЕНЫ post-m3** (директива Босса «всё кроме миграции V2-V3 — на потом»). Дизайн завершён и зафиксирован; применение — только ПОСЛЕ флипа + 5 волн.
 - **Frozen-Zone read-only** для всех, кроме Hub во время волн: `AudioEngineV2.ts`, `patchV1.ts`, `track.orchestrator.ts`, `src/bridges/*`.
 

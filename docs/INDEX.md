@@ -66,6 +66,16 @@
 | Agent state | `~/Desktop/beLive_Context/` | 000-FULL-BASE.md, MACRO/MICRO packs |
 | Governance | `docs/governance/agent-governance-map.md` | Agent governance map |
 
+## 🤝 Mac↔PC Coordination (live, 2026-08-25+)
+
+| Ресурс | Путь | Описание |
+|--------|------|----------|
+| **SHARED REGISTRY** | `team-m/REGISTRY.md` | Живой реестр координации Hub↔Mac: ownership matrix, status, open Q, handshake log |
+| Hub→Mac handshake | `team-m/SYNC-HUB-TO-MAC-2026-08-25.md` | Старт взаимодействия, запрос ack Mac-007 |
+| INBOX (live claims) | `team-m/INBOX.md` | Канал заявок по правилу shared-файлов |
+
+> Hub = 007_Винда (PC). Mac-007 = зеркалит процесс, receives packets от Hub. PC-версия «что в HEAD» основная при расхождении (sshfs Mac падал 2×).
+
 ---
 
 *INDEX — навигационный файл. Для статуса синхронизации см. MASTER-SYNC-REGISTRY.yaml.*

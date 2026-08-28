@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# proj — HTML Projection Player (beLive, ПК / WSL)
+#
+# КОНВЕНЦИЯ: любой агент кладёт самодостаточный *.html (всё inline: css+js)
+# в папку <repo>/html-projections/. После этого пользователь одной командой
+# открывает проекцию в браузере на Windows.
+#
+# Использование:
+#   proj            открыть САМУЮ СВЕЖУЮ проекцию (последний изменённый .html)
+#   proj list       список всех проекций с номерами
+#   proj <n>        открыть проекцию по номеру из list
+#   proj <имя>      открыть html-projections/<имя>.html (расширение необязательно)
+#   proj gallery    открыть кликабельную галерею всех проекций
+#
+# Проекции копируются во временную папку Windows и открываются в браузере —
+# так не зависим от путей WSL.
+
+REPO="${REPO:-/home/nikit/projects/beLive}"
+PROJ="$REPO/html-projections"
+TMP="/mnt/c/Users/nikit/AppData/Local/Temp/beLive-proj"
+WIN='C:\Users\nikit\AppData\Local\Temp\beLive-proj'
+
+mkdir -p "$PROJ" "$TMP"
+
+open_win() {
+  # $1 = windows-путь к файлу
+  # Форсим браузер (иначе .html открывается в VS Code по ассоциации по умолчанию)
+  powershell.exe -NoProfile -Command "Start-Process msedge.exe -ArgumentList '$1'" >/dev/null 2>&1 \
+    || powershell.exe -NoProfile -Command "Start-Process chrome.exe -ArgumentList '$1'" >/dev/null 2>&1 \
+    || powershell.exe -NoProfile -Command "Start-Process '$1'" >/dev/null 2>&1
+  echo "→ открыто в браузере: $1"
+}
+
+list_files() {
+  find "$PROJ" -maxdepth 1 -name '*.html' ! -name 'index.html' -printf '%p\n' | sort
+}
+
+case "$1" in
+  ""|latest)
+    t=$(find "$PROJ" -maxdepth 1 -name '*.html' ! -name 'index.html' -printf '%T@ %p\n' | sort -n | tail -1 | awk '{print $2}')
+    [ -z "$t" ] && t=$(list_files | tail -1)
+    [ -z "$t" ] && { echo "Проекций нет в $PROJ"; exit 1; }
+    base=$(basename "$t")
+    cp "$t" "$TMP/$base"
+    open_win "$WIN\\$base"
+    ;;
+  list|ls)
+    i=1
+    while IFS= read -r f; do
+      printf '%s) %s\n' "$i" "$(basename "$f")"
+      i=$((i+1))
+    done < <(list_files)
+    [ "$i" = "1" ] && echo "(папка пуста — агенты ещё не делали проекций)"
+    ;;
+  gallery|g)
+    {
+      echo '<!doctype html><html lang="ru"><head><meta charset="utf-8">'
+      echo '<title>Галерея проекций beLive</title>'
+      echo '<style>body{font-family:Segoe UI,system-ui;background:#0c1020;color:#e9eefb;margin:0;padding:30px}'
+      echo 'h1{font-weight:700}'
+      echo 'a{display:block;padding:12px 16px;margin:8px 0;background:#151b30;border:1px solid #26315a;border-radius:10px;color:#cdd6f0;text-decoration:none;font-size:15px}'
+      echo 'a:hover{border-color:#5ce0c8}</style></head><body>'
+      echo '<h1>🎞 Галерея HTML-проекций beLive</h1>'
+    } > "$TMP/index.html"
+    while IFS= read -r f; do
+      base=$(basename "$f")
+      cp "$f" "$TMP/$base"
+      echo "<a href=\"$base\">📄 $base</a>" >> "$TMP/index.html"
+    done < <(list_files)
+    echo '</body></html>' >> "$TMP/index.html"
+    open_win "$WIN\\index.html"
+    ;;
+  *)
+    if [[ "$1" =~ ^[0-9]+$ ]]; then
+      t=$(list_files | sed -n "${1}p")
+    else
+      t="$PROJ/$1"; [[ "$t" != *.html ]] && t="$t.html"
+    fi
+    [ -f "$t" ] || { echo "Не найдено: $1"; exit 1; }
+    base=$(basename "$t")
+    cp "$t" "$TMP/$base"
+    open_win "$WIN\\$base"
+    ;;
+esac

@@ -1,5 +1,7 @@
 # Agent Governance Map — beLive
 
+> 🗄️ **HISTORICAL — не канон.** Описывает файлы/раскладку (`.opencode/agent/*.md`, `~/Desktop/Belive-Agents/...`, `protocol-v2.1.md` как внешний), которых НЕТ в актуальном репо. Актуальная координация — `team-m/REGISTRY.md` + `docs/INDEX.md`. Не использовать как источник истины. (Помечено по COORDINATION-HUB, 2026-08-25.)
+
 **Document type:** Architecture / Governance  
 **Scope:** Full inventory of how OpenCode collects context, applies rules, and constrains agents in the beLive project  
 **Date:** 2026-06-10  

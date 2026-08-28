@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>beLive Migration War Room — Visual</title>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#121826; --panel2:#0f1420; --line:#1f2a3d;
+    --win:#22d3ee;   /* Ведро / Windows */
+    --mac:#fb7185;   /* Задрот / Mac */
+    --ok:#34d399; --warn:#fbbf24; --run:#60a5fa; --bad:#f87171;
+    --txt:#e6edf6; --dim:#8aa0b8;
+    font-synthesis:none;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 80% -10%,#16203a 0%,var(--bg) 60%);color:var(--txt);
+       font-family:-apple-system,Segoe UI,Roboto,Inter,system-ui,sans-serif;}
+  header{padding:18px 26px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header h1{font-size:20px;margin:0;letter-spacing:.3px}
+  header .sub{color:var(--dim);font-size:13px}
+  .badge{padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid var(--line)}
+  .win{color:var(--win);border-color:#0e7490;background:#06222b}
+  .mac{color:var(--mac);border-color:#7f1d2e;background:#2a0e16}
+  .wrap{padding:20px 26px;display:grid;gap:18px;grid-template-columns:1.55fr 1fr;grid-template-areas:"spine score" "steps tests" "auto logs";}
+  @media(max-width:980px){.wrap{grid-template-columns:1fr;grid-template-areas:"spine" "score" "steps" "tests" "auto" "logs"}}
+  .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:14px;padding:16px}
+  .panel h2{margin:0 0 12px;font-size:14px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px}
+  /* progress */
+  .prog{height:10px;border-radius:999px;background:#0a1120;border:1px solid var(--line);overflow:hidden;margin:6px 0 4px}
+  .prog>i{display:block;height:100%;background:linear-gradient(90deg,var(--win),#34d399);width:0;transition:width 1.2s ease}
+  .here{display:inline-block;margin-top:4px;font-size:12px;color:var(--warn);font-weight:700}
+  /* spine */
+  #spine{grid-area:spine}
+  .rail{display:flex;gap:10px;overflow-x:auto;padding:8px 4px 14px}
+  .node{flex:0 0 auto;width:128px;border-radius:12px;border:1px solid var(--line);background:#0d1422;padding:10px;cursor:pointer;transition:.15s;position:relative}
+  .node:hover{transform:translateY(-3px);border-color:var(--win)}
+  .node .dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-bottom:6px}
+  .node .nm{font-size:12px;font-weight:700;line-height:1.25}
+  .node .st{font-size:10px;color:var(--dim);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+  .done .dot{background:var(--ok)} .retest .dot{background:var(--warn)} .queued .dot{background:var(--run)} .blocked .dot{background:var(--bad)}
+  .node.done{border-left:3px solid var(--ok)} .node.retest{border-left:3px solid var(--warn)}
+  .node.queued{border-left:3px solid var(--run)} .node.blocked{border-left:3px solid var(--bad)}
+  .detail{margin-top:10px;padding:12px;border:1px dashed var(--line);border-radius:10px;background:#0a1120;font-size:13px;min-height:54px;color:var(--dim)}
+  .detail b{color:var(--txt)}
+  /* scoreboard */
+  #score{grid-area:score}
+  .score{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .team{text-align:center;flex:1}
+  .team .logo{font-size:30px}
+  .team .sc{font-size:34px;font-weight:800;line-height:1}
+  .win .sc{color:var(--win)} .mac .sc{color:var(--mac)}
+  .vs{color:var(--dim);font-weight:800}
+  .round{margin-top:12px;font-size:12px;color:var(--dim);border-top:1px solid var(--line);padding-top:10px}
+  .round b{color:var(--txt)}
+  /* steps */
+  #steps{grid-area:steps}
+  .card{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px;background:#0d1422}
+  .card .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .card .tt{font-weight:700;font-size:13px}
+  .pill{font-size:10px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+  .p-queued{color:var(--run);border-color:#1e3a5f} .p-blocked{color:var(--bad);border-color:#5b1f1f}
+  .p-retest{color:var(--warn);border-color:#5b4a1f} .p-done{color:var(--ok);border-color:#1f4d3a}
+  .card .ds{font-size:12px;color:var(--dim);margin:6px 0}
+  .auto{font-size:11px;color:var(--win);background:#06222b;border:1px solid #0e7490;border-radius:8px;padding:6px 8px;margin-top:4px}
+  .auto:before{content:"⚙ ";}
+  /* tests & logs */
+  #tests{grid-area:tests} #logs{grid-area:logs}
+  ul{margin:0;padding-left:18px;font-size:13px} li{margin:5px 0;color:var(--dim)} li b{color:var(--txt)}
+  code{background:#0a1120;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--win);font-size:12px}
+  /* auto */
+  #auto{grid-area:auto}
+  .idea{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:9px;background:#0d1422;font-size:13px}
+  .idea .h{font-weight:700;color:var(--win)}
+  .idea .d{color:var(--dim);font-size:12px;margin-top:3px}
+  .foot{padding:10px 26px 26px;color:var(--dim);font-size:11px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <h1>🪟 beLive · Migration War Room</h1>
+  <span class="badge win">ВЕДРО 007</span>
+  <span class="badge mac">ЗАДРОТЫ M007</span>
+  <span class="sub">визуальная проекция · YouTube-шоу режим · обнови при каждом шаге</span>
+</header>
+
+<div class="wrap">
+  <!-- SPINE -->
+  <section class="panel" id="spine">
+    <h2>🧭 Хребет миграции → M3-GO</h2>
+    <div class="prog"><i id="bar"></i></div>
+    <div><span class="here" id="here">⏳ YOU ARE HERE: финиш аудио-ядра, упёрлись в спеку Центра</span></div>
+    <div class="rail" id="rail"></div>
+    <div class="detail" id="detail">Нажми станцию, чтобы увидеть суть.</div>
+  </section>
+
+  <!-- SCOREBOARD -->
+  <section class="panel" id="score">
+    <h2>🪟⚔️🍎 Счёт шоу</h2>
+    <div class="score">
+      <div class="team win"><div class="logo">🪟</div><div class="sc" id="sw">2</div><div>ВЁДРА</div></div>
+      <div class="vs">:</div>
+      <div class="team mac"><div class="logo">🍎</div><div class="sc" id="sm">0</div><div>ЗАДРОТЫ</div></div>
+    </div>
+    <div class="round">
+      <b>Раунд 2:</b> Ведро-007 применил G1/G2/G14 (чтобы <b>работало</b>), поймал <b>3-ю ошибку</b> M007
+      (D4 через registerInit — тот не монтирует UI) и разнёс <b>M4</b> (ванильный путь бьёт в мёртвый <code>/api/gateway/chat</code> 404).
+      Задроты пока в нокдауне. Следующий раунд — за ними, но без косяков.
+    </div>
+  </section>
+
+  <!-- STEPS -->
+  <section class="panel" id="steps">
+    <h2>▶️ Следующие шаги (и как автоматизировать)</h2>
+    <div class="card">
+      <div class="top"><span class="tt">TASK-015 · браузер-ретест стерео</span><span class="pill p-retest">RETEST</span></div>
+      <div class="ds">Ctrl+Shift+R → 🎤 ON → VMix ON. Слушай: вокал L / минус центр / мик R. Ждёт юзера.</div>
+      <div class="auto">Playwright-smoke: скрипт проверяет, что левый канал ≠ правому и мик слышен только при 🎤 ON.</div>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tt">M4 · unify chat (аккуратный пак)</span><span class="pill p-queued">QUEUED</span></div>
+      <div class="ds">002 нашёл 3 P0-риска. Пак: abort→stopAllProviders, onError-рендер, gateway double-onDone guard.</div>
+      <div class="auto">Сделать 002 stress-test АВТО-gate перед диспатчем любого рефактора чата.</div>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tt">D4 · CoachPanel (правильный маунт)</span><span class="pill p-queued">QUEUED</span></div>
+      <div class="ds">3-я ошибка M007: registerInit не монтирует UI. Рендерить &lt;CoachPanel/&gt; в App (main.tsx:937).</div>
+      <div class="auto">Шаблон react-панели + линтер, запрещающий mount-DOM внутри registerInit.</div>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tt">TASK-013.4 · чистка publishSeek</span><span class="pill p-queued">QUEUED</span></div>
+      <div class="ds">Дубли TransportBar:45 / WagonTrain:109,134 после №17-E.</div>
+      <div class="auto">grep-скрипт: находит двойные publishSeek и кидает пак-кандидата.</div>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tt">MIC-УШИ-СЕССИЯ</span><span class="pill p-queued">QUEUED</span></div>
+      <div class="ds">solo-preview, vocal-fade, auto-pause, RTL-голос. Ждёт бриф 006.</div>
+      <div class="auto">Шаблон-заготовка от 006, который 007 сразу пакует в Оператора.</div>
+    </div>
+    <div class="card">
+      <div class="top"><span class="tt">425 (+G4) · M3-GO финал</span><span class="pill p-blocked">BLOCKED</span></div>
+      <div class="ds">Нужна СПЕКА Центра — это архитектура, не зона 007.</div>
+      <div class="auto">Как только Центр даёт спеку → 007 сразу пакует и гонит через Оператора.</div>
+    </div>
+  </section>
+
+  <!-- TESTS -->
+  <section class="panel" id="tests">
+    <h2>🧪 Какие тесты нужны</h2>
+    <ul>
+      <li><b>Канон-гейт:</b> <code>npx tsc --noEmit | grep -c "error TS"</code> → ровно <b>314</b></li>
+      <li><b>Юнит-гейт:</b> <code>npm run test</code> → <b>763/763</b> (files 62/64, 2 legacy load-error)</li>
+      <li><b>Браузер:</b> ретест TASK-015 (стерео-картина вживую)</li>
+      <li><b>E2E character-AI:</b> Billy-чат теперь ДАЁТ звук (после G2) + аватар счастливый</li>
+      <li><b>009 независимая верификация</b> — гейт для любого дропа Мака</li>
+      <li><b>002 stress-test</b> — гейт для любого рефактора (M4 и т.п.)</li>
+    </ul>
+  </section>
+
+  <!-- LOGS -->
+  <section class="panel" id="logs">
+    <h2>📜 Куда смотреть (логи/источники)</h2>
+    <ul>
+      <li><b>Канон:</b> <code>agent-registry/../mnt/.../TSC-LEDGER.md</code> (доп34)</li>
+      <li><b>Трекер:</b> <code>agent-registry/MIGRATION-WAR-ROOM.md</code> (живой)</li>
+      <li><b>Синк Мак:</b> <code>team-m/INBOX.md</code> + <code>team-m/reports/*</code></li>
+      <li><b>Фракции:</b> <code>team-m/FACTION-LINE.md</code> (Ведра vs Задроты)</li>
+      <li><b>Консоль браузера:</b> кью/аватар при <code>ASSISTANT_RESPONSE_COMPLETED</code></li>
+      <li><b>Буфер Венды:</b> <code>clip.exe</code> — статусы 007 прилетают в Ctrl+V</li>
+    </ul>
+  </section>
+
+  <!-- AUTOMATION -->
+  <section class="panel" id="auto">
+    <h2>🤖 Как автоматизировать ещё</h2>
+    <div class="idea"><div class="h">verify.sh (CI-гейт)</div><div class="d">Бежит tsc-счётчик + vitest, падает если ≠314/763. Вешаем на каждый пуш — канон охраняет себя сам.</div></div>
+    <div class="idea"><div class="h">Авто-дашборд из War Room</div><div class="d">Скрипт читает MIGRATION-WAR-ROOM.md и генерит ЭТОТ HTML автоматом. Меняешь трекер → обновляешь картинку одной командой.</div></div>
+    <div class="idea"><div class="h">Mac-синк → буфер Венды</div><div class="d">mac-state.sh уже обновляет INBOX; добавить авто-push сводки в Windows-буфер (clip.exe) при каждом дропе М007.</div></div>
+    <div class="idea"><div class="h">Pre-merge gates 009 + 002</div><div class="d">Любой пропозал Мака автоматом гонится через 009 (verify) и 002 (stress) ДО диспатча Оператора. Брак не проходит.</div></div>
+    <div class="idea"><div class="h">Playwright stereo-smoke</div><div class="d">Заменяет ручной ретест TASK-015: проверяет раскладку каналов программно.</div></div>
+  </section>
+</div>
+
+<div class="foot">Сгенерировано 007 (Ведро-координатор) · канон tsc 314 / vitest 763/763 · Frozen нетронут · шоу продолжается 🪟⚔️🍎</div>
+
+<script>
+  const spine = [
+    {id:'17', nm:'№17 сага холда', st:'done', note:'9 слоёв 442→464, юзер ретест ✅'},
+    {id:'18', nm:'№18-BUS + красный фейдер', st:'done', note:'music-bus мастер-фейдер ✅'},
+    {id:'14', nm:'TASK-014 мик-тумблер', st:'done', note:'юзер слышит себя ✅'},
+    {id:'15', nm:'TASK-015 V-Mix стерео', st:'retest', note:'код готов (вокал L / центр / мик R), ждёт твой браузер-ретест'},
+    {id:'a2', nm:'A2 двойной writer', st:'done', note:'ликвидирован, код'},
+    {id:'19', nm:'TASK-001..009', st:'done', note:'исследования 006 + VERIFY 007'},
+    {id:'ca', nm:'Character-AI (Мак)', st:'done', note:'M1/M3/D3/Layer-2 + G1/G2 фиксы Ведра ✅'},
+    {id:'g14', nm:'F-2 G14 latency', st:'done', note:'компенсация ~43мс самоконтроля ✅ tsc314'},
+    {id:'134', nm:'TASK-013.4 publishSeek', st:'queued', note:'чистка дублей TransportBar/WagonTrain'},
+    {id:'mic', nm:'MIC-УШИ-СЕССИЯ', st:'queued', note:'solo/vocal-fade/auto-pause/RTL — нужен бриф 006'},
+    {id:'425', nm:'425 (+G4)', st:'blocked', note:'СПЕКА Центра — архитектура не моя зона'},
+    {id:'go', nm:'M3-GO финал', st:'blocked', note:'блокируется 425'},
+  ];
+  const rail = document.getElementById('rail');
+  const detail = document.getElementById('detail');
+  const labels = {done:'ГОТОВО', retest:'РЕТЕСТ', queued:'В ОЧЕРЕДИ', blocked:'БЛОК'};
+  spine.forEach(n=>{
+    const d=document.createElement('div');
+    d.className='node '+n.st;
+    d.innerHTML=`<span class="dot"></span><div class="nm">${n.nm}</div><div class="st">${labels[n.st]}</div>`;
+    d.onclick=()=>{ detail.innerHTML=`<b>${n.nm}</b> — <span style="color:var(--${n.st==='done'?'ok':n.st==='retest'?'warn':n.st==='queued'?'run':'bad'})">${labels[n.st]}</span><br>${n.note}`; };
+    rail.appendChild(d);
+  });
+  const done = spine.filter(n=>n.st==='done').length;
+  const ret  = spine.filter(n=>n.st==='retest').length;
+  const pct = Math.round(((done + ret*0.5)/spine.length)*100);
+  document.getElementById('bar').style.width = pct+'%';
+  document.getElementById('here').textContent = `⏳ YOU ARE HERE: ${pct}% хребта · финиш аудио-ядра, упёрлись в спеку Центра (425/M3-GO)`;
+</script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ПК ⇄ Мак — визуальная метафора</title>
+<style>
+  :root{
+    --bg:#0c1020; --panel:#151b30; --ink:#e9eefb; --muted:#9aa6c4;
+    --pc:#4f8cff; --mac:#ff7ac6; --bridge:#5ce0c8; --warn:#ffd166; --ok:#6ee7a8;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:radial-gradient(1200px 600px at 50% -10%,#1a2240,#0c1020);
+    color:var(--ink);min-height:100vh}
+  header{text-align:center;padding:26px 16px 6px}
+  header h1{margin:0;font-size:26px;letter-spacing:.3px}
+  header p{margin:6px 0 0;color:var(--muted);font-size:14px}
+  .wrap{max-width:1040px;margin:0 auto;padding:14px 16px 60px}
+
+  /* ===== СЦЕНА ===== */
+  .scene{position:relative;height:340px;background:linear-gradient(180deg,#0e1428,#0a0f1f);
+    border:1px solid #243056;border-radius:18px;overflow:hidden;margin-top:14px}
+  .ground{position:absolute;left:0;right:0;bottom:0;height:70px;background:linear-gradient(180deg,#10182f,#0b1020);
+    border-top:1px solid #223055}
+  .building{position:absolute;bottom:70px;width:220px;height:210px;border-radius:14px 14px 6px 6px;
+    box-shadow:0 10px 30px rgba(0,0,0,.45)}
+  .building .roof{position:absolute;top:-14px;left:-8px;right:-8px;height:22px;border-radius:12px 12px 0 0}
+  .building .label{position:absolute;top:8px;left:0;right:0;text-align:center;font-weight:700;font-size:14px}
+  .building .sub{position:absolute;top:28px;left:0;right:0;text-align:center;font-size:11px;color:#0c1020;opacity:.8}
+  .pc{left:34px;background:linear-gradient(180deg,#1b2a52,#16203f)}
+  .pc .roof{background:var(--pc)}
+  .mac{right:34px;background:linear-gradient(180deg,#52203f,#3a1630)}
+  .mac .roof{background:var(--mac)}
+  .bld-body{position:absolute;inset:42px 14px 14px;border-radius:10px;background:rgba(255,255,255,.06);
+    display:flex;flex-direction:column;gap:8px;padding:10px}
+  .chip{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-radius:8px;
+    padding:6px 8px;font-size:11px;color:#dfe6fb}
+  .chip b{color:#fff}
+  .glow{box-shadow:0 0 0 3px var(--bridge),0 0 26px var(--bridge) !important;transition:.3s}
+
+  /* мост */
+  .bridge{position:absolute;bottom:120px;left:254px;right:254px;height:10px;border-radius:6px;
+    background:linear-gradient(90deg,var(--pc),var(--bridge),var(--mac));
+    box-shadow:0 0 18px rgba(92,224,200,.5)}
+  .bridge .wire{position:absolute;top:-22px;left:0;right:0;height:2px;background:rgba(92,224,200,.35)}
+  .packet{position:absolute;top:-6px;width:14px;height:14px;border-radius:50%;background:#fff;
+    box-shadow:0 0 12px #fff;animation:travel 3.4s linear infinite}
+  .packet.b{animation-delay:1.1s;background:var(--mac);box-shadow:0 0 12px var(--mac)}
+  .packet.c{animation-delay:2.2s;background:var(--bridge);box-shadow:0 0 12px var(--bridge)}
+  @keyframes travel{0%{left:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{left:100%;opacity:0}}
+
+  /* почтовый ящик + звонок */
+  .mailbox{position:absolute;bottom:74px;left:300px;width:54px;height:46px;border-radius:8px 8px 4px 4px;
+    background:#caa45a;border:2px solid #8a6a2e}
+  .mailbox .slot{position:absolute;top:8px;left:8px;right:8px;height:8px;background:#3a2c10;border-radius:3px}
+  .mailbox .flag{position:absolute;top:-16px;right:-2px;width:4px;height:18px;background:#fff;border-radius:2px}
+  .bell{position:absolute;bottom:128px;left:286px;font-size:26px;transform-origin:top center}
+  .bell.ring{animation:ring .5s ease-in-out 3}
+  @keyframes ring{0%,100%{transform:rotate(0)}25%{transform:rotate(18deg)}75%{transform:rotate(-18deg)}}
+
+  /* Билли */
+  .billy{position:absolute;bottom:74px;right:120px;width:60px;height:74px}
+  .billy .head{width:46px;height:46px;border-radius:50%;background:#ffd27a;margin:0 auto;
+    position:relative;box-shadow:0 6px 16px rgba(0,0,0,.4)}
+  .billy .eye{position:absolute;top:16px;width:8px;height:8px;border-radius:50%;background:#222}
+  .billy .eye.l{left:10px}.billy .eye.r{right:10px}
+  .billy .body{width:34px;height:24px;border-radius:14px 14px 6px 6px;background:#ffb74a;margin:4px auto 0}
+  .billy.bounce{animation:bounce .6s ease}
+  @keyframes bounce{0%{transform:translateY(0)}30%{transform:translateY(-16px)}60%{transform:translateY(0)}}
+
+  .toast{position:absolute;top:14px;left:50%;transform:translateX(-50%) translateY(-20px);
+    background:#10203a;border:1px solid var(--bridge);color:var(--ink);padding:10px 16px;border-radius:12px;
+    font-size:13px;opacity:0;transition:.35s;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:80%;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* ===== ТУР ===== */
+  .controls{display:flex;gap:10px;justify-content:center;margin:16px 0 6px;flex-wrap:wrap}
+  button{font:inherit;cursor:pointer;border:none;border-radius:10px;padding:10px 16px;font-weight:600}
+  .btn-tour{background:var(--bridge);color:#06281f}
+  .btn-demo{background:var(--mac);color:#3a0a2a}
+  .btn-reset{background:#263154;color:var(--ink)}
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:14px}
+  .step{background:var(--panel);border:1px solid #26315a;border-radius:14px;padding:14px;cursor:pointer;transition:.2s}
+  .step:hover{transform:translateY(-3px)}
+  .step.active{border-color:var(--bridge);box-shadow:0 0 0 2px var(--bridge)}
+  .step .n{display:inline-block;width:26px;height:26px;line-height:26px;text-align:center;border-radius:50%;
+    background:var(--pc);color:#fff;font-weight:700;font-size:13px;margin-bottom:8px}
+  .step h3{margin:0 0 6px;font-size:15px}
+  .step p{margin:0;color:var(--muted);font-size:12.5px;line-height:1.5}
+  .explain{background:var(--panel);border:1px solid #26315a;border-radius:14px;padding:16px;margin-top:16px;min-height:84px}
+  .explain h3{margin:0 0 8px;font-size:17px;color:var(--bridge)}
+  .explain p{margin:0;color:#cdd6f0;font-size:14px;line-height:1.6}
+  .legend{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:10px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:12px;height:12px;border-radius:50%}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:18px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏢 ПК ⇄ Мак — как мы работаем вместе</h1>
+  <p>Одна метафора вместо тех-терминов. Нажми «Запустить тур» или кликай по шагам.</p>
+</header>
+
+<div class="wrap">
+  <!-- СЦЕНА -->
+  <div class="scene" id="scene">
+    <div class="ground"></div>
+
+    <!-- ПК -->
+    <div class="building pc" id="el-pc">
+      <div class="roof"></div>
+      <div class="label">ПК</div>
+      <div class="sub">Главный офис</div>
+      <div class="bld-body">
+        <div class="chip">📚 <b>Главные файлы</b> проекта</div>
+        <div class="chip" id="el-board">📋 <b>Доска статуса</b><br>сама переписывается</div>
+      </div>
+    </div>
+
+    <!-- МОСТ -->
+    <div class="bridge" id="el-bridge">
+      <div class="wire"></div>
+      <div class="packet"></div>
+      <div class="packet b"></div>
+      <div class="packet c"></div>
+    </div>
+
+    <!-- МАК -->
+    <div class="building mac" id="el-mac">
+      <div class="roof"></div>
+      <div class="label">Мак</div>
+      <div class="sub">Творческая студия</div>
+      <div class="bld-body">
+        <div class="chip">🎨 Рисует дизайн</div>
+        <div class="chip">📐 Делает макеты</div>
+      </div>
+    </div>
+
+    <!-- ящик + звонок -->
+    <div class="mailbox" id="el-mail"><div class="slot"></div><div class="flag" id="mailFlag"></div></div>
+    <div class="bell" id="el-bell">🔔</div>
+
+    <!-- Билли -->
+    <div class="billy" id="el-billy"><div class="head"><div class="eye l"></div><div class="eye r"></div></div><div class="body"></div></div>
+
+    <div class="toast" id="toast">Новый отчёт от Мака!</div>
+  </div>
+
+  <div class="legend">
+    <span><i class="dot" style="background:var(--pc)"></i>ПК — офис с файлами</span>
+    <span><i class="dot" style="background:var(--mac)"></i>Мак — студия</span>
+    <span><i class="dot" style="background:var(--bridge)"></i>Волшебный мост (связь)</span>
+  </div>
+
+  <!-- УПРАВЛЕНИЕ -->
+  <div class="controls">
+    <button class="btn-tour" onclick="startTour()">▶ Запустить тур</button>
+    <button class="btn-demo" onclick="macArrived()">📨 Мак прислал отчёт</button>
+    <button class="btn-reset" onclick="reset()">⟲ Сбросить</button>
+  </div>
+
+  <!-- ШАГИ -->
+  <div class="steps">
+    <div class="step" data-step="0" onclick="go(0)"><span class="n">1</span><h3>Волшебный мост</h3><p>Как ПК и Мак физически соединены и «видят» общие файлы.</p></div>
+    <div class="step" data-step="1" onclick="go(1)"><span class="n">2</span><h3>Общая папка</h3><p>Обе стороны правят одни и те же файлы — как на одном столе.</p></div>
+    <div class="step" data-step="2" onclick="go(2)"><span class="n">3</span><h3>Доска статуса</h3><p>Авто-«мел» в офисе: что сейчас в работе, какая ветка.</p></div>
+    <div class="step" data-step="3" onclick="go(3)"><span class="n">4</span><h3>Почтовый ящик</h3><p>Студия кидает готовые отчёты — ты подходишь и читаешь.</p></div>
+    <div class="step" data-step="4" onclick="go(4)"><span class="n">5</span><h3>Дверной звонок</h3><p>План: как прилетит письмо — звук + Билли реагирует. Ты не проверяешь ящик вручную.</p></div>
+  </div>
+
+  <div class="explain" id="explain">
+    <h3>Готов? Жми «Запустить тур» 👆</h3>
+    <p>Это не схема кода. Это история про два здания, мост между ними и почтовый ящик, в который студия кидает готовую работу. Всё остальное — детали.</p>
+  </div>
+</div>
+
+<footer>Метафора системы ПК ⇄ Мак · для Никиты · звук/аватар-уведомление (шаг 5) — пока план, не код.</footer>
+
+<script>
+  const steps = [
+    {el:['el-bridge'], title:'1. Волшебный мост',
+     text:'ПК и Мак соединены невидимым кабелем. ПК держит маленький «входной порт», Маку выдан свой ключ — он подключается без пароля. Благодаря мосту всё, что положили в одном здании, мгновенно появляется в другом. Пакеты, бегущие по мосту — это твои файлы в пути.'},
+    {el:['el-pc','el-mac','el-bridge'], title:'2. Общая папка',
+     text:'У нас НЕТ двух копий проекта. Проект живёт в офисе (ПК), а студия (Мак) подключена к нему как сетевой диск. Мак сохраняет файл — ты на ПК видишь его сразу, и наоборот. Никакого «скинь мне файл» вручную.'},
+    {el:['el-board'], title:'3. Доска статуса',
+     text:'В офисе на стене висит «мел-доска». Каждый раз, когда кто-то фиксирует изменения (коммит), маленький робот переписывает доску: какая сейчас ветка, последний шаг, что ещё не доделано. Так обе стороны всегда знают «где мы». Доска сама себя обновляет — её не надо трогать руками.'},
+    {el:['el-mail'], title:'4. Почтовый ящик',
+     text:'Рядом с офисом — почтовый ящик (папка team-m). Студия, закончив задачу, опускает туда письмо-отчёт: «Я сделал дизайн hero-секции, готово». Ты подходишь к ящику, открываешь — и сразу видишь, что прислал Мак. Это наш канал «решение от Мака пришло».'},
+    {el:['el-bell','el-billy'], title:'5. Дверной звонок (план)',
+     text:'Сейчас ты сам подходишь к ящику и проверяешь. Следующий шаг — повесить «дверной звонок»: как только Мак кинул отчёт, раздаётся звук + наш маскот Билли подпрыгивает. Ты узнаешь мгновенно, не заглядывая в ящик. Вот кнопка «📨 Мак прислал отчёт» — попробуй, это и есть будущий звонок.'},
+  ];
+
+  function clearGlow(){document.querySelectorAll('.glow').forEach(e=>e.classList.remove('glow'));}
+  function go(i){
+    clearGlow();
+    steps[i].el.forEach(id=>document.getElementById(id).classList.add('glow'));
+    document.getElementById('explain').innerHTML='<h3>'+steps[i].title+'</h3><p>'+steps[i].text+'</p>';
+    document.querySelectorAll('.step').forEach(s=>s.classList.toggle('active',+s.dataset.step===i));
+  }
+  function startTour(){let i=0;go(0);const t=setInterval(()=>{i++;if(i>=steps.length){clearInterval(t);return;}go(i);},2600);}
+  function reset(){clearGlow();document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+    document.getElementById('explain').innerHTML='<h3>Готов? Жми «Запустить тур» 👆</h3><p>Это не схема кода. Это история про два здания, мост между ними и почтовый ящик, в который студия кидает готовую работу.</p>';}
+
+  function macArrived(){
+    // звонок
+    const bell=document.getElementById('el-bell');bell.classList.remove('ring');void bell.offsetWidth;bell.classList.add('ring');
+    // Билли
+    const b=document.getElementById('el-billy');b.classList.remove('bounce');void b.offsetWidth;b.classList.add('bounce');
+    // флаг ящика
+    document.getElementById('mailFlag').style.background='var(--ok)';
+    // тост
+    const t=document.getElementById('toast');
+    t.textContent='🔔 Новый отчёт от Мака: дизайн / hero-section — готово!';
+    t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);
+  }
+</script>
+</body>
+</html>

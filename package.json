@@ -13,6 +13,7 @@
   },
   "scripts": {
     "dev": "vite",
+    "prebuild": "mkdir -p public/team-m && cp -f team-m/INBOX.md public/team-m/INBOX.md",
     "build": "vite build && cp -r js dist/js",
     "preview": "vite preview",
     "test": "vitest",

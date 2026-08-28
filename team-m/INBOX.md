@@ -1,15 +1,25 @@
 # Mac Team — INBOX (авто, не редактировать вручную)
 
-_Обновлено: 2026-08-26T05:35:44Z_
+_Обновлено: 2026-08-28T08:24:02Z_
 
 | agent | task | status | updated |
 |--------|------|--------|---------|
 | mac-009 | VERDICT-FINAL-ROADMAP | — |  |
 | 007-vinda | m1-verification | — |  |
+| 007-vinda | uncommitted-tails-2026-08-28 | — |  |
+| 007-vinda | belivebase-city-report-2026-08-28 | — |  |
+| 007-vinda | city-communications-2026-08-28 | — |  |
+| 007-vinda | city-district-census-2026-08-28 | — |  |
 | 007-vinda | n3b-chain | — |  |
+| 007-vinda | migration-status-2026-08-28 | — |  |
+| 007-vinda | billy-tower-recon-2026-08-28 | — |  |
 | m007 | character-ai-status | — |  |
+| 008 | REPORT-TO-007-VISUAL-MAP-2026-08-26 | — |  |
+| 008 | VISUAL-MAP-ORIGINALS | — |  |
 | mac-007 | run2-m2-landing | — |  |
+| mac-007 | GO-STATUS-2026-08-26 | — |  |
 | mac-007 | MICRO-PACK-TAKES-AUDIO-draft | — |  |
+| mac-007 | belivebase-chain | — |  |
 | mac-007 | stress-p2-verdict | — |  |
 | mac-007 | stress-holes-verdict | — |  |
 | mac-007 | FINAL-M3-GO-CHECKLIST-draft | — |  |
@@ -25,6 +35,7 @@ _Обновлено: 2026-08-26T05:35:44Z_
 | mac-007 | MICRO-PACK-CHARACTERAI-VISUAL-CHECK-draft | — |  |
 | mac-007 | glm-qwen-007-prompt | — |  |
 | mac-007 | MICRO-PACK-G3-LAYER2-EMIT-draft | — |  |
+| mac-007 | BRIEFING-2ROUNDS-2026-08-26 | — |  |
 | mac-007 | holes-draft-audio | — |  |
 | mac-007 | g0-p1-nullguard-committed | — |  |
 | mac-007 | run4-m4-layer2 | — |  |
@@ -35,20 +46,24 @@ _Обновлено: 2026-08-26T05:35:44Z_
 | mac-007 | STRESS-M3-GO-verdict | — |  |
 | mac-007 | MICRO-PACK-MARKER-SYNC-draft | — |  |
 | mac-007 | MICRO-PACK-M2-AVATAR-draft | — |  |
+| mac-007 | design-refs-vs-008-as-is | — |  |
 | mac-007 | MICRO-PACK-SURFACE-draft | — |  |
 | mac-007 | holes-draft-sync | — |  |
 | mac-007 | go-001-full-run | — |  |
 | mac-007 | farlight-packs-bslice-e1 | — |  |
+| mac-007 | fouc-stem-recon | — |  |
 | mac-007 | smoke-inbox-sound-protocol | — |  |
 | mac-007 | design-refs-analysis | — |  |
 | mac-007 | run3-m3-d3-d4 | — |  |
 | mac-007 | proposal-notify-bridge | — |  |
 | mac-007 | roadmap-master | — |  |
 | mac-007 | proposal-coachpanel | — |  |
+| mac-007 | student-pedagog-worker-hunt | — |  |
 | mac-007 | youtube-cover-brief | — |  |
+| mac-007 | pitch-scope-chain | — |  |
 | mac-007 | recon-d4-g3 | — |  |
 | mac-007 | ack-h-letter-d4-verified | — |  |
 | mac-007 | proposal-coachpanel-body | — |  |
 | mac-007 | MICRO-PACK-E1-PREDICATE-draft | — |  |
 
-_Всего отчётов: 46
+_Всего отчётов: 61

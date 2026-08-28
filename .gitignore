@@ -99,3 +99,5 @@ opencode.json.low
 REPO-STATE.md
 .tmp-frames/
 team-m/design-refs/
+opencode.json
+._*

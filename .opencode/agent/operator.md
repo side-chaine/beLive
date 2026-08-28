@@ -2,6 +2,7 @@
 description: "Operator — Blind Executor. Only apply, typecheck, test, report. Does exactly what MICRO-PACK says."
 mode: all
 model: opencode/hy3-free
+steps: 150
 permission:
   read: allow
   edit: allow
