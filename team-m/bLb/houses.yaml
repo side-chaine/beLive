@@ -1,0 +1,153 @@
+# houses.yaml · beLiveBase · DRAFT v0 (Phase 0, не коммитить в город до M3)
+# Реестр: квартал ↔ модули src/ ↔ владелец ↔ статус
+# Источники: скаут S1 (инвентарь src), city-district-census-2026-08-28, DOMAIN-OWNERSHIP.yaml
+# Легенда статуса: alive | frozen | trash-w4 | trash-w5 | placeholder | external
+# Дыры ownership помечены owner: TODO-BOSS
+
+meta:
+  version: 0-draft
+  date: 2026-08-28
+  author: mac
+  note: >
+    Census заявляет 17 кварталов, строк фактически 18 (Арены внахлёст) —
+    счёт уточнить перед final (Gate D).
+
+houses:
+  - id: 001
+    quarter: Врата
+    modules: [src/components/welcome, src/components/onboarding]
+    owner: TODO-BOSS
+    status: alive
+
+  - id: 002
+    quarter: Площадь Каталог
+    modules: [src/catalog]
+    owner: TODO-BOSS   # крупнейшая дыра: целый квартал без домена в DOMAIN-OWNERSHIP.yaml
+    status: alive
+
+  - id: 003-005
+    quarter: Завод Studio
+    modules: [src/audio/core, src/audio/compat, src/audio/engine-v3, src/stem]
+    owner: center/007 (audio-engine, stem)
+    status: alive
+    frozen: [src/audio/core/AudioEngineV2.ts, src/audio/compat/patchV1.ts]
+    trash-w4: [src/audio/engine-v3/V2Adapter.ts, src/audio/engine-v3/IV2PublicContract.ts, src/audio/engine-v3/SignalsmithAdapterService.bak.ts]
+
+  - id: 006-008
+    quarter: Академия Quest
+    modules: [src/exercises, src/practice, src/takes]
+    owner: center/007 (exercises, practice, takes)
+    status: alive
+
+  - id: 009-010
+    quarter: Театр Show
+    modules: [src/components/Show, src/services/show.html.ts, src/services/show.image.ts]
+    owner: center/007 (show)
+    status: alive
+
+  - id: 011
+    quarter: Башня Split
+    modules: [src/components/monitor]
+    owner: TODO-BOSS
+    status: alive
+
+  - id: 012
+    quarter: Ателье Styles
+    modules: [src/theme, src/styles, src/data/textStylePresets, src/components/StylesDeck]
+    owner: center/007 (theme); styles/data — TODO-BOSS (полудыра)
+    status: alive
+
+  - id: 013
+    quarter: Лаб Notes
+    modules: [src/audio/pitch, src/components/PianoKeyboard, src/js/main.js]
+    owner: center/007 (audio-engine, частично)
+    status: alive
+    note: src/js/main.js — legacy PitchDetectionEngine, кандидат W6
+
+  - id: 014
+    quarter: Башня Билли
+    modules: [src/billy, src/character]
+    owner: center/007 (billi-ai); character — TODO-BOSS (принадлежность неясна, доков НОЛЬ)
+    status: alive
+    risk: character саморегистрируется в initRegistry, но без паспорта здания
+
+  - id: 018-019
+    quarter: Мастерская Sync
+    modules: [src/sync, src/stores/wordSync.store.ts, src/stores/markers.store.ts]
+    owner: center/007 (sync-system, markers)
+    status: alive
+    frozen: [wordSync.store.ts (FROZEN-READ), markers.store.ts (FROZEN-READ)]
+
+  - id: 020
+    quarter: Площадь Hub
+    modules: [src/feed]
+    owner: TODO-BOSS
+    status: alive-demo
+
+  - id: 021-022
+    quarter: Арены Karaoke/Concert
+    modules: [src/components/KaraokeLyricsBoard, src/transitions, src/backgrounds]
+    owner: TODO-BOSS (transitions, backgrounds — полудыра через scenes)
+    status: alive
+    placeholder: [src/Karaoke, src/Concert]   # только .gitkeep; решение: delete или планируемые здания
+
+  - id: 023
+    quarter: Арена Live
+    modules: [src/components/LiveControls, src/components/LiveSubtitle]
+    owner: TODO-BOSS
+    status: alive
+
+  - id: 029-030
+    quarter: Дом профиля
+    modules: [src/components/profile, src/avatar]
+    owner: TODO-BOSS (avatar — полная дыра)
+    status: alive
+
+  - id: 031
+    quarter: AI Config
+    modules: [src/js/ai, src/components/AiSettingsModal]
+    owner: TODO-BOSS
+    status: conserved   # AI deferred, инфраструктура законсервирована
+
+  - id: 032
+    quarter: Киностудия фонов
+    modules: [src/backgrounds, src/services/block-scene.service.ts]
+    owner: center/007 (scenes, частично)
+    status: alive
+
+  - id: 034
+    quarter: Архив ДНК
+    modules: [src/components/TrackInfoBoard, src/services/metadata-backfill.ts, src/structure]
+    owner: center/007 (track-meta, частично); structure — TODO-BOSS
+    status: alive
+
+  - id: 038
+    quarter: Старая мастерская блоков
+    modules: [src/blocks]
+    owner: TODO-BOSS (снос без владельца)
+    status: trash-w5   # BAC-107, ещё смонтирована в App/main
+
+  - id: infra
+    quarter: Вне кварталов — инфраструктура города
+    modules: [src/foundation, src/bridges, src/playback, src/runtime, src/deck, src/performance, src/stores, src/hooks, src/triggers, src/services, src/types, src/utils, src/config, src/test, src/__smoke__, src/App.tsx, src/main.tsx]
+    owner: >
+      foundation/bridges/playback/runtime/stores/hooks/triggers/types — TODO-BOSS
+      (критично: foundation = EventBus-хребет, bridges = FROZEN-зона без владельца);
+      deck/performance — center/007
+    status: alive
+    frozen: [src/bridges/*, src/services/track.orchestrator.ts]
+
+  - id: external
+    quarter: Внешние ресурсы (вне репо)
+    modules: [Bank_beLive, kaggle-mms-notebook, cf-workers]
+    owner: Босс/оператор
+    status: external
+    note: >
+      Bank_beLive — внешний банк треков, решение о переезде за Боссом;
+      prepare_batch.sh/fix_artifacts.js отсутствуют в репо (преемники research/scripts/*.py,
+      research/mms-workbench-01/run.py); артефакты research/artifacts/*.json едут в город.
+
+open-seams:
+  - L1 exact hash dormant (lyricsHash "", map-2.1:934) — TODO Wave 5, не потерять
+  - BAC-108: прод не должен бить localhost:8787 (VITE_GATEWAY_URL, 8d7b5c9)
+  - slot-matrix контракт frozen, но док невалиден (MISMATCH) — rewrite до final
