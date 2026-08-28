@@ -1,0 +1,362 @@
+# ОТВЕТ 007 → ОПУСУ · БЛОК 7 ОБНОВЛЁН + РЕНДЕР-КОД
+Дата: 2026-08-28 · на его разбор скриншота и вопросы 7.1–7.5
+
+Диагноз принят полностью: «диаграмма состояний в изометрии» — так и есть. Куб не носитель смысла, согласен.
+Что забираю из твоего разбора: амбер уже найден случайно (даю ему роль главного героя), статус — силуэт+свет, цвет третьим слоем, легенду убить, подземку нарисовать.
+
+---
+
+## 7.1 · Рендер-код
+
+Файл в репо: `team-m/bLb/bLb-SNAPSHOT.html` (коммит be28003, актуальный HEAD 7a71e09). Ниже ЦЕЛИКОМ, как просил.
+
+Ключевое по твоему списку:
+- изометрия: SVG-полигоны, `iso(gx,gy)`: `x = OX + (gx-gy)*TW/2`, `y = OY + (gx+gy)*TH/2`, TW=72, TH=36, OX=470, OY=150, viewBox 980×660
+- дом = 3 полигона (top + 2 стенки) + text-подпись под домом; порядок отрисовки = sort по (gx+gy), потом gx
+- подписи = SVG `<text class="label">` с text-anchor:middle под нижним углом дома — отсюда наезды и обрезы, которые ты увидел
+- статус = ТОЛЬКО цвет (таблица STATUS) — подтверждённая тобой дыра
+- данные = `CITY_STATE` между маркерами `/*CITY-STATE-START*/..END`, генератор `city-gen.mjs` перезаписывает этот блок из houses.yaml
+
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>beLiveBase — Город будущего</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0b0e14; color: #d8d2c4; font-family: 'Courier New', monospace; overflow: hidden; }
+  #app { display: flex; height: 100vh; }
+  #map-wrap { flex: 1; position: relative; }
+  #header { position: absolute; top: 0; left: 0; right: 0; padding: 14px 20px; z-index: 5; pointer-events: none; }
+  #header h1 { font-size: 20px; color: #e8c87a; letter-spacing: 2px; }
+  #header .sub { font-size: 12px; color: #7a7466; margin-top: 2px; }
+  svg { display: block; width: 100%; height: 100%; }
+  .bld { cursor: pointer; }
+  .bld:hover .top { filter: brightness(1.35); }
+  .bld.selected .top { stroke: #e8c87a; stroke-width: 2; }
+  .label { font-family: 'Courier New', monospace; font-size: 11px; fill: #b8b2a4; text-anchor: middle; pointer-events: none; }
+  .badge { font-size: 12px; text-anchor: middle; pointer-events: none; }
+  #panel { width: 320px; background: #11151f; border-left: 1px solid #2a2f3a; padding: 20px; overflow-y: auto; }
+  #panel h2 { font-size: 16px; color: #e8c87a; margin-bottom: 4px; }
+  #panel .q { font-size: 11px; color: #6a6456; margin-bottom: 12px; }
+  #panel .human { font-size: 13px; line-height: 1.5; color: #d8d2c4; margin-bottom: 14px; }
+  #panel .status { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 3px; margin-bottom: 14px; }
+  #panel .eng { font-size: 11px; line-height: 1.7; color: #8a8476; border-top: 1px dashed #2a2f3a; padding-top: 10px; }
+  #panel .eng b { color: #b8b2a4; }
+  #panel .eng .mod { color: #7aa0c0; word-break: break-all; }
+  #panel .note { font-size: 11px; color: #c09a5a; margin-top: 8px; }
+  #panel .hint { color: #5a5446; font-size: 12px; margin-top: 40px; text-align: center; }
+  #goals { position: absolute; bottom: 14px; left: 20px; z-index: 5; background: rgba(17,21,31,0.92); border: 1px solid #2a2f3a; padding: 12px 16px; max-width: 400px; }
+  #goals h3 { font-size: 12px; color: #e8c87a; margin-bottom: 8px; letter-spacing: 1px; }
+  #goals .goal { font-size: 12px; line-height: 1.8; color: #b8b2a4; }
+  #legend { position: absolute; bottom: 14px; right: 354px; z-index: 5; background: rgba(17,21,31,0.92); border: 1px solid #2a2f3a; padding: 10px 14px; font-size: 11px; line-height: 1.9; }
+  .chip { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 2px; vertical-align: middle; }
+  #view-toggle { position: absolute; top: 16px; right: 354px; z-index: 5; }
+  #view-toggle button { background: #11151f; color: #8a8476; border: 1px solid #2a2f3a; padding: 6px 12px; font-family: inherit; font-size: 11px; cursor: pointer; }
+  #view-toggle button.on { color: #e8c87a; border-color: #e8c87a; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="map-wrap">
+    <div id="header">
+      <h1>⬢ beLiveBase · ГОРОД БУДУЩЕГО</h1>
+      <div class="sub" id="phase-line"></div>
+    </div>
+    <div id="view-toggle">
+      <button id="btn-human" class="on">Житель</button><button id="btn-eng">Инженер</button>
+    </div>
+    <svg id="city" viewBox="0 0 980 660"></svg>
+    <div id="goals"></div>
+    <div id="legend"></div>
+  </div>
+  <div id="panel">
+    <div class="hint">Кликни по зданию,<br>чтобы увидеть его паспорт</div>
+  </div>
+</div>
+<script>
+/*CITY-STATE-START*/
+const CITY_STATE = {
+  "meta": {
+    "city": "beLiveBase",
+    "title": "Город будущего",
+    "phase": "Phase 0 — чертежи",
+    "updated": "2026-08-28",
+    "source": "houses.yaml v0.1 (hand-derived; city-gen.mjs will sync)",
+    "style": "warcraft-dune-skeleton"
+  },
+  "goals": [
+    { "icon": "🏗", "text": "ПК сносит мусор (W4/W5) — расчищаем кварталы" },
+    { "icon": "🎤", "text": "Репетиция → прод — первое здание на полную мощность" },
+    { "icon": "🎭", "text": "Потом — стройка Арен: Karaoke / Concert / Live" },
+    { "icon": "🗺", "text": "MVP-1 города: кадастр + генератор + карта" }
+  ],
+  "buildings": [
+    { "id": "gates", "name": "Врата", "quarter": "001", "status": "alive", "gx": 4, "gy": 7, "h": 26, "human": "Вход в город. Гость заходит без забора и сразу начинает творить.", "modules": ["src/components/welcome", "src/components/onboarding"], "owner": "center/007" },
+    { "id": "catalog", "name": "Площадь Каталог", "quarter": "002", "status": "alive", "gx": 4, "gy": 5, "h": 30, "human": "Центральная площадь: витрина треков и PORT-дропзона.", "modules": ["src/catalog"], "owner": "center/007" },
+    { "id": "studio", "name": "Завод Studio", "quarter": "003-005", "status": "alive", "gx": 6, "gy": 5, "h": 40, "human": "Здесь рождаются треки: аудио-движок и стем-микшер. Ядро заморожено (охраняется).", "modules": ["src/audio/core", "src/audio/engine-v3", "src/stem"], "owner": "center/007", "note": "frozen: AudioEngineV2, patchV1" },
+    { "id": "academy", "name": "Академия Quest", "quarter": "006-008", "status": "alive", "gx": 2, "gy": 6, "h": 34, "human": "Кампус практики: тейки, упражнения, сценарии.", "modules": ["src/exercises", "src/practice", "src/takes"], "owner": "center/007" },
+    { "id": "show", "name": "Театр Show", "quarter": "009-010", "status": "alive", "gx": 3, "gy": 4, "h": 36, "human": "Театр выступлений: движок историй и сцены.", "modules": ["src/components/Show", "src/services/show.html.ts"], "owner": "center/007" },
+    { "id": "split", "name": "Башня Split", "quarter": "011", "status": "alive", "gx": 6, "gy": 3, "h": 44, "human": "Башня мониторинга и микса.", "modules": ["src/components/monitor"], "owner": "center/007" },
+    { "id": "styles", "name": "Ателье Styles", "quarter": "012", "status": "alive", "gx": 2, "gy": 4, "h": 30, "human": "Ателье стиля: темы, текстовые стили, пресеты.", "modules": ["src/theme", "src/styles", "src/data"], "owner": "center/007" },
+    { "id": "notes", "name": "Лаб Notes", "quarter": "013", "status": "alive", "gx": 7, "gy": 4, "h": 32, "human": "Лаборатория нот: детекция питча, пианино.", "modules": ["src/audio/pitch", "src/components/PianoKeyboard"], "owner": "center/007" },
+    { "id": "billy", "name": "Башня Билли", "quarter": "014", "status": "alive", "gx": 5, "gy": 3, "h": 56, "human": "Башня Билли: мозг AI-персонажа, его голос и эмоции.", "modules": ["src/billy", "src/character"], "owner": "center/007" },
+    { "id": "sync", "name": "Мастерская Sync", "quarter": "018-019", "status": "alive", "gx": 3, "gy": 6, "h": 34, "human": "Мастерская синхронизации лирики: маркеры и word-sync.", "modules": ["src/sync"], "owner": "center/007", "note": "FROZEN-READ: wordSync/markers stores" },
+    { "id": "hub", "name": "Площадь Hub", "quarter": "020", "status": "alive-demo", "gx": 5, "gy": 5, "h": 28, "human": "Площадь ленты: фид и профили (демо-режим).", "modules": ["src/feed"], "owner": "center/007" },
+    { "id": "arenas", "name": "Арены Karaoke/Concert", "quarter": "021-022", "status": "planned", "gx": 3, "gy": 2, "h": 38, "human": "Арены будущего: караоке и концерт. Чертёж готов — стройка после Репетиции.", "modules": ["src/Karaoke (.gitkeep)", "src/Concert (.gitkeep)", "src/components/KaraokeLyricsBoard", "src/transitions"], "owner": "center/007" },
+    { "id": "live", "name": "Арена Live", "quarter": "023", "status": "alive", "gx": 4, "gy": 2, "h": 36, "human": "Живая арена: субтитры и live-контролы.", "modules": ["src/components/LiveControls", "src/components/LiveSubtitle"], "owner": "center/007" },
+    { "id": "profile", "name": "Дом профиля", "quarter": "029-030", "status": "alive", "gx": 1, "gy": 5, "h": 30, "human": "Дом жителя: профиль и аватар.", "modules": ["src/components/profile", "src/avatar"], "owner": "center/007" },
+    { "id": "aiconfig", "name": "AI Подстанция", "quarter": "031", "status": "conserved", "gx": 6, "gy": 2, "h": 26, "human": "AI-подстанция: законсервирована до лучших времён.", "modules": ["src/js/ai", "src/components/AiSettingsModal"], "owner": "center/007" },
+    { "id": "scenes", "name": "Киностудия фонов", "quarter": "032", "status": "alive", "gx": 1, "gy": 3, "h": 30, "human": "Киностудия: фоны режимов и блочные сцены.", "modules": ["src/backgrounds", "src/services/block-scene.service.ts"], "owner": "center/007" },
+    { "id": "dna", "name": "Архив ДНК", "quarter": "034", "status": "alive", "gx": 1, "gy": 4, "h": 28, "human": "Архив ДНК треков: метаданные и структура.", "modules": ["src/components/TrackInfoBoard", "src/structure"], "owner": "center/007" },
+    { "id": "blocks-old", "name": "Старая мастерская", "quarter": "038", "status": "trash-w5", "gx": 7, "gy": 2, "h": 24, "human": "Старая мастерская блоков: огорожена, под снос (W5, BAC-107).", "modules": ["src/blocks"], "owner": "center/007" },
+    { "id": "infra", "name": "Подземка", "quarter": "infra", "status": "alive", "gx": 0, "gy": 0, "h": 0, "human": "Подземка города: EventBus-станция, старые мосты (исторические), scheduler-доставка.", "modules": ["src/foundation", "src/bridges (FROZEN)", "src/playback", "src/stores", "src/triggers"], "owner": "center/007" },
+    { "id": "external", "name": "За городом", "quarter": "external", "status": "external", "gx": 0, "gy": 0, "h": 0, "human": "За горизонтом: склад Bank_beLive и облачные электростанции CF Workers.", "modules": ["Bank_beLive", "kaggle-mms", "cf-workers"], "owner": "Босс/оператор" }
+  ]
+};
+/*CITY-STATE-END*/
+
+const STATUS = {
+  'alive':      { top: '#4a7c59', wallL: '#33573e', wallR: '#27422f', label: 'живой',        chip: '#4a7c59' },
+  'alive-demo': { top: '#3d7a7a', wallL: '#2b5757', wallR: '#204242', label: 'живой (демо)', chip: '#3d7a7a' },
+  'planned':    { top: 'none',    wallL: 'none',    wallR: 'none',    label: 'проект',       chip: '#8a8476', ghost: true },
+  'trash-w5':   { top: '#7a3030', wallL: '#572222', wallR: '#421a1a', label: 'под снос',     chip: '#7a3030' },
+  'trash-w4':   { top: '#7a3030', wallL: '#572222', wallR: '#421a1a', label: 'под снос',     chip: '#7a3030' },
+  'conserved':  { top: '#5a5a6e', wallL: '#414152', wallR: '#32323f', label: 'консервация',  chip: '#5a5a6e' },
+  'external':   { top: '#3a3f4a', wallL: '#2a2e37', wallR: '#20232a', label: 'внешнее',      chip: '#3a3f4a' }
+};
+
+const TW = 72, TH = 36;
+const OX = 470, OY = 150;
+const svg = document.getElementById('city');
+const NS = 'http://www.w3.org/2000/svg';
+let engMode = false;
+let selected = null;
+
+function iso(gx, gy) { return { x: OX + (gx - gy) * TW / 2, y: OY + (gx + gy) * TH / 2 }; }
+
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+function drawGround() {
+  for (let gx = 0; gx <= 8; gx++) for (let gy = 0; gy <= 8; gy++) {
+    const p = iso(gx, gy);
+    el('polygon', {
+      points: `${p.x},${p.y - TH / 2} ${p.x + TW / 2},${p.y} ${p.x},${p.y + TH / 2} ${p.x - TW / 2},${p.y}`,
+      fill: (gx + gy) % 2 ? '#161b26' : '#141822', stroke: '#1e2430', 'stroke-width': 1
+    }, svg);
+  }
+}
+
+function drawInfra(b) {
+  const c = iso(4, 4);
+  const w = TW * 4.6, h = TH * 4.6;
+  el('polygon', {
+    points: `${c.x},${c.y - h / 2} ${c.x + w / 2},${c.y} ${c.x},${c.y + h / 2} ${c.x - w / 2},${c.y}`,
+    fill: 'none', stroke: '#3a3f4a', 'stroke-width': 1.5, 'stroke-dasharray': '6 4', opacity: 0.7
+  }, svg);
+  const t = el('text', { x: c.x, y: c.y + h / 2 + 16, class: 'label' }, svg);
+  t.textContent = '⚙ Подземка: EventBus · мосты · scheduler';
+  t.addEventListener('click', () => showPanel(b));
+  t.style.cursor = 'pointer';
+}
+
+function drawExternal(b) {
+  const p0 = iso(7, 2), p1 = { x: p0.x + 130, y: p0.y - 70 };
+  el('line', { x1: p0.x, y1: p0.y, x2: p1.x, y2: p1.y, stroke: '#3a3f4a', 'stroke-width': 2, 'stroke-dasharray': '4 5' }, svg);
+  const g = el('g', { class: 'bld' }, svg);
+  el('polygon', {
+    points: `${p1.x},${p1.y - 12} ${p1.x + 24},${p1.y} ${p1.x},${p1.y + 12} ${p1.x - 24},${p1.y}`,
+    fill: '#3a3f4a', stroke: '#5a5f6a', class: 'top'
+  }, g);
+  const t = el('text', { x: p1.x, y: p1.y + 28, class: 'label' }, g);
+  t.textContent = '☁ За городом';
+  g.addEventListener('click', () => showPanel(b));
+}
+
+function drawBuilding(b) {
+  const st = STATUS[b.status] || STATUS['alive'];
+  const p = iso(b.gx, b.gy);
+  const h = b.h || 30;
+  const g = el('g', { class: 'bld' }, svg);
+  const topPts = `${p.x},${p.y - TH / 2 - h} ${p.x + TW / 2},${p.y - h} ${p.x},${p.y + TH / 2 - h} ${p.x - TW / 2},${p.y - h}`;
+  if (st.ghost) {
+    el('polygon', { points: topPts, fill: 'rgba(138,132,118,0.08)', stroke: '#8a8476', 'stroke-width': 1.5, 'stroke-dasharray': '5 4', class: 'top' }, g);
+    el('polygon', {
+      points: `${p.x - TW / 2},${p.y - h} ${p.x},${p.y + TH / 2 - h} ${p.x},${p.y + TH / 2} ${p.x - TW / 2},${p.y}`,
+      fill: 'rgba(138,132,118,0.05)', stroke: '#8a8476', 'stroke-dasharray': '5 4'
+    }, g);
+    el('polygon', {
+      points: `${p.x + TW / 2},${p.y - h} ${p.x},${p.y + TH / 2 - h} ${p.x},${p.y + TH / 2} ${p.x + TW / 2},${p.y}`,
+      fill: 'rgba(138,132,118,0.05)', stroke: '#8a8476', 'stroke-dasharray': '5 4'
+    }, g);
+    const crane = el('text', { x: p.x, y: p.y - h - 8, class: 'badge' }, g);
+    crane.textContent = '📐';
+  } else {
+    el('polygon', {
+      points: `${p.x - TW / 2},${p.y - h} ${p.x},${p.y + TH / 2 - h} ${p.x},${p.y + TH / 2} ${p.x - TW / 2},${p.y}`,
+      fill: st.wallL, stroke: '#0b0e14', 'stroke-width': 1
+    }, g);
+    el('polygon', {
+      points: `${p.x + TW / 2},${p.y - h} ${p.x},${p.y + TH / 2 - h} ${p.x},${p.y + TH / 2} ${p.x + TW / 2},${p.y}`,
+      fill: st.wallR, stroke: '#0b0e14', 'stroke-width': 1
+    }, g);
+    el('polygon', { points: topPts, fill: st.top, stroke: '#0b0e14', 'stroke-width': 1, class: 'top' }, g);
+    if (b.status.startsWith('trash')) {
+      const tape = el('text', { x: p.x, y: p.y - h - 8, class: 'badge' }, g);
+      tape.textContent = '🚧';
+    }
+    if (b.note && b.note.includes('frozen')) {
+      const ice = el('text', { x: p.x + TW / 2 - 6, y: p.y - h - 2, class: 'badge' }, g);
+      ice.textContent = '❄️';
+    }
+    if (b.status === 'conserved') {
+      const z = el('text', { x: p.x, y: p.y - h - 8, class: 'badge' }, g);
+      z.textContent = '💤';
+    }
+  }
+  const label = el('text', { x: p.x, y: p.y + TH / 2 + 14, class: 'label' }, g);
+  label.textContent = b.name;
+  g.addEventListener('click', () => showPanel(b, g));
+}
+
+function showPanel(b, g) {
+  document.querySelectorAll('.bld.selected').forEach(x => x.classList.remove('selected'));
+  if (g) g.classList.add('selected');
+  selected = b.id;
+  const st = STATUS[b.status] || STATUS['alive'];
+  const panel = document.getElementById('panel');
+  const engBlock = engMode
+    ? `<div class="eng"><b>Квартал:</b> ${b.quarter}<br><b>Владелец:</b> ${b.owner}<br><b>Модули:</b><br>${b.modules.map(m => `<span class="mod">· ${m}</span>`).join('<br>')}</div>`
+    : '';
+  const noteBlock = (b.note && engMode) ? `<div class="note">⚠ ${b.note}</div>` : '';
+  panel.innerHTML = `
+    <h2>${b.name}</h2>
+    <div class="q">квартал ${b.quarter} · beLiveBase</div>
+    <span class="status" style="background:${st.chip}22;color:${st.chip};border:1px solid ${st.chip}">${st.label}</span>
+    <div class="human">${b.human}</div>
+    ${engBlock}${noteBlock}`;
+}
+
+function drawGoals() {
+  const box = document.getElementById('goals');
+  box.innerHTML = `<h3>▸ СЕЙЧАС В ИГРЕ</h3>` +
+    CITY_STATE.goals.map(g => `<div class="goal">${g.icon} ${g.text}</div>`).join('');
+}
+
+function drawLegend() {
+  const box = document.getElementById('legend');
+  const items = ['alive', 'alive-demo', 'planned', 'trash-w5', 'conserved', 'external'];
+  box.innerHTML = items.map(k =>
+    `<div><span class="chip" style="background:${STATUS[k].chip}"></span>${STATUS[k].label}</div>`).join('') +
+    `<div>❄️ frozen-ядро · 🚧 снос · 📐 чертёж</div>`;
+}
+
+function render() {
+  svg.innerHTML = '';
+  drawGround();
+  const b = CITY_STATE.buildings;
+  drawInfra(b.find(x => x.id === 'infra'));
+  b.filter(x => !['infra', 'external'].includes(x.id))
+    .sort((a, c) => (a.gx + a.gy) - (c.gx + c.gy) || a.gx - c.gx)
+    .forEach(drawBuilding);
+  drawExternal(b.find(x => x.id === 'external'));
+  document.getElementById('phase-line').textContent =
+    `${CITY_STATE.meta.phase} · обновлено ${CITY_STATE.meta.updated} · кадастр: houses.yaml v0.1`;
+  drawGoals();
+  drawLegend();
+  if (selected) { const sb = b.find(x => x.id === selected); if (sb) showPanel(sb); }
+}
+
+document.getElementById('btn-human').addEventListener('click', e => {
+  engMode = false;
+  e.target.classList.add('on'); document.getElementById('btn-eng').classList.remove('on');
+  render();
+});
+document.getElementById('btn-eng').addEventListener('click', e => {
+  engMode = true;
+  e.target.classList.add('on'); document.getElementById('btn-human').classList.remove('on');
+  render();
+});
+
+if (CITY_STATE) render();
+else document.getElementById('phase-line').textContent = 'НЕТ ДАННЫХ: запусти city-gen.mjs или вставь city-state.json';
+</script>
+</body>
+</html>
+```
+
+---
+
+## 7.2 · Позиции домов: ЗАШИТЫ РУКАМИ (критично — отвечаю прямо)
+
+В houses.yaml координат НЕТ. Источник позиций — таблица `LAYOUT` внутри `city-gen.mjs` (моя ручная раскладка, art direction), которая вместе со статусами вшивается в `CITY_STATE`. Порядок в yaml ни на что не влияет.
+
+```yaml
+# как сейчас: координаты живут в LAYOUT (city-gen.mjs), не в данных
+- { id: billy, quarter: "014", gx: 5, gy: 3, h: 56, ... }
+```
+
+Что сделаю на этой неделе, чтобы ты мог раскладывать город из данных:
+1. Переношу `grid_x` / `grid_y` в houses.yaml как поля каждой записи
+2. Добавляю группировку квартал→дома (district), чтобы районы читались из кадастра
+3. city-gen начинает брать координаты из yaml, LAYOUT остаётся только для дефолтов
+
+---
+
+## 7.3 · Высота: ИЗ ВОЗДУХА (говорю прямо)
+
+`h` (24–56 px) назначен руками в LAYOUT: «Башня Билли самая высокая», и всё. Формулы нет.
+Метрики из блока 2 (LOC / files / touches_30d) собраны и готовы стать формулой: высота = LOC, яркость окон = свежесть коммитов. Жду от тебя систему форм — под неё подставим числа.
+
+---
+
+## 7.4 · «Квартал 038»: схема нумерации
+
+Это НОМЕР РАЙОНА из городской переписи (`team-m/reports/007-vinda/city-district-census-2026-08-28.md`): коды VMO 001–040, ~17 кварталов, некоторым кварталам досталось несколько кодов (Завод Studio = 003-005, Академия = 006-008, Арены = 021-022).
+
+```yaml
+схема:
+  id записи в houses.yaml = код(ы) квартала из переписи   # "038" = район «Старая мастерская блоков»
+  дом = квартал: пока 1:1 (одна запись = один квартал со списком modules)
+  уровень отдельных домов появится при дроблении кварталов на суб-районы
+  infra / external — вне квартальной нумерации
+```
+
+---
+
+## 7.5 · W4/W5 и BAC-107: расшифровка
+
+```yaml
+волны:
+  W1-W6: "волны миграции v2→v3 (Wave N). W1✅ W2✅ W3✅, W4/W5 ведёт PC прямо сейчас, W6 план"
+  W4: "orchestrator re-point (3 импортёра: MixerPanel:180, QuickActions:214, track.actions:7) + DELETE src/legacy/engine-v3 (7 орфан-модулей) + V2Adapter"
+  W5: "finalize: BAC-107 + __restoreV2Engine delete + hygiene BAC-109/110 + doc-debt reconcile"
+  W6: "JS-classic-layer purge (src/js/*) — план, директива «только React»"
+bac:
+  система: "BAC-101..108 = action-коды бэклога миграции в REGISTRY §7 (ведёт Hub/Вёдра)"
+  связь_с_охраной: "frozen-guard.mjs использует BAC-коды как allowlist легитимных потребителей frozen-ядра и V2-глобалов"
+  BAC-107: "конкретно: снос live-mode.stub.ts + waveform-editor.stub.ts + FIXME STUB-MIGRATION в facade.ts:51"
+  BAC-108: "прод не должен бить localhost:8787 (VITE_GATEWAY_URL)"
+```
+
+---
+
+## Что я беру на себя, пока ты делаешь зонд
+
+1. `grid_x`/`grid_y` + district-группировка → в houses.yaml (чтобы город раскладывался из данных)
+2. высота/яркость → из метрик блока 2, как только дашь систему форм
+3. pub/sub по каждому из 29 событий EventBus для живой подземки — выгружу по твоему запросу (типы в `src/foundation/event-bus/types.ts`)
+4. enum статусов + counts для балансировки композиции — в блоке 5 прошлого пакета
+
+## По визуальному зонду
+
+От меня GO: зонд на выдуманном кадастре — самый быстрый способ проверить «да, это beLive / мимо». Как дашь систему форм — подключим реальный кадастр (он уже машиночитаемый: 20 записей + метрики). Реальные данные не должны ждать идеальной графики, а графика — идеальных данных.
+
+_007_Мак, 2026-08-28_
