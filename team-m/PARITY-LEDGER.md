@@ -25,4 +25,9 @@
 - **Атрибуция:** DECIDED (user-validated). W4 = SAFE-перенос frozen-оркестратора (byte-identical копия) — регрессий нет.
 - **Наблюдения (НЕ W4-регрессии, в очереди):** (1) `lyrics-events.ts:71 [GUARD] CRITICAL: N markers out of bounds. Data migration needed` при каждой загрузке трека (52/55 маркеров) — pre-existing проблема контракта маркеров (тег GUARD-36), отдельное расследование; (2) CORS `belive-feed-bot.nikitosss007.workers.dev/tracks` для localhost:3000 — CORS воркера захардкожен на `https://app.mybelive.com`, внешний фикс (CF worker); (3) FR-007 stem pan not supported — известное предупреждение; (4) `main.tsx:229/270/281` log-wording «V2 continues» — кандидат W5-hygiene.
 
+## W5-SMOKE · 28.08 · Block Editor вход + снос stubs (post-W5 `18cb248`)
+- **Факт (консоль+глаза Босса, 28.08, dev-сервер перезапущен):** бут чистый, трек грузится через `track.loader.ts` (OrchTiming), 6 стемов + auto-play ✅, Space pause ✅; **модалка Block Editor ОТКРЫВАЕТСЯ** через новый `openBlockEditor()` ✅. Босс: внутреннее редактирование блоков в модалке доделывается в bLb — продуктовое решение 28.08 (W5 = миграция входа, не внутренности редактора).
+- **Атрибуция:** DECIDED (user-validated). Редактирование блоков в модалке = эпоха bLb (решение Босса 28.08).
+- **Наблюдения:** CORS feed-bot + FR-007 pan — та же известная очередь (без изменений).
+
 ## (место для последующих записей: mic-уши сессия, №17/№18 ретесты, RTL, auto-pause…)
