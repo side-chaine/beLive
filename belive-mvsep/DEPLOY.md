@@ -18,7 +18,7 @@ wrangler kv:namespace create MVSEP_RATES --preview
 
 ```bash
 wrangler secret put MVSEP_API_KEY
-# Paste: kVnx54oXl0li4do1eSQwGY9nC527TZ
+# Paste: ${MVSEP_API_KEY}  ← РОТИРОВАНО: старый ключ удалён из живых файлов (см. REGISTRY §MVSEP-key); новый возьмите в MVSEP-консоли
 
 wrangler secret put JWT_SECRET
 # Paste: тот же secret что в belive-auth Worker
