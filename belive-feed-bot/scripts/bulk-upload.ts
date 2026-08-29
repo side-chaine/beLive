@@ -16,7 +16,23 @@
  * >50MB файлы — SKIP (выводятся в отчёт для ffmpeg)
  */
 
-const BOT_TOKEN = process.env.BOT_TOKEN || '8506268729:AAF_4gkscFhHUTGdEJUeFNVKoWSaYsNgHiA';
+/**
+ * Требует BOT_TOKEN через env (хардкод-фолбэк удалён 2026-08-29 — токен утёк в
+ * публичную git-историю 14.06, считаем скомпрометированным; ротация — @BotFather /revoke).
+ *   BOT_TOKEN=... CHAT_ID=... npx tsx scripts/bulk-upload.ts ~/Desktop/tracks/
+ */
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    console.error(`✗ Обязательная переменная окружения не задана: ${name}`);
+    console.error(`  Пример: ${name}=<значение> npx tsx scripts/bulk-upload.ts <папка>`);
+    console.error('  Токен бота: @BotFather → /mybots → API Token (НЕ хранить в файлах)');
+    process.exit(1);
+  }
+  return value;
+}
+
+const BOT_TOKEN = requireEnv('BOT_TOKEN');
 const CHAT_ID = process.env.CHAT_ID || '435558710';
 const KV_MODE = (process.env.KV_MODE || 'json') as 'auto' | 'json';
 const TG_API = 'https://api.telegram.org/bot';

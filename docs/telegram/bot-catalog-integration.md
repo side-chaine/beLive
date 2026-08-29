@@ -102,7 +102,7 @@ npx esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/wo
 - **Содержит:** file_id → track metadata (title, artist, slug, type, fileIds, fileSize, fileName); ключ `track_data:catalog` — массив треков от bot-upload (fileIds/type/fileName), читается в `GET /tracks` вместе с префиксом `track_data:t:`.
 
 ### Secrets
-- `BOT_TOKEN`: `8506268729:AAHWkRIA6MxGsds44Q6BPj9MlH2pDWpMxLo`
+- `BOT_TOKEN`: **НЕ хранить в файлах** — только `wrangler secret put BOT_TOKEN` (или env для локальных скриптов). Токен дважды утекал в git-историю (14.06 `AAF…` и 28.08 `AAHW…`) — оба отозваны/ротированы. Отзыв: Telegram → @BotFather → /mybots → API Token → /revoke. Историю см. `docs/audit/07-SECRETS-FULL-SWEEP.md`.
 
 ## Файловая структура бота
 
