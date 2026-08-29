@@ -1,0 +1,165 @@
+diff --git a/src/audio/engine-v3/V2Adapter.ts b/src/audio/engine-v3/V2Adapter.ts
+index 0968e2a..7315602 100644
+--- a/src/audio/engine-v3/V2Adapter.ts
++++ b/src/audio/engine-v3/V2Adapter.ts
+@@ -15,6 +15,17 @@ import {
+   isPublicKey,
+ } from './IV2PublicContract'
+ 
++/**
++ * Наблюдатель за вызовами V2.
++ * Получает имя метода и аргументы ДО того, как вызов дойдёт до V2.
++ *
++ * Контракт наблюдателя (важно):
++ *  - наблюдатель НЕ имеет права ронять аудио — V2Adapter гасит его исключения;
++ *  - наблюдатель НЕ должен сам вызывать delegateSync/delegateAsync для того же
++ *    метода, который он слушает — это рекурсия.
++ */
++export type V2CallObserver = (method: string, args: unknown[]) => void
++
+ export class V2Adapter {
+   private static instance: V2Adapter
+   static getInstance(): V2Adapter {
+@@ -22,6 +33,35 @@ export class V2Adapter {
+     return this.instance
+   }
+ 
++  private readonly _observers = new Set<V2CallObserver>()
++
++  /**
++   * Единственная точка, через которую можно наблюдать за обращениями к V2.
++   *
++   * Раньше наблюдатели (V2ResurrectionDetector) подменяли метод на инстансе
++   * через require() + monkey-patching. Это не работает в ESM-бандле Vite
++   * (require не существует → ReferenceError глушится catch) и требует
++   * ручного restore. Подписка снимает обе проблемы конструктивно.
++   *
++   * @returns функция отписки
++   */
++  observe(fn: V2CallObserver): () => void {
++    this._observers.add(fn)
++    return () => {
++      this._observers.delete(fn)
++    }
++  }
++
++  private _notify(method: string, args: unknown[]): void {
++    for (const fn of this._observers) {
++      try {
++        fn(method, args)
++      } catch {
++        // Наблюдатель не имеет права ронять аудио. Никогда.
++      }
++    }
++  }
++
+   /** Получить V2 engine, приведённый к публичному контракту */
+   getV2Engine(): IV2PublicContract | null {
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any — единственный as any
+@@ -54,6 +94,9 @@ export class V2Adapter {
+     }
+     const v2 = this.getV2Engine()
+     if (!v2) throw new Error('[V2Adapter] V2 not available')
++    // Уведомляем ДО вызова: фиксируем намерение, а не результат.
++    // Если V2 бросит исключение — факт обращения к нему всё равно зафиксирован.
++    this._notify(method, args)
+     return (v2 as any)[method]?.(...args)
+   }
+ 
+@@ -63,6 +106,7 @@ export class V2Adapter {
+     }
+     const v2 = this.getV2Engine()
+     if (!v2) throw new Error('[V2Adapter] V2 not available')
++    this._notify(method, args)
+     const result = (v2 as any)[method]?.(...args)
+     return result instanceof Promise ? result : Promise.resolve(result)
+   }
+diff --git a/src/audio/engine-v3/diagnostics/CaptureWorklet.ts b/src/audio/engine-v3/diagnostics/CaptureWorklet.ts
+index bfe2165..ae3e2c3 100644
+--- a/src/audio/engine-v3/diagnostics/CaptureWorklet.ts
++++ b/src/audio/engine-v3/diagnostics/CaptureWorklet.ts
+@@ -14,6 +14,28 @@ function captureWorkletCode(): void {
+   var CAPTURE_NAME = 'belive-capture-processor'
+ 
+   class CaptureProcessor extends AudioWorkletProcessor {
++    // Объявления полей нужны СТРОГО для tsc: присваивание this._x без объявления
++    // даёт TS2339 (75 ошибок в этом файле на момент правки).
++    // В рантайме это безопасно: бандлер стирает аннотации до того, как функция
++    // будет сериализована через toString() в AudioWorkletGlobalScope.
++    // Базовый класс объявлен в src/types/audio-worklet-global.d.ts.
++    _buffer: Float32Array
++    _bufferSize: number
++    _writeIndex: number
++    _startFrame: number
++    _firstNonZeroFrame: number
++    _lastNonZeroFrame: number
++    _energySumSq: number
++    _firstNonZeroWriteIndexEver: number
++    _processCount: number
++    _maxAbsEver: number
++    _firstNonZeroWriteIndex: number
++    _nonZeroQuantumCount: number
++    _totalSamplesWritten: number
++    _wrapCount: number
++    /** Гистограмма длин квантов; ключи — строковые (см. String(len) ниже). */
++    _quantumLenHist: Record<string, number>
++
+     constructor(options: any) {
+       super(options)
+       var size = (options && options.processorOptions && options.processorOptions.bufferSize) || 220500
+diff --git a/src/audio/engine-v3/integration/V2AudioCage.ts b/src/audio/engine-v3/integration/V2AudioCage.ts
+index 523ba02..d343566 100644
+--- a/src/audio/engine-v3/integration/V2AudioCage.ts
++++ b/src/audio/engine-v3/integration/V2AudioCage.ts
+@@ -17,7 +17,19 @@
+ 
+ import { V2Adapter } from '../V2Adapter'
+ 
+-const STEM_IDS = ['instrumental', 'vocals', 'drums', 'bass', 'keys', 'guitar', 'backing', 'other']
++/** Единственный источник правды о том, какие стемы есть в V2.
++ *  Экспортируется, потому что V2ResurrectionDetector должен мерить
++ *  уровень ровно тех же стемов, которые клетка заглушает. */
++export const STEM_IDS = [
++  'instrumental',
++  'vocals',
++  'drums',
++  'bass',
++  'keys',
++  'guitar',
++  'backing',
++  'other',
++] as const
+ 
+ export class V2AudioCage {
+   private _active = false
+diff --git a/src/services/__tests__/track-meta.service.test.ts b/src/services/__tests__/track-meta.service.test.ts
+index b771113..1c8665c 100644
+--- a/src/services/__tests__/track-meta.service.test.ts
++++ b/src/services/__tests__/track-meta.service.test.ts
+@@ -23,7 +23,7 @@ describe('track-meta.service', () => {
+     // Проверяем через fetchGetSongBPM с замоканным fetch
+     it('конвертирует open_key в camelot (интеграционно)', async () => {
+       const mockTrack = { search: [{ tempo: 120, key_of: 'C', open_key: '8m', camelot: null }] };
+-      global.fetch = vi.fn().mockResolvedValue({
++      globalThis.fetch = vi.fn().mockResolvedValue({
+         ok: true,
+         json: () => Promise.resolve(mockTrack),
+       });
+@@ -46,7 +46,7 @@ describe('track-meta.service', () => {
+       (getTrack as any).mockResolvedValue({ trackMeta: { genre: ['rock'], bpm: null } });
+ 
+       const { fetchTrackMeta } = await import('../track-meta.service');
+-      global.fetch = vi.fn().mockResolvedValue({ ok: false });
++      globalThis.fetch = vi.fn().mockResolvedValue({ ok: false });
+ 
+       const meta = await fetchTrackMeta(1, 'Artist - Song');
+ 
+@@ -69,7 +69,7 @@ describe('track-meta.service', () => {
+     const { getTrack } = await import('../idb.service');
+     (getTrack as any).mockResolvedValue({ trackMeta: existingMeta });
+ 
+-    global.fetch = vi.fn().mockResolvedValue({ ok: false });
++    globalThis.fetch = vi.fn().mockResolvedValue({ ok: false });
+ 
+     const meta = await fetchTrackMeta(1, 'Artist - Song');
+ 

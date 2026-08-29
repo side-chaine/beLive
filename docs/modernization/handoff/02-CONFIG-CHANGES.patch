@@ -1,0 +1,129 @@
+diff --git a/.github/workflows/doc-sync-check.yml b/.github/workflows/doc-sync-check.yml
+index 7ab3c2c..aac35f1 100644
+--- a/.github/workflows/doc-sync-check.yml
++++ b/.github/workflows/doc-sync-check.yml
+@@ -1,25 +1,50 @@
+ name: Doc Sync Check
+ on: [pull_request]
+ 
++# ⚠️ ВАЖНО (2026-08-29): docs/sync/ загитignoreн (.gitignore:66), поэтому
++# MASTER-SYNC-REGISTRY.yaml НЕ существует на чистом checkout — никогда.
++# Раньше первый шаг делал exit 1, и эта джоба была КРАСНОЙ НА КАЖДОМ PR
++# с момента создания. Гейт, красный всегда, перестаёт быть сигналом и
++# приучает команду не смотреть в CI.
++#
++# Исправление: если реестра нет в репозитории — честно выходим с успехом,
++# объясняя причину. Проверки сохраняются и включаются автоматически,
++# как только реестр станет доступен (см. ADR-0011 — перенос в приватный
++# репозиторий, либо раскомментирование docs/sync/ после переезда).
++#
++# ADR-0011: docs/modernization/ADR-0011-git-and-doc-visibility-policy.md
++
+ jobs:
+   check:
+     runs-on: ubuntu-latest
+     steps:
+       - uses: actions/checkout@v4
+-      
+-      - name: Check MASTER-SYNC-REGISTRY.yaml exists
++
++      - name: Resolve registry path
++        id: registry
+         run: |
+-          if [ ! -f docs/sync/MASTER-SYNC-REGISTRY.yaml ]; then
+-            echo "❌ MASTER-SYNC-REGISTRY.yaml not found!"
+-            exit 1
+-          fi
+-          echo "✅ MASTER-SYNC-REGISTRY.yaml exists"
+-      
++          # Поддерживаем оба расположения: старое (docs/sync) и новое,
++          # если реестр переедет в git-tracked место.
++          for candidate in docs/sync/MASTER-SYNC-REGISTRY.yaml docs/sync/registry.yaml; do
++            if [ -f "$candidate" ]; then
++              echo "path=$candidate" >> "$GITHUB_OUTPUT"
++              echo "found=true" >> "$GITHUB_OUTPUT"
++              echo "✅ Реестр найден: $candidate"
++              exit 0
++            fi
++          done
++          echo "found=false" >> "$GITHUB_OUTPUT"
++          echo "⏭️  Реестр недоступен в этом репозитории (docs/sync/ загитignoreн)."
++          echo "   Проверки пропущены. Это НЕ ошибка — см. комментарий в начале файла."
++          echo "   Вернуть проверки: ADR-0011 (приватный репозиторий beLive-internal)."
++
+       - name: Check for OPEN DOC-TC with P0/P1 priority
++        if: steps.registry.outputs.found == 'true'
+         run: |
+-          P0_COUNT=$(grep -c "priority: P0" docs/sync/MASTER-SYNC-REGISTRY.yaml 2>/dev/null || echo "0")
+-          P1_COUNT=$(grep -c "priority: P1" docs/sync/MASTER-SYNC-REGISTRY.yaml 2>/dev/null || echo "0")
+-          
++          R="${{ steps.registry.outputs.path }}"
++          P0_COUNT=$(grep -c "priority: P0" "$R" 2>/dev/null || echo "0")
++          P1_COUNT=$(grep -c "priority: P1" "$R" 2>/dev/null || echo "0")
++
+           if [ "$P0_COUNT" -gt 0 ] || [ "$P1_COUNT" -gt 0 ]; then
+             echo "⚠️  WARNING: Open DOC-TC with P0/P1 priority found!"
+             echo "   P0: $P0_COUNT"
+@@ -28,30 +53,32 @@ jobs:
+           else
+             echo "✅ No critical DOC-TC items open"
+           fi
+-      
++
+       - name: Check for CONFLICT status in registry
++        if: steps.registry.outputs.found == 'true'
+         run: |
+-          if grep -q "status: conflict" docs/sync/MASTER-SYNC-REGISTRY.yaml 2>/dev/null; then
++          R="${{ steps.registry.outputs.path }}"
++          if grep -q "status: conflict" "$R" 2>/dev/null; then
+             echo "❌ CONFLICT status found in registry!"
+-            grep -B2 "status: conflict" docs/sync/MASTER-SYNC-REGISTRY.yaml
++            grep -B2 "status: conflict" "$R"
+             exit 1
+           fi
+           echo "✅ No conflicts in registry"
+-      
++
+       - name: Smoke test — changed domain matches registry
++        if: steps.registry.outputs.found == 'true'
+         run: |
+-          # Get changed files in src/
+-          CHANGED=$(git diff --name-only origin/main...HEAD -- src/ 2>/dev/null || echo "")
++          R="${{ steps.registry.outputs.path }}"
++          CHANGED=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD" -- src/ 2>/dev/null || echo "")
+           if [ -z "$CHANGED" ]; then
+             echo "✅ No code changes — skipping domain check"
+             exit 0
+           fi
+-          
+-          # For each changed file, check if its domain is synced
++
+           for file in $CHANGED; do
+             DOMAIN=$(echo "$file" | grep -oE "src/(audio|sync|billy|exercises|takes|stem|triggers|performance)" | head -1 || echo "")
+             if [ -n "$DOMAIN" ]; then
+-              STATUS=$(grep -A5 "path:.*$DOMAIN" docs/sync/MASTER-SYNC-REGISTRY.yaml | grep "status:" | head -1 || echo "")
++              STATUS=$(grep -A5 "path:.*$DOMAIN" "$R" | grep "status:" | head -1 || echo "")
+               if echo "$STATUS" | grep -q "needs_update"; then
+                 echo "⚠️  Warning: $file changed but $DOMAIN docs are needs_update"
+               fi
+diff --git a/.gitignore b/.gitignore
+index 566a2c4..d1fd00d 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -69,8 +69,15 @@ AGENTS.md
+ .continue.config.example.yaml
+ research/
+ 
+-# macOS
++# macOS / Windows — метаданные файловых систем (65 файлов ._ * в дереве на 2026-08-29)
+ **/.DS_Store
++._*
++**/._*
++desktop.ini
++Thumbs.db
++
++# Машинно-локальное состояние агентов (не проектное)
++.workbuddy-ai/
+ 
+ # Internal agent docs
+ docs/agents/

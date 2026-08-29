@@ -1,0 +1,212 @@
+src/audio/core/AudioEngineV2.ts(12,24): error TS6133: 'BUILTIN_STEMS' is declared but its value is never read.
+src/audio/core/AudioEngineV2.ts(67,20): error TS6133: '_LOOP_RESYNC_BLACKOUT_MS' is declared but its value is never read.
+src/audio/core/AudioEngineV2.ts(100,20): error TS6133: '_SYNC_BLACKOUT_FLOOR' is declared but its value is never read.
+src/audio/core/AudioEngineV2.ts(699,35): error TS6133: 'opts' is declared but its value is never read.
+src/audio/core/AudioEngineV2.ts(1195,37): error TS2345: Argument of type 'Float32Array<ArrayBufferLike>' is not assignable to parameter of type 'Float32Array<ArrayBuffer>'.
+src/audio/core/AudioEngineV2.ts(1488,33): error TS6133: 'id' is declared but its value is never read.
+src/audio/core/AudioEngineV2.ts(2024,11): error TS6133: '_micCaptureEnabled' is declared but its value is never read.
+src/audio/core/StemPlayer.ts(68,16): error TS2339: Property 'playsInline' does not exist on type 'HTMLAudioElement'.
+src/audio/core/StemPlayer.ts(74,24): error TS6133: 'e' is declared but its value is never read.
+src/audio/core/StemPlayer.ts(116,16): error TS2339: Property 'playsInline' does not exist on type 'HTMLAudioElement'.
+src/audio/engine-v3/__tests__/VendorTemporalMap.test.ts(197,11): error TS6133: 'seg1' is declared but its value is never read.
+src/audio/engine-v3/diagnostics/impulse-test-harness.ts(6,32): error TS7016: Could not find a declaration file for module '../vendor/SignalsmithStretch.mjs'. 'C:/Users/nikit/OneDrive/Документы/BeLive/src/audio/engine-v3/vendor/SignalsmithStretch.mjs' implicitly has an 'any' type.
+src/audio/engine-v3/integration/V3DataInterceptor.ts(85,38): error TS2769: No overload matches this call.
+src/audio/engine-v3/MeterNodeV3.ts(33,43): error TS2345: Argument of type 'Float32Array<ArrayBufferLike>' is not assignable to parameter of type 'Float32Array<ArrayBuffer>'.
+src/audio/pitch/pitch-visual-bridge.ts(17,30): error TS2339: Property 'get' does not exist on type 'typeof PitchEngine'.
+src/billy/__tests__/billy-controller.test.ts(2,44): error TS6133: 'BillyStepResult' is declared but its value is never read.
+src/billy/__tests__/billy-controller.test.ts(50,3): error TS2322: Type '{ isPlaying: boolean; isAiStreaming: boolean; hasTrack: boolean; isLooping: boolean; isRecording: boolean; isOverlayOpen: boolean; bpm: number; activeLineIndex: number; activeBlockType: string | null; ... 4 more ...; attackRequest?: string | ... 1 more ... | undefined; }' is not assignable to type 'BillyInputs'.
+src/billy/__tests__/billy-controller.test.ts(289,7): error TS2554: Expected 3 arguments, but got 4.
+src/billy/__tests__/billy-controller.test.ts(305,7): error TS2554: Expected 3 arguments, but got 4.
+src/billy/__tests__/billy-controller.test.ts(321,7): error TS2554: Expected 3 arguments, but got 4.
+src/billy/__tests__/billy-controller.test.ts(337,7): error TS2554: Expected 3 arguments, but got 4.
+src/billy/__tests__/billy-controller.test.ts(353,7): error TS2554: Expected 3 arguments, but got 4.
+src/billy/__tests__/billy-controller.test.ts(369,7): error TS2554: Expected 3 arguments, but got 4.
+src/billy/__tests__/billy-controller.test.ts(385,7): error TS2554: Expected 3 arguments, but got 4.
+src/billy/billy-controller.ts(4,3): error TS6133: 'CORNER_POS' is declared but its value is never read.
+src/billy/billy-runtime.ts(3,3): error TS6133: 'BILLY_WIDTH' is declared but its value is never read.
+src/billy/billy-runtime.ts(4,3): error TS6133: 'BILLY_HEIGHT' is declared but its value is never read.
+src/billy/billy-runtime.ts(7,8): error TS6133: 'BillyMode' is declared but its value is never read.
+src/billy/billy-runtime.ts(8,8): error TS6133: 'BillyZone' is declared but its value is never read.
+src/billy/billy.service.ts(43,10): error TS2554: Expected 1 arguments, but got 0.
+src/billy/billy.service.ts(60,10): error TS2554: Expected 1 arguments, but got 0.
+src/blocks/parser/block-taxonomy.test.ts(55,17): error TS6133: 'alias' is declared but its value is never read.
+src/blocks/parser/tagged-lyrics.parser.ts(276,9): error TS6133: 'typesNumberIfMultiple' is declared but its value is never read.
+src/blocks/parser/tagged-lyrics.parser.ts(342,3): error TS6133: 'lastLineIndex' is declared but its value is never read.
+src/catalog/components/CatalogLayout.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/catalog/feed/feed-data.store.ts(119,35): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/catalog/feed/feed-data.store.ts(231,13): error TS6133: 's' is declared but its value is never read.
+src/catalog/feed/feed-data.store.ts(235,11): error TS6133: 's' is declared but its value is never read.
+src/catalog/feed/feed-data.store.ts(349,42): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/catalog/feed/feed-data.store.ts(557,11): error TS6133: 's' is declared but its value is never read.
+src/catalog/feed/FeedPostCard.tsx(49,10): error TS6133: 'toast' is declared but its value is never read.
+src/components/BillyDock/BillyDock.tsx(58,9): error TS6133: 'animation' is declared but its value is never read.
+src/components/CatalogPanel.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/components/ControlDeck.tsx(4,1): error TS6133: 'usePianoStore' is declared but its value is never read.
+src/components/ControlDeck.tsx(12,10): error TS2300: Duplicate identifier 'useSyncStore'.
+src/components/ControlDeck.tsx(13,10): error TS2300: Duplicate identifier 'useSyncStore'.
+src/components/ControlDeck.tsx(27,9): error TS6133: 'stemsMode' is declared but its value is never read.
+src/components/ControlDeck.tsx(35,9): error TS6133: 'pianoOpen' is declared but its value is never read.
+src/components/ControlPanel.tsx(34,21): error TS6133: 'active' is declared but its value is never read.
+src/components/CurrentTrackBadge.tsx(20,28): error TS6133: 'coverArtUrl' is declared but its value is never read.
+src/components/Header.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/components/InstrumentOverlay.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/components/InstrumentStrip.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/components/NowPlaying.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/components/NowPlaying.tsx(1,17): error TS6133: 'useEffect' is declared but its value is never read.
+src/components/QuickActions.tsx(39,20): error TS6133: 'setAutoDetect' is declared but its value is never read.
+src/components/RehearsalLyrics.tsx(36,9): error TS6133: 'loopBlockIds' is declared but its value is never read.
+src/components/RehearsalLyrics.tsx(417,7): error TS2353: Object literal may only specify known properties, and 'label' does not exist in type 'TextBlock'.
+src/components/RehearsalLyrics.tsx(713,9): error TS6133: 'getBlockCueStyle' is declared but its value is never read.
+src/components/StylesDeck.tsx(12,3): error TS6133: 'LINE_OTHERS_SOURCES' is declared but its value is never read.
+src/components/StylesDeck.tsx(13,3): error TS6133: 'LINE_OTHERS_SOURCE_LABELS' is declared but its value is never read.
+src/components/StylesDeck.tsx(21,8): error TS6133: 'LineOthersSource' is declared but its value is never read.
+src/components/StylesDeck.tsx(64,7): error TS6133: 'WORD_COMPLETED_LABELS' is declared but its value is never read.
+src/components/StylesDeck.tsx(122,7): error TS6133: 'WORD_COMPLETED_MODES' is declared but its value is never read.
+src/components/StylesDeck.tsx(244,9): error TS6133: 'wordCompletedMode' is declared but its value is never read.
+src/components/StylesDeck.tsx(255,9): error TS6133: 'setWordCompletedMode' is declared but its value is never read.
+src/components/TrackInfo.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/components/TrackInfoBoard/AiExpertPanel.tsx(184,13): error TS6133: 'scenarioId' is declared but its value is never read.
+src/components/TrackInfoBoard/AiExpertPanel.tsx(311,58): error TS6133: 'r' is declared but its value is never read.
+src/components/TrackInfoBoard/TrackInfoBoard.tsx(240,23): error TS2322: Type 'string[] | null | undefined' is not assignable to type 'string[] | null'.
+src/components/TrackInfoBoard/TrackInfoBoard.tsx(240,44): error TS2322: Type 'string[] | null | undefined' is not assignable to type 'string[] | null'.
+src/components/TrackInfoBoard/TrackInfoBoard.tsx(281,32): error TS2322: Type 'SimilarTrack[] | null | undefined' is not assignable to type '{ name: string; artist: string; }[] | null'.
+src/components/TransportBar.tsx(17,9): error TS6133: 'isPlaying' is declared but its value is never read.
+src/components/UploadPanel.tsx(516,25): error TS6133: 'cleanLyrics' is declared but its value is never read.
+src/components/VolumeControls.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/components/WagonTrain.tsx(25,9): error TS6133: 'toggleBlock' is declared but its value is never read.
+src/components/WagonTrain.tsx(26,9): error TS6133: 'replaceLoop' is declared but its value is never read.
+src/components/WagonTrain.tsx(133,27): error TS6133: 'i' is declared but its value is never read.
+src/exercises/components/QuestEntrySurface.tsx(40,3): error TS6133: 'visibility' is declared but its value is never read.
+src/exercises/exercise.interruption.ts(104,9): error TS2353: Object literal may only specify known properties, and 'instrumentalVolume' does not exist in type 'AudioState | Partial<AudioState> | ((state: AudioState) => AudioState | Partial<AudioState>)'.
+src/exercises/exercise.runtime.lock.test.ts(3,25): error TS6196: 'ExercisePhase' is declared but never used.
+src/exercises/exercise.runtime.test.ts(3,25): error TS6196: 'ExercisePhase' is declared but never used.
+src/exercises/exercise.store.ts(101,3): error TS6133: 'currentRound' is declared but its value is never read.
+src/exercises/generators/backing-ladder.generator.ts(11,25): error TS6196: 'BackingMode' is declared but never used.
+src/exercises/generators/backing-ladder.generator.ts(111,31): error TS6133: 'params' is declared but its value is never read.
+src/feed/useResizeColumns.ts(3,27): error TS6133: 'FeedColWidths' is declared but its value is never read.
+src/feed/useResizeColumns.ts(174,38): error TS6133: 'side' is declared but its value is never read.
+src/foundation/event-bus/wrappers/audio-reactive.ts(88,37): error TS2345: Argument of type 'Uint8Array<ArrayBufferLike>' is not assignable to parameter of type 'Uint8Array<ArrayBuffer>'.
+src/foundation/event-bus/wrappers/stem-reactive.ts(66,44): error TS2345: Argument of type 'Uint8Array<ArrayBufferLike>' is not assignable to parameter of type 'Uint8Array<ArrayBuffer>'.
+src/hooks/useBillyAudioReactive.ts(144,11): error TS6133: 'armChaos' is declared but its value is never read.
+src/hooks/useBillyLocomotion.ts(24,3): error TS6133: 'POSITION_DEADZONE' is declared but its value is never read.
+src/hooks/useStemWaveform.ts(131,37): error TS2345: Argument of type 'Uint8Array<ArrayBufferLike>' is not assignable to parameter of type 'Uint8Array<ArrayBuffer>'.
+src/js/ui/ai-chat-ui.ts(4,28): error TS6133: 'stripTextCommands' is declared but its value is never read.
+src/legacy/engine-v3/__tests__/engine-v3.test.ts(4,29): error TS2307: Cannot find module '../MeterNodeV3' or its corresponding type declarations.
+src/legacy/engine-v3/CaptureBusV3.ts(1,27): error TS2307: Cannot find module './V2Adapter' or its corresponding type declarations.
+src/legacy/engine-v3/LoopEngineV3.ts(1,27): error TS2307: Cannot find module './V2Adapter' or its corresponding type declarations.
+src/legacy/engine-v3/StemPlayerV3.ts(6,27): error TS2307: Cannot find module './V2Adapter' or its corresponding type declarations.
+src/legacy/engine-v3/StemPlayerV3.ts(7,31): error TS2307: Cannot find module './types' or its corresponding type declarations.
+src/legacy/engine-v3/VocalMixV3.ts(1,27): error TS2307: Cannot find module './V2Adapter' or its corresponding type declarations.
+src/main.tsx(19,1): error TS6192: All imports in import declaration are unused.
+src/main.tsx(553,19): error TS6133: '_title' is declared but its value is never read.
+src/performance/performance.store.test.ts(1,32): error TS6133: 'beforeEach' is declared but its value is never read.
+src/performance/performance.store.test.ts(2,31): error TS6133: 'useVisualBudget' is declared but its value is never read.
+src/performance/performance.store.test.ts(2,48): error TS6133: 'useEffectiveTier' is declared but its value is never read.
+src/Rehearsal/bridge/rehearsal-trigger.bridge.ts(228,11): error TS6133: 'scheduleApply' is declared but its value is never read.
+src/services/__tests__/auto-lyrics.grid-search.test.ts(13,30): error TS6133: 'DEFAULT_TUNING' is declared but its value is never read.
+src/services/audio-analysis.service.ts(116,32): error TS2353: Object literal may only specify known properties, and 'wasmPath' does not exist in type '{ locateFile?: ((path: string, prefix: string) => string) | undefined; }'.
+src/services/auto-lyrics.service.ts(1138,9): error TS6133: 'geniusLines' is declared but its value is never read.
+src/services/auto-lyrics.service.ts(1201,9): error TS6133: 'bestScore' is declared but its value is never read.
+src/services/auto-lyrics.service.ts(1523,9): error TS6133: 'autoM2Count' is declared but its value is never read.
+src/services/block-scene.service.ts(19,26): error TS6133: 'idbClearScenes' is declared but its value is never read.
+src/services/cover-art.service.ts(16,11): error TS6196: 'LastFmTrack' is declared but never used.
+src/services/cover-art.service.ts(277,17): error TS6133: 'width' is declared but its value is never read.
+src/services/cover-art.service.ts(277,24): error TS6133: 'height' is declared but its value is never read.
+src/services/idb.service.ts(373,52): error TS6133: 'profileId' is declared but its value is never read.
+src/services/mode-switch.service.ts(19,10): error TS6133: 'deactivateLiveIfActive' is declared but its value is never read.
+src/services/mode-switch.service.ts(104,10): error TS6133: 'detectBodyMode' is declared but its value is never read.
+src/services/upload.service.ts(420,9): error TS6133: 'jsonFileName' is declared but its value is never read.
+src/services/upload.service.ts(421,9): error TS6133: 'jsonContent' is declared but its value is never read.
+src/slot-matrix/__tests__/slot-canvas.test.ts(3,38): error TS6196: 'SubBlockRange' is declared but never used.
+src/slot-matrix/__tests__/slot-canvas.test.ts(99,17): error TS2741: Property 'lineIndices' is missing in type '{ id: string; blockId: string; subBlockIndex: number; startSlotIndex: number; endSlotIndex: number; isFirst: true; isLast: true; }' but required in type 'SubBlockRange'.
+src/slot-matrix/__tests__/slot-canvas.test.ts(108,5): error TS2741: Property 'lineIndices' is missing in type '{ id: string; blockId: string; subBlockIndex: number; startSlotIndex: number; endSlotIndex: number; isFirst: true; isLast: true; }' but required in type 'SubBlockRange'.
+src/slot-matrix/__tests__/slot-canvas.test.ts(129,5): error TS2741: Property 'lineIndices' is missing in type '{ id: string; blockId: string; subBlockIndex: number; startSlotIndex: number; endSlotIndex: number; isFirst: true; isLast: true; }' but required in type 'SubBlockRange'.
+src/slot-matrix/__tests__/slot-groups.test.ts(1,32): error TS6133: 'vi' is declared but its value is never read.
+src/slot-matrix/__tests__/slot-groups.test.ts(1,36): error TS6133: 'beforeEach' is declared but its value is never read.
+src/slot-matrix/__tests__/slot-matrix.test.ts(4,3): error TS6133: 'getRootFontSize' is declared but its value is never read.
+src/slot-matrix/__tests__/slot-matrix.test.ts(53,28): error TS6133: 'activeLine' is declared but its value is never read.
+src/slot-matrix/__tests__/slot-matrix.test.ts(53,48): error TS6133: 'block' is declared but its value is never read.
+src/slot-matrix/__tests__/slot-matrix.test.ts(53,60): error TS6133: 'max' is declared but its value is never read.
+src/slot-matrix/compute-slot-canvas.ts(53,5): error TS6133: 'matrix' is declared but its value is never read.
+src/slot-matrix/compute-slot-canvas.ts(152,5): error TS6133: 'gapPx' is declared but its value is never read.
+src/slot-matrix/compute-slot-canvas.ts(179,9): error TS2741: Property 'lineIndices' is missing in type '{ id: string; blockId: string; subBlockIndex: number; startSlotIndex: number; endSlotIndex: number; isFirst: true; isLast: true; }' but required in type 'SubBlockRange'.
+src/slot-matrix/compute-slot-groups.ts(110,11): error TS2741: Property 'lineIndices' is missing in type '{ id: string; blockId: string; subBlockIndex: number; startSlotIndex: number; endSlotIndex: number; isFirst: boolean; isLast: boolean; }' but required in type 'SubBlockRange'.
+src/slot-matrix/use-slot-matrix.ts(4,1): error TS6133: 'computeOffsetY' is declared but its value is never read.
+src/stem/stem.store.ts(20,10): error TS6133: 'BUILTIN_STEMS' is declared but its value is never read.
+src/stores/__tests__/batch-remain.test.ts(6,82): error TS2322: Type 'boolean' is not assignable to type '() => boolean'.
+src/stores/__tests__/batch-remain.test.ts(26,50): error TS2353: Object literal may only specify known properties, and 'scenes' does not exist in type 'BlockSceneStore | Partial<BlockSceneStore> | ((state: BlockSceneStore) => BlockSceneStore | Partial<...>)'.
+src/stores/__tests__/batch-remain.test.ts(28,42): error TS2339: Property 'scenes' does not exist on type 'BlockSceneStore'.
+src/stores/__tests__/batch-remain.test.ts(35,45): error TS2353: Object literal may only specify known properties, and 'apiKey' does not exist in type '(MvsepState & MvsepActions) | Partial<MvsepState & MvsepActions> | ((state: MvsepState & MvsepActions) => (MvsepState & MvsepActions) | Partial<...>)'.
+src/stores/__tests__/batch-remain.test.ts(37,37): error TS2339: Property 'status' does not exist on type 'MvsepState & MvsepActions'.
+src/stores/__tests__/medium-stores.test.ts(6,44): error TS2353: Object literal may only specify known properties, and 'loopStart' does not exist in type 'LoopState | Partial<LoopState> | ((state: LoopState) => LoopState | Partial<LoopState>)'.
+src/stores/__tests__/medium-stores.test.ts(9,14): error TS2339: Property 'loopStart' does not exist on type 'LoopState'.
+src/stores/__tests__/medium-stores.test.ts(10,14): error TS2339: Property 'loopEnd' does not exist on type 'LoopState'.
+src/stores/__tests__/medium-stores.test.ts(11,14): error TS2339: Property 'loopActive' does not exist on type 'LoopState'.
+src/stores/__tests__/medium-stores.test.ts(18,45): error TS2353: Object literal may only specify known properties, and 'pitchEnabled' does not exist in type 'PitchState | Partial<PitchState> | ((state: PitchState) => PitchState | Partial<PitchState>)'.
+src/stores/__tests__/medium-stores.test.ts(20,37): error TS2339: Property 'pitchEnabled' does not exist on type 'PitchState'.
+src/stores/__tests__/medium-stores.test.ts(27,49): error TS2353: Object literal may only specify known properties, and 'activeStyleId' does not exist in type 'TextStyleState | Partial<TextStyleState> | ((state: TextStyleState) => TextStyleState | Partial<TextStyleState>)'.
+src/stores/__tests__/medium-stores.test.ts(29,41): error TS2339: Property 'activeStyleId' does not exist on type 'TextStyleState'.
+src/stores/__tests__/medium-stores.test.ts(45,46): error TS2353: Object literal may only specify known properties, and 'lyrics' does not exist in type 'LyricsState | Partial<LyricsState> | ((state: LyricsState) => LyricsState | Partial<LyricsState>)'.
+src/stores/__tests__/medium-stores.test.ts(47,38): error TS2339: Property 'lyrics' does not exist on type 'LyricsState'.
+src/stores/__tests__/medium-stores.test.ts(64,48): error TS2353: Object literal may only specify known properties, and 'isWordSyncReady' does not exist in type 'WordSyncState | Partial<WordSyncState> | ((state: WordSyncState) => WordSyncState | Partial<WordSyncState>)'.
+src/stores/__tests__/medium-stores.test.ts(66,40): error TS2339: Property 'isWordSyncReady' does not exist on type 'WordSyncState'.
+src/stores/__tests__/simple-stores.test.ts(6,58): error TS2353: Object literal may only specify known properties, and 'typeCounts' does not exist in type 'BlocksState | Partial<BlocksState> | ((state: BlocksState) => BlocksState | Partial<BlocksState>)'.
+src/stores/__tests__/simple-stores.test.ts(15,46): error TS2353: Object literal may only specify known properties, and 'cameraActive' does not exist in type 'CameraState | Partial<CameraState> | ((state: CameraState) => CameraState | Partial<CameraState>)'.
+src/stores/__tests__/simple-stores.test.ts(17,38): error TS2339: Property 'cameraActive' does not exist on type 'CameraState'.
+src/stores/__tests__/simple-stores.test.ts(24,45): error TS2353: Object literal may only specify known properties, and 'pianoOpen' does not exist in type 'PianoState | Partial<PianoState> | ((state: PianoState) => PianoState | Partial<PianoState>)'.
+src/stores/__tests__/simple-stores.test.ts(26,37): error TS2339: Property 'pianoOpen' does not exist on type 'PianoState'.
+src/stores/__tests__/simple-stores.test.ts(33,45): error TS2353: Object literal may only specify known properties, and 'activePresetId' does not exist in type 'PlateState | Partial<PlateState> | ((state: PlateState) => PlateState | Partial<PlateState>)'.
+src/stores/__tests__/simple-stores.test.ts(35,37): error TS2339: Property 'activePresetId' does not exist on type 'PlateState'.
+src/stores/__tests__/simple-stores.test.ts(42,69): error TS2353: Object literal may only specify known properties, and 'isPaused' does not exist in type 'RecordingState | Partial<RecordingState> | ((state: RecordingState) => RecordingState | Partial<RecordingState>)'.
+src/stores/__tests__/simple-stores.test.ts(51,44): error TS2353: Object literal may only specify known properties, and 'activeTab' does not exist in type 'DeckState | Partial<DeckState> | ((state: DeckState) => DeckState | Partial<DeckState>)'.
+src/stores/__tests__/simple-stores.test.ts(53,36): error TS2551: Property 'activeTab' does not exist on type 'DeckState'. Did you mean 'activeTabId'?
+src/stores/loop.store.ts(6,29): error TS6133: 'getMergedBlockTimeRange' is declared but its value is never read.
+src/stores/loop.store.ts(103,15): error TS6133: 'nextSubs' is declared but its value is never read.
+src/stores/loop.store.ts(121,37): error TS6133: 'lines' is declared but its value is never read.
+src/stores/loop.store.ts(146,11): error TS6133: 'markers' is declared but its value is never read.
+src/stores/pitch.store.ts(45,32): error TS2339: Property 'get' does not exist on type 'typeof PitchEngine'.
+src/stores/pitch.store.ts(85,17): error TS2339: Property 'get' does not exist on type 'typeof PitchEngine'.
+src/stores/practice-session.store.ts(175,24): error TS6133: 'e' is declared but its value is never read.
+src/stores/textStyle.store.ts(160,19): error TS2345: Argument of type '{ fontFamily: string; styleId: string; transitionId: string; transitionSet: TransitionSet; fontScale: number; wordFocusLevel: WordFocusLevel; wordFxMode: WordFxMode; ... 4 more ...; lineOthersLevel: LineOthersLevel; }' is not assignable to parameter of type 'PersistedState'.
+src/stores/textStyle.store.ts(260,19): error TS2345: Argument of type '{ fontFamily: string; styleId: string; transitionId: string; transitionSet: TransitionSet; fontScale: number; wordFocusLevel: WordFocusLevel; wordFxMode: WordFxMode; ... 4 more ...; lineOthersLevel: LineOthersLevel; }' is not assignable to parameter of type 'PersistedState'.
+src/sync/canvas/hit-testing.ts(12,11): error TS6196: 'LoopHandleDetection' is declared but never used.
+src/sync/components/SyncEditorPanel.tsx(2,10): error TS2300: Duplicate identifier 'useSyncStore'.
+src/sync/components/SyncEditorPanel.tsx(8,10): error TS2300: Duplicate identifier 'useSyncStore'.
+src/sync/components/SyncEditorPanel.tsx(422,27): error TS2554: Expected 1 arguments, but got 2.
+src/sync/components/SyncEditorPanel.tsx(1098,36): error TS6133: 'idx' is declared but its value is never read.
+src/sync/components/SyncLyrics.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/sync/hooks/useWaveformViewport.ts(22,3): error TS6133: 'containerRef' is declared but its value is never read.
+src/sync/hooks/useWaveformViewport.ts(23,3): error TS6133: 'canvasRef' is declared but its value is never read.
+src/sync/word-sync/line-map.builder.test.ts(86,13): error TS6133: 'lineMap' is declared but its value is never read.
+src/takes/components/TakesCanvas.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/takes/components/TakesControlStrip.tsx(3,1): error TS6133: 'useAudioStore' is declared but its value is never read.
+src/takes/components/TakesControlStrip.tsx(32,69): error TS6133: 'onCompareModeChange' is declared but its value is never read.
+src/takes/components/TakesControlStrip.tsx(54,9): error TS6133: 'setRoundCaptureLockedSlot' is declared but its value is never read.
+src/takes/components/TakesControlStrip.tsx(73,9): error TS6133: 'PLAYING_REFERENCE_ID' is declared but its value is never read.
+src/takes/components/TakesControlStrip.tsx(79,9): error TS6133: 'setPreviewMode' is declared but its value is never read.
+src/takes/components/TakesControlStrip.tsx(82,55): error TS6133: 'setPlayingTakeId' is declared but its value is never read.
+src/takes/components/TakesControlStrip.tsx(100,9): error TS6133: 'handlePracticeInterrupt' is declared but its value is never read.
+src/takes/components/TakesControlStrip.tsx(188,7): error TS2531: Object is possibly 'null'.
+src/takes/components/TakesControlStrip.tsx(617,42): error TS2531: Object is possibly 'null'.
+src/takes/components/TakesPanel.tsx(62,9): error TS6133: 'clearCompletionMoment' is declared but its value is never read.
+src/takes/components/TakesPanel.tsx(313,9): error TS6133: 'canCompare' is declared but its value is never read.
+src/takes/components/TakesPanel.tsx(1091,25): error TS2531: Object is possibly 'null'.
+src/takes/components/TakesPanel.tsx(1172,9): error TS2531: Object is possibly 'null'.
+src/takes/components/TakesPanel.tsx(1205,7): error TS2531: Object is possibly 'null'.
+src/takes/components/TakesPanel.tsx(1352,21): error TS6133: 'ae' is declared but its value is never read.
+src/takes/hooks/useTakesPlayback.ts(22,3): error TS6133: 'activeBlockId' is declared but its value is never read.
+src/takes/hooks/useTakesPlayback.ts(38,53): error TS2339: Property 'instrumentalVolume' does not exist on type 'AudioState'.
+src/takes/hooks/useTakesPlayback.ts(39,47): error TS2339: Property 'vocalsVolume' does not exist on type 'AudioState'.
+src/takes/hooks/useTakesPlayback.ts(55,13): error TS2339: Property 'instrumentalVolume' does not exist on type 'AudioState'.
+src/takes/hooks/useTakesPlayback.ts(55,33): error TS2339: Property 'vocalsVolume' does not exist on type 'AudioState'.
+src/takes/hooks/useTakesPlayback.ts(100,31): error TS2531: Object is possibly 'null'.
+src/takes/hooks/useTakesPlayback.ts(187,26): error TS2531: Object is possibly 'null'.
+src/takes/waveform/live-trail-controller.ts(43,11): error TS6133: '_logCount' is declared but its value is never read.
+src/takes/waveform/live-trail-renderer.ts(103,11): error TS6133: 'drawCallCount' is declared but its value is never read.
+src/takes/waveform/live-waveform-accumulator.ts(61,37): error TS2345: Argument of type 'Float32Array<ArrayBufferLike>' is not assignable to parameter of type 'Float32Array<ArrayBuffer>'.
+src/test/setup.ts(92,9): error TS6133: 'originalGetContext' is declared but its value is never read.
+src/test/setup.ts(93,78): error TS6133: 'args' is declared but its value is never read.
+src/theme/store/theme-store.ts(9,1): error TS6133: 'defaultTheme' is declared but its value is never read.
+src/theme/themes/neon-night.ts(6,1): error TS6133: 'defaultTheme' is declared but its value is never read.
+src/triggers/__tests__/trigger.engine.test.ts(40,24): error TS2345: Argument of type '{ id: string; tick: Mock<() => { id: string; type: string; source: string; value: number; time: number; metadata: {}; }[]>; reset: Mock<Procedure>; }' is not assignable to parameter of type 'TriggerDetector'.
+src/triggers/WordHighlightLine.tsx(3,1): error TS6133: 'useTextStyleStore' is declared but its value is never read.
