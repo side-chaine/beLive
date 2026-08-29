@@ -211,6 +211,14 @@ export function showNotification(type: 'info' | 'success' | 'error', message: st
 /**
  * Handle file selection — stateless, stores in uploadSession
  */
+
+  // LYRICS-JSON-DROP: extract plain lyrics text from export.json (zip-export writes data.lyrics).
+  // txt (already in parsedLyricsContent) wins; non-string lyrics ignored.
+  export function extractExportJsonLyrics(data: any, current: string | null): string | null {
+    if (data?.lyrics && typeof data.lyrics === 'string' && !current) return data.lyrics;
+    return current;
+  }
+
 export async function handleFileSelect(
   type: UploadFileType,
   file: File,
@@ -267,6 +275,7 @@ export async function handleFileSelect(
       try {
         const text = await readFileAsText(file);
         const data = JSON.parse(text);
+        uploadSession.parsedLyricsContent = extractExportJsonLyrics(data, uploadSession.parsedLyricsContent);
         if (Array.isArray(data)) {
           // Validate markers array shape
           if (isPersistedSyncMarkerArray(data)) {
@@ -319,9 +328,11 @@ export async function handleFileSelect(
             uploadSession.jsonScenes = data.scenes;
           }
         } else {
-          showNotification('error', '❌ JSON должен содержать массив markers');
-          uploadSession.jsonMarkers = null;
-          uploadSession.jsonTextBlocks = null;
+          if (!uploadSession.parsedLyricsContent) {
+            showNotification('error', '❌ JSON должен содержать массив markers');
+            uploadSession.jsonMarkers = null;
+            uploadSession.jsonTextBlocks = null;
+          }
         }
       } catch (e) {
         console.error('UploadService: JSON parse error:', e);
