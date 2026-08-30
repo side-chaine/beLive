@@ -136,6 +136,9 @@ export class HybridPipelineService implements IPipelineController {
   get chainA(): StemChain { return this._chainA }
   get chainB(): StemChain { return this._chainB }
   get stretchPool(): StretchInstancePool { return this._stretchPool }
+  /** ARC-2e: фейдеронезависимый vocal-тап (pre-stretch, до volume/mute/solo) для питч-референса.
+   *  null ⇔ вокал-стем не загружен (сам сигнал живости). Тап ДО stretchGain — mute/solo/volume не влияют. */
+  get vocalReferenceTap(): AudioNode | null { return this._vocalHallSource }
 
   get currentTime(): number {
     if (!this._isPlaying) return this._currentOffset
@@ -216,12 +219,14 @@ export class HybridPipelineService implements IPipelineController {
         stretchGain.gain.value = 1.0
         instance.outputNode.connect(stretchGain)
         // R1: pre-fader vocal hall tap (только vocals) — от instance.outputNode ДО stretchGain.
-        // Повторный loadStem того же инстанса (пул переиспользует WASM) — НЕ дублируем connect.
-        if (stemId === 'vocals' && this._vocalHallTarget) {
+        // ARC-2e (002 У-1): присвоение БЕЗУСЛОВНО (тап жив и без MonitorRouter), connect — только при живом зале.
+        if (stemId === 'vocals') {
           if (this._vocalHallSource !== instance.outputNode) {
             if (this._vocalHallSource) { try { this._vocalHallSource.disconnect(this._vocalHallSend) } catch {} }
-            instance.outputNode.connect(this._vocalHallSend)
             this._vocalHallSource = instance.outputNode
+            if (this._vocalHallTarget) {
+              try { instance.outputNode.connect(this._vocalHallSend) } catch {}
+            }
           }
         }
         stretchGain.connect(this._chainA.mergeGain)
@@ -694,6 +699,13 @@ export class HybridPipelineService implements IPipelineController {
     // _busVolumes НЕ чистим — user-pref переживает reset (паритет V2 engine-level)
     this._crashedStems.clear()
     this._deadStems.clear()
+
+    // ARC-2e (002 У-2): рвём vocal-tap ДО переиспользования WASM-слотов пулом —
+    // иначе зомби-ребро outputNode→_vocalHallSend несёт чужой стем в зал (monitor-truth breach)
+    if (this._vocalHallSource) {
+      try { this._vocalHallSource.disconnect(this._vocalHallSend) } catch {}
+      this._vocalHallSource = null
+    }
 
     // StretchPool остаётся — переиспользуем WASM инстансы
     this._stretchPool.stopAll()

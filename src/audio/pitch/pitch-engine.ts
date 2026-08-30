@@ -40,6 +40,8 @@ export class PitchEngine {
   private _worklet: AudioWorkletNode | null = null;
   private _listeners = new Set<PitchListener>();
   private _ownStream = false;
+  private _refNeeded = false;   // ARC-2e: стрим взят у MicSourceV3 (refcounted)
+  private _initGen = 0;         // ARC-2e (002 У-4): gen-гвард in-flight acquire
 
   /* Passive mode (initFromNode) */
   private _analyser: AnalyserNode | null = null;
@@ -67,22 +69,42 @@ export class PitchEngine {
   async initFromMic(): Promise<void> {
     if (this._status === 'running' || this._status === 'starting') return;
     this._status = 'starting';
+    const myGen = ++this._initGen;
 
     try {
       const ctx = this._getContext();
       if (ctx.state === 'suspended') await ctx.resume();
 
-      /* Mic stream */
-      const ae = (window as any).audioEngine;
-      const existing = ae?.microphoneStream as MediaStream | undefined;
-      if (existing && existing.getAudioTracks().some((t: MediaStreamTrack) => t.readyState === 'live')) {
-        this._stream = existing;
-        this._ownStream = false;
+      /* ARC-2e: дедуп с takes-REC через MicSourceV3 (инвариант 82e1c76).
+         main.tsx публикует __belive.micSource; класс НЕ экспортирует singleton —
+         runtime-чтение, без импорта (циклов нет). */
+      const micSource = (window as any).__belive?.micSource as
+        | { acquire(): Promise<MediaStream>; release(): void }
+        | undefined;
+
+      if (micSource) {
+        const stream = await micSource.acquire();
+        /* ARC-2e (002 У-4): destroy (status='idle') или re-init (новый gen) в in-flight окне —
+           release уравновешивает acquire, присвоения на мёртвом движке НЕТ */
+        if (this._status !== 'starting' || this._initGen !== myGen) {
+          try { micSource.release() } catch {}
+          return;
+        }
+        this._stream = stream;
+        this._refNeeded = true;   // ТОЛЬКО после успешного await+гарда (иначе двойной decrement съедает refcount REC)
       } else {
-        this._stream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-        });
-        this._ownStream = true;
+        /* fallback: V2-режим / V3 boot не дошёл — статус-кво, не хуже сегодняшнего */
+        const ae = (window as any).audioEngine;
+        const existing = ae?.microphoneStream as MediaStream | undefined;
+        if (existing && existing.getAudioTracks().some((t: MediaStreamTrack) => t.readyState === 'live')) {
+          this._stream = existing;
+          this._ownStream = false;
+        } else {
+          this._stream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+          });
+          this._ownStream = true;
+        }
       }
 
       this._source = ctx.createMediaStreamSource(this._stream);
@@ -234,6 +256,13 @@ export class PitchEngine {
     if (this._ownStream && this._source) {
       this._source.disconnect();
       this._stream?.getTracks().forEach((t) => t.stop());
+    }
+
+    /* ARC-2e (002 У-4): refcounted-release — стрим принадлежит MicSourceV3, НЕ движку.
+       try/catch: __belive.micSource может исчезнуть между acquire и destroy — silent, не throw в cleanup. */
+    if (this._refNeeded) {
+      try { ((window as any).__belive?.micSource as { release?: () => void } | undefined)?.release?.() } catch {}
+      this._refNeeded = false;
     }
 
     this._worklet = null;

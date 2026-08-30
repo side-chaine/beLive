@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePianoStore } from '../stores/piano.store';
+import { useAudioStore } from '../stores/audio.store';
 import { PitchEngine } from '../audio/pitch/pitch-engine';
 import { midiToNote } from '../audio/pitch/types';
 import type { WorkletMessage } from '../audio/pitch/types';
@@ -222,6 +223,7 @@ function useStableNote(engine: PitchEngine | null): string | null {
 export function PitchTab() {
   const micActive = usePianoStore(s => s.micActive);
   const setMicActive = usePianoStore(s => s.setMicActive);
+  const isPlaying = useAudioStore(s => s.isPlaying);
 
   const vocalEngineRef = useRef<PitchEngine | null>(null);
   const [vocalEngine, setVocalEngine] = useState<PitchEngine | null>(null);
@@ -232,32 +234,32 @@ export function PitchTab() {
 
   /* ── Vocal engine — eager init + event-driven ── */
   useEffect(() => {
-    const ae = (window as any).audioEngine;
     const gen = ++genRef.current;
     let destroyed = false;
 
     const tryInit = (): boolean => {
       if (destroyed) return false;
-      const vocalsGain = ae?.vocalsGain as AudioNode | undefined;
-      const aeHasVocals = ae?.stems?.has('vocals') ?? false;
-      setHasVocals(aeHasVocals);
-
-      if (!vocalsGain || !aeHasVocals) return false;
-
+      // ARC-2e: V3-тап вместо мёртвых facade-полей — фейдеронезависимый pre-fader vocal
+      const tap = ((window as any).__belive?.pipeline?.vocalReferenceTap ?? null) as AudioNode | null;
+      setHasVocals(tap !== null);
+      if (!tap) {
+        vocalEngineRef.current?.pause();   // ARC-2e (002 У-5): гасим тик-зомби (движок жив, тап мёртв)
+        return false;
+      }
       if (vocalEngineRef.current) {
-        vocalEngineRef.current.retarget(vocalsGain);
+        vocalEngineRef.current.retarget(tap);
+        if (!useAudioStore.getState().isPlaying) vocalEngineRef.current.pause(); // пауза-тиканье
         return true;
       }
-
       const eng = new PitchEngine();
       vocalEngineRef.current = eng;
-      eng.initFromNode(vocalsGain).then(() => {
+      eng.initFromNode(tap).then(() => {
         if (genRef.current !== gen || destroyed) {
           eng.destroy();
           return;
         }
         setVocalEngine(eng);
-        if (!ae?.isPlaying) eng.pause();
+        if (!useAudioStore.getState().isPlaying) eng.pause();   // ARC-2e (002 У-3): isPlaying из store
       }).catch(err => {
         console.warn('[PitchTab] vocal engine failed:', err);
       });
@@ -266,8 +268,13 @@ export function PitchTab() {
 
     tryInit();
 
-    const onTrackLoaded = () => tryInit();
+    const onTrackLoaded = () => tryInit();                              // backup: маунт после stem-ready
     document.addEventListener('track-fully-loaded', onTrackLoaded);
+
+    const onVocalStemReady = (e: Event) => {                            // ARC-2e: раньше на сотни ms
+      if ((e as CustomEvent).detail?.stemId === 'vocals') tryInit();
+    };
+    document.addEventListener('track-stem-ready', onVocalStemReady);
 
     const onPlaybackState = (e: Event) => {
       const detail = (e as CustomEvent).detail;
@@ -281,6 +288,7 @@ export function PitchTab() {
     return () => {
       destroyed = true;
       document.removeEventListener('track-fully-loaded', onTrackLoaded);
+      document.removeEventListener('track-stem-ready', onVocalStemReady);
       window.removeEventListener('playback-state-changed', onPlaybackState);
       clearTimeout(timeoutId);
       if (vocalEngineRef.current) {
@@ -343,8 +351,7 @@ export function PitchTab() {
     if (hasVocals === false) return '\u2014\u2014';
     if (hasVocals === null && !vocalEngine) return '\u2026';
     if (!vocal.note && vocalEngine) {
-      const ae = (window as any).audioEngine;
-      if (ae && !ae.isPlaying) return '\u23F8';
+      if (!isPlaying) return '\u23F8';   // ARC-2e (002 У-3): семантика паузы из store
     }
     return vocal.note ?? '\u2014';
   })();
