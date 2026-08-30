@@ -1,0 +1,197 @@
+{
+  "rehearsal": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "sync": {
+    "loc": 4814,
+    "files": 33,
+    "t30": 7
+  },
+  "catalog": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "scene": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "hub": {
+    "loc": 769,
+    "files": 7,
+    "t30": 0
+  },
+  "user": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "arena": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "power": {
+    "loc": 1774921,
+    "files": 1000,
+    "t30": 2
+  },
+  "foundation": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "studio": {
+    "loc": 21566,
+    "files": 68,
+    "t30": 56
+  },
+  "quest": {
+    "loc": 10702,
+    "files": 56,
+    "t30": 17
+  },
+  "show": {
+    "loc": 4585,
+    "files": 13,
+    "t30": 1
+  },
+  "split": {
+    "loc": 170,
+    "files": 3,
+    "t30": 0
+  },
+  "styles": {
+    "loc": 839,
+    "files": 13,
+    "t30": 0
+  },
+  "notes": {
+    "loc": 1649,
+    "files": 11,
+    "t30": 2
+  },
+  "billy": {
+    "loc": 1725,
+    "files": 18,
+    "t30": 7
+  },
+  "port": {
+    "loc": 4500,
+    "files": 24,
+    "t30": 6
+  },
+  "dna": {
+    "loc": 4185,
+    "files": 8,
+    "t30": 2
+  },
+  "scenes": {
+    "loc": 3134,
+    "files": 14,
+    "t30": 2
+  },
+  "profile": {
+    "loc": 1135,
+    "files": 8,
+    "t30": 4
+  },
+  "karaoke": {
+    "loc": 790,
+    "files": 2,
+    "t30": 0
+  },
+  "concert": {
+    "loc": 122,
+    "files": 1,
+    "t30": 0
+  },
+  "live": {
+    "loc": 66,
+    "files": 2,
+    "t30": 0
+  },
+  "infra": {
+    "loc": 31971,
+    "files": 206,
+    "t30": 82
+  },
+  "bridge": {
+    "loc": 1064,
+    "files": 8,
+    "t30": 1
+  },
+  "m-play": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "m-stem": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "m-mic": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "m-mix": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "m-line": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "m-loop": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "m-load": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "m-saved": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "m-take": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "m-scenes": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "m-sect": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "m-mode": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "m-billy": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  },
+  "m-bridge": {
+    "loc": 0,
+    "files": 0,
+    "t30": 0
+  }
+}
