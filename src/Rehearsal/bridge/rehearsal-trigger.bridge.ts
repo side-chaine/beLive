@@ -15,6 +15,8 @@ export class RehearsalTriggerBridge {
   private sender = new EnvelopeSender();
   private coalescer = new CommandCoalescer();
   private watchdog = new PlaybackWatchdog();
+  /** BRG-2: оригиналы обёрнутых ae.* для restore в dispose (анти-двойная-обёртка) */
+  private _blHijackFns: { play?: unknown; pause?: unknown; seekTo?: unknown; setCurrentTime?: unknown } = {};
   private drift = new DriftCorrector();
   private vclock = new VirtualClock();
   private clockWorker: Worker;
@@ -30,6 +32,7 @@ export class RehearsalTriggerBridge {
    *  десятки секунд "дрифта" и дёргал seek. Лог: "drift check: 72398.7 ms".
    *  Фикс: на hide — стоп мониторинга, на visible — свежий якорь. */
   private onVisibilityChange = () => {
+    // BRG-2: restore-обёртки при dispose (маркер __blHijacked + оригиналы в _blHijackFns)
     if (document.visibilityState === 'visible') {
       this.send({ type: 'sync-request' });
       // Переанкоровка: берём текущую реальную позицию как новую точку отсчёта
@@ -123,34 +126,38 @@ export class RehearsalTriggerBridge {
     const ae = (window as any).audioEngine;
     if (!ae) { setTimeout(() => this.hijackAudioTransport(), 500); return; }
 
-    const origPlay = ae.play.bind(ae);
-    const origPause = ae.pause.bind(ae);
-    const origSeekTo = ae.seekTo.bind(ae);
-
-    ae.play = (...args: unknown[]) => {
-      const result = origPlay(...args);
-      this.broadcastTransport({ type: 'play', mediaTime: ae.getCurrentTime?.() ?? 0, wallClockTime: Date.now() });
-      return result;
-    };
-    ae.pause = (...args: unknown[]) => {
-      const result = origPause(...args);
-      this.broadcastTransport({ type: 'pause', mediaTime: ae.getCurrentTime?.() ?? 0, wallClockTime: Date.now() });
-      return result;
-    };
-    ae.seekTo = (t: number, ...args: unknown[]) => {
-      const result = origSeekTo(t, ...args);
-      this.broadcastTransport({ type: 'seek', mediaTime: t, wallClockTime: Date.now() });
-      return result;
-    };
-    // ★ setCurrentTime используется при клике по блокам — тоже broadcast
-    if (ae.setCurrentTime) {
-      const origSetCurrentTime = ae.setCurrentTime.bind(ae);
-      ae.setCurrentTime = (t: number) => {
-        origSetCurrentTime(t);
-        this.broadcastTransport({ type: 'seek', mediaTime: t, wallClockTime: Date.now() });
+    // BRG-2 fix (201-ревизия 23:05, диспатч 200 23:50): маркер против двойной обёртки
+    // (dispose не снимал патч — пересоздание моста = двойной broadcast) + ARC-2d сделал
+    // ae.play живым async → broadcast ДО resolve с pre-play getCurrentTime + unhandled
+    // rejection (тот же класс, что баг 21:00). Обёртки в _blHijackFns — restore в dispose.
+    if (ae.__blHijacked) return;
+    ae.__blHijacked = true;
+    const wrap = <A extends unknown[]>(broadcastType: 'play' | 'pause' | 'seek', fn: (...a: A) => unknown) =>
+      (...args: A) => {
+        const result = fn(...args);
+        // broadcast ПОСЛЕ resolve живого транспорта (не до), ошибки — проглочены, не unhandled
+        void Promise.resolve(result).then(() => {
+          this.broadcastTransport({
+            type: broadcastType,
+            mediaTime: ae.getCurrentTime?.() ?? 0,
+            wallClockTime: Date.now(),
+          });
+        }).catch(() => {});
+        return result;
       };
+    this._blHijackFns = {
+      play: ae.play,
+      pause: ae.pause,
+      seekTo: ae.seekTo,
+      setCurrentTime: ae.setCurrentTime,
+    };
+    ae.play = wrap('play', ae.play.bind(ae));
+    ae.pause = wrap('pause', ae.pause.bind(ae));
+    ae.seekTo = wrap('seek', ae.seekTo.bind(ae)) as typeof ae.seekTo;
+    if (ae.setCurrentTime) {
+      ae.setCurrentTime = wrap('seek', ae.setCurrentTime.bind(ae)) as typeof ae.setCurrentTime;
     }
-    console.log('[PATCH-ORDER] rehearsal-trigger: hijackAudioTransport — play/pause/seekTo/setCurrentTime patched');
+    console.log('[PATCH-ORDER] rehearsal-trigger: hijackAudioTransport — play/pause/seekTo/setCurrentTime patched (BRG-2 guard)');
   }
 
   // --- Приём ---
@@ -398,6 +405,15 @@ export class RehearsalTriggerBridge {
   }
 
   dispose() {
+    // BRG-2: снимаем hijack-обёртки (маркер + оригиналы) — пересоздание моста не наследует патч
+    const ae = (window as any).audioEngine;
+    if (ae?.__blHijacked) {
+      if (this._blHijackFns.play !== undefined) ae.play = this._blHijackFns.play;
+      if (this._blHijackFns.pause !== undefined) ae.pause = this._blHijackFns.pause;
+      if (this._blHijackFns.seekTo !== undefined) ae.seekTo = this._blHijackFns.seekTo;
+      if (this._blHijackFns.setCurrentTime !== undefined) ae.setCurrentTime = this._blHijackFns.setCurrentTime;
+      delete ae.__blHijacked;
+    }
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     this.cancelPendingApplies();
     this.clockWorker.terminate();

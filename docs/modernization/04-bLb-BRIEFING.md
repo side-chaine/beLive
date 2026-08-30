@@ -363,7 +363,7 @@ city/
 - `scripts/audit-city.mjs` — карта импортов: 512 файлов, 93 orphan, 43 hub, 4 цикла (первый проход).
 - `scripts/check-secrets.mjs` — гейт на секреты (R1 VITE_*, R2 форматы, R3 SECRET=value). Нашёл токен Telegram-бота с 14 июня, ключи Last.fm/GetSongBPM в бандле.
 - Pre-commit хук + шаг в `quality-gates.yml`.
-- `02-PROGRAM-ROADMAP.md` — план (помечен «устарел», но архитектура мыслей жива).
+- `docs/archive/superseded/02-PROGRAM-ROADMAP.md` (архив, 30.08) — план (помечен «устарел», но архитектура мыслей жива).
 - `03-CITY-AUDIT-BRIEF.md` — бриф для 5 Скаутов (Скаут-4 уже отстрелял).
 - `ADR-0016-w2-entry-criterion-and-deadlock.md` — разрешение тупика W2.
 - `00-INDEX.md` — статус аудита.

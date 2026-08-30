@@ -86,6 +86,8 @@ docs/modernization/handoff/
 
 ## 1.1 Полный инвентарь отчётов (всё лежит в `handoff/docs/`)
 
+> **TOMBSTONE (30.08, MICRO-PACK D):** копия `handoff/docs/` (22 файла) снесена — актуальные файлы живут в `docs/modernization/`. Снимок мёртвого бранча `067-e-regime-0` (REGISTRY-копия) сохранён в истории + `mission-zero.bundle`. SHA `d5c66bd` не существует на origin — дерево Hy4 см. в bundle.
+
 **23 документа, ~250 КБ.** Порядок чтения — сверху вниз.
 
 | Файл | Размер | О чём |
