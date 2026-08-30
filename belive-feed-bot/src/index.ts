@@ -24,7 +24,7 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const reqOrigin = request.headers.get('Origin') || '';
     const corsHeaders = (origin: string) => {
-      const allow = ['https://app.mybelive.com', 'http://localhost:5173', 'http://127.0.0.1:5173', 'http://0.0.0.0:5173'];
+      const allow = ['https://app.mybelive.com', 'http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:3000', 'http://0.0.0.0:5173'];
       const allowed = allow.includes(origin) || origin.startsWith('http://192.168.')
         ? origin : 'https://app.mybelive.com';
       return {
@@ -108,7 +108,7 @@ export default {
 
       // A2: Strict origin check (=== не includes!)
       const origin = request.headers.get('Origin') || '';
-      const allowedDev = ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://0.0.0.0:5173'];
+      const allowedDev = ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:3000', 'http://0.0.0.0:5173'];
       if (origin !== 'https://app.mybelive.com' && !allowedDev.includes(origin) && !origin.startsWith('http://192.168.')) {
         return new Response('Forbidden', { status: 403, headers: corsHeaders });
       }

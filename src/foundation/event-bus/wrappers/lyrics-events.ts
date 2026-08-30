@@ -67,7 +67,16 @@ export function initLyricsEvents(): () => void {
       }
 
       // Throttled guard логирование (parity с bridge.ts:118-128)
-      if (invalidCount > 5 && !_guardLogged) {
+      // GUARD-36 (30.08, фикс 007): кадр, где ВСЕ маркеры out-of-bounds — это гонка смены трека
+      // (markers старого трека против lines нового, детектор читает сторы раздельно),
+      // а НЕ «data migration needed». Лог Босса подтверждает: счёт = lines.length ПРЕДЫДУЩЕГО
+      // трека (36/52/55 на каждом переходе). Кричащий CRITICAL на каждый переход — ложная
+      // тревога; понижаем до тихого warn и не лочим _guardLogged на race-кадре.
+      if (invalidCount > 5 && invalidCount >= markers.length && !_guardLogged) {
+        // race-кадр смены трека: 100% маркеров мимо — данные в порядке, ждём track-loaded
+        console.warn(`[GUARD] track-change race: ${invalidCount}/${markers.length} markers out of bounds — old markers vs new lines, skipping (no migration needed)`)
+        _guardLastCount = invalidCount
+      } else if (invalidCount > 5 && !_guardLogged) {
         console.error(`[GUARD] CRITICAL: ${invalidCount} markers out of bounds. Data migration needed.`)
         _guardLogged = true
         _guardLastCount = invalidCount
