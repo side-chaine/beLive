@@ -10,6 +10,7 @@ import type { StemLoadMap } from '../stem/stemTypes';
 import type { StemDataEntry } from './idb.service';
 import { getTrack as getTrackFromIDB } from './idb.service';
 import { useStemStore } from '../stem/stem.store';
+import { ENGINE_MODE } from '../engine-mode';
 
 export interface LoadTrackOptions {
   autoplay?: boolean;
@@ -466,6 +467,13 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
     if (opts.autoplay) {
       _autoplayTimer = setTimeout(async () => {
         _autoplayTimer = null;
+        // ARC-2d-hotfix (30.08, smoke Boss): в V3 фасадная play() стала РЕАЛЬНОЙ после
+        // наполнения фасада — легаси-таймер стартовал transport на пустом пуле ДО фоновой
+        // V3-загрузки, а каноничный auto-play интерсептора потом блокировался гвардом
+        // 'state: playing' → стемы загружены, но не запущены → тишина.
+        // В V3 autoplay канонизирует V3DataInterceptor (loadTrack → transport.play).
+        // В V2 (ENGINE_MODE='v2') этот путь остаётся единственным — не трогаем.
+        if (ENGINE_MODE === 'v3') return;
         try { await ae.play(); } catch (_) {}
       }, 200);
     }
