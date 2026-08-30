@@ -46,7 +46,7 @@ export const usePitchStore = create<PitchState>((set, get) => ({
     set({ status: 'starting', error: null });
 
     try {
-      await engine.init();
+      await engine.initFromMic(); /* mic-only до ARC-2e; риск двойного захвата с PitchTab-mic в V2 — разрулить в ARC-2e */
 
       _unsub = engine.subscribe((msg: WorkletMessage) => {
         const now = performance.now();

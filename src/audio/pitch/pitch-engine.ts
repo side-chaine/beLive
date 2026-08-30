@@ -18,6 +18,17 @@ let _workletLoaded = false;
  *                    Safe: zero audio thread impact, no crackling
  */
 export class PitchEngine {
+  /**
+   * Singleton accessor. Владелец singleton-а — pitch.store/bridge (ARC-2a).
+   * PitchTab владеет ЛОКАЛЬНЫМИ инстансами (new) до ARC-2e.
+   * ⚠ МИНА ARC-2e: перевод PitchTab на get() требует события смерти/пересборки store —
+   * PitchTab-cleanup destroy() убьёт singleton под живым store (status:'running' без worklet).
+   */
+  private static _instance: PitchEngine | null = null;
+  static get(): PitchEngine {
+    if (!PitchEngine._instance) PitchEngine._instance = new PitchEngine();
+    return PitchEngine._instance;
+  }
   readonly ring = new PitchRingBuffer(300);
 
   private _status: PitchStatus = 'idle';
@@ -236,7 +247,7 @@ export class PitchEngine {
     this._detector = null;
     this._ctx = null;
     this._ownStream = false;
-
+    this._listeners.clear();
     this.ring.clear();
     this._status = 'idle';
   }
