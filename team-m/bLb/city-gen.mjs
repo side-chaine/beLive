@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// beLiveBase city-gen v2: houses.yaml (v0.2) -> city-state.json + инъекция CITY/TOUR в bLb-CITY-v0.2-quiet.html
+// beLiveBase city-gen v3: houses.yaml (v0.3: здание=режим, этаж=файл) -> city-state.json + инъекция CITY/TOUR
 // Запуск на ПК (есть node): node team-m/bLb/city-gen.mjs
 // Если рядом есть city-metrics.json (даёт city-metrics.mjs) — перекрывает loc/files/t30 из yaml.
-// Без внешних зависимостей: парсер yaml минимальный, под известный формат houses.yaml v0.2.
+// Без внешних зависимостей: парсер yaml минимальный, под формат houses.yaml v0.3 (совместим с v0.2 rooms).
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -28,7 +28,7 @@ const REAL_EVENTS = new Set([
   'ui:mode-changed', 'ui:block-scenes-loaded', 'ui:camera-permission-resolved',
   'practice:state-changed'
 ]);
-const STATUSES = new Set(['alive', 'demo', 'planned', 'conserved', 'trash', 'cleared', 'external']);
+const STATUSES = new Set(['alive', 'alive-partial', 'demo', 'planned', 'conserved', 'trash', 'cleared', 'external']);
 const ARCHS = new Set(['tower', 'factory', 'arena', 'lab', 'archive', 'campus', 'house', 'plaza', 'gate', 'none']);
 const GRID_W = 15, GRID_D = 14;
 
@@ -162,9 +162,13 @@ if (existsSync(METRICS_PATH)) {
 
 // ── здания ──
 const buildings = [];
+const infraNodes = new Set(); // render:none узлы (подземка) — легитимные станции метро, но не здания
 for (const h of parsed.houses) {
   // render:none (подземка) и render:external (за городом) рисуются отдельно, не здания
-  if (h.render === 'none' || h.render === 'external') continue;
+  if (h.render === 'none' || h.render === 'external') {
+    if (h.render === 'none') infraNodes.add(h.key || h.id);
+    continue;
+  }
   const key = h.key || h.id;
   const g = parseGrid(h.grid);
   const m = parseMetrics(h.metrics);
@@ -183,7 +187,8 @@ for (const h of parsed.houses) {
     route: h.route || null,
     what: h.what || '',
     gives: Array.isArray(h.gives) ? h.gives : [],
-    rooms: (Array.isArray(h.rooms) ? h.rooms : []).map(r => {
+    // v0.3: этаж = файл (floors); rooms — legacy-псевдоним v0.2
+    rooms: (Array.isArray(h.floors) && h.floors.length ? h.floors : (Array.isArray(h.rooms) ? h.rooms : [])).map(r => {
       const i = String(r).indexOf('|');
       return i === -1 ? { n: String(r), d: '' } : { n: r.slice(0, i), d: r.slice(i + 1) };
     }),
@@ -206,7 +211,13 @@ const metro = parsed.metro.map(m => ({
 for (const b of buildings) {
   if (!b.what) errors.push(`${b.id}: нет what (здание должно говорить по-человечески)`);
   if (!b.gives.length) errors.push(`${b.id}: нет gives (что даёт пользователю)`);
-  if (!b.rooms.length) errors.push(`${b.id}: нет rooms (что внутри)`);
+  // v0.3: этаж = файл. alive/demo ОБЯЗАНЫ иметь этажи; planned — стройка, floors может быть пуст.
+  if ((b.st === 'alive' || b.st === 'demo') && !b.rooms.length)
+    errors.push(`${b.id}: живой режим без этажей (floors) — тёмное здание, снести или описать этажи (Никита 01:14)`);
+  if (b.st === 'planned' && b.rooms.length === 0 && b.mods.length === 0)
+    warnings.push(`${b.id}: planned без файлов — тёмный этаж .gitkeep; стройка после гейта`);
+  else if ((b.st === 'alive' || b.st === 'demo') && b.rooms.some(r => /^тёмный этаж/i.test(r.n)))
+    errors.push(`${b.id}: живой режим с тёмным этажом — снести или переназвать этаж`);
   if (!STATUSES.has(b.st)) errors.push(`${b.id}: неизвестный статус ${b.st}`);
   if (!ARCHS.has(b.arch)) errors.push(`${b.id}: неизвестный архетип ${b.arch}`);
   if (!districtIds.has(b.dist)) errors.push(`${b.id}: квартал ${b.dist} не найден`);
@@ -214,10 +225,12 @@ for (const b of buildings) {
     errors.push(`${b.id}: grid вне границ города (15x14)`);
   if (b.gate && !(b.gate in gates)) errors.push(`${b.id}: гейт ${b.gate} не объявлен в meta.gates`);
   if (b.t30 === -1) warnings.push(`${b.id}: t30 не посчитан — ПК: node team-m/bLb/city-metrics.mjs`);
+  if (b.st === 'planned' && (b.loc > 0 || b.files > 0))
+    warnings.push(`${b.id}: planned, но loc/files > 0 — проверь статус (режим заявлен, файлы есть)`);
 }
 for (const m of metro) {
-  if (!buildingIds.has(m.from)) errors.push(`metro ${m.id}: from=${m.from} нет среди зданий`);
-  if (m.to && !buildingIds.has(m.to)) errors.push(`metro ${m.id}: to=${m.to} нет среди зданий`);
+  if (!buildingIds.has(m.from) && !infraNodes.has(m.from)) errors.push(`metro ${m.id}: from=${m.from} нет среди зданий`);
+  if (m.to && m.to !== 'none' && !buildingIds.has(m.to) && !infraNodes.has(m.to)) errors.push(`metro ${m.id}: to=${m.to} нет среди зданий`);
   if (!REAL_EVENTS.has(m.ev) && !m.ev.startsWith('city:'))
     errors.push(`metro ${m.id}: событие ${m.ev} не в реестре EventBus v2 и не city:*`);
 }

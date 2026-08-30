@@ -1,459 +1,437 @@
-# houses.yaml · beLiveBase · v0.2 (единый кадастр города)
-# Формат — контракт для city-gen.mjs (валидация + инъекция в bLb-CITY-v0.2-quiet.html)
-# и для city-metrics.mjs (ПК досчитывает loc/files/t30 по modules и пишет city-metrics.json)
+# houses.yaml · beLiveBase · v0.3 (кадастр: здание = режим, этаж = файл)
+# Модель (Никита 30.08 01:14): «каждый объект — этаж, каждое здание — режим».
+# Планировка — 301 (9 районов / 19 зданий / 71 этаж, 05-VISUAL-MAP-TO-bLb.md §1.1).
+# Сборка — 707, кросс-чек — 301. Метрики сняты по SSH с живого дерева @ b0879ed.
 #
-# Легенда статуса: alive | demo | planned | conserved | trash | cleared | external
-# gate: имя гейта из meta.gates, который ДОЛЖЕН ПРОЙТИ, прежде чем здание сменит статус
-# rooms: список "Название|описание простыми словами" (комнаты = смысловые модули)
-# metrics.t30 = -1 означает "ещё не посчитано ПК" (city-metrics.mjs)
+# КОНТРАКТ v0.3 (дельта к v0.2):
+#   - status: alive | demo | planned | conserved | external (trash убран: снос доказывается отдельно)
+#   - floors: каждый этаж = реальный файл/модуль живого дерева; «тёмный этаж» = пустой .gitkeep
+#   - КРИТЕРИЙ ЭТАПА 2: 19+ зданий = живые режимы, ни одного этажа без файла
+# t30 = -1 → досчитает city-metrics.mjs на ПК (git log 30 дней)
 
 meta:
-  version: 0.2
-  date: 2026-08-28
-  author: mac
-  layout: glm-v0.2-quiet (сетка 15x14, одобрена Боссом 28.08 как база)
+  version: 0.3
+  date: 2026-08-30
+  author: "707 (сборка) · 301 (планировка, кросс-чек)"
+  layout: glm-v0.2-quiet (сетка 15x14, база 28.08; планировка v0.3 по 301)
+  head: b0879ed
   decisions:
-    - "Босс 28.08: дыры ownership — решает Мак; дефолт center/007 (keeper 007)"
-    - "Босс 28.08: Karaoke/Concert — ПЛАНИРУЕМЫЕ здания, не delete; сначала Репетиция к проду"
-    - "Босс 28.08: v0.2 quiet city (GLM) — утверждена как база: город молчит, говорит только то, на что указали"
-    - "Босс 28.08: город = игровая форма управления репозиторием, интегрированная прямо в репозиторий"
-    - "Босс 28.08: проигрывается не трек, а цепочка (тур); зум внутрь здания с интерьером"
-    - "Мак 28.08: Karaoke и Concert — два ОТДЕЛЬНЫХ здания (в GLM были слиты)"
-    - "Мак 28.08: метрики loc/files — реальные замеры 28.08; t30 досчитает ПК через city-metrics.mjs"
+    - "Никита 30.08 01:14: объект = этаж, здание = режим; невидимое = мусор"
+    - "Никита 30.08 01:02: ноль мусора; тёмные этажи не проходят ревью"
+    - "301 30.08: сетка = 9 районов (CADASTRE-SEED §2) + 7 живых зданий дока (deck/modules.ts) + 3 закомментированных (mix/tools/ai) — «19 зданий/71 этаж» из 05-VISUAL-MAP (Кай), НЕ сетка 301 — атрибуция исправлена по кросс-чеку 301 §0"
+    - "301 30.08 Q2: тёмных .gitkeep = 9 (не 11): Rehearsal/ и js/ — живые; 2 оставить (Concert/Karaoke = резерв под переезд, App.tsx:233), 7 на снос (Json, backend, gateway, css, img, assets, resources — пусто + grep 0)"
+    - "301 30.08 Q3: blocks ЖИВ (импортёры: blocks-events.ts:13, SyncEditorPanel.tsx:16, SyncLyrics.tsx:4, theme/types.ts:9, TakesPanel.tsx:7) — статус trash из v0.2 отменён (подтверждено кросс-чеком)"
+    - "301 30.08 Q4: src/js/ai ЖИВ (6 файлов, 872 loc, импортёры CharacterSoundManager/layer2-report-emitter/model-dropdown-ui) — отдельная запись от deck-модуля ai (законсервирован, modules.ts:50)"
+    - "301 30.08 Q5: karaoke/concert → alive-partial (KaraokeLyricsBoard рендерится App.tsx:233; режим вне фокуса миграции VMO-021..023)"
+    - "301 30.08 Q6: m-mode from:infra — ui:mode-changed живёт в фундаменте (channels/ui.ts:5)"
+    - "707 30.08: src/Rehearsal = отдельное здание моста (не подземка)"
+    - "707 30.08: src/stem/ пуст (0 файлов) — этаж убран из Studio; стемы живут в engine-v3"
   gates:
     - id: W5
-      desc: "снос Старой мастерской (BAC-107) — только после волны W5"
-      state: open
+      desc: "(закрыт) снос старой мастерской BAC-107 — волна W5 применена 28.08"
+      state: passed
     - id: rehearsal-prod
       desc: "стройка Арен — только после Репетиции к проду"
       state: open
+    - id: bridge-mvp
+      desc: "мост Педагог-Студент до прод-этапа (Этап 1 roadmap)"
+      state: open
 
 districts:
-  - id: billy
-    name: квартал Билли
-    hue: bridge
-    grid: {gx: 3, gy: 0, w: 5, d: 3}
-  - id: stage
-    name: сцена
-    hue: chorus
-    grid: {gx: 8, gy: 0, w: 7, d: 5}
-  - id: core
-    name: ядро
+  - id: rehearsal
+    name: район Репетиция
     hue: core
-    grid: {gx: 4, gy: 4, w: 6, d: 4}
-  - id: forum
-    name: форум
+    grid: {gx: 3, gy: 2, w: 7, d: 6}
+  - id: sync
+    name: район Синхрон
+    hue: bridge
+    grid: {gx: 0, gy: 0, w: 3, d: 5}
+  - id: catalog
+    name: район Каталог
     hue: gold
-    grid: {gx: 6, gy: 9, w: 6, d: 4}
-  - id: atelier
-    name: ателье
+    grid: {gx: 10, gy: 2, w: 5, d: 4}
+  - id: scene
+    name: район Сцена
+    hue: chorus
+    grid: {gx: 9, gy: 8, w: 6, d: 3}
+  - id: hub
+    name: район Хаб
+    hue: gold
+    grid: {gx: 2, gy: 9, w: 4, d: 4}
+  - id: user
+    name: район Пользователь
     hue: verse
-    grid: {gx: 0, gy: 4, w: 4, d: 5}
-  - id: campus
-    name: кампус
-    hue: verse
-    grid: {gx: 1, gy: 10, w: 5, d: 4}
-  - id: waste
-    name: пустырь
+    grid: {gx: 0, gy: 5, w: 2, d: 4}
+  - id: arena
+    name: район Арен
+    hue: chorus
+    grid: {gx: 10, gy: 12, w: 5, d: 2}
+  - id: power
+    name: район Электростанций
     hue: waste
-    grid: {gx: 12, gy: 6, w: 3, d: 3}
+    grid: {gx: 13, gy: 0, w: 2, d: 2}
+  - id: foundation
+    name: район Фундамент
+    hue: waste
+    core: true
+    grid: {gx: 0, gy: 0, w: 0, d: 0}
 
 houses:
-  - id: 001
-    key: gates
-    quarter: Врата
-    district: forum
-    arch: gate
-    grid: {gx: 7, gy: 12, w: 3, d: 1}
-    modules: [src/components/welcome, src/components/onboarding]
-    owner: center/007
-    status: alive
-    route: welcome
-    metrics: {loc: 716, files: 6, t30: -1}
-    what: "Вход без забора. Зашёл — и сразу поёшь."
-    gives:
-      - "Первый трек за 30 секунд"
-      - "Никаких лишних экранов"
-    rooms:
-      - "Приветствие|город встречает тепло"
-      - "Первый шаг|один клик до пения"
-
-  - id: 002
-    key: catalog
-    quarter: Площадь Каталог
-    district: forum
-    arch: plaza
-    grid: {gx: 7, gy: 9, w: 3, d: 3}
-    modules: [src/catalog]
-    owner: center/007
-    status: alive
-    route: catalog
-    metrics: {loc: 4476, files: 24, t30: -1}
-    what: "Главная площадь: здесь лежат все треки и сюда приносишь свои."
-    gives:
-      - "Все треки под рукой"
-      - "Перетащил файл — и уже поёшь"
-    rooms:
-      - "Витрина|все треки города"
-      - "Дропзона|свой файл — за секунду"
-
-  - id: 003-005
+  # ===== REHEARSAL (301: STUDIO · QUEST · SHOW · SPLIT · STYLES · NOTES · BILLY) =====
+  - id: B01
     key: studio
     quarter: Завод Studio
-    district: core
+    district: rehearsal
     arch: factory
-    grid: {gx: 5, gy: 4, w: 3, d: 2}
-    modules: [src/audio/core, src/audio/compat, src/audio/engine-v3, src/stem]
-    owner: center/007
+    grid: {gx: 4, gy: 2, w: 3, d: 2}
+    owner: 007
     status: alive
     route: rehearsal
-    frozen: sealed   # ядро v2 под пломбой (AudioEngineV2, patchV1)
-    metrics: {loc: 21199, files: 65, t30: -1}
-    what: "Главная фабрика звука. Слышит каждую твою ноту и держит темп."
-    gives:
-      - "Показывает, где взял верно, а где мимо"
-      - "Держит ритм, не даёт сбиться"
-      - "Разделяет голос и музыку"
-    rooms:
-      - "Движок v3|считает звук вживую"
-      - "Ядро v2|старый мотор, под пломбой"
-      - "Стемы|голос отдельно от музыки"
+    modules: [src/audio]
+    metrics: {loc: 21611, files: 92, t30: -1}
+    what: "Завод звука V3: растяжка, стемы, монитор, питч-фундамент."
+    gives: ["Слышит каждую ноту и держит темп", "Голос отдельно от музыки"]
+    floors:
+      - "Движок V3|src/audio/engine-v3 — 54 файла, 17280 loc (pipeline, monitor, services, integration)"
+      - "Ядро V2 под пломбой|src/audio/core + src/audio/compat — 7 файлов, 2932 loc (FROZEN §6)"
+      - "Монитор|src/audio/engine-v3/monitor — 5 файлов, 893 loc: MonitorRouter, DeviceManager"
+      - "Питч-фундамент|src/audio/pitch — 8 файлов, 1166 loc (подключение к V3 = ARC-2e, VIS-2)"
+      - "Фасад|js/audio-facade-v3.js — 82 строки, контракт ARC-2d применён (b0879ed), BLB-26: вне tsconfig"
 
-  - id: 006-008
-    key: academy
+  - id: B02
+    key: quest
     quarter: Академия Quest
-    district: campus
+    district: rehearsal
     arch: campus
-    grid: {gx: 2, gy: 10, w: 3, d: 2}
-    modules: [src/exercises, src/practice, src/takes]
-    owner: center/007
+    grid: {gx: 7, gy: 3, w: 2, d: 2}
+    owner: 007
     status: alive
     route: rehearsal
+    modules: [src/exercises, src/practice, src/takes]
     metrics: {loc: 10665, files: 57, t30: -1}
-    what: "Школа пения. Тейки, упражнения, маленькие победы."
-    gives:
-      - "Упражнения по чуть-чуть"
-      - "Рост видно по тейкам"
-    rooms:
-      - "Упражнения|короткие и по делу"
-      - "Тейки|твои записи и прогресс"
-      - "Практика|сценарии занятий"
+    what: "Школа пения: упражнения, тейки, прогресс."
+    gives: ["Упражнения по чуть-чуть", "Рост виден по тейкам"]
+    floors:
+      - "Упражнения|src/exercises — 29 файлов, 3786 loc"
+      - "Практика|src/practice — 3 файла, 560 loc"
+      - "Тейки|src/takes — 25 файлов, 6319 loc"
 
-  - id: 009-010
+  - id: B03
     key: show
     quarter: Театр Show
-    district: stage
+    district: rehearsal
     arch: lab
-    grid: {gx: 8, gy: 3, w: 2, d: 2}
-    modules: [src/components/Show, src/services/show.html.ts, src/services/show.image.ts]
-    owner: center/007
+    grid: {gx: 8, gy: 5, w: 2, d: 2}
+    owner: 007
     status: alive
-    route: concert
-    metrics: {loc: 4572, files: 13, t30: -1}
-    what: "Режиссёр твоего выступления. Собирает номер из готовых сцен."
-    gives:
-      - "Сценарии номеров на выбор"
-      - "Картина меняется за один клик"
-    rooms:
-      - "Сцены|готовые картинки номера"
-      - "Сценарии|что за чем идёт"
+    route: show
+    modules: [src/components/Show, src/services/show.html.ts, src/services/show.image.ts]
+    metrics: {loc: 2193, files: 8, t30: -1}
+    what: "Режиссёр номера: собирает выступление из готовых сцен."
+    gives: ["Сценарии номеров на выбор", "Картина меняется за клик"]
+    floors:
+      - "Сцены|src/components/Show — 8 файлов, 2193 loc"
+      - "Сценарии|src/services/show.html.ts + show.image.ts"
 
-  - id: 011
+  - id: B04
     key: split
     quarter: Башня Split
-    district: core
+    district: rehearsal
     arch: tower
-    grid: {gx: 9, gy: 5, w: 1, d: 2}
-    modules: [src/components/monitor]
-    owner: center/007
+    grid: {gx: 9, gy: 3, w: 1, d: 2}
+    owner: 301
     status: alive
-    route: rehearsal
+    route: monitor
+    modules: [src/components/monitor]
     metrics: {loc: 167, files: 3, t30: -1}
-    what: "Смотровая башня. Видит весь звук города сразу."
-    gives:
-      - "Понятно, что перевешивает в миксе"
-      - "Громкость под контролем"
-    rooms:
-      - "Монитор|уровни звука на виду"
-      - "Микшер|баланс голоса и музыки"
+    what: "Аудио-суфлёр: вокал в ушах, музыка в зал. Черновик видео-моста (301 §4)."
+    gives: ["Вокал в ушах, музыка в зал", "LINE UP — готовый объект синхронизации"]
+    floors:
+      - "Монитор|src/components/monitor — 3 файла, 167 loc"
+      - "Маршрутизация|MonitorRouter + DeviceManager — ROUTE/SPLIT/LINE UP (RemotePeerRoute = Этап 1)"
 
-  - id: 012
+  - id: B05
     key: styles
     quarter: Ателье Styles
-    district: atelier
+    district: rehearsal
     arch: lab
-    grid: {gx: 1, gy: 4, w: 2, d: 2}
-    modules: [src/theme, src/styles, src/data/textStylePresets, src/components/StylesDeck]
-    owner: center/007
+    grid: {gx: 3, gy: 5, w: 2, d: 2}
+    owner: 007
     status: alive
-    route: rehearsal
-    metrics: {loc: 2344, files: 17, t30: -1}
-    what: "Мастерская внешнего вида. Красит город под тебя."
-    gives:
-      - "Темы одним касанием"
-      - "Свой стиль текста и фона"
-    rooms:
-      - "Темы|настроение города"
-      - "Пресеты|готовые сочетания"
+    route: styles
+    modules: [src/theme, src/styles, src/data/textStylePresets]
+    metrics: {loc: 768, files: 12, t30: -1}
+    what: "Мастерская внешнего вида: темы и стили текста."
+    gives: ["Темы одним касанием", "Свой стиль текста"]
+    floors:
+      - "Темы|src/theme — 12 файлов, 768 loc"
+      - "Пресеты|src/data/textStylePresets"
 
-  - id: 013
+  - id: B06
     key: notes
     quarter: Лаб Notes
-    district: core
+    district: rehearsal
     arch: lab
-    grid: {gx: 7, gy: 6, w: 2, d: 2}
-    modules: [src/audio/pitch, src/components/PianoKeyboard, src/js/main.js]
-    owner: center/007
+    grid: {gx: 6, gy: 6, w: 2, d: 2}
+    owner: 007
     status: alive
-    route: rehearsal
-    metrics: {loc: 1528, files: 11, t30: -1}
-    what: "Слышит, какую ноту ты взял, и показывает на пианино."
-    gives:
-      - "Видно, выше или ниже взял"
-      - "Пианино прямо на экране"
-    rooms:
-      - "Питч|оценивает высоту ноты"
-      - "Клавиатура|ноты под пальцами"
+    route: pitch
+    modules: [src/audio/pitch, src/components/PianoKeyboard]
+    metrics: {loc: 1166, files: 8, t30: -1}
+    what: "Слышит ноту и показывает на пианино. VIS-2: подключение к V3 — вход ARC-2e."
+    gives: ["Видно, выше или ниже взял"]
+    floors:
+      - "Питч-детекция|src/audio/pitch — 8 файлов, 1166 loc (к V3 не подключён — VIS-2, ARC-2e)"
+      - "Пианино|src/components/PianoKeyboard"
 
-  - id: 014
+  - id: B07
     key: billy
     quarter: Башня Билли
-    district: billy
+    district: rehearsal
     arch: tower
-    grid: {gx: 4, gy: 0, w: 2, d: 2}
-    modules: [src/billy, src/character]
-    owner: center/007
+    grid: {gx: 2, gy: 9, w: 2, d: 2}
+    owner: 007
     status: alive
-    route: live
-    metrics: {loc: 1707, files: 18, t30: -1}
-    what: "Твой наставник в городе. Слушает, как ты поёшь, и отвечает по-человечески."
-    gives:
-      - "Живой отклик на каждую фразу"
-      - "Подсказки вместо скучных таблиц"
-      - "Хвалит за прогресс — честно"
-    rooms:
-      - "Голос|говорит, хвалит, подбадривает"
-      - "Характер|помнит твоё настроение"
-      - "Реакция|включается в любую сцену"
+    route: billy
+    modes: [rehearsal, karaoke, concert, live]
+    modules: [src/billy, src/character]
+    metrics: {loc: 1663, files: 17, t30: -1}
+    what: "Наставник в городе: слушает, хвалит, подбадривает. VIS-7: переезд чата в правую рейку."
+    gives: ["Живой отклик на фразу", "Подсказки вместо таблиц", "Хвалит за прогресс — честно"]
+    floors:
+      - "Голос|src/billy — 11 файлов, 1381 loc"
+      - "Характер|src/character — 6 файлов, 282 loc"
+      - "AI-инфраструктура|src/js/ai — 6 файлов, 872 loc; ЖИВА (импортёры: CharacterSoundManager.ts:4-5, layer2-report-emitter.ts:2, model-dropdown-ui.ts:1-2) — 301 Q4"
 
-  - id: 018-019
+  # ===== SYNC (301: SYNC-TOWER, 6 этажей) =====
+  - id: B08
     key: sync
-    quarter: Мастерская Sync
-    district: core
-    arch: lab
-    grid: {gx: 4, gy: 6, w: 2, d: 2}
-    modules: [src/sync, src/stores/wordSync.store.ts, src/stores/markers.store.ts]
-    owner: center/007
+    quarter: Башня Sync
+    district: sync
+    arch: tower
+    grid: {gx: 1, gy: 0, w: 2, d: 4}
+    owner: 007
     status: alive
     route: rehearsal
-    frozen: read   # FROZEN-READ: wordSync/markers stores
-    metrics: {loc: 4843, files: 35, t30: -1}
-    what: "Здесь рождается свет слова: текст загорается точно в такт песне."
-    gives:
-      - "Не нужно следить глазами за строчкой"
-      - "Слово подсвечивается вовремя"
-    rooms:
-      - "Маркеры слов|каждое слово на своём месте"
-      - "Тактовый свет|подсветка дышит с ритмом"
+    frozen: read
+    modules: [src/sync, src/stores/markers.store.ts, src/stores/wordSync.store.ts]
+    metrics: {loc: 4647, files: 33, t30: -1}
+    what: "Башня света слова: текст загорается точно в такт."
+    gives: ["Слово подсвечивается вовремя", "Не нужно следить глазами за строчкой"]
+    floors:
+      - "Компоненты|src/sync/components — WaveformCanvas, SyncEditorPanel"
+      - "Слоты|src/slot-matrix — 13 файлов, 3296 loc (контракт frozen, док MISMATCH — open-seam)"
+      - "Маркеры слов|src/stores/markers.store.ts + wordSync.store.ts (FROZEN-READ)"
+      - "Хуки синхронизации|src/sync/hooks"
 
-  - id: 020
-    key: hub
-    quarter: Площадь Hub
-    district: forum
+  # ===== CATALOG (301: PORT, DNA) =====
+  - id: B09
+    key: port
+    quarter: Порт Каталог
+    district: catalog
     arch: plaza
-    grid: {gx: 10, gy: 9, w: 2, d: 2}
-    modules: [src/feed]
-    owner: center/007
-    status: demo
-    route: feed
-    metrics: {loc: 762, files: 7, t30: -1}
-    what: "Лента города: кто что поёт и что говорят люди."
-    gives:
-      - "Посты и реакции рядом"
-      - "Видно, что происходит сейчас"
-    rooms:
-      - "Лента|свежие выступления"
-      - "Профили|люди города"
-
-  - id: 021
-    key: karaoke
-    quarter: Арена Karaoke
-    district: stage
-    arch: arena
-    grid: {gx: 11.6, gy: 1, w: 1.6, d: 3}
-    modules: [src/Karaoke, src/components/KaraokeLyricsBoard, src/transitions]
-    owner: center/007
-    status: planned
-    gate: rehearsal-prod
-    route: karaoke
-    metrics: {loc: 871, files: 3, t30: -1}   # затравка: KaraokeLyricsBoard + transitions
-    what: "Зал для вечера с друзьями. Стройка впереди — первые песни ещё не спеты."
-    gives:
-      - "Караоке-вечер с друзьями"
-      - "Быстрый старт: выбрал песню — поёшь"
-    rooms:
-      - "Зал|лёгкий и шумный"
-      - "Табло|кто поёт сейчас"
-
-  - id: 022
-    key: concert
-    quarter: Арена Concert
-    district: stage
-    arch: arena
-    grid: {gx: 13.4, gy: 1, w: 1.6, d: 3}
-    modules: [src/Concert]
-    owner: center/007
-    status: planned
-    gate: rehearsal-prod
-    route: concert
-    metrics: {loc: 0, files: 0, t30: -1}
-    what: "Большая сцена со светом и залом. Главная арена города — пока чертёж."
-    gives:
-      - "Полный концерт со светом и залом"
-      - "Сцена как у больших артистов"
-    rooms:
-      - "Сцена|большая сцена и свет"
-      - "Зал|ряды и огни"
-
-  - id: 023
-    key: live
-    quarter: Арена Live
-    district: stage
-    arch: arena
-    grid: {gx: 9, gy: 0, w: 3, d: 3}
-    modules: [src/components/LiveControls.tsx, src/components/LiveSubtitle.tsx]
-    owner: center/007
-    status: alive
-    route: live
-    metrics: {loc: 126, files: 4, t30: -1}   # честно: арена пока маленькая
-    what: "Сцена прямого эфира. Отсюда твой голос уходит в мир."
-    gives:
-      - "Субтитры прямо в кадре"
-      - "Весь контроль эфира на одной панели"
-      - "Чувство настоящего выступления"
-    rooms:
-      - "Эфир|прямой выход в мир"
-      - "Субтитры|слова видят все зрители"
-      - "Пульт сцены|всё под рукой"
-
-  - id: 029-030
-    key: profile
-    quarter: Дом профиля
-    district: campus
-    arch: house
-    grid: {gx: 2, gy: 12, w: 2, d: 1}
-    modules: [src/components/profile, src/avatar]
-    owner: center/007
-    status: alive
-    route: profile
-    metrics: {loc: 1127, files: 8, t30: -1}
-    what: "Твой дом в городе. Имя, аватар, история выступлений."
-    gives:
-      - "Своя страница и архив"
-      - "Аватар на любой вкус"
-    rooms:
-      - "Профиль|кто ты в городе"
-      - "Аватар|твоё лицо"
-
-  - id: 031
-    key: aiconfig
-    quarter: AI Подстанция
-    district: billy
-    arch: archive
-    grid: {gx: 7, gy: 1, w: 1, d: 1}
-    modules: [src/js/ai, src/components/AiSettingsModal.tsx]
-    owner: center/007
-    status: conserved
-    metrics: {loc: 1645, files: 8, t30: -1}
-    what: "Старый блок настроек. Спит под тентом и никому не мешает."
-    gives:
-      - "Тихое место, когда понадобятся новые настройки"
-    rooms:
-      - "Вентиль|перекрыт до времени"
-      - "Щиток|параметры прошлой версии"
-
-  - id: 032
-    key: scenes
-    quarter: Киностудия фонов
-    district: atelier
-    arch: archive
-    grid: {gx: 1, gy: 6, w: 2, d: 2}
-    modules: [src/backgrounds, src/services/block-scene.service.ts]
-    owner: center/007
-    status: alive
-    route: concert
-    metrics: {loc: 1164, files: 5, t30: -1}
-    what: "Рисует миры позади тебя. Сцена за спиной — её работа."
-    gives:
-      - "Фоны под настроение песни"
-      - "Картинка меняется вместе со сценой"
-    rooms:
-      - "Фоны|города, залы, космос"
-      - "Блочные сцены|сборка миров из блоков"
-
-  - id: 034
-    key: dna
-    quarter: Архив ДНК
-    district: atelier
-    arch: archive
-    grid: {gx: 3, gy: 6, w: 1, d: 2}
-    modules: [src/components/TrackInfoBoard, src/services/metadata-backfill.ts, src/structure]
-    owner: center/007
+    grid: {gx: 10, gy: 2, w: 3, d: 3}
+    owner: 007
     status: alive
     route: catalog
-    metrics: {loc: 4177, files: 8, t30: -1}
-    what: "Паспорт трека: куплеты, припевы, темп — вся суть песни."
-    gives:
-      - "Видно, где ты сейчас в песне"
-      - "К припеву — в один прыжок"
-    rooms:
-      - "Структура|карта песни"
-      - "Метаданные|темп, тональность, слова"
+    modules: [src/catalog]
+    metrics: {loc: 3513, files: 23, t30: -1}
+    what: "Порт города: сюда приносят треки, отсюда расходятся по залам."
+    gives: ["Все треки под рукой", "Перетащил файл — и уже поёшь"]
+    floors:
+      - "Витрина|src/catalog — 23 файла, 3513 loc"
+      - "Загрузка|src/services/upload.service.ts + ZipPipeline"
 
-  - id: 038
-    key: blocks-old
-    quarter: Старая мастерская
-    district: waste
-    arch: lab
-    grid: {gx: 12, gy: 6, w: 2, d: 2}
-    modules: [src/blocks]
-    owner: center/007
-    status: trash
-    gate: W5   # снос только после W5 (BAC-107), подтверждение обязательно
-    metrics: {loc: 1956, files: 9, t30: -1}
-    what: "Прошлый век. Решено: снести и освободить место новому."
-    gives:
-      - "Землю под будущую арену"
-    rooms:
-      - "Остатки|ждут сноса"
+  - id: B10
+    key: dna
+    quarter: Архив ДНК
+    district: catalog
+    arch: archive
+    grid: {gx: 13, gy: 3, w: 2, d: 2}
+    owner: 007
+    status: alive
+    route: catalog
+    modules: [src/components/TrackInfoBoard, src/structure]
+    metrics: {loc: 3084, files: 7, t30: -1}
+    what: "Паспорт трека: структура, куплеты, припевы, темп."
+    gives: ["Видно, где ты в песне", "К припеву — в один прыжок"]
+    floors:
+      - "Инфоборт|src/components/TrackInfoBoard — 6 файлов, 3019 loc"
+      - "Структура|src/structure — 65 loc"
+      - "Метаданные|src/services/metadata-backfill.ts"
 
+  # ===== SCENE (301: SCENE-EDITOR, 3 этажа) =====
+  - id: B11
+    key: scenes
+    quarter: Киностудия Сцен
+    district: scene
+    arch: archive
+    grid: {gx: 9, gy: 8, w: 2, d: 2}
+    owner: 007
+    status: alive
+    route: concert
+    modules: [src/backgrounds, src/services/block-scene.service.ts, src/blocks]
+    metrics: {loc: 2478, files: 13, t30: -1}
+    what: "Рисует миры позади певца: фоны и блочные сцены."
+    gives: ["Фоны под настроение", "Картина меняется со сценой"]
+    floors:
+      - "Фоны|src/backgrounds — 4 файла, 788 loc"
+      - "Блочные сцены|src/services/block-scene.service.ts"
+      - "Мастерская блоков|src/blocks — 9 файлов, 1690 loc; ЖИВА (10+ импортёров: App, ControlPanel, SyncEditorPanel, WagonTrain, BillyDock, UploadPanel) — статус trash из v0.2 отменён"
+
+  # ===== HUB (301: FEED, 3 этажа) =====
+  - id: B12
+    key: hub
+    quarter: Площадь Хаб
+    district: hub
+    arch: plaza
+    grid: {gx: 4, gy: 10, w: 2, d: 2}
+    owner: 007
+    status: demo
+    route: feed
+    modules: [src/feed]
+    metrics: {loc: 516, files: 6, t30: -1}
+    what: "Лента города (демо). VIS-8: развилка пейджер/комната, рекомендация C — гибрид."
+    gives: ["Что происходит сейчас"]
+    floors:
+      - "Лента|src/feed — 6 файлов, 516 loc"
+
+  # ===== USER (301: ROOM, 3 этажа) =====
+  - id: B13
+    key: profile
+    quarter: Комната Пользователя
+    district: user
+    arch: house
+    grid: {gx: 0, gy: 5, w: 2, d: 3}
+    owner: 007
+    status: alive
+    route: profile
+    modules: [src/components/profile, src/avatar]
+    metrics: {loc: 719, files: 6, t30: -1}
+    what: "Твой дом: профиль, аватар, история выступлений."
+    gives: ["Своя страница и архив", "Аватар на любой вкус"]
+    floors:
+      - "Профиль|src/components/profile — 292 loc"
+      - "Аватар|src/avatar — 5 файлов, 427 loc"
+
+  # ===== ARENA (301: KARAOKE / CONCERT / LIVE — все P3) =====
+  - id: B14
+    key: karaoke
+    quarter: Арена Karaoke
+    district: arena
+    arch: arena
+    grid: {gx: 10, gy: 12, w: 1.6, d: 2}
+    owner: 007
+    status: alive-partial
+    gate: rehearsal-prod
+    route: karaoke
+    modes: [karaoke]
+    modules: [src/components/KaraokeLyricsBoard.tsx, src/transitions]
+    metrics: {loc: 121, files: 1, t30: -1}
+    what: "Зал караоке: режим жив (KaraokeLyricsBoard рендерится, App.tsx:233), вне фокуса миграции — VMO-021..023. src/Karaoke = резерв под переезд (301 Q2)."
+    gives: ["Караоке-вечер с друзьями"]
+    floors:
+      - "Табло|src/components/KaraokeLyricsBoard.tsx — 121 loc (рендерится в karaoke и concert — App.tsx:233)"
+      - "Резерв|src/Karaoke/.gitkeep — место под переезд кода режима (не мусор — 301 Q2)"
+
+  - id: B15
+    key: concert
+    quarter: Арена Concert
+    district: arena
+    arch: arena
+    grid: {gx: 12, gy: 12, w: 1.6, d: 2}
+    owner: 007
+    status: alive-partial
+    gate: rehearsal-prod
+    route: concert
+    modes: [concert]
+    modules: [src/components/KaraokeLyricsBoard.tsx]
+    metrics: {loc: 121, files: 1, t30: -1}
+    what: "Большая сцена: режим жив через KaraokeLyricsBoard (App.tsx:233), вне фокуса миграции. src/Concert = резерв под переезд (301 Q2)."
+    gives: ["Концерт со светом и залом"]
+    floors:
+      - "Сцена|общий с karaoke рендер KaraokeLyricsBoard.tsx — App.tsx:233"
+      - "Резерв|src/Concert/.gitkeep — место под переезд кода режима (не мусор — 301 Q2)"
+
+  - id: B16
+    key: live
+    quarter: Арена Live
+    district: arena
+    arch: arena
+    grid: {gx: 14, gy: 12, w: 1, d: 2}
+    owner: 007
+    status: alive
+    route: live
+    modules: [src/components/LiveControls.tsx, src/components/LiveSubtitle.tsx]
+    metrics: {loc: 126, files: 4, t30: -1}
+    what: "Прямой эфир: субтитры в кадре, пульт эфира."
+    gives: ["Субтитры видят все зрители", "Весь контроль на одной панели"]
+    floors:
+      - "Пульт эфира|src/components/LiveControls.tsx — 40 loc"
+      - "Субтитры|src/components/LiveSubtitle.tsx — 24 loc"
+
+  # ===== POWER (внешние электростанции; 301 §5.2: все утёкшие ключи — здесь) =====
+  - id: PWR
+    key: power
+    quarter: Электростанции
+    district: power
+    arch: none
+    grid: {gx: 13, gy: 0, w: 2, d: 2}
+    owner: Никита
+    status: external
+    render: external
+    modules: [belive-api, belive-feed-bot, belive-mvsep, belive-gateway, belive-ai, belive-rehearsal, belive-auth]
+    metrics: {loc: 0, files: 0, t30: -1}
+    what: "Облачные электростанции CF Workers — 7 воркеров (инвентаризация 201 от 01:36). Ключи — SEC-2/3/4."
+    gives: ["Питание города из облака"]
+    floors:
+      - "belive (Pages)|app.mybelive.com + GH Pages"
+      - "belive-feed-bot|TG-каталог (BOT_TOKEN тип Text — 🔴 сменить на Secret, Никита)"
+      - "belive-mvsep|разделение стемов (KV MVSEP_RATES)"
+      - "belive-gateway|AI-шлюз (5 KV + 1 D1; FOUNDER_SUB — аудит)"
+      - "belive-ai|OpenRouter (OPENROUTER_API_KEY — добавить в рунбук поворота)"
+      - "belive-rehearsal|Durable Object REHEARSAL_ROOM — будущая инфра моста (46 дн без деплоя, 🟡)"
+      - "belive-auth|auth-воркер (54 дня, 0 bindings, 🟡)"
+
+  # ===== FOUNDATION (подземка — не здание) =====
   - id: infra
     key: infra
     quarter: Подземка
-    district: core
+    district: foundation
     arch: none
     grid: {gx: 0, gy: 0, w: 0, d: 0}
-    modules: [src/foundation, src/bridges, src/playback, src/runtime, src/stores, src/hooks, src/triggers, src/services, src/types, src/utils, src/config]
-    owner: center/007
+    owner: 007
     status: alive
-    render: none   # не здание: подземка = линии метро (EventBus-хребет)
-    frozen: sealed   # src/bridges/*, track.orchestrator.ts
-    what: "Подземка города: EventBus-станции и старые мосты под пломбой."
+    render: none
+    frozen: sealed
+    modules: [src/foundation, src/bridges, src/playback, src/runtime, src/stores, src/hooks, src/triggers, src/services, src/types, src/utils, src/config, src/deck, src/js, src/data]
+    what: "Подземка города: EventBus (32 файла, 2262 loc), мосты под пломбой (§6 FROZEN), stores, hooks, deck."
 
-  - id: external
-    key: external
-    quarter: За городом
-    district: waste
-    arch: none
-    grid: {gx: 0, gy: 0, w: 0, d: 0}
-    modules: [Bank_beLive, kaggle-mms-notebook, cf-workers]
-    owner: Босс/оператор
-    status: external
-    render: external   # рисуется отдельным объектом за дорогой
-    what: "За горизонтом: склад Bank_beLive и облачные электростанции CF Workers."
+  # ===== МОСТ (Этап 1 roadmap; 301 §4: видео-мост = SPLIT с выходом на peer) =====
+  - id: B17
+    key: bridge
+    quarter: Мост Педагог-Студент
+    district: foundation
+    arch: tower
+    grid: {gx: 7, gy: 9, w: 1, d: 1}
+    owner: 007
+    status: alive
+    route: rehearsal
+    modules: [src/Rehearsal]
+    metrics: {loc: 1056, files: 9, t30: -1}
+    what: "Видео-мост двух машин: сессия Педагог-Студент. Черновик — SPLIT (301 §4)."
+    gives: ["Урок на две машины", "Тейк студента — педагогу"]
+    floors:
+      - "Signaling|src/Rehearsal/services/signaling-client.ts"
+      - "Peer|src/Rehearsal/services/peer-connection.ts"
+      - "Триггер-мост|src/Rehearsal/bridge/rehearsal-trigger.bridge.ts (17× window.audioEngine — BAC-105-кластер, вход ARC-2e)"
+      - "Сессия|src/Rehearsal/store/rehearsal-session.store.ts"
+      - "Протокол|src/Rehearsal/types/protocol.types.ts (TriggerPayload: annotation + focus-change — 0 использований, BRG-1)"
+      - "Clock|src/Rehearsal/workers/clock-scheduler.worker.ts"
+      - "Deep-link|src/Rehearsal/services/deep-link.service.ts"
+      - "Примитивы|src/Rehearsal/bridge/sync-primitives.ts"
 
-# Метро: имя линии = реальное событие EventBus v2 (канал:событие, src/foundation/event-bus/types.ts)
-# или служебное событие города city:*. Импульс едет from -> to при событии.
+# Метро: линия = реальное событие EventBus v2 (src/foundation/event-bus/types.ts, 28 событий)
 metro:
   - id: m-play
     from: studio
@@ -484,23 +462,23 @@ metro:
     via: "6.6,3.6"
   - id: m-loop
     from: sync
-    to: academy
+    to: quest
     ev: sync:loop-set
     pulse: 0
     via: "5.0,8.5"
   - id: m-load
-    from: catalog
+    from: port
     to: studio
     ev: audio:track-loaded
     pulse: 1
     via: "6.0,7.0"
   - id: m-saved
-    from: catalog
+    from: port
     to: hub
     ev: catalog:track-saved
     pulse: 0
   - id: m-take
-    from: academy
+    from: quest
     to: hub
     ev: practice:state-changed
     pulse: 0
@@ -513,29 +491,34 @@ metro:
     via: "4.5,4.8"
   - id: m-sect
     from: dna
-    to: catalog
+    to: port
     ev: sync:sections-updated
     pulse: 0
   - id: m-mode
-    from: gates
-    to: catalog
+    from: infra
+    to: port
     ev: ui:mode-changed
     pulse: 0
   - id: m-billy
     from: billy
-    to: catalog
+    to: port
     ev: city:billy-say
     pulse: 1
     via: "6.2,3.2;6.6,8.6"
-  - id: cut
-    from: blocks-old
-    to: none
-    ev: city:severed
+  - id: m-bridge
+    from: split
+    to: bridge
+    ev: city:bridge-session
     pulse: 0
-    via: "11.4,8.2"
 
 open-seams:
-  - L1 exact hash dormant (lyricsHash "", map-2.1:934) — TODO Wave 5, не потерять
-  - BAC-108: прод не должен бить localhost:8787 (VITE_GATEWAY_URL, 8d7b5c9)
-  - slot-matrix контракт frozen, но док невалиден (MISMATCH) — rewrite до final
-  - D14: eventbus-v2.md заявляет 29 событий (Practice: 2), в types.ts фактически 28 (Practice: 1) — док поправить при случае
+  - "VIS-2: питч не подключён к V3 — вход ARC-2e (301, запрос 2)"
+  - "VIS-3=VIS-4: гипотеза неатомарной загрузки стемов — код-проверка 007 (301, запрос 1)"
+  - "BRG-1: TriggerPayload (annotation/focus-change) — 0 использований, revive в Этапе 1"
+  - "BAC-105-кластер: 17× window.audioEngine в rehearsal-trigger.bridge.ts — вход ARC-2e"
+  - "VIS-7: чат Билли — переезд из дока в правую рейку (BLB-13/14, рекомендация A)"
+  - "D14: eventbus-v2.md заявляет 29 событий, в types.ts 28 — док поправить"
+  - "slot-matrix: контракт frozen, док MISMATCH — rewrite до final"
+  - "СНОС 7 тёмных .gitkeep (301 Q2, слово аудитора, доказательства полные — пусто + grep 0): Json, backend, gateway, css, img, assets, resources — исполняет 007 (rm по sshfs ломается, §7); Bank_beLive удалён из кадастра (grep 0)"
+  - "DEAD-CODE-MANIFEST 301: 28 мёртвых файлов / 2168 стр / 396 мёртвых экспортов, D0–D9 — фураж для этажей кадастра"
+  - "DOCS-AUDIT 301: 22 пары дублей / 266 КБ / 32 нулевых файла — в работу 200"

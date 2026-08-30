@@ -1,38 +1,914 @@
 {
   "meta": {
     "city": "beLiveBase",
-    "title": "Город будущего",
-    "phase": "Phase 0 — чертежи",
-    "updated": "2026-08-28",
-    "source": "houses.yaml v0.1 (hand-derived; city-gen.mjs will sync)",
-    "style": "warcraft-dune-skeleton"
+    "phase": "Phase 0 · чертежи",
+    "updated": "2026-08-30",
+    "cadastre": "houses.yaml 0.3",
+    "gates": {
+      "W5": "passed",
+      "rehearsal-prod": "open",
+      "bridge-mvp": "open"
+    }
   },
-  "goals": [
-    { "icon": "🏗", "text": "ПК сносит мусор (W4/W5) — расчищаем кварталы" },
-    { "icon": "🎤", "text": "Репетиция → прод — первое здание на полную мощность" },
-    { "icon": "🎭", "text": "Потом — стройка Арен: Karaoke / Concert / Live" },
-    { "icon": "🗺", "text": "MVP-1 города: кадастр + генератор + карта" }
+  "districts": [
+    {
+      "id": "rehearsal",
+      "name": "район Репетиция",
+      "hue": "core",
+      "gx": 3,
+      "gy": 2,
+      "w": 7,
+      "d": 6
+    },
+    {
+      "id": "sync",
+      "name": "район Синхрон",
+      "hue": "bridge",
+      "gx": 0,
+      "gy": 0,
+      "w": 3,
+      "d": 5
+    },
+    {
+      "id": "catalog",
+      "name": "район Каталог",
+      "hue": "gold",
+      "gx": 10,
+      "gy": 2,
+      "w": 5,
+      "d": 4
+    },
+    {
+      "id": "scene",
+      "name": "район Сцена",
+      "hue": "chorus",
+      "gx": 9,
+      "gy": 8,
+      "w": 6,
+      "d": 3
+    },
+    {
+      "id": "hub",
+      "name": "район Хаб",
+      "hue": "gold",
+      "gx": 2,
+      "gy": 9,
+      "w": 4,
+      "d": 4
+    },
+    {
+      "id": "user",
+      "name": "район Пользователь",
+      "hue": "verse",
+      "gx": 0,
+      "gy": 5,
+      "w": 2,
+      "d": 4
+    },
+    {
+      "id": "arena",
+      "name": "район Арен",
+      "hue": "chorus",
+      "gx": 10,
+      "gy": 12,
+      "w": 5,
+      "d": 2
+    },
+    {
+      "id": "power",
+      "name": "район Электростанций",
+      "hue": "waste",
+      "gx": 13,
+      "gy": 0,
+      "w": 2,
+      "d": 2
+    },
+    {
+      "id": "foundation",
+      "name": "район Фундамент",
+      "hue": "waste",
+      "gx": 0,
+      "gy": 0,
+      "w": 0,
+      "d": 0
+    }
   ],
   "buildings": [
-    { "id": "gates", "name": "Врата", "quarter": "001", "status": "alive", "gx": 4, "gy": 7, "h": 26, "human": "Вход в город. Гость заходит без забора и сразу начинает творить.", "modules": ["src/components/welcome", "src/components/onboarding"], "owner": "center/007" },
-    { "id": "catalog", "name": "Площадь Каталог", "quarter": "002", "status": "alive", "gx": 4, "gy": 5, "h": 30, "human": "Центральная площадь: витрина треков и PORT-дропзона.", "modules": ["src/catalog"], "owner": "center/007" },
-    { "id": "studio", "name": "Завод Studio", "quarter": "003-005", "status": "alive", "gx": 6, "gy": 5, "h": 40, "human": "Здесь рождаются треки: аудио-движок и стем-микшер. Ядро заморожено (охраняется).", "modules": ["src/audio/core", "src/audio/engine-v3", "src/stem"], "owner": "center/007", "note": "frozen: AudioEngineV2, patchV1" },
-    { "id": "academy", "name": "Академия Quest", "quarter": "006-008", "status": "alive", "gx": 2, "gy": 6, "h": 34, "human": "Кампус практики: тейки, упражнения, сценарии.", "modules": ["src/exercises", "src/practice", "src/takes"], "owner": "center/007" },
-    { "id": "show", "name": "Театр Show", "quarter": "009-010", "status": "alive", "gx": 3, "gy": 4, "h": 36, "human": "Театр выступлений: движок историй и сцены.", "modules": ["src/components/Show", "src/services/show.html.ts"], "owner": "center/007" },
-    { "id": "split", "name": "Башня Split", "quarter": "011", "status": "alive", "gx": 6, "gy": 3, "h": 44, "human": "Башня мониторинга и микса.", "modules": ["src/components/monitor"], "owner": "center/007" },
-    { "id": "styles", "name": "Ателье Styles", "quarter": "012", "status": "alive", "gx": 2, "gy": 4, "h": 30, "human": "Ателье стиля: темы, текстовые стили, пресеты.", "modules": ["src/theme", "src/styles", "src/data"], "owner": "center/007" },
-    { "id": "notes", "name": "Лаб Notes", "quarter": "013", "status": "alive", "gx": 7, "gy": 4, "h": 32, "human": "Лаборатория нот: детекция питча, пианино.", "modules": ["src/audio/pitch", "src/components/PianoKeyboard"], "owner": "center/007" },
-    { "id": "billy", "name": "Башня Билли", "quarter": "014", "status": "alive", "gx": 5, "gy": 3, "h": 56, "human": "Башня Билли: мозг AI-персонажа, его голос и эмоции.", "modules": ["src/billy", "src/character"], "owner": "center/007" },
-    { "id": "sync", "name": "Мастерская Sync", "quarter": "018-019", "status": "alive", "gx": 3, "gy": 6, "h": 34, "human": "Мастерская синхронизации лирики: маркеры и word-sync.", "modules": ["src/sync"], "owner": "center/007", "note": "FROZEN-READ: wordSync/markers stores" },
-    { "id": "hub", "name": "Площадь Hub", "quarter": "020", "status": "alive-demo", "gx": 5, "gy": 5, "h": 28, "human": "Площадь ленты: фид и профили (демо-режим).", "modules": ["src/feed"], "owner": "center/007" },
-    { "id": "arenas", "name": "Арены Karaoke/Concert", "quarter": "021-022", "status": "planned", "gx": 3, "gy": 2, "h": 38, "human": "Арены будущего: караоке и концерт. Чертёж готов — стройка после Репетиции.", "modules": ["src/Karaoke (.gitkeep)", "src/Concert (.gitkeep)", "src/components/KaraokeLyricsBoard", "src/transitions"], "owner": "center/007" },
-    { "id": "live", "name": "Арена Live", "quarter": "023", "status": "alive", "gx": 4, "gy": 2, "h": 36, "human": "Живая арена: субтитры и live-контролы.", "modules": ["src/components/LiveControls", "src/components/LiveSubtitle"], "owner": "center/007" },
-    { "id": "profile", "name": "Дом профиля", "quarter": "029-030", "status": "alive", "gx": 1, "gy": 5, "h": 30, "human": "Дом жителя: профиль и аватар.", "modules": ["src/components/profile", "src/avatar"], "owner": "center/007" },
-    { "id": "aiconfig", "name": "AI Подстанция", "quarter": "031", "status": "conserved", "gx": 6, "gy": 2, "h": 26, "human": "AI-подстанция: законсервирована до лучших времён.", "modules": ["src/js/ai", "src/components/AiSettingsModal"], "owner": "center/007" },
-    { "id": "scenes", "name": "Киностудия фонов", "quarter": "032", "status": "alive", "gx": 1, "gy": 3, "h": 30, "human": "Киностудия: фоны режимов и блочные сцены.", "modules": ["src/backgrounds", "src/services/block-scene.service.ts"], "owner": "center/007" },
-    { "id": "dna", "name": "Архив ДНК", "quarter": "034", "status": "alive", "gx": 1, "gy": 4, "h": 28, "human": "Архив ДНК треков: метаданные и структура.", "modules": ["src/components/TrackInfoBoard", "src/structure"], "owner": "center/007" },
-    { "id": "blocks-old", "name": "Старая мастерская", "quarter": "038", "status": "trash-w5", "gx": 7, "gy": 2, "h": 24, "human": "Старая мастерская блоков: огорожена, под снос (W5, BAC-107).", "modules": ["src/blocks"], "owner": "center/007" },
-    { "id": "infra", "name": "Подземка", "quarter": "infra", "status": "alive", "gx": 0, "gy": 0, "h": 0, "human": "Подземка города: EventBus-станция, старые мосты (исторические), scheduler-доставка.", "modules": ["src/foundation", "src/bridges (FROZEN)", "src/playback", "src/stores", "src/triggers"], "owner": "center/007" },
-    { "id": "external", "name": "За городом", "quarter": "external", "status": "external", "gx": 0, "gy": 0, "h": 0, "human": "За горизонтом: склад Bank_beLive и облачные электростанции CF Workers.", "modules": ["Bank_beLive", "kaggle-mms", "cf-workers"], "owner": "Босс/оператор" }
+    {
+      "id": "studio",
+      "name": "Завод Studio",
+      "vmo": "B01",
+      "dist": "rehearsal",
+      "arch": "factory",
+      "st": "alive",
+      "gx": 4,
+      "gy": 2,
+      "w": 3,
+      "d": 2,
+      "loc": 21611,
+      "files": 92,
+      "t30": -1,
+      "route": "rehearsal",
+      "what": "Завод звука V3: растяжка, стемы, монитор, питч-фундамент.",
+      "gives": [
+        "Слышит каждую ноту и держит темп",
+        "Голос отдельно от музыки"
+      ],
+      "rooms": [
+        {
+          "n": "Движок V3",
+          "d": "src/audio/engine-v3 — 54 файла, 17280 loc (pipeline, monitor, services, integration)"
+        },
+        {
+          "n": "Ядро V2 под пломбой",
+          "d": "src/audio/core + src/audio/compat — 7 файлов, 2932 loc (FROZEN §6)"
+        },
+        {
+          "n": "Монитор",
+          "d": "src/audio/engine-v3/monitor — 5 файлов, 893 loc: MonitorRouter, DeviceManager"
+        },
+        {
+          "n": "Питч-фундамент",
+          "d": "src/audio/pitch — 8 файлов, 1166 loc (подключение к V3 = ARC-2e, VIS-2)"
+        },
+        {
+          "n": "Фасад",
+          "d": "js/audio-facade-v3.js — 82 строки, контракт ARC-2d применён (b0879ed), BLB-26: вне tsconfig"
+        }
+      ],
+      "mods": [
+        "src/audio"
+      ],
+      "owner": "007"
+    },
+    {
+      "id": "quest",
+      "name": "Академия Quest",
+      "vmo": "B02",
+      "dist": "rehearsal",
+      "arch": "campus",
+      "st": "alive",
+      "gx": 7,
+      "gy": 3,
+      "w": 2,
+      "d": 2,
+      "loc": 10665,
+      "files": 57,
+      "t30": -1,
+      "route": "rehearsal",
+      "what": "Школа пения: упражнения, тейки, прогресс.",
+      "gives": [
+        "Упражнения по чуть-чуть",
+        "Рост виден по тейкам"
+      ],
+      "rooms": [
+        {
+          "n": "Упражнения",
+          "d": "src/exercises — 29 файлов, 3786 loc"
+        },
+        {
+          "n": "Практика",
+          "d": "src/practice — 3 файла, 560 loc"
+        },
+        {
+          "n": "Тейки",
+          "d": "src/takes — 25 файлов, 6319 loc"
+        }
+      ],
+      "mods": [
+        "src/exercises",
+        "src/practice",
+        "src/takes"
+      ],
+      "owner": "007"
+    },
+    {
+      "id": "show",
+      "name": "Театр Show",
+      "vmo": "B03",
+      "dist": "rehearsal",
+      "arch": "lab",
+      "st": "alive",
+      "gx": 8,
+      "gy": 5,
+      "w": 2,
+      "d": 2,
+      "loc": 2193,
+      "files": 8,
+      "t30": -1,
+      "route": "show",
+      "what": "Режиссёр номера: собирает выступление из готовых сцен.",
+      "gives": [
+        "Сценарии номеров на выбор",
+        "Картина меняется за клик"
+      ],
+      "rooms": [
+        {
+          "n": "Сцены",
+          "d": "src/components/Show — 8 файлов, 2193 loc"
+        },
+        {
+          "n": "Сценарии",
+          "d": "src/services/show.html.ts + show.image.ts"
+        }
+      ],
+      "mods": [
+        "src/components/Show",
+        "src/services/show.html.ts",
+        "src/services/show.image.ts"
+      ],
+      "owner": "007"
+    },
+    {
+      "id": "split",
+      "name": "Башня Split",
+      "vmo": "B04",
+      "dist": "rehearsal",
+      "arch": "tower",
+      "st": "alive",
+      "gx": 9,
+      "gy": 3,
+      "w": 1,
+      "d": 2,
+      "loc": 167,
+      "files": 3,
+      "t30": -1,
+      "route": "monitor",
+      "what": "Аудио-суфлёр: вокал в ушах, музыка в зал. Черновик видео-моста (301 §4).",
+      "gives": [
+        "Вокал в ушах",
+        "музыка в зал",
+        "LINE UP — готовый объект синхронизации"
+      ],
+      "rooms": [
+        {
+          "n": "Монитор",
+          "d": "src/components/monitor — 3 файла, 167 loc"
+        },
+        {
+          "n": "Маршрутизация",
+          "d": "MonitorRouter + DeviceManager — ROUTE/SPLIT/LINE UP (RemotePeerRoute = Этап 1)"
+        }
+      ],
+      "mods": [
+        "src/components/monitor"
+      ],
+      "owner": "301"
+    },
+    {
+      "id": "styles",
+      "name": "Ателье Styles",
+      "vmo": "B05",
+      "dist": "rehearsal",
+      "arch": "lab",
+      "st": "alive",
+      "gx": 3,
+      "gy": 5,
+      "w": 2,
+      "d": 2,
+      "loc": 768,
+      "files": 12,
+      "t30": -1,
+      "route": "styles",
+      "what": "Мастерская внешнего вида: темы и стили текста.",
+      "gives": [
+        "Темы одним касанием",
+        "Свой стиль текста"
+      ],
+      "rooms": [
+        {
+          "n": "Темы",
+          "d": "src/theme — 12 файлов, 768 loc"
+        },
+        {
+          "n": "Пресеты",
+          "d": "src/data/textStylePresets"
+        }
+      ],
+      "mods": [
+        "src/theme",
+        "src/styles",
+        "src/data/textStylePresets"
+      ],
+      "owner": "007"
+    },
+    {
+      "id": "notes",
+      "name": "Лаб Notes",
+      "vmo": "B06",
+      "dist": "rehearsal",
+      "arch": "lab",
+      "st": "alive",
+      "gx": 6,
+      "gy": 6,
+      "w": 2,
+      "d": 2,
+      "loc": 1166,
+      "files": 8,
+      "t30": -1,
+      "route": "pitch",
+      "what": "Слышит ноту и показывает на пианино. VIS-2: подключение к V3 — вход ARC-2e.",
+      "gives": [
+        "Видно",
+        "выше или ниже взял"
+      ],
+      "rooms": [
+        {
+          "n": "Питч-детекция",
+          "d": "src/audio/pitch — 8 файлов, 1166 loc (к V3 не подключён — VIS-2, ARC-2e)"
+        },
+        {
+          "n": "Пианино",
+          "d": "src/components/PianoKeyboard"
+        }
+      ],
+      "mods": [
+        "src/audio/pitch",
+        "src/components/PianoKeyboard"
+      ],
+      "owner": "007"
+    },
+    {
+      "id": "billy",
+      "name": "Башня Билли",
+      "vmo": "B07",
+      "dist": "rehearsal",
+      "arch": "tower",
+      "st": "alive",
+      "gx": 2,
+      "gy": 9,
+      "w": 2,
+      "d": 2,
+      "loc": 1663,
+      "files": 17,
+      "t30": -1,
+      "route": "billy",
+      "what": "Наставник в городе: слушает, хвалит, подбадривает. VIS-7: переезд чата в правую рейку.",
+      "gives": [
+        "Живой отклик на фразу",
+        "Подсказки вместо таблиц",
+        "Хвалит за прогресс — честно"
+      ],
+      "rooms": [
+        {
+          "n": "Голос",
+          "d": "src/billy — 11 файлов, 1381 loc"
+        },
+        {
+          "n": "Характер",
+          "d": "src/character — 6 файлов, 282 loc"
+        },
+        {
+          "n": "AI-инфраструктура",
+          "d": "src/js/ai — 6 файлов, 872 loc; ЖИВА (импортёры: CharacterSoundManager.ts:4-5, layer2-report-emitter.ts:2, model-dropdown-ui.ts:1-2) — 301 Q4"
+        }
+      ],
+      "mods": [
+        "src/billy",
+        "src/character"
+      ],
+      "owner": "007"
+    },
+    {
+      "id": "sync",
+      "name": "Башня Sync",
+      "vmo": "B08",
+      "dist": "sync",
+      "arch": "tower",
+      "st": "alive",
+      "gx": 1,
+      "gy": 0,
+      "w": 2,
+      "d": 4,
+      "loc": 4647,
+      "files": 33,
+      "t30": -1,
+      "route": "rehearsal",
+      "what": "Башня света слова: текст загорается точно в такт.",
+      "gives": [
+        "Слово подсвечивается вовремя",
+        "Не нужно следить глазами за строчкой"
+      ],
+      "rooms": [
+        {
+          "n": "Компоненты",
+          "d": "src/sync/components — WaveformCanvas, SyncEditorPanel"
+        },
+        {
+          "n": "Слоты",
+          "d": "src/slot-matrix — 13 файлов, 3296 loc (контракт frozen, док MISMATCH — open-seam)"
+        },
+        {
+          "n": "Маркеры слов",
+          "d": "src/stores/markers.store.ts + wordSync.store.ts (FROZEN-READ)"
+        },
+        {
+          "n": "Хуки синхронизации",
+          "d": "src/sync/hooks"
+        }
+      ],
+      "mods": [
+        "src/sync",
+        "src/stores/markers.store.ts",
+        "src/stores/wordSync.store.ts"
+      ],
+      "owner": "007",
+      "frozen": "read"
+    },
+    {
+      "id": "port",
+      "name": "Порт Каталог",
+      "vmo": "B09",
+      "dist": "catalog",
+      "arch": "plaza",
+      "st": "alive",
+      "gx": 10,
+      "gy": 2,
+      "w": 3,
+      "d": 3,
+      "loc": 3513,
+      "files": 23,
+      "t30": -1,
+      "route": "catalog",
+      "what": "Порт города: сюда приносят треки, отсюда расходятся по залам.",
+      "gives": [
+        "Все треки под рукой",
+        "Перетащил файл — и уже поёшь"
+      ],
+      "rooms": [
+        {
+          "n": "Витрина",
+          "d": "src/catalog — 23 файла, 3513 loc"
+        },
+        {
+          "n": "Загрузка",
+          "d": "src/services/upload.service.ts + ZipPipeline"
+        }
+      ],
+      "mods": [
+        "src/catalog"
+      ],
+      "owner": "007"
+    },
+    {
+      "id": "dna",
+      "name": "Архив ДНК",
+      "vmo": "B10",
+      "dist": "catalog",
+      "arch": "archive",
+      "st": "alive",
+      "gx": 13,
+      "gy": 3,
+      "w": 2,
+      "d": 2,
+      "loc": 3084,
+      "files": 7,
+      "t30": -1,
+      "route": "catalog",
+      "what": "Паспорт трека: структура, куплеты, припевы, темп.",
+      "gives": [
+        "Видно",
+        "где ты в песне",
+        "К припеву — в один прыжок"
+      ],
+      "rooms": [
+        {
+          "n": "Инфоборт",
+          "d": "src/components/TrackInfoBoard — 6 файлов, 3019 loc"
+        },
+        {
+          "n": "Структура",
+          "d": "src/structure — 65 loc"
+        },
+        {
+          "n": "Метаданные",
+          "d": "src/services/metadata-backfill.ts"
+        }
+      ],
+      "mods": [
+        "src/components/TrackInfoBoard",
+        "src/structure"
+      ],
+      "owner": "007"
+    },
+    {
+      "id": "scenes",
+      "name": "Киностудия Сцен",
+      "vmo": "B11",
+      "dist": "scene",
+      "arch": "archive",
+      "st": "alive",
+      "gx": 9,
+      "gy": 8,
+      "w": 2,
+      "d": 2,
+      "loc": 2478,
+      "files": 13,
+      "t30": -1,
+      "route": "concert",
+      "what": "Рисует миры позади певца: фоны и блочные сцены.",
+      "gives": [
+        "Фоны под настроение",
+        "Картина меняется со сценой"
+      ],
+      "rooms": [
+        {
+          "n": "Фоны",
+          "d": "src/backgrounds — 4 файла, 788 loc"
+        },
+        {
+          "n": "Блочные сцены",
+          "d": "src/services/block-scene.service.ts"
+        },
+        {
+          "n": "Мастерская блоков",
+          "d": "src/blocks — 9 файлов, 1690 loc; ЖИВА (10+ импортёров: App, ControlPanel, SyncEditorPanel, WagonTrain, BillyDock, UploadPanel) — статус trash из v0.2 отменён"
+        }
+      ],
+      "mods": [
+        "src/backgrounds",
+        "src/services/block-scene.service.ts",
+        "src/blocks"
+      ],
+      "owner": "007"
+    },
+    {
+      "id": "hub",
+      "name": "Площадь Хаб",
+      "vmo": "B12",
+      "dist": "hub",
+      "arch": "plaza",
+      "st": "demo",
+      "gx": 4,
+      "gy": 10,
+      "w": 2,
+      "d": 2,
+      "loc": 516,
+      "files": 6,
+      "t30": -1,
+      "route": "feed",
+      "what": "Лента города (демо). VIS-8: развилка пейджер/комната, рекомендация C — гибрид.",
+      "gives": [
+        "Что происходит сейчас"
+      ],
+      "rooms": [
+        {
+          "n": "Лента",
+          "d": "src/feed — 6 файлов, 516 loc"
+        }
+      ],
+      "mods": [
+        "src/feed"
+      ],
+      "owner": "007"
+    },
+    {
+      "id": "profile",
+      "name": "Комната Пользователя",
+      "vmo": "B13",
+      "dist": "user",
+      "arch": "house",
+      "st": "alive",
+      "gx": 0,
+      "gy": 5,
+      "w": 2,
+      "d": 3,
+      "loc": 719,
+      "files": 6,
+      "t30": -1,
+      "route": "profile",
+      "what": "Твой дом: профиль, аватар, история выступлений.",
+      "gives": [
+        "Своя страница и архив",
+        "Аватар на любой вкус"
+      ],
+      "rooms": [
+        {
+          "n": "Профиль",
+          "d": "src/components/profile — 292 loc"
+        },
+        {
+          "n": "Аватар",
+          "d": "src/avatar — 5 файлов, 427 loc"
+        }
+      ],
+      "mods": [
+        "src/components/profile",
+        "src/avatar"
+      ],
+      "owner": "007"
+    },
+    {
+      "id": "karaoke",
+      "name": "Арена Karaoke",
+      "vmo": "B14",
+      "dist": "arena",
+      "arch": "arena",
+      "st": "alive-partial",
+      "gx": 10,
+      "gy": 12,
+      "w": 1.6,
+      "d": 2,
+      "loc": 121,
+      "files": 1,
+      "t30": -1,
+      "route": "karaoke",
+      "what": "Зал караоке: режим жив (KaraokeLyricsBoard рендерится, App.tsx:233), вне фокуса миграции — VMO-021..023. src/Karaoke = резерв под переезд (301 Q2).",
+      "gives": [
+        "Караоке-вечер с друзьями"
+      ],
+      "rooms": [
+        {
+          "n": "Табло",
+          "d": "src/components/KaraokeLyricsBoard.tsx — 121 loc (рендерится в karaoke и concert — App.tsx:233)"
+        },
+        {
+          "n": "Резерв",
+          "d": "src/Karaoke/.gitkeep — место под переезд кода режима (не мусор — 301 Q2)"
+        }
+      ],
+      "mods": [
+        "src/components/KaraokeLyricsBoard.tsx",
+        "src/transitions"
+      ],
+      "owner": "007",
+      "gate": "rehearsal-prod"
+    },
+    {
+      "id": "concert",
+      "name": "Арена Concert",
+      "vmo": "B15",
+      "dist": "arena",
+      "arch": "arena",
+      "st": "alive-partial",
+      "gx": 12,
+      "gy": 12,
+      "w": 1.6,
+      "d": 2,
+      "loc": 121,
+      "files": 1,
+      "t30": -1,
+      "route": "concert",
+      "what": "Большая сцена: режим жив через KaraokeLyricsBoard (App.tsx:233), вне фокуса миграции. src/Concert = резерв под переезд (301 Q2).",
+      "gives": [
+        "Концерт со светом и залом"
+      ],
+      "rooms": [
+        {
+          "n": "Сцена",
+          "d": "общий с karaoke рендер KaraokeLyricsBoard.tsx — App.tsx:233"
+        },
+        {
+          "n": "Резерв",
+          "d": "src/Concert/.gitkeep — место под переезд кода режима (не мусор — 301 Q2)"
+        }
+      ],
+      "mods": [
+        "src/components/KaraokeLyricsBoard.tsx"
+      ],
+      "owner": "007",
+      "gate": "rehearsal-prod"
+    },
+    {
+      "id": "live",
+      "name": "Арена Live",
+      "vmo": "B16",
+      "dist": "arena",
+      "arch": "arena",
+      "st": "alive",
+      "gx": 14,
+      "gy": 12,
+      "w": 1,
+      "d": 2,
+      "loc": 126,
+      "files": 4,
+      "t30": -1,
+      "route": "live",
+      "what": "Прямой эфир: субтитры в кадре, пульт эфира.",
+      "gives": [
+        "Субтитры видят все зрители",
+        "Весь контроль на одной панели"
+      ],
+      "rooms": [
+        {
+          "n": "Пульт эфира",
+          "d": "src/components/LiveControls.tsx — 40 loc"
+        },
+        {
+          "n": "Субтитры",
+          "d": "src/components/LiveSubtitle.tsx — 24 loc"
+        }
+      ],
+      "mods": [
+        "src/components/LiveControls.tsx",
+        "src/components/LiveSubtitle.tsx"
+      ],
+      "owner": "007"
+    },
+    {
+      "id": "bridge",
+      "name": "Мост Педагог-Студент",
+      "vmo": "B17",
+      "dist": "foundation",
+      "arch": "tower",
+      "st": "alive",
+      "gx": 7,
+      "gy": 9,
+      "w": 1,
+      "d": 1,
+      "loc": 1056,
+      "files": 9,
+      "t30": -1,
+      "route": "rehearsal",
+      "what": "Видео-мост двух машин: сессия Педагог-Студент. Черновик — SPLIT (301 §4).",
+      "gives": [
+        "Урок на две машины",
+        "Тейк студента — педагогу"
+      ],
+      "rooms": [
+        {
+          "n": "Signaling",
+          "d": "src/Rehearsal/services/signaling-client.ts"
+        },
+        {
+          "n": "Peer",
+          "d": "src/Rehearsal/services/peer-connection.ts"
+        },
+        {
+          "n": "Триггер-мост",
+          "d": "src/Rehearsal/bridge/rehearsal-trigger.bridge.ts (17× window.audioEngine — BAC-105-кластер, вход ARC-2e)"
+        },
+        {
+          "n": "Сессия",
+          "d": "src/Rehearsal/store/rehearsal-session.store.ts"
+        },
+        {
+          "n": "Протокол",
+          "d": "src/Rehearsal/types/protocol.types.ts (TriggerPayload: annotation + focus-change — 0 использований, BRG-1)"
+        },
+        {
+          "n": "Clock",
+          "d": "src/Rehearsal/workers/clock-scheduler.worker.ts"
+        },
+        {
+          "n": "Deep-link",
+          "d": "src/Rehearsal/services/deep-link.service.ts"
+        },
+        {
+          "n": "Примитивы",
+          "d": "src/Rehearsal/bridge/sync-primitives.ts"
+        }
+      ],
+      "mods": [
+        "src/Rehearsal"
+      ],
+      "owner": "007"
+    }
+  ],
+  "metro": [
+    {
+      "id": "m-play",
+      "from": "studio",
+      "to": "sync",
+      "ev": "audio:playback-state-changed",
+      "pulse": 1
+    },
+    {
+      "id": "m-stem",
+      "from": "studio",
+      "to": "notes",
+      "ev": "audio:track-stem-ready",
+      "pulse": 1
+    },
+    {
+      "id": "m-mic",
+      "from": "studio",
+      "to": "live",
+      "ev": "audio:microphone-state-changed",
+      "pulse": 1,
+      "via": [
+        [
+          8.6,
+          3.4
+        ]
+      ]
+    },
+    {
+      "id": "m-mix",
+      "from": "studio",
+      "to": "split",
+      "ev": "audio:vocalmix-state-changed",
+      "pulse": 1
+    },
+    {
+      "id": "m-line",
+      "from": "sync",
+      "to": "show",
+      "ev": "sync:active-line-changed",
+      "pulse": 1,
+      "via": [
+        [
+          6.6,
+          3.6
+        ]
+      ]
+    },
+    {
+      "id": "m-loop",
+      "from": "sync",
+      "to": "quest",
+      "ev": "sync:loop-set",
+      "pulse": 0,
+      "via": [
+        [
+          5,
+          8.5
+        ]
+      ]
+    },
+    {
+      "id": "m-load",
+      "from": "port",
+      "to": "studio",
+      "ev": "audio:track-loaded",
+      "pulse": 1,
+      "via": [
+        [
+          6,
+          7
+        ]
+      ]
+    },
+    {
+      "id": "m-saved",
+      "from": "port",
+      "to": "hub",
+      "ev": "catalog:track-saved",
+      "pulse": 0
+    },
+    {
+      "id": "m-take",
+      "from": "quest",
+      "to": "hub",
+      "ev": "practice:state-changed",
+      "pulse": 0,
+      "via": [
+        [
+          5.6,
+          10.2
+        ]
+      ]
+    },
+    {
+      "id": "m-scenes",
+      "from": "scenes",
+      "to": "show",
+      "ev": "ui:block-scenes-loaded",
+      "pulse": 0,
+      "via": [
+        [
+          4.5,
+          4.8
+        ]
+      ]
+    },
+    {
+      "id": "m-sect",
+      "from": "dna",
+      "to": "port",
+      "ev": "sync:sections-updated",
+      "pulse": 0
+    },
+    {
+      "id": "m-mode",
+      "from": "infra",
+      "to": "port",
+      "ev": "ui:mode-changed",
+      "pulse": 0
+    },
+    {
+      "id": "m-billy",
+      "from": "billy",
+      "to": "port",
+      "ev": "city:billy-say",
+      "pulse": 1,
+      "via": [
+        [
+          6.2,
+          3.2
+        ],
+        [
+          6.6,
+          8.6
+        ]
+      ]
+    },
+    {
+      "id": "m-bridge",
+      "from": "split",
+      "to": "bridge",
+      "ev": "city:bridge-session",
+      "pulse": 0
+    }
   ]
 }
