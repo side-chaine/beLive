@@ -89,6 +89,8 @@ function bootAether(): void {
     ;(window as any).__v3Active = false
     ;(window as any).__setV3Active = (active: boolean) => { (window as any).__v3Active = active === true }
     const transport = getTransport()
+    ;(window as any).__belive = (window as any).__belive || {}
+    ;(window as any).__belive.transport = transport
     if (!transport) return // V2 not available
 
     // 1. Publisher — публикация времени в UI

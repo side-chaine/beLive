@@ -218,7 +218,7 @@ export class RehearsalTriggerBridge {
     if (t != null) ae?.seekTo?.(t);
     if (payload.type === 'play') {
       this.vclock.anchor(t ?? ae?.getCurrentTime?.() ?? 0, ae?.playbackRate ?? 1);
-      this.playWithWatchdog();
+      this.playWithWatchdog(2, t);
     } else if (payload.type === 'pause') {
       ae?.pause?.();
       this.stopDriftMonitoring();
@@ -315,7 +315,7 @@ export class RehearsalTriggerBridge {
     this.pendingApplies.clear();
   }
 
-  private playWithWatchdog(retriesLeft = 2) {
+  private playWithWatchdog(retriesLeft = 2, offset?: number) {
     const ae = (window as any).audioEngine;
     // [найдено чужой верификацией] ae?.play?.() короткозамыкается в
     // undefined целиком, если ae отсутствует — .catch() на undefined
@@ -324,7 +324,7 @@ export class RehearsalTriggerBridge {
       useRehearsalSessionStore.getState().setRequiresUserInteraction(true);
       return;
     }
-    void ae.play().catch(() => {
+    void ae.play(offset).catch(() => {
       // iOS autoplay gate — тот же механизм, что и для холодного старта,
       // отдельного пути для "очнулись после сна" не городим (Раунд 3, Слой 2).
       useRehearsalSessionStore.getState().setRequiresUserInteraction(true);
