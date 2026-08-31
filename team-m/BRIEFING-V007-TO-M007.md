@@ -46,7 +46,7 @@
 - ⏳ V007 сейчас: верификация (009) + стейкинг в War Room как отдельный трек «Character-AI / Frontend» (параллельно аудио-миграции).
 
 ## 6. ЧТО ДЕЛАТЬ СЕЙЧАС (NEXT)
-1. Прочитай `docs/SYSTEM-REPORT-V007.md`, `docs/MAC-PC-BRIDGE-SPEC.md`, `docs/SYNC-PROTOCOL.md`.
+1. Прочитай `team-m/SHARED-REGISTRY.md §0 (SYSTEM-REPORT → historical-redirect)`, `team-m/SHARED-REGISTRY.md §0 (MAC-PC-BRIDGE-SPEC → historical-redirect)`, `docs/SYNC-PROTOCOL.md`.
 2. Продолжай character-ai фичу КАК ПРОПОЗАЛЫ (docs/ + `team-m/reports/`), не правь `src/` напрямую.
 3. Дропни статус-отчёт: `team-m/scripts/mac-report.sh m007 character-ai-status wip` (и допиши тело).
 4. Жди интеграции твоего дропа от V007; дальше работай в связке.

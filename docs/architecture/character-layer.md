@@ -20,25 +20,25 @@
 | `notify-bridge.ts` | Поллинг `team-m/INBOX.md` (1500ms, `cache: no-store`); fallback — виртуальный импорт `INBOX.md?raw`; djb2 content-hash; при изменении → `emitReportArrived({source:'inbox-sync'})` |
 | `layer2-report-emitter.ts` | G3-мост: завершение AI-ответа → событие `team-m.report-arrived` (`source:'mac-chat'`) |
 | `notify-emit.ts` | Эмиттер события `team-m.report-arrived` |
-| `__tests__/layer2-report-emitter.test.ts` | Тест эмиттера |
+| `src/__tests__/layer2-report-emitter.test.ts` | Тест эмиттера |
 
 ## 3. Контракты
 
 - ❄️ **SoundCue union** (канон тайпинга ассистентов, REGISTRY 25.08): `{kind:'synth'} & CueSpec | {kind:'asset', url, gain}` — без хардкода под конкретного персонажа.
 - ✅ **CUE_DEFAULT** (профиль Billy, HARD CONTRACT §4): sine, 880→1760 Гц, ~0.2с, gain 0.15.
 - ✅ **NOTIFY_CUE** (Layer-2, отчёт Mac-команды): sine, 440→660 Гц, gain 0.12 — мягче Billy-cue.
-- ✅ Звук включается/выключается через `getSoundEnabled()` (`js/ai/settings/ai-settings.store`).
-- ✅ Единственный источник истины завершения ответа — `aiHub` (`js/ai/registry`); character-слой не владеет AI-логикой, только реагирует.
+- ✅ Звук включается/выключается через `getSoundEnabled()` (`src/js/ai/settings/ai-settings.store`).
+- ✅ Единственный источник истины завершения ответа — `aiHub` (`src/js/ai/registry`); character-слой не владеет AI-логикой, только реагирует.
 
 ## 4. Границы и зависимости
 
-- Зависит от: `foundation/registry/initRegistry` (саморегистрация), `js/ai/registry` (aiHub), `js/ai/settings`, `stores/notify.store`.
+- Зависит от: `foundation/registry/initRegistry` (саморегистрация), `src/js/ai/registry` (aiHub), `js/ai/settings`, `stores/notify.store`.
 - НЕ зависит от транспортного audio-домена: WebAudio standalone — frozen `AudioEngineV2` не трогается (инвариант 2 доктрины соблюдён).
 - Потребители события `team-m.report-arrived`: звуковой cue + будущий `avatar.store` (визуальная реакция аватара — шов ⚠️, см. event/listener map).
 
 ## 5. История
 
-- Коммит `c0084c2` (2026-08-25): A3 notify-bridge + notify.store + character/sound (расширение пакета G3).
+- Коммит `c0084c2` (2026-08-25): A3 notify-bridge + notify.store + src/character/sound (расширение пакета G3).
 - P1#6 null-guard и SoundCue union — применены в цепях N3-β (tsc 313/769 на момент фиксации).
 - `getProfileSound` — локальная функция в CoachPanel.tsx, registry.ts не трогать (условие ратификации 25.08).
 

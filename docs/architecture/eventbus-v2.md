@@ -39,7 +39,7 @@ graph LR
 | `src/foundation/event-bus/types.ts` | 29 типизированных payload'ов |
 | `src/foundation/event-bus/facade.ts` | BridgeFacade (EventTarget.prototype patch) |
 | `src/foundation/event-bus/channels/*.ts` | 6 typed helpers |
-| `src/foundation/event-bus/wrappers/` | 23 EventBus-wrapper'а (1 активен) |
+| `src/foundation/event-bus/wrappers/` | EventBus-wrapper'а (~19 в активном использовании) |
 
 ## Пример использования
 

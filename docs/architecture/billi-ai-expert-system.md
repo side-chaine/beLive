@@ -151,7 +151,7 @@ useTrackInfoStore (НЕ persist — runtime only)
 src/
 ├── stores/
 │   └── ai-settings.store.ts
-├── js/ai/providers/
+├── src/js/ai/providers/
 │   └── openrouter-direct.provider.ts
 ├── utils/
 │   └── structure-formula.ts         ← getStructureFormula()

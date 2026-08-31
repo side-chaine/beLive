@@ -1,5 +1,7 @@
 # Предложение: Cross-Team Sync — Team M (Mac) → Team V (Windows)
 
+> 🗄️ **HISTORICAL (redirect 30.08):** этот док закрыт. Живая правда — `team-m/SHARED-REGISTRY.md §0 (OWNER-таблица, beLive-bridge SSOT)`. Карта вердиктов — `team-m/DOC-SYNC-MAP-2026-08-30.md`.
+
 > **Документ-бриф для команды Мака (M007) и её суб-агентов.**
 > **Статус:** предложенное решение, согласовано со стороны V (Windows/ПК).
 > **Дата:** 2026-08-23

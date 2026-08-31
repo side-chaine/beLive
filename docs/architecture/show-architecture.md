@@ -472,7 +472,7 @@ deactivateFeature()
 ❌ js/**/*.js
 ❌ src/stores/wordSync.store.ts
 ❌ src/stores/markers.store.ts
-❌ src/triggers/trigger.bridge.ts
+❌ src/triggers/trigger.bus.ts / trigger.store.ts
 ```
 
 ---

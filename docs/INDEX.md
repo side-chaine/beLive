@@ -10,6 +10,10 @@
 |----------|-------------|
 | [architecture-map-2.1](architecture/architecture-map-2.1.md) | Master architecture map — ownership, invariants, seams ✅ v2.2 Complete |
 | [audio-engine](architecture/audio-engine.md) | AudioEngineV2 + transport + stem system |
+| [eventbus-v2](architecture/eventbus-v2.md) | EventBus v2 — типиз. шина, 6 каналов |
+| [frozen-zones-v2](architecture/frozen-zones-v2.md) | Frozen Zones v2 — карта неприкасаемых |
+| [feed-social-v2](architecture/feed-social-v2.md) | Social Layer v2 — Wave 2 |
+| [transport-v3](architecture/transport-v3.md) | Transport V3 — синглтон, 5 состояний |
 | [auth-system](architecture/auth-system.md) | Google OAuth, Guest Mode, JWT |
 | [billi-ai-expert-system](architecture/billi-ai-expert-system.md) | AI Expert System + Billy v2 FSM |
 | [block-first-lyrics-sync](architecture/block-first-lyrics-sync.md) | Block-first sync algorithm |
@@ -26,7 +30,6 @@
 | [reactive-lyrics-foundation](architecture/reactive-lyrics-foundation.md) | Trigger/scheduler/word FX |
 | [scenario-stage-state-model](architecture/scenario-stage-state-model.md) | Scenario state machine 🗄️ STALE |
 | [show-architecture](architecture/show-architecture.md) | Show architecture ✅ v2.2 Sub-Slide |
-| [slot-matrix-system-v2.2](architecture/slot-matrix-system-v2.2.md) | Slot matrix system |
 | [styles-system](architecture/styles-system.md) | Style intent + recipes |
 | [sync-system](architecture/sync-system.md) | Two-layer sync architecture |
 | [takes-system](architecture/takes-system.md) | Takes recording + comparison |
@@ -71,7 +74,7 @@
 | Ресурс | Путь | Описание |
 |--------|------|----------|
 | **SHARED REGISTRY** | `team-m/REGISTRY.md` | Живой реестр координации Hub↔Mac: ownership matrix, status, open Q, handshake log |
-| Hub→Mac handshake | `team-m/SYNC-HUB-TO-MAC-2026-08-25.md` | Старт взаимодействия, запрос ack Mac-007 |
+| Hub→Mac handshake | `team-m/archive/SYNC-HUB-TO-MAC-2026-08-25.md` | Старт взаимодействия, запрос ack Mac-007 |
 | INBOX (live claims) | `team-m/INBOX.md` | Канал заявок по правилу shared-файлов |
 
 > Hub = 007_Винда (PC). Mac-007 = зеркалит процесс, receives packets от Hub. PC-версия «что в HEAD» основная при расхождении (sshfs Mac падал 2×).

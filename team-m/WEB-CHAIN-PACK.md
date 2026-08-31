@@ -132,7 +132,7 @@ Web-архитектор возвращает **пропозал** (markdown) с
 - `team-m/SUBAGENT-SETUP.md` — канон настройки субагентов (для справки, локальные цепочки сейчас паузены).
 - `agent-registry/MIGRATION-WAR-ROOM.md` — единственный источник правды по статусам.
 - `docs/INDEX.md` — single-entry навигация.
-- `docs/product-protocol-v2.1.md`, `docs/SYNC-PROTOCOL.md`, `docs/MAC-PC-BRIDGE-SPEC.md` — протоколы.
+- `docs/product-protocol-v2.1.md`, `docs/SYNC-PROTOCOL.md`, `team-m/SHARED-REGISTRY.md §0 (MAC-PC-BRIDGE-SPEC → historical-redirect)` — протоколы.
 
 ---
 

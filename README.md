@@ -178,7 +178,6 @@ Full architecture in `docs/architecture/`. Key docs:
 | `exercises-system.md` | Quest runtime, recipes, generators |
 | `takes-system.md` | Recording and waveform system |
 | `monitor-mix-v2.md` | Split mode, Line Up calibration |
-| `slot-matrix-system-v2.2.md` | Layout computation, sub-blocks, transition presets |
 | `performance-quality-system.md` | Visual budget tiers, recording-safe clamping |
 
 ---

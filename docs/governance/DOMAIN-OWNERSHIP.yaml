@@ -79,7 +79,7 @@ domains:
     doc_tc_initiator: "007"
 
   - domain: slot-matrix
-    path: docs/architecture/slot-matrix-system-v2.2.md
+    path: src/slot-matrix/slot-matrix.types.md  # E1-5 (30.08): живой носитель контракта; v2.2-док — historical
     owner: center
     keeper: "007"
     doc_tc_initiator: "007"

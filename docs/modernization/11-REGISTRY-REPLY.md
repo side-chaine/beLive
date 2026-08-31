@@ -27,7 +27,7 @@
 
 ## 2. Мак мост НЕ видит — это доказано спекой
 
-`docs/MAC-PC-BRIDGE-SPEC.md` @ `a691c2f`:
+`team-m/SHARED-REGISTRY.md §0 (MAC-PC-BRIDGE-SPEC → historical-redirect)` @ `a691c2f`:
 
 - **`:37`** — `sshfs bepc:/home/nikit/projects/beLive ~/beLive-pc`
 - **`:43`** — «Мак работает **только внутри `~/beLive-pc`**»

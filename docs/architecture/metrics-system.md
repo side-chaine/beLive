@@ -56,7 +56,7 @@ export interface MetricsCube {
 ```
 Event (track-loaded, practice:completed, audio.store)
     ↓
-metrics.bridge.ts (subscriber)
+metrics-sync.service.ts (subscriber)
     ↓
 metrics.store.ts (MetricsCube, Zustand persist → localStorage)
     ↓
@@ -204,7 +204,7 @@ DELETE FROM sync_rate_limit WHERE window_start < (strftime('%s','now') * 1000) -
 |------|-------|-----------|
 | src/types/metrics.types.ts | — | MetricsCube интерфейс |
 | src/stores/metrics.store.ts | — | Zustand persist → localStorage |
-| src/services/metrics.bridge.ts | — | Event subscriber |
+| src/services/metrics-sync.service.ts | — | Event subscriber |
 | src/services/genre-aggregation.service.ts | — | IDB genre aggregation |
 | src/services/metrics-sync.service.ts | — | Client sync + retry |
 | src/feed/ProfileStats.tsx | 95 | Conditional cells (pure reader) |

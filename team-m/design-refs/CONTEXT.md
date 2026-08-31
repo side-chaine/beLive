@@ -26,7 +26,7 @@
 - **Тейки**: `src/takes/*` v3 (recorder, takes.time `setRate`, useTakesPlayback) — Take1/2/3 на волне.
 - **Аудио v3**: HybridPipelineService (7/7 stems), MonitorRouter (+monitorLevel getter), program-capture (запись с аудио — починили), V2AudioCage, delegateSync single-writer (`main.tsx:148`).
 - **Каталог**: `CatalogBillyChat.tsx`, feed-воркер (CORS-allowlist: только app.mybelive.com — localhost:3000 даёт CORS, это НЕ баг).
-- **Спека GTRACK** (`team-m/GTRACK-SPEC-2026-08-25.md`): fingerprint/10 полей — ложится на референсы 17/18.
+- **Спека GTRACK** (`team-m/archive/GTRACK-SPEC-2026-08-25.md`): fingerprint/10 полей — ложится на референсы 17/18.
 
 ## 5. ДИЗАЙН-РЕФЕРЕНСЫ — все 19 (переименованы, старые имена в MANIFEST)
 ### Серия A · STUDIO-консоль

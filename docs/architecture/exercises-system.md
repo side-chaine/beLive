@@ -1249,6 +1249,6 @@ This would enable dynamic UI adaptation without manual state management.
 ## Appendix C: Related Documents
 
 - **Takes System**: `/docs/architecture/takes-system.md` (if exists)
-- **Sync/Monitor/Pitch**: `/docs/architecture/sync-monitor-pitch-integration.md`
+- **Sync/Monitor/Pitch**: `/docs/architecture/sync-monitor-pitch-integration.md *(PLANNED — док не создан)*`
 - **Audio Engine**: `/docs/architecture/audio-engine.md`
 - **Interaction Semantics**: `/docs/architecture/interaction-schema-2.1.md`

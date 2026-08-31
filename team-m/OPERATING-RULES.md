@@ -28,7 +28,7 @@
   В отчёте ОБЯЗАТЕЛЬНО: `## Что сделано` / `## Что нужно от V007` / `## Блокеры` / `## Текущий статус`.
 - **V007 → M007:** `agent-registry/MIGRATION-WAR-ROOM.md` (canonical state) + `team-m/BRIEFING-V007-TO-M007.md` (онбординг M007) + заметки в `team-m/`.
 - **Доки (лежат в `docs/` на ПК, видны Маку ПОСЛЕ живого монтажа):**
-  `SYSTEM-REPORT-V007.md`, `MAC-PC-BRIDGE-SPEC.md`, `SYNC-PROTOCOL.md`.
+  `SHARED-REGISTRY.md §0` (SYSTEM-REPORT/MAC-PC-BRIDGE-SPEC → historical-redirect), `SYNC-PROTOCOL.md`.
 - **Триггер готовности:** коммит отчёта Мака → V007 видит в `team-m/INBOX.md` строку «Mac: <agent> / <task> — <status>».
 
 ## 5. РОЛИ

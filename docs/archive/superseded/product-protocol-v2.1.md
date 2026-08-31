@@ -1,5 +1,7 @@
 # Protocol v2.1 — beLive Protocol Reference
 
+> 🗄️ **HISTORICAL (redirect 30.08):** этот док закрыт. Живая правда — `docs/architecture/auth-system.md (живые auth-контракты)`. Карта вердиктов — `team-m/DOC-SYNC-MAP-2026-08-30.md`.
+
 **Status:** Protocol contracts for auth, AI, and data layer  
 **Version:** 2.1  
 **Date:** 2026-06-07  

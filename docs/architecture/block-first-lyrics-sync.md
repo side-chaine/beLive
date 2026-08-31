@@ -512,7 +512,7 @@ if (bestScore < 0.5 || bestIdx < 0) {
 
 **Result:** First marker aligns with actual vocal onset. ~80% of all markers land accurately. Remaining ~20% may have non-linear drift (see Multi-Anchor Correction roadmap).
 
-**Known limitation:** Linear offset cannot fix non-linear drift where individual markers diverge from actual timing. See `docs/architecture/sync-accuracy-roadmap.md` for L3+ roadmap.
+**Known limitation:** Linear offset cannot fix non-linear drift where individual markers diverge from actual timing. See `docs/architecture/sync-accuracy-roadmap.md *(PLANNED — док не создан)*` for L3+ roadmap.
 
 **Performance:** ~5-13s on current hardware (`decodeAudioData` of full vocal stem). Async VOC planned for W13.
 

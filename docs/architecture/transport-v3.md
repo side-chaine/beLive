@@ -50,9 +50,9 @@ src/audio/engine-v3/
 
 | Файл | Назначение |
 |------|-----------|
-| `src/audio/engine-v3/TransportV3.ts` | Транспорт (5,042 строки, 5 состояний) |
+| `src/audio/engine-v3/core/TransportV3.ts` | Транспорт (5,042 строки, 5 состояний) |
 | `src/audio/engine-v3/V2Adapter.ts` | Мост к V2 (IV2PublicContract, allowlist, `_` blocked) |
-| `src/audio/engine-v3/types.ts` | Типы: состояния, события |
+| `src/audio/engine-v3/core/types.ts` | Типы: состояния, события |
 
 ## Пример использования
 

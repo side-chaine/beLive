@@ -1,5 +1,7 @@
 # 🏛️ BATCH REPORT: TC-094 + TC-095 — Orphan Absorption & UI Fallback
 
+> 🗄️ **HISTORICAL (redirect 30.08):** этот док закрыт. Живая правда — `team-m/SHARED-REGISTRY.md`. Карта вердиктов — `team-m/DOC-SYNC-MAP-2026-08-30.md`.
+
 **Дата:** 2026-06-30  
 **Команда:** 007 (DeepSeek V4 Flash Free)  
 **Центры:** Центр_32, Центр_33  

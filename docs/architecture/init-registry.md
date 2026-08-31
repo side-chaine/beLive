@@ -36,7 +36,6 @@ graph TD
 | Файл | Назначение |
 |------|-----------|
 | `src/foundation/registry/initRegistry.ts` | Реестр (104 строки) |
-| `src/foundation/registry/__tests__/initRegistry.test.ts` | Тесты lifecycle |
 
 ## Пример использования
 

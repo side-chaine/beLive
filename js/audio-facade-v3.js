@@ -51,17 +51,23 @@
         if (t) t.stop();
       } catch {}
     },
+    // BRG-2b (201, 31.08): transport.seek — async; раньше void → unhandled rejection
+    // при reject. Возвращаем промис как play/pause (консистентный контракт фасада).
     seekTo(t) {
       try {
         const tr = window.__belive && window.__belive.transport;
-        if (tr && typeof t === 'number' && Number.isFinite(t)) tr.seek(t);
-      } catch {}
+        return (tr && typeof t === 'number' && Number.isFinite(t))
+          ? tr.seek(t).catch(() => {})
+          : Promise.resolve();
+      } catch { return Promise.resolve(); }
     },
     setCurrentTime(t) {
       try {
         const tr = window.__belive && window.__belive.transport;
-        if (tr && typeof t === 'number' && Number.isFinite(t)) tr.seek(t);
-      } catch {}
+        return (tr && typeof t === 'number' && Number.isFinite(t))
+          ? tr.seek(t).catch(() => {})
+          : Promise.resolve();
+      } catch { return Promise.resolve(); }
     },
     loadTrack() { return Promise.resolve(); },
     setInstrumentalVolume(v) {

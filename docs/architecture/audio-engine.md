@@ -865,7 +865,7 @@ The source of truth remains engine current time, but UI state arrives through se
 
 ### Scan mismatch to note
 The current scan set includes:
-- `src/audio/store/audioStore.ts`
+- `src/stores/audio.store.ts`
 
 But runtime bridges import:
 - `../stores/audio.store`

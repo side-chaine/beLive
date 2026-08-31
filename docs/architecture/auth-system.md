@@ -5,9 +5,9 @@
 **Date:** 2026-06-07
 **Author:** Agent 007 (по заданию Никиты)
 **Related:**
-- `protocol-v2.1.md` (Technical JWT/protocol specs)
-- `interaction-schema-2.2.md` (Interaction flows)
-- `architecture-map-2.2.md` (Auth in arch context)
+- `docs/archive/superseded/product-protocol-v2.1.md (архив)` (Technical JWT/protocol specs)
+- `docs/archive/superseded/interaction-schema-2.2.md (архив)` (Interaction flows)
+- `docs/archive/superseded/architecture-map-2.2.md (архив)` (Auth in arch context)
 - `src/services/auth.service.ts` (Implementation)
 - `src/stores/user-profile.store.ts` (Data store)
 - `src/types/user.types.ts` (Type definitions)

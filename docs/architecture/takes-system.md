@@ -190,7 +190,7 @@ All exercise recipes classified into three categories for learner surface visibi
 | Takes metadata / UI state | `takes.store.ts`                         | lightweight Zustand state                   |
 | Binary assets             | `takes.assets.ts`                        | blobs, buffers, peaks, URLs outside Zustand |
 | Mic capture               | `takes.recorder.ts`                      | MediaRecorder + analyser tap                |
-| Lifecycle cleanup         | `takes.bridge.ts`                        | track change / playback stop / DOM attrs    |
+| Lifecycle cleanup         | `takes.store.ts + takes.duck.ts`                        | track change / playback stop / DOM attrs    |
 | Transport authority       | `AudioEngineV2`                          | frozen, not owned by Takes                  |
 | Mic stream authority      | `MicrophoneManager` via engine           | raw stream source                           |
 | Block timing truth        | blocks + markers + `getBlockTimeRange()` | reused utility path                         |
@@ -224,7 +224,7 @@ Takes does **not** own:
 | `src/takes/takes.types.ts`                   | types (`TakeMeta`, `BlockTakes`, `PreviewMode`, `ViewMode`) |
 | `src/takes/takes.assets.ts`                  | blob/buffer/peaks registry                                  |
 | `src/takes/takes.recorder.ts`                | MediaRecorder wrapper + analyser tap                        |
-| `src/takes/takes.bridge.ts`                  | lifecycle and event bridge                                  |
+| `src/takes/takes.store.ts + takes.duck.ts`                  | lifecycle and event bridge                                  |
 | `src/takes/components/TakesPanel.tsx`        | panel container + canvas wiring                             |
 | `src/takes/components/TakesCanvas.tsx`       | waveform renderer                                           |
 | `src/takes/components/TakesControlStrip.tsx` | take cards, preview, record actions                         |
