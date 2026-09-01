@@ -52,8 +52,10 @@ Bridges continue to work unchanged.
 
 ## Frozen Zones
 
+> Операционный канон — `frozen-manifest.json` (verify:frozen, 18/18) + док-SSOT `frozen-zones-v2.md`; списки ниже — срез на дату.
+
 ZERO TOUCH:
 - src/audio/core/AudioEngineV2.ts ❄️
 - src/bridges/* ❄️
 - src/services/track.orchestrator.ts ❄️
-- js/*.js ❄️
+- js-слой — снесён Волной A 01.09 (audio-engine.js, recorder-processor.js; живой фасад audio-facade-v3.js вне frozen)

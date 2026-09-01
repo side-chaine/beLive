@@ -9,7 +9,7 @@
 | Document | Description |
 |----------|-------------|
 | [architecture-map-2.1](architecture/architecture-map-2.1.md) | Master architecture map — ownership, invariants, seams ✅ v2.2 Complete |
-| [audio-engine](architecture/audio-engine.md) | AudioEngineV2 + transport + stem system |
+| [audio-engine](architecture/audio-engine.md) | V2 frozen-хвост + V3 transport + stems |
 | [eventbus-v2](architecture/eventbus-v2.md) | EventBus v2 — типиз. шина, 6 каналов |
 | [frozen-zones-v2](architecture/frozen-zones-v2.md) | Frozen Zones v2 — карта неприкасаемых |
 | [feed-social-v2](architecture/feed-social-v2.md) | Social Layer v2 — Wave 2 |

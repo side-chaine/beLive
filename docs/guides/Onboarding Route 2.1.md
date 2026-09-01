@@ -47,7 +47,7 @@ It is now a structured hybrid product runtime with:
 
 - preserved boot/boundary globals
 - React/TypeScript product surfaces
-- `AudioEngineV2` transport authority
+- V3 transport (js/audio-facade-v3.js)
 - marker-driven line sync backbone
 - additive word-sync layer
 - trigger-driven reactive lyric runtime
@@ -120,7 +120,7 @@ The real open frontier is:
 Do **not** reopen these areas unless there is strong new evidence.
 
 ### 4.1 Frozen enough to treat as settled
-- `AudioEngineV2` as transport authority
+- V3-фасад as transport
 - preserved `window.audioEngine` identity
 - marker-driven current line backbone
 - additive word-sync architecture
@@ -564,7 +564,7 @@ A good first report should be structured like this:
 
 ### 12.1 Confirmed truths
 Example:
-- AudioEngineV2 is transport authority
+- V3-фасад is transport surface
 - current line remains marker-driven
 - word-sync hydration is orchestrator-driven
 
@@ -681,7 +681,7 @@ Use this checklist during first scans.
 
 ### Audio
 - [ ] verified `window.audioEngine` patch-in-place
-- [ ] verified `AudioEngineV2` transport authority
+- [ ] verified V3 transport (фасад js/audio-facade-v3.js)
 - [ ] verified master clock and vocal follower behavior
 
 ### Track flow

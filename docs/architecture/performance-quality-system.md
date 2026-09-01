@@ -59,7 +59,7 @@ The strongest model separates three concerns permanently.
 
 ## 3.1 Timing truth
 Owned by:
-- `AudioEngineV2`
+- V3 transport (фасад)
 - marker-driven active line
 - word-sync layer
 - trigger layer

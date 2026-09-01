@@ -38,7 +38,7 @@ UI → useStemStore.setStemVolume(id, vol) → Zustand update
 | Файл | Назначение |
 |------|-----------|
 | `src/foundation/reactions/stem-engine-sync.ts` | Central Bridge (164 строки) |
-| `src/audio/engine-v3/V2Adapter.ts` | Единственный мост к frozen V2 |
+| `src/audio/engine-v3/V2Adapter.ts` | Живой мост V2↔V3 (delegateSync, V2Adapter.ts:51) |
 | `src/foundation/reactions/__tests__/stem-engine-sync.test.ts` | 6 тестов |
 
 ## Особенности

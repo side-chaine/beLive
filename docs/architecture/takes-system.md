@@ -233,7 +233,7 @@ Takes does **not** own:
 
 | File                                  | Why it matters                             |
 | ------------------------------------- | ------------------------------------------ |
-| `src/audio/core/AudioEngineV2.ts`     | transport authority, stem loading, volumes |
+| `src/audio/core/AudioEngineV2.ts`     | V3 transport (фасад), stem loading, volumes (frozen V2 — до M5) |
 | `src/audio/compat/patchV1.ts`         | public getters on `window.audioEngine`     |
 | `src/audio/core/MicrophoneManager.ts` | raw mic stream                             |
 | `src/utils/block-time-range.ts`       | canonical block → time mapping             |
@@ -531,7 +531,7 @@ Recorded take preview uses:
 - AudioBufferSourceNode
 - independent gain node
 - direct Web Audio playback
-- engine remains transport authority
+- engine remains: V3 transport (фасад)
 
 **Important contract:**
 Engine-led preview remains frozen. No second transport.
@@ -870,7 +870,7 @@ During recording, the user sees their waveform being written behind the playhead
 - Compare and live recording are separate concerns
 - Green is reserved for future match/proximity semantics
 - Playhead remains separate DOM layer
-- Full transport authority remains in `AudioEngineV2`
+- Transport = V3-слой (W6-финиш); frozen V2 — до M5
 - Target hardware = MacBook Pro 2013 (performance gate)
 - **Exercise execution lock blocks all interference surfaces during listening/pre-recording/recording**
 - **Host residency mutations forbidden during active exercise execution**

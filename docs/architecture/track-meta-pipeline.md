@@ -379,7 +379,7 @@ GetSongBPM (api.getsong.co) возвращает тональность в фо�
 | `architecture-map-2.1.md` | Ownership matrix, event contracts |
 | `zip-pipeline.md` | ZIP export/import (cover art pipeline) |
 | `tib-current-state-context.md` | TrackInfoBoard UI state (устарел, май 2026) |
-| `audio-engine.md` | AudioEngineV2 транспорт |
+| `audio-engine.md` | V2 frozen + V3 transport |
 | `sync-system.md` | Двухслойная архитектура синхронизации |
 
 ---

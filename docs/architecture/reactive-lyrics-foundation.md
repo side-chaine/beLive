@@ -83,7 +83,7 @@ It is a working runtime substrate.
 ## 4. Ownership Map
 
 ## 4.1 Transport authority
-**Owner:** `AudioEngineV2`
+**Owner:** V3 transport (фасад)
 
 Transport remains fully owned by the audio engine.
 Stores and bridges are mirrors or consumers, not authorities.
@@ -155,7 +155,7 @@ It is not yet the full final style profile system, but it is the foundation of i
 The current runtime chain is now:
 
 ```text
-AudioEngineV2 currentTime
+фасад currentTime (V3)
 → marker-driven active line
 → wordSync.store timing selectors
 → WordLineDetector
@@ -442,7 +442,7 @@ The console exists, but mode-aware lyric style profiles are not fully encoded in
 
 Do not reopen:
 
-- transport authority in AudioEngineV2
+- transport in V3-слое
 - marker-driven line backbone
 - additive sync model
 - trigger layer as a separate first-class domain
