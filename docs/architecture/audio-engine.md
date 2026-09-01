@@ -6,7 +6,7 @@ audio-engine.md
 
 ## Freeze verdict
 
-Текущий аудиодвижок beLive — **v2 frozen core + EngineV3 additive layer**. 
+Текущий аудиодвижок beLive — **EngineV3 (V3 — дефолт с 28.08) + V2 frozen-хвост до полного вывода (M5)**. 
 
 Главный итог:
 - transport authority: `AudioEngineV2` (❄️ frozen, core) + `EngineV3` (через V2Adapter)
@@ -50,7 +50,7 @@ React boot вызывает `tryActivateV2()` через `src/App.tsx` и `src/a
 ## Ownership map
 
 ### Transport authority
-Подтверждённо: `AudioEngineV2` (❄️ frozen, runtime authority) + `EngineV3` (additive layer через V2Adapter)
+Подтверждённо: `AudioEngineV2` (❄️ frozen, только чтение) + `EngineV3` (дефолт; V2Adapter — мост к frozen V2)
 
 Ключевые методы (V2 core — frozen):
 - `loadTrack` — `src/audio/core/AudioEngineV2.ts:63-147`
@@ -59,7 +59,7 @@ React boot вызывает `tryActivateV2()` через `src/App.tsx` и `src/a
 - `setCurrentTime/seekTo` — `375-392`
 - `stop` — `546-553`
 
-**EngineV3 (additive, см. §EngineV3 ниже):**
+**EngineV3 (дефолт, см. §EngineV3 ниже):**
 - `TransportV3.ts` — singleton facade, 5 состояний, error recovery
 - `V2Adapter.ts` — `delegateSync(method, ...args)` / `getSync(prop)` — единственный bridge к frozen V2
 - `getTransport()` — lazy singleton, в `main.tsx:115`
