@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -35,13 +35,24 @@ checkBlock('graveyard', manifest.graveyard);
 
 const known = new Set([...Object.keys(manifest.guard), ...Object.keys(manifest.graveyard)]);
 const bridgesDir = join(root, 'src', 'bridges');
+// FROZEN-WARN-патч 201 (01.09): рекурсивный обход — подкаталоги под наблюдением;
+// SKIP-маска по ИМЕНИ (не по каталогу — иначе дыра вернётся); .tsx ловится;
+// .spec.ts больше не даёт ложный WARN (доказано дифф-прогоном 201: HEAD 3/5 провалов, патч 6/6).
+const SKIP_RE = /\.(test|spec)\.tsx?$/;   // тесты легально править — см. note в манифесте
+function walk(dir, out = []) {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, e.name);
+    if (e.isDirectory()) walk(p, out);
+    else if (/\.tsx?$/.test(e.name)) out.push(p);
+  }
+  return out;
+}
 if (existsSync(bridgesDir)) {
-  for (const entry of readdirSync(bridgesDir, { withFileTypes: true })) {
-    if (!entry.isFile() || !entry.name.endsWith('.ts')) continue;
-    const rel = `src/bridges/${entry.name}`;
-    if (!known.has(rel)) {
-      console.warn(`WARN resurrection: ${rel} вне манифеста (новый мост до Волны C?)`);
-    }
+  for (const abs of walk(bridgesDir)) {
+    const rel = relative(root, abs).split(sep).join('/');
+    if (known.has(rel)) continue;
+    if (SKIP_RE.test(rel)) continue;      // тесты — не замок, и не шум
+    console.warn(`WARN resurrection: ${rel} вне манифеста (новый мост до Волны C?)`);
   }
 }
 
