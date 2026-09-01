@@ -19,7 +19,7 @@ export function getPlaybackTime(): number {
   return (window as any).audioEngine?.getCurrentTime?.() ?? 0;
 }
 
-/** Seek: через TransportV3 при активном V3, иначе через V2Adapter. */
+/** Seek: через TransportV3 при активном V3, иначе через legacy-движок (V2-обёртка снесена Волной B). */
 export function seekTo(t: number): void {
   if ((window as any).__v3Active) {
     try { void getTransport()?.seek(Math.max(0, t)); } catch {}

@@ -54,6 +54,3 @@ export function getStatePublisher(): _V3StatePublisher | null {
 
 // Monitor — Static Output Bus (TC-2C)
 export { MonitorRouter } from './monitor/MonitorRouter'
-
-// Legacy — retained for frozen V2 access
-export { V2Adapter } from './V2Adapter'

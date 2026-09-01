@@ -6,16 +6,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useStemStore } from '../../../stem/stem.store'
 
-// V2Adapter mock
+// mockV2 — истор. заглушка (V2-обёртка снесена Волной B); живые строки ниже ассертуют мёртвый канал
 const mockV2 = {
   getV2Engine: vi.fn(),
   delegateSync: vi.fn(),
 }
 
+// Волна B: ключ V2Adapter удалён из фабрики (класс снесён); mockV2-объект оставлен —
+// 6 живых строк (:40/:47/:50/:73/:86 + decl) ассертят, что мёртвый канал не зовётся.
 vi.mock('../../../audio/engine-v3', () => ({
-  V2Adapter: {
-    getInstance: () => mockV2,
-  },
   getTransport: vi.fn(),
 }))
 

@@ -35,7 +35,7 @@ function resolveLineByTime(t: number): number {
 export function initPositionSync(): () => void {
   let intervalId: ReturnType<typeof setInterval> | null = null
 
-  /** Обновить currentTime из V2Adapter (AudioEngineV2 имеет getCurrentTime(), НЕ свойство currentTime) */
+  /** Обновить currentTime из legacy-движка (AudioEngineV2 имеет getCurrentTime(), НЕ свойство currentTime) */
   const syncCurrentTime = () => {
     // Double guard: И state !== 'idle' И стемы есть. Одного условия мало —
     // V3DataInterceptor грузит стемы до авто-старта V3, state остаётся 'idle'.

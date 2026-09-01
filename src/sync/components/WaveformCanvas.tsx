@@ -430,11 +430,11 @@ export function WaveformCanvas() {
             }
           }
         } else {
-          // Simple click → seek (via V2Adapter)
+          // Simple click → seek (через TransportV3)
           const clickTime = mouseDownRef.current.time;
           const clampedTime = Math.max(0, Math.min(clickTime, duration));
           try {
-            // M2 (2a): в V3-режиме seek идёт через TransportV3, не через V2Adapter (который блокируется)
+            // M2 (2a): в V3-режиме seek идёт через TransportV3 (прямой V2-путь заблокирован гардом)
             const t3 = getTransport()
             const v3Active = (window as any).__v3Active || (t3 && t3.state !== 'idle')
             if (v3Active && t3) {

@@ -1,6 +1,6 @@
 // ============================================================
 // src/foundation/reactions/stem-engine-sync.ts
-// Central Bridge: Zustand subscribe → V2Adapter.delegateSync
+// Central Bridge: Zustand subscribe → pipeline (V3) / legacy-движок (V2-делегация снесена W2b)
 //
 // Sonnet C: одно место вместо 6 копий dual-call.
 // Ручной diff (вместо subscribeWithSelector) + cold-start sync.

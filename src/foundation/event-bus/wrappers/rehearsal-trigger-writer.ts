@@ -3,7 +3,7 @@
 // CLASS: SIDE-EFFECT
 // ORIGINAL: src/Rehearsal/bridge/rehearsal-trigger.bridge.ts ❄️ FROZEN
 //
-// Замена 17× (window as any).audioEngine на V2Adapter.
+// Замена 17× (window as any).audioEngine на TransportV3 (истор.: ранее V2-обёртка, снесена Волной B).
 // Bridge НЕ ТРОГАЕТСЯ — этот wrapper используется когда Facade отключается.
 // ============================================================
 

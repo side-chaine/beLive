@@ -263,7 +263,7 @@ export class MonitorRouter {
     try { source.connect(this._mainDelay) } catch (e) { console.warn('[MonitorRouter] connectCalibrationPulse failed', e) }
   }
 
-  /** Connect mic (V2Adapter.enableMicrophone calls this) */
+  /** Connect mic (legacy-канал enableMicrophone; V2-обёртка снесена Волной B) */
   setMicEnabled(on: boolean): void {
     const now = this.programInput.context.currentTime
     const ramp = now + 0.02

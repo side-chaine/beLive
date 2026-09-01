@@ -11,7 +11,7 @@
  *     + H1.5 dead-stem (catch/no-slot → gain 0; успешный reload resurrect)
  *  6. NaN-гарды стора (setBusVolume/setStemVolume первой строкой)
  *  7. регресс симптома №18: фейдер 37% переживает смену блока (reset), music тише пропорционально
- *  9. cage-инвариант H4.1: гард ae.* блокирует при __v3Active, V2Adapter-канал не задет
+ *  9. cage-инвариант H4.1: гард ae.* блокирует при __v3Active, delegateSync-канал не задет
  * 10. dual-mode маршрутизация красного фейдера ControlDeck (stems ↔ no-stems) — контракт-зеркало H3.4
  */
 
@@ -415,7 +415,7 @@ describe('№18-BUS H4.1: ae.* mini-gard (__v3Active) + cage-инвариант'
     expect(console.warn).toHaveBeenCalled()
   })
 
-  it('cage-инвариант: гард задевает только ae.*, канал V2Adapter.delegateSync работает при __v3Active', () => {
+  it('cage-инвариант: гард задевает только ae.*, delegateSync-канал не задет (истор.: V2Adapter снесён Волной B)', () => {
     const origInst = vi.fn()
     const ae: Record<string, any> = { setInstrumentalVolume: origInst, setStemVolume: vi.fn(), setStemsEnabled: vi.fn() }
     installGuard(ae)

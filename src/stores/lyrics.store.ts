@@ -23,7 +23,7 @@ export const useLyricsStore = create<LyricsState>((set) => ({
 }));
 
 // BAC-001 (VMO-035): SAFE-side FOUC gate for lyrics.
-// The frozen track.orchestrator populates a RAW lyrics mirror (before word-sync
+// The track loader (ex-track.orchestrator, снесён Волной B) populates a RAW lyrics mirror (before word-sync
 // processing); the frozen lyrics.bridge then syncs that mirror into this store
 // EARLY — on the early `lyrics-rendered` event (orchestrator Step 8) — with the
 // unprocessed raw text. That raw mirror must NEVER be flashed.
