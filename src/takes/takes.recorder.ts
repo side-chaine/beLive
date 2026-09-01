@@ -105,7 +105,7 @@ export class TakesRecorder {
 
     // Create AnalyserNode for live waveform (listen-only tap)
     const ctx: AudioContext = engineMode === 'v3'
-      ? ((window as any).__belive?.pipeline?.ctx ?? ae.audioContext ?? ae._audioContext)
+      ? ((window as any).__belive?.pipeline?.ctx ?? ae.audioContext)
       : (ae.audioContext ?? ae._audioContext);
     if (ctx) {
       this._sourceNode = ctx.createMediaStreamSource(stream);

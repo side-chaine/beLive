@@ -99,16 +99,6 @@ export default function SyncEditorPanel() {
     return () => ro.disconnect();
   }, []);
 
-  // Sync slider with actual audioEngine values on mount
-  useEffect(() => {
-    const ae = (window as any).audioEngine;
-    if (!ae) return;
-    const iVol = ae.instrumentalGain?.gain?.value ?? 1;
-    const vVol = ae.vocalsGain?.gain?.value ?? 1;
-    useStemStore.getState().setStemVolume('instrumental', iVol);
-    useStemStore.getState().setStemVolume('vocals', vVol);
-  }, []);
-
   const cycleSource = useCallback(() => {
     const idx = SOURCE_CYCLE.indexOf(sourceMode);
     setSourceMode(SOURCE_CYCLE[(idx + 1) % SOURCE_CYCLE.length]);
@@ -617,10 +607,10 @@ export default function SyncEditorPanel() {
       const tc = (window as any).trackCatalog;
       const ae = (window as any).audioEngine;
 
-      // Duration: from audioEngine (most reliable)
-      const duration = ae?.audio?.duration
-        || ae?.getDuration?.()
-        || 0;
+      // Duration: V3 pipeline.duration (HPS:149) → V2 getDuration() → 0 (Волна B: мёртвый ae.audio.duration удалён)
+      const duration = (window as any).__belive?.pipeline?.duration
+        ?? ae?.getDuration?.()
+        ?? 0;
 
       // Artist + Title: from trackCatalog
       let artistName = '';
