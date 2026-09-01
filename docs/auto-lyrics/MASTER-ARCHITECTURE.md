@@ -384,7 +384,7 @@ function blockFirstLineSync(genius, lrc, tuning?: Partial<SyncTuning>): MatchRes
 
 | Файл | Роль |
 |---|---|
-| `src/services/auto-lyrics.service.ts` | **Ядро:** blockFirstLineSync (2142 строки), Variant B, 4-pass pipeline, §7 константы |
+| `src/services/auto-lyrics.service.ts` | **Ядро:** blockFirstLineSync (2152 строки), Variant B, 4-pass pipeline, §7 константы |
 | `src/services/__tests__/auto-lyrics.match.test.ts` | 69 тестов: MJ регрессия (TC-141/142), Runaway (TC-150/152/153/155/156), Arena A1/A2/A6 |
 | `src/services/__tests__/mj-cgp-dryrun.test.ts` | 3 теста: реальный MJ CGP + Solo gap-assignment |
 | `src/services/__tests__/auto-lyrics.grid-search.test.ts` | Grid search (108 комбинаций) — инструмент калибровки, не committed |

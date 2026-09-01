@@ -1,5 +1,5 @@
 # EventBus v2 — Центральная шина событий
-*Описание:* Единая типизированная шина вместо 24 legacy bridges. 6 каналов, 29 событий.
+*Описание:* Единая типизированная шина вместо 24 legacy bridges. 6 каналов, 28 событий.
 *Дата:* 2026-07-16
 *Статус:* ✅ PRODUCTION (Facade dual-delivery)
 
@@ -28,7 +28,7 @@ graph LR
 | Catalog | 4 | track-saved, tracks-changed, catalog-close, catalog-cleared |
 | Sync | 8 | blocks-applied, active-line-changed, loop-set/cleared/completed |
 | UI | 3 | mode-changed, block-scenes-loaded, camera-permission-resolved |
-| Practice | 2 | practice:state-changed (объединяет 6 legacy events) |
+| Practice | 1 | practice:state-changed (объединяет 6 legacy events) |
 | **Total** | **29** | |
 
 ## Ключевые файлы
@@ -36,7 +36,7 @@ graph LR
 | Файл | Назначение |
 |------|-----------|
 | `src/foundation/event-bus/event-bus.ts` | Ядро: publish/subscribe/clear |
-| `src/foundation/event-bus/types.ts` | 29 типизированных payload'ов |
+| `src/foundation/event-bus/types.ts` | 28 типизированных payload'ов |
 | `src/foundation/event-bus/facade.ts` | BridgeFacade (EventTarget.prototype patch) |
 | `src/foundation/event-bus/channels/*.ts` | 6 typed helpers |
 | `src/foundation/event-bus/wrappers/` | EventBus-wrapper'а (~19 в активном использовании) |

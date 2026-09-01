@@ -161,7 +161,7 @@ DELETE FROM sync_rate_limit WHERE window_start < (strftime('%s','now') * 1000) -
 |------|----------|-----------|----------|
 | ELO | const 1500 → D1 в Phase 3 | Всегда | Показать 1500 |
 | Треков | trackStore.tracksMeta.length | При ≥1 треке | Показать 0 |
-| Репетиции | metrics.bridge → metrics.store | При первом Play | Скрыть |
+| Репетиции | metrics-sync.service → metrics.store | При первом Play | Скрыть |
 | Квесты | exercise.store + persist | При первом квесте | Скрыть |
 | Жанр | genre-aggregation → IDB | При ≥1 треке с meta | Скрыть |
 

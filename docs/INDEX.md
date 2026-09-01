@@ -1,6 +1,6 @@
 # 📚 beLive Documentation Index
 
-> **Last updated:** 2026-06-10
+> **Last updated:** 2026-08-31
 > ⚠️ **SOURCE OF TRUTH for doc sync status:** `docs/sync/MASTER-SYNC-REGISTRY.yaml`
 > **Human-readable registry:** `docs/sync/MASTER-SYNC-REGISTRY.md`
 

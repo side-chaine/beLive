@@ -12,7 +12,7 @@ audio-engine.md
 - transport authority: `AudioEngineV2` (❄️ frozen, core) + `EngineV3` (через V2Adapter)
 - loop ownership: `loop-events.ts` → `loop.store`
 - sync editor loop: `WaveformCanvas` (direct engine-backed)
-- EngineV3: 7 production modules (TransportV3, V2Adapter, DuckGuardV3, MeterNodeV3 + support)
+- EngineV3: 30 модулей в 8 слоях (core/pipeline/monitor/integration/stems/services/diagnostics + корень), ~4 900 строк — см. § EngineV3
 
 
 ## Current architecture, condensed
@@ -1040,39 +1040,22 @@ A more DAW-like transport with tighter loop/seek/selection semantics remains a r
 
 ---
 
-## EngineV3 — Additive Layer (2026-07-17)
+## EngineV3 — Production Layer (post-W6, ARC-2c/d/e)
 
-**Статус:** 7 production modules, 7 archived → `src/legacy/engine-v3/`
+30 модулей в 8 слоях, ~4 914 строк. V3 — дефолт с 28.08 (миграция финиширована, PROD-push `780db23`); V2 frozen-ядро остаётся в кодовой базе до полного вывода (M5 ⬜ — план Ц3, PLAN-v3.3 §0/§1).
 
-### Production (7)
 ```
-src/audio/engine-v3/
-├── V2Adapter.ts          — единственный мост к AudioEngineV2 (15+ импортов)
-├── TransportV3.ts        — singleton, 5 состояний, error recovery
-├── IV2PublicContract.ts  — публичный контракт V2
-├── DuckGuardV3.ts        — Web Audio ducking (сохранён)
-├── MeterNodeV3.ts        — RMS/peak анализатор (сохранён)
-├── index.ts              — barrel + getTransport()
-└── types.ts              — типы
+src/audio/engine-v3/           # 30 prod .ts/.tsx · 4914 LOC
+├── core/        4 файла 635   # TransportV3 · HybridClock · StemOrchestrator · types
+├── pipeline/    6 файлов 1509 # HybridPipelineService · StretchInstancePool · StretchInstance · StemChain · IPipelineController · HybridLoopStrategy
+├── monitor/     5 файлов 893  # MonitorEngine · MonitorRouter · AutoMixController · PulseCalibrator · DeviceManager
+├── integration/ 6 файлов 691  # V3DataInterceptor · V3StatePublisher · LoopEngineV3 · DuckGuardV3Native · AudioCrashModal · useAudioContextHealth
+├── stems/       1 файл 344   # StemPlayerV3
+├── services/    2 файла 164  # MicSourceV3 · RateThrottler
+├── diagnostics/ 2 файла 390  # CaptureWorklet · DuplicateAudioRouteChecker
+└── корень       4 файла 288  # index (getTransport) · V2Adapter · IV2PublicContract · vendor .d.ts
 ```
-
-### Archived (7 → `src/legacy/engine-v3/`)
-StemPlayerV3, VocalMixV3, MicrophoneV3, LoopEngineV3, CrossfadeV3, CaptureBusV3, RateParamV3
-— 0 внешних импортов, код сохранён в git + legacy.
-
-### Lifecycle
-- `getTransport()` — lazy singleton (main.tsx:115)
-- `acquire/release` через `playback-orchestrator.service`
-- `_v2Fallback` — fallback для методов, не реализованных в V3
-- AudioContext — единый (V2 через V2Adapter)
-
-### Frozen boundary
-- `src/audio/core/AudioEngineV2.ts` — ❄️ НЕ ТРОГАТЬ
-- `src/audio/compat/patchV1.ts` — ❄️ НЕ ТРОГАТЬ
-- V2Adapter — только read через IV2PublicContract
-
----
-
+7 ранних модулей W1-эры: часть влита в слои, часть снесена W4/W5; src/legacy/ убран из дерева.
 ## Roadmap
 
 ### Frozen now

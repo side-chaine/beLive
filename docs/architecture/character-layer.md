@@ -20,7 +20,7 @@
 | `notify-bridge.ts` | Поллинг `team-m/INBOX.md` (1500ms, `cache: no-store`); fallback — виртуальный импорт `INBOX.md?raw`; djb2 content-hash; при изменении → `emitReportArrived({source:'inbox-sync'})` |
 | `layer2-report-emitter.ts` | G3-мост: завершение AI-ответа → событие `team-m.report-arrived` (`source:'mac-chat'`) |
 | `notify-emit.ts` | Эмиттер события `team-m.report-arrived` |
-| `src/__tests__/layer2-report-emitter.test.ts` | Тест эмиттера |
+| `src/character/__tests__/layer2-report-emitter.test.ts` | Тест эмиттера |
 
 ## 3. Контракты
 
@@ -32,7 +32,7 @@
 
 ## 4. Границы и зависимости
 
-- Зависит от: `foundation/registry/initRegistry` (саморегистрация), `src/js/ai/registry` (aiHub), `js/ai/settings`, `stores/notify.store`.
+- Зависит от: `foundation/registry/initRegistry` (саморегистрация), `src/js/ai/registry` (aiHub), `src/js/ai/settings`, `stores/notify.store`.
 - НЕ зависит от транспортного audio-домена: WebAudio standalone — frozen `AudioEngineV2` не трогается (инвариант 2 доктрины соблюдён).
 - Потребители события `team-m.report-arrived`: звуковой cue + будущий `avatar.store` (визуальная реакция аватара — шов ⚠️, см. event/listener map).
 

@@ -158,7 +158,7 @@ Variant B и §7 calibration — всё это было построено ПО�
 После чтения документации — карта для навигации по коду:
 
 ```
-src/services/auto-lyrics.service.ts (2142 строки)
+src/services/auto-lyrics.service.ts (2152 строки)
 ├── blockFirstLineSync()         → главная функция (точка входа)
 ├── DEFAULT_TUNING               → §7 константы (строка ~35)
 ├── [Pass 1] _collectCandidates  → Candidate Collection

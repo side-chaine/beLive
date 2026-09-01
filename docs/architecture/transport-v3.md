@@ -1,7 +1,7 @@
 # TransportV3 — Аудио-транспорт
 *Описание:* V3 транспорт — синглтон с 5 состояниями, error recovery и EventBus интеграцией.
 *Дата:* 2026-07-17 (обновлён: V3 — полноценный engine, не прослойка)
-*Статус:* ✅ PRODUCTION (15 модулей engine-v3/, V2Adapter как fallback для frozen)
+*Статус:* ✅ PRODUCTION (✅ PRODUCTION (30 модулей в 8 слоях engine-v3/, V2Adapter — мост к frozen V2) engine-v3/, V2Adapter как fallback для frozen)
 
 ---
 
@@ -23,27 +23,6 @@ graph TD
 ```
 IDLE → PLAYING → PAUSED → (seek) → PLAYING
                         → ERROR → (recover) → IDLE/PLAYING
-```
-
-## EngineV3 — состав (15 модулей)
-
-```
-src/audio/engine-v3/
-├── TransportV3.ts        (5,042 строк) — транспорт, 5 состояний
-├── V2Adapter.ts          (2,631 строк) — мост к V2 (единственный bridge к frozen)
-├── StemPlayerV3.ts       (1,546)       — загрузка и управление стемами
-├── VocalMixV3.ts         (1,100)       — вокальный микс (bypass, level)
-├── MicrophoneV3.ts       (1,583)       — микрофон (input, monitor)
-├── LoopEngineV3.ts       (1,266)       — loop подсистема
-├── CrossfadeV3.ts        (1,186)       — кроссфейд между треками
-├── CaptureBusV3.ts       (1,304)       — Program Capture Bus (запись выхода)
-├── DuckGuardV3.ts        (2,989)       — защита от обратной связи
-├── MeterNodeV3.ts        (1,461)       — Web Audio meter
-├── RateParamV3.ts        (999)         — rate parameter smoothing
-├── IV2PublicContract.ts  (3,002)       — V2 public API контракт
-├── index.ts              (1,242)       — getTransport() singleton
-├── types.ts              (777)         — типы
-└── __tests__/            3 тест-файла
 ```
 
 ## Ключевые файлы
@@ -80,14 +59,24 @@ transport.state           // 'idle' | 'playing' | 'paused' | 'error'
 - **EventBus интеграция:** `seek()` публикует `seek-position-changed` для lyrics sync
 - **Singleton:** `getTransport()` — всегда один инстанс
 
-## Текущие ограничения
+## EngineV3 — состав (8 слоёв · 30 модулей · ~4 900 строк)
 
-- V3 имеет собственные модули (StemPlayerV3, LoopEngineV3, VocalMixV3, MicrophoneV3, CaptureBusV3 и др.), но AudioContext — единый (V2 через V2Adapter)
-- V2Adapter — единственный мост к frozen AudioEngineV2, через IV2PublicContract
-- scheduler (rAF) — через Scheduler Orchestrator (acquire/release lifecycle)
-- `_v2Fallback` — механизм fallback для методов, не реализованных в V3
-
-## Frozen status
+```
+src/audio/engine-v3/           # 30 prod .ts/.tsx · 4914 LOC (+10 тест-файлов · 1817 LOC)
+├── core/        4 файла 635   # TransportV3 317 · HybridClock 176 · StemOrchestrator 134 · types 8
+├── pipeline/    6 файлов 1509 # HybridPipelineService 745 · StretchInstancePool 279 · StretchInstance 221
+│                            #   StemChain 152 · IPipelineController 73 · HybridLoopStrategy 39
+├── monitor/     5 файлов 893  # MonitorEngine 285 · MonitorRouter 283 · AutoMixController 120
+│                            #   PulseCalibrator 114 · DeviceManager 91
+├── integration/ 6 файлов 691  # V3DataInterceptor 250 · V3StatePublisher 202 · LoopEngineV3 88
+│                            #   DuckGuardV3Native 66 · AudioCrashModal 64 · useAudioContextHealth 21
+├── stems/       1 файл 344   # StemPlayerV3
+├── services/    2 файла 164  # MicSourceV3 95 · RateThrottler 69
+├── diagnostics/ 2 файла 390  # CaptureWorklet 264 · DuplicateAudioRouteChecker 126
+└── корень       4 файла 288  # index 59 (getTransport) · V2Adapter 83 · IV2PublicContract 115 · vendor .d.ts
+```
+> Счёт = production .ts/.tsx. Диагностический harness (~20 файлов .mjs/.json в diagnostics/) и тесты в счёт модулей не входят.
+> Перенос имён (истор.): TransportV3→core/ · types→core/ · StemPlayerV3→stems/ · LoopEngineV3→integration/ · DuckGuardV3→integration/DuckGuardV3Native (замена) · V2Adapter, IV2PublicContract, index — корень.
 
 | Файл | Статус |
 |------|:------:|

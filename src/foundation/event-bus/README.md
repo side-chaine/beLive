@@ -1,14 +1,14 @@
 # 🕸️ EventBus — beLife Starbase 2.0
 
 ## Architecture
-6 channels, 27 typed events.
+6 channels, 28 typed events.
 Replaces 24 legacy bridges via BridgeFacade (Strangler Fig).
 
 ## Channels
 
 | Channel | Events | Payloads |
 |---------|--------|----------|
-| audio | 9 | track-loaded, track-fully-loaded, track-stem-ready, playback-state-changed, playback-rate-changed, vocalmix-state-changed, microphone-state-changed, monitor-state-changed, monitor-route-changed |
+| audio | 10 | track-loaded, track-fully-loaded, track-stem-ready, playback-state-changed, playback-rate-changed, vocalmix-state-changed, microphone-state-changed, monitor-state-changed, monitor-route-changed |
 | track | 2 | before-change, load-failed |
 | catalog | 4 | track-saved, tracks-changed, catalog-close, catalog-cleared |
 | sync | 8 | blocks-applied, active-line-changed, lyrics-rendered, save-track-markers, loop-set, loop-cleared, loopcompleted, sections-updated |

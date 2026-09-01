@@ -8,7 +8,7 @@
 
 | Документ | О чём | Статус |
 |:---------|:------|:------:|
-| [`eventbus-v2.md`](./eventbus-v2.md) | Центральная шина событий: 6 каналов, 29 событий, Facade | ✅ |
+| [`eventbus-v2.md`](./eventbus-v2.md) | Центральная шина событий: 6 каналов, 28 событий, Facade | ✅ |
 | [`central-bridge.md`](./central-bridge.md) | Store → Engine sync: реактивный слой вместо dual-call | ✅ |
 | [`init-registry.md`](./init-registry.md) | Lifecycle: единая инициализация, HMR-safe cleanup | ✅ |
 | [`transport-v3.md`](./transport-v3.md) | V3 транспорт: 7 методов, 5 состояний, error recovery | ✅ |

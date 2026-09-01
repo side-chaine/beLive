@@ -1,5 +1,7 @@
 # ADR-0008 · Базовый уровень безопасности: SRI — немедленно, CSP — после выноса инлайна
 
+> ⚠️ SRI-ветка не применена (0 integrity в index.html); CSP НЕ внедрён (нет ни в public/_headers, ни в meta index.html — проверено 31.08).
+
 **Статус:** proposed · **Дата:** 2026-08-29 (обновлён ночью) · **Волна:** W3
 **Связано:** [01-BASELINE §5.3](./01-BASELINE.md), [SRI-PATCH.md](./SRI-PATCH.md), [ADR-0002](./ADR-0002-worklet-realm-extraction.md), [ADR-0007](./ADR-0007-observability-and-console-policy.md)
 

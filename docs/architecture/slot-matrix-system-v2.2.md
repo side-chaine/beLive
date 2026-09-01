@@ -1,3 +1,4 @@
+> 🗄️ HISTORICAL (redirect 31.08): содержимое = Styles System (не Slot Matrix, бан 2026-05-20); живой носитель контракта — src/slot-matrix/slot-matrix.types.ts; индексы почищены E1-5.
 # ⚠️ DOCUMENTATION MISMATCH — ACTION REQUIRED
 
 > **CRITICAL:** This file currently contains "Styles System" documentation, NOT Slot Matrix architecture.

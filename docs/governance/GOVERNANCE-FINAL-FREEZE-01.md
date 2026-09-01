@@ -1,4 +1,6 @@
 # 🏛️ GOVERNANCE FINAL FREEZE v1.0
+
+> 🗄️ HISTORICAL (31.08): июньский базлайн. Живая матрица владения — docs/governance/DOMAIN-OWNERSHIP.yaml (1:1 с §8.2); координация — team-m/SHARED-REGISTRY.md §0.
 ## beLive Agent System — June 2026 Baseline
 
 **Версия:** 1.0  

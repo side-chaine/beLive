@@ -1,4 +1,5 @@
 # 01-BASELINE — Состояние репозитория, снятое фактом
+> 🗄️ HISTORICAL SNAPSHOT (31.08): срез ветки 067-e-regime-0, HEAD d5c66bd — коммит не существует в истории (git cat-file); tsc=307 среза ≠ канон 290. Живой канон-снапшот — SHARED-REGISTRY.
 
 **Дата:** 2026-08-29 · **Агент:** Hy4 (Лив) · **Машина:** Windows, `win32/x64`, Node v22.22.2, npm 10.9.7
 **Ветка:** `067-e-regime-0` · **HEAD:** `d5c66bd` · **Remote:** `side-chaine/beLive`

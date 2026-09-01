@@ -60,7 +60,7 @@ beLiveBase — не папка с файлами. Это **город**, в ко
 **Назначение:** Все коммуникации между районами.
 **Технологии:** EventBus, typed channels, BridgeFacade
 **Закон:** Никто не знает друг друга напрямую. Все через станцию.
-**Паспорт:** ✅ Есть (34 файла, 6 каналов, 27 событий)
+**Паспорт:** ✅ Есть (33 файла, 6 каналов, 28 событий)
 **Состояние:** 🔄 Миграция — BridgeFacade ещё работает (Strangler Fig)
 
 ### 4. 🗄 Library (Библиотека)
@@ -209,12 +209,10 @@ Practice 🎤 — 1 событие (с 6 под-состояниями)
 ### На слом 🗑
 | Здание | Почему |
 |--------|--------|
-| SoundTouch (pitch/) | Заменён Signalsmith |
-| Bridges (bridges/) | Заменены EventBus (Starbase 2.0) |
-| DuckGuardV3 (singleton) | Мёртвый код |
-| main.tsx SoundTouch тесты | 430 строк мусора |
+| SoundTouch-стрейч (pitch/) | Стрейч удалён (S1/Signalsmith-фикс); каталог pitch/ жив в рантайме (yin-детекция — не SoundTouch) |
+| Bridges (bridges/) | ❄️ FROZEN до полного вывода (frozen-zones-v2.md — 4 зоны); EventBus-обёртки взяли функцию (24→19), физический снос — только по OVERRIDE Никиты |
+| DuckGuardV3 (singleton) | Заменён: singleton снесён (W3 DELETE), жив native-вариант — integration/DuckGuardV3Native |
 
----
 
 ## 🎬 Для YouTube: экскурсии по городу
 
