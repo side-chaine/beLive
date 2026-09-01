@@ -1,7 +1,7 @@
 # TransportV3 — Аудио-транспорт
 *Описание:* V3 транспорт — синглтон с 5 состояниями, error recovery и EventBus интеграцией.
 *Дата:* 2026-07-17 (обновлён: V3 — полноценный engine, не прослойка)
-*Статус:* ✅ PRODUCTION (✅ PRODUCTION (30 модулей в 8 слоях engine-v3/, V2Adapter — мост к frozen V2) engine-v3/, V2Adapter как fallback для frozen)
+*Статус:* ✅ PRODUCTION (30 модулей в 8 слоях engine-v3/, V2Adapter — мост к frozen V2)
 
 ---
 

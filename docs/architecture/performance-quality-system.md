@@ -351,10 +351,8 @@ This should be persisted as user preference.
 - `playback-visual.types.ts` — Frame context types
 
 Участники scheduler (зарегистрированы):
-- trigger.bridge
-- performance.bridge
+- trigger-visual.service
 - stem-reactive.bridge
-- billy.bridge
 
 ---
 

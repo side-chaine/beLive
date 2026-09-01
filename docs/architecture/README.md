@@ -12,7 +12,7 @@
 | [`central-bridge.md`](./central-bridge.md) | Store → Engine sync: реактивный слой вместо dual-call | ✅ |
 | [`init-registry.md`](./init-registry.md) | Lifecycle: единая инициализация, HMR-safe cleanup | ✅ |
 | [`transport-v3.md`](./transport-v3.md) | V3 транспорт: 7 методов, 5 состояний, error recovery | ✅ |
-| [`frozen-zones-v2.md`](./frozen-zones-v2.md) | Карта frozen зон: 30 файлов, ~6,932 строк | ✅ |
+**4 зоны · 19 файлов · ~5 299 строк** (синхронно с frozen-zones-v2.md)
 
 ## Схема зависимостей
 

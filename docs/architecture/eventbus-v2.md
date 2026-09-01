@@ -29,7 +29,7 @@ graph LR
 | Sync | 8 | blocks-applied, active-line-changed, loop-set/cleared/completed |
 | UI | 3 | mode-changed, block-scenes-loaded, camera-permission-resolved |
 | Practice | 1 | practice:state-changed (объединяет 6 legacy events) |
-| **Total** | **29** | |
+| **Total** | **28** | |
 
 ## Ключевые файлы
 

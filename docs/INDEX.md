@@ -28,7 +28,7 @@
 | [performance-quality-system](architecture/performance-quality-system.md) | Performance tiers + budgets |
 | [practice-experience-layer](architecture/practice-experience-layer.md) | Practice surface architecture |
 | [reactive-lyrics-foundation](architecture/reactive-lyrics-foundation.md) | Trigger/scheduler/word FX |
-| [scenario-stage-state-model](architecture/scenario-stage-state-model.md) | Scenario state machine 🗄️ STALE |
+| [scenario-stage-state-model](archive/superseded/scenario-stage-state-model.md) | Scenario state machine 🗄️ STALE |
 | [show-architecture](architecture/show-architecture.md) | Show architecture ✅ v2.2 Sub-Slide |
 | [styles-system](architecture/styles-system.md) | Style intent + recipes |
 | [sync-system](architecture/sync-system.md) | Two-layer sync architecture |
@@ -56,7 +56,6 @@
 | [DOC-TC-BACKLOG.yaml](sync/DOC-TC-BACKLOG.yaml) | Open documentation tasks backlog |
 | [DOMAIN-OWNERSHIP.yaml](governance/DOMAIN-OWNERSHIP.yaml) | Domain owner/keeper table |
 | [DOC-SYNC-FINAL-REPORT.md](sync/DOC-SYNC-FINAL-REPORT.md) | Full transformation report |
-| [ARCH-BASE.md](ARCH-BASE.md) | Base architecture principles (agent context) |
 | [BILI-CONTEXT.md](BILI-CONTEXT.md) | Product Manager context |
 | [auth-system-freeze.md](auth-system-freeze.md) | Auth system snapshot (historical) |
 | [protocol-v2.1.md](protocol-v2.1.md) | Agent protocol (canonical in Belive-Agents/) |
