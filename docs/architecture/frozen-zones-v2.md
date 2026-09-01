@@ -1,6 +1,6 @@
 # Frozen Zones v2 — Карта неприкасаемых зон
-> 🔒 Механизм охраны (с 01.09, FG-CI): `frozen-manifest.json` + `npm run verify:frozen` (CI). Манифест = операционный канон (18 файлов).
-**3 зоны · 18 файлов** (AudioEngineV2 + track.orchestrator + 16 мостов вкл. live-guard), ~5 137 строк (wc-факт: −162 patchV1, 01.09, Волна A)
+> 🔒 Механизм охраны (с 01.09, FG-CI): `frozen-manifest.json` + `npm run verify:frozen` (CI). Манифест = операционный канон (17 файлов).
+**2 зоны · 17 файлов** (AudioEngineV2 + 16 мостов вкл. live-guard), ~4 545 строк (wc-факт: 5299 → −162 Волна A → −592 orchestrator Волна B, 01.09)
 *Дата:* 2026-07-17 (обновлён после bridge retirement wave)
 *Статус:* ⚠️ ЧАСТИЧНО АКТУАЛЬНО — 19/22 bridges retired, актуальный список ниже
 
@@ -21,10 +21,12 @@
 | `src/audio/core/VocalMix.ts` | ~150 | Stereo routing. VocalMixV3 в Фазе 6 |
 | `src/audio/core/MicrophoneManager.ts` | ~100 | Микрофон. MicrophoneV3 в Фазе 6 |
 | `src/audio/core/audioContext.ts` | 28 | AudioContext singleton |
-| `src/services/track.orchestrator.ts` | 592 | 21-step load pipeline. Будет заменён Saga pattern |
+| `src/services/track.orchestrator.ts` — 🗑 удалён 01.09, Волна B (0 импортёров; 1:1-копия живёт track.loader.ts; OVERRIDE). SHA — история манифеста |
 | `js/*.js` (5 файлов) | ~1,000 | Legacy boundary shells |
 
-### 🔄 Bridges (3 осталось — не frozen)
+### 🔄 Bridges-прочие (3 живут вне src/bridges/; операционный канон src/bridges/ = 16 мостов в frozen-manifest.json: live-guard guard + 15 graveyard — см. 🔒-строку выше)
+
+> ⚠️ Ниже — мосты ДРУГИХ зон (blockEditor/Rehearsal/stem-reactive), НЕ каталог src/bridges/. Каталог src/bridges/ полностью в манифесте (graveyard-15 — трупы Волны C).
 
 | Файл | Статус | Примечание |
 |------|:------:|------------|
@@ -53,7 +55,7 @@
 |:---:|:------:|:---------:|:-:|
 | AUDIO 🎧 | AudioEngineV2 (+patchV1 до 01.09) | engine-v3/ (11 модулей) | 30% |
 | SYNC ⏱ | 7 bridges | sync/*, triggers/*, blocks/* | 10% |
-| DATA 📦 | track.orchestrator | idb.service, upload.service | 5% |
+| DATA 📦 | track.orchestrator (снесён Волной B; приёмщик — track.loader.ts) | idb.service, upload.service | 5% |
 | NETWORK 🌐 | — | Все workers | 0% |
 | AI 🤖 | — | Все billy-модули | 0% |
 | AUTH 🔐 | — | Все auth модули | 0% |

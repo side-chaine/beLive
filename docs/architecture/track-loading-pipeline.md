@@ -9,6 +9,8 @@
 
 ## Overview
 
+> 🗑️ track.orchestrator снесён Волной B 01.09 — пайплайн описывает живой track.loader.ts (W4-замена, self-sufficient).
+
 beLive загружает трек в 5 фаз: от ZIP-файла до готового воспроизведения. Каждая фаза имеет чёткого владельца и зависимости.
 
 > **Update 2026-07-17:** Parallel FileReader (concurrency 2) в `upload.service.ts`. Dedup guard для trackCatalog.push. TG download теперь через `fetch` + Stream API (`getReader()`) вместо XHR (см. `CatalogContent.tsx:43`).
@@ -89,7 +91,7 @@ lrclib may have multiple versions of LRC. LRC Picker allows user to select the b
 
 ## §3. Phase 3: Sync & Alignment
 
-**Owner:** `track.orchestrator.ts` (14-step pipeline)  
+**Owner:** `track.orchestrator (удалён, Волна B).ts` (14-step pipeline)  
 **Goal:** Apply markers, blocks, word-sync to loaded track
 
 ### Key Steps

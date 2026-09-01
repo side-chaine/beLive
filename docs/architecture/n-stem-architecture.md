@@ -183,7 +183,7 @@ const DEFAULT_ROLE_ORDER = {
 │    ↓                                                               │
 │  loadTrack() from catalog click                                      │
 │    ↓                                                               │
-│  track.orchestrator.ts                                               │
+│  track.orchestrator (удалён, Волна B).ts                                               │
 │    ├─ getTrackFromIDB(track.id)        → fresh read with stemsData  │
 │    ├─ tc.tracks[index] = freshTrack    → patch in-memory catalog    │
 │    ├─ Create Blob URLs for each stem in stemsData                   │
@@ -643,7 +643,7 @@ Current implementation includes verbose console logs (`[Orchestrator] W5:`, `[Up
 | **W3** | Parallel bus taps, _reconnectBusTaps() | ✅ FROZEN | `AudioEngineV2.ts` |
 | **W3.2** | Volume control (_stemVolumes, effective gain formula) | ✅ FROZEN | `AudioEngineV2.ts` |
 | **W3.4** | Program Capture from buses (not VocalMix merger) | ✅ FROZEN | `AudioEngineV2.ts` |
-| **W3min** | N-stem loading from IDB stemsData | ✅ FROZEN | `track.orchestrator.ts` |
+| **W3min** | N-stem loading from IDB stemsData | ✅ FROZEN | `track.orchestrator (удалён, Волна B).ts` |
 | **W4a** | Store generalization (remove audio.store volume duplication) | ✅ FROZEN | `audio.store.ts`, `audio.bridge.ts` |
 | **W4b** | Bridge generalization (MODE_STEM_POLICIES per role) | ✅ FROZEN | `mode-switch.bridge.ts`, `mode.bridge.ts`, `patchV1.ts` |
 | **W5** | MixerPanel UI + metering infrastructure | ✅ FROZEN | `AudioEngineV2.ts`, `MixerPanel.tsx`, `MixerPanel.module.css`, `modules.ts` |
@@ -668,7 +668,7 @@ Current implementation includes verbose console logs (`[Orchestrator] W5:`, `[Up
 | **W12** | Soft resync diagnostic logging | 📋 PLANNED | `AudioEngineV2.ts` |
 | **W13** | Initial sync stabilization (post-load) | 📋 PLANNED | `AudioEngineV2.ts` |
 | **TC-DEC-01** | skipDecode for instrumental — 7x load speedup | ✅ COMPLETE | `AudioEngineV2.ts` line 319 |
-| **TC-DEC-02** | Fix instrumentation — accurate metrics | ✅ COMPLETE | `track.orchestrator.ts` lines 194, 250, 259, 290, 299 |
+| **TC-DEC-02** | Fix instrumentation — accurate metrics | ✅ COMPLETE | `track.orchestrator (удалён, Волна B).ts` lines 194, 250, 259, 290, 299 |
 
 **W10 Details — Stems Polish & Progressive Loading (Center 10)**
 
@@ -678,13 +678,13 @@ Current implementation includes verbose console logs (`[Orchestrator] W5:`, `[Up
 | TC-10.6 | Add `stemsMode` (tumbler preference) to stem.store | `stem.store.ts` |
 | TC-10.7 | MixerPanel button = stemsEnabled, faders by stemsMode, stagger animation | `MixerPanel.tsx`, `stem.store.ts` |
 | TC-10.8 | QuickActions tumbler = stemsMode, NOT stemsEnabled | `QuickActions.tsx` |
-| TC-10.9 | Preserve stemsEnabled in initStems + IDB restore | `stem.store.ts`, `track.orchestrator.ts`, `audio.bridge.ts` |
+| TC-10.9 | Preserve stemsEnabled in initStems + IDB restore | `stem.store.ts`, `track.orchestrator (удалён, Волна B).ts`, `audio.bridge.ts` |
 | TC-10.10 | onFullyLoaded volume sync to store | `audio.bridge.ts` |
 | TC-10.11 | effectiveEnabled = currentEnabled \|\| savedMode | `audio.bridge.ts` |
-| TC-10.12 | _stemsBootRestored flag — IDB restore only at boot | `stem.store.ts`, `track.orchestrator.ts`, `audio.bridge.ts` |
+| TC-10.12 | _stemsBootRestored flag — IDB restore only at boot | `stem.store.ts`, `track.orchestrator (удалён, Волна B).ts`, `audio.bridge.ts` |
 | TC-10.13 | Fix _stemsBootRestored setState (was mutating snapshot) | `audio.bridge.ts` |
 | TC-10.14 | GUARD CRITICAL throttle — 1 log per track | `lyrics.bridge.ts` |
-| TC-10.15 | Loading path uses stemsMode, not just stemsEnabled | `track.orchestrator.ts` |
+| TC-10.15 | Loading path uses stemsMode, not just stemsEnabled | `track.orchestrator (удалён, Волна B).ts` |
 
 ---
 

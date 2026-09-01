@@ -1,6 +1,8 @@
 audio-engine.md
 # LAYER A — Short architect report
 
+> 🗑️ track.orchestrator.ts удалён 01.09 (Волна B): 0 импортёров, 1:1-живизна — track.loader.ts. V3 transport-слой самодостаточен.
+
 > **⚠️ This document is a domain-specific reference. For the complete current architecture, see [Architecture Map 2.1](./architecture-map-2.1.md).**
 > **Update 2026-07-17:** EngineV3 active (7 modules). Bridge layer 22/22 retired → EventBus wrappers.
 
@@ -36,7 +38,7 @@ React boot вызывает `tryActivateV2()` через `src/App.tsx` и `src/a
 
 `VocalMix` — stereo routing layer.
 
-`track.orchestrator` — главный high-level load pipeline:
+`track.orchestrator (удалён, Волна B)` — главный high-level load pipeline:
 `lyrics/blocks ready → audio load → markers apply → optional autoplay`.
 
 `audio.bridge` — ✅ RETIRED → `audio-events.ts` (EventBus wrapper)
@@ -110,7 +112,7 @@ Bridges не владеют transport.
 ## Main runtime flows, condensed
 
 ### Track load
-`track.orchestrator.ts:19-128`
+`track.orchestrator (удалён, Волна B).ts:19-128`
 
 Порядок:
 1. cancel previous autoplay timer
@@ -182,7 +184,7 @@ Store computes range from `block.lineIndices + markers`, bridge pushes range int
 `useKeyboardShortcuts.ts:13-19`
 → `window.queueTrackJump(delta)`
 
-`track.orchestrator.ts:130-150`
+`track.orchestrator (удалён, Волна B).ts:130-150`
 - accumulate delta
 - debounce 250ms
 - compute target track
@@ -352,7 +354,7 @@ Responsibilities:
 
 Main high-level track load flow:
 
-- `src/services/track.orchestrator.ts:19-128`
+- `src/services/track.orchestrator (удалён, Волна B).ts:19-128`
 
 Responsibilities:
 - choose track
@@ -521,7 +523,7 @@ Bridges are not authoritative for:
 ## 1. Track load
 
 Confirmed high-level order from:
-- `src/services/track.orchestrator.ts:19-128`
+- `src/services/track.orchestrator (удалён, Волна B).ts:19-128`
 
 ### Exact flow
 
@@ -783,7 +785,7 @@ TrackMap loop and Sync Editor loop are separate UX surfaces with different owner
 
 Confirmed from:
 - `useKeyboardShortcuts.ts:13-19`
-- `track.orchestrator.ts:130-150`
+- `track.orchestrator (удалён, Волна B).ts:130-150`
 
 ### Flow
 
