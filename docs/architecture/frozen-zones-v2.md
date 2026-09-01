@@ -1,4 +1,5 @@
 # Frozen Zones v2 — Карта неприкасаемых зон
+> 🔒 Механизм охраны (с 01.09, FG-CI): `frozen-manifest.json` + `npm run verify:frozen` (CI). Манифест = операционный канон (19 файлов).
 **4 зоны · 19 файлов** (AudioEngineV2 + patchV1 + track.orchestrator + 16 мостов), ~5 299 строк (wc-факт 01.09)
 *Дата:* 2026-07-17 (обновлён после bridge retirement wave)
 *Статус:* ⚠️ ЧАСТИЧНО АКТУАЛЬНО — 19/22 bridges retired, актуальный список ниже
