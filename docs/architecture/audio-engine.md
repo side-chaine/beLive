@@ -19,7 +19,9 @@ audio-engine.md
 
 Ранний `window.audioEngine` создаётся в `js/audio-engine.js:6-46` как boot stub с `AudioContext`, stub methods и spacebar handler.  
 React boot вызывает `tryActivateV2()` через `src/App.tsx` и `src/audio/featureFlag.ts:10-30`.  
-`src/audio/compat/patchV1.ts:9-125` patch-in-place заменяет методы и свойства stub-объекта на `AudioEngineV2` surface.
+`src/audio/compat/patchV1.ts:9-125` (удалён, Волна A) patch-in-place заменяет методы и свойства stub-объекта на `AudioEngineV2` surface.
+
+> 🗑️ js/audio-engine.js + patchV1.ts удалены 01.09 (Волна A): первый не загружался с V3-дефолта, второй — мёртвый экспорт. История — в git (тег v2-final-production)
 
 `AudioEngineV2` — основная transport facade:
 - load / play / pause / stop / seek / loop / playbackRate
@@ -95,7 +97,7 @@ getCurrentTime(): number {
 Это отдельная loop system surface.
 
 ### Compat layer responsibility
-`patchV1.ts` — сохранить identity старого `window.audioEngine`, но перевести все внешние вызовы в v2.
+`patchV1.ts` (удалён, Волна A) — сохранить identity старого `window.audioEngine`, но перевести все внешние вызовы в v2.
 
 ### Bridge responsibility
 Bridges не владеют transport.
@@ -241,7 +243,7 @@ These are historical hypotheses, now resolved.
 
 beLive uses a hybrid audio runtime.
 
-The early boot object is still created by legacy `js/audio-engine.js`, but the live transport runtime is owned by `AudioEngineV2` after React boot patches the existing `window.audioEngine` object in place.
+The early boot object is still created by legacy `js/audio-engine.js` (удалён, Волна A), but the live transport runtime is owned by `AudioEngineV2` after React boot patches the existing `window.audioEngine` object in place.
 
 This means:
 
@@ -251,9 +253,9 @@ This means:
 
 Confirmed boot patch chain:
 
-- `js/audio-engine.js:6-46` — creates early `window.audioEngine`
+- `js/audio-engine.js:6-46` (удалён, Волна A) — creates early `window.audioEngine`
 - `src/audio/featureFlag.ts:10-30` — `tryActivateV2()`
-- `src/audio/compat/patchV1.ts:9-125` — patches legacy object to v2 methods/properties
+- `src/audio/compat/patchV1.ts:9-125` (удалён, Волна A) — patches legacy object to v2 methods/properties
 
 The engine currently uses:
 
@@ -271,7 +273,7 @@ The engine currently uses:
 
 Early audio object is created in:
 
-- `js/audio-engine.js:6-46`
+- `js/audio-engine.js:6-46` (удалён, Волна A)
 
 It provides:
 - `AudioContext`
@@ -285,7 +287,7 @@ React later activates v2 through:
 
 This calls:
 
-- `src/audio/compat/patchV1.ts:9-125`
+- `src/audio/compat/patchV1.ts:9-125` (удалён, Волна A)
 
 The patch layer:
 - injects the boot `AudioContext` into the v2 singleton path
@@ -491,7 +493,7 @@ This is not routed through `useLoopStore`.
 
 **Confirmed role: runtime compatibility shell**
 
-- `src/audio/compat/patchV1.ts`
+- `src/audio/compat/patchV1.ts` (удалён, Волна A)
 
 Responsibilities:
 - preserve `window.audioEngine` identity

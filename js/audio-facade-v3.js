@@ -211,6 +211,6 @@
       } catch { return null; }
     },
   };
-  // совместимость с v1-stub API (js/audio-engine.js)
+  // v1-stub-эпоха закрыта (де-фриз Волна A, 01.09)
   if (!window.audioEngine) window.audioEngine = facade;
 })();

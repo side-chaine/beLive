@@ -54,7 +54,6 @@ Bridges continue to work unchanged.
 
 ZERO TOUCH:
 - src/audio/core/AudioEngineV2.ts ❄️
-- src/audio/compat/patchV1.ts ❄️
 - src/bridges/* ❄️
 - src/services/track.orchestrator.ts ❄️
 - js/*.js ❄️

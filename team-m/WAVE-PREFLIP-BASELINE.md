@@ -11,11 +11,11 @@
 Полный список сохранён: `/tmp/opencode/frozen-baseline-sha.txt`
 Контрольные (ключевые frozen-файлы):
 - `src/audio/core/AudioEngineV2.ts`  c5311543…ed6f92
-- `src/audio/compat/patchV1.ts`      0e599c34…924a30
+- `src/audio/compat/patchV1.ts`      0e599c34…924a30 (снесён Волной A 01.09 — вне префлип-базы)
 - `src/services/track.orchestrator.ts` b8818e66…199bd
 - `src/bridges/lyrics.bridge.ts`     059944b4…34aa7
 - `src/bridges/live-guard.ts`        a87b3fd2…86ba8
-(полный список 19 файлов в /tmp-файле; при исполнении волн SHA256 ДО/ПОСЛЕ должен совпадать побайтово)
+(полный список 18 файлов в /tmp-файле; при исполнении волн SHA256 ДО/ПОСЛЕ должен совпадать побайтово)
 
 ## Frozen-guard baseline (26.08)
 🔴 **RED — 5 нарушений (вне allowlist)** = BAC-105 V2-глобал ридеры (цель WAVE1/WAVE5):

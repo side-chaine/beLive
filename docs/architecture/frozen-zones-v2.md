@@ -1,6 +1,6 @@
 # Frozen Zones v2 — Карта неприкасаемых зон
-> 🔒 Механизм охраны (с 01.09, FG-CI): `frozen-manifest.json` + `npm run verify:frozen` (CI). Манифест = операционный канон (19 файлов).
-**4 зоны · 19 файлов** (AudioEngineV2 + patchV1 + track.orchestrator + 16 мостов), ~5 299 строк (wc-факт 01.09)
+> 🔒 Механизм охраны (с 01.09, FG-CI): `frozen-manifest.json` + `npm run verify:frozen` (CI). Манифест = операционный канон (18 файлов).
+**3 зоны · 18 файлов** (AudioEngineV2 + track.orchestrator + 16 мостов вкл. live-guard), ~5 137 строк (wc-факт: −162 patchV1, 01.09, Волна A)
 *Дата:* 2026-07-17 (обновлён после bridge retirement wave)
 *Статус:* ⚠️ ЧАСТИЧНО АКТУАЛЬНО — 19/22 bridges retired, актуальный список ниже
 
@@ -15,7 +15,7 @@
 | Файл | Строк | Причина |
 |------|:-----:|---------|
 | `src/audio/core/AudioEngineV2.ts` | 2,178 | Транспортный монолит. Чинить нельзя — EngineV3 заменит |
-| `src/audio/compat/patchV1.ts` | 162 | V1→V2 совместимость. Умрёт вместе с V2 |
+| `src/audio/compat/patchV1.ts` | 162 | ❄️→🗑 **удалён 01.09, Волна A** (де-фриз GO Никиты 12:00; мёртвый экспорт patchV1WithV2; OVERRIDE). SHA — в frozen-manifest.json истории |
 | `src/audio/core/StemPlayer.ts` | ~200 | Загрузка стемов. V3 StemPlayerV3 готов |
 | `src/audio/core/AudioLoader.ts` | ~150 | Декодинг аудио |
 | `src/audio/core/VocalMix.ts` | ~150 | Stereo routing. VocalMixV3 в Фазе 6 |
@@ -51,7 +51,7 @@
 
 | Цех | Frozen | Не frozen | % |
 |:---:|:------:|:---------:|:-:|
-| AUDIO 🎧 | AudioEngineV2, patchV1 | engine-v3/ (11 модулей) | 30% |
+| AUDIO 🎧 | AudioEngineV2 (+patchV1 до 01.09) | engine-v3/ (11 модулей) | 30% |
 | SYNC ⏱ | 7 bridges | sync/*, triggers/*, blocks/* | 10% |
 | DATA 📦 | track.orchestrator | idb.service, upload.service | 5% |
 | NETWORK 🌐 | — | Все workers | 0% |

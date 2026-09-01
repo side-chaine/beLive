@@ -4,19 +4,19 @@
 ## FROZEN-СПИСОК (SHA256 ДО/ПОСЛЕ — идентичен на КАЖДОЙ волне)
 Любая волна НЕ правит frozen. `live-guard` НЕ перемещать (файл остаётся под `src/bridges/`).
 - `src/audio/core/AudioEngineV2.ts`
-- `src/audio/compat/patchV1.ts`
+- `src/audio/compat/patchV1.ts` — снесён Волной A 01.09 (OVERRIDE)
 - `src/services/track.orchestrator.ts`
 - `src/bridges/**` (все файлы, вкл. `live-guard`, `audio-reactive.bridge`, `blocks.bridge`, `__tests__/*`)
 - `_`-поля внутри frozen-файлов.
 
-Проверка: `find src/audio/core/AudioEngineV2.ts src/audio/compat/patchV1.ts src/services/track.orchestrator.ts src/bridges -type f | xargs sha256sum` → сравнить ДО/ПОСЛЕ. Расхождение = нарушение R6.
+Проверка: `find src/audio/core/AudioEngineV2.ts src/services/track.orchestrator.ts src/bridges -type f | xargs sha256sum` → сравнить ДО/ПОСЛЕ (patchV1 — снесён Волной A 01.09 (OVERRIDE), выведен из списка; frozen канон = 18 файлов). Расхождение = нарушение R6.
 
 ---
 
 ## WAVE 1 · activation cut + BAC-105 (V2-globals re-point)
-- **Frozen byte-identical:** `patchV1.ts`, `AudioEngineV2.ts` (+ всё выше).
-- **Safe-scope:** `src/App.tsx` (93–101, `tryActivateV2`); `src/audio/featureFlag.ts` (6, импорт patchV1); **12 ридеров V2-глобалов** (точный список grep'ом; известные: mode-switch.service, block-scene.service, track.actions, FullAvatar, useStemWaveform, useBackgroundManagers, trigger-visual, MonitorMixPanel, upload.service, …) → V3-state/E1-предикат.
-- **Invariant:** `tryActivateV2`→0; `patchV1` в featureFlag→0; `window.<V2-global>` в SAFE → 0. frozen SHA256 неизменен.
+- **Frozen byte-identical:** `patchV1.ts` — снесён Волной A 01.09 (OVERRIDE), `AudioEngineV2.ts` (+ всё выше).
+- **Safe-scope:** `src/App.tsx` (93–101, `tryActivateV2`); `src/audio/featureFlag.ts` (6, импорт patchV1 — снесён Волной A 01.09 (OVERRIDE)); **12 ридеров V2-глобалов** (точный список grep'ом; известные: mode-switch.service, block-scene.service, track.actions, FullAvatar, useStemWaveform, useBackgroundManagers, trigger-visual, MonitorMixPanel, upload.service, …) → V3-state/E1-предикат.
+- **Invariant:** `tryActivateV2`→0; `patchV1` (снесён Волной A 01.09 (OVERRIDE)) в featureFlag→0; `window.<V2-global>` в SAFE → 0. frozen SHA256 неизменен.
 
 ## WAVE 2 · delegateSync (23) + V2Adapter (27) re-point
 - **Frozen byte-identical:** `track.orchestrator.ts`.
@@ -29,9 +29,9 @@
 - **Invariant:** `__switchToV3/V2AudioCage/ResurrectionDetector`→0; BusFader18 §9 annotated. frozen SHA256 неизменен.
 
 ## WAVE 4 · orchestrator re-point + legacy(8)/V2Adapter delete
-- **Frozen byte-identical:** `track.orchestrator.ts`, `patchV1.ts`, `AudioEngineV2.ts`, `src/bridges/**` (live-guard НА МЕСТЕ, не moved).
+- **Frozen byte-identical:** `track.orchestrator.ts`, `patchV1.ts` — снесён Волной A 01.09 (OVERRIDE), `AudioEngineV2.ts`, `src/bridges/**` (live-guard НА МЕСТЕ, не moved).
 - **Safe-scope:** 6 потребителей `track.actions.ts:7` (re-point); `MixerPanel.tsx:180` + `QuickActions.tsx:214` dyn-import orchestrator (удалить); `track.actions.ts` (перестаёт звать orchestrator); `V2Adapter.ts` УДАЛИТЬ ТОЛЬКО если `grep -rln "V2Adapter" src`→0; `src/legacy/engine-v3/*` (**9 файлов (вкл. 2 test)**, BAC-112) удалить.
-- **Invariant:** safe→frozen импорты (track.orchestrator/patchV1) → 0; `V2Adapter` grep→0 (файл удалён); `src/legacy/engine-v3/*` удалён; frozen SHA256 неизменен (live-guard на месте).
+- **Invariant:** safe→frozen импорты (track.orchestrator/patchV1 — снесён Волной A 01.09 (OVERRIDE)) → 0; `V2Adapter` grep→0 (файл удалён); `src/legacy/engine-v3/*` удалён; frozen SHA256 неизменен (live-guard на месте).
 
 ## WAVE 5 · finalization + BAC-107
 - **Frozen byte-identical:** все (комментарии-V2 = retain-класс).

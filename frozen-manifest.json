@@ -1,9 +1,8 @@
 {
   "version": 1,
-  "note": "SHA-механизм охраны frozen-зоны. Тесты НЕ в манифесте (страховка — не замок). Канон: 4 зоны · 19 файлов (FROZEN-AUDIT-301 §7, wc=5299).",
+  "note": "SHA-механизм охраны frozen-зоны. Тесты НЕ в манифесте (страховка — не замок). Канон: 3 зоны · 18 файлов (FROZEN-AUDIT-301 §7, wc=5137).",
   "guard": {
     "src/audio/core/AudioEngineV2.ts": "c5311543716de2f9c2317b85dee0c676c219e0242702a23fe11a435778ed6f92",
-    "src/audio/compat/patchV1.ts": "0e599c349d104e7737ecd902d4fc64da89f2c278fae61602b2562b32f9924a30",
     "src/services/track.orchestrator.ts": "b8818e66e5cd5ff6ce158cdc6d02f824c9190c1cce4a6c555b73ad94946199bd",
     "src/bridges/live-guard.ts": "a87b3fd22dca826e5d51df90eb5fa91c5ffb5f9aa38b32e067e3fb1299886ba8"
   },
