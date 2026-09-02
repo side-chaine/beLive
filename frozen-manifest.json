@@ -15,7 +15,6 @@
     "src/bridges/plate.bridge.ts": "6909a7e748e35fa71acbbbb90825c9f15be119409046f22cc999874a2dff44e3",
     "src/bridges/stem-reactive.bridge.ts": "473e506882aea9fa2b4ecad609d6dabe3fe202a9d8c6341a4f3e297867461cab",
     "src/bridges/textStyle.bridge.ts": "670ffa4cc42bd79972cc0204cf50b6004a3c55fb5fc39337601b8419f660f1c0",
-    "src/bridges/time-sync.ts": "6d2bece240187d05cdb9093f1153ba3e9f6118191a3560556c0d8e226c31e876",
     "src/bridges/track.bridge.ts": "8e30b54d5ba79f1e110d685dd949024973df0ec00bd484d0c5cdde4793ec28c9"
   }
 }
