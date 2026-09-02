@@ -6,7 +6,10 @@
 У-1 allowlist-7 внутрь манифеста → PASS на HEAD достижим · У-2 takes-запись (retired-before-C, inBoot) · У-3 шапка mode-switch-events в #15 · У-4 сигнал-правило «≥1 из 4» · У-5 main.tsx:63 → манифест · У-6 describe в #15 · усиления: inBoot-поле, allowlist/knownGaps в манифесте, Δ=retiredAt:sha-аудит.
 
 ## 1. КОММИТ #0 (PREP, без сносов; гейт PASS на HEAD до #1)
-**bridge-manifest.json (корень), 18 записей:** 15 graveyard {id, bridge, wrapper, status: dual-fire, inBoot, retiredAt: null, testsRemoved[], knownGaps[], notes} + live-guard {live, inBoot:true} + rehearsal-trigger {live, вне C} + takes {retired-before-C, wrapper: takes-events, inBoot:true}. residueAllowlist внутри: 8 ключей (7 У-1 + sync-editor-closed) + prefix practice:*.
+
+> **⚠️ ПОПРАВКА 009-СУДА (внесена 007, вердикт РЕШЕНО С УСЛОВИЯМИ):** манифест = **20 записей, не 18** (условие-1) и **allowlist = 7 ключей + practice:*, не «8»** (условие-2). Детали: `WAVEC-009-VERDICT-2026-09-02.md`. Спека ниже скорректирована.
+
+**bridge-manifest.json (корень), 20 записей:** 15 graveyard {id, bridge, wrapper, status: dual-fire, inBoot, retiredAt: null, testsRemoved[], knownGaps[], notes} + live-guard {live, inBoot:true} + rehearsal-trigger {live, вне C} + takes {retired-before-C, wrapper: takes-events, inBoot:true} + **exercise-events {live, inBoot:true}** (main.tsx:18/:61 — живая обёртка в буте, открытие Суда) + **block-editor-events {orphaned-wrapper}** (wrappers/index.ts:16, 0 init-вызовов — класс mode-switch-events, открытие Суда). residueAllowlist внутри: **7 ключей (track-saved, catalog-close, save-track-markers, loop-set, loopcompleted, block-scenes-loaded, camera-permission-resolved) + prefix practice:*** — sync-editor-closed НЕ включать (его нет в LEGACY_EVENT_MAP, facade.ts:31 — «8» = мёртвая запись).
 **verify-bridge-parity.ts v2:** эталон = манифест (glob-скан умирает); сигнал-правило = eventBus.subscribe | addEventListener | scheduler.register | knownGap:true (plate — единственный knownGap:true); allowlist из манифеста (хардкод :23 умирает); retired-запись → мост отсутствует + обёртка имеет сигнал (анти-вакуум).
 **main.tsx:63:** «10 GREEN» → «wrapper-init registry · эталон: bridge-manifest.json».
 Гейт #0: tsc 290 · vitest 808/69 · frozen 17/17 · parity-v2 PASS на HEAD.
