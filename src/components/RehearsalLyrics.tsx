@@ -30,6 +30,7 @@ export function RehearsalLyrics() {
   const lines = useLyricsStore(s => s.lines);
   const activeLineIndex = useLyricsStore(s => s.activeLineIndex);
   const lyricsReady = useLyricsStore(s => s.lyricsReady);
+  const structurePending = useLyricsStore(s => s.structurePending);
   const blocks = useBlocksStore(s => s.blocks);
   const activeRef = useRef<HTMLDivElement>(null);
   const prevBlockRef = useRef<TextBlock | null>(null);
@@ -762,6 +763,9 @@ export function RehearsalLyrics() {
   // BAC-001 (VMO-035): hide until the late load signal flips lyricsReady true,
   // so the early raw lyrics mirror from the frozen orchestrator never flashes.
   if (!lyricsReady || lines.length === 0) return null;
+
+  // D-CASE 7: blocks-зеркало строится — сырой центр не показываем (FOUC-гейт)
+  if (structurePending) return null;
 
   if (displayBlock) {
     const fontSize = getBlockFontSize(visibleLineIndices.length);

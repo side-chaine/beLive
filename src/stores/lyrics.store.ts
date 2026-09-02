@@ -1,10 +1,12 @@
 import { create } from 'zustand';
+import { useBlocksStore } from './blocks.store';
 
 interface LyricsState {
   lines: string[];
   activeLineIndex: number;
   activeBlockId: string | null;
   lyricsReady: boolean;
+  structurePending: boolean;
   setLines: (lines: string[]) => void;
   setActiveLineIndex: (idx: number) => void;
   setActiveBlockId: (id: string | null) => void;
@@ -16,6 +18,7 @@ export const useLyricsStore = create<LyricsState>((set) => ({
   activeLineIndex: -1,
   activeBlockId: null,
   lyricsReady: false,
+  structurePending: false,
   setLines: (lines) => set({ lines }),
   setActiveLineIndex: (idx) => set({ activeLineIndex: idx }),
   setActiveBlockId: (id) => set({ activeBlockId: id }),
@@ -34,6 +37,27 @@ export const useLyricsStore = create<LyricsState>((set) => ({
 // BlockScenesModal, …) WITHOUT touching any frozen file.
 // We do NOT open the gate on `lyrics-rendered` — it fires early from the frozen
 // orchestrator with the unprocessed raw mirror.
+
+// ── D-CASE 7 (FOUC gate): structurePending — плашку строим только после blocks-зеркала.
+// Арм: before-track-change (синхронные tc-данные, loader fresh-read ДО Step 3).
+// Релиз: blocks>0 (подписка) ИЛИ flush-сиблинг ИЛИ watchdog 1200мс (raw-деградация).
+let _structWatchdog: ReturnType<typeof setTimeout> | null = null;
+const clearStructWatchdog = () => { if (_structWatchdog) { clearTimeout(_structWatchdog); _structWatchdog = null; } };
+const releaseStruct = () => { clearStructWatchdog(); if (useLyricsStore.getState().structurePending) useLyricsStore.setState({ structurePending: false }); };
+const onBeforeTrackChangeArm = (e: Event) => {
+  const detail = (e as CustomEvent).detail as { toTrackId?: string } | undefined;
+  if (!detail?.toTrackId) return;              // bare Event (delete/clearAll) — арма нет
+  clearStructWatchdog();
+  const tc = (window as any).trackCatalog;     // свежий при каждом событии, без кэша
+  const track = tc?.tracks?.find((t: any) => t.id === detail.toTrackId);
+  const hasStructure = !!track?.blocksData?.length
+    || !!track?.syncMarkers?.some((m: any) => m.blockType && m.blockType !== 'unknown');
+  useLyricsStore.setState({ structurePending: hasStructure });  // ре-арм атомарно
+  if (hasStructure) {
+    _structWatchdog = setTimeout(() => { _structWatchdog = null; releaseStruct(); }, 1200);
+  }
+};
+
 let _rawLyricsBuffer: string[] = [];
 
 if (typeof document !== 'undefined') {
@@ -80,5 +104,13 @@ if (typeof document !== 'undefined') {
       useLyricsStore.setState({ lines: _rawLyricsBuffer });
       _rawLyricsBuffer = [];
     }
+    // D-CASE 7: flush открыл гейт, а blocks уже здесь → снять structurePending тем же тиком
+    if (state.lyricsReady && !prev.lyricsReady && useLyricsStore.getState().structurePending && useBlocksStore.getState().blocks.length > 0) {
+      releaseStruct();
+    }
   });
+
+  // D-CASE 7: аддитив-listener'ы — арм на before-track-change, релиз по blocks>0.
+  document.addEventListener('before-track-change', onBeforeTrackChangeArm);
+  useBlocksStore.subscribe((state) => { if (state.blocks.length > 0) releaseStruct(); });
 }
