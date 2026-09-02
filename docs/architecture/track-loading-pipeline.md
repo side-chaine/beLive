@@ -91,7 +91,7 @@ lrclib may have multiple versions of LRC. LRC Picker allows user to select the b
 
 ## §3. Phase 3: Sync & Alignment
 
-**Owner:** `track.orchestrator (удалён, Волна B).ts` (14-step pipeline)  
+**Owner:** `track.orchestrator.ts (удалён 01.09, Волна B)` (14-step pipeline)  
 **Goal:** Apply markers, blocks, word-sync to loaded track
 
 ### Key Steps

@@ -508,7 +508,7 @@ if (bestScore < 0.5 || bestIdx < 0) {
 5. Apply if `0.3s ≤ |offset| ≤ 3.0s` — shift ALL markers (M1 + M2)
 6. Persist: `updateTrackField(trackId, { syncMarkers: correctedMarkers, dataVersion: 3 })`
 
-**Files:** `src/services/vocal-onset.service.ts`, `src/services/track.orchestrator (удалён, Волна B).ts` (step 11a.5)
+**Files:** `src/services/vocal-onset.service.ts`, `src/services/track.orchestrator.ts (удалён 01.09, Волна B)` (step 11a.5)
 
 **Result:** First marker aligns with actual vocal onset. ~80% of all markers land accurately. Remaining ~20% may have non-linear drift (see Multi-Anchor Correction roadmap).
 
@@ -908,7 +908,7 @@ WagonTrain uses IIFE fallback to ensure correct labels **even for legacy data**:
 |----|----------|------|------|--------|
 | TC-BRIDGE-01 | Короткие слова (yo, oh, we) отфильтрованы | Fallback w.length >= 2 | `auto-lyrics.service.ts` | ✅ |
 | TC-BRIDGE-02 | Пустые lineIndices не фильтруются в blocks.bridge | Filter перед map | `blocks.bridge.ts` | ✅ |
-| TC-BRIDGE-03 | TC-006 читает stale маркеры | Guard: m1Markers.length > 0 | `track.orchestrator (удалён, Волна B).ts` | ✅ |
+| TC-BRIDGE-03 | TC-006 читает stale маркеры | Guard: m1Markers.length > 0 | `track.orchestrator.ts (удалён 01.09, Волна B)` | ✅ |
 | TC-BRIDGE-04-DIAG | Diagnostics после удаления temp fields | Перемещён до cleanup | `auto-lyrics.service.ts` | ✅ |
 | TC-BRIDGE-05 | lastMatchedLrcIdx += contentLineCount | Отклонён — overshot | — | ❌ Reverted |
 | TC-BRIDGE-06 | Revert к original lastMatchedLrcIdx | lastMatchedLrcIdx = bestIdx | `auto-lyrics.service.ts` | ✅ |

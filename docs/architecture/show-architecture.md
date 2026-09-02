@@ -468,7 +468,7 @@ deactivateFeature()
 ❌ src/audio/core/AudioEngineV2.ts
 ❌ src/audio/compat/patchV1.ts
 ❌ src/bridges/**/*.ts
-❌ src/services/track.orchestrator (удалён, Волна B).ts
+❌ src/services/track.orchestrator.ts (удалён 01.09, Волна B)
 ❌ js/**/*.js
 ❌ src/stores/wordSync.store.ts
 ❌ src/stores/markers.store.ts

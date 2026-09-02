@@ -218,7 +218,7 @@ When a ZIP is imported without lyrics, the app opens the lyrics paste modal. If 
 
 - `parseTaggedLyrics()` produces `DetectedBlock[]`.
 - `detectedBlocksToPersistedBlocks()` (in `src/services/auto-lyrics.service.ts`) converts `DetectedBlock[]` → `PersistedTextBlock[]` by mapping each block's `contentLines` to indices in the clean lyric lines.
-- The resulting `PersistedTextBlock[]` is saved to `track.blocksData` so `track.orchestrator (удалён, Волна B).ts` loads it via `loadImportedBlocks()` and `sanitizeBlocks()` accepts it.
+- The resulting `PersistedTextBlock[]` is saved to `track.blocksData` so `track.orchestrator.ts (удалён 01.09, Волна B)` loads it via `loadImportedBlocks()` and `sanitizeBlocks()` accepts it.
 
 This ensures TrackMap structure is preserved even without timing data. (TC-ZIP-03)
 

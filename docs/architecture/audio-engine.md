@@ -38,7 +38,7 @@ React boot вызывает `tryActivateV2()` через `src/App.tsx` и `src/a
 
 `VocalMix` — stereo routing layer.
 
-`track.orchestrator (удалён, Волна B)` — главный high-level load pipeline:
+`track.orchestrator.ts (удалён 01.09, Волна B)` — главный high-level load pipeline:
 `lyrics/blocks ready → audio load → markers apply → optional autoplay`.
 
 `audio.bridge` — ✅ RETIRED → `audio-events.ts` (EventBus wrapper)
@@ -112,7 +112,7 @@ Bridges не владеют transport.
 ## Main runtime flows, condensed
 
 ### Track load
-`track.orchestrator (удалён, Волна B).ts:19-128`
+`track.orchestrator.ts:19-128 (удалён 01.09, Волна B)`
 
 Порядок:
 1. cancel previous autoplay timer
@@ -184,7 +184,7 @@ Store computes range from `block.lineIndices + markers`, bridge pushes range int
 `useKeyboardShortcuts.ts:13-19`
 → `window.queueTrackJump(delta)`
 
-`track.orchestrator (удалён, Волна B).ts:130-150`
+`track.orchestrator.ts:130-150 (удалён 01.09, Волна B)`
 - accumulate delta
 - debounce 250ms
 - compute target track
@@ -354,7 +354,7 @@ Responsibilities:
 
 Main high-level track load flow:
 
-- `src/services/track.orchestrator (удалён, Волна B).ts:19-128`
+- `src/services/track.orchestrator.ts:19-128 (удалён 01.09, Волна B)`
 
 Responsibilities:
 - choose track
@@ -523,7 +523,7 @@ Bridges are not authoritative for:
 ## 1. Track load
 
 Confirmed high-level order from:
-- `src/services/track.orchestrator (удалён, Волна B).ts:19-128`
+- `src/services/track.orchestrator.ts:19-128 (удалён 01.09, Волна B)`
 
 ### Exact flow
 
@@ -785,7 +785,7 @@ TrackMap loop and Sync Editor loop are separate UX surfaces with different owner
 
 Confirmed from:
 - `useKeyboardShortcuts.ts:13-19`
-- `track.orchestrator (удалён, Волна B).ts:130-150`
+- `track.orchestrator.ts:130-150 (удалён 01.09, Волна B)`
 
 ### Flow
 

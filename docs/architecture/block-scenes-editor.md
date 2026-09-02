@@ -534,7 +534,7 @@ See [Section 3.5](#35-zip-scene-roundtrip-events) for the complete event topolog
 ❌ src/audio/core/AudioEngineV2.ts
 ❌ src/audio/compat/patchV1.ts
 ❌ src/bridges/**  (read-only reference)
-❌ src/services/track.orchestrator (удалён, Волна B).ts
+❌ src/services/track.orchestrator.ts (удалён 01.09, Волна B)
 ❌ js/  (legacy boundary shells)
 ❌ TextAppDB — migration blocked by legacy track-catalog.js
 ❌ New npm dependencies without approval
