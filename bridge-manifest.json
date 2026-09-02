@@ -7,7 +7,7 @@
     "note": "7 LEGACY-ключей без eventBus-подписок (6 dom-only-channel + 1 dead-mapping, verdict 009; sync-editor-closed НЕ включать — отсутствует в LEGACY_EVENT_MAP)"
   },
   "records": [
-    { "id": "audio", "bridge": "src/bridges/audio.bridge.ts", "wrapper": "src/foundation/event-bus/wrappers/audio-events.ts", "status": "dual-fire", "inBoot": true, "retiredAt": null, "testsRemoved": [], "knownGaps": [], "notes": "снос #1 — пилот волны (301: безопасен первым)" },
+    { "id": "audio", "bridge": "src/bridges/audio.bridge.ts", "wrapper": "src/foundation/event-bus/wrappers/audio-events.ts", "status": "retired", "inBoot": true, "retiredAt": "wave-c-#1", "testsRemoved": ["src/bridges/__tests__/audio.bridge.test.ts"], "knownGaps": [], "notes": "снос #1 — пилот волны (301: безопасен первым)" },
     { "id": "blocks", "bridge": "src/bridges/blocks.bridge.ts", "wrapper": "src/foundation/event-bus/wrappers/blocks-events.ts", "status": "dual-fire", "inBoot": true, "retiredAt": null, "testsRemoved": [], "knownGaps": [], "notes": "" },
     { "id": "loop", "bridge": "src/bridges/loop.bridge.ts", "wrapper": "src/foundation/event-bus/wrappers/loop-events.ts", "status": "dual-fire", "inBoot": true, "retiredAt": null, "testsRemoved": [], "knownGaps": [], "notes": "" },
     { "id": "mode", "bridge": "src/bridges/mode.bridge.ts", "wrapper": "src/foundation/event-bus/wrappers/mode-events.ts", "status": "dual-fire", "inBoot": true, "retiredAt": null, "testsRemoved": [], "knownGaps": [], "notes": "" },
