@@ -7,7 +7,6 @@
   },
   "graveyard": {
     "src/bridges/mode-switch.bridge.ts": "72efdf8e219df2726cfec1328364da2bbcfa78b847202c74128f15348678b7df",
-    "src/bridges/monitor.bridge.ts": "5030cf93c67e8f45c9f6ac2f67e504e3cb5bc29ba37749cd436289d23938516e",
-    "src/bridges/stem-reactive.bridge.ts": "473e506882aea9fa2b4ecad609d6dabe3fe202a9d8c6341a4f3e297867461cab"
+    "src/bridges/monitor.bridge.ts": "5030cf93c67e8f45c9f6ac2f67e504e3cb5bc29ba37749cd436289d23938516e"
   }
 }
