@@ -6,7 +6,6 @@
     "src/bridges/live-guard.ts": "a87b3fd22dca826e5d51df90eb5fa91c5ffb5f9aa38b32e067e3fb1299886ba8"
   },
   "graveyard": {
-    "src/bridges/audio-reactive.bridge.ts": "377b2e5f5244289ba0601d92026b2f4b34124b1eec94a61d7143fdccd5fc156a",
     "src/bridges/lyrics.bridge.ts": "059944b4ee16066be77d95fd9e8a7ad831dcd6dafa30b9b0e39dcc99c6334aa7",
     "src/bridges/mode-switch.bridge.ts": "72efdf8e219df2726cfec1328364da2bbcfa78b847202c74128f15348678b7df",
     "src/bridges/monitor.bridge.ts": "5030cf93c67e8f45c9f6ac2f67e504e3cb5bc29ba37749cd436289d23938516e",
