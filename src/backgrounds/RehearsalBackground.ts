@@ -323,6 +323,19 @@ export class RehearsalBackgroundManager {
     if (this._crossfadeTimer) { clearTimeout(this._crossfadeTimer); this._crossfadeTimer = null; }
     if (this._pendingTransitionEnd) { this._pendingTransitionEnd(); this._pendingTransitionEnd = null; }
     this._lastSceneSwitch = 0;
+
+    // FOUC-2 P0: симметрия с setBlockScene(null) — после гашения слоёв вернуть
+    // страховочный Pexels-фон на body (иначе белый холст до первой покраски новой сцены).
+    // Защита от двойного интервала: clearAllScenes может зваться при живом таймере
+    // (повторный свитч без сцен) — в отличие от null-ветки гасим перед армом.
+    if (!this._customBgUrl) {
+      if (this.timerId) { clearInterval(this.timerId); this.timerId = null; }
+      this.lastImageIndex = -1;
+      this._setBackground();
+      if (this.interval && this.interval > 0 && this.imagePaths.length > 1) {
+        this.timerId = setInterval(this._setBackground.bind(this), this.interval);
+      }
+    }
   }
 
   /**
