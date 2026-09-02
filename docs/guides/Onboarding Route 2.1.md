@@ -248,8 +248,8 @@ This gives you the canonical product load path:
 
 ### 6.4 Marker / line sync path
 Then read:
-- `src/bridges/markers.bridge.ts`
-- `src/bridges/lyrics.bridge.ts`
+- `src/foundation/event-bus/wrappers/markers-events.ts` (замена markers.bridge; Волна C снесла оригинал)
+- `src/foundation/event-bus/wrappers/lyrics-events.ts` (замена lyrics.bridge; Волна C снесла оригинал)
 - `src/stores/markers.store.ts`
 - `src/stores/lyrics.store.ts`
 
@@ -265,7 +265,7 @@ This gives you:
 ### 6.5 Loop surfaces
 Then read:
 - `src/stores/loop.store.ts`
-- `src/bridges/loop.bridge.ts`
+- `src/foundation/event-bus/wrappers/loop-events.ts` (замена loop.bridge; Волна C снесла оригинал)
 - `src/components/WagonTrain.tsx`
 - `src/sync/components/WaveformCanvas.tsx`
 
@@ -319,7 +319,7 @@ This reveals the most modernized runtime path:
 ### 6.8 Style / performance split
 Then read:
 - `src/stores/textStyle.store.ts`
-- `src/bridges/textStyle.bridge.ts`
+- `src/foundation/event-bus/wrappers/text-style-events.ts` (замена textStyle.bridge; Волна C снесла оригинал)
 - `src/performance/performance.store.ts`
 - `src/performance/performance.bridge.ts`
 - `src/performance/performance.hooks.ts`
@@ -338,7 +338,7 @@ This shows:
 Then read:
 - `src/hooks/useBackgroundManagers.ts`
 - `src/bridges/live-guard.ts`
-- `src/bridges/monitor.bridge.ts`
+- `src/foundation/event-bus/wrappers/monitor-events.ts` (замена monitor.bridge; Волна C снесла оригинал)
 - `src/stores/recording.store.ts`
 - `src/takes/takes.store.ts`
 - `src/takes/takes.bridge.ts`
@@ -434,7 +434,7 @@ If you cannot answer those, do not move into deeper code yet.
 If you have 2 focused hours, add this:
 
 ### Inspect
-- `src/bridges/lyrics.bridge.ts`
+- `src/foundation/event-bus/wrappers/lyrics-events.ts` (замена lyrics.bridge; Волна C снесла оригинал)
 - `src/stores/wordSync.store.ts`
 - `src/triggers/trigger.bridge.ts`
 - `src/playback/playback-visual-scheduler.ts`
@@ -460,11 +460,10 @@ If you cannot explain those, you are not yet ready to propose architecture chang
 If you have half a day, complete the system picture.
 
 ### Inspect
-- `src/bridges/mode-switch.bridge.ts`
-- `src/bridges/mode.bridge.ts`
-- `src/bridges/audio.bridge.ts`
+- `src/foundation/event-bus/wrappers/mode-events.ts` (замена mode-switch.bridge + mode.bridge; Волна C снесла оригиналы)
+- `src/foundation/event-bus/wrappers/audio-events.ts` (замена audio.bridge; Волна C снесла оригинал)
 - `src/performance/performance.bridge.ts`
-- `src/bridges/monitor.bridge.ts`
+- `src/foundation/event-bus/wrappers/monitor-events.ts` (замена monitor.bridge; Волна C снесла оригинал)
 - `src/blocks/bridge/blockEditor.bridge.ts`
 - `js/track-catalog.js`
 - `js/marker-manager.js`

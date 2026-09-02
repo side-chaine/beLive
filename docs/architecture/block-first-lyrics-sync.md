@@ -907,7 +907,7 @@ WagonTrain uses IIFE fallback to ensure correct labels **even for legacy data**:
 | TC | Проблема | Фикс | Файл | Статус |
 |----|----------|------|------|--------|
 | TC-BRIDGE-01 | Короткие слова (yo, oh, we) отфильтрованы | Fallback w.length >= 2 | `auto-lyrics.service.ts` | ✅ |
-| TC-BRIDGE-02 | Пустые lineIndices не фильтруются в blocks.bridge | Filter перед map | `blocks.bridge.ts` | ✅ |
+| TC-BRIDGE-02 | Пустые lineIndices не фильтруются в blocks.bridge | Filter перед map | `blocks-events.ts` (wrapper; замена blocks.bridge, Волна C снесла оригинал) | ✅ |
 | TC-BRIDGE-03 | TC-006 читает stale маркеры | Guard: m1Markers.length > 0 | `track.orchestrator.ts (удалён 01.09, Волна B)` | ✅ |
 | TC-BRIDGE-04-DIAG | Diagnostics после удаления temp fields | Перемещён до cleanup | `auto-lyrics.service.ts` | ✅ |
 | TC-BRIDGE-05 | lastMatchedLrcIdx += contentLineCount | Отклонён — overshot | — | ❌ Reverted |

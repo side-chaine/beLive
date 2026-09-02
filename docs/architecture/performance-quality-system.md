@@ -360,8 +360,8 @@ This should be persisted as user preference.
 
 CSS var-based reactive pipeline:
 
-- `stem-reactive.bridge.ts` — per-stem CSS vars
-- `audio-reactive.bridge.ts` — frequency analysis → CSS vars
+- `src/foundation/event-bus/wrappers/stem-reactive.ts` (wrapper; замена stem-reactive.bridge, Волна C снесла оригинал) — per-stem CSS vars
+- `src/foundation/event-bus/wrappers/audio-reactive.ts` (wrapper; замена audio-reactive.bridge, Волна C снесла оригинал) — frequency analysis → CSS vars
 
 ---
 

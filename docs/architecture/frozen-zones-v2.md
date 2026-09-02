@@ -1,6 +1,6 @@
 # Frozen Zones v2 — Карта неприкасаемых зон
-> 🔒 Механизм охраны (с 01.09, FG-CI): `frozen-manifest.json` + `npm run verify:frozen` (CI). Манифест = операционный канон (17 файлов).
-**2 зоны · 17 файлов** (AudioEngineV2 + 16 мостов вкл. live-guard), ~4 545 строк (wc-факт: 5299 → −162 Волна A → −592 orchestrator Волна B, 01.09)
+> 🔒 Механизм охраны (с 01.09, FG-CI): `frozen-manifest.json` + `npm run verify:frozen` (CI). Манифест = операционный канон (2 файла, после Волны C: guard 2, graveyard 0).
+**2 зоны · 2 файла** (AudioEngineV2 + live-guard), ~2 199 строк (wc-факт: 5299 → −162 Волна A → −592 Волна B → −2 350 Волна C: 15 graveyard-мостов, 01.09)
 *Дата:* 2026-07-17 (обновлён после bridge retirement wave)
 *Статус:* ⚠️ ЧАСТИЧНО АКТУАЛЬНО — 19/22 bridges retired, актуальный список ниже
 
@@ -24,9 +24,9 @@
 | `src/services/track.orchestrator.ts` — 🗑 удалён 01.09, Волна B (0 импортёров; 1:1-копия живёт track.loader.ts; OVERRIDE). SHA — история манифеста |
 | `js/*.js` (5 файлов) | ~1,000 | Legacy boundary shells |
 
-### 🔄 Bridges-прочие (3 живут вне src/bridges/; операционный канон src/bridges/ = 16 мостов в frozen-manifest.json: live-guard guard + 15 graveyard — см. 🔒-строку выше)
+### 🔄 Bridges-прочие (операционный канон src/bridges/ = 1 файл: live-guard (guard-зона; 15 graveyard-мостов снесены Волной C 01.09, graveyard пуст) — см. 🔒-строку выше)
 
-> ⚠️ Ниже — мосты ДРУГИХ зон (blockEditor/Rehearsal/stem-reactive), НЕ каталог src/bridges/. Каталог src/bridges/ полностью в манифесте (graveyard-15 — трупы Волны C).
+> ⚠️ Ниже — мосты ДРУГИХ зон (blockEditor/Rehearsal/stem-reactive), НЕ каталог src/bridges/. Каталог src/bridges/ полностью в манифесте (15 graveyard-мостов снесены Волной C; graveyard пуст).
 
 | Файл | Статус | Примечание |
 |------|:------:|------------|
@@ -34,9 +34,7 @@
 | `src/Rehearsal/bridge/rehearsal-trigger.bridge.ts` | ❄️ | До V3 AudioContext |
 | `src/bridges/live-guard.ts` | 🟢 | Security guard, не bridge |
 
-**22/22 bridges RETIRED** — все frozen bridges.
-**1 переклассифицирован:** trigger.bridge → trigger-visual.service 🟢
-**2 осталось на диске:** stem-reactive.bridge (❄️, в процессе retire), rehearsal-trigger.bridge (❄️, до V3 AudioContext)
+**все 15 graveyard-мостов снесены Волной C (01.09); остался live-guard (guard)**
 
 ### 🟢 Не frozen (можно менять)
 

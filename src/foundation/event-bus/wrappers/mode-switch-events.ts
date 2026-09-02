@@ -3,9 +3,9 @@
 // CLASS: SIDE-EFFECT
 // ORIGINAL: src/bridges/mode-switch.bridge.ts (partial)
 //
-// mode-changed → DOM classList
-// EventBus-wrapper. Пока не активен — bridges продолжают
-// работать через Facade. Активируется когда Facade отключается.
+// mode-changed → DOM classList (классList красит живой mode-switch.service:247 + mode-events:81 — этот wrapper их дубль)
+// Wrapper = dead code: вне бута (registerInit нет), кандидат retire Волной D.
+// Волна C 01.09: мост mode-switch.bridge.ts снесён (graveyard пуст).
 // ============================================================
 
 import { eventBus } from '../event-bus'

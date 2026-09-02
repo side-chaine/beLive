@@ -6,10 +6,10 @@
 - `src/audio/core/AudioEngineV2.ts`
 - `src/audio/compat/patchV1.ts` — снесён Волной A 01.09 (OVERRIDE)
 - `src/services/track.orchestrator.ts`
-- `src/bridges/**` (все файлы, вкл. `live-guard`, `audio-reactive.bridge`, `blocks.bridge`, `__tests__/*`)
+- `src/bridges/live-guard.ts` (guard: после Волны C — AudioEngineV2 + live-guard; остальные снесены Волной C)
 - `_`-поля внутри frozen-файлов.
 
-Проверка: `find src/audio/core/AudioEngineV2.ts src/services/track.orchestrator.ts src/bridges -type f | xargs sha256sum` → сравнить ДО/ПОСЛЕ (patchV1 — снесён Волной A 01.09 (OVERRIDE), выведен из списка; frozen канон = 18 файлов). Расхождение = нарушение R6.
+Проверка: `find src/audio/core/AudioEngineV2.ts src/bridges/live-guard.ts -type f | xargs sha256sum` → сравнить ДО/ПОСЛЕ (patchV1/track.orchestrator — снесены; frozen канон = 2 файла). Расхождение = нарушение R6.
 
 ---
 

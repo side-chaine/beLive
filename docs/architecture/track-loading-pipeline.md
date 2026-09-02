@@ -152,22 +152,22 @@ Stem gainNode ──┬──→ VocalMix merger (primary)
 
 ### Key State Updates
 
-| Store | Bridge | What it mirrors |
+| Store | Bridge → wrapper (Волна C) | What it mirrors |
 |-------|--------|----------------|
-| `track.store` | `track.bridge` | Track metadata |
-| `blocks.store` | `blocks.bridge` | Blocks from LD.textBlocks |
-| `markers.store` | `markers.bridge` | Markers from markerManager |
-| `audio.store` | `audio.bridge` | Playback state, duration |
-| `loop.store` | `loop.bridge` | TrackMap loop intent |
+| `track.store` | `track-events.ts` (замена track.bridge) | Track metadata |
+| `blocks.store` | `blocks-events.ts` (замена blocks.bridge) | Blocks from LD.textBlocks |
+| `markers.store` | `markers-events.ts` (замена markers.bridge) | Markers from markerManager |
+| `audio.store` | `audio-events.ts` (замена audio.bridge) | Playback state, duration |
+| `loop.store` | `loop-events.ts` (замена loop.bridge) | TrackMap loop intent |
 
 ### Event-Driven Sync
 
 ```
 AudioEngineV2 → 'track-loaded' event
-  → audio.bridge (mirrors state)
-  → blocks.bridge (syncs blocks, 300ms delay)
-  → markers.bridge (syncs markers)
-  → track.bridge (syncs metadata)
+  → audio-events (mirrors state)
+  → blocks-events (syncs blocks, 300ms delay)
+  → markers-events (syncs markers)
+  → track-events (syncs metadata)
 ```
 
 ---

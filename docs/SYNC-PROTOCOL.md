@@ -27,6 +27,7 @@
 - Для live-статуса без коммита: Мак смотрит файлы напрямую или `git status` в монтаже.
 - ❄️ **FROZEN-ZONE** (`AudioEngineV2.ts`, `patchV1.ts`, `bridges/*`, `track.orchestrator.ts`,
   приватные `_`) и **dispatch-только-через-007** действуют на ОБЕИХ сторонах без исключений.
+  _(после Волны C: guard = AudioEngineV2 + live-guard; bridges снесены)_
 
 ## 4. Заметки реализации
 - Хук: `.git/hooks/update-repo-state.sh` (вызывается из `post-commit`/`post-merge`/`post-checkout`).

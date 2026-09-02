@@ -125,7 +125,7 @@ When `setBlockSceneMap` receives a valid sceneMap:
 
 ### 3.3 Race Condition Guard in onScenesLoaded
 
-`track.bridge.ts` updates store with 100ms debounce. `block-scenes-loaded` fires before store is updated.
+`track-events.ts` (wrapper updates store with 100ms debounce; замена track.bridge, Волна C снесла оригинал). `block-scenes-loaded` fires before store is updated.
 **Fix:** `onScenesLoaded` reads `currentTrackIndex` from `window.trackCatalog` (synchronous) instead of store.
 Fallback to store if trackCatalog unavailable.
 
@@ -134,7 +134,7 @@ Fallback to store if trackCatalog unavailable.
 | URL Type | Managed By | Revoked On |
 |----------|-----------|-----------|
 | Scene Object URLs | `block-scene.service._sceneObjectUrls` Set | `before-track-change`, track switch |
-| Cover art Object URLs | `track.bridge._coverArtObjectUrls` Set | `syncAll` (deferred 1200ms) |
+| Cover art Object URLs | `track-events._coverArtObjectUrls` Set (`track.bridge` снесён Волной C; wrapper) | `syncAll` (deferred 1200ms) |
 | Preview URLs (modal) | `previewUrlsRef` Map | Modal close, unmount |
 
 ### 3.5 ZIP Scene Roundtrip Events

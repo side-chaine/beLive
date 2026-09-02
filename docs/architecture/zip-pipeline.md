@@ -444,8 +444,8 @@ Tightening:     if budget not met → pick largest encoded → 64kbps → rechec
 | `src/services/cover-art.service.ts` | Cover art fetch + blob save |
 | `src/services/idb.service.ts` | IDB schema (coverArtBlob field, blockScenes store) |
 | `src/services/block-scene.service.ts` | Block scenes load/save from IDB |
-| `src/bridges/track.bridge.ts` | Blob → Object URL hydration |
-| `src/bridges/cover-theme.bridge.ts` | Theme hydration from IDB |
+| `src/foundation/event-bus/wrappers/track-events.ts` (замена track.bridge; Волна C снесла оригинал) | Blob → Object URL hydration |
+| `src/foundation/event-bus/wrappers/cover-events.ts` (замена cover-theme.bridge; Волна C снесла оригинал) | Theme hydration from IDB |
 | `src/components/CoverArt.tsx` | UI component (img + fallback) |
 | `src/config/stem-transcode.config.ts` | Transcode config (v2.0) |
 | `src/utils/zip-preflight.ts` | Pre-flight + budget gate |

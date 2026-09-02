@@ -210,7 +210,7 @@ Practice 🎤 — 1 событие (с 6 под-состояниями)
 | Здание | Почему |
 |--------|--------|
 | SoundTouch-стрейч (pitch/) | Стрейч удалён (S1/Signalsmith-фикс); каталог pitch/ жив в рантайме (yin-детекция — не SoundTouch) |
-| Bridges (bridges/) | ❄️ FROZEN до полного вывода (frozen-zones-v2.md — 4 зоны); EventBus-обёртки взяли функцию (24→19), физический снос — только по OVERRIDE Никиты |
+| Bridges (bridges/) | ✅ снос выполнен Волной C (OVERRIDE Никиты 02.09); живая замена — EventBus-wrappers; live-guard — guard-зона |
 | DuckGuardV3 (singleton) | Заменён: singleton снесён (W3 DELETE), жив native-вариант — integration/DuckGuardV3Native |
 
 

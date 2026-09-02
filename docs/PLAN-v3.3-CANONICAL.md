@@ -26,7 +26,7 @@ SoundCue union ✅; остаток: B-slice (см. §4), F-2-дубль (под�
 пилота), mic-уши-сессия · M3 ✅ (flip 2395c1e7, W1/W2 done, 26.08; E1/E2/E3 см. §3 5-7 — подтвердить в closure-таблице Мака) · M5 ⬜ · E7 ⬜ · GO ⬜ · G0-draft готов к ревью
 Ц3+Ц2; кампания не стартовала; подпись №4 = самый длинный user-latency.
 
-> ⚠️ Срез на дату (01.09, Волна B): SSOT frozen-зоны — `frozen-manifest.json` + `docs/architecture/frozen-zones-v2.md` (2 зоны · 17 файлов); track.orchestrator удалён Волной B. Списки ниже — исторический срез.
+> ⚠️ Срез на дату (после Волны C, 02.09): SSOT frozen-зоны — `frozen-manifest.json` + `docs/architecture/frozen-zones-v2.md` (2 зоны · 2 файла: guard = AudioEngineV2 + live-guard; graveyard пуст); track.orchestrator удалён Волной B, 15 bridges снесены Волной C. Списки ниже — исторический срез.
 
 ## §2. ПРАВИЛА ИГРЫ
 Frozen: AudioEngineV2, patchV1, bridges/*, track.orchestrator, _-поля,

@@ -89,7 +89,7 @@ getCurrentTime(): number {
 Подтверждённо: **store is owner, bridge syncs engine**
 
 - store: `src/stores/loop.store.ts`
-- bridge → engine: `src/bridges/loop.bridge.ts:44-83`
+- bridge → engine: `src/bridges/loop.bridge.ts:44-83` (путь мёртв с Волной C; замена — loop-events.ts)
 
 ### Sync Editor loop authority
 Подтверждённо: **local `WaveformCanvas` loopRef + direct engine calls**
@@ -222,7 +222,7 @@ Likely fault lines by current scan:
 - `setCurrentTime()` paused-path vs playing-path split
 - `_waitForSeeked()` 80ms timeout path
 - vocals resync on first resume
-- currentTime/UI optimistic updates in `audio.bridge`
+- currentTime/UI optimistic updates in `audio.bridge` (путь мёртв с Волной C; замена — audio-events.ts)
 
 These are historical hypotheses, now resolved.
 
@@ -369,7 +369,7 @@ Responsibilities:
 ### 7. Bridge layer
 
 #### Audio state bridge
-- `src/bridges/audio.bridge.ts:4-143`
+- `src/bridges/audio.bridge.ts:4-143` (путь мёртв с Волной C; замена — audio-events.ts)
 
 Responsibilities:
 - mirror playback state into store
@@ -377,14 +377,14 @@ Responsibilities:
 - patch seek wrappers to keep UI and active line optimistic
 
 #### Time sync bridge
-- `src/bridges/time-sync.ts:14-30`
+- `src/bridges/time-sync.ts:14-30` (путь мёртв с Волной C; замена — position-sync.ts)
 
 Responsibilities:
 - poll engine current time at ~10Hz during playback
 - keep progress UI updated
 
 #### Lyrics bridge
-- `src/bridges/lyrics.bridge.ts:5-134`
+- `src/bridges/lyrics.bridge.ts:5-134` (путь мёртв с Волной C; замена — lyrics-events.ts)
 
 Responsibilities:
 - sync lyrics lines from legacy LD shell into store
@@ -393,7 +393,7 @@ Responsibilities:
 - reverse-sync active line back into legacy LD state for consumers that still read it
 
 #### Loop bridge
-- `src/bridges/loop.bridge.ts:3-95`
+- `src/bridges/loop.bridge.ts:3-95` (путь мёртв с Волной C; замена — loop-events.ts)
 
 Responsibilities:
 - treat `useLoopStore` as TrackMap loop owner
@@ -474,7 +474,7 @@ TrackMap loop state lives in:
 - `src/stores/loop.store.ts`
 
 Engine sync is done by:
-- `src/bridges/loop.bridge.ts:44-83`
+- `src/bridges/loop.bridge.ts:44-83` (путь мёртв с Волной C; замена — loop-events.ts)
 
 This means:
 - store owns intent and selected range
@@ -682,14 +682,14 @@ Confirmed from:
 ### Compatibility note
 
 External callers usually do not hit bare v2 methods directly.
-Through legacy `window.audioEngine`, `audio.bridge` patches:
+Through legacy `window.audioEngine`, `audio.bridge` patches (путь мёртв с Волной C; замена — audio-events.ts):
 - `setCurrentTime`
 - `seekTo`
 
 and mirrors current time and optimistic active line into stores.
 
 Confirmed at:
-- `audio.bridge.ts:67-123`
+- `audio.bridge.ts:67-123` (путь мёртв с Волной C)
 
 ---
 
@@ -735,7 +735,7 @@ Confirmed from:
    - `loopStartTime`
    - `loopEndTime`
    - line boundaries
-5. `loop.bridge` subscriber reacts
+5. `loop.bridge` subscriber reacts (путь мёртв с Волной C; замена — loop-events.ts)
 6. bridge calls:
    - `ae.setLoop(loopStartTime, loopEndTime)`
 
@@ -841,7 +841,7 @@ Confirmed in engine:
 ### Confirmed architectural boundaries
 
 - transport authority = `AudioEngineV2`
-- TrackMap loop owner = `loop.store + loop.bridge`
+- TrackMap loop owner = `loop.store + loop.bridge` (loop.bridge снесён Волной C; замена — loop-events.ts)
 - Sync Editor loop owner = `WaveformCanvas` local state + direct engine calls
 - current UI stores are mirrors / consumers, not transport owners
 

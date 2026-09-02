@@ -12,7 +12,7 @@
 | [`central-bridge.md`](./central-bridge.md) | Store → Engine sync: реактивный слой вместо dual-call | ✅ |
 | [`init-registry.md`](./init-registry.md) | Lifecycle: единая инициализация, HMR-safe cleanup | ✅ |
 | [`transport-v3.md`](./transport-v3.md) | V3 транспорт: 7 методов, 5 состояний, error recovery | ✅ |
-**2 зоны · 17 файлов · ~4 545 строк** (после Волн A+B: patchV1 −162, track.orchestrator −592 снесены; синхронно с frozen-zones-v2.md:3)
+**2 зоны · 2 файла · ~2 199 строк** (после Волн A+B+C: 17→2; см. frozen-manifest.json)
 
 ## Схема зависимостей
 

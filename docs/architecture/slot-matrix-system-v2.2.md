@@ -1,4 +1,4 @@
-> 🗄️ HISTORICAL (redirect 31.08): содержимое = Styles System (не Slot Matrix, бан 2026-05-20); живой носитель контракта — src/slot-matrix/slot-matrix.types.ts; индексы почищены E1-5.
+> 🗄️ HISTORICAL (redirect 31.08): содержимое = Styles System (не Slot Matrix, бан 2026-05-20); живой носитель контракта — src/slot-matrix/slot-matrix.types.ts; индексы почищены E1-5. _Волна C 01.09: plate.bridge → plate-events (wrapper), textStyle.bridge → text-style-events (wrapper) — оригиналы снесены._
 # ⚠️ DOCUMENTATION MISMATCH — ACTION REQUIRED
 
 > **CRITICAL:** This file currently contains "Styles System" documentation, NOT Slot Matrix architecture.
@@ -96,7 +96,7 @@ src/stores/
 └── plate.store.ts                    ← transitionPreset field + persist 🆕
 
 src/bridges/
-└── plate.bridge.ts                   ← Auto-save plate.store → IDB 🆕
+└── plate-events.ts (wrapper; замена plate.bridge, Волна C снесла оригинал) ← Auto-save plate.store → IDB 🆕
 
 src/components/
 ├── RehearsalLyrics.tsx               ← Рендер + ПС overlay + state machine 🆕
@@ -408,7 +408,7 @@ Read path (load track):
 
 Write path (user picks preset):
   plate.store.setTransitionPreset("bounce")
-    → plate.bridge debounce 300ms
+    → plate-events debounce 300ms (wrapper; замена plate.bridge, Волна C)
     → syncToIDB(trackId, { transitionPreset: "bounce" })
 
 Guard: null/undefined → НЕ перезаписывать plate.store
@@ -464,7 +464,7 @@ IDLE
 | 13 | Preset имена краткие | UX |
 | 14 | VOC dataVersion=4 | Разрывает L3→L2 бесконечный цикл |
 | 15 | ZIP import guard null/undefined | Не перезаписывать выбор пользователя |
-| 16 | initPlateBridge() после textStyle.bridge | Порядок инициализации |
+| 16 | initPlateBridge() после text-style-events | Порядок инициализации |
 
 ### Критические нюансы
 

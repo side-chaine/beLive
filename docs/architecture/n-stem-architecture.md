@@ -207,7 +207,7 @@ const DEFAULT_ROLE_ORDER = {
 │    ├─ _reconnectProgramBus()                                        │
 │    └─ _notifyTrackLoaded(loadedStems, hasVocals)                    │
 │    ↓                                                               │
-│  audio.bridge.ts  [track-loaded event]                              │
+│  audio-events.ts (wrapper; замена audio.bridge, Волна C)  [track-loaded event]                            │
 │    useStemStore.getState().initStems(loadedStems)                   │
 │    ↓                                                               │
 │  MixerPanel.tsx  [reacts to loadedStems]                            │
@@ -409,8 +409,8 @@ function getRolePolicyVolume(role: StemRole, policy: ModeStemPolicy): number {
 
 | Path | Component | Responsibility |
 |------|-----------|----------------|
-| **Command path** | `mode-switch.bridge.ts` | Save rehearsal volumes, apply new mode, emit `mode-changed` |
-| **Observer path** | `mode.bridge.ts` | Listen to `mode-changed`, apply volume policy with 100ms delay |
+| **Command path** | `mode-switch.bridge.ts` (снесён Волной C; замена — mode-events.ts) | Save rehearsal volumes, apply new mode, emit `mode-changed` |
+| **Observer path** | `mode.bridge.ts` (снесён Волной C; замена — mode-events.ts) | Listen to `mode-changed`, apply volume policy with 100ms delay |
 
 ---
 
@@ -565,7 +565,7 @@ interface StemState {
 ### Initialization Flow
 
 ```
-audio.bridge.ts listens to 'track-loaded' event
+audio-events.ts (wrapper; замена audio.bridge, Волна C) listens to 'track-loaded' event
   ↓
 event.detail.loadedStems = ['instrumental', 'vocals', 'drums', 'guitar', 'keys']
   ↓
@@ -577,7 +577,7 @@ Sets: loadedStems, stemVolumes (all 1), stemMutes (all false),
       stemsMode: preserved from get().stemsMode (TC-10.6)
       _stemsBootRestored: preserved from get()._stemsBootRestored (TC-10.12)
   ↓
-audio.bridge.ts: IDB restore logic (TC-10.12)
+audio-events.ts (wrapper; замена audio.bridge, Волна C): IDB restore logic (TC-10.12)
   ├─ Boot (first load): effectiveEnabled = currentEnabled || savedMode
   │   → _stemsBootRestored = true
   └─ Track switch: effectiveEnabled = currentEnabled (preserve user choice)
@@ -725,7 +725,7 @@ Current implementation includes verbose console logs (`[Orchestrator] W5:`, `[Up
 
 ## Visual Mixer Reactive Pipeline
 
-`stem-reactive.bridge.ts` implements a 60Hz reactive pipeline for the Visual Mixer:
+`stem-reactive.ts` (wrapper; замена stem-reactive.bridge, Волна C) implements a 60Hz reactive pipeline for the Visual Mixer:
 
 - Registers detector + writer with `PlaybackVisualScheduler`
 - Publishes CSS vars per stem: `--bl-stem-{id}-energy` (0.000–1.000) and `--bl-stem-{id}-hit` (0|1)

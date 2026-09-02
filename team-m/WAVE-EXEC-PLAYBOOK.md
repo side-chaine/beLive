@@ -7,7 +7,7 @@
 ```
 npm run typecheck && npx vitest run && npm run verify:ci   # MUST BE GREEN (канон 306/767+5int+2load + PARITY)
 node team-m/bLb/frozen-guard.mjs                            # 🟢 GREEN (0 new safe→frozen). RED → СТОП + реестр.
-find src/audio/core/AudioEngineV2.ts src/audio/compat/patchV1.ts src/services/track.orchestrator.ts src/bridges -type f | xargs sha256sum > /tmp/frozen-pre.sha
+find src/audio/core/AudioEngineV2.ts src/bridges/live-guard.ts -type f | xargs sha256sum > /tmp/frozen-pre.sha
 ```
 
 ## 1. M3-GO FLIP (1 коммит, frozen НЕ трогаем)
@@ -33,7 +33,7 @@ find src/audio/core/AudioEngineV2.ts src/audio/compat/patchV1.ts src/services/tr
 
 ### W4 — orchestrator re-point + legacy/V2Adapter delete
 - **Safe:** 6 потребителей `track.actions.ts:7` re-point; `MixerPanel.tsx:180`+`QuickActions.tsx:214` dyn-import orchestrator удалить; `V2Adapter.ts` УДАЛИТЬ ТОЛЬКО если `grep -rln "V2Adapter" src` → 0; `src/legacy/engine-v3/*` (**9 файлов, вкл. 2 test**) удалить.
-- **Frozen НЕ трогать:** `track.orchestrator.ts`,`patchV1.ts`,`AudioEngineV2.ts`,`src/bridges/**`. **live-guard НЕ moved** (остаётся в `bridges/`, импорт `main.tsx:6` легитимен, allowlist).
+- **Frozen НЕ трогать:** `track.orchestrator.ts`,`patchV1.ts`,`AudioEngineV2.ts`,`src/bridges/**`. **(снесены Волной C; исключение — live-guard)**. **live-guard НЕ moved** (остаётся в `bridges/`, импорт `main.tsx:6` легитимен, allowlist).
 - **Гейт:** `grep -rln "V2Adapter" src` → 0; legacy удалён; canon GREEN.
 
 ### W5 — finalization (doc-debt BAC-111 + E1 cleanup)
@@ -48,7 +48,7 @@ npm run verify:ci       # PARITY PASS
 # dist/ не содержит V2-символы:
 grep -rlE "AudioEngineV2|patchV1|track\.orchestrator|V2Adapter" dist 2>/dev/null || echo "CLEAN"
 # SHA256 frozen совпал:
-find src/audio/core/AudioEngineV2.ts src/audio/compat/patchV1.ts src/services/track.orchestrator.ts src/bridges -type f | xargs sha256sum > /tmp/frozen-post.sha
+find src/audio/core/AudioEngineV2.ts src/bridges/live-guard.ts -type f | xargs sha256sum > /tmp/frozen-post.sha
 diff /tmp/frozen-pre.sha /tmp/frozen-post.sha && echo "FROZEN BYTE-IDENTICAL"
 node team-m/bLb/frozen-guard.mjs   # 🟢 GREEN
 ```
