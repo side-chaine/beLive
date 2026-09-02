@@ -155,5 +155,7 @@ describe('ARC-2e К-7: static-grep PitchTab (?raw)', () => {
     expect(pitchTabSrc).not.toMatch(/ae\?\.\s*(isPlaying|vocalsGain|stems\b)/)
     // и нет прямого чтения facade-глобали (обе прежние декларации вычищены)
     expect(pitchTabSrc).not.toMatch(/\(window as any\)\.audioEngine/)
+    expect(pitchTabSrc).not.toMatch(/wing(Left|Right)/)
+    expect(pitchTabSrc).not.toMatch(/subFrequency|subMidi/)
   })
 })

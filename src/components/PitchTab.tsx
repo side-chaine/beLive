@@ -57,26 +57,6 @@ const S = {
     justifyContent: 'center',
     height: '100%',
   },
-  wingLeft: {
-    position: 'absolute' as const,
-    right: '50%',
-    top: '15%',
-    bottom: '15%',
-    borderRadius: '4px 0 0 4px',
-    transition: 'width 0.12s ease-out',
-    background: 'linear-gradient(to right, rgba(155,89,182,0.05), rgba(155,89,182,0.9))',
-    pointerEvents: 'none' as const,
-  },
-  wingRight: {
-    position: 'absolute' as const,
-    left: '50%',
-    top: '15%',
-    bottom: '15%',
-    borderRadius: '0 4px 4px 0',
-    transition: 'width 0.12s ease-out',
-    background: 'linear-gradient(to left, rgba(231,76,60,0.05), rgba(231,76,60,0.9))',
-    pointerEvents: 'none' as const,
-  },
   noteInWings: {
     position: 'relative' as const,
     zIndex: 2,
@@ -85,7 +65,6 @@ const S = {
     fontWeight: 700,
     color: '#fff',
     whiteSpace: 'nowrap' as const,
-    transition: 'text-shadow 0.15s ease-out',
     letterSpacing: '0.5px',
     userSelect: 'none' as const,
   },
@@ -96,7 +75,7 @@ const S = {
   spacer: { flex: 1 },
 } as const;
 
-/* ── Hook: engine → fast snap → note string + depth ── */
+/* ── Hook: engine → fast snap → note string + сабгармоника ── */
 
 function useStableVocalData(engine: PitchEngine | null): { note: string | null; subScore: number; noiseScore: number } {
   const [note, setNote] = useState<string | null>(null);
@@ -371,27 +350,11 @@ export function PitchTab() {
         <span style={S.label}>vocal</span>
 
         <div style={S.wingsContainer}>
-          <div style={{
-            ...S.wingLeft,
-            width: `${Math.max(vocal.subScore > 0.02 ? 3 : 0, Math.round(vocal.subScore * 42))}%`,
-          }} />
           <span style={{
             ...S.noteInWings,
-            textShadow: (() => {
-              const s = vocal.subScore || 0;
-              const n = vocal.noiseScore || 0;
-              const d = Math.max(s, n);
-              if (d < 0.03) return 'none';
-              const c = s > n ? 'rgba(155,89,182,' : 'rgba(231,76,60,';
-              return `0 0 ${4 + Math.round(d * 12)}px ${c}${0.6 + d * 0.4})`;
-            })(),
           }}>
             {vocalDisplay}
           </span>
-          <div style={{
-            ...S.wingRight,
-            width: `${Math.max(vocal.noiseScore > 0.02 ? 3 : 0, Math.round(vocal.noiseScore * 42))}%`,
-          }} />
         </div>
 
         {micNote && (
