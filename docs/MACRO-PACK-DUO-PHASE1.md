@@ -73,6 +73,8 @@ try { (window as any).__setLoadingV3?.(true) } catch {}
 // В finally loadTrack() (перед return):
 try { (window as any).__setLoadingV3?.(false) } catch {}
 
+    // 🪦 OBS-1: __setLoadingV3 — сеттер-фантом (нигде не определён; 3 вызова = no-op) — удалён из V3DataInterceptor.ts. Индикатор загрузки никогда не существовал; guard __loadingV3 (MP-26) всегда читал undefined.
+
 // --- Блок активации (шаг 8, строки ~144-168) ---
 if (this._pipeline && loadedStemIds.length > 0) {
   this._cage?.activate()

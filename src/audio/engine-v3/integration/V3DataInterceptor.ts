@@ -54,14 +54,16 @@ export class V3DataInterceptor {
 
   async loadTrack(record: TrackRecord): Promise<LoadResult> {
     const myGeneration = ++this._loadGeneration;
-    // ⏳ MP-28: V3 loading in progress — блокируем V2 fallback
-    try { (window as any).__setLoadingV3?.(true) } catch {}
     // 🧹 009: сбрасываем флаг V3 при новой загрузке (cleanup предыдущей)
     try { (window as any).__setV3Active?.(false) } catch {}
+
+    try { performance.mark('belive:load:02-reset') } catch {}
 
     // 1. 🛑 Stop, но НЕ сбрасываем pipeline (оставляем старые WASM буферы живыми)
     this.transport.stop();
     this.orchestrator.disposeAll();
+
+    try { performance.mark('belive:load:03-jobs') } catch {}
 
     // 2. Build decode jobs
     // MX-01: If individual stems exist, skip instrumental master (would cause phasing)
@@ -85,6 +87,8 @@ export class V3DataInterceptor {
       }
       for (const [id, stem] of chosen) jobs.push({ id, data: stem.data, type: stem.type });
     }
+
+    try { performance.mark('belive:load:04-decode') } catch {}
 
     // 3. 🔄 ATOMIC: decode ВСЕ сначала (до pipeline.reset)
     type JobResult = { id: string; ok: true; buffer: AudioBuffer } | { id: string; ok: false; error: unknown };
@@ -113,14 +117,17 @@ export class V3DataInterceptor {
 
     // 4. Проверка generation — если устарел, abort
     if (myGeneration !== this._loadGeneration) {
-      try { (window as any).__setLoadingV3?.(false) } catch {}  // ⏳ cleanup
       return { loadedStemIds: [], failedStemIds: jobs.map((j) => j.id) };
     }
+
+    try { performance.mark('belive:load:05-wasm-reset') } catch {}
 
     // 5. 🧹 Теперь сбрасываем pipeline (старые буферы больше не нужны)
     if (this._pipeline) {
       await this._pipeline.reset()
     }
+
+    try { performance.mark('belive:load:06-wasm-load') } catch {}
 
     // 6. Добавляем в orchestrator + pipeline
     const loadedStemIds: string[] = [];
@@ -157,6 +164,8 @@ export class V3DataInterceptor {
       console.log('[V3DataInterceptor] stale load aborted — track superseded')
       return { loadedStemIds: [], failedStemIds }
     }
+
+    try { performance.mark('belive:load:07-activate') } catch {}
 
     // 8. 🎯 Zombie Kill Switch — заглушить V2 + запуск V3 с offset + safety net 🔴
     if (this._pipeline && loadedStemIds.length > 0) {
@@ -196,8 +205,11 @@ export class V3DataInterceptor {
       }
     }
 
-    // ⏳ MP-28: V3 загрузка завершена
-    try { (window as any).__setLoadingV3?.(false) } catch {}
+    // 🪦 OBS-1: __setLoadingV3 был сеттер-фантомом (нигде не определён, 3 вызова = no-op) — удалён.
+    // Индикатора загрузки не существует; см. docs/MACRO-PACK-DUO-PHASE1.md MP-28.
+    try { performance.mark('belive:load:08-loaded') } catch {}
+
+    try { performance.mark('belive:load:09-dispatch') } catch {}
 
     // M1-2 (342, расширение): V3 заменяет V2 как источник 'track-loaded'.
     // UI-мосты (blocks/track/audio/text-style/block-scene/auto-lyrics) ждут это
