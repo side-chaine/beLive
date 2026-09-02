@@ -11,7 +11,6 @@
     "src/bridges/lyrics.bridge.ts": "059944b4ee16066be77d95fd9e8a7ad831dcd6dafa30b9b0e39dcc99c6334aa7",
     "src/bridges/markers.bridge.ts": "37ba77ac692c9cb2fdf235d1ce986a45acb1b3bc1bf302ed7775cea78b8ab81b",
     "src/bridges/mode-switch.bridge.ts": "72efdf8e219df2726cfec1328364da2bbcfa78b847202c74128f15348678b7df",
-    "src/bridges/mode.bridge.ts": "ebd056555ccc1f07ed51a4af629887a49fafaed68ebb493eab8a68aa3fc89c50",
     "src/bridges/monitor.bridge.ts": "5030cf93c67e8f45c9f6ac2f67e504e3cb5bc29ba37749cd436289d23938516e",
     "src/bridges/plate.bridge.ts": "6909a7e748e35fa71acbbbb90825c9f15be119409046f22cc999874a2dff44e3",
     "src/bridges/stem-reactive.bridge.ts": "473e506882aea9fa2b4ecad609d6dabe3fe202a9d8c6341a4f3e297867461cab",
