@@ -7,7 +7,6 @@
   },
   "graveyard": {
     "src/bridges/audio-reactive.bridge.ts": "377b2e5f5244289ba0601d92026b2f4b34124b1eec94a61d7143fdccd5fc156a",
-    "src/bridges/blocks.bridge.ts": "8eb0cf3f5f2f512e38db02ed2788099a4f3c747405777741e27ab5d840ec4a27",
     "src/bridges/cover-theme.bridge.ts": "84cd0a54a7585ab8dcb28888e668b0921be4c528ac1cc7f90d2d682ca33be2f4",
     "src/bridges/loop.bridge.ts": "1375957a2b391b798570b22eb74bb7e2728108e14794b2088dfafc032c784d1c",
     "src/bridges/lyrics.bridge.ts": "059944b4ee16066be77d95fd9e8a7ad831dcd6dafa30b9b0e39dcc99c6334aa7",
