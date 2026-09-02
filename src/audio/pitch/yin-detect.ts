@@ -15,16 +15,7 @@ export interface YinResult {
 
   /** 0..1 — strength of subharmonic (F0/2) relative to fundamental */
   subharmonicRatio: number;
-  /** Hz — estimated subharmonic frequency (F0/2) when ratio is meaningful */
-  subFrequency: number | null;
-  /** MIDI — estimated subharmonic MIDI when ratio is meaningful */
-  subMidi: number | null;
-  /** 0..1 — composite distortion depth proxy */
-  depth: number;
-  /** 0..1 — subharmonic strength (growl/false-cord family) */
-  subScore: number;
-  /** 0..1 — aperiodicity/noise proxy (scream/rasp family) */
-  noiseScore: number;
+
 }
 
 export class YinDetector {
@@ -110,7 +101,7 @@ export class YinDetector {
       }
     }
 
-    /* If no tau below threshold, treat as "no_pitch" but still compute depth */
+    /* If no tau below threshold, treat as "no_pitch" but still compute subharmonic */
     if (te === -1) {
       te = minTau;
     }
@@ -126,14 +117,13 @@ export class YinDetector {
     let freq = sampleRate / bt;
     const conf = 1 - cmnd[te];
 
-    /* ── Distortion MVP-0: subharmonics + depth (proxy) ──
+    /* RASP-SNAPSHOT: сырьё снапшота (С5/С7), слепок-контур зона-7 — снос запрещён без OVERRIDE. noiseProxy-восстановление: clamp((cmnd[te]-0.18)/0.42, 0, 1) */
+    /* ── Сабгармоника: F0/2 ratio (сырьё снапшота С5/С7) ──
        YIN already computed CMND for all tau values.
        Fundamental strength ~= 1 - cmnd[T0]
        Subharmonic (F0/2) strength ~= 1 - cmnd[2*T0] (if in range)
     */
     let subharmonicRatio = 0;
-    let subFrequency: number | null = null;
-    let subMidi: number | null = null;
 
     const twoTe = te * 2;
     if (twoTe <= tauMax) {
@@ -143,13 +133,6 @@ export class YinDetector {
         subharmonicRatio = Math.max(0, Math.min(1, subStrength / fundStrength));
       }
     }
-
-    const aperiodicity = cmnd[te]; // 0..1, higher = noisier / more chaotic
-    const noiseProxy = Math.max(0, Math.min(1, (aperiodicity - 0.18) / 0.42));
-    const depth = Math.max(0, Math.min(1, 0.8 * subharmonicRatio + 0.2 * noiseProxy));
-
-    const subScore = subharmonicRatio;
-    const noiseScore = noiseProxy;
 
     /* Level 2: temporal octave lock */
     freq = this._octLock(freq, conf);
@@ -168,22 +151,12 @@ export class YinDetector {
 
     const midi = 12 * Math.log2(freq / 440) + 69;
 
-    if (subharmonicRatio > 0.2) {
-      subFrequency = freq / 2;
-      subMidi = midi - 12;
-    }
-
     return {
       frequency: freq,
       confidence: conf,
       midi,
       rms,
       subharmonicRatio,
-      subFrequency,
-      subMidi,
-      depth,
-      subScore,
-      noiseScore,
     };
   }
 

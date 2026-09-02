@@ -7,14 +7,6 @@ export type WorkletMessage =
       rms: number;
       midi: number;
       timestamp: number;
-      /** Distortion MVP-0 (optional): composite depth 0..1 */
-      depth?: number;
-      /** Distortion MVP-0 (optional): subharmonic ratio 0..1 */
-      subharmonicRatio?: number;
-      /** Distortion MVP-0 (optional): subharmonic frequency (Hz) */
-      subFrequency?: number | null;
-      /** Distortion MVP-0 (optional): subharmonic midi (float) */
-      subMidi?: number | null;
       /** SUB score 0..1 (growl/false-cord family) */
       subScore?: number;
       /** NOISE score 0..1 (scream/rasp), works without pitch */

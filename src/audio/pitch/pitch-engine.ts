@@ -180,6 +180,7 @@ export class PitchEngine {
    * Returns normalized noise score 0..1.
    * Bins computed dynamically from actual sampleRate/fftSize.
    */
+  /* RASP-SNAPSHOT: сырьё снапшота (С5/С7), слепок-контур зона-7 — снос запрещён без OVERRIDE. noiseProxy-восстановление: clamp((cmnd[te]-0.18)/0.42, 0, 1) */
   private _computeSFM(freqDb: Float32Array, sampleRate: number, fftSize: number): number {
     const binRes = sampleRate / fftSize;
     const lo = Math.ceil(200 / binRes);
@@ -215,10 +216,6 @@ export class PitchEngine {
         midi: result.midi,
         timestamp: ctx.currentTime,
 
-        depth: (result as any).depth,
-        subharmonicRatio: (result as any).subharmonicRatio,
-        subFrequency: (result as any).subFrequency,
-        subMidi: (result as any).subMidi,
         subScore: (result as any).subharmonicRatio ?? 0,
         noiseScore: noiseFromSFM,
       });
