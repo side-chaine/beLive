@@ -60,7 +60,7 @@ declare global { interface Window { __BELIVE_BOOTED__?: boolean } }
 void bridgeFacade.init()
 registerInit({ id: 'exercise-events', init: initExerciseEvents })
 registerInit({ id: 'stem-engine-sync', init: initStemEngineSync })
-// === DUAL FIRE: 10 GREEN bridges (gate verified, parity pass) ===
+// === wrapper-init registry · эталон: bridge-manifest.json ===
 registerInit({ id: 'track-events', init: initTrackEvents })
 registerInit({ id: 'cover-events', init: initCoverEvents })
 registerInit({ id: 'plate-events', init: initPlateEvents })

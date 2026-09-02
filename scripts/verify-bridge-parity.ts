@@ -1,52 +1,71 @@
 /**
- * verify-bridge-parity.ts — Gate Phase (P0)
+ * verify-bridge-parity.ts — Gate Phase (P0) v2
  *
- * Проверяет что для каждого bridge есть wrapper-эквивалент.
+ * Проверяет паритет LEGACY_EVENT_MAP ↔ wrappers + манифест.
  * Запуск: npx tsx scripts/verify-bridge-parity.ts
  *
- * 1. Парсит LEGACY_EVENT_MAP из facade.ts
- * 2. Для каждого ключа — ищет addEventListener в bridges/
- * 3. Для каждого канала+события — ищет eventBus.subscribe в wrappers/
- * 4. Если ключ есть в LEGACY_EVENT_MAP, но bridge не слушает → residue
- * 5. Если bridge слушает, но wrapper не подписан → PARITY FAIL
+ * v2: manifest-based (bridge-manifest.json), signal-rule CHECK-B/C/D
+ *
+ * 1. Парсит LEGACY_EVENT_MAP из facade.ts (regex — как в v1)
+ * 2. Сканирует wrappers/*.ts на подписки (eventBus.subscribe, addEventListener, scheduler.register*)
+ * 3. Загружает bridge-manifest.json (residueAllowlist, records)
+ * 4. CHECK-A: каждый ключ LEGACY_EVENT_MAP → обёртка подписаны ИЛИ allowlist ИЛИ prefix → ok; иначе FAIL
+ * 5. CHECK-B: запись с wrapper и status≠'live' → файл существует И (≥1 сигнал ИЛИ signalExempt)
+ * 6. CHECK-C: запись с bridge и status retired/retired-before-C → файл моста ОБЯЗАН отсутствовать
+ * 7. CHECK-D: live-guard → src/bridges/live-guard.ts существует
  */
 
 import { readFileSync, existsSync } from 'fs'
 import { globSync } from 'glob'
 
 const FACADE_PATH = 'src/foundation/event-bus/facade.ts'
-const BRIDGES_DIR = 'src/bridges'
 const WRAPPERS_DIR = 'src/foundation/event-bus/wrappers'
+const MANIFEST_PATH = 'bridge-manifest.json'
 const LEGACY_EVENT_MAP_LABEL = 'LEGACY_EVENT_MAP'
 
-/** Разрешённые residue-события (sync-editor-closed и т.д.) */
-const RESIDUE_ALLOWLIST = new Set(['sync-editor-closed'])
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-interface BridgeInfo {
-  file: string
-  events: string[] // addEventListener события
-  lines: number
-  engineCalls: number
+interface ManifestResidueAllowlist {
+  keys: string[]
+  prefixes: string[]
+  note: string
+}
+
+interface ManifestRecord {
+  id: string
+  bridge: string | null
+  wrapper: string | null
+  status: string
+  inBoot: boolean
+  retiredAt: string | null
+  testsRemoved: string[]
+  knownGaps: string[]
+  signalExempt?: boolean
+  notes: string
+}
+
+interface ManifestData {
+  version: number
+  note: string
+  residueAllowlist: ManifestResidueAllowlist
+  records: ManifestRecord[]
 }
 
 interface WrapperInfo {
   file: string
-  subscriptions: Array<{ channel: string; event: string }>
-  lines: number
-  hasTodo: boolean
+  coveredEvents: Set<string>   // eventBus.subscribe → event name
+  coveredChannelEvents: Set<string> // eventBus.subscribe → "Channel.event" pairs
+  addListenerEvents: Set<string> // addEventListener('event')
+  hasSchedulerSignals: boolean  // scheduler.register*
+  totalSignals: number
 }
 
-function main(): void {
-  const facade = readFileSync(FACADE_PATH, 'utf-8')
-  const legacyMap = parseLegacyEventMap(facade)
-  const bridges = scanBridges()
-  const wrappers = scanWrappers()
-  const parityResult = checkParity(legacyMap, bridges, wrappers)
-  printReport(parityResult)
-  process.exit(parityResult.failures > 0 ? 1 : 0)
-}
+// ---------------------------------------------------------------------------
+// LEGACY_EVENT_MAP parsing (unchanged from v1)
+// ---------------------------------------------------------------------------
 
-/** Парсит LEGACY_EVENT_MAP из facade.ts (ключ и канал+событие) */
 function parseLegacyEventMap(code: string): Map<string, { channel: string; event: string }> {
   const map = new Map<string, { channel: string; event: string }>()
   const start = code.indexOf(LEGACY_EVENT_MAP_LABEL)
@@ -55,7 +74,6 @@ function parseLegacyEventMap(code: string): Map<string, { channel: string; event
     process.exit(1)
   }
 
-  // Ищем все строки вида: 'event-name': { channel: ..., event: ... }
   const re = /'([^']+)':\s*\{\s*channel:\s*EventBusChannel\.(\w+),\s*event:\s*'([^']+)'\s*\}/g
   let match: RegExpExecArray | null
   while ((match = re.exec(code)) !== null) {
@@ -65,164 +83,226 @@ function parseLegacyEventMap(code: string): Map<string, { channel: string; event
   return map
 }
 
-/** Сканирует все .bridge.ts в src/bridges/ */
-function scanBridges(): BridgeInfo[] {
-  const files = globSync(`${BRIDGES_DIR}/**/*.bridge.ts`)
-  return files.map((file) => {
-    const content = readFileSync(file, 'utf-8')
-    const lines = content.split('\n').length
+// ---------------------------------------------------------------------------
+// Scan wrappers — подписки + сигналы
+// ---------------------------------------------------------------------------
 
-    // addEventListener('event', ...)
-    const eventMatches = content.matchAll(/addEventListener\s*\(\s*'([^']+)'/g)
-    const events = Array.from(eventMatches, (m) => m[1])
-
-    // engine-вызовы (audioEngine., delegateSync)
-    const engineMatches = content.match(/audioEngine\.|delegateSync|setStemVolume|setCurrentTime|seekTo/g)
-    const engineCalls = engineMatches ? engineMatches.length : 0
-
-    return { file: file.replace(BRIDGES_DIR + '/', ''), events, lines, engineCalls }
-  })
-}
-
-/** Сканирует все wrapper'ы в src/foundation/event-bus/wrappers/ */
 function scanWrappers(): WrapperInfo[] {
   const files = globSync(`${WRAPPERS_DIR}/*.ts`)
   return files.map((file) => {
     const content = readFileSync(file, 'utf-8')
-    const lines = content.split('\n').length
-    const hasTodo = content.includes('TODO') || content.includes('FIXME')
 
-    // eventBus.subscribe(Channel, 'event', ...)
+    // eventBus.subscribe(EventBusChannel.X, 'event', ...)
     const subMatches = content.matchAll(
       /eventBus\.subscribe\s*\(\s*EventBusChannel\.(\w+)\s*,\s*'([^']+)'/g
     )
-    const subscriptions = Array.from(subMatches, (m) => ({
-      channel: m[1],
-      event: m[2],
-    }))
+    const coveredEvents = new Set<string>()
+    const coveredChannelEvents = new Set<string>()
+    for (const m of subMatches) {
+      coveredEvents.add(m[2])
+      coveredChannelEvents.add(`${m[1]}.${m[2]}`)
+    }
+
+    // addEventListener('event', ...)
+    const addMatches = content.matchAll(/addEventListener\s*\(\s*'([^']+)'/g)
+    const addListenerEvents = new Set<string>()
+    for (const m of addMatches) {
+      addListenerEvents.add(m[1])
+    }
+
+    // scheduler.register* (registerDetector, registerWriter, register)
+    const hasSchedulerSignals = /scheduler\.register\w*\s*\(/.test(content)
+
+    const totalSignals = coveredEvents.size + addListenerEvents.size + (hasSchedulerSignals ? 1 : 0)
 
     return {
       file: file.replace(WRAPPERS_DIR + '/', ''),
-      subscriptions,
-      lines,
-      hasTodo,
+      coveredEvents,
+      coveredChannelEvents,
+      addListenerEvents,
+      hasSchedulerSignals,
+      totalSignals,
     }
   })
 }
 
-/** Сравнивает: для каждого LEGACY ключа — bridge слушает? wrapper подписан? */
-function checkParity(
+// ---------------------------------------------------------------------------
+// CHECK-A: legacy-coverage
+// ---------------------------------------------------------------------------
+
+function checkA(
   legacyMap: Map<string, { channel: string; event: string }>,
-  bridges: BridgeInfo[],
   wrappers: WrapperInfo[],
-): {
-  total: number
-  covered: number
-  failures: number
-  residues: number
-  bridgeCandidates: string[]
-  details: Array<{
-    legacy: string
-    channel: string
-    event: string
-    hasBridge: boolean
-    hasWrapper: boolean
-    isResidue: boolean
-  }>
-} {
-  const details: Array<{
-    legacy: string
-    channel: string
-    event: string
-    hasBridge: boolean
-    hasWrapper: boolean
-    isResidue: boolean
-  }> = []
+  allowlist: ManifestResidueAllowlist,
+): { covered: number; residue: number; failures: number; details: Array<{ legacy: string; channel: string; event: string; status: string }> } {
+  // Collect all covered channel.event pairs from all wrappers
+  const allCoveredPairs = new Set<string>()
+  for (const w of wrappers) {
+    for (const ce of w.coveredChannelEvents) allCoveredPairs.add(ce)
+  }
 
   let covered = 0
+  let residue = 0
   let failures = 0
-  let residues = 0
-
-  // Все addEventListener события из bridges
-  const bridgeEvents = new Set<string>()
-  for (const b of bridges) {
-    for (const e of b.events) bridgeEvents.add(e)
-  }
-
-  // Все wrapper подписки (канал+событие)
-  const wrapperSubs = new Set<string>()
-  for (const w of wrappers) {
-    for (const s of w.subscriptions) wrapperSubs.add(`${s.channel}.${s.event}`)
-  }
+  const details: Array<{ legacy: string; channel: string; event: string; status: string }> = []
 
   for (const [legacyKey, mapping] of legacyMap) {
-    const hasBridge = bridgeEvents.has(legacyKey)
-    const hasWrapper = wrapperSubs.has(`${mapping.channel}.${mapping.event}`)
-    const isResidue = RESIDUE_ALLOWLIST.has(legacyKey) || legacyKey.startsWith('practice:')
+    const pairKey = `${mapping.channel}.${mapping.event}`
+    const isCovered = allCoveredPairs.has(pairKey)
+    const inAllowlist = allowlist.keys.includes(legacyKey)
+    const hasPrefix = allowlist.prefixes.some(p => legacyKey.startsWith(p))
 
-    details.push({ legacy: legacyKey, channel: mapping.channel, event: mapping.event, hasBridge, hasWrapper, isResidue })
-
-    if (!hasBridge && !isResidue) {
-      // LEGACY ключ есть, никто не слушает — можно удалить из карты
-      residues++
-    }
-
-    if (hasBridge && !hasWrapper && !isResidue) {
-      // Bridge слушает, wrapper не подписан → FAIL
-      failures++
-    }
-
-    if (hasWrapper && !isResidue) {
+    if (isCovered) {
       covered++
+      details.push({ legacy: legacyKey, channel: mapping.channel, event: mapping.event, status: 'covered' })
+    } else if (inAllowlist || hasPrefix) {
+      residue++
+      details.push({ legacy: legacyKey, channel: mapping.channel, event: mapping.event, status: 'residue' })
+    } else {
+      failures++
+      details.push({ legacy: legacyKey, channel: mapping.channel, event: mapping.event, status: 'FAIL' })
     }
   }
 
-  // Bridges без engine-вызовов → кандидаты на простой retire
-  const bridgeCandidates = bridges
-    .filter((b) => b.engineCalls === 0 && b.file !== 'exercise.bridge.ts' && b.file !== 'time-sync')
-    .map((b) => b.file)
-
-  return { total: legacyMap.size, covered, failures, residues, bridgeCandidates, details }
+  return { covered, residue, failures, details }
 }
 
-function printReport(result: ReturnType<typeof checkParity>): void {
-  console.log('\n=== 🛡️ BRIDGE PARITY REPORT ===\n')
-  console.log(`LEGACY_EVENT_MAP entries: ${result.total}`)
-  console.log(`Covered by wrappers:    ${result.covered}`)
-  console.log(`PARITY FAILURES:        ${result.failures} 🔴`)
-  console.log(`Residue (no listener):  ${result.residues} 🟡`)
-  console.log(`\nBridges ready to retire (0 engine calls): ${result.bridgeCandidates.length}`)
-  for (const b of result.bridgeCandidates) {
-    console.log(`  🟢 ${b}`)
+// ---------------------------------------------------------------------------
+// CHECK-B/C/D: manifest records validation
+// ---------------------------------------------------------------------------
+
+function checkRecords(
+  records: ManifestRecord[],
+  wrappers: WrapperInfo[],
+): { failures: number; details: Array<{ id: string; check: string; ok: boolean; msg: string }> } {
+  const details: Array<{ id: string; check: string; ok: boolean; msg: string }> = []
+  let failures = 0
+
+  // Build wrapper file → signals lookup
+  const wrapperSignals = new Map<string, WrapperInfo>()
+  for (const w of wrappers) {
+    wrapperSignals.set(w.file, w)
   }
 
-  if (result.failures > 0) {
-    console.log('\n🔴 PARITY FAILURES:')
-    for (const d of result.details) {
-      if (d.hasBridge && !d.hasWrapper && !d.isResidue) {
-        console.log(`  ${d.legacy}: bridge слушает, wrapper НЕТ (→${d.channel}.${d.event})`)
+  for (const rec of records) {
+    // CHECK-B: wrapper + status ≠ 'live'
+    if (rec.wrapper && rec.status !== 'live') {
+      const wrapperAbsPath = rec.wrapper
+      const fileExists = existsSync(wrapperAbsPath)
+
+      if (!fileExists) {
+        failures++
+        details.push({ id: rec.id, check: 'CHECK-B', ok: false, msg: `wrapper file not found: ${rec.wrapper}` })
+        continue
+      }
+
+      // ≥1 signal from scan OR signalExempt
+      const wrapperRel = rec.wrapper.replace('src/foundation/event-bus/wrappers/', '')
+      const wrapperInfo = wrapperSignals.get(wrapperRel)
+      const hasSignals = wrapperInfo ? wrapperInfo.totalSignals > 0 : false
+      const exempt = rec.signalExempt === true
+
+      if (!hasSignals && !exempt) {
+        failures++
+        details.push({ id: rec.id, check: 'CHECK-B', ok: false, msg: `wrapper has 0 signals and no signalExempt flag: ${rec.wrapper}` })
+      } else {
+        details.push({ id: rec.id, check: 'CHECK-B', ok: true, msg: exempt ? 'signalExempt' : `${wrapperInfo!.totalSignals} signal(s)` })
+      }
+    }
+
+    // CHECK-C: bridge + status retired/retired-before-C → bridge file must NOT exist
+    if (rec.bridge && (rec.status === 'retired' || rec.status === 'retired-before-C')) {
+      const fileExists = existsSync(rec.bridge)
+      if (fileExists) {
+        failures++
+        details.push({ id: rec.id, check: 'CHECK-C', ok: false, msg: `bridge file still exists (should be removed): ${rec.bridge}` })
+      } else {
+        details.push({ id: rec.id, check: 'CHECK-C', ok: true, msg: 'bridge file absent ✓' })
       }
     }
   }
 
-  if (result.residues > 0) {
-    console.log('\n🟡 RESIDUE EVENTS (в LEGACY_MAP, никто не слушает):')
-    for (const d of result.details) {
-      if (!d.hasBridge && !d.isResidue) {
-        console.log(`  ${d.legacy}: никто не слушает`)
+  // CHECK-D: live-guard
+  const guard = records.find(r => r.id === 'live-guard')
+  if (guard?.bridge) {
+    const exists = existsSync(guard.bridge)
+    if (!exists) {
+      failures++
+      details.push({ id: 'live-guard', check: 'CHECK-D', ok: false, msg: `live-guard bridge not found: ${guard.bridge}` })
+    } else {
+      details.push({ id: 'live-guard', check: 'CHECK-D', ok: true, msg: 'live-guard exists ✓' })
+    }
+  }
+
+  return { failures, details }
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+function main(): void {
+  // Load facade
+  const facade = readFileSync(FACADE_PATH, 'utf-8')
+  const legacyMap = parseLegacyEventMap(facade)
+
+  // Load manifest
+  const manifest: ManifestData = JSON.parse(readFileSync(MANIFEST_PATH, 'utf-8'))
+
+  // Scan wrappers
+  const wrappers = scanWrappers()
+
+  // CHECK-A: legacy coverage
+  const checkAResult = checkA(legacyMap, wrappers, manifest.residueAllowlist)
+
+  // CHECK-B/C/D: manifest records
+  const checkBCD = checkRecords(manifest.records, wrappers)
+
+  const totalFailures = checkAResult.failures + checkBCD.failures
+
+  // Report
+  console.log('\n=== 🛡️ BRIDGE PARITY REPORT v2 ===\n')
+  console.log(`LEGACY_EVENT_MAP entries: ${legacyMap.size}`)
+  console.log(`Covered by wrappers:    ${checkAResult.covered}`)
+  console.log(`Residue (allowlist):    ${checkAResult.residue}`)
+  console.log(`CHECK-A FAILURES:       ${checkAResult.failures} 🔴`)
+  console.log(`CHECK-B/C/D FAILURES:   ${checkBCD.failures} 🔴`)
+  console.log(`Manifest records:       ${manifest.records.length}`)
+  console.log(`Wrappers scanned:       ${wrappers.length}`)
+
+  if (checkAResult.failures > 0) {
+    console.log('\n🔴 CHECK-A FAILURES (ключ без подписки и без allowlist):')
+    for (const d of checkAResult.details) {
+      if (d.status === 'FAIL') {
+        console.log(`  ${d.legacy}: → ${d.channel}.${d.event}`)
       }
     }
   }
 
-  console.log('\n=== DETAIL ===')
-  for (const d of result.details) {
-    const bridge = d.hasBridge ? '✅' : '❌'
-    const wrapper = d.hasWrapper ? '✅' : '❌'
-    const note = d.isResidue ? ' (residue)' : ''
-    console.log(`  ${d.legacy} → bridge:${bridge} wrapper:${wrapper}${note}`)
+  if (checkBCD.failures > 0) {
+    console.log('\n🔴 CHECK-B/C/D FAILURES:')
+    for (const d of checkBCD.details) {
+      if (!d.ok) {
+        console.log(`  [${d.check}] ${d.id}: ${d.msg}`)
+      }
+    }
   }
 
-  console.log(`\n${result.failures > 0 ? '❌ PARITY FAILED' : '✅ PARITY PASS'}`)
+  console.log('\n=== DETAIL (CHECK-A) ===')
+  for (const d of checkAResult.details) {
+    const icon = d.status === 'covered' ? '✅' : d.status === 'residue' ? '🟡' : '❌'
+    const note = d.status === 'residue' ? ' (residue)' : ''
+    console.log(`  ${icon} ${d.legacy} → ${d.channel}.${d.event}${note}`)
+  }
+
+  console.log('\n=== DETAIL (CHECK-B/C/D) ===')
+  for (const d of checkBCD.details) {
+    const icon = d.ok ? '✅' : '❌'
+    console.log(`  ${icon} [${d.check}] ${d.id}: ${d.msg}`)
+  }
+
+  console.log(`\n${totalFailures > 0 ? '❌ PARITY FAILED' : '✅ PARITY PASS'}`)
+  process.exit(totalFailures > 0 ? 1 : 0)
 }
 
 main()
