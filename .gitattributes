@@ -4,7 +4,6 @@
 # SHA-КАНОНИЧНЫЕ ФАЙЛЫ — git не имеет права их трогать
 src/audio/engine-v3/vendor/**                                -text
 src/audio/engine-v3/diagnostics/run-impulse-diagnostics-*.js -text
-src/audio/core/AudioEngineV2.ts                              -text
 src/audio/compat/patchV1.ts                                  -text
 src/bridges/live-guard.ts                                    -text
 

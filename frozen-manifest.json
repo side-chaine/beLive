@@ -2,7 +2,6 @@
   "version": 1,
   "note": "SHA-механизм охраны frozen-зоны. Тесты НЕ в манифесте (страховка — не замок). Канон: 2 зоны · 16 файлов (FROZEN-AUDIT-301 §7; Волна B 01.09: −track.orchestrator 592, wc=4545; Волна C #1: −audio.bridge). Graveyard = мёртвый код под контрактом V2; воскрешение требует проверки контракта, не только SHA (201, 01.09); Волна C #15: −mode-switch (последний graveyard) → 2 файла, wc=2199",
   "guard": {
-    "src/audio/core/AudioEngineV2.ts": "c5311543716de2f9c2317b85dee0c676c219e0242702a23fe11a435778ed6f92",
     "src/bridges/live-guard.ts": "a87b3fd22dca826e5d51df90eb5fa91c5ffb5f9aa38b32e067e3fb1299886ba8"
   },
   "graveyard": {}

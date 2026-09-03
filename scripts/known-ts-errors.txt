@@ -1,14 +1,4 @@
 src/Rehearsal/bridge/rehearsal-trigger.bridge.ts(228,11): error TS6133: 'scheduleApply' is declared but its value is never read.
-src/audio/core/AudioEngineV2.ts(100,20): error TS6133: '_SYNC_BLACKOUT_FLOOR' is declared but its value is never read.
-src/audio/core/AudioEngineV2.ts(1195,37): error TS2345: Argument of type 'Float32Array<ArrayBufferLike>' is not assignable to parameter of type 'Float32Array<ArrayBuffer>'.
-src/audio/core/AudioEngineV2.ts(12,24): error TS6133: 'BUILTIN_STEMS' is declared but its value is never read.
-src/audio/core/AudioEngineV2.ts(1488,33): error TS6133: 'id' is declared but its value is never read.
-src/audio/core/AudioEngineV2.ts(2024,11): error TS6133: '_micCaptureEnabled' is declared but its value is never read.
-src/audio/core/AudioEngineV2.ts(67,20): error TS6133: '_LOOP_RESYNC_BLACKOUT_MS' is declared but its value is never read.
-src/audio/core/AudioEngineV2.ts(699,35): error TS6133: 'opts' is declared but its value is never read.
-src/audio/core/StemPlayer.ts(116,16): error TS2339: Property 'playsInline' does not exist on type 'HTMLAudioElement'.
-src/audio/core/StemPlayer.ts(68,16): error TS2339: Property 'playsInline' does not exist on type 'HTMLAudioElement'.
-src/audio/core/StemPlayer.ts(74,24): error TS6133: 'e' is declared but its value is never read.
 src/audio/engine-v3/MeterNodeV3.ts(33,43): error TS2345: Argument of type 'Float32Array<ArrayBufferLike>' is not assignable to parameter of type 'Float32Array<ArrayBuffer>'.
 src/audio/pitch/pitch-visual-bridge.ts(17,30): error TS2339: Property 'get' does not exist on type 'typeof PitchEngine'.
 src/billy/__tests__/billy-controller.test.ts(2,44): error TS6133: 'BillyStepResult' is declared but its value is never read.
