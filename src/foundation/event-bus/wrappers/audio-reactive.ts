@@ -35,12 +35,12 @@ export function initAudioReactiveEvents(): () => void {
       analyser.smoothingTimeConstant = 0.8
       dataArray = new Uint8Array(analyser.frequencyBinCount)
 
-      if (ae.stereoMerger?.connect) {
-        ae.stereoMerger.connect(analyser)
-      } else if (ae.instrumentalGain?.connect) {
-        ae.instrumentalGain.connect(analyser)
+      const pipeline = (window as any).__belive?.pipeline
+      const analyserNode = pipeline?.getStemAnalyser?.('music') || pipeline?.getStemAnalyser?.('instrumental')
+      if (analyserNode?.connect) {
+        analyserNode.connect(analyser)
       } else {
-        console.warn('[audio-reactive] connect failed: no stereoMerger or instrumentalGain')
+        console.warn('[audio-reactive] connect failed: no pipeline stem analyser')
       }
     } catch (e) {
       console.warn('[audio-reactive] connect failed:', e)
