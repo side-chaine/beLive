@@ -64,23 +64,6 @@ export class RehearsalBackgroundManager {
     }
   }
 
-  private _preloadAll(): void {
-    if (!Array.isArray(this.imagePaths)) return;
-    this.imagePaths.forEach(src => {
-      if (this._cache.has(src)) return;
-      this._evictCacheIfNeeded();
-      const img = new Image();
-      img.decoding = 'async';
-      img.loading = 'eager';
-      img.src = src;
-      this._cache.set(src, img);
-      if (typeof img.decode === 'function') {
-        img.decode()
-          .then(() => { this._decoded.set(src, true); })
-          .catch(() => {});
-      }
-    });
-  }
 
   start(): void {
     if (!this.imagePaths || this.imagePaths.length === 0) return;
@@ -88,7 +71,7 @@ export class RehearsalBackgroundManager {
     document.body.appendChild(this._sceneLayerA);
     document.body.appendChild(this._sceneLayerB);
     this.isActive = true;
-    this._preloadAll();
+
     if (this._customBgUrl) {
       this.body.style.setProperty('background-image', `url('${this._customBgUrl}')`);
       this.body.style.setProperty('background-size', 'cover');
