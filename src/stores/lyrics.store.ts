@@ -40,7 +40,7 @@ export const useLyricsStore = create<LyricsState>((set) => ({
 
 // ── D-CASE 7 (FOUC gate): structurePending — плашку строим только после blocks-зеркала.
 // Арм: before-track-change (синхронные tc-данные, loader fresh-read ДО Step 3).
-// Релиз: blocks>0 (подписка) ИЛИ flush-сиблинг ИЛИ watchdog 1200мс (raw-деградация).
+// Релиз: blocks>0 (подписка) ИЛИ flush-сиблинг ИЛИ watchdog 4000мс (raw-деградация).
 let _structWatchdog: ReturnType<typeof setTimeout> | null = null;
 const clearStructWatchdog = () => { if (_structWatchdog) { clearTimeout(_structWatchdog); _structWatchdog = null; } };
 const releaseStruct = () => { clearStructWatchdog(); if (useLyricsStore.getState().structurePending) useLyricsStore.setState({ structurePending: false }); };
@@ -54,7 +54,8 @@ const onBeforeTrackChangeArm = (e: Event) => {
     || !!track?.syncMarkers?.some((m: any) => m.blockType && m.blockType !== 'unknown');
   useLyricsStore.setState({ structurePending: hasStructure });  // ре-арм атомарно
   if (hasStructure) {
-    _structWatchdog = setTimeout(() => { _structWatchdog = null; releaseStruct(); }, 1200);
+    // 006-фикс: 1200 мерилось от АРМА, blocks приходят ~1400-1500 (V3 1132-1205 + зеркало +300) — сырость при каждом свитче; 4000 = патология-fallback, норма закрывается blocks-subscribe.
+    _structWatchdog = setTimeout(() => { _structWatchdog = null; releaseStruct(); }, 4000);
   }
 };
 

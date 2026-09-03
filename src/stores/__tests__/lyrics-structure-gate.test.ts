@@ -3,7 +3,7 @@ import { useLyricsStore } from '../lyrics.store';
 import { useBlocksStore } from '../blocks.store';
 
 // D-CASE 7 (FOUC gate): structurePending — арм на before-track-change по свежим tc-данным,
-// релиз по blocks>0 / flush-сиблингу / watchdog 1200мс.
+// релиз по blocks>0 / flush-сиблингу / watchdog 4000мс.
 // jsdom-дефолт по vitest.config (pragma не нужна); fake timers ВСЕХ кейсах;
 // диспатч ТОЛЬКО document.dispatchEvent (setup.ts:125 глушит window-диспатч).
 
@@ -53,12 +53,12 @@ describe('lyrics-structure-gate', () => {
     expect(useLyricsStore.getState().structurePending).toBe(false);
   });
 
-  it('К3: watchdog 1200мс → false (raw-деградация)', () => {
+  it('К3: watchdog 4000мс → false (raw-деградация)', () => {
     (globalThis as any).trackCatalog = { tracks: [{ id: 't1', blocksData: [1] }] };
     document.dispatchEvent(new CustomEvent('before-track-change', { detail: { toTrackId: 't1' } }));
     expect(useLyricsStore.getState().structurePending).toBe(true);
 
-    vi.advanceTimersByTime(1200);
+    vi.advanceTimersByTime(4000);
     expect(useLyricsStore.getState().structurePending).toBe(false);
   });
 
@@ -68,9 +68,9 @@ describe('lyrics-structure-gate', () => {
     expect(useLyricsStore.getState().structurePending).toBe(true);
     expect(useLyricsStore.getState().lyricsReady).toBe(false);
 
-    vi.advanceTimersByTime(1200);
+    vi.advanceTimersByTime(4000);
     expect(useLyricsStore.getState().structurePending).toBe(false);
-    // наш 1200мс-watchdog — НЕ BAC-001 _watchdog: lyricsReady не поднимает
+    // наш 4000мс-watchdog — НЕ BAC-001 _watchdog: lyricsReady не поднимает
     expect(useLyricsStore.getState().lyricsReady).toBe(false);
   });
 
@@ -82,12 +82,12 @@ describe('lyrics-structure-gate', () => {
     expect(useLyricsStore.getState().structurePending).toBe(true);
     expect(useLyricsStore.getState().lines.length).toBe(3);
 
-    vi.advanceTimersByTime(1200);
+    vi.advanceTimersByTime(4000);
     expect(useLyricsStore.getState().structurePending).toBe(false);
     expect(useLyricsStore.getState().lines.length).toBe(3);
   });
 
-  it('(в): двойной свитч A→B→A — ре-арм таймера честный (1199 true, +1мс false)', () => {
+  it('(в): двойной свитч A→B→A — ре-арм таймера честный (3999 true, +1мс false)', () => {
     (globalThis as any).trackCatalog = {
       tracks: [
         { id: 't1', blocksData: [1] },
@@ -104,7 +104,7 @@ describe('lyrics-structure-gate', () => {
     document.dispatchEvent(new CustomEvent('before-track-change', { detail: { toTrackId: 't1' } }));
     expect(useLyricsStore.getState().structurePending).toBe(true);
 
-    vi.advanceTimersByTime(1199);
+    vi.advanceTimersByTime(3999);
     expect(useLyricsStore.getState().structurePending).toBe(true);
     vi.advanceTimersByTime(1);
     expect(useLyricsStore.getState().structurePending).toBe(false);
