@@ -5,7 +5,6 @@
 src/audio/engine-v3/vendor/**                                -text
 src/audio/engine-v3/diagnostics/run-impulse-diagnostics-*.js -text
 src/audio/compat/patchV1.ts                                  -text
-src/bridges/live-guard.ts                                    -text
 
 # Бинарники
 *.wasm  binary
