@@ -25,9 +25,21 @@ export function initAudioReactiveEvents(): () => void {
   let analyser: AnalyserNode | null = null
   let dataArray: Uint8Array | null = null
 
-  const setupAnalyser = () => {
+  const teardownAnalyser = () => {
+    try {
+      analyser?.disconnect()
+    } catch { /* ignore */ }
+    analyser = null
+    dataArray = null
+  }
+
+  // D-0c-2b: полный микс без вокала (паритет V2 stereoMerger = инструментальный микс);
+  // реконнект на каждый track-loaded — meters пересоздаются при loadStem (HPS:245),
+  // старый анализатор после свитча висел бы на мёртвом meter.
+  const setupAnalyser = (stemIds?: string[]) => {
     const ae = (window as any).audioEngine
     if (!ae?.audioContext) return
+    teardownAnalyser()
     try {
       const ctx = ae.audioContext as AudioContext
       analyser = ctx.createAnalyser()
@@ -36,23 +48,19 @@ export function initAudioReactiveEvents(): () => void {
       dataArray = new Uint8Array(analyser.frequencyBinCount)
 
       const pipeline = (window as any).__belive?.pipeline
-      const analyserNode = pipeline?.getStemAnalyser?.('music') || pipeline?.getStemAnalyser?.('instrumental')
-      if (analyserNode?.connect) {
-        analyserNode.connect(analyser)
-      } else {
-        console.warn('[audio-reactive] connect failed: no pipeline stem analyser')
+      let candidates = (stemIds ?? []).filter((s: string) => s !== 'vocals')
+      if (candidates.length === 0) candidates = ['instrumental', 'music']
+      let connected = 0
+      for (const id of candidates) {
+        const node = pipeline?.getStemAnalyser?.(id)
+        if (node?.connect) { try { node.connect(analyser); connected++ } catch {} }
+      }
+      if (connected === 0) {
+        console.warn('[audio-reactive] connect failed: no pipeline stem analyser (stems:', candidates.join(','), ')')
       }
     } catch (e) {
       console.warn('[audio-reactive] connect failed:', e)
     }
-  }
-
-  const teardownAnalyser = () => {
-    try {
-      analyser?.disconnect()
-    } catch { /* ignore */ }
-    analyser = null
-    dataArray = null
   }
 
   // Scheduler integration
@@ -143,12 +151,20 @@ export function initAudioReactiveEvents(): () => void {
     }
   }))
 
+  // Реконнект на каждый трек: loadedStems = список стемов нового графа (V3DataInterceptor:224)
+  const onTrackLoaded = (e: Event) => {
+    const loaded = (e as CustomEvent).detail?.loadedStems
+    if (Array.isArray(loaded) && loaded.length > 0) setupAnalyser(loaded)
+  }
+  document.addEventListener('track-loaded', onTrackLoaded)
+
   // Cleanup
   return () => {
     release('audio-reactive')
     scheduler.unregister('audio-reactive-events-detector')
     scheduler.unregister('audio-reactive-events-writer')
     subs.forEach(s => s.unsubscribe())
+    document.removeEventListener('track-loaded', onTrackLoaded)
     teardownAnalyser()
     resetCssVars()
     clearQueuedCssVars('audio')
