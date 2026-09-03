@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // bLb Frozen-boundary guard · v1 · 007_Мак (Far Light)
+// 03.09: AudioEngineV2/live-guard снесены (D-1/D-2) — regex'ы ниже исторические
 // Read-only сканер: ловит НОВЫЕ safe→frozen импорты / V2-глобалы вне allowlist (REGISTRY §7 BAC-101..108).
 // НЕ пишет в репо, НЕ коммитит, НЕ PR-ит. Только вывод. Запуск: node frozen-guard.mjs [repo-root]
 import fs from 'node:fs';

@@ -517,5 +517,5 @@ export const LOOP_PRE_SEEK_TIMEOUT_MS = 400;       // if seeked not received in 
  *     → masterVolumeGainNode (gain = user volume, 0 when muted)
  *     → master-bus
  *
- * This invariant is enforced in AudioEngineV2.setStemMute().
+ * This invariant is enforced in AudioEngineV2.setStemMute() (V2 снесён D-1, 03.09).
  */

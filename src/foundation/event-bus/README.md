@@ -56,5 +56,5 @@ Bridges continue to work unchanged.
 
 ZERO TOUCH:
 - src/audio/core/AudioEngineV2.ts ❄️
-- src/bridges/ — снесены Волной C (остался live-guard — guard-зона); замены — wrappers/ (см. bridge-manifest.json)
+- src/bridges/ — снесены Волной C (03.09) + live-guard снесён D-2 (03.09, window.liveMode = 0 писателей); замены — wrappers/ (см. bridge-manifest.json)
 - js-слой — снесён Волной A 01.09 (audio-engine.js, recorder-processor.js; живой фасад audio-facade-v3.js вне frozen)

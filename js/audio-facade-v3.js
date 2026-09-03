@@ -19,7 +19,7 @@
       } catch { return 0; }
     },
     // M1-2 (342, расширение): hybridEngine контракт для UI (useWaveformData, SyncEditor).
-    // В V2-режиме его наполнял AudioEngineV2 (get hybridEngine()); здесь читаем
+    // В V2-режиме его наполнял AudioEngineV2 (get hybridEngine()) (класс снесён D-1, 03.09); здесь читаем
     // Blob URLs, которые main.tsx публикует в window.__belive.trackUrls после загрузки V3.
     get hybridEngine() {
       try {

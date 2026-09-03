@@ -3,7 +3,7 @@
  *
  * Horizontal scrollable row of ChannelStrips in the Dock Panel.
  * Each strip: label + VU meter + fader + M/S buttons.
- * Binds to stem.store for state, AudioEngineV2 for metering.
+ * Binds to stem.store for state, AudioEngineV2 for metering (снесён D-1, 03.09).
  *
  * Performance: metering poll respects STEM_CAPACITY_BY_TIER.meterFps.
  * CSS-only meters for v1 (no canvas, no peak hold).

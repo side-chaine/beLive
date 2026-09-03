@@ -1,5 +1,5 @@
 // src/character/sound/CharacterSoundManager.ts
-// Провайдер-агностик. Слушает ТОЛЬКО aiHub. WebAudio standalone (мимо frozen AudioEngineV2).
+// Провайдер-агностик. Слушает ТОЛЬКО aiHub. WebAudio standalone (мимо frozen AudioEngineV2, снесён D-1, 03.09).
 // Звук параметризован через CueSpec — data-driven под персонажей (Billy/English/Vocal Coach).
 import { aiHub, ASSISTANT_RESPONSE_COMPLETED } from '../../js/ai/registry';
 import { getSoundEnabled } from '../../js/ai/settings/ai-settings.store';
