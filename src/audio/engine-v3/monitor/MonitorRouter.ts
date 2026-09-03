@@ -205,6 +205,7 @@ export class MonitorRouter {
   }
 
   isVMixOn(): boolean { return this._vmixMaster.gain.value > 0.5 }
+  isMicMonitorOn(): boolean { return this._monitorGain.gain.value > 0.01 }
 
   /** Music level in monitor mix */
   setMusicLevel(v: number): void {
