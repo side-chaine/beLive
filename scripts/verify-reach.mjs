@@ -57,6 +57,9 @@ const RE_EXPORT_FROM  = /^\s*export\s+[^'"]*?from\s+['"]([^'"]+)['"]/;
 const RE_DYNAMIC      = /import\(\s*['"]([^'"]+)['"]\s*\)/;
 const RE_COMMENT_LINE = /^\s*\/\//;
 const RE_DYNAMIC_SKIP = /\/\/.*/; // strip trailing comment before import(
+// G1-FIX-2 (CEO_1 17:40): многострочная закрывашка `} from 'spec'` + worker-рёбра
+const RE_FROM_ANY   = /^\s*\}?[^'"]*?\bfrom\s+['"]([^'"]+)['"]/;
+const RE_URL_WORKER = /new\s+URL\(\s*['"]([^'"]+)['"]\s*,\s*import\.meta\.url\s*\)/;
 
 const visited = new Set();
 const queue = [...roots];
@@ -85,6 +88,10 @@ while (queue.length > 0) {
       m = RE_DYNAMIC.exec(stripped);
       if (m) spec = m[1];
     }
+    // (c2) многострочная закрывашка: `} from 'spec'` (CEO_1: 57 шт в 42 файлах)
+    if (!spec) { m = RE_FROM_ANY.exec(line); if (m) spec = m[1]; }
+    // (e) ребро воркера/ассета: new URL('spec', import.meta.url)
+    if (!spec) { m = RE_URL_WORKER.exec(line); if (m) spec = m[1]; }
 
     if (!spec) continue;
     const resolved = resolveImport(file, spec);
