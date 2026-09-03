@@ -408,7 +408,7 @@ export function ControlDeck() {
                     node.connect(router.micInput);
                     belive.__micMonitorNode = node;
                     try { await belive.deviceManager?.ensureMonitorPlaying?.(); } catch {}
-                    router.setMicMonitor(true);
+                    router.setMicMonitor(true, useAudioStore.getState().micVolume ?? 1);
                     setTimeout(() => {
                       try {
                         const g = router.monitorLevel;

@@ -205,7 +205,15 @@ export class MonitorRouter {
   }
 
   isVMixOn(): boolean { return this._vmixMaster.gain.value > 0.5 }
-  isMicMonitorOn(): boolean { return this._monitorGain.gain.value > 0.01 }
+
+  /** D-0c-fix (006 §4.2): громкость самоконтроля мика. Ноль = тишина, НЕ release —
+   *  устройство включено, возобновление мгновенное. Оба тапа: monitor + VMix R-канал. */
+  setMicVolume(v: number): void {
+    const clamped = Math.max(0, Math.min(1, Number(v) || 0))
+    const now = this.programInput.context.currentTime
+    this._monitorGain.gain.setTargetAtTime(clamped, now, 0.015)
+    this.vmixMicIn.gain.setTargetAtTime(clamped, now, 0.015)
+  }
 
   /** Music level in monitor mix */
   setMusicLevel(v: number): void {

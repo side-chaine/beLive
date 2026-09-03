@@ -194,7 +194,7 @@ describe('ARC-2d: audio-facade-v3 contract (transport routing)', () => {
     expect(monitorRouter.attachProgramSource).toHaveBeenCalledWith(gain, { kind: 'preview' })
   })
 
-  it('21. инертность пустышек: loadTrack → resolved; enable/disableVocalMix, setStemsEnabled, setStemPan, setStemsMode, setMicrophoneVolume, detachProgramSource — тихий вызов; ensureInstrumentalBuffer → resolved', async () => {
+  it('21. инертность пустышек: loadTrack → resolved; enable/disableVocalMix, setStemsEnabled, setStemPan, setStemsMode, detachProgramSource — тихий вызов; ensureInstrumentalBuffer → resolved', async () => {
     mockBelive()
     await expect(ae().loadTrack()).resolves.toBeUndefined()
     expect(() => {
@@ -203,10 +203,17 @@ describe('ARC-2d: audio-facade-v3 contract (transport routing)', () => {
       ae().setStemsEnabled()
       ae().setStemPan()
       ae().setStemsMode()
-      ae().setMicrophoneVolume()
       ae().detachProgramSource()
     }).not.toThrow()
     await expect(ae().ensureInstrumentalBuffer()).resolves.toBe(null)
+  })
+
+  it('21b. setMicrophoneVolume живой: маршрутизирует в monitorRouter.setMicVolume (006 D-0c-fix)', () => {
+    const spy = vi.fn()
+    mockBelive()
+    ;(window as any).__belive.monitorRouter = { setMicVolume: spy }
+    ae().setMicrophoneVolume(0.2)
+    expect(spy).toHaveBeenCalledWith(0.2)
   })
 
   it('22. hijack-инвариант guard :81: занятый window.audioEngine НЕ затирается повторным eval; delete → свежий экземпляр', () => {

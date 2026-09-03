@@ -84,10 +84,8 @@
     },
     setMicrophoneVolume(v) {
       try {
-        const router = window.__belive && window.__belive.monitorRouter;
-        if (router && typeof router.isMicMonitorOn === 'function') {
-          router.setMicMonitor(router.isMicMonitorOn(), Number(v) || 0);
-        }
+        window.__belive && window.__belive.monitorRouter &&
+        window.__belive.monitorRouter.setMicVolume && window.__belive.monitorRouter.setMicVolume(Number(v) || 0);
       } catch {}
     },
     setStemVolume(id, v) {
