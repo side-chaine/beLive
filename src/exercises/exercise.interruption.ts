@@ -17,7 +17,7 @@
  */
 
 import { useExerciseStore } from './exercise.store';
-import { useAudioStore } from '../stores/audio.store';
+import { useStemStore } from '../stem/stem.store';
 
 /**
  * Interrupt handler function type
@@ -94,16 +94,9 @@ export function interruptPracticeSession(action?: () => void): void {
   const savedVolumes = exerciseState.savedVolumes;
   if (savedVolumes) {
     try {
-      // Access audio engine through window global (legacy bridge)
-      const audioEngine = (window as any).audioEngine;
-      if (audioEngine && typeof audioEngine.setVolumes === 'function') {
-        audioEngine.setVolumes(savedVolumes.instrumental, savedVolumes.vocals);
-      }
-      // Mirror restored baseline values into audio.store for UI truth
-      useAudioStore.setState({
-        instrumentalVolume: savedVolumes.instrumental,
-        vocalsVolume: savedVolumes.vocals,
-      });
+      // W4a: stem.store — единственный живой канал громкостей (audio.store REMOVED-поля)
+      useStemStore.getState().setStemVolume('instrumental', savedVolumes.instrumental);
+      useStemStore.getState().setStemVolume('vocals', savedVolumes.vocals);
     } catch (error) {
       console.error('[PracticeInterruption] Failed to restore volumes:', error);
     }
