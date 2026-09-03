@@ -14,6 +14,28 @@ function captureWorkletCode(): void {
   var CAPTURE_NAME = 'belive-capture-processor'
 
   class CaptureProcessor extends AudioWorkletProcessor {
+    // Объявления полей нужны СТРОГО для tsc: присваивание this._x без объявления
+    // даёт TS2339 (75 ошибок в этом файле на момент правки).
+    // В рантайме это безопасно: бандлер стирает аннотации до того, как функция
+    // будет сериализована через toString() в AudioWorkletGlobalScope.
+    // Базовый класс объявлен в src/types/audio-worklet-global.d.ts.
+    _buffer: Float32Array
+    _bufferSize: number
+    _writeIndex: number
+    _startFrame: number
+    _firstNonZeroFrame: number
+    _lastNonZeroFrame: number
+    _energySumSq: number
+    _firstNonZeroWriteIndexEver: number
+    _processCount: number
+    _maxAbsEver: number
+    _firstNonZeroWriteIndex: number
+    _nonZeroQuantumCount: number
+    _totalSamplesWritten: number
+    _wrapCount: number
+    /** Гистограмма длин квантов; ключи — строковые (см. String(len) ниже). */
+    _quantumLenHist: Record<string, number>
+
     constructor(options: any) {
       super(options)
       var size = (options && options.processorOptions && options.processorOptions.bufferSize) || 220500
