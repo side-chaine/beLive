@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // scripts/verify-reach.mjs — G-1 gate: find unreachable src/ files from roots
+// G1-FIX: line-based import parsing — side-effect imports/export-from/dynamic + comment-filter + .d.ts excluded
 // Usage: node scripts/verify-reach.mjs
 // Parses index.html <script src> tags + src/main.tsx as roots.
-// BFS import/from graph (regex, .ts/.tsx/.js/.mjs, no node_modules).
+// BFS import/from graph (line-based, .ts/.tsx/.js/.mjs, no node_modules).
 // Mode: warn, exit 0 always.
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -49,8 +50,13 @@ function resolveImport(fromFile, spec) {
   return null;
 }
 
-// ── 3. BFS import graph ──
-const IMPORT_RE = /(?:import\s+(?:type\s+)?(?:[\s\S]*?\s+from\s+)?['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\))/g;
+// ── 3. BFS import graph (line-based) ──
+const RE_IMPORT_FROM  = /^\s*import\s+[^'"]*?from\s+['"]([^'"]+)['"]/;
+const RE_IMPORT_SIDE  = /^\s*import\s+['"]([^'"]+)['"]/;
+const RE_EXPORT_FROM  = /^\s*export\s+[^'"]*?from\s+['"]([^'"]+)['"]/;
+const RE_DYNAMIC      = /import\(\s*['"]([^'"]+)['"]\s*\)/;
+const RE_COMMENT_LINE = /^\s*\/\//;
+const RE_DYNAMIC_SKIP = /\/\/.*/; // strip trailing comment before import(
 
 const visited = new Set();
 const queue = [...roots];
@@ -61,10 +67,25 @@ while (queue.length > 0) {
   let content;
   try { content = readFileSync(file, 'utf8'); } catch { continue; }
 
-  IMPORT_RE.lastIndex = 0;
-  let m;
-  while ((m = IMPORT_RE.exec(content)) !== null) {
-    const spec = m[1] || m[2];
+  const lines = content.split('\n');
+  for (const line of lines) {
+    if (RE_COMMENT_LINE.test(line)) continue; // skip full-line comments
+
+    let spec = null;
+    // (a) import X from 'spec'
+    let m = RE_IMPORT_FROM.exec(line);
+    if (m) { spec = m[1]; }
+    // (b) import 'spec'  (side-effect)
+    if (!spec) { m = RE_IMPORT_SIDE.exec(line); if (m) spec = m[1]; }
+    // (c) export ... from 'spec'
+    if (!spec) { m = RE_EXPORT_FROM.exec(line); if (m) spec = m[1]; }
+    // (d) dynamic import('spec') — strip trailing comment first
+    if (!spec) {
+      const stripped = line.replace(RE_DYNAMIC_SKIP, '');
+      m = RE_DYNAMIC.exec(stripped);
+      if (m) spec = m[1];
+    }
+
     if (!spec) continue;
     const resolved = resolveImport(file, spec);
     if (resolved && !visited.has(resolved)) {
@@ -80,7 +101,7 @@ function walkSrc(dir, out = []) {
     if (entry.name === 'node_modules') continue;
     const abs = join(dir, entry.name);
     if (entry.isDirectory()) walkSrc(abs, out);
-    else if (RE_EXT.test(entry.name)) out.push(abs);
+    else if (RE_EXT.test(entry.name) && !/\.d\.ts$/.test(entry.name)) out.push(abs);
   }
   return out;
 }
