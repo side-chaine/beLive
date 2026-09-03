@@ -12,7 +12,6 @@
  * 4. CHECK-A: каждый ключ LEGACY_EVENT_MAP → обёртка подписаны ИЛИ allowlist ИЛИ prefix → ok; иначе FAIL
  * 5. CHECK-B: запись с wrapper и status≠'live' → файл существует И (≥1 сигнал ИЛИ signalExempt)
  * 6. CHECK-C: запись с bridge и status retired/retired-before-C → файл моста ОБЯЗАН отсутствовать
- * 7. CHECK-D: live-guard → src/bridges/live-guard.ts существует
  */
 
 import { readFileSync, existsSync } from 'fs'
@@ -219,18 +218,6 @@ function checkRecords(
       } else {
         details.push({ id: rec.id, check: 'CHECK-C', ok: true, msg: 'bridge file absent ✓' })
       }
-    }
-  }
-
-  // CHECK-D: live-guard
-  const guard = records.find(r => r.id === 'live-guard')
-  if (guard?.bridge) {
-    const exists = existsSync(guard.bridge)
-    if (!exists) {
-      failures++
-      details.push({ id: 'live-guard', check: 'CHECK-D', ok: false, msg: `live-guard bridge not found: ${guard.bridge}` })
-    } else {
-      details.push({ id: 'live-guard', check: 'CHECK-D', ok: true, msg: 'live-guard exists ✓' })
     }
   }
 

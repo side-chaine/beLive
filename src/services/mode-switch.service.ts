@@ -16,11 +16,6 @@ function getApp(): any {
   return (window as any).app;
 }
 
-function deactivateLiveIfActive(): void {
-  const lm = (window as any).liveMode;
-  if (lm?.isActive) lm.deactivate();
-}
-
 function setBodyMode(mode: string): void {
   document.body.className = document.body.className
     .replace(/mode-\w+/g, '')
@@ -206,10 +201,6 @@ function activateLive(): void {
   enableResidualLiveOverlay();
   emitModeChanged(getCurrentMode() ?? 'rehearsal', 'live');
   applyModeVolumePreset('live');
-  const liveMode = (window as any).liveMode;
-  if (liveMode && typeof liveMode.activate === 'function') {
-    liveMode.activate().catch(() => {});
-  }
 }
 
 function enableResidualLiveOverlay(): void {

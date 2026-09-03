@@ -15,16 +15,7 @@ export function showAppNotification(message: string, type: string = 'info'): voi
     }
   } catch (_) {}
 
-  // Priority 2: LiveMode error message
-  try {
-    const w = window as any;
-    if (w.liveMode && typeof w.liveMode._showErrorMessage === 'function') {
-      w.liveMode._showErrorMessage(message, type);
-      return;
-    }
-  } catch (_) {}
-
-  // Priority 3: DOM toast
+  // Priority 2: DOM toast
   const div = document.createElement('div');
   div.textContent = message;
   div.style.cssText =

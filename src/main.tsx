@@ -2,8 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { ThemeProvider } from './theme/components/ThemeProvider';
-// retired: blocks.bridge → blocks-events (DUAL FIRE)
-import { installLiveGuard } from './bridges/live-guard';
+
 // retired: loop.bridge → loop-events
 import { initLoopEvents } from './foundation/event-bus/wrappers/loop-events';
 // import { initAudioReactiveBridge } from './bridges/audio-reactive.bridge';  // retired → audio-reactive wrapper
@@ -314,7 +313,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   }
 
-  installLiveGuard();
   // initLoopBridge();  // retired → loop-events in initRegistry
   // initAudioReactiveBridge();  // retired → audio-reactive wrapper in registerInit
   // Phase 5.1: cleanup bridgeFacade on page unload
