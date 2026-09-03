@@ -22,7 +22,9 @@
     "verify:events": "npx tsx scripts/verify-event-map.ts",
     "verify:parity": "npx tsx scripts/verify-bridge-parity.ts",
     "verify:ci": "npm run verify:events && npm run verify:parity",
-    "verify:frozen": "node scripts/check-frozen.mjs"
+    "verify:frozen": "node scripts/check-frozen.mjs",
+    "verify:refs": "node scripts/verify-refs.mjs",
+    "verify:reach": "node scripts/verify-reach.mjs"
   },
   "repository": {
     "type": "git",
