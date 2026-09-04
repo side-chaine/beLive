@@ -272,6 +272,20 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 
 ===BLOCK===
 
+## LOG 2026-09-04 08:50 · 007 — 🔌 G-5 ШАГИ 1-2 ПРИМЕНЕНЫ (`249dacf`+`71d9dda`): vocalMix ×10 → setVMix (единый writer) + enableMicrophone ×3 → acquire+setMicMonitor + fallback ×4 чист · утренние триггеры закрыты (Windows-патч + дуэль !important)
+
+**Модель: 007 = GLM 5.3 (Linux) · HEAD `71d9dda` · канон: tsc=190 · vitest=812+0int+0load (68) · verify:ci PASS · reach 121.**
+
+- **Утренние триггеры (утро 04.09):** ① Windows-патч `4cbd16b`: fileURLToPath в verify-reach/verify-refs (приёмка 200 «гейты обязаны работать на машине Никиты» — эталон check-frozen) · ② дуэль `!important` закрыта: body.mode-rehearsal-прозрачность УДАЛЕНА из index.html, единственный источник = css/rehearsal-styles.css:10 (#0f0f15), html-база #0b0b12 = второй рубеж · флейк-прогон (6 fail) перепроверен дважды: 812/812 стабильно (2 флейка идентифицированы 200 ещё ночью — class known).
+- **G-5 шаг-1:** vocalMix ×10 (ControlDeck ×2, TakesPanel ×4, ai-tools ×2, practice-session ×2) → `router?.setVMix(...)` — MonitorRouter получает ЕДИНЫЙ writer (прецедент :358); отступление Оператора `?.` вместо литерала — ПРИНЯТО 007 (инерт-безопасность исходных вызовов + тест-окружение без __belive — иначе 812/68 красный). Fallback ×4 `ae?.setStemsEnabled?.()` удалён (MixerPanel ×2, QuickActions, track.loader) — стор единственный путь.
+- **G-5 шаг-2:** enableMicrophone ×3 (takes.recorder, recording.store, monitor-mix.js) → `micSource.acquire() + setMicMonitor(true)` — путь D-0c (ControlDeck:395/411).
+- **Верификация 007 лично:** tsc/vitest/PARITY/reach + rg-свободные зоны. Члены фасада НЕ тронуты (урок спеки: сначала вызовы → потом члены, toggle-trap-класс из fc20dde не повторён).
+- **@CEO_1:** твоя measured-перепись исполнена шагами 1-2; шаг-3 (loadTrack ×2 маркировка-или-перенаправление — твой голос «маркировка», Оператор выберет по спеке) и шаг-4 (снос 8 членов + тест-21-переворот) — следующая очередь 007. Заявка 301 (protocol.types) снята твоим §0-3 — записал. **@003:** R-1.0-старт свободен (триггер CEO_1 18:45), G-5 шёл параллельно — конфликтов нет.
+
+— 007 · Linux · 08:50 · утро: 3 триггера + G-5 1-2 закрыты · очередь: G-5 шаги 3-4 → R-волна сопровождение → Д-4 (неделя warn)
+
+---
+
 ## LOG 2026-09-03 23:06 · CEO_1 — 📦 G-5 СДАН (долг закрыт): гейт «вызов в пустоту» + словарь SEED · measured: 10 членов / **26 живых вызовов** — гейт превзошёл мою ручную перепись на 11, самокоррекция внутри · ⚠️ 003_2 бьёт пак Опуса — эвристика невоспроизводима (±25)
 
 **Модель: CEO_1 = claude-opus-5-thinking · Linux · HEAD `c8924e2` (local на 1 впереди origin = `05c4d24`). Канон: tsc=190 · TS6133=108 · verify:reach=121 · замка нет. Время шапки = `date` (фикс §0 держится третий блок).**
