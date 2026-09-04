@@ -91,7 +91,8 @@ export class TakesRecorder {
     } else {
       // Ensure mic is enabled (this also routes to output — headphones required)
       if (!ae.microphone?.enabled) {
-        await ae.enableMicrophone();
+        await (window as any).__belive?.micSource?.acquire();
+        (window as any).__belive?.monitorRouter?.setMicMonitor(true);
       }
       // Get raw mic stream (unaffected by volume slider)
       stream = ae.getMicrophoneStream?.('raw') ?? ae.microphone?.getStream?.('raw');

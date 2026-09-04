@@ -123,7 +123,8 @@
             if (this.enabled) return true;
             // mic
             if (!opts.skipMic) {
-                await this.engine.enableMicrophone();
+                await window.__belive?.micSource?.acquire();
+                window.__belive?.monitorRouter?.setMicMonitor(true);
                 this.micSource = this.engine.microphoneSource || (this.engine.microphoneStream ? this.ctx.createMediaStreamSource(this.engine.microphoneStream) : null);
                 if (!this.micSource) throw new Error('MonitorMix: no microphone');
                 try { this.micSource.disconnect(); } catch(_) {}

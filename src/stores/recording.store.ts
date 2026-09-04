@@ -51,7 +51,8 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
             // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
             return;
           }
-          await ae.enableMicrophone();
+          await (window as any).__belive?.micSource?.acquire();
+          (window as any).__belive?.monitorRouter?.setMicMonitor(true);
         } catch (e) {
           console.warn('[Recording] Failed to auto-enable mic:', e);
         }
