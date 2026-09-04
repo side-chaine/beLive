@@ -129,13 +129,13 @@ houses:
     owner: 007
     status: alive
     route: show
-    modules: [src/components/Show, src/services/show.html.ts, src/services/show.image.ts]
-    metrics: {loc: 2193, files: 8, t30: -1}
+    modules: [src/components/Show]
+    metrics: {loc: 4585, files: 13, t30: 1}
     what: "Режиссёр номера: собирает выступление из готовых сцен."
     gives: ["Сценарии номеров на выбор", "Картина меняется за клик"]
     floors:
       - "Сцены|src/components/Show — 8 файлов, 2193 loc"
-      - "Сценарии|src/services/show.html.ts + show.image.ts"
+      - "Сценарии [cleared]|src/services/show.html.ts + show.image.ts — не существуют (verify-reach 121; removed_by CEO_1-audit 04.09), этаж-фантом из v0.3"
 
   - id: B04
     key: split
@@ -266,7 +266,7 @@ houses:
     floors:
       - "Инфоборт|src/components/TrackInfoBoard — 6 файлов, 3019 loc"
       - "Структура|src/structure — 65 loc"
-      - "Метаданные|src/services/metadata-backfill.ts"
+      - "Метаданные [cleared]|src/services/metadata-backfill.ts — не существует (verify-reach 121; removed_by CEO_1-audit 04.09)"
 
   # ===== SCENE (301: SCENE-EDITOR, 3 этажа) =====
   - id: B11

@@ -1,94 +1,4 @@
 {
-  "rehearsal": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "sync": {
-    "loc": 4804,
-    "files": 33,
-    "t30": 7,
-    "churn90": 29,
-    "hotspot": 1393,
-    "hot": false,
-    "birth": 2026,
-    "metric": "2026—2026"
-  },
-  "catalog": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "scene": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "hub": {
-    "loc": 769,
-    "files": 7,
-    "t30": 0,
-    "churn90": 16,
-    "hotspot": 123,
-    "hot": false,
-    "birth": 2026,
-    "metric": "2026—2026"
-  },
-  "user": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "arena": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "power": {
-    "loc": 1774921,
-    "files": 1000,
-    "t30": 2,
-    "churn90": 25,
-    "hotspot": 443730,
-    "hot": false,
-    "birth": 2026,
-    "metric": "2026—2026"
-  },
-  "foundation": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
   "studio": {
     "loc": 18466,
     "files": 60,
@@ -159,6 +69,16 @@
     "birth": 2026,
     "metric": "2026—2026"
   },
+  "sync": {
+    "loc": 4804,
+    "files": 33,
+    "t30": 7,
+    "churn90": 29,
+    "hotspot": 1393,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
+  },
   "port": {
     "loc": 4500,
     "files": 24,
@@ -185,6 +105,16 @@
     "t30": 3,
     "churn90": 17,
     "hotspot": 532,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
+  },
+  "hub": {
+    "loc": 769,
+    "files": 7,
+    "t30": 0,
+    "churn90": 16,
+    "hotspot": 123,
     "hot": false,
     "birth": 2026,
     "metric": "2026—2026"
@@ -229,6 +159,16 @@
     "birth": 2026,
     "metric": "2026—2026"
   },
+  "power": {
+    "loc": 1774921,
+    "files": 1000,
+    "t30": 2,
+    "churn90": 25,
+    "hotspot": 443730,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
+  },
   "infra": {
     "loc": 29060,
     "files": 189,
@@ -248,145 +188,5 @@
     "hot": false,
     "birth": 2026,
     "metric": "2026—2026"
-  },
-  "m-play": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "m-stem": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "m-mic": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "m-mix": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "m-line": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "m-loop": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "m-load": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "m-saved": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "m-take": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "m-scenes": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "m-sect": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "m-mode": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "m-billy": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
-  },
-  "m-bridge": {
-    "loc": 0,
-    "files": 0,
-    "t30": 0,
-    "churn90": 0,
-    "hotspot": 0,
-    "hot": false,
-    "birth": null,
-    "metric": null
   }
 }
