@@ -9,8 +9,9 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve, relative, posix } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = resolve(new URL('.', import.meta.url).pathname, '..');
+const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const srcDir = join(root, 'src');
 const RE_EXT = /\.(ts|tsx|js|mjs)$/;
 

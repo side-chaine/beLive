@@ -5,8 +5,9 @@
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = join(new URL('.', import.meta.url).pathname, '..');
+const root = join(fileURLToPath(new URL('.', import.meta.url)), '..');
 
 if (!process.argv[2]) {
   console.log('Usage: node scripts/verify-refs.mjs <path>');

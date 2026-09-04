@@ -172,9 +172,11 @@
       body.mode-rehearsal .app-container {
         background-color: transparent !important;
       }
-      body.mode-rehearsal {
-        background-color: transparent !important;
-      }
+      /* 201-fix (03.09): raw-body transparency REMOVED — single source of truth for
+         rehearsal body bg is css/rehearsal-styles.css:10 (#0f0f15 !important).
+         Two !important duels on the same selector = last-load-wins lottery.
+         Backgrounds stay visible: body bg paints UNDER scene layers (z-index -1),
+         app-container transparent above. html base #0b0b12 = second fallback tier. */
     </style>
 
     <!-- DOCK STANDARD — Static height tokens
