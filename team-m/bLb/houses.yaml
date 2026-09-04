@@ -1,7 +1,7 @@
 # houses.yaml · beLiveBase · v0.3 (кадастр: здание = режим, этаж = файл)
 # Модель (Никита 30.08 01:14): «каждый объект — этаж, каждое здание — режим».
 # Планировка — 301 (9 районов / 19 зданий / 71 этаж, 05-VISUAL-MAP-TO-bLb.md §1.1).
-# Сборка — 707, кросс-чек — 301. Метрики сняты по SSH с живого дерева @ b0879ed.
+# Сборка — 707, кросс-чек — 301. Метрики пересняты 007 после Волн C+D + де-фриза @ 30f2c8d — КАДАСТРОВАЯ ПРАВДА 04.09 (город отражает репо на 04.09, не на 28.08).
 #
 # КОНТРАКТ v0.3 (дельта к v0.2):
 #   - status: alive | demo | planned | conserved | external (trash убран: снос доказывается отдельно)
@@ -10,11 +10,11 @@
 # t30 = -1 → досчитает city-metrics.mjs на ПК (git log 30 дней)
 
 meta:
-  version: 0.3
-  date: 2026-08-30
-  author: "707 (сборка) · 301 (планировка, кросс-чек)"
+  version: 0.4.0
+  date: 2026-09-04
+  author: "707 (сборка) · 301 (планировка, кросс-чек) · 005 (З-7 карта чата)"
   layout: glm-v0.2-quiet (сетка 15x14, база 28.08; планировка v0.3 по 301)
-  head: b0879ed
+  head: 30f2c8d
   decisions:
     - "Никита 30.08 01:14: объект = этаж, здание = режим; невидимое = мусор"
     - "Никита 30.08 01:02: ноль мусора; тёмные этажи не проходят ревью"
@@ -36,6 +36,9 @@ meta:
     - id: bridge-mvp
       desc: "мост Педагог-Студент до прод-этапа (Этап 1 roadmap)"
       state: open
+    - id: liveness
+      desc: "(04.09, де-фриз D-0..D-5) замок frozen упразднён D-3; город держат гейты живости — G-1 verify-reach (121 unreachable, warn), G-2 verify-inert (0 пустышек фасада, allowlist loadTrack=intentional-contract), G-4 verify-refs (ссылки вне src). Все Windows-совместимы (fileURLToPath). Флип warn->fail = D-4 после недели зелени."
+      state: passed
 
 districts:
   - id: rehearsal
@@ -88,15 +91,16 @@ houses:
     status: alive
     route: rehearsal
     modules: [src/audio]
-    metrics: {loc: 21611, files: 92, t30: -1}
+    metrics: {loc: 18466, files: 60, t30: 55}
     what: "Завод звука V3: растяжка, стемы, монитор, питч-фундамент."
     gives: ["Слышит каждую ноту и держит темп", "Голос отдельно от музыки"]
     floors:
       - "Движок V3|src/audio/engine-v3 — 54 файла, 17280 loc (pipeline, monitor, services, integration)"
-      - "Ядро V2 под пломбой|src/audio/core + src/audio/compat — 7 файлов, 2932 loc (FROZEN §6)"
+      - "Ядро V2 [cleared]|созвездие AudioEngineV2+StemPlayer+AudioLoader+VocalMix+MicrophoneManager (2735 loc) снесено D-1 03.09; жив audioContext.ts (9 импортёров); замок frozen упразднён D-3"
       - "Монитор|src/audio/engine-v3/monitor — 5 файлов, 893 loc: MonitorRouter, DeviceManager"
       - "Питч-фундамент|src/audio/pitch — 8 файлов, 1166 loc (подключение к V3 = ARC-2e, VIS-2)"
       - "Фасад|js/audio-facade-v3.js — 82 строки, контракт ARC-2d применён (b0879ed), BLB-26: вне tsconfig"
+      - "Спектр-визуал [alive]|audio-reactive: реконнект по track-loaded + pipeline.getStemAnalyser (полный невокальный микс, паритет V2) — D-0c-2b 03.09; FullAvatar/BPM CSS-вары живы; OBS-1: 8 меток belive:load:* (обсерваторий загрузки, load-atoms.yaml)"
 
   - id: B02
     key: quest
@@ -108,7 +112,7 @@ houses:
     status: alive
     route: rehearsal
     modules: [src/exercises, src/practice, src/takes]
-    metrics: {loc: 10665, files: 57, t30: -1}
+    metrics: {loc: 10695, files: 56, t30: 17}
     what: "Школа пения: упражнения, тейки, прогресс."
     gives: ["Упражнения по чуть-чуть", "Рост виден по тейкам"]
     floors:
@@ -178,10 +182,11 @@ houses:
     route: pitch
     modules: [src/audio/pitch, src/components/PianoKeyboard]
     metrics: {loc: 1166, files: 8, t30: -1}
-    what: "Слышит ноту и показывает на пианино. VIS-2: подключение к V3 — вход ARC-2e."
+    what: "Слышит ноту и показывает на пианино. ARC-2e в каноне: питч на V3-тапах (vocalReferenceTap pre-fader)."
     gives: ["Видно, выше или ниже взял"]
     floors:
-      - "Питч-детекция|src/audio/pitch — 8 файлов, 1166 loc (к V3 не подключён — VIS-2, ARC-2e)"
+      - "Питч-детекция|src/audio/pitch — 8 файлов, 1166 loc; ARC-2e применён (b13a733): vocalReferenceTap pre-fader, fader-independent; mic через MicSourceV3.acquire"
+      - "A/B-эталон [backlog]|pitchy (0BSD, MPM) — кандидат микро-апгрейда после ARC-2e (досье 005); pYIN-слой + FFT-путь (005_2: ~10× CPU) — кандидат «Питч v2»"
       - "Пианино|src/components/PianoKeyboard"
 
   - id: B07
@@ -195,13 +200,16 @@ houses:
     route: billy
     modes: [rehearsal, karaoke, concert, live]
     modules: [src/billy, src/character]
-    metrics: {loc: 1663, files: 17, t30: -1}
-    what: "Наставник в городе: слушает, хвалит, подбадривает. VIS-7: переезд чата в правую рейку."
+    metrics: {loc: 1725, files: 18, t30: 6}
+    what: "Наставник в городе: слушает, хвалит, подбадривает. З-7: переезд чата в правую рейку (эпизод-1 YouTube)."
     gives: ["Живой отклик на фразу", "Подсказки вместо таблиц", "Хвалит за прогресс — честно"]
     floors:
       - "Голос|src/billy — 11 файлов, 1381 loc"
       - "Характер|src/character — 6 файлов, 282 loc"
       - "AI-инфраструктура|src/js/ai — 6 файлов, 872 loc; ЖИВА (импортёры: CharacterSoundManager.ts:4-5, layer2-report-emitter.ts:2, model-dropdown-ui.ts:1-2) — 301 Q4"
+      - "Правая рейка [backlog]|З-7: переезд AiExpertPanel-compact в fixed-контейнер справа (донор: BillyChatModule deck:45; сеть готова — gateway SSE rate-limit 20/мин); эпизод-1 YouTube: до/после"
+      - "Старый чат-док [dark-code]|deck-таб billy уходит при переезде; AIChatPanel (orphan-мок) + ai-chat-ui.ts (легаси, CSS утерян) — кандидаты на списание (прогон #3)"
+      - "Чат у каталога [shelved]|CatalogBillyChat.tsx (151 стр, 0 импортёров) — спит до 🔴 Никиты: kill/shelved (досье готово); донор quick-questions-паттерна"
 
   # ===== SYNC (301: SYNC-TOWER, 6 этажей) =====
   - id: B08
@@ -213,9 +221,9 @@ houses:
     owner: 007
     status: alive
     route: rehearsal
-    frozen: read
+    gate: liveness
     modules: [src/sync, src/stores/markers.store.ts, src/stores/wordSync.store.ts]
-    metrics: {loc: 4647, files: 33, t30: -1}
+    metrics: {loc: 4804, files: 33, t30: 7}
     what: "Башня света слова: текст загорается точно в такт."
     gives: ["Слово подсвечивается вовремя", "Не нужно следить глазами за строчкой"]
     floors:
@@ -235,7 +243,7 @@ houses:
     status: alive
     route: catalog
     modules: [src/catalog]
-    metrics: {loc: 3513, files: 23, t30: -1}
+    metrics: {loc: 4500, files: 24, t30: 6}
     what: "Порт города: сюда приносят треки, отсюда расходятся по залам."
     gives: ["Все треки под рукой", "Перетащил файл — и уже поёшь"]
     floors:
@@ -252,7 +260,7 @@ houses:
     status: alive
     route: catalog
     modules: [src/components/TrackInfoBoard, src/structure]
-    metrics: {loc: 3084, files: 7, t30: -1}
+    metrics: {loc: 4185, files: 8, t30: 2}
     what: "Паспорт трека: структура, куплеты, припевы, темп."
     gives: ["Видно, где ты в песне", "К припеву — в один прыжок"]
     floors:
@@ -290,7 +298,7 @@ houses:
     status: demo
     route: feed
     modules: [src/feed]
-    metrics: {loc: 516, files: 6, t30: -1}
+    metrics: {loc: 769, files: 7, t30: 0}
     what: "Лента города (демо). VIS-8: развилка пейджер/комната, рекомендация C — гибрид."
     gives: ["Что происходит сейчас"]
     floors:
@@ -307,12 +315,13 @@ houses:
     status: alive
     route: profile
     modules: [src/components/profile, src/avatar]
-    metrics: {loc: 719, files: 6, t30: -1}
-    what: "Твой дом: профиль, аватар, история выступлений."
-    gives: ["Своя страница и архив", "Аватар на любой вкус"]
+    metrics: {loc: 719, files: 6, t30: 4}
+    what: "Твой дом: профиль, аватар, история, паспорт голоса (Расщёп-Слепок)."
+    gives: ["Своя страница и архив", "Аватар на любой вкус", "Слепок твоего голоса за 3 минуты игры"]
     floors:
       - "Профиль|src/components/profile — 292 loc"
       - "Аватар|src/avatar — 5 файлов, 427 loc"
+      - "Паспорт голоса [backlog]|«Расщёп-Слепок» (🔴 GO Никиты 31.08 13:10): калибровка-игра 3-5 мин, фейдер-голос, автоснапшот {f0,subScore,noiseScore,rms}; индивидуальная модель расщепа — GREENFIELD (мир не делает, 005 С-1); снос старого детектора — после контура замены (51 стр / 5 файлов, 0 тестов — 301); сырье subScore/noiseScore ОСТАВИТЬ (yin-detect.ts:139-152 — 005 С-4); кандидаты VIS-16/17 (VMix/transpose toggle) — рядом"
 
   # ===== ARENA (301: KARAOKE / CONCERT / LIVE — все P3) =====
   - id: B14
@@ -363,12 +372,13 @@ houses:
     status: alive
     route: live
     modules: [src/components/LiveControls.tsx, src/components/LiveSubtitle.tsx]
-    metrics: {loc: 126, files: 4, t30: -1}
+    metrics: {loc: 66, files: 2, t30: 0}
     what: "Прямой эфир: субтитры в кадре, пульт эфира."
     gives: ["Субтитры видят все зрители", "Весь контроль на одной панели"]
     floors:
       - "Пульт эфира|src/components/LiveControls.tsx — 40 loc"
       - "Субтитры|src/components/LiveSubtitle.tsx — 24 loc"
+      - "LIVE-кнопка [alive]|index.html:233 → mode-switch.service activateLive (setBodyMode+volume-preset, К-11); liveMode-объект был фантомом (0 писателей) — снесён D-2 03.09"
 
   # ===== POWER (внешние электростанции; 301 §5.2: все утёкшие ключи — здесь) =====
   - id: PWR
@@ -403,9 +413,9 @@ houses:
     owner: 007
     status: alive
     render: none
-    frozen: sealed
-    modules: [src/foundation, src/bridges, src/playback, src/runtime, src/stores, src/hooks, src/triggers, src/services, src/types, src/utils, src/config, src/deck, src/js, src/data]
-    what: "Подземка города: EventBus (32 файла, 2262 loc), мосты под пломбой (§6 FROZEN), stores, hooks, deck."
+    gate: liveness
+    modules: [src/foundation, src/playback, src/runtime, src/stores, src/hooks, src/triggers, src/services, src/types, src/utils, src/config, src/deck, src/js, src/data]
+    what: "Подземка города: EventBus, stores, hooks, deck. Мосты снесены Волной C (15, 03.09), V2 — D-1; замок frozen упразднён D-3 — город держат ГЕЙТЫ ЖИВОСТИ: G-1 verify-reach (121), G-2 verify-inert (0 пустышек), G-4 verify-refs. Все — Windows-совместимы."
 
   # ===== МОСТ (Этап 1 roadmap; 301 §4: видео-мост = SPLIT с выходом на peer) =====
   - id: B17
@@ -418,13 +428,13 @@ houses:
     status: alive
     route: rehearsal
     modules: [src/Rehearsal]
-    metrics: {loc: 1056, files: 9, t30: -1}
+    metrics: {loc: 1080, files: 8, t30: 1}
     what: "Видео-мост двух машин: сессия Педагог-Студент. Черновик — SPLIT (301 §4)."
     gives: ["Урок на две машины", "Тейк студента — педагогу"]
     floors:
       - "Signaling|src/Rehearsal/services/signaling-client.ts"
       - "Peer|src/Rehearsal/services/peer-connection.ts"
-      - "Триггер-мост|src/Rehearsal/bridge/rehearsal-trigger.bridge.ts (17× window.audioEngine — BAC-105-кластер, вход ARC-2e)"
+      - "Триггер-мост|src/Rehearsal/bridge/rehearsal-trigger.bridge.ts (живой: main.tsx:803 + deep-link:91; liveMode-фантом в notification/mode-switch снесён D-2; фасад = единый контракт)"
       - "Сессия|src/Rehearsal/store/rehearsal-session.store.ts"
       - "Протокол|src/Rehearsal/types/protocol.types.ts (TriggerPayload: annotation + focus-change — 0 использований, BRG-1)"
       - "Clock|src/Rehearsal/workers/clock-scheduler.worker.ts"

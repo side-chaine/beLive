@@ -2,196 +2,391 @@
   "rehearsal": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "sync": {
-    "loc": 4814,
+    "loc": 4804,
     "files": 33,
-    "t30": 7
+    "t30": 7,
+    "churn90": 29,
+    "hotspot": 1393,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "catalog": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "scene": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "hub": {
     "loc": 769,
     "files": 7,
-    "t30": 0
+    "t30": 0,
+    "churn90": 16,
+    "hotspot": 123,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "user": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "arena": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "power": {
     "loc": 1774921,
     "files": 1000,
-    "t30": 2
+    "t30": 2,
+    "churn90": 25,
+    "hotspot": 443730,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "foundation": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "studio": {
-    "loc": 21566,
-    "files": 68,
-    "t30": 56
+    "loc": 18466,
+    "files": 60,
+    "t30": 55,
+    "churn90": 119,
+    "hotspot": 21975,
+    "hot": true,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "quest": {
-    "loc": 10702,
+    "loc": 10695,
     "files": 56,
-    "t30": 17
+    "t30": 17,
+    "churn90": 76,
+    "hotspot": 8128,
+    "hot": true,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "show": {
     "loc": 4585,
     "files": 13,
-    "t30": 1
+    "t30": 1,
+    "churn90": 2,
+    "hotspot": 92,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "split": {
     "loc": 170,
     "files": 3,
-    "t30": 0
+    "t30": 0,
+    "churn90": 3,
+    "hotspot": 5,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "styles": {
     "loc": 839,
     "files": 13,
-    "t30": 0
+    "t30": 0,
+    "churn90": 1,
+    "hotspot": 8,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "notes": {
-    "loc": 1649,
+    "loc": 1613,
     "files": 11,
-    "t30": 2
+    "t30": 4,
+    "churn90": 8,
+    "hotspot": 129,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "billy": {
     "loc": 1725,
     "files": 18,
-    "t30": 7
+    "t30": 6,
+    "churn90": 17,
+    "hotspot": 293,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "port": {
     "loc": 4500,
     "files": 24,
-    "t30": 6
+    "t30": 6,
+    "churn90": 139,
+    "hotspot": 6255,
+    "hot": true,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "dna": {
     "loc": 4185,
     "files": 8,
-    "t30": 2
+    "t30": 2,
+    "churn90": 21,
+    "hotspot": 879,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "scenes": {
-    "loc": 3134,
+    "loc": 3130,
     "files": 14,
-    "t30": 2
+    "t30": 3,
+    "churn90": 17,
+    "hotspot": 532,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "profile": {
     "loc": 1135,
     "files": 8,
-    "t30": 4
+    "t30": 4,
+    "churn90": 15,
+    "hotspot": 170,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "karaoke": {
     "loc": 790,
     "files": 2,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "concert": {
     "loc": 122,
     "files": 1,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "live": {
     "loc": 66,
     "files": 2,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "infra": {
-    "loc": 31971,
-    "files": 206,
-    "t30": 82
+    "loc": 29060,
+    "files": 189,
+    "t30": 84,
+    "churn90": 292,
+    "hotspot": 84855,
+    "hot": true,
+    "birth": 2025,
+    "metric": "2025—2026"
   },
   "bridge": {
-    "loc": 1064,
+    "loc": 1080,
     "files": 8,
-    "t30": 1
+    "t30": 1,
+    "churn90": 36,
+    "hotspot": 389,
+    "hot": false,
+    "birth": 2026,
+    "metric": "2026—2026"
   },
   "m-play": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "m-stem": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "m-mic": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "m-mix": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "m-line": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "m-loop": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "m-load": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "m-saved": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "m-take": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "m-scenes": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "m-sect": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "m-mode": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "m-billy": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   },
   "m-bridge": {
     "loc": 0,
     "files": 0,
-    "t30": 0
+    "t30": 0,
+    "churn90": 0,
+    "hotspot": 0,
+    "hot": false,
+    "birth": null,
+    "metric": null
   }
 }

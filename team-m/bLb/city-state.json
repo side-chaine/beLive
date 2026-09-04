@@ -2,12 +2,13 @@
   "meta": {
     "city": "beLiveBase",
     "phase": "Phase 0 · чертежи",
-    "updated": "2026-08-30",
-    "cadastre": "houses.yaml 0.3",
+    "updated": "2026-09-04",
+    "cadastre": "houses.yaml 0.4.0",
     "gates": {
       "W5": "passed",
       "rehearsal-prod": "open",
-      "bridge-mvp": "open"
+      "bridge-mvp": "open",
+      "liveness": "passed"
     }
   },
   "districts": [
@@ -105,9 +106,13 @@
       "gy": 2,
       "w": 3,
       "d": 2,
-      "loc": 21566,
-      "files": 68,
-      "t30": 56,
+      "loc": 18466,
+      "files": 60,
+      "t30": 55,
+      "churn90": 119,
+      "hotspot": 21975,
+      "hot": true,
+      "birth": 2026,
       "route": "rehearsal",
       "what": "Завод звука V3: растяжка, стемы, монитор, питч-фундамент.",
       "gives": [
@@ -120,8 +125,8 @@
           "d": "src/audio/engine-v3 — 54 файла, 17280 loc (pipeline, monitor, services, integration)"
         },
         {
-          "n": "Ядро V2 под пломбой",
-          "d": "src/audio/core + src/audio/compat — 7 файлов, 2932 loc (FROZEN §6)"
+          "n": "Ядро V2 [cleared]",
+          "d": "созвездие AudioEngineV2+StemPlayer+AudioLoader+VocalMix+MicrophoneManager (2735 loc) снесено D-1 03.09; жив audioContext.ts (9 импортёров); замок frozen упразднён D-3"
         },
         {
           "n": "Монитор",
@@ -134,6 +139,10 @@
         {
           "n": "Фасад",
           "d": "js/audio-facade-v3.js — 82 строки, контракт ARC-2d применён (b0879ed), BLB-26: вне tsconfig"
+        },
+        {
+          "n": "Спектр-визуал [alive]",
+          "d": "audio-reactive: реконнект по track-loaded + pipeline.getStemAnalyser (полный невокальный микс, паритет V2) — D-0c-2b 03.09; FullAvatar/BPM CSS-вары живы; OBS-1: 8 меток belive:load:* (обсерваторий загрузки, load-atoms.yaml)"
         }
       ],
       "mods": [
@@ -152,9 +161,13 @@
       "gy": 3,
       "w": 2,
       "d": 2,
-      "loc": 10702,
+      "loc": 10695,
       "files": 56,
       "t30": 17,
+      "churn90": 76,
+      "hotspot": 8128,
+      "hot": true,
+      "birth": 2026,
       "route": "rehearsal",
       "what": "Школа пения: упражнения, тейки, прогресс.",
       "gives": [
@@ -196,6 +209,10 @@
       "loc": 4585,
       "files": 13,
       "t30": 1,
+      "churn90": 2,
+      "hotspot": 92,
+      "hot": false,
+      "birth": 2026,
       "route": "show",
       "what": "Режиссёр номера: собирает выступление из готовых сцен.",
       "gives": [
@@ -233,6 +250,10 @@
       "loc": 170,
       "files": 3,
       "t30": 0,
+      "churn90": 3,
+      "hotspot": 5,
+      "hot": false,
+      "birth": 2026,
       "route": "monitor",
       "what": "Аудио-суфлёр: вокал в ушах, музыка в зал. Черновик видео-моста (301 §4).",
       "gives": [
@@ -269,6 +290,10 @@
       "loc": 839,
       "files": 13,
       "t30": 0,
+      "churn90": 1,
+      "hotspot": 8,
+      "hot": false,
+      "birth": 2026,
       "route": "styles",
       "what": "Мастерская внешнего вида: темы и стили текста.",
       "gives": [
@@ -303,11 +328,15 @@
       "gy": 6,
       "w": 2,
       "d": 2,
-      "loc": 1649,
+      "loc": 1613,
       "files": 11,
-      "t30": 2,
+      "t30": 4,
+      "churn90": 8,
+      "hotspot": 129,
+      "hot": false,
+      "birth": 2026,
       "route": "pitch",
-      "what": "Слышит ноту и показывает на пианино. VIS-2: подключение к V3 — вход ARC-2e.",
+      "what": "Слышит ноту и показывает на пианино. ARC-2e в каноне: питч на V3-тапах (vocalReferenceTap pre-fader).",
       "gives": [
         "Видно",
         "выше или ниже взял"
@@ -315,7 +344,12 @@
       "rooms": [
         {
           "n": "Питч-детекция",
-          "d": "src/audio/pitch — 8 файлов, 1166 loc (к V3 не подключён — VIS-2, ARC-2e)"
+          "d": "src/audio/pitch — 8 файлов, 1166 loc; ARC-2e применён (b13a733): vocalReferenceTap pre-fader, fader-independent; mic через MicSourceV3.acquire"
+        },
+        {
+          "n": "A/B-эталон",
+          "d": "pitchy (0BSD, MPM) — кандидат микро-апгрейда после ARC-2e (досье 005); pYIN-слой + FFT-путь (005_2: ~10× CPU) — кандидат «Питч v2»",
+          "mark": "backlog"
         },
         {
           "n": "Пианино",
@@ -341,9 +375,13 @@
       "d": 2,
       "loc": 1725,
       "files": 18,
-      "t30": 7,
+      "t30": 6,
+      "churn90": 17,
+      "hotspot": 293,
+      "hot": false,
+      "birth": 2026,
       "route": "billy",
-      "what": "Наставник в городе: слушает, хвалит, подбадривает. VIS-7: переезд чата в правую рейку.",
+      "what": "Наставник в городе: слушает, хвалит, подбадривает. З-7: переезд чата в правую рейку (эпизод-1 YouTube).",
       "gives": [
         "Живой отклик на фразу",
         "Подсказки вместо таблиц",
@@ -361,6 +399,21 @@
         {
           "n": "AI-инфраструктура",
           "d": "src/js/ai — 6 файлов, 872 loc; ЖИВА (импортёры: CharacterSoundManager.ts:4-5, layer2-report-emitter.ts:2, model-dropdown-ui.ts:1-2) — 301 Q4"
+        },
+        {
+          "n": "Правая рейка",
+          "d": "З-7: переезд AiExpertPanel-compact в fixed-контейнер справа (донор: BillyChatModule deck:45; сеть готова — gateway SSE rate-limit 20/мин); эпизод-1 YouTube: до/после",
+          "mark": "backlog"
+        },
+        {
+          "n": "Старый чат-док",
+          "d": "deck-таб billy уходит при переезде; AIChatPanel (orphan-мок) + ai-chat-ui.ts (легаси, CSS утерян) — кандидаты на списание (прогон",
+          "mark": "dark-code"
+        },
+        {
+          "n": "Чат у каталога",
+          "d": "CatalogBillyChat.tsx (151 стр, 0 импортёров) — спит до 🔴 Никиты: kill/shelved (досье готово); донор quick-questions-паттерна",
+          "mark": "shelved"
         }
       ],
       "mods": [
@@ -380,9 +433,13 @@
       "gy": 0,
       "w": 2,
       "d": 4,
-      "loc": 4814,
+      "loc": 4804,
       "files": 33,
       "t30": 7,
+      "churn90": 29,
+      "hotspot": 1393,
+      "hot": false,
+      "birth": 2026,
       "route": "rehearsal",
       "what": "Башня света слова: текст загорается точно в такт.",
       "gives": [
@@ -413,7 +470,7 @@
         "src/stores/wordSync.store.ts"
       ],
       "owner": "007",
-      "frozen": "read"
+      "gate": "liveness"
     },
     {
       "id": "port",
@@ -429,6 +486,10 @@
       "loc": 4500,
       "files": 24,
       "t30": 6,
+      "churn90": 139,
+      "hotspot": 6255,
+      "hot": true,
+      "birth": 2026,
       "route": "catalog",
       "what": "Порт города: сюда приносят треки, отсюда расходятся по залам.",
       "gives": [
@@ -464,6 +525,10 @@
       "loc": 4185,
       "files": 8,
       "t30": 2,
+      "churn90": 21,
+      "hotspot": 879,
+      "hot": false,
+      "birth": 2026,
       "route": "catalog",
       "what": "Паспорт трека: структура, куплеты, припевы, темп.",
       "gives": [
@@ -502,9 +567,13 @@
       "gy": 8,
       "w": 2,
       "d": 2,
-      "loc": 3134,
+      "loc": 3130,
       "files": 14,
-      "t30": 2,
+      "t30": 3,
+      "churn90": 17,
+      "hotspot": 532,
+      "hot": false,
+      "birth": 2026,
       "route": "concert",
       "what": "Рисует миры позади певца: фоны и блочные сцены.",
       "gives": [
@@ -546,6 +615,10 @@
       "loc": 769,
       "files": 7,
       "t30": 0,
+      "churn90": 16,
+      "hotspot": 123,
+      "hot": false,
+      "birth": 2026,
       "route": "feed",
       "what": "Лента города (демо). VIS-8: развилка пейджер/комната, рекомендация C — гибрид.",
       "gives": [
@@ -576,11 +649,16 @@
       "loc": 1135,
       "files": 8,
       "t30": 4,
+      "churn90": 15,
+      "hotspot": 170,
+      "hot": false,
+      "birth": 2026,
       "route": "profile",
-      "what": "Твой дом: профиль, аватар, история выступлений.",
+      "what": "Твой дом: профиль, аватар, история, паспорт голоса (Расщёп-Слепок).",
       "gives": [
         "Своя страница и архив",
-        "Аватар на любой вкус"
+        "Аватар на любой вкус",
+        "Слепок твоего голоса за 3 минуты игры"
       ],
       "rooms": [
         {
@@ -590,6 +668,11 @@
         {
           "n": "Аватар",
           "d": "src/avatar — 5 файлов, 427 loc"
+        },
+        {
+          "n": "Паспорт голоса",
+          "d": "«Расщёп-Слепок» (🔴 GO Никиты 31.08 13:10): калибровка-игра 3-5 мин, фейдер-голос, автоснапшот {f0,subScore,noiseScore,rms}; индивидуальная модель расщепа — GREENFIELD (мир не делает, 005 С-1); снос старого детектора — после контура замены (51 стр / 5 файлов, 0 тестов — 301); сырье subScore/noiseScore ОСТАВИТЬ (yin-detect.ts:139-152 — 005 С-4); кандидаты VIS-16/17 (VMix/transpose toggle) — рядом",
+          "mark": "backlog"
         }
       ],
       "mods": [
@@ -612,6 +695,10 @@
       "loc": 790,
       "files": 2,
       "t30": 0,
+      "churn90": 0,
+      "hotspot": 0,
+      "hot": false,
+      "birth": 2026,
       "route": "karaoke",
       "what": "Зал караоке: режим жив (KaraokeLyricsBoard рендерится, App.tsx:233), вне фокуса миграции — VMO-021..023. src/Karaoke = резерв под переезд (301 Q2).",
       "gives": [
@@ -648,6 +735,10 @@
       "loc": 122,
       "files": 1,
       "t30": 0,
+      "churn90": 0,
+      "hotspot": 0,
+      "hot": false,
+      "birth": 2026,
       "route": "concert",
       "what": "Большая сцена: режим жив через KaraokeLyricsBoard (App.tsx:233), вне фокуса миграции. src/Concert = резерв под переезд (301 Q2).",
       "gives": [
@@ -683,6 +774,10 @@
       "loc": 66,
       "files": 2,
       "t30": 0,
+      "churn90": 0,
+      "hotspot": 0,
+      "hot": false,
+      "birth": 2026,
       "route": "live",
       "what": "Прямой эфир: субтитры в кадре, пульт эфира.",
       "gives": [
@@ -697,6 +792,10 @@
         {
           "n": "Субтитры",
           "d": "src/components/LiveSubtitle.tsx — 24 loc"
+        },
+        {
+          "n": "LIVE-кнопка [alive]",
+          "d": "index.html:233 → mode-switch.service activateLive (setBodyMode+volume-preset, К-11); liveMode-объект был фантомом (0 писателей) — снесён D-2 03.09"
         }
       ],
       "mods": [
@@ -716,9 +815,13 @@
       "gy": 9,
       "w": 1,
       "d": 1,
-      "loc": 1064,
+      "loc": 1080,
       "files": 8,
       "t30": 1,
+      "churn90": 36,
+      "hotspot": 389,
+      "hot": false,
+      "birth": 2026,
       "route": "rehearsal",
       "what": "Видео-мост двух машин: сессия Педагог-Студент. Черновик — SPLIT (301 §4).",
       "gives": [
@@ -736,7 +839,7 @@
         },
         {
           "n": "Триггер-мост",
-          "d": "src/Rehearsal/bridge/rehearsal-trigger.bridge.ts (17× window.audioEngine — BAC-105-кластер, вход ARC-2e)"
+          "d": "src/Rehearsal/bridge/rehearsal-trigger.bridge.ts (живой: main.tsx:803 + deep-link:91; liveMode-фантом в notification/mode-switch снесён D-2; фасад = единый контракт)"
         },
         {
           "n": "Сессия",
