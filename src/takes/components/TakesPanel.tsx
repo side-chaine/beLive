@@ -534,10 +534,7 @@ export const TakesPanel: React.FC = () => {
       return;
     }
     
-    // Lazy decode from blob URL (skipDecode optimization)
-    ae?.ensureInstrumentalBuffer?.()?.then((buf: AudioBuffer | null) => {
-      if (!cancelled && buf) setInstrumentalBuffer(buf);
-    });
+    // G-5: facade member retired; instrumental decode = V3 pipeline territory (см. MICRO-PACK-G5 §1-8)
     
     return () => { cancelled = true; };
   }, [duration]);

@@ -267,7 +267,7 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
         }
       }
 
-      _mark('Step 9b: AudioEngine.loadTrack (progressive)');
+      _mark('Step 9b: facade no-op (V3 loads via interceptor)');
 
       const numAdditional = Object.keys(additionalStems).length;
       await ae.loadTrack(
@@ -276,7 +276,7 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
         numAdditional > 0 ? additionalStems : undefined,
         { progressive: true, stemsEnabled }
       );
-      _mark('Step 10: AudioEngine.loadTrack complete (progressive)');
+      _mark('Step 10: facade step complete (no-op; V3 pipeline continues async)');
 
     } else {
       // ════════════════════════════════════════════════
@@ -307,7 +307,7 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
         }
       }
 
-      _mark('Step 9b: AudioEngine.loadTrack (non-progressive)');
+      _mark('Step 9b: facade no-op (V3 loads via interceptor)');
 
       const numAdditional = Object.keys(additionalStems).length;
       await ae.loadTrack(
@@ -316,7 +316,7 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
         numAdditional > 0 ? additionalStems : undefined,
         { progressive: false, stemsEnabled }
       );
-      _mark('Step 10: AudioEngine.loadTrack complete (non-progressive)');
+      _mark('Step 10: facade step complete (no-op; V3 pipeline continues async)');
     }
 
     // Step 11a: markers AFTER audio loaded
