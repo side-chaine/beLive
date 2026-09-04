@@ -278,6 +278,27 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 
 
 
+## LOG 2026-09-05 01:55 · **007** — 🚀 KIMI WEBBRIDGE ПОДНЯТ И РАБОТАЕТ: 007 водит живой Chrome Никиты через мост (опроверг вердикт 006 «нужен Kimi Desktop, водитель — чужой») · адрес beLive = `localhost:3001/beLive/` (3000 умер вместе со старым dev-сервером)
+
+**Модель: 007 = GLM 5.3 Free · Linux/WSL · заказ Никиты: «у меня же есть Kimi WebBridge, 006 пробовал — не получилось, пробуй ты!»**
+
+**Контекст:** 006 в 01:24 вердиктировал «мост не поднять без Kimi Desktop App, водитель — агент Kimi». Я пошёл первоисточниками (официальный FAQ kimi.ai/help/kimi-webbridge) и нашёл то, что 006 не дочитал: **«WebBridge supports all Local Agents, including Claude Code, Codex, Cursor, Kimi Code, and more» + установка одним curl на любой Linux/WSL** — без Kimi Desktop.
+
+**Что сделано (каждый шаг проверен живой командой):**
+
+1. ✅ **Установка:** прочитал глазами `https://cdn.kimi.com/webbridge/install.sh` (чистый скрипт: бинарник в `~/.kimi-webbridge/`, демон, скиллы) → запустил → демон поднялся на порту 10086, **расширение из Chrome Никиты подключилось само** (status: `extension_connected:true, extension_id fldmhcel…, v2.0.5`). Скиллы в рантаймы не встали («no supported AI-agent runtime detected» — opencode не в списке детекции), это не блокер: протокол прост.
+2. ✅ **Протокол добыт из тарбалла** `cdn.kimi.com/webbridge/latest/skills/kimi-webbridge.tar.gz` → SKILL.md: 12 команд (`navigate/click/fill/snapshot/screenshot/evaluate/cdp/network/upload/save_as_pdf/list_tabs/close_session`), формат `POST http://127.0.0.1:10086/command` с JSON `{"action","args","session"}`. **Скилл скопирован в мост: `agent-browser/webbridge-skill/` (SKILL.md + operations.md) — 006/Cline читает и пользуется.**
+3. ✅ **ЖИВОЙ ПРОГОН ПОДТВЕРДИЛ:** `navigate` открыл **видимую вкладку в Chrome Никиты** (группа «007 · проба WebBridge», tabId 690395289) → `snapshot` прочитал DOM → «Welcome to beLIVE» → `screenshot` сохранил кадр (`agent-browser/webbridge-probe-01.jpg`, 33KB). Никита видел всё на экране справа — экзамен «хочу видеть твою работу» сдан.
+4. 🔧 **КРИТИЧЕСКАЯ ПРАВКА АДРЕСА:** dev-сервер жив на **3001**, НЕ 3000 (3000 умер; vite слушает `0.0.0.0:3001`). Исправлено: `shot.mjs` + PROBE-006-док → `localhost:3001/beLive/` везде. Кто пойдёт на 3000 — получит «Страница не найдена» (я и получил, прогоном в живом браузере).
+5. ⚪ **Для 006-Cline (новый путь, проще Playwright MCP):** мост уже стоит в WSL — 006 не нужен Kimi Desktop: команды те же curl-POST на `127.0.0.1:10086` (из pwsh — через файл-тело, `curl.exe`, НЕ bare curl; скилл §Windows в `webbridge-skill/SKILL.md`). Playwright MCP (добавлен мной ранее) остаётся запасным колесом.
+6. ⚪ Правило часов/сессий моста: одна задача = одна `session` = одна группа вкладок; `close_session` — только по слову Никиты.
+
+**Итог для фронта:** браузерный фронт 006 (пробы ПР-1…ПР-5) теперь движим без VS Code-акробатики: 006 шлёт curl в мост → вкладки видны Никите в его Chrome. Адрес: `http://localhost:3001/beLive/`. GLM 5.3 Free скрины не читает — верификация картинок за 006 (MiMo-глаза).
+
+— 007 · Linux/WSL · 05.09 01:55 · мост поднят, вкладка открыта, Никита всё видел 🚂🌉
+
+---
+
 ## LOG 2026-09-05 00:40 · **007** — 🔧 НАСТРОЙКА 006-Cline ЗАВЕРШЕНА: filesystem-MCP видит beLIve_Designs (петля чтения лечится) + Playwright MCP добавлен (видимый Chrome headed) + shot.mjs headless:false + порт 3002→3000/beLive/ + опечатки belive→beLive в PROBE-доке
 
 **Модель: 007 = GLM 5.3 Free · Linux · исполнение заказа Никиты (~00:15) «помоги настроить 006 в Cline — VS Code слева, браузер справа, хочу видеть его работу».**
@@ -305,7 +326,9 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 
 **Модель: GLM 5.3 Flash · Cline/VS Code · Windows · pwsh 7.6.5 · 00:27 по машине.** Никита показал экран (слева VS Code+Cline, справа Chrome — «я хочу чтобы ты использовал браузер справа, а ты слева… хочу видеть всё, что ты делаешь»). В отчёте, всё проверено живыми командами: (1) среда — pwsh 7.6.5, node v24.19.0, **ffmpeg 9.0.1 УЖЕ в PATH** (старая заметка «не в PATH» устарела); (2) MCP-конфиг 4 сервера жив, точный путь settings зафиксирован, рестарт — за Никитой; (3) **петля «6×read_files» объяснена**: `beLIve_Designs` лежит в `OneDrive\Desktop\` ВНЕ корней filesystem-MCP → лечение: добавить корень + рестарт MCP + правило анти-петли; (4) **браузер**: нативного инструмента нет; цех уже в мосту — `agent-browser\shot.mjs` (puppeteer-core 25.10, node v24.19), но `headless:true` = Никита не видит; три решения, ключевое — **Playwright MCP** с видимым окном (готовый JSON в отчёте); фото Д-КЕЙСА 1 найдено: `Downloads\2026-08-31_11-07-52.png`; порт 3000 vs 3002 — сверить при прогоне. Бэкап реестра перед правкой: `.bak-006-prompt-report`.
 
-— 006 · Windows · 00:27 · по своим задачам стою в «остановись», этот отчёт = ответ на прямой заказ Никиты 🎭
+**⚡ ДОПОЛНЕНО 01:24 (заказ Никиты «проверь плагин Kimi»):** плагин в его Chrome = **Kimi WebBridge v2.0.5** (Moonshot AI, ID `fldmhceldgbpfpkbgopacenieobmligc`, 100k юзеров) — НЕ сайдбар-ассистент, а **настоящий мост для AI-агентов**: локальный сервис + CDP (Chrome DevTools Protocol) — агент открывает страницы, кликает, заполняет формы в живом видимом Chrome. НО: мост сейчас НЕ поднят (порт 10086 молчит, процессов kimi нет), а официальный водитель — агент Kimi (нужен Kimi Desktop App); MCP-хвоста для Cline у него нет. Вердикт: подходит по архитектуре, но для 006 проще и роднее прямая дорога — Chrome с `--remote-debugging-port=9222` + Playwright MCP/`puppeteer.connect` (§13 отчёта). Kimi остаётся Никите для его собственных браузерных задач.
+
+— 006 · Windows · 01:24 · Kimi-плагин: «архитектура — наша, водитель — чужой» 🎭
 
 ---
 
