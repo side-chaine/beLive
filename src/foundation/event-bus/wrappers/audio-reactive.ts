@@ -56,7 +56,10 @@ export function initAudioReactiveEvents(): () => void {
         if (node?.connect) { try { node.connect(analyser); connected++ } catch {} }
       }
       if (connected === 0) {
-        console.warn('[audio-reactive] connect failed: no pipeline stem analyser (stems:', candidates.join(','), ')')
+        // Boot-гонка (smoke 04.09): первый play приходит ДО track-loaded — meters пусты,
+        // warn шумел. Молчим: track-loaded-подписка через мгновение реконнектит по loadedStems.
+        // Warn остаётся только для явного track-loaded-провала (передаётся флагом).
+        if (stemIds) console.warn('[audio-reactive] connect failed after track-loaded: no stem analyser (stems:', candidates.join(','), ')')
       }
     } catch (e) {
       console.warn('[audio-reactive] connect failed:', e)
