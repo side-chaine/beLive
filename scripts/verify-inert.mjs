@@ -59,6 +59,9 @@ for (const [member, kind] of inert) {
   const al = ALLOW.find((a) => a.member === member);
   const callers = live.get(member) ?? [];
   if (al && callers.length === 0) { console.log(`  ⚪ ${member}: intentional (${al.reason}, until ${al.until})`); continue; }
+  // G-5-fix (007): allowlist-член с живыми вызовами = honest-contract (loadTrack: V2-fallback
+  // деградации, вызовы маркированы). Пустота осознана => intentional, вызовы перечислены для наблюдателя.
+  if (al && callers.length > 0) { console.log(`  ⚪ ${member}: intentional-contract (${al.reason}, until ${al.until}) — ${callers.length} live marked call(s): ${callers.join(', ')}`); continue; }
   if (callers.length) console.log(`  🔴🔴 ${member} (${kind}): ${callers.length} LIVE CALL(S) INTO VOID -> ${callers.join(', ')}`);
   else console.log(`  🔴 ${member} (${kind}): inert, not in allowlist`);
 }
