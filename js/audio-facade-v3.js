@@ -94,7 +94,6 @@
         p?.setStemVolume?.(id, v);
       } catch {}
     },
-    setStemsEnabled() {},
     setStemMute(id, m) {
       try {
         const p = window.__belive && window.__belive.pipeline;
@@ -107,7 +106,6 @@
         p?.soloStem?.(id, s);
       } catch {}
     },
-    setStemPan() {}, setStemsMode() {},
     getStemMeterLevel(id) {
       try {
         const p = window.__belive && window.__belive.pipeline;
@@ -149,10 +147,6 @@
         })();
       });
     },
-    enableMicrophone() { return Promise.resolve({ enabled: false, volume: 0 }); }, disableMicrophone() {},
-    // V2-bus концепт: V3 vmix-тапы подключены постоянно (main.tsx) — toggle-API нет.
-    // Осознанное отсечение (ARC-2e): UI-ложь TakesPanel reference-listen задокументирована.
-    enableVocalMix() {}, disableVocalMix() {},
     setPlaybackRate(r) {
       try {
         const t = window.__belive && window.__belive.transport;
@@ -178,9 +172,6 @@
         r?.attachProgramSource?.(node, opts);
       } catch {}
     },
-    // MonitorRouter — static graph «0 disconnect»: detach-метода НЕТ by design.
-    // Stopped source молчит — зомби-нода безвредна. Honest debt, ARC-2e.
-    detachProgramSource() {},
     // P1 (program-capture): вернуть program-capture bus из MonitorRouter (FR-008).
     // captureStream — MediaStreamAudioDestinationNode; .stream — программный аудиопоток (music+vocals).
     getProgramCaptureStream() {
@@ -189,7 +180,6 @@
         return (r && r.captureStream && r.captureStream.stream) ? r.captureStream.stream : null;
       } catch { return null; }
     },
-    ensureInstrumentalBuffer() { return Promise.resolve(null); },
     // ARC-2d (У-5): true при живом transport (контракт IV2PublicContract: boolean).
     // Edge «стемы + idle»: loop-events V2-ветка глушит rAF-fallback при applied=true.
     setLoop(s, e) {

@@ -194,18 +194,10 @@ describe('ARC-2d: audio-facade-v3 contract (transport routing)', () => {
     expect(monitorRouter.attachProgramSource).toHaveBeenCalledWith(gain, { kind: 'preview' })
   })
 
-  it('21. инертность пустышек: loadTrack → resolved; enable/disableVocalMix, setStemsEnabled, setStemPan, setStemsMode, detachProgramSource — тихий вызов; ensureInstrumentalBuffer → resolved', async () => {
-    mockBelive()
-    await expect(ae().loadTrack()).resolves.toBeUndefined()
-    expect(() => {
-      ae().enableVocalMix()
-      ae().disableVocalMix()
-      ae().setStemsEnabled()
-      ae().setStemPan()
-      ae().setStemsMode()
-      ae().detachProgramSource()
-    }).not.toThrow()
-    await expect(ae().ensureInstrumentalBuffer()).resolves.toBe(null)
+  it('21. пустышек нет: retired members отсутствуют на объекте (G-5)', () => {
+    for (const m of ['enableVocalMix','disableVocalMix','setStemsEnabled','setStemPan','setStemsMode','detachProgramSource','disableMicrophone','ensureInstrumentalBuffer']) {
+      expect(ae()[m]).toBeUndefined()
+    }
   })
 
   it('21b. setMicrophoneVolume живой: маршрутизирует в monitorRouter.setMicVolume (006 D-0c-fix)', () => {

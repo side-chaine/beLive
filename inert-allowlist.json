@@ -1,1 +1,1 @@
-{"version": 1, "note": "Intentional inert facade members — G-5 warn. Each entry: member/reason/until (same dict as D-4 hold-list).", "members": []}
+{"version": 1, "note": "Intentional inert facade members — G-5 warn. Each entry: member/reason/until (same dict as D-4 hold-list).", "members": [{"member": "loadTrack", "reason": "V2-fallback contract: resolves no-op while V3 interceptor loads; markers honest since step-3", "until": "V2-fallback removal decision"}]}
