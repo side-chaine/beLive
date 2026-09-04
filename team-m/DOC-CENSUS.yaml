@@ -26,7 +26,7 @@ counters:
     team_m: 341
     root: 69
   private_untracked:
-    docs: 90          # Д-15 Опуса подтверждён: 254 - 164; зоны .gitignore (archive/sync/agents-hub)
+    docs: 90  # было до миграции; после vault/-миграции: docs-зоны пусты, всё под vault/ (04.09)          # Д-15 Опуса подтверждён: 254 - 164; зоны .gitignore (archive/sync/agents-hub)
     note: "R-2-блокер Д-16: git mv в history/ снимает ignore-правило — развилка А/Б/В у Никиты"
 
 orphanage:
@@ -52,315 +52,315 @@ orphanage:
 
 # ── CENSUS-ЗАПИСИ (R-1, 007: парный дедлайн истёк — состав живой на 04.09 21:5x, дрейф от CEO_1-замера 69 → фактический)
 records:
-  - path: "docs/agents-hub/001-CONTEXT-MASTER.md"
+  - path: "vault/agents-hub/001-CONTEXT-MASTER.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents-hub/01-CONTEXT-SUMMARY.md"
+  - path: "vault/agents-hub/01-CONTEXT-SUMMARY.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents-hub/02-TASK-240-OFFLINE-CLOSURE.md"
+  - path: "vault/agents-hub/02-TASK-240-OFFLINE-CLOSURE.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents-hub/03-ROUND-001-SONNET-PROMPT-242.md"
+  - path: "vault/agents-hub/03-ROUND-001-SONNET-PROMPT-242.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents-hub/04-EVIDENCE-INDEX.md"
+  - path: "vault/agents-hub/04-EVIDENCE-INDEX.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents-hub/05-ROUND1-VERIFIED-DRIFT-TABLE.md"
+  - path: "vault/agents-hub/05-ROUND1-VERIFIED-DRIFT-TABLE.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents-hub/06-ROUND-2-SOL-MANDATE-242.md"
+  - path: "vault/agents-hub/06-ROUND-2-SOL-MANDATE-242.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents-hub/07-ROUND2-VERIFIED-LAW.md"
+  - path: "vault/agents-hub/07-ROUND2-VERIFIED-LAW.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents-hub/08-ROUND-3-MANDATE-243.md"
+  - path: "vault/agents-hub/08-ROUND-3-MANDATE-243.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents-hub/09-ROUND3-VERIFIED-DECISION.md"
+  - path: "vault/agents-hub/09-ROUND3-VERIFIED-DECISION.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents-hub/245-CONTEXT-MASTER-001.md"
+  - path: "vault/agents-hub/245-CONTEXT-MASTER-001.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents-hub/AGENTS-sonnet-briefs/SONNET-ANSWERS-5-RESPONSE.md"
+  - path: "vault/agents-hub/AGENTS-sonnet-briefs/SONNET-ANSWERS-5-RESPONSE.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents-hub/AGENTS-sonnet-briefs/TO-1.3-SONNET-BRIEFING.md"
+  - path: "vault/agents-hub/AGENTS-sonnet-briefs/TO-1.3-SONNET-BRIEFING.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents-hub/AGENTS-sonnet-briefs/TO-1.4-SONNET-PROMPT.md"
+  - path: "vault/agents-hub/AGENTS-sonnet-briefs/TO-1.4-SONNET-PROMPT.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents-hub/README.md"
+  - path: "vault/agents-hub/README.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents-hub/REZUME-001-PO-VOZOBNOVLENIY.md"
+  - path: "vault/agents-hub/REZUME-001-PO-VOZOBNOVLENIY.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents-hub/_OLD/02-TASK-235-FORENSIC.md"
+  - path: "vault/agents-hub/_OLD/02-TASK-235-FORENSIC.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents/AUDIT.md"
+  - path: "vault/agents/AUDIT.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents/MATRIX.md"
+  - path: "vault/agents/MATRIX.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents/MODEL-CATALOG.md"
+  - path: "vault/agents/MODEL-CATALOG.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents/MODEL-ROUTING-GUIDE.md"
+  - path: "vault/agents/MODEL-ROUTING-GUIDE.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents/PROTOCOL.md"
+  - path: "vault/agents/PROTOCOL.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents/README.md"
+  - path: "vault/agents/README.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/agents/REGISTRY.md"
+  - path: "vault/agents/REGISTRY.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/archive/superseded/02-PROGRAM-ROADMAP.md"
-    state: HISTORY
-    visibility: public
-    measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/archive/superseded/architecture-map-2.2.md"
+  - path: "history/02-PROGRAM-ROADMAP.md"
     state: HISTORY
     visibility: public
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/archive/superseded/interaction-schema-2.2.md"
+  - path: "history/architecture-map-2.2.md"
     state: HISTORY
     visibility: public
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/archive/superseded/product-protocol-v2.1.md"
+  - path: "history/interaction-schema-2.2.md"
     state: HISTORY
     visibility: public
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/archive/superseded/scenario-stage-state-model.md"
+  - path: "history/product-protocol-v2.1.md"
     state: HISTORY
     visibility: public
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/DOC-SYNC-FINAL-REPORT.md"
+  - path: "history/scenario-stage-state-model.md"
+    state: HISTORY
+    visibility: public
+    measured_at: "2026-09-04 21:55 +0300"
+  - path: "vault/sync/DOC-SYNC-FINAL-REPORT.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/DOC-TC-BACKLOG.yaml"
+  - path: "vault/sync/DOC-TC-BACKLOG.yaml"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/MASTER-SYNC-REGISTRY.md"
+  - path: "vault/sync/MASTER-SYNC-REGISTRY.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/MASTER-SYNC-REGISTRY.yaml"
+  - path: "vault/sync/MASTER-SYNC-REGISTRY.yaml"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/DOC-HYGIENE-01.md"
+  - path: "vault/sync/reports/DOC-HYGIENE-01.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-01.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-01.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-02-FRESH.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-02-FRESH.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-03-FRESH.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-03-FRESH.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-04.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-04.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-05-FRESH.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-05-FRESH.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-06-FRESH.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-06-FRESH.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-07.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-07.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-08.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-08.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-09.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-09.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-10-FRESH.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-10-FRESH.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-11.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-11.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-12.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-12.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-13.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-13.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-14.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-14.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-15-FRESH.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-15-FRESH.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-16.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-16.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-17.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-17.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-18.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-18.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-19-FRESH.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-19-FRESH.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-20.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-20.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-21.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-21.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-22.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-22.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-23.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-23.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-24.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-24.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-25.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-25.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-26.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-26.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-27.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-27.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-ARCH-28.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-ARCH-28.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-CANON-01.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-CANON-01.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-CANON-02.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-CANON-02.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-CANON-03.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-CANON-03.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-CANON-04.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-CANON-04.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-CANON-05.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-CANON-05.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-VERIFY-01.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-VERIFY-01.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-VERIFY-02.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-VERIFY-02.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-VERIFY-03.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-VERIFY-03.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-VERIFY-04-FINAL.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-VERIFY-04-FINAL.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/SYNC-VERIFY-05.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/SYNC-VERIFY-05.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/TC-ARCH-06.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/TC-ARCH-06.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/TC-ARCH-09.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/TC-ARCH-09.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/TC-ARCH-16.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/TC-ARCH-16.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/TC-ARCH-26.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/TC-ARCH-26.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/SYNC-REPORTS/TC-ARCH-27.md"
+  - path: "vault/sync/reports/SYNC-REPORTS/TC-ARCH-27.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
-  - path: "docs/sync/reports/TCOV-01.md"
+  - path: "vault/sync/reports/TCOV-01.md"
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"

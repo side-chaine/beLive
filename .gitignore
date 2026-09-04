@@ -60,6 +60,7 @@ docs/architecture/.DS_Store
 ~/
 
 # Internal docs — not for public
+vault/
 docs/archive/
 docs/ARCH-BASE.md
 docs/protocol-v2.1.md

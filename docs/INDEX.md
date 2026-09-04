@@ -1,8 +1,8 @@
 # 📚 beLive Documentation Index
 
 > **Last updated:** 2026-08-31
-> ⚠️ **SOURCE OF TRUTH for doc sync status:** `docs/sync/MASTER-SYNC-REGISTRY.yaml`
-> **Human-readable registry:** `docs/sync/MASTER-SYNC-REGISTRY.md`
+> ⚠️ **SOURCE OF TRUTH for doc sync status:** `vault/sync/MASTER-SYNC-REGISTRY.yaml` (приватная зона, agents-only; миграция vault/ 04.09)
+> **Human-readable registry:** `vault/sync/MASTER-SYNC-REGISTRY.md` (приватная зона)
 
 ## 🏛️ Architecture (docs/architecture/)
 
