@@ -1,0 +1,50 @@
+# DOC-CENSUS · R-1.0 · 2026-09-04 11:20 (время машины) · измерено 007 по спеке MICRO-PACK-DOCS-REFORM v1.1
+# ПРАВИЛО СКОУПОВ (Д-1 Опуса): любая цифра публикуется с пометкой on-disk ИЛИ tracked —
+# расхождение между колонками = два законных измерения, НЕ ошибка.
+# Приёмка CEO_1 (18:45/17:56): оба счётчика внутри файла, размер > 0, цифры различны и со скоупом,
+# сиротство пересчитано в публичном срезе (101 из v1.0 НЕ переносить как факт).
+
+meta:
+  head: "6c0fbde"
+  measured_at: "2026-09-04 11:20 +0300"
+  measured_by: "007 (GLM 5.3, Linux) — R-1.0 исполнил сам: фронт пары 003 стоял, перепись остаётся паре"
+  method:
+    on_disk: "find . -name '*.md' -not -path './node_modules/*' -not -path './.git/*' | wc -l"
+    tracked: "git ls-files '*.md' | wc -l"
+    private: "on-disk minus tracked в зоне (gitignore: docs/archive :63, docs/sync :66, docs/agents-hub :81 — Д-15)"
+    orphan: "tracked docs/ файл с нулём входящих упоминаний basename из других tracked docs/ (публичный срез)"
+
+counters:
+  on_disk:
+    total: 796
+    docs: 254
+    team_m: 362
+    root: 5
+  tracked:
+    total: 574
+    docs: 164
+    team_m: 341
+    root: 69
+  private_untracked:
+    docs: 90          # Д-15 Опуса подтверждён: 254 - 164; зоны .gitignore (archive/sync/agents-hub)
+    note: "R-2-блокер Д-16: git mv в history/ снимает ignore-правило — развилка А/Б/В у Никиты"
+
+orphanage:
+  public_slice_orphans: 62
+  basis: "tracked docs/ (164 файла), входящие ссылки по basename из других tracked docs/"
+  v1_0_101_not_carried: true   # 101 из v1.0 НЕ перенесена как факт (требование CEO_1 18:45)
+  first_ten:
+    - docs/BELIVEBASE-CHARTER.md
+    - docs/HISTORY-MAP-V2-V3-MIGRATION.md
+    - docs/PLAN-v3.3-CANONICAL.md
+    - docs/SCOUT-REPORT-gateway-audio-deps.md
+    - docs/SONNET-REPORT-13-DUO-STRATEGY.md
+    - docs/TC-094-095-BATCH-REPORT.md
+    - docs/architecture/LATENCY-REGISTRY.md
+    - docs/architecture/avatar-visual-engine.md
+    - docs/architecture/character-layer.md
+    - docs/architecture/lrc-parser-service.md
+  note: "CHARTER/PLAN в списке сирот = их имена пишут без basename-ссылок из docs/ — референс-точки из team-m/ не входят в публичный срез; перепись 003 решит, сирота это или якорь (учёт INDEX.md ведётся отдельно)"
+
+# Дрейф от замера Опуса 03.09 (767/546): рост дерева за 2 дня (реестр-блоки, паки, отчёты) —
+# законный дрейф, скоуп-правило соблюдено; приёмка по свойству (не по числу), база для R-1 переписи.
