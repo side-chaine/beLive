@@ -337,7 +337,7 @@ This shows:
 ### 6.9 Secondary surfaces
 Then read:
 - `src/hooks/useBackgroundManagers.ts`
-- `src/bridges/live-guard.ts`
+- ~~`src/bridges/live-guard.ts`~~ (снесён Волной D-2 03.09; гейты живости G-1/G-2/G-4 — охрана)
 - `src/foundation/event-bus/wrappers/monitor-events.ts` (замена monitor.bridge; Волна C снесла оригинал)
 - `src/stores/recording.store.ts`
 - `src/takes/takes.store.ts`
