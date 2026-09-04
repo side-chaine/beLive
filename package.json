@@ -23,7 +23,9 @@
     "verify:parity": "npx tsx scripts/verify-bridge-parity.ts",
     "verify:ci": "npm run verify:events && npm run verify:parity",
     "verify:refs": "node scripts/verify-refs.mjs",
-    "verify:reach": "node scripts/verify-reach.mjs"
+    "verify:reach": "node scripts/verify-reach.mjs",
+    "probe:bundle": "node scripts/probe-bundle.mjs",
+    "verify:docvis": "node scripts/verify-doc-visibility.mjs"
   },
   "repository": {
     "type": "git",
