@@ -233,7 +233,6 @@ const StemsToggle: React.FC<StemsToggleProps> = ({ menuItemStyle, accentColor, o
       // Если стемы играли — выключить воспроизведение
       if (st.stemsEnabled) {
         st.setStemsEnabled(false);
-        ae?.setStemsEnabled?.(false);
         ae?.setStemVolume?.('instrumental', 1);
         st.setStemVolume('instrumental', 1);
 

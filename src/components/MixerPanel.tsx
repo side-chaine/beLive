@@ -154,7 +154,6 @@ export function MixerPanel() {
 
     // 1. Toggle stemsEnabled
     st.setStemsEnabled(newEnabled);
-    ae?.setStemsEnabled?.(newEnabled);
 
     // 2. Persist stemsEnabled to IDB
     const tc = (window as any).trackCatalog;
@@ -185,7 +184,6 @@ export function MixerPanel() {
           // Fallback: вернуть instrumental + сбросить stemsEnabled
           ae?.setStemVolume?.('instrumental', 1);
           st.setStemsEnabled(false);
-          ae?.setStemsEnabled?.(false);
           return;
         } finally {
           useStemStore.getState().setStemsLoading(false);

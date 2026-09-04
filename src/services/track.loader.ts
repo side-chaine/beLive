@@ -231,7 +231,6 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
       stemsEnabled = true;
       st.setStemsEnabled(true);
       st.setStemsMode(true);
-      ae?.setStemsEnabled?.(true);
     }
 
     const shouldLoadStems = st.stemsMode || stemsEnabled;

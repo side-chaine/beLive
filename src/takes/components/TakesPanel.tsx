@@ -1005,15 +1005,16 @@ export const TakesPanel: React.FC = () => {
 
     const ae = (window as any).audioEngine;
     if (!ae) return;
+    const router = (window as any).__belive?.monitorRouter;
 
     // Apply V-Mix based on listenSource
     if (currentExerciseStep.listenSource === 'reference') {
       // Reference listen: ensure V-Mix is OFF
-      ae.disableVocalMix?.();
+      router?.setVMix(false);
       useAudioStore.setState({ vocalMixEnabled: false });
     } else if (currentExerciseStep.listenSource === 'previous-take') {
       // Previous-take preview: ensure V-Mix is ON
-      ae.enableVocalMix?.();
+      router?.setVMix(true);
       useAudioStore.setState({ vocalMixEnabled: true });
     }
   }, [activeExercise, phase, currentExerciseStep]);
@@ -1027,12 +1028,13 @@ export const TakesPanel: React.FC = () => {
 
     const ae = (window as any).audioEngine;
     if (!ae) return;
+    const router = (window as any).__belive?.monitorRouter;
 
     // Restore engine V-Mix from saved value
     if (savedVmixEnabled) {
-      ae.enableVocalMix?.();
+      router?.setVMix(true);
     } else {
-      ae.disableVocalMix?.();
+      router?.setVMix(false);
     }
 
     // Mirror to audio store

@@ -985,7 +985,7 @@ async function executeSwitchMode(
 async function executeToggleVocalMix(
   args: Record<string, unknown>
 ): Promise<ToolCallResult> {
-  const ae = (window as any).audioEngine;
+  const router = (window as any).__belive?.monitorRouter;
   const audioStore = useAudioStore.getState();
 
   let targetEnabled: boolean;
@@ -996,9 +996,9 @@ async function executeToggleVocalMix(
   }
 
   if (targetEnabled) {
-    ae?.enableVocalMix?.();
+    router?.setVMix(true);
   } else {
-    ae?.disableVocalMix?.();
+    router?.setVMix(false);
   }
 
   // Mirror store

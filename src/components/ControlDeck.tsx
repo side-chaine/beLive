@@ -365,8 +365,8 @@ export function ControlDeck() {
                   // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
                   return;
                 }
-                if (vocalMixEnabled) ae.disableVocalMix();
-                else ae.enableVocalMix();
+                if (vocalMixEnabled) router?.setVMix(false);
+                else router?.setVMix(true);
               }}
               style={{
                 background: vocalMixEnabled ? 'rgba(255, 140, 0, 0.25)' : 'transparent',

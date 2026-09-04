@@ -126,11 +126,11 @@ function restoreSnapshot(snapshot: PracticeSnapshot): void {
   // 3. Restore vocal mix
   if (snapshot.vocalMixEnabled !== undefined) {
     audioState.setVocalMixEnabled(snapshot.vocalMixEnabled);
-    const ae = (window as any).audioEngine;
+    const router = (window as any).__belive?.monitorRouter;
     if (snapshot.vocalMixEnabled) {
-      ae?.enableVocalMix?.();
+      router?.setVMix(true);
     } else {
-      ae?.disableVocalMix?.();
+      router?.setVMix(false);
     }
   }
 
