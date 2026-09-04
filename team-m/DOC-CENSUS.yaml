@@ -364,3 +364,905 @@ records:
     state: HISTORY
     visibility: private
     measured_at: "2026-09-04 21:55 +0300"
+
+# ── R-1.1 SCAN (003_2-сканер scripts/doc-census-scan.py, head 2f9e19f): 174 public docs; UNCLEAR 19→0 (007-разметка по содержимому)
+
+  - path: "docs/007-SPEC-STATUS.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+    note: "статус-спека агента"
+
+  - path: "docs/AUDIO-BEHAVIOR-SPEC.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+    note: "аудио-контракт"
+
+  - path: "docs/BELIVEBASE-CHARTER.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/BILI-CONTEXT.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+    note: "контекст Билли"
+
+  - path: "docs/HISTORY-MAP-V2-V3-MIGRATION.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/INDEX.md"
+    state: REFERENCE
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+    note: "генерённый индекс"
+
+  - path: "docs/MAC-PC-BRIDGE-SPEC.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/MACRO-PACK-DUO-PHASE1.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/PLAN-v3.3-CANONICAL.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/SCOUT-REPORT-gateway-audio-deps.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/SONNET-REPORT-13-DUO-STRATEGY.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/STRATEGY-V3-DUO-FIRST.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/SYNC-PROTOCOL.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/SYSTEM-REPORT-V007.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/TC-094-095-BATCH-REPORT.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/LATENCY-REGISTRY.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/README.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/architecture-doctrine.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/architecture-map-2.1.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/audio-engine.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/auth-system.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/avatar-visual-engine.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/billi-ai-expert-system.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/block-first-lyrics-sync.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/block-scenes-editor.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/central-bridge.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/character-layer.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/control-surface-semantics.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/dock-standard.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/eventbus-v2.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/exercises-system.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/feed-social-v2.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/frozen-zones-v2.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/init-registry.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/interaction-schema-2.1.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/lrc-parser-service.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/marker-system-spec.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/metrics-system.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/monitor-mix-v2.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/n-stem-architecture.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/performance-quality-system.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/practice-experience-layer.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/reactive-lyrics-foundation.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/show-architecture.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/slot-matrix-system-v2.2.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/styles-system.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/sync-system.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/takes-system.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/track-loading-pipeline.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/track-meta-pipeline.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/transport-v3.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/w11-visual-boot-theming.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/architecture/zip-pipeline.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/audit/00-INDEX.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/audit/04-REQUEST-ALPHA-REPORT.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/audit/04-SECRETS.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/audit/06-MVSEP-REMEDIATION.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/audit/07-SECRETS-FULL-SWEEP.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/auth-system-freeze.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/auto-lyrics/CONTINUOUS-TESTING-REGISTRY.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/auto-lyrics/MASTER-ARCHITECTURE.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/auto-lyrics/METHODOLOGY.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/auto-lyrics/ONBOARDING-PATH.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/auto-lyrics/OPEN-ITEMS.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/character-ai/RESEARCH-REPORT.md"
+    state: REFERENCE
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/domain/feed.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/glossary-owner.md"
+    state: REFERENCE
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+    note: "глоссарий"
+
+  - path: "docs/governance/GOVERNANCE-FINAL-FREEZE-01.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/governance/GOVERNANCE-VALIDATION-REPORT-01.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/governance/agent-governance-map.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/guides/Onboarding Route 2.1.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/00-ALERT.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/00-BASE-DIAGNOSIS.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/00-INDEX.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/00-ROADMAP.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/01-ANSWERS-TO-007.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/01-BASELINE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/02-ANSWERS-TO-007.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/03-CITY-AUDIT-BRIEF.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/03-bLb-BRIEFING.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/04-bLb-BRIEFING.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/05-INITIATIVES-LEDGER.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/06-GPT-REFS.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/06-VISUAL-MAP-TO-bLb.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/07-INITIATIVES-SUMMARY.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/08-PITCH-COUNTERCHECK.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/09-BLB17-RETRACTED-SYNCED-CHECK.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/10-TSC-RECONCILE-296.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/11-REGISTRY-REPLY.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/ADR-0001-legacy-isolation-project-references.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/ADR-0002-worklet-realm-extraction.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/ADR-0003-typed-global-contracts.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/ADR-0004-v2-legacy-removal-sequence.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/ADR-0005-toolchain-upgrade-path.md"
+    state: REFERENCE
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+    note: "ADR"
+
+  - path: "docs/modernization/ADR-0006-state-architecture.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/ADR-0007-observability-and-console-policy.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/ADR-0008-csp-and-security-baseline.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/ADR-0009-testing-strategy.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/ADR-0010-dev-environment-and-node-modules-integrity.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/ADR-0011-git-and-doc-visibility-policy.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/ADR-0012-dependency-manifest-policy.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/ADR-0013-ci-gate-architecture.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/ADR-0014-monorepo-layout.md"
+    state: REFERENCE
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+    note: "ADR"
+
+  - path: "docs/modernization/ADR-0015-frozen-zone-policy.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/ADR-0016-w2-entry-criterion-and-deadlock.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/MISSION-ZERO-REPO-SCAN.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/REGISTRY.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/SRI-PATCH.md"
+    state: REFERENCE
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+    note: "патч-записка"
+
+  - path: "docs/modernization/findings/FINDING-001-v2-resurrection-detector-silent-noop.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/findings/FINDING-002-audioworklet-realm-typing.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/modernization/handoff/00-README-007.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/archive/HANDOFF-FOR-NEW-SONNET.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/archive/NEW-SONNET-MEGA-PACK.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/context/013-HANDOFF-NEW-ARCHITECT.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/context/014-MICRO-PACK-SPIKE-SIGNALSMITH.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+    note: "operations-эра"
+
+  - path: "docs/operations/context/SOUNDTOUCHJS-FULL/GPT-DEEP-RESEARCH.md"
+    state: REFERENCE
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/INDEX.md"
+    state: REFERENCE
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-20/419-MICRO-PACK-TAKES-V3-TIME.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-20/420-REPORT-C3-TAKES-V3-TIME.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-20/421-REPORT-C3-TAKES-PREROLL-COUNTDOWN.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-20/422-MICRO-PACK-TAKES-PREROLL-FIX.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-20/423-REPORT-C3-TAKES-PREROLL-FIX.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-20/424-MICRO-PACK-C24-PARITY-TEARDOWN-PRACTICE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-20/424-REPORT-C3-MICRO-PLUS-PRACTICE-GATE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-20/425-G0-DRAFT.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-20/425-MICRO-PACK-C25-SOLO-RESTORE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-20/426-FORENSIC-SOLO-INDICATOR.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-20/427-MICRO-PACK-A-SINGLE-WRITER-GAIN.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-20/427-REPORT-C27-SINGLE-WRITER-GAIN.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-20/428-MICRO-PACK-B-INDICATOR-BRIDGE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/428-REPORT-C28-INDICATOR-BRIDGE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/429-REPORT-C28-RETEST-R1PROOF.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/430-REPORT-BUNDLE3-NUMBERS-TAKES-DEAD.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/431-MICRO-PACK-F1-MIC-SOURCE-V3.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/431-REPORT-C29-F1-MIC-SOURCE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/432-MICRO-PACK-F15-WAVEFORM-DECODE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/432-REPORT-C30-F15-WAVEFORM-DECODE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/433-MICRO-PACK-F16-COMMIT-ON-INTERRUPT.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/433-REPORT-C31-F16-COMMIT-ON-INTERRUPT.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/434-MICRO-PACK-F17-TAKE-AUDIO-CTX.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/434-REPORT-C32-F17-FULL-TAKE-SAGA.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/435-MICRO-PACK-N1-TRACE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/436-MICRO-PACK-F18-TAKE-PLAYBACK-GEN-FIX.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/436-REPORT-C33-F18-TAKE-AUDIO-ROOTCAUSE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/437-REPORT-C33-BROKEN-FIX-TAKE-SILENCE-ROOTCAUSE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/438-MICRO-PACK-C-PLUS-TRACE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/439-REPORT-N1-RETEST-ROOTCAUSE-UI-READINESS-AUTOADVANCE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/440-MICRO-PACK-N2-ISREADY-SUBSCRIPTION.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/441-MICRO-PACK-TASK-009-TAKE-HIGHLIGHT.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/442-MICRO-PACK-№17-NO-AUTOADVANCE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-21/443-FULL-REPORT-Ц3.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/444-REPORT-№17-CORRECTION-008VISION-Ц3.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/445-MICRO-PACK-№17-B2.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/446-REPORT-№17B2-DONE-A1-ANSWER-Ц3.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/447-MICRO-PACK-№17-C-BLOCK-PIN.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/448-REPORT-№17-ROOTCAUSE-17C-APPLIED-Ц3.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/449-MICRO-PACK-№17-TRACE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/450-MICRO-PACK-PSTRAVEL-DIGITS.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/451-MICRO-PACK-№17-D-HONEST-CLOCK.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/452-REPORT-№17-ROOTCAUSE-CLOCKDRIFT-Ц3.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/453-MICRO-PACK-№17-F-PIN-RELEASE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/454-CORRECTION-№17-FINAL-Ц3.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/455-MICRO-PACK-№17-G-CHIPS-STICK.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/456-MICRO-PACK-№17-H-SUBBLOCK.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/457-MICRO-PACK-№17-E-PUBLISHSEEK-PROPOSAL.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/458-MICRO-PACK-№17-I-PIN-NO-AUTORELEASE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/459-MICRO-PACK-№17-J-LYRICS-HOLD.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/460-MICRO-PACK-№17-K-VIEW-HOLD.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/461-MICRO-PACK-TASK012-INSTRUMENTATION.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/462-MICRO-PACK-№18-BUS-FADER.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-22/463-MICRO-PACK-TASK014-MIC-TOGGLE.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-23/464-MICRO-PACK-TASK014B-MONITOR-AWAKEN.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-23/464b-MICRO-PACK-TASK014C-LOCAL-TAP.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/operations/packs/era-08-23/465-MICRO-PACK-TASK015-VMIX.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/sessions/2026-06-14-evening.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/team-m-setup-prompt.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/team-m-sync-proposal.md"
+    state: HISTORY
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
+  - path: "docs/telegram/bot-catalog-integration.md"
+    state: LIVING
+    visibility: public
+    scanned_at: "2026-09-05 00:35"
+
