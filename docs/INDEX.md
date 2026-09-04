@@ -1,83 +1,16 @@
-# 📚 beLive Documentation Index
+# beLive — Index of docs (R-3, generated)
 
-> **Last updated:** 2026-08-31
-> ⚠️ **SOURCE OF TRUTH for doc sync status:** `vault/sync/MASTER-SYNC-REGISTRY.yaml` (приватная зона, agents-only; миграция vault/ 04.09)
-> **Human-readable registry:** `vault/sync/MASTER-SYNC-REGISTRY.md` (приватная зона)
+> Сгенерировано скриптом `scripts/gen-doc-index.mjs` из `team-m/DOC-CENSUS.yaml` (census = единственный источник; правки индекса руками запрещены — правь census).
+> Публичных LIVING: 0 · публичных HISTORY: 5 · приватных (vault/, agents-only): 73.
 
-## 🏛️ Architecture (docs/architecture/)
+## LIVING (public)
 
-| Document | Description |
-|----------|-------------|
-| [architecture-map-2.1](architecture/architecture-map-2.1.md) | Master architecture map — ownership, invariants, seams ✅ v2.2 Complete |
-| [audio-engine](architecture/audio-engine.md) | V2 frozen-хвост + V3 transport + stems |
-| [eventbus-v2](architecture/eventbus-v2.md) | EventBus v2 — типиз. шина, 6 каналов |
-| [frozen-zones-v2](architecture/frozen-zones-v2.md) | Frozen Zones v2 — карта неприкасаемых |
-| [feed-social-v2](architecture/feed-social-v2.md) | Social Layer v2 — Wave 2 |
-| [transport-v3](architecture/transport-v3.md) | Transport V3 — синглтон, 5 состояний |
-| [auth-system](architecture/auth-system.md) | Google OAuth, Guest Mode, JWT |
-| [billi-ai-expert-system](architecture/billi-ai-expert-system.md) | AI Expert System + Billy v2 FSM |
-| [block-first-lyrics-sync](architecture/block-first-lyrics-sync.md) | Block-first sync algorithm |
-| [block-scenes-editor](architecture/block-scenes-editor.md) | Block scenes editor |
-| [control-surface-semantics](architecture/control-surface-semantics.md) | Control surface contracts |
-| [dock-standard](architecture/dock-standard.md) | Dock/ControlDeck standard |
-| [exercises-system](architecture/exercises-system.md) | Exercise quest layer + recipes |
-| [interaction-schema-2.1](architecture/interaction-schema-2.1.md) | Runtime interaction topology ✅ v2.2 Complete |
-| [marker-system-spec](architecture/marker-system-spec.md) | M1/M2 marker system |
-| [monitor-mix-v2](architecture/monitor-mix-v2.md) | Monitor mix architecture |
-| [n-stem-architecture](architecture/n-stem-architecture.md) | N-stem loading + bus architecture |
-| [performance-quality-system](architecture/performance-quality-system.md) | Performance tiers + budgets |
-| [practice-experience-layer](architecture/practice-experience-layer.md) | Practice surface architecture |
-| [reactive-lyrics-foundation](architecture/reactive-lyrics-foundation.md) | Trigger/scheduler/word FX |
-| [scenario-stage-state-model](archive/superseded/scenario-stage-state-model.md) | Scenario state machine 🗄️ STALE |
-| [show-architecture](architecture/show-architecture.md) | Show architecture ✅ v2.2 Sub-Slide |
-| [styles-system](architecture/styles-system.md) | Style intent + recipes |
-| [sync-system](architecture/sync-system.md) | Two-layer sync architecture |
-| [takes-system](architecture/takes-system.md) | Takes recording + comparison |
-| [track-loading-pipeline](architecture/track-loading-pipeline.md) | Track loading pipeline |
-| [track-meta-pipeline](architecture/track-meta-pipeline.md) | Track metadata pipeline |
-| [w11-visual-boot-theming](architecture/w11-visual-boot-theming.md) | Visual boot + cover theming |
-| [zip-pipeline](architecture/zip-pipeline.md) | ZIP export/import roundtrip |
-| [feed](domain/feed.md) | Social Feed — posts, likes, comments, moderation | TC-108 |
+## HISTORY (public lineage — надгробия читаются в файлах)
+- [history/02-PROGRAM-ROADMAP.md](history/02-PROGRAM-ROADMAP.md)
+- [history/architecture-map-2.2.md](history/architecture-map-2.2.md)
+- [history/interaction-schema-2.2.md](history/interaction-schema-2.2.md)
+- [history/product-protocol-v2.1.md](history/product-protocol-v2.1.md)
+- [history/scenario-stage-state-model.md](history/scenario-stage-state-model.md)
 
-> **Superseded:** `architecture-map-2.2.md` (merged) · `interaction-schema-2.2.md` (merged) | See `docs/architecture/`
-
-## 📖 Guides
-
-| Document | Description |
-|----------|-------------|
-| [Onboarding Route 2.1](guides/Onboarding%20Route%202.1.md) | New specialist entry path |
-
-## 📊 Sync & Governance
-
-| Document | Description |
-|----------|-------------|
-| [MASTER-SYNC-REGISTRY.yaml](sync/MASTER-SYNC-REGISTRY.yaml) | **SOURCE OF TRUTH** — doc sync status, 28 docs |
-| [MASTER-SYNC-REGISTRY.md](sync/MASTER-SYNC-REGISTRY.md) | Human-readable registry view |
-| [DOC-TC-BACKLOG.yaml](sync/DOC-TC-BACKLOG.yaml) | Open documentation tasks backlog |
-| [DOMAIN-OWNERSHIP.yaml](governance/DOMAIN-OWNERSHIP.yaml) | Domain owner/keeper table |
-| [DOC-SYNC-FINAL-REPORT.md](sync/DOC-SYNC-FINAL-REPORT.md) | Full transformation report |
-| [BILI-CONTEXT.md](BILI-CONTEXT.md) | Product Manager context |
-| [auth-system-freeze.md](auth-system-freeze.md) | Auth system snapshot (historical) |
-| [protocol-v2.1.md](protocol-v2.1.md) | Agent protocol (canonical in Belive-Agents/) |
-
-## 📋 Связанное (вне docs/)
-
-| Ресурс | Путь | Описание |
-|--------|------|----------|
-| Agent charters | `~/Desktop/Belive-Agents/` | 007, 009, Operator, protocol, bootstrap |
-| Agent state | `~/Desktop/beLive_Context/` | 000-FULL-BASE.md, MACRO/MICRO packs |
-| Governance | `docs/governance/agent-governance-map.md` | Agent governance map |
-
-## 🤝 Mac↔PC Coordination (live, 2026-08-25+)
-
-| Ресурс | Путь | Описание |
-|--------|------|----------|
-| **SHARED REGISTRY** | `team-m/REGISTRY.md` | Живой реестр координации Hub↔Mac: ownership matrix, status, open Q, handshake log |
-| Hub→Mac handshake | `team-m/archive/SYNC-HUB-TO-MAC-2026-08-25.md` | Старт взаимодействия, запрос ack Mac-007 |
-| INBOX (live claims) | `team-m/INBOX.md` | Канал заявок по правилу shared-файлов |
-
-> Hub = 007_Винда (PC). Mac-007 = зеркалит процесс, receives packets от Hub. PC-версия «что в HEAD» основная при расхождении (sshfs Mac падал 2×).
-
----
-
-*INDEX — навигационный файл. Для статуса синхронизации см. MASTER-SYNC-REGISTRY.yaml.*
+## Приватная зона (vault/ — agents-only, не публикуется)
+Статус приватных доков: `vault/` под .gitignore; перечислены в census (счёт 73), в публичном индексе не разглашаются.

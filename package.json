@@ -26,7 +26,8 @@
     "verify:reach": "node scripts/verify-reach.mjs",
     "probe:bundle": "node scripts/probe-bundle.mjs",
     "verify:docvis": "node scripts/verify-doc-visibility.mjs",
-    "verify:inert": "node scripts/verify-inert.mjs"
+    "verify:inert": "node scripts/verify-inert.mjs",
+    "gen:docindex": "node scripts/gen-doc-index.mjs"
   },
   "repository": {
     "type": "git",
