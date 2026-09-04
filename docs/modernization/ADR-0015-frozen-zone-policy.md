@@ -1,6 +1,6 @@
 # ADR-0015 · Политика FROZEN-зон: заморозка защищает содержимое, но не блокирует прогресс
 
-> ⚠️ АКТУАЛИЗАЦИЯ (31.08): живой носитель frozen-карты — `docs/architecture/frozen-zones-v2.md` (2 зоны с 01.09: AudioEngineV2 + live-guard; `src/bridges/*` — снесены Волной C (graveyard-15; live-guard жив); track.orchestrator (patchV1 удалён Волной A — OVERRIDE Никиты; SHA в истории)). Механизм .frozen-zones.json/check-frozen.mjs из этого ADR не внедрён (glob пуст; судьба — 🔴). Инлайн-список ниже — исторический срез W1 (одна зона на тот момент).
+> 🔓 Носитель эпохи замка — упразднён 03.09; механизм из этого ADR не внедрялся, охрана = ливнесс-гейты G-1/G-2/G-4 (`verify:reach=121`, `verify:ci`). Инлайн-список ниже — исторический срез W1 (одна зона на тот момент).
 
 **Статус:** proposed · **Дата:** 2026-08-29 · **Волна:** W1
 **Связано:** [ADR-0001](./ADR-0001-legacy-isolation-project-references.md), [ADR-0004](./ADR-0004-v2-legacy-removal-sequence.md), [01-BASELINE §3](./01-BASELINE.md)

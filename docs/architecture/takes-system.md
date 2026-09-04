@@ -191,7 +191,7 @@ All exercise recipes classified into three categories for learner surface visibi
 | Binary assets             | `takes.assets.ts`                        | blobs, buffers, peaks, URLs outside Zustand |
 | Mic capture               | `takes.recorder.ts`                      | MediaRecorder + analyser tap                |
 | Lifecycle cleanup         | `takes.store.ts + takes.duck.ts`                        | track change / playback stop / DOM attrs    |
-| Transport authority       | `AudioEngineV2`                          | frozen, not owned by Takes                  |
+| Transport authority       | V3 (фасад + engine-v3)                  | V2-ядро снесено Волной D-1 03.09            |
 | Mic stream authority      | `MicrophoneManager` via engine           | raw stream source                           |
 | Block timing truth        | blocks + markers + `getBlockTimeRange()` | reused utility path                         |
 | Exercise execution lock   | `isExerciseExecutionLocked()` helper     | unified guard across all surfaces           |
@@ -233,7 +233,7 @@ Takes does **not** own:
 
 | File                                  | Why it matters                             |
 | ------------------------------------- | ------------------------------------------ |
-| `src/audio/core/AudioEngineV2.ts`     | V3 transport (фасад), stem loading, volumes (frozen V2 — до M5) |
+| `src/audio/core/AudioEngineV2.ts`     | V3 transport (фасад), stem loading, volumes (V2-ядро снесено Волной D-1 03.09 (M5-пункт исполнен сноском)) |
 | `src/audio/compat/patchV1.ts`         | public getters on `window.audioEngine`     |
 | `src/audio/core/MicrophoneManager.ts` | raw mic stream                             |
 | `src/utils/block-time-range.ts`       | canonical block → time mapping             |
@@ -870,7 +870,7 @@ During recording, the user sees their waveform being written behind the playhead
 - Compare and live recording are separate concerns
 - Green is reserved for future match/proximity semantics
 - Playhead remains separate DOM layer
-- Transport = V3-слой (W6-финиш); frozen V2 — до M5
+- Transport = V3-слой (W6-финиш); V2-ядро снесено Волной D-1 03.09 (M5-пункт исполнен сноском)
 - Target hardware = MacBook Pro 2013 (performance gate)
 - **Exercise execution lock blocks all interference surfaces during listening/pre-recording/recording**
 - **Host residency mutations forbidden during active exercise execution**

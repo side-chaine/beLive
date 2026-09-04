@@ -52,7 +52,7 @@ Bridges continue to work unchanged.
 
 ## Frozen Zones
 
-> Операционный канон — `frozen-manifest.json` (verify:frozen, 2/2 (guard)) + док-SSOT `frozen-zones-v2.md`; списки ниже — срез на дату.
+> Канон эпохи замка — упразднён (03.09, D-3); охрана = ливнесс-гейты G-1/G-2/G-4 (`verify:reach=121`, `verify:ci`).
 
 ZERO TOUCH:
 - src/audio/core/AudioEngineV2.ts ❄️

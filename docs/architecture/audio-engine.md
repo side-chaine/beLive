@@ -245,7 +245,7 @@ These are historical hypotheses, now resolved.
 
 beLive uses a hybrid audio runtime.
 
-The early boot object is still created by legacy `js/audio-engine.js` (удалён, Волна A), but the live transport runtime is owned by `AudioEngineV2` after React boot patches the existing `window.audioEngine` object in place.
+The early boot object is still created by legacy `js/audio-engine.js` (удалён, Волна A), but the live transport runtime is owned by `AudioEngineV2` (снесён Волной D-1 03.09) after React boot patches the existing `window.audioEngine` object in place.
 
 This means:
 
@@ -430,7 +430,7 @@ This is a separate loop UX path from TrackMap loop.
 
 ### Transport authority
 
-**Confirmed transport authority: `AudioEngineV2`**
+**Confirmed transport authority: `AudioEngineV2` (снесён Волной D-1 03.09)**
 
 Key methods:
 - `loadTrack` — `AudioEngineV2.ts:63-147`
@@ -840,7 +840,7 @@ Confirmed in engine:
 
 ### Confirmed architectural boundaries
 
-- transport authority = `AudioEngineV2`
+- transport authority = `AudioEngineV2` (снесён Волной D-1 03.09)
 - TrackMap loop owner = `loop.store + loop.bridge` (loop.bridge снесён Волной C; замена — loop-events.ts)
 - Sync Editor loop owner = `WaveformCanvas` local state + direct engine calls
 - current UI stores are mirrors / consumers, not transport owners
@@ -1064,7 +1064,7 @@ src/audio/engine-v3/           # 30 prod .ts/.tsx · 4914 LOC
 
 ### Frozen now
 - preserve stub identity
-- transport authority in `AudioEngineV2`
+- transport authority in `AudioEngineV2` (снесён Волной D-1 03.09)
 - engine-backed TrackMap loop
 - store-driven TrackMap loop ownership
 - WagonTrain rebind-on-click loop contract

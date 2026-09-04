@@ -82,4 +82,4 @@ src/audio/engine-v3/           # 30 prod .ts/.tsx · 4914 LOC (+10 тест-фа
 |------|:------:|
 | `src/audio/engine-v3/*` | ✅ НЕ frozen |
 | `src/audio/core/AudioEngineV2.ts` | ❄️ FROZEN — V2Adapter только читает |
-| `src/audio/compat/patchV1.ts` | 🗑️ удалён 01.09, Волна A (мёртвый экспорт; памятник — frozen-manifest.json история) |
+| `src/audio/compat/patchV1.ts` | 🗑️ удалён 01.09, Волна A (мёртвый экспорт; памятник — git-история (замок упразднён 03.09)) |

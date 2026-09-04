@@ -59,10 +59,10 @@ bLb · ГЕНПЛАН — вид сверху
 
 | Район (режим) | Кварталы (= 22 домена ownership) | Что внутри (здания = пакеты/файлы) |
 |---|---|---|
-| **CONCERT** | (нет своего домена) | `audio-engine`, `monitor`, `live-guard` |
+| **CONCERT** | (нет своего домена) | `audio-engine`, `monitor`, `live-guard` (live-guard — снесён Волной D-2 03.09 (замок упразднён D-3)) |
 | **KARAOKE** | (нет своего) | `lyrics.store`, `WordHighlightLine` + bridge `lyrics.bridge.ts` |
 | **REHEARSAL** | `takes`, `exercises`, `practice`, `quest` | `TakesPanel`, `ExercisesSystem`, `Scenarios`, `Markers` |
-| **LIVE** | `show`, `control-surface` | `ShowArchitecture`, `LiveSubtitle`, `live-guard` |
+| **LIVE** | `show`, `control-surface` | `ShowArchitecture`, `LiveSubtitle`, `live-guard` (live-guard — снесён Волной D-2 03.09 (замок упразднён D-3)) |
 | **CATALOG** | (нет своего) | `CatalogLayout`, `track.orchestrator`, `idb.service` |
 | **STUDIO** (нижняя панель) | `styles`, `dock`, `theme` | `StylesPanel`, `DockStandard`, `Themes`, `VisualBoard` |
 | **CORE INFRA** | 15 кварталов | ядро репозитория |
@@ -116,7 +116,7 @@ bLb · ГЕНПЛАН — вид сверху
 Из `architecture-map-2.1.md` §20 — это законы, ломать нельзя:
 
 - **I-1.** `window.audioEngine`, `window.lyricsDisplay`, `window.markerManager`... — глобалы продолжают жить. Их патчат, не убивают.
-- **I-2.** Транспорт — V3-слой (W6-финиш); frozen V2 — до M5. Сторы и бриджи могут зеркалить, не исполнять.
+- **I-2.** Транспорт — V3-слой (W6-финиш); V2-ядро снесено Волной D-1 03.09 (M5-пункт исполнен сноском). Сторы и бриджи могут зеркалить, не исполнять.
 - **I-3.** Маркеры = канонический backbone для активной строки. Word sync — добавка, не замена.
 - **I-4.** Слой бриджей — постоянная архитектура, не временная миграция.
 - **I-5.** Performance policy ортогональна остальному.

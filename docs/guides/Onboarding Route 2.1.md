@@ -218,7 +218,7 @@ Then read:
 - `js/audio-engine.js`
 - `src/audio/featureFlag.ts`
 - `src/audio/compat/patchV1.ts`
-- `src/audio/core/AudioEngineV2.ts`
+- `src/audio/core/AudioEngineV2.ts` (снесён Волной D-1 03.09; живой транспорт — `js/audio-facade-v3.js`)
 
 #### Why
 This shows:
@@ -413,7 +413,7 @@ If you have only 30 minutes, do this:
 - `src/main.tsx`
 - `src/App.tsx`
 - `src/audio/compat/patchV1.ts`
-- `src/audio/core/AudioEngineV2.ts`
+- `src/audio/core/AudioEngineV2.ts` (снесён Волной D-1 03.09; живой транспорт — `js/audio-facade-v3.js`)
 - `src/services/track.orchestrator.ts`
 
 ### Goal
