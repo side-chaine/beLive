@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// beLiveBase city-gen v3: houses.yaml (v0.3: здание=режим, этаж=файл) -> city-state.json + инъекция CITY/TOUR
+// beLiveBase city-gen v3.2: houses.yaml (v0.3: здание=режим, этаж=файл; v0.3.2: метки этажей) -> city-state.json + инъекция CITY/TOUR
 // Запуск на ПК (есть node): node team-m/bLb/city-gen.mjs
 // Если рядом есть city-metrics.json (даёт city-metrics.mjs) — перекрывает loc/files/t30 из yaml.
 // Без внешних зависимостей: парсер yaml минимальный, под формат houses.yaml v0.3 (совместим с v0.2 rooms).
@@ -172,7 +172,7 @@ for (const h of parsed.houses) {
   const key = h.key || h.id;
   const g = parseGrid(h.grid);
   const m = parseMetrics(h.metrics);
-  const pc = pcMetrics[key];
+  const pc = pcMetrics[key] || {};
   const b = {
     id: key,
     name: h.quarter || key,
@@ -181,16 +181,28 @@ for (const h of parsed.houses) {
     arch: h.arch || 'lab',
     st: h.status || 'alive',
     ...(g || { gx: 0, gy: 0, w: 1, d: 1 }),
-    loc: pc ? pc.loc : (m ? m.loc : 0),
-    files: pc ? pc.files : (m ? m.files : 0),
-    t30: pc ? pc.t30 : (m ? m.t30 : -1),
+    loc: 'loc' in pc ? pc.loc : (m ? m.loc : 0),
+    files: 'files' in pc ? pc.files : (m ? m.files : 0),
+    t30: 't30' in pc ? pc.t30 : (m ? m.t30 : -1),
+    // З-6 слой 2: перегретые цеха (hotspot = churn90×loc/100, модель Tornhill)
+    churn90: pc.churn90 != null ? pc.churn90 : null,
+    hotspot: pc.hotspot != null ? pc.hotspot : null,
+    hot: pc.hot === true,
+    // З-6 слой 1: история города (birth = год первого коммита старейшего файла)
+    birth: pc.birth != null ? pc.birth : null,
     route: h.route || null,
     what: h.what || '',
     gives: Array.isArray(h.gives) ? h.gives : [],
     // v0.3: этаж = файл (floors); rooms — legacy-псевдоним v0.2
+    // v0.3.2: метки этажей [dark-code]/[dark-doc]/[shelved]/[backlog] — парсится из названия
     rooms: (Array.isArray(h.floors) && h.floors.length ? h.floors : (Array.isArray(h.rooms) ? h.rooms : [])).map(r => {
-      const i = String(r).indexOf('|');
-      return i === -1 ? { n: String(r), d: '' } : { n: r.slice(0, i), d: r.slice(i + 1) };
+      const raw = String(r);
+      const mark = raw.match(/\[(dark-code|dark-doc|shelved|backlog)\]/i);
+      const clean = raw.replace(/\s*\[(dark-code|dark-doc|shelved|backlog)\]/i, '').trim();
+      const i = clean.indexOf('|');
+      const room = i === -1 ? { n: clean, d: '' } : { n: clean.slice(0, i), d: clean.slice(i + 1) };
+      if (mark) room.mark = mark[1].toLowerCase();
+      return room;
     }),
     mods: Array.isArray(h.modules) ? h.modules : [],
     owner: h.owner || 'center/007'
@@ -227,6 +239,9 @@ for (const b of buildings) {
   if (b.t30 === -1) warnings.push(`${b.id}: t30 не посчитан — ПК: node team-m/bLb/city-metrics.mjs`);
   if (b.st === 'planned' && (b.loc > 0 || b.files > 0))
     warnings.push(`${b.id}: planned, но loc/files > 0 — проверь статус (режим заявлен, файлы есть)`);
+  // З-6: перегретый цех — ранний сигнал для 001/002 (рефактор-цели по данным)
+  if (b.hot) warnings.push(`${b.id}: 🔥 ПЕРЕГРЕТЫЙ ЦЕХ — hotspot=${b.hotspot}, churn90=${b.churn90} (порог: hotspot>1000 И churn90>50) — рефактор-кандидат, телеметрия bLb`);
+  if (b.birth && b.birth < 2025) warnings.push(`${b.id}: старожил с ${b.birth} — слой «история города» (паттерн Gource)`);
 }
 for (const m of metro) {
   if (!buildingIds.has(m.from) && !infraNodes.has(m.from)) errors.push(`metro ${m.id}: from=${m.from} нет среди зданий`);

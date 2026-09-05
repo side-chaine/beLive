@@ -135,7 +135,7 @@ houses:
     gives: ["Сценарии номеров на выбор", "Картина меняется за клик"]
     floors:
       - "Сцены|src/components/Show — 8 файлов, 2193 loc"
-      - "Сценарии [cleared]|src/services/show.html.ts + show.image.ts — не существуют (verify-reach 121; removed_by CEO_1-audit 04.09), этаж-фантом из v0.3"
+      - "Сценарии [renamed]|src/services/show.html.service.ts + show.image.service.ts — живы (переименование из show.html.ts/show.image.ts, не снос; 4 импортёра: StepWorkspace.tsx:8,13 · PresenterDock.tsx:4,5)"
 
   - id: B04
     key: split
