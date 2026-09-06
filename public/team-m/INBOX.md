@@ -1,6 +1,6 @@
 # Mac Team — INBOX (авто, не редактировать вручную)
 
-_Обновлено: 2026-08-28T08:24:02Z_
+_Обновлено: 2026-08-29T12:00:00Z_
 
 | agent | task | status | updated |
 |--------|------|--------|---------|
@@ -65,5 +65,7 @@ _Обновлено: 2026-08-28T08:24:02Z_
 | mac-007 | ack-h-letter-d4-verified | — |  |
 | mac-007 | proposal-coachpanel-body | — |  |
 | mac-007 | MICRO-PACK-E1-PREDICATE-draft | — |  |
+| mac-007 | security-audit-pivot | GO | 2026-08-29 |
+| mac-007 | city-description | GO | 2026-08-29 |
 
-_Всего отчётов: 61
+_Всего отчётов: 63
