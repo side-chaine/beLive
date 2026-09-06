@@ -4,7 +4,7 @@
 // Usage: node scripts/verify-reach.mjs
 // Parses index.html <script src> tags + src/main.tsx as roots.
 // BFS import/from graph (line-based, .ts/.tsx/.js/.mjs, no node_modules).
-// Mode: warn, exit 0 always.
+// Mode: fail (D-4), exit 1 on violations; hold-list = scripts/reach-holdlist.json
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { existsSync } from 'node:fs';
@@ -127,12 +127,35 @@ const H1_RE = [
 const excludedCount = unreachable.filter(f => H1_RE.some(re => re.test(f))).length; // A-12: «исключено: N»
 const reduced = unreachable.filter(f => !H1_RE.some(re => re.test(f)));
 
-if (reduced.length === 0) {
-  console.log('verify-reach: all src/ files reachable');
-} else {
-  console.log(`verify-reach: ${reduced.length} unreachable src/ file(s):`);
-  console.log(`  excluded (H-1 tests): ${excludedCount}`);
-  for (const f of reduced.sort()) {
-    console.log(`  ${relative(root, f)}`);
-  }
+// ── Block 5 · v0.4 (D-4 flip): hold-list split + fail + PULSE tail ──
+// 5a Load (try/catch; дедуп Set — ㊵)
+let holdList;
+try {
+  holdList = JSON.parse(readFileSync(join(root, 'scripts', 'reach-holdlist.json'), 'utf8'));
+} catch (e) {
+  console.error(`holdlist: format break: ${e.message}`);
+  process.exit(1);
 }
+const members = [...new Set(holdList.members.map((m) => m.member))];
+const toPosix = (p) => relative(root, p).split(/[\\/]/).join('/');   // ㊳ win32-совместимая нормализация
+const memberSet = new Set(members);
+
+// 5b Split (нормализация posix при сравнении)
+const hold = reduced.filter((f) => memberSet.has(toPosix(f)));
+const violations = reduced.filter((f) => !memberSet.has(toPosix(f)));
+const reducedPosix = new Set(reduced.map(toPosix));
+const stale = members.filter((m) => !reducedPosix.has(m));
+
+// 5c Печать (probe-bundle-совместимо: `  <posix-path>`; агрегация class из листа, НЕ хардкод — 002-патч 3)
+const classCount = new Map();
+for (const rec of holdList.members) classCount.set(rec.class, (classCount.get(rec.class) ?? 0) + 1);
+const agg = [...classCount.entries()].map(([c, n]) => `${n} ${c}`).join(' · ');
+console.log(`verify-reach: ${violations.length} violations · hold: ${hold.length} (${agg}) · excluded (H-1 tests): ${excludedCount} · stale: ${stale.length}`);
+for (const f of violations.sort()) console.log(`  ${toPosix(f)}`);
+for (const f of hold.sort()) console.log(`  ${toPosix(f)}`);
+
+// 5d PULSE-хвост (N-12 ed3ab7f, латиницей — всегда последняя строка, и при 0, и при exit 1)
+console.log('PULSE · 6 gates = repo heartbeat');
+
+// 5e Exit (stale — печать, не fail; violations>0 → exit 1)
+process.exit(violations.length > 0 ? 1 : 0);
