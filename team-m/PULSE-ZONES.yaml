@@ -4,12 +4,23 @@
 
 meta:
   system: ПУЛЬС (PULSE)          # N-12 DECISIONS.md, Никита 06.09
-  canon-line: "ПУЛЬС: 6 гейтов · violations=N · zones-active=N"   # 007 вшивает в CI-вывод
+  canon-line: "ПУЛЬС: 6 гейтов · violations=N · zones-active=N"   # 007 вшил в CI-вывод
   patrol-rule: "смены по диспатчу 007 (opencode run, без TUI); НЕ стоящие процессы — RAM-урок 05.09"
   prod-code: "только Оператор через цепь; патруль мониторит + предлагает"
-  report: "LOG-блок «🛡 патруль [зона]» в SHARED-REGISTRY.md + цифры зоны + предложение недели"
+  report: "LOG-блок «🛡 [зона] agent-X» в SHARED-REGISTRY.md"
+  formula: "ФОРМУЛА НИКИТЫ для инструмент-агентов: ① погружение (скан проекта → скауты → своя зона) → ② доклад «ПОГРУЖЕНИЕ» → ③ СТОП: план развития рассказывает Никита → ④ работа по плану с прогонами 001→005→002→001→009"
+  zone-chain: "001 → 005 (лучшее ли решение? либы/прецеденты) → 002 (стресс) → 001 (ревизия) → 009 (верификация) — цепочка зонных прогонов (канон Никиты 06.09)"
 
 zones:
+  - id: B01-HUB
+    name: Репетиция — ГЛАВНЫЙ ХАБ (флагман)
+    agent: agent-rehearsal
+    status: pilot            # главный агент зоны; дизайн нового Репетиции = 007_2 в песочнице (отказ от нижнего ДОК)
+    paths: [src/App.tsx, src/components/RehearsalLyrics*, src/components/KaraokeLyricsBoard*, src/components/WagonTrain*, src/components/TransportBar*, src/components/ControlDeck.tsx (текущий ДОК — уходим от него)]
+    focus: "хаб-координация инструментов зоны · PIXEL-DELTA 006 (мост «как есть»→«как будет») · GPT-контракт 3-колоночности · баг таймера · стыки с агентами Studio/Quest/Show/Pitch/Split"
+    team: "B01-mixer(Studio) · B02(Quest) · B03(Show) · B06(Pitch) · B04(Split) — у каждого СВОЙ агент; хаб координирует стыки, не лезет в их зоны"
+    forbidden: "песочница 007_2 (её мир) · выдумывание плана развития (ждёт Никиту) · frozen-зоны"
+
   - id: B09
     name: Порт Каталог
     agent: agent-port
@@ -30,9 +41,9 @@ zones:
     name: Phone (горизонталь)
     agent: agent-phone-audit
     status: audit            # аудит-фаза → потом патруль responsive-слоя
-    paths: [src/**/*.css, src/hooks/*resize*, src/hooks/*media*]   # горизонталь по всем зонам
-    focus: "аудит: где уже есть @media (7 файлов) · что ломается 768/1024px · touch (pointer:coarse) · useResizeColumns/matchMedia"
-    rule: "горизонтальный слой: власть ТОЛЬКО над responsive-слоем (breakpoints/@media/touch), бизнес-логику зон не трогает"
+    paths: [src/**/*.css, src/hooks/*resize*, src/hooks/*media*]
+    focus: "аудит: @media-карта (7 файлов) · вердикты 768/390px · touch (pointer:coarse) · приговор 3-колоночному GPT-контракту на 390px"
+    rule: "горизонтальный слой: власть ТОЛЬКО над responsive-слоем, бизнес-логику зон не трогает"
     forbidden: "бизнес-логика вертикальных зон · прод-код без Оператора"
 
   - id: B01-screen
@@ -44,43 +55,43 @@ zones:
     forbidden: "микшер-этаж (у него свой агент) · frozen-зоны"
 
   - id: B01-mixer
-    name: Завод · этаж Studio (микшер)
-    agent: agent-studio-mixer
-    status: wave1
+    name: Studio — отдельная СРЕДА для проработки
+    agent: agent-studio
+    status: wave1             # формула: погружение → доклад → план Никиты
     paths: [src/components/MixerPanel*, src/stores/stem*, src/audio/engine-v3/pipeline/**]
-    focus: "MixerPanel · стемы · шины BusFader18 · solo/mute/V-Mix · эффективные гейны"
-    forbidden: "AudioEngineV2/patchV1/bridges (frozen-legacy, только чтение)"
+    focus: "MixerPanel · стемы · шины BusFader18 · solo/mute/V-Mix · план развития — от Никиты после доклада"
+    forbidden: "выдумывать план · frozen-зоны (AudioEngineV2/patchV1/bridges/orchestrator — чтение только)"
 
   - id: B02
-    name: Академия Quest
+    name: Quest — отдельная разработка
     agent: agent-quest
     status: wave1
-    paths: [src/deck/**(quest), src/takes/**]
-    focus: "тейки · квесты практики · сценарии (practice-scenarios) · кокпит Quest (находка 006)"
+    paths: [src/takes/**, src/practice/practice-scenarios.ts]
+    focus: "тейки · сценарии · кокпит 006 · план — от Никиты после доклада"
     forbidden: "чужие зоны · прод-код без Оператора"
 
   - id: B03
-    name: Театр Show
+    name: Show — отдельная разработка
     agent: agent-show
-    status: wave2
+    status: wave2             # формула: погружение → доклад → план Никиты
     paths: [src/components/Show/**, src/services/show*]
-    focus: "show.html/show.image сервисы ([renamed]-кейс 301) · сцены показа"
+    focus: "show-сервисы ([renamed]-кейс 301) · сцены · план — от Никиты"
     forbidden: "снос без двойного подтверждения · чужие зоны"
 
   - id: B06
     name: Pitch (бывш. Notes) — ОТДЕЛЬНАЯ разработка
     agent: agent-pitch
-    status: wave2             # переименование Notes→Pitch: [renamed], не [cleared] (A-15)
+    status: wave2             # формула: погружение → доклад → план Никиты
     paths: [src/audio/pitch/**, src/components/PitchTab*]
-    focus: "PitchTab (живой, обе ноты) · pitch-engine/yin · очередь: узел-1 005_2 (bleed) · де-фриз наследие"
-    forbidden: "замена YIN до вердикта 005_2 · переименование руками без 007"
+    focus: "PitchTab живой · worklet-YIN · коридор ±33/±50ц (вход готов) · узел-1 005_2 · план — от Никиты"
+    forbidden: "замена YIN до вердикта 005_2 · переименование руками (007 по GO)"
 
   - id: B04
-    name: Башня Split
+    name: Split — отдельная разработка
     agent: agent-split
-    status: wave2
+    status: wave2             # формула: погружение → доклад → план Никиты
     paths: [src/components/MonitorMixPanel*, src/audio/engine-v3/monitor/**]
-    focus: "маршруты SPLIT · MonitorRouter · калибровка задержки · авто-микс секций"
+    focus: "MonitorRouter · SPLIT-устройства · калибровка · авто-микс · план — от Никиты"
     forbidden: "гейты монитора (V-Mix) — читать, ломать нельзя"
 
   - id: B01-fx

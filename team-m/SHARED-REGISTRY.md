@@ -281,6 +281,32 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
    — это **тёмные этажи города**. По директиве «ноль мусора» они не проходят ревью.
 ---
 
+## LOG 2026-09-06 12:34 · agent-phone-audit [PHONE] — 🛡 ФАЗА-1: ЧИСТЫЙ АУДИТ мобильной/планшетной адаптации (read-only, артефакт `team-m/PHONE-AUDIT-2026-09-06.md`)
+
+**Модель: agent-phone-audit = Big Pickle Zen · ПК · Linux · HEAD `16d608c` (канон: tsc 184 · vitest 812/68). Слой: горизонтальный поверх всех зон — ТОЛЬКО responsive (breakpoints/@media/touch), бизнес-логика зон не тронута (0 байт src/).**
+
+- **Карта адаптации (факт vs бриф):** по всем 41 CSS-файлу `@media` несут только **6**, и состав ДРУГОЙ, чем в брифе: реальные width-breakpoints = **FeedScreen (767px)** · **CatalogLayout (1024/767px)** · **WelcomePage (480px/420h)** · FeedLayout.feed-track-snap (intrinsic scroll-snap) — BillyDock/BlockScenesModal/word-effects = только `prefers-reduced-motion` (accessibility, не адаптация). **InstrumentCard и MonitorMixPanel из брифа @media НЕ ИМЕЮТ.** JS-адаптив: `useResizeColumns` (matchMedia 767px + ResizeObserver + pointer-drag, живой, эталон) — единственный.
+- **Вердикты по экранам (прогноз по коду, НЕ ПРОВЕРЕНО на устройстве):** телефон 390px — лента/каталог/вход ДЕРЖАТСЯ (767-блоки), рабочие панели НЕ адаптированы: ControlDeck (0 @media, фикс 240px панель) 🔴 · MonitorMixPanel (3-col minmax 200/180px → третья колонка в 0 на 390px) 🔴 · ShowEditor/PresenterDock (фикс 220px панели) 🔴 · WaveformCanvas **mouse-only драг** (onMouseDown/Move/Up, :646) — тач-драг sync-редактора мёртв 🔴. Планшет 768-1024px — главный экран ТРУП: ни одного breakpoint в диапазоне (кроме каталога), useResizeColumns MIN_COL1=400px → лента ~236px на 768px.
+- **Touch-слой:** `pointer: coarse` — **0 вхождений во всём src** (hover-UI на тач слеп); safe-area `env()` — только WelcomePage (21 fixed-оверлей без чёлочных отступов); `100vh` без dvh — 5 мест (iOS URL-bar прыжки); кнопки 20-28px ниже 44px-нормы. Mouse-only драги: WaveformCanvas + ControlDeck.tsx:209/284/461 + PresenterDock.tsx:339 — против 5 живых pointer-паттернов (useResizeColumns/RehearsalLyrics boundary/InstrumentCard/CalibrationDrum) → миграция механическая, но это бизнес-код зон: фаза-2 отдаёт СПЕКИ зонам (B08/B01/B03), не правки.
+- **GPT-контракт 3-колонок (PERSONAL|MAIN|AI-COACH) на 390px:** приговор — **нужен отдельный мобильный layout** (свайп-колонки по образцу CatalogLayout 767px или bottom-sheet для AI-COACH; арифметика minmax-минимумов ≥820px несовместима с 390px). layout-скелета контракта в src/ пока НЕТ.
+- **Топ-5 зон боли:** ① ControlDeck ② MonitorMixPanel ③ WaveformCanvas touch ④ ShowEditor+PresenterDock ⑤ FeedScreen-планшет. Плюс общесистемные: pointer:coarse=0, safe-area=1/22, dvh=0.
+- **Кости для фазы-2 уже в репо:** useResizeColumns.isMobile (реюз детекта) · CatalogLayout scroll-snap-паттерн · `min(760px, 92vw)` LineFxSelectorModal · нативные range-фейдеры MixerPanel/MonitorMix (тач ок из коробки) · `--bl-deck-height` ResizeObserver-мост. Фаза-2 = сборка из готовых костей. Жду GO Никиты на вердикт.
+
+— agent-phone-audit · 06.09 · горизонталь PHONE размечена, слой дышит только на входе и ленте 🛡📱
+
+## LOG 2026-09-06 12:26 · agent-port [B09] — 🛡 ПАТРУЛЬ СМЕНЫ №2 (сверка)
+
+**Модель: agent-port = Big Pickle Zen · ПК · Linux · HEAD `910e767` (канон: tsc 184 · vitest 812/68 · reach 51 hold/0 viol). Зона: src/catalog/** + upload* + welcome.**
+
+- **reach зоны: 4 флага → 0 тесты · 0 живые · 4 hold (Никита, без изменений):** CatalogBillyChat H-3 + тройка EventList/HeroStack/TrackScroll H-5 — у всех **ноль импортёров** (rg по src, HEAD `910e767`); тройку держит только коммент `feed.types.ts:121`. Сверка с №1: **Δ0** — новых флагов за смену нет, зона в стабильном hold. Лента жива иным путём (App→FeedScreen→FeedLayout→FeedPostCard).
+- **TS зоны: 8 → Δ0** (FeedPostCard:49 toast · feed-data.store ×5 `p/s/s/c/s` · upload.service ×2 «kept unused as in legacy» `upload.service.ts:430`, контракт паритета). Микро-батч Оператору, риск 0.
+- **junction зоны: 0 пар B09** (7 глобальных, violations=3 — все CF/belive-ai, не мои). Стык каталог↔TG-воркер ПУЛЬСом по-прежнему не покрыт (см. предложение №1).
+- **Лифты:** zip `CatalogLayout.tsx:127`→`upload.service.ts:685` (JSZip dyn-import:692, safety 60s) **~НЕ ПРОВЕРЕНО** (нет замеров в логах) · TG-download `CatalogContent.tsx:34` (retry+truncated-гейт, тест жив) **~НЕ ПРОВЕРЕНО** · TG-upload `tg-upload.service.ts:20` зовётся ТОЛЬКО из B08, не из каталога · ручная `UploadPanel→saveTrack.ts:393`. **Узкое место общее (то же): весь ZIP в RAM одним куском `readFileAsArrayBuffer` до JSZip → OOM-риск MBP-2013 (коммент `upload.service.ts:541` уже бьёт стемы чанками по 2 — аудио так, а распаковка целиком ещё нет).**
+- **Стык B01+B09:** loadTrack [OrchTiming] ×14 (`track.loader.ts`); IDB re-read ~50-100ms из 1-3s total — сознательная свежесть (TC-85-03). Сверка с №1: без регресса.
+- **Предложение недели (1 коммит, Оператор через цепь) #2:** распаковка ZIP потоком/чанками — `JSZip.loadAsync` на `Uint8Array` всего файла (`upload.service.ts:693`) → **streaming-разбор по записям с отсевом `__MACOSX/` и `._` до чтения в память**. Эффект: снимает главное узкое место трёх лифтов (RAM-pinch на больших mvsep-бандлах), путь — тот же, риск низкий.
+
+⚠️ Повтор флага (не frozen, вверх): `X-API-Key: 'belive2026'` хардкод `tg-upload.service.ts:70` — всё ещё кандидат в CF-батч секретов.
+
 ## LOG 2026-09-06 12:18 · agent-port [B09] — 🛡 ПАТРУЛЬ СМЕНЫ №1 (пилот зоны)
 
 **Модель: agent-port = Big Pickle Zen · ПК · Linux · HEAD `2295170` (canon: tsc 184 · vitest 812/68 · reach 51 hold/0 viol). Зона: src/catalog/** + upload* + welcome.**
@@ -313,6 +339,33 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 — 007 · 11:45 · смена закрыта чисто: пять хвостов — пять коммитов, все CI зелёные 🫀
 
 
+---
+
+## LOG 2026-09-06 12:38 · CEO_1 — 🏙 СТРУКТУРА ЗОН УТОЧНЕНА НИКИТОЙ: Репетиция = ГЛАВНЫЙ ХАБ (отказ от нижнего ДОК, дизайн с 007_2) · Studio/Quest/Show/Pitch/Split = каждый отдельный агент по формуле «погружение → доклад → план Никиты»
+**Модель: CEO_1 = Z-AI GLM 5.3 (WSL) · HEAD `2295170` · PIXEL-DELTA 006 забран в git (мост «как есть»→«как будет») · промпты пересобраны: 11 (rehearsal-хаб новый + studio/quest/show/pitch/split по формуле + port/sync/phone-аудит + visual-fx/styles волна-2)**
+
+**Директива Никиты (12:00):** ① Studio = ОТДЕЛЬНЫЙ агент (целая среда для проработки; детали и план — Никита расскажет ПОСЛЕ погружения агента) ② точно так же Quest, Show, Pitch, Split — каждый важный, отдельный агент ③ Репетиция = ГЛАВНЫЙ ХАБ: с 007_2 прорабатывается новый дизайн — отказ от нижнего ДОК, всё размещается по-другому (3-колоночный GPT-контракт); 006 сдал пиксель-отчёт (текущее решение + GPT-референс) ④ агент Репетиции: погружение → доклад → план от Никиты.
+
+**Что сделано:**
+- **ФОРМУЛА НИКИТЫ вшита в каждый промпт и PULSE-ZONES.yaml (meta.formula):** ① погружение (скан проекта: реестр-хвост/DECISIONS/PULSE-ZONES → скауты обязательно → своя зона + цифры ПУЛЬСа) → ② доклад «🛡 ПОГРУЖЕНИЕ» → ③ СТОП: план развития рассказывает Никита → ④ работа по плану с прогонами **001→005→002→001→009** (meta.zone-chain — цепочка Никиты: 005 проверяет «лучшее ли решение снаружи»).
+- **agent-rehearsal [B01-HUB]** — ГЛАВНЫЙ ХАБ: флагман, координация стыков инструментов (их зоны — не его), PIXEL-DELTA + GPT-контракт в обязательном погружении, текущий ControlDeck в списке «от чего уходим», песочница 007_2 — не его мир (запрещено лезть).
+- **agent-studio [B01-mixer]** — Studio отдельная СРЕДА: MixerPanel/стемы/шины BusFader18 + ждёт план Никиты после доклада.
+- **agent-quest [B02] / agent-show [B03] / agent-pitch [B06] / agent-split [B04]** — та же формула, каждый отдельная разработка.
+- **agent-visual-fx / agent-styles** — волна-2, патруль-формат (погружение → предложение недели; план Никиты не требуется для мониторинга, но решения — по GO).
+- **Старые имена убраны:** agent-factory (роль поглощена rehearsal-хабом), agent-studio-mixer → agent-studio.
+- **ХЭНДОФ-строки для запуска сессий Никитой (в блоке ниже) — по одной строке на агента.**
+
+**ХЭНДОФ-СТРОКИ (копируй в новую сессию как есть):**
+- Порт: `Ты agent-port [B09]. Хэндофф: .opencode/agent/agent-port.md + team-m/PULSE-ZONES.yaml (зона B09). Скауты → погружение → доклад ПОГРУЖЕНИЕ в реестр. Начинай.`
+- Sync: `Ты agent-sync [B08]. Хэндофф: .opencode/agent/agent-sync.md + PULSE-ZONES (B08). Скауты → ПОЛНЫЙ разбор всех функций Sync → досье team-m/SYNC-DISSECTION-B08-<дата>.md + доклад. Начинай.`
+- PHONE: `Ты agent-phone-audit [PHONE]. Хэндофф: .opencode/agent/agent-phone-audit.md + PULSE-ZONES (PHONE). Скауты → аудит @media/touch → team-m/PHONE-AUDIT-<дата>.md + доклад. Начинай.`
+- Репетиция (хаб): `Ты agent-rehearsal [B01-HUB] — ГЛАВНЫЙ ХАБ. Хэндофф: .opencode/agent/agent-rehearsal.md + PULSE-ZONES (B01-HUB) + team-m/PIXEL-DELTA-2026-09-05.md + team-m/ui-spec/UI-CHANGE-SPEC-2026-09-05.md. Скауты → погружение (включая PIXEL-DELTA и GPT-контракт) → доклад. Начинай.`
+- Studio: `Ты agent-studio [B01-mixer]. Хэндофф: .opencode/agent/agent-studio.md + PULSE-ZONES (B01-mixer). Скауты → погружение в СРЕДУ Studio → доклад. Начинай.`
+- Quest/Show/Pitch/Split: та же строка со своим agent-*.md и зоной.
+
+**@Никита:** после доклада «ПОГРУЖЕНИЕ» каждого агента — рассказывай план развития именно этому агенту. Сессии трёх созданных (Порт/Sync/PHONE) уже совместимы: их промпты содержат формулу; новые создавай по строкам выше.
+
+— CEO_1 · 06.09 12:38 · флагман получил хаба, инструменты — по агенту, формула одна 🏙🛡
 ---
 
 ## LOG 2026-09-06 11:07 · CEO_1 — 🛡 ПУЛЬС · ЗОННЫЕ ПАТРУЛИ СОБРАНЫ: 11 промптов + PULSE-ZONES.yaml (v0.1) + ветка Phone добавлена + 5 CEO-поправок Никите
