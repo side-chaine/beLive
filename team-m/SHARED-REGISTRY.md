@@ -283,6 +283,28 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 
 ---
 
+## LOG 2026-09-06 13:57 · agent-split [B04] — 🛡 ПОГРУЖЕНИЕ: Башня Split вскрыта (волна-2, формула шаг-1 сдана) — доклад сдан, СТОП: жду план Никиты
+
+**Модель: agent-split = Big Pickle Zen · ПК · Linux · HEAD `26e9256`. Канон: tsc 184 (зона 0) · vitest 812/68 — канон реестра, полный прогон НЕ делал (честно) · reach exit 0 (зона чиста; `monitor.state.ts` — единственный в hold, H-6) · тестов зоны: 0. src/ не тронут (read-only).**
+
+- **Зона = «суфлёрная» (00-ALERT.md:26-52):** маршрутизация звука мониторного микшера. Живое ядро: `engine-v3/monitor/` 5 файлов 902 loc (Router 292 · Engine-фасад 285 · AutoMix 120 · PulseCalibrator 114 · DeviceManager 91) + UI: MonitorMixPanel 771 + css 1271 + 3 суб-компонента (CalibrationDrum 87 · DualAutoMixRow 53 · ToggleSliderRow 27) + monitor.store 553 + device-calibrations 143 + monitor-events 50. Легаси `js/monitor-mix.js` 1224 строк — грузится `index.html:406`, жив V2-делегатом.
+
+- **Архитектура (как есть):** ① `MonitorEngine` = Permanent Facade (TC-2C-2): усыновляет легаси-класс как `_legacy`, забирает `window.monitorMix` (MonitorEngine.ts:47). **Фасад живёт в `_mode:'v2'` до первого успешного V3-груза трека** — `setBackendMode('v3')` вызывается только в `main.tsx:245` внутри `interceptor.loadTrack().then()`; если груз упал (catch :267) — фасад навсегда остаётся на легаси-графе. Два графа (V2/V3) существуют параллельно осознанно. ② `MonitorRouter` = статический граф, 0 disconnect, все ноды в конструкторе, переключения linearRamp 20ms. **SPLIT** = `setRouteMain` crossfade `_defaultBranch`→ctx.destination ↔ `_mainBranch`→`_mainDelay`→mainStream (Router:177-186); SPLIT-тип выхода = гейн параллельных ветвей, не поле устройства. ③ **Line Up**: PulseCalibrator (880Hz/6 гармоник/0.12s, lookahead 150/80ms) → оба выхода (BT monitorStream + main через вход `_mainDelay` пре-делей, parity legacy :606/:610); пер-device LRU-хранилище (max 20, stale >7 дней) `device-calibrations.ts`; TAP-ритуал клавиша `5` + jitter/CV-конфиденс ≥3 тапов (Panel:101-156); undo/redo стек нуджей (10 глубина). ④ **AutoMix**: 6 блоков, exact-match strict zero (TC-065), каскад R2 dynamics (vocalHallInput.gain) × trim (_vocalHallGain); движется событием `active-line-changed` (lyrics.service:145 → DOM → фасад → EventBus Sync → контроллер). ⑤ **V-Mix (гейты — ЧИТАЛ, не трогал):** TASK-015 стерео-разводка vocals L/music center/mic R + serial `_vmixMicGate` (TASK-015b, иммунен к 🎤); потребители setVMix: ControlDeck:355-369 · practice-session.store:129-134 · TakesPanel:1010-1034 · ai-tools:999-1001.
+
+- **Смерть внутри живого (7 позиций, решение — план/цепь):** ① `setBlockResolver` — НИКТО не вызывает (0 вызовов в src+js): авто-микс резолвит блоки через легаси-глобал `window.lyricsDisplay.textBlocks` (AutoMix:79-93) — живая зависимость от V2-глобала. ② Back Vocal master + 6 блоков = **UI-only, engine не подключён** (store:407) — BV Stage 2-3 roadmap (monitor-mix-v2.md:411-446). ③ Дубль resume-playback в Cancel/Confirm (Panel:557-572 vs :619-634) с двойным HOTFIX FM-9 guard. ④ Lock-статус Line Up в ref (Panel:24) — теряется при перемонтировании, не в сторе. ⑤ `monitor-events.ts` **АКТИВЕН** (registerInit main.tsx:69 + runAll :78) — вопреки своему комментарию «пока не активен» (:8-9); его `mapLegacyMonitorState` имеет 7 дефолтов, конфликтующих со стором (delayMs 150↔120 · includeMusic true↔false · routeMainEnabled true↔false · compensateOn main↔monitor · и др.) — риск перезалива стора при событии. ⑥ `adoptState` (Engine:272) — мёртвый метод, «кандидат W4/W5». ⑦ `monitor.state.ts` (163 loc) — труп, 0 импортёров, hold H-6 на снос-батч Д-2. Плюс мёртвый CSS-хвост (.testBtn/.unlockBtn/.instructionHero/.modeStatusBadge) и двойной writer localStorage-ключей `monitor:deviceId` (DeviceManager:63-64 vs легаси monitor-mix.js:1122-1123).
+
+- **Док-дрейф (для DOC-CHECK волны):** monitor-mix-v2.md — главный док зоны, но: класс «~420 строк» vs факт 1224 (:70); панель 919 vs факт 771 (:364); **Line Up = MAJOR UNDOCUMENTED FEATURE** (:327,:476 — признано самим доком); monitor.bridge.ts RETIRED (:68) vs interaction-schema-2.1.md:1978 ещё описывает живым; sync-monitor-pitch-integration.md — PLANNED, файла нет.
+
+- **Внешние вердикты по зоне:** PHONE-аудит боль №4 — MonitorMixPanel 🔴 тел/🟡 планш (3-col minmax схлопывается на 390px, 0 @media); BLB-15 (07-INITIATIVES:99) — SPLIT ∩ видеомост: оба забирают monitor/main из одного графа, но «MonitorRouter и Rehearsal-транспорт не сшиты»; W2.5 roadmap — monitor-mix.js в списке js/-глобалок на перевод в модули (ДГ-04 у 201).
+
+- **НЕ ЗНАЮ / жду план Никиты:** вектор Split как отдельной разработки (BV-движок? мобильный Layer Up? док-закрытие Line Up?) · судьба легаси-делегата monitor-mix.js (завязано на общий v2-похоронный фронт) · резолвер авто-микса (setBlockResolver забыли или осознанно?) · стык с видеомостом BLB-15 · двойные дефолты monitor-events — чинить или снести wrapper.
+
+**СТОП.** Шаг-1 формулы завершён. План развития — от Никиты.
+
+— agent-split [B04] · 06.09 13:57 · башня вскрыта, маршруты карта-в-карту, ждём прораба 🎛🛡
+
+---
+
 ## LOG 2026-09-06 13:40 · agent-rehearsal [B01-HUB] — 🛡 ПОГРУЖЕНИЕ: ГЛАВНЫЙ ХАБ «РЕПЕТИЦИЯ» (скауты ×3 + PIXEL-DELTA + GPT-контракт впитаны) — доклад сдан, СТОП: жду план Никиты
 
 **Модель: agent-rehearsal = Big Pickle Zen · ПК · Linux · HEAD `26e9256`. Зона B01-HUB: App.tsx (259) + Header + WagonTrain + RehearsalLyrics (1098) + KaraokeLyricsBoard + TransportBar + ControlDeck (581) + deck/modules (7 модулей). Погружение по формуле Никиты (① → ② → ③ СТОП).**
