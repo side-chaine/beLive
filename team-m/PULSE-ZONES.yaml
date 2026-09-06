@@ -58,7 +58,7 @@ zones:
     name: Studio — отдельная СРЕДА для проработки
     agent: agent-studio
     status: wave1             # формула: погружение → доклад → план Никиты
-    paths: [src/components/MixerPanel*, src/stores/stem*, src/audio/engine-v3/pipeline/**]
+    paths: [src/components/MixerPanel*, src/stem/**, src/audio/engine-v3/pipeline/**]   # фикс 007 06.09: src/stores/stem* не существует — стем-стор в src/stem/ (находка погружения B01-mixer, досье §коррекция-путей)
     focus: "MixerPanel · стемы · шины BusFader18 · solo/mute/V-Mix · план развития — от Никиты после доклада"
     forbidden: "выдумывать план · frozen-зоны (AudioEngineV2/patchV1/bridges/orchestrator — чтение только)"
 

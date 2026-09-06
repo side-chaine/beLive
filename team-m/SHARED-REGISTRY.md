@@ -305,6 +305,35 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 
 ---
 
+## LOG 2026-09-06 14:1x · agent-quest [B02] — 🛡 ПОГРУЖЕНИЕ: зал Quest вскрыт (волна-1, формула шаг-1 сдана; артефакт `team-m/QUEST-IMMERSION-B02-2026-09-06.md`)
+
+**Модель: agent-quest = Big Pickle Zen · ПК · Linux · HEAD `26e9256` (канон: tsc 184 · vitest 812/68). Зона по yaml: `src/takes/**` + `src/practice/practice-scenarios.ts`. src/ не тронут (0 байт, read-only).**
+
+- **Зона = «тренажёрный зал вокалиста»** (тейки × блоки 3 слота, упражнения с шагами/раундами, квест-карточки Promise/Method/Win + Completion Moment). Кнопка «Quest» в доке (deck/modules.ts:61-70) = lazy-TakesPanel — главный кокпит. Территория ФАКТИЧЕСКАЯ — три слоя: takes (22 файла ~2.3K loc) · practice (3, 560) · **exercises (28, ~3.8K — ядро квестов, в yaml НЕ ОБЪЯВЛЕНО)** → правка PULSE-ZONES.yaml на фронте 007 (аналог находки B08).
+- **⚠️ Главная структурная находка — ДВЕ системы практики, друг о друге не знают:** exercises (QuestEntrySurface→7 рецептов-генераторов: echo/triple-take/call-response/backing-only/acappella-boss/tempo-ladder/trade; стор 458, фазовая машина, roundCapture in-flight окна, scenarioMixOverride) vs practice (Билли-автопилот: 3 сценария bpm-ramp/focus-mix/section-breakdown через executeToolCall ai-tools). Семантика дублируется (темп/луп/бэкинг). Вопрос №1 Никите: единая система или две роли?
+- **Тейки:** session-only (память: Zustand-метаданные + singleton-реестр Blob/AudioBuffer ВНЕ стора — чистка на смену трека, НИЧЕГО не в IDB). Запись: MediaRecorder через V3 `__belive.micSource.acquire()` (ошибки типизированы F-1/431), webm/opus+Safari-fallback, analyser-tap. takes.time/duck — V3-aware (TransportV3 clock/seek, frozen-файлы не тронуты). Live-волна — императивный конвейер controller→accumulator→renderer (zero React, 3 теста). Playback: gen-гварды гонок, Program Bus, tempo-aware тренировочных тейков.
+- **Смерть/долг (7 позиций, решение — план/цепь):** ① `random-blocks` — ФАНТОМ типа (practice-scenarios.ts:19 объявлен, в реестре SCENARIOS/AVAILABLE нет) ② compat-стык `__playTakeFn/__stopPreviewFn` на сторе (useTakesPlayback:246-260) ③ exercises/index.ts — H-6 труп в holdlist (снос-батч Д-2 по GO) ④ RecipeCardPopover — H-1c ⑤ «зум волны» из хэндоффа — в коде НЕ НАЙДЕН (фикс-окно блока) ⑥ QuestEntrySurface 'visibility' — мёртвый проп ⑦ TS-долг.
+- **Цифры зоны:** tsc **184 (Δ0 канон), зона несёт 23 из 184 (12.5%)** — почти весь TS6133/6196 deadcode-класс (TakesControlStrip 7 · TakesPanel 6 · остальное по 1-2) → микробатч Оператора. **vitest зоны 12 файлов / 179 тестов PASS (5.31s)**. reach: 0 violations, зона в hold 2 (index.ts + RecipeCardPopover). junction зоны: 0 пар. Живая цепочка: TakesPanel←deck/modules←ControlDeck←App.
+- **Стыки:** B01-HUB (lazy-таб дока, ControlDeck×3 interruption, WagonTrain/RehearsalLyrics) · B01-mixer (duck через pipeline.setBusVolume/stem.store) · B08 (пики sync/canvas/peaks) · Билли/TrackInfoBoard (executeToolCall, PracticeSessionCard) · event-bus (takes/exercise-events). PHONE-фаза-2 кандидат: панели зоны на 390px не проверялись.
+- **Вопросы Никите (7):** ① exercises vs practice — судьба? ② random-blocks — реализовать/вычистить? ③ TS-батч 23 — в очередь? ④ зум волны — в планах? ⑤ сессионность тейков — финально или IDB-персистентность? ⑥ __playTakeFn — легализовать/снести? ⑦ Practice Plan ZONE 3 (GPT-контракт) — мой ли фронт (suggestScenarios+QuestEntrySurface как поставщик)?
+
+**СТОП.** Шаг-1 формулы завершён. План развития — от Никиты.
+
+— agent-quest [B02] · 06.09 14:1x · зал вскрыт, тейки живы, жду тренерского плана 🎤🛡
+
+## LOG 2026-09-06 13:47 · agent-studio [B01-mixer] — 🛡 ПОГРУЖЕНИЕ: СРЕДА Studio разведана (MixerPanel/стемы/шины BusFader18), доклад сдан, СТОП: жду план Никиты
+
+**Модель: agent-studio = Big Pickle Zen (opencode/big-pickle) · ПК (Linux) · HEAD `26e9256` (замер 007: tsc 184/102, vitest 812/68 — канон Δ0). Формула: ① погружение ✅ → ② доклад (файл `team-m/STUDIO-IMMERSION-2026-09-06.md`, 23.8 КБ) → ③ СТОП, жду план Никиты. Диспатч 007: скауты ×2 (explore + arch) впитаны.**
+
+1. ⚪ **Карта зоны (ядро 14 файлов · ~3.5K LOC):** MixerPanel.tsx 362 (DOCK-модуль 'mixer'='Studio', жив, modules.ts:72-81) · стем-стор реально в **`src/stem/` — путь `src/stores/stem*` из PULSE-ZONES.yaml НЕ существует** (коррекция путей; фикс yaml — фронт 007) · pipeline 6 файлов 1509 LOC (HybridPipelineService 745 — ядро, формула BusFader18 :628-637) · тесты: BusFader18 14 it · VocalTap 3 it · stem.store 11 it.
+2. ⚪ **Шины BusFader18:** `effective = clamp(raw) × clamp(busFactor)`, ×0 при mute/вне-solo/crash(H1.2)/dead(H1.5); single-writer `_applyEffectiveGain` :648-655 (static-grep-тест шит); busOf: instrumental вне шин (A2.25, фактор 1.0), vocal/backing→vocal-bus, music→music-bus. **Ключевой факт: pipeline фактически single-path** — Bus B (varispeed) отключён, помечен «будет удалён в 067-D full cleanup»; двухшистость живёт только в контракте IPipelineController/StemChain.
+3. ⚪ **Цифры ПУЛЬСа зоны:** reach 0 violations / hold 51 / excluded 70 (PASS, зона чистая) · tsc 184/TS6133 102 = Δ0 канон · junction pairs=7 violations=3 (известный хвост CF-батча Д-3, не зоны) · vitest не гонял (канон 812/68 Δ0, диспатч запрещает).
+4. ⚪ **Живость-карта:** VolumeControls/BpmControl не монтируются ([renamed]-кейс 301 — запись deck/modules.ts:4-13 закомментирована, замещены живым MixerPanel) · window.audioEngine в зоне — только мёртвые/legacy-файлы, в pipeline 0 · V-Mix-контрола в MixerPanel НЕТ (кнопка в ControlDeck:350-383 → MonitorRouter B04; тапы в pipeline:82-85) · путь звука: MixerPanel → stem.store → stem-engine-sync → pipeline (прямых V2-вызовов нет, «Engine Arbiter»).
+5. ⚪ **Вопросы Никите (5):** ① single-path Bus B — целевое состояние (дочистить) или возврат двухшиности? ② V-Mix — остаётся в ControlDeck/Split или контроль в MixerPanel? ③ deprecated-геттеры stem.store (instrumentalVolume/vocalsVolume/hasVocals, 0 потребителей) — сносить или музей? ④ bus-события в event-bus — нужны ли (сейчас шины только store/pipeline)? ⑤ судьба Visual-режима InstrumentStrip (в V3 ae.*-вызовы гасятся гардом, профили пульсации лежат).
+6. ⚪ **Честно НЕ ЗНАЮ / НЕ ПРОВЕРЕНО:** план развития (формула запрещает выдумывать — за Никитой) · дата/приоритет «067-D full cleanup» (комменты кода её не дают) · глубина планов песочницы 007_2 · StretchInstance/StretchInstancePool — читал фактурно, не глубоко · vitest живьём не гонял.
+
+— agent-studio [B01-mixer] · 06.09 13:47 · погружение сдано, код не тронут (только чтение + артефакт) · **СТОП: жду план развития Studio от Никиты** 🎛🛡
+
 ## LOG 2026-09-06 13:40 · agent-rehearsal [B01-HUB] — 🛡 ПОГРУЖЕНИЕ: ГЛАВНЫЙ ХАБ «РЕПЕТИЦИЯ» (скауты ×3 + PIXEL-DELTA + GPT-контракт впитаны) — доклад сдан, СТОП: жду план Никиты
 
 **Модель: agent-rehearsal = Big Pickle Zen · ПК · Linux · HEAD `26e9256`. Зона B01-HUB: App.tsx (259) + Header + WagonTrain + RehearsalLyrics (1098) + KaraokeLyricsBoard + TransportBar + ControlDeck (581) + deck/modules (7 модулей). Погружение по формуле Никиты (① → ② → ③ СТОП).**
@@ -533,9 +562,10 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 4. **AI-синк = честно-мёртвый бэкенд:** gateway `/v1/align` = mock-success (каждая строка 2с, confidence 0.5, words=[]), осознанно отфильтрован двойным контр-доверием: F46 (provider==='mock' → stale-provider, в кэш/IDB не попадает) + порог 0.55 (confidence 0.5 = band low → подсветка слов НЕ включается). Фронт-путь целиком жив. Пользовательская ловушка: кнопка «Align» успешна, эффекта нет, объяснения нет.
 5. **Точки боли (10, см. досье §5):** №1 — контрактный разрыв Add-кнопки (`addMarker(line,time)` 2 аргумента против стор-сигнатуры 1 объект → живой TS2554 + двойное чтение getCurrentTime, мс-дрейф); №2 — зависимость от невидимого фундамента; №3 — Save всегда скачивает JSON-файл на диск (неочевидный побочный эффект); №5 — прямая мутация zustand-объектов при group-drag; №7 — двойной fetch+decode стемов для волны (~30МБ×2).
 6. **Метрики зоны:** TS 8/184 (7 чистка + 1 живой контракт) · junction 0 пар (стык с B04 AutoMix через active-line-changed — событийный, не файловый) · SyncBus 7 live-событий (зона не публикует — потребляют AutoMix B04 и lyrics.service) · 62 тест-кейса на чистом ядре word-sync, UI-слой без тестов.
-7. **Предложения недели (P1..P4, для цепи 001→002→009 по GO):** P1 починить контракт Add-кнопки (хирургия, закрывает TS2554) · P2 честный фидбек Align (provider=mock → «подсветка отключена») · P2 объявить main.tsx:328-554 фундаментом зоны во всех правках · P3 peaks.ts → utils/audio (5 внешних импортёров takes) · deadcode-батч 7 хвостов.
+7. **Vitest зоны прогнан живьём (13:52): 62/62 зелёные, 4 файла, 2.24с** — канон 812 Δ0, зона тест-нейтральна; пункт «vitest НЕ ПРОВЕРЕНО» из досье снят.
+8. **Предложения недели (P1..P4, для цепи 001→002→009 по GO):** P1 починить контракт Add-кнопки (хирургия, закрывает TS2554) · P2 честный фидбек Align (provider=mock → «подсветка отключена») · P2 объявить main.tsx:328-554 фундаментом зоны во всех правках · P3 peaks.ts → utils/audio (5 внешних импортёров takes) · deadcode-батч 7 хвостов.
 
-НЕ ПРОВЕРЕНО: живой смоук руками, vitest зоны отдельно, PHONE-размеры. Зона не тронута (read-only разбор, src/ = 0 правок).
+НЕ ПРОВЕРЕНО: живой смоук руками, PHONE-размеры. Зона не тронута (read-only разбор, src/ = 0 правок).
 
 — agent-sync · 06.09 12:00 · B08 досье сдано, пилот B09+B08 ждёт раскатки 🛡
 
