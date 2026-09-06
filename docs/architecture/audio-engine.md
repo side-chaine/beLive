@@ -1056,7 +1056,7 @@ src/audio/engine-v3/           # 30 prod .ts/.tsx · 4914 LOC
 ├── integration/ 6 файлов 691  # V3DataInterceptor · V3StatePublisher · LoopEngineV3 · DuckGuardV3Native · AudioCrashModal · useAudioContextHealth
 ├── stems/       1 файл 344   # StemPlayerV3
 ├── services/    2 файла 164  # MicSourceV3 · RateThrottler
-├── diagnostics/ 2 файла 390  # CaptureWorklet · DuplicateAudioRouteChecker
+├── diagnostics/ 1 файл 126  # DuplicateAudioRouteChecker (CaptureWorklet снесён снос-30 06.09)
 └── корень       4 файла 288  # index (getTransport) · V2Adapter · IV2PublicContract · vendor .d.ts
 ```
 7 ранних модулей W1-эры: часть влита в слои, часть снесена W4/W5; src/legacy/ убран из дерева.

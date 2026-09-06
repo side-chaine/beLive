@@ -131,7 +131,7 @@ __v2Detector.report()
 
 | Что | Путь в мосте | Размер | Зачем |
 |---|---|---|---|
-| `CaptureWorklet.ts` | `from-windows/src/audio/engine-v3/diagnostics/CaptureWorklet.ts` | 10 749 | 15 объявлений полей в `CaptureProcessor`. Бери файл целиком, не вписывай руками |
+| `CaptureWorklet.ts` | `from-windows/src/audio/engine-v3/diagnostics/CaptureWorklet.ts` | 10 749 | 15 объявлений полей в `CaptureProcessor`. Бери файл целиком, не вписывай руками. **(историческое: файл снесён 71fcc4b)** |
 | `BpmSwitchRace100.test.ts` | `from-windows/src/audio/engine-v3/__tests__/BpmSwitchRace100.test.ts` | 11 234 | локальный `declare const process` вместо `@types/node` |
 | `track-meta.service.test.ts` | `from-windows/src/services/__tests__/track-meta.service.test.ts` | 3 179 | `global.fetch` → `globalThis.fetch` (3 вхождения) |
 
@@ -140,7 +140,7 @@ __v2Detector.report()
 ```bash
 B=/mnt/c/Users/nikit/beLive-bridge/from-windows
 cd /home/nikit/projects/beLive
-cp "$B/src/audio/engine-v3/diagnostics/CaptureWorklet.ts"      src/audio/engine-v3/diagnostics/
+cp "$B/src/audio/engine-v3/diagnostics/CaptureWorklet.ts"      src/audio/engine-v3/diagnostics/   # (историческое: файл снесён 71fcc4b)
 cp "$B/src/audio/engine-v3/__tests__/BpmSwitchRace100.test.ts"  src/audio/engine-v3/__tests__/
 cp "$B/src/services/__tests__/track-meta.service.test.ts"       src/services/__tests__/
 ```

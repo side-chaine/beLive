@@ -125,7 +125,7 @@ W−1 ОЖИВИТЬ МАШИНУ ──▶ W0 ГИГИЕНА ──▶ W1 ТИ�
 | Finding | О чём | Статус | Эффект |
 |---|---|---|---|
 | [FINDING-001](./findings/FINDING-001-v2-resurrection-detector-silent-noop.md) | `V2ResurrectionDetector` не мог измерить ничего: `require()` в ESM, неверный путь, чтение несуществующих полей, метод из одних комментариев | ✅ исправлено | `tsc` 216 → 212, `TS2591` → 0; monkey-patching заменён на `V2Adapter.observe()` |
-| [FINDING-002](./findings/FINDING-002-audioworklet-realm-typing.md) | 80 ошибок в `CaptureWorklet.ts` — не долг по типам, а отсутствующие декларации AudioWorklet-realm'а | ✅ применено | `tsc` 307 → 227 одним `.d.ts`; ноль правок рантайма. Плюс почему **нельзя** тянуть `@types/node` в браузерный проект |
+| [FINDING-002](./findings/FINDING-002-audioworklet-realm-typing.md) | 80 ошибок в `CaptureWorklet.ts` — не долг по типам, а отсутствующие декларации AudioWorklet-realm'а | ✅ применено (снесено снос-30 71fcc4b) | `tsc` 307 → 227 одним `.d.ts`; ноль правок рантайма. Плюс почему **нельзя** тянуть `@types/node` в браузерный проект |
 
 **Паттерн из FINDING-001, который стоит запомнить 007:**
 
@@ -269,7 +269,7 @@ Safari, CPU-бюджет MBP 2013, компонентные тесты).
 | **2026-08-29 (ночь)** | **ADR-0010, ADR-0011; чистка `.gitignore`; расскладка 21 MD** | **`git status` 121 → 67; корень очищен; реестр создан** |
 | **2026-08-29 (ночь)** | **Снижение ошибок `tsc` по кластерам** | **307 → 212.** Амбиентные типы AudioWorklet (`src/types/audio-worklet-global.d.ts`) + объявления полей `CaptureProcessor`: 80 ошибок одним махом; `global`→`globalThis`; узкое `declare const process` вместо `@types/node` |
 | **2026-08-29 (ночь)** | **FINDING-001: `V2ResurrectionDetector`** | Прибор-пустышка, от которого зависит вся доказательная база миграции ([ADR-0004](./ADR-0004-v2-legacy-removal-sequence.md) требует собрать доказательства до шага 5). Переписан на `V2Adapter.observe()` + реальное измерение `getStemMeterLevel` |
-| **2026-08-29 (ночь)** | **FINDING-002: типизация AudioWorklet-realm** | 80 ошибок TS2339/TS2304 в `CaptureWorklet.ts` закрыты одним `.d.ts` без единой правки рантайма |
+| **2026-08-29 (ночь)** | **FINDING-002: типизация AudioWorklet-realm** | 80 ошибок TS2339/TS2304 в `CaptureWorklet.ts` закрыты одним `.d.ts` без единой правки рантайма (файл снесён снос-30 71fcc4b) |
 | 2026-08-29 09:00 |baseline-ратчет обновлён | `.ci-baseline/tsc` 307 → **212**; реестр актуализирован |
 
 ---
@@ -279,7 +279,7 @@ Safari, CPU-бюджет MBP 2013, компонентные тесты).
 | Файл | Что | Риск |
 |---|---|---|
 | `src/types/audio-worklet-global.d.ts` | **создан** — амбиентные декларации `AudioWorkletProcessor`, `currentFrame`, `registerProcessor`. `.d.ts` стирается при сборке → нулевое влияние на рантайм | нет |
-| `src/audio/engine-v3/diagnostics/CaptureWorklet.ts` | 15 объявлений полей в `class CaptureProcessor`. Проверено эмитом JS: аннотации стёрлись, поля стали нативными | нет |
+| `src/audio/engine-v3/diagnostics/CaptureWorklet.ts` | 15 объявлений полей в `class CaptureProcessor`. Проверено эмитом JS: аннотации стёрлись, поля стали нативными (снесено снос-30 71fcc4b) | нет |
 | `src/services/__tests__/track-meta.service.test.ts` | `global.fetch` → `globalThis.fetch` (3 места) | нет |
 | `src/audio/engine-v3/__tests__/BpmSwitchRace100.test.ts` | узкое локальное `declare const process` вместо `@types/node` (не открывать `fs`/`path`/`Buffer` браузерному коду) | нет |
 | `src/audio/engine-v3/V2Adapter.ts` | **добавлен observer API** `observe()` / `_notify()`, вызовы в `delegateSync` + `delegateAsync` | низкий (аддитивно, без подписчиков — ноль эффекта) |

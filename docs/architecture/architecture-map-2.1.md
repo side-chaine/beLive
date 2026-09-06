@@ -350,7 +350,6 @@ src/
     ├── ai/                      ← AI action executor + providers
     ├── ui/                      ← AI chat UI
     ├── utils/                   ← Performance monitor, scroll lock
-    └── main.js                  ← Legacy JS entry
 
 js/                              ← Legacy boundary shells
 ├── audio-engine.js              ← Boot stub: creates window.audioEngine

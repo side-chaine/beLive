@@ -1,5 +1,7 @@
 # ADR-0002 · Вынос AudioWorklet-кода из строк в настоящие модули
 
+> ⚠️ Историческое: CaptureWorklet.ts и impulse-test-harness.ts снесены (71fcc4b и ранее). createCaptureNode-контракт больше не существует.
+
 **Статус:** proposed · **Дата:** 2026-08-29 · **Волна:** W1 (Z2) · **Снимает:** 80 ошибок tsc (26% всех)
 **Связано:** [00-ROADMAP](./00-ROADMAP.md), [ADR-0008](./ADR-0008-csp-and-security-baseline.md)
 

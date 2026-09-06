@@ -12,7 +12,7 @@ export function basicTextCleanup(text: string): string {
   return cleaned;
 }
 
-/** @deprecated Import from lrc-parser.service instead */
+/** @deprecated LRC-парсинг: смотрите auto-lyrics.service (parseLrcString) — снос-30 06.09: lrc-parser.service.ts снесён (0 импортёров) */
 export function parseLrcFile(lrcText: string): string {
   if (!lrcText) return '';
   const lines = lrcText.split(/\r?\n/);

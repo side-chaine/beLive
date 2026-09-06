@@ -72,7 +72,7 @@ src/audio/engine-v3/           # 30 prod .ts/.tsx · 4914 LOC (+10 тест-фа
 │                            #   DuckGuardV3Native 66 · AudioCrashModal 64 · useAudioContextHealth 21
 ├── stems/       1 файл 344   # StemPlayerV3
 ├── services/    2 файла 164  # MicSourceV3 95 · RateThrottler 69
-├── diagnostics/ 2 файла 390  # CaptureWorklet 264 · DuplicateAudioRouteChecker 126
+├── diagnostics/ 1 файл 126  # DuplicateAudioRouteChecker (CaptureWorklet снесён снос-30 06.09)
 └── корень       4 файла 288  # index 59 (getTransport) · V2Adapter 83 · IV2PublicContract 115 · vendor .d.ts
 ```
 > Счёт = production .ts/.tsx. Диагностический harness (~20 файлов .mjs/.json в diagnostics/) и тесты в счёт модулей не входят.

@@ -166,7 +166,7 @@ MISSION ZERO сложнее удаления V2 по четырём причин
 | Дебаг | стек в `eval`'d коде | нормальные исходники |
 | Бандлинг | не бандлится, не минифицируется | бандлится |
 
-Шаг: `src/audio/engine-v3/diagnostics/CaptureWorklet.ts` → `public/worklets/capture-processor.js` + `addModule('/worklets/capture-processor.js')`. Осторожно: `addModule` **асинхронный** — все 2 точки вызова нужно перевести на await.
+Шаг: `src/audio/engine-v3/diagnostics/CaptureWorklet.ts` → `public/worklets/capture-processor.js` + `addModule('/worklets/capture-processor.js')`. Осторожно: `addModule` **асинхронный** — все 2 точки вызова нужно перевести на await. **(историческое: снесено снос-30 06.09)**
 
 **Z4 — контракт транспорта снимет целый класс багов.** Один интерфейс, две реализации (V2-facade и V3-pipeline) — и баг класса C3 (`play()` вернул undefined) становится **ошибкой компиляции**, а не тихим падением в проде.
 

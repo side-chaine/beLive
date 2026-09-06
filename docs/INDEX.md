@@ -26,7 +26,7 @@
 - [docs/architecture/exercises-system.md](docs/architecture/exercises-system.md)
 - [docs/architecture/feed-social-v2.md](docs/architecture/feed-social-v2.md)
 - [docs/architecture/init-registry.md](docs/architecture/init-registry.md)
-- [docs/architecture/lrc-parser-service.md](docs/architecture/lrc-parser-service.md)
+- [docs/architecture/lrc-parser-service.md](docs/architecture/lrc-parser-service.md) (историческое: снесено 71fcc4b)
 - [docs/architecture/marker-system-spec.md](docs/architecture/marker-system-spec.md)
 - [docs/architecture/metrics-system.md](docs/architecture/metrics-system.md)
 - [docs/architecture/performance-quality-system.md](docs/architecture/performance-quality-system.md)

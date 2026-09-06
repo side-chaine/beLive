@@ -150,7 +150,7 @@ cp "$B/src/audio/engine-v3/integration/V2AudioCage.ts"             src/audio/eng
 cp "$B/src/audio/engine-v3/integration/V2ResurrectionDetector.ts"   src/audio/engine-v3/integration/
 cp "$B/src/audio/engine-v3/V2Adapter.ts"                            src/audio/engine-v3/
 cp "$B/src/types/audio-worklet-global.d.ts"                         src/types/
-cp "$B/src/audio/engine-v3/diagnostics/CaptureWorklet.ts"           src/audio/engine-v3/diagnostics/
+cp "$B/src/audio/engine-v3/diagnostics/CaptureWorklet.ts"           src/audio/engine-v3/diagnostics/   # (историческое: файл снесён 71fcc4b)
 cp "$B/src/audio/engine-v3/__tests__/BpmSwitchRace100.test.ts"      src/audio/engine-v3/__tests__/
 cp "$B/src/services/__tests__/track-meta.service.test.ts"           src/services/__tests__/
 ```

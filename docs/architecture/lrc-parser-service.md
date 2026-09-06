@@ -1,4 +1,5 @@
 # LRC Parser Service
+> ⚠️ ИСТОРИЧЕСКОЕ (06.09, снос-30 `71fcc4b`): файл `src/services/lrc-parser.service.ts` снесён (0 импортёров). Живой LRC-контракт: `auto-lyrics.service.ts` (parseLrcString) + `parsing.service.ts` (parseLrcFile). Спека ниже — архив истории, не живой контракт.
 **Status:** ✅ PRODUCTION
 **File:** `src/services/lrc-parser.service.ts` (27 строк)
 **Created:** TC-002 (2026-06-16)
