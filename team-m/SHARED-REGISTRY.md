@@ -283,6 +283,22 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 
 ---
 
+## LOG 2026-09-06 14:45 · 007 — 💥 СНОС-30 ИСПОЛНЕН (−12 754 строки) + 🩺 CI-инцидент 541/542 разряжен откатом ошибочного диагноза + финальный канон tsc=181
+
+**Модель: 007 = GLM 5.3 · ПК · Linux · HEAD `6822c81` = origin · CI 543 SUCCESS. Канон НОВЫЙ: tsc=181 · vitest 812/68/0int · reach: 121 = 70 excluded + 21 hold + 0 violations (стало: 8 H-1c + 6 H-3 + 4 H-4 + 3 H-5) · junction 3/grace-3 · G-3b 0/0 · PARITY PASS (19 записей / 17 wrappers / 2 demolished).**
+
+**① Снос-30 (`71fcc4b`, GO Никиты, скаут-верифицировано, Оператор):** 18 H-2 diagnostics (v6.32.x прогоны, верификаторы 207-305, CaptureWorklet — мёртв подтверждён: addModule-строк 0, потребитель impulse-test-harness удалён ранее) + 12 H-6 мёртвых (barrels stem/triggers/exercises/wrappers, mode-switch-events, rehearsal-trigger-writer, js/main.js, monitor.state, lrc-parser, NowPlaying/TrackInfo/OnboardingStep — все 0 импортёров; цепочка-риск РЕВЕРСИРОВАНА — barrel реэкспортировал H-1c, а не питался). **Скаут: 0 тест-импортёров у всех 30, тестов умерло 0, ложных срабатываний 0.** probe:bundle before/after: 0 потерь бандла, 0 ложных флагов — снесённые отсутствовали в бандле и ДО. Hold-лист почищен тем же коммитом: 51→21. **tsc 184→181: снесённые файлы несли 3 своих TS6133 — Оператор честно встал на СТОП при расхождении, диагноз верен, канон обновлён.**
+
+**② CI-инцидент 541→542→543 (мой самоотзыв — честно):** 541 упал на Verify (parity-хвост сноса: манифест ссылался на 2 снесённых wrapper-а) → вылечено правилом PM-1: bridge-manifest mode-switch + rehearsal-trigger → статус **demolished** (запись, не удаление; CHECK-B получил demolished-ветку «файл обязан отсутствовать» — зеркало CHECK-C). Но мой фикс-диагноз 542 был **ОШИБОЧЕН**: я счёл вис локального `npx tsx` CI-проблемой и внёс tsx в devDeps ⇒ npm@11 сгенерил nested-esbuild-lock, который npm@10 (CI Node 20) отверг на Install. **Откатил сам** (`6822c81`): CI 529/536/537 доказывают — npx-скачивание в CI работало всегда; локальный вис = пустой кэш + параллельный прогон, не CI-беда. Гейты остаются devDeps-независимыми (канон дома). **CI 543 зелёный, деплой жив.** Урок в §0-ловушки: «локальный вис npx ≠ CI-беда: прежде чем тащить devDep — проверь, падал ли КОГДА-ЛИБО этот шаг в CI».
+
+**③ Сопутствующее:** PULSE-ZONES.yaml: мёртвый путь B08 `src/components/SyncWaveform*/**` → `src/sync/components/**` (находка досье-патруля, `7a55ec8`) · досье SYNC-DISSECTION-B08 в git · волна-1 жива: agent-rehearsal [B01-HUB] сдал погружение 13:40, ждёт план Никиты.
+
+**Очередь 007:** волна-1 погружения (Studio/Quest/Show/Pitch/Split по формуле Никиты) — после плана на rehearsal-HUB · CF-батч 🔴 Никиты (жертвы G-7: METRICS_DB/belive-ai/belive-auth + снятие grace) · SEED-Билли · H-5-лента.
+
+— 007 · 14:45 · минус 12.7К строк мусора, канон честен, CI зелёный · самоотзыв про tsx записан 🫀💥
+
+---
+
 ## LOG 2026-09-06 14:00 · agent-pitch [B06] — 🛡 ПОГРУЖЕНИЕ: ЗОНА PITCH (бывш. Notes) — ядро живое и сильное, 4 спящих слоя, входы не начаты; доклад сдан, СТОП: жду план развития от Никиты
 
 **Модель: agent-pitch = Big Pickle Zen · ПК · Linux · HEAD `26e9256`. Зона B06: `src/audio/pitch/**` (9 файлов, 1318 строк) + `src/components/PitchTab.tsx` (372) + PianoKeyboard (164) + стыки (pitch.store 97, MicSourceV3, vocalReferenceTap). Погружение по формуле Никиты: ① скан+скаут → ② доклад → ③ СТОП.**
