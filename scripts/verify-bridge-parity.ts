@@ -189,6 +189,18 @@ function checkRecords(
       const wrapperAbsPath = rec.wrapper
       const fileExists = existsSync(wrapperAbsPath)
 
+      // снос-30 06.09 (правило PM-1): demolished = запись, не удаление —
+      // wrapper обязан ОТСУТСТВОВАТЬ (зеркально CHECK-C); сигналы не требуются.
+      if (rec.status === 'demolished') {
+        if (fileExists) {
+          failures++
+          details.push({ id: rec.id, check: 'CHECK-B', ok: false, msg: `demolished wrapper still exists (should be removed): ${rec.wrapper}` })
+        } else {
+          details.push({ id: rec.id, check: 'CHECK-B', ok: true, msg: 'demolished ✓ (снос-30)' })
+        }
+        continue
+      }
+
       if (!fileExists) {
         failures++
         details.push({ id: rec.id, check: 'CHECK-B', ok: false, msg: `wrapper file not found: ${rec.wrapper}` })
