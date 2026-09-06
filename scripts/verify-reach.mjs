@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // scripts/verify-reach.mjs — G-1 gate: find unreachable src/ files from roots
 // G1-FIX: line-based import parsing — side-effect imports/export-from/dynamic + comment-filter + .d.ts excluded
-// Usage: node scripts/verify-reach.mjs
+// Usage: node scripts/verify-reach.mjs [--zone=<id>]   — зонный срез ПУЛЬСа (team-m/PULSE-ZONES.yaml)
 // Parses index.html <script src> tags + src/main.tsx as roots.
 // BFS import/from graph (line-based, .ts/.tsx/.js/.mjs, no node_modules).
 // Mode: fail (D-4), exit 1 on violations; hold-list = scripts/reach-holdlist.json
@@ -147,12 +147,77 @@ const reducedPosix = new Set(reduced.map(toPosix));
 const stale = members.filter((m) => !reducedPosix.has(m));
 
 // 5c Печать (probe-bundle-совместимо: `  <posix-path>`; агрегация class из листа, НЕ хардкод — 002-патч 3)
-const classCount = new Map();
-for (const rec of holdList.members) classCount.set(rec.class, (classCount.get(rec.class) ?? 0) + 1);
-const agg = [...classCount.entries()].map(([c, n]) => `${n} ${c}`).join(' · ');
-console.log(`verify-reach: ${violations.length} violations · hold: ${hold.length} (${agg}) · excluded (H-1 tests): ${excludedCount} · stale: ${stale.length}`);
-for (const f of violations.sort()) console.log(`  ${toPosix(f)}`);
-for (const f of hold.sort()) console.log(`  ${toPosix(f)}`);
+const zoneArg = process.argv.find((a) => a.startsWith('--zone='));   // Block 6: зонный срез
+if (!zoneArg) {
+  const classCount = new Map();
+  for (const rec of holdList.members) classCount.set(rec.class, (classCount.get(rec.class) ?? 0) + 1);
+  const agg = [...classCount.entries()].map(([c, n]) => `${n} ${c}`).join(' · ');
+  console.log(`verify-reach: ${violations.length} violations · hold: ${hold.length} (${agg}) · excluded (H-1 tests): ${excludedCount} · stale: ${stale.length}`);
+  for (const f of violations.sort()) console.log(`  ${toPosix(f)}`);
+  for (const f of hold.sort()) console.log(`  ${toPosix(f)}`);
+}
+
+// ── Block 6 · --zone=<id> (ПУЛЬС-каркас, GO CEO_1 10:44 п.③ 06.09) ──
+// Зональный срез гейта: префикс-фильтр по paths из PULSE-ZONES.yaml.
+
+// Микро-парсер реестра зон (гейты node:-only, yaml-зависимости запрещены):
+// секция zones:, записи `  - id: X` + `    paths: [a, b]` + `    name:`.
+function parseZonesYaml(file) {
+  const text = readFileSync(file, 'utf8');
+  const zones = [];
+  let cur = null;
+  let inZones = false;
+  for (const raw of text.split('\n')) {
+    const line = raw.trim();
+    if (!inZones) {
+      if (line === 'zones:') inZones = true;
+      continue;
+    }
+    const idMatch = line.match(/^- id:\s*(\S+)/);
+    if (idMatch) {
+      if (cur) zones.push(cur);
+      cur = { id: idMatch[1], name: '', paths: [] };
+      continue;
+    }
+    if (!cur) continue;
+    const nameMatch = line.match(/^name:\s*(.*)$/);
+    if (nameMatch) { cur.name = nameMatch[1]; continue; }
+    const pathsMatch = line.match(/^paths:\s*\[(.*)\]\s*$/);
+    if (pathsMatch) {
+      cur.paths = pathsMatch[1].split(',').map((s) => s.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
+      continue;
+    }
+    if (/^[a-z-]+:$/.test(line)) break; // вышли из zones-секции (напр. sandbox:)
+  }
+  if (cur) zones.push(cur);
+  return zones;
+}
+
+if (zoneArg) {
+  const zoneId = zoneArg.slice('--zone='.length);
+  const zones = parseZonesYaml(join(root, 'team-m', 'PULSE-ZONES.yaml'));
+  const zone = zones.find((z) => z.id === zoneId);
+  if (!zone) {
+    console.log(`zone not found: ${zoneId}. Available ids: ${zones.map((z) => z.id).join(', ')}`);
+    console.log('PULSE · 6 gates = repo heartbeat');
+    process.exit(1);
+  }
+  // paths → префикс-фильтры: 'src/catalog/**' → 'src/catalog/'; без '**' = точный префикс
+  const prefixes = zone.paths.map((g) => g.replace(/\*+$/, ''));
+  const inZone = (p) => prefixes.some((pr) => p.startsWith(pr));
+  const zHold = hold.filter((f) => inZone(toPosix(f)));
+  const zViolations = violations.filter((f) => inZone(toPosix(f)));
+
+  if (zHold.length === 0 && zViolations.length === 0) {
+    console.log(`zone ${zone.id} «${zone.name}»: violations 0 · hold 0 — зона чиста (из общих ${violations.length} viol / ${hold.length} hold)`);
+  } else {
+    console.log(`zone ${zone.id} «${zone.name}»: violations ${zViolations.length} · hold ${zHold.length} (из общих ${violations.length} viol / ${hold.length} hold)`);
+    for (const f of zViolations.sort()) console.log(`  ${toPosix(f)}`);
+    for (const f of zHold.sort()) console.log(`  ${toPosix(f)}`);
+  }
+  console.log('PULSE · 6 gates = repo heartbeat');
+  process.exit(zViolations.length > 0 ? 1 : 0); // тот же принцип, что глобально
+}
 
 // 5d PULSE-хвост (N-12 ed3ab7f, латиницей — всегда последняя строка, и при 0, и при exit 1)
 console.log('PULSE · 6 gates = repo heartbeat');
