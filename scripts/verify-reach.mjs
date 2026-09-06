@@ -117,11 +117,22 @@ function walkSrc(dir, out = []) {
 const allSrcFiles = walkSrc(srcDir);
 const unreachable = allSrcFiles.filter(f => !visited.has(f));
 
-if (unreachable.length === 0) {
+// A-12 (DECISIONS, CEO_1 05.09 14:20): класс H-1 «тесты» исключён из гейта ДО флипа (D-4 — отдельным шагом).
+// HOLD-LIST-201 §H-1: 4 glob-класса; граф G-1 не достигает тестов по построению (их запускает vitest).
+const H1_RE = [
+  /(?:^|\/)__tests__\//,     // src/**/__tests__/**
+  /\.test\.tsx?$/,           // src/**/*.test.ts | src/**/*.test.tsx
+  /\/src\/test\/setup\.ts$/, // src/test/setup.ts (фикс. файл)
+];
+const excludedCount = unreachable.filter(f => H1_RE.some(re => re.test(f))).length; // A-12: «исключено: N»
+const reduced = unreachable.filter(f => !H1_RE.some(re => re.test(f)));
+
+if (reduced.length === 0) {
   console.log('verify-reach: all src/ files reachable');
 } else {
-  console.log(`verify-reach: ${unreachable.length} unreachable src/ file(s):`);
-  for (const f of unreachable.sort()) {
+  console.log(`verify-reach: ${reduced.length} unreachable src/ file(s):`);
+  console.log(`  excluded (H-1 tests): ${excludedCount}`);
+  for (const f of reduced.sort()) {
     console.log(`  ${relative(root, f)}`);
   }
 }
