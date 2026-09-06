@@ -280,6 +280,38 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 
 ---
 
+## LOG 2026-09-06 00:20 · 007 — 🏁 G-7 «СТЫК» ПРИМЕНЁН И ЗАПЕЧАТАН (цепь 001→002→001→009 + Оператор ×2): 7 пар · TOML-резолв по binding · tracked-истина · grace в CI · канон Δ0 · деплой зелёный
+
+**Модель: 007 = GLM 5.3 (tokenrouter) · ПК · Linux · HEAD `6d13020` = origin · CI run 529 success. Канон после применения: tsc=190 (Δ0) · vitest 812/68/0int (Δ0) · reach=121 · inert=1⚪ · G-3b 0/0 · PARITY PASS · junction violations=3 exact-set.**
+
+**Что применено (коммит `6d13020`, 5 файлов):** `scripts/junction-registry.yaml` (7 пар, формат A-4) · `scripts/verify-junction.mjs` (интерпретатор ~300 строк по контракту) · `package.json` (**verify:ci = 6 гейтов**: events+parity+reach+inert+docvis+junction — расширение A-13, events+parity сохранены) · `deploy.yml` (env JUNCTION_GRACE = 3 id до CF-батча 🔴 Никиты). Пак: `team-m/MICRO-PACK-G7-IMPL-2026-09-05.md` (артефакт прогона, 13 правок 002 + 3 ревизии 001 внесены).
+
+**Цепь отработала как система:** 001 собрал пак (7 пар, section-резолв поправка-А, JUNCTION_GRACE-решение «реестр честный fail / CI-ops-подавление») → **002 дал 13 правок** (TOML `#`-skip — закомментированный id «выигрывал последним»; ambiguous-binding; GRACE-STALE «пора снять»; заголовок ⚠ при grace в окружении; **exact-set A1=3 вместо ≥1** — «≥1» пропускал частично-слепой гейт; ветка «жертва вылечена раньше»; css-нормализация @media/@keyframes/`/**/`-вырез; external-host skip; per-file резолв) → 001-ревизия подтвердила + 3 финальных → **009 верифицировал независимо: 20/21 клеймов grep-ом, смоук-предсказание по 7 парам сошлось с A1 до знака — ГОТОВ** → Оператор применил.
+
+**Живая дыра, которую поймал СТОП Оператора (A1 = 2 вместо 3):** `belive-api/wrangler.toml` (gitignored `.gitignore:78`, 0 tracked — судьба 🔴 Никита «belive-auth в git») попал в физический глоб → пара 3 ушла в ложный ok. **Решение 001: tracked-истина** — workerIndex = `git ls-files '*wrangler.toml'` (прецедент docvis:37; git = окружение VCS, не devDeps-зависимость); fallback с честной деградацией при мёртвом git; **при живом git физический глоб ЗАПРЕЩЁН** — гейт докладывает фантома ㉞, не решает чужую развилку молча. Повторный прогон: violations=3 exact-set, вывод сошёлся с предсказанием 001 пункт за пунктом.
+
+**A1 честный вывод (локально, без grace):** 🔴 `wrangler-env-d1` (METRICS_DB: index.ts:27 читает ↔ wrangler.toml:42 `database_id=""`) · 🔴 `vite-url-ai-worker` (main.tsx:695 ↔ belive-ai фантом) · 🔴 `vite-url-worker-src` (.env.production:5 ↔ belive-auth не в tracked — 0tracked-каталог не есть репо) · 🟡 env-single-source (поправка-Б 201: SIGNALING_URL нет в .env.example, CI инжектит) · 🟡 css-dup 443 dup-ключей (шум-кап 10) · ⚪ secrets-cf-token (requires cf-token) · ✅ ephe-env-kv-scope (id `bd9b1fdb…` совпадает в двух toml — гейт умеет печатать и зелёное). **A4 grace-репетиция: 3×🟡 GRACE, violations=0, exit 0. A5: CI 529 success — деплой не лёг.**
+
+**Для Никиты (CF-батч):** лечишь METRICS_DB id / судьбу belive-ai / судьбу belive-auth → гейт сам станет зелёным (снятие grace-строки из deploy.yml = удаление 1 env-строки; GRACE-STALE подскажет, если забудешь). Жертвы гейта = доска развилок DECISIONS, гейт их честно краснит.
+
+— 007 · 00:20 · гейт стыков жив: проверяет, не лечит · очередь: A-12 → DEADCODE-батч №1
+
+---
+
+## LOG 2026-09-05 23:20 · 006 — 🏗 ОТЧЁТ «КАК УСТРОЕНА [SB]» ДЛЯ 007_2 сдан + демон WebBridge пал ВТОРОЙ раз за вечер
+
+**Модель: 006 = GLM 5.3 Flash · ПК Windows · мост. Продолжение пиксель-пака: Никита попросил отчёт «что и как устроено» для 007_2.**
+
+1. ⚪ **Деливерабл:** `SB-ARCHITECTURE-FOR-007_2-2026-09-05.md` (корень моста, 116 строк) — паспорт цели (порт 3000, beLive-yt, feature/yt-prep +7) · компонентная карта по фибрам (WagonTrain/TransportPanel/ControlDeck/BpmButtons/BillyDock/ModeButtons/QuickActions + CSS-модульные хэши) · скелет сцены с размерами · механики караоке (слоты `_yf9xl_`, data-атрибуты, авто-маркеры, палитра строк: прошедшие краснеют/текущая белая/будущие зеленеют) · Runtime API (audioEngine 36 методов, __belive.transport/pipeline/stemOrchestrator/monitorRouter/deviceManager, PitchDetector, __beliveBridgeFacade, beLiveSwitchMode) · живые --bl-* токены группами · **карта «скрытые семена → доноры нового UI»** (ai-chat-window hidden → ZONE 8; Notes=вокальный диапазон C2-C6 → ZONE 3; canvas 930×135 → ZONE 5 волна; Каталог v2+Import Markers → Mini Catalog) · 7 граблей (таймер-баг с корнем, isTrusted Билли, слайдеры без рефов, падающий демон, протухающая сессия, bmp-btn-пасхалка, каталог-оверлей) · маппинг PIXEL-DELTA-зон → точки встраивания · правила работы.
+
+2. ⚪ **Пара 007_2 теперь комплектная:** `PIXEL-DELTA-2026-09-05.md` (ЧТО менять: [SB]→[REF] по зонам) + `SB-ARCHITECTURE-FOR-007_2-2026-09-05.md` (КАК устроено: где и на чём встраивать). Оба в корне моста.
+
+3. ⚠️ **Инфра:** демон Kimi WebBridge упал ВТОРОЙ раз за вечер (~23:10, между зондами) — поднят снова (pid 3683). Нестабильность демона = новый пункт в грабли. Фреш-зонды React-фибров на :3000 не успел снять (вкладка ушла из фокуса) — компонентная карта в отчёте по утренней верификации фибров 11:40-45 + сверка DOM-структуры вечером (идентична).
+
+— 006 · пиксель-верификатор · пакет для 007_2 укомплектован 📦
+
+---
+
 ## LOG 2026-09-05 23:05 · 006 — 🎨 PIXEL-DELTA ГОТОВ (новый референс GPT 21:24 → GO-пакет 007_2) + ⚠️ ПОРТ [SB] СМЕНИЛСЯ 3001→3000 + демон WebBridge поднят
 
 **Модель: 006 = GLM 5.3 Flash · ПК Windows · мост. По команде Никиты «вот новый референс от GPT» — полный пиксель-пак сдан.**
