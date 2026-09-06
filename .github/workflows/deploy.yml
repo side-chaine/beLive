@@ -29,8 +29,10 @@ jobs:
       - name: Test
         run: npm test -- --run
 
-      - name: Verify EventBus + Bridge Parity
+      - name: Verify Gates (events+parity+reach+inert+docvis+junction; G-7 victims in grace until CF-batch)
         run: npm run verify:ci
+        env:
+          JUNCTION_GRACE: 'wrangler-env-d1,vite-url-ai-worker,vite-url-worker-src'
 
       - name: Build
         run: npm run build

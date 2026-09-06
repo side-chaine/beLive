@@ -1,0 +1,78 @@
+# junction-registry · v0.1 · 2026-09-05 · G-7 «Стык»
+# Спека: team-m/MICRO-PACK-G7-JUNCTION-2026-09-05.md (§2 формат, §4 пары, §6 правила, поправки А/Б 14:00)
+# ФОРМАТ ЗАМОРОЖЕН: список пар; поля id/kind/a/b/rule/level; a/b — flow-JSON
+# (ключи и значения в кавычках — парсится JSON.parse); комментарии # после значения или на своей строке.
+# Правила §6: новая пара = запись здесь, интерпретатор не меняется; резолв TOML по таблице; cf-token = unverifiable.
+
+- id: wrangler-env-d1            # пара 1 · жертва живая (CF-батч 🔴 Никита)
+  kind: env-to-toml
+  a: { "file": "gateway/src/index.ts", "env": "METRICS_DB" }
+  b: { "file": "gateway/wrangler.toml", "section": "d1_databases", "binding": "METRICS_DB", "attr": "database_id", "nonEmpty": true }
+  rule: implies
+  level: fail
+  # index.ts:27 читает METRICS_DB; wrangler.toml:40 binding, :42 database_id="".
+  # Ловушка ㊱: FEED_DB (:34/:36 id непустой) — резолв ТОЛЬКО по таблице binding=METRICS_DB, не по файлу.
+
+- id: vite-url-ai-worker         # пара 2 · фантом ㉞
+  kind: code-to-worker
+  a: { "file": "src/main.tsx", "env": "VITE_AI_WORKER_URL" }
+  b: { "worker": "belive-ai" }
+  rule: implies
+  level: fail
+  # main.tsx:695 читает (также src/js/ai/providers/belive.provider.ts:9); в репо 4 wrangler.toml
+  # (gateway, gateway/rehearsal, belive-feed-bot, belive-mvsep) — belive-ai нет. Судьба = CF-батч 🔴.
+  # A сужена до main.tsx: .env*-сторона покрыта парой 3 (дедуп). [002-стресс]
+
+- id: vite-url-worker-src        # пара 3 · обобщение пары 2
+  kind: env-to-worker
+  a: { "files": ".env*", "pattern": "VITE_*_URL" }
+  b: { "from": "hostname" }
+  rule: implies
+  level: fail
+  # Только непустые значения; hostname *.workers.dev → имя воркера (первый label) → wrangler.toml name;
+  # localhost/пустые — skip с пометкой, НЕ violation. Сегодня: REHEARSAL→belive-rehearsal ✓;
+  # AUTH (.env.production:5) → belive-auth НЕТ в репо → violation.
+  # hostname не *.workers.dev и не localhost/IP → skip с пометкой 🟡 external-host (вне досягаемости
+  # репо-резолва), НЕ violation. [002-стресс]
+
+- id: css-dup-warn               # пара 4 · warn-генератор (каскад статикой не вычислить — вердикт 201)
+  kind: css-dup
+  a: { "files": "src/**/*.css, css/*.css" }
+  rule: warn-only
+  level: warn
+  # Ключ (нормализованный селектор, свойство) в ≥2 файлах; расхождение значений — пометка.
+  # Вывод: первые 10 + счётчик (шум-кап).
+  # skip контекстов @media/@keyframes (стек по `{`); skip селекторов без [a-zA-Z] (keyframe-проценты);
+  # нормализация = trim + схлопывание пробелов; мультиселектор = ключ как есть (порядок значим).
+  # Причина: css/styles.css — 16 живых keyframes-дублей и 38 мультиселекторов; наивный резолв
+  # забивает warn-канал бессмыслицей. [002-стресс]
+
+- id: ephe-env-kv-scope          # пара 5 · сегодня зелёная
+  kind: kv-cross-worker
+  a: { "file": "gateway/src/index.ts", "env": "EPHEMERAL_KV" }
+  b: { "files": ["gateway/wrangler.toml", "belive-feed-bot/wrangler.toml"], "section": "kv_namespaces", "binding": "EPHEMERAL_KV", "attr": "id", "sameIn": true }
+  rule: implies
+  level: fail
+  # index.ts:16 читает EPHEMERAL_KV; id bd9b1fdb… в gateway:25 и feed-bot:20 — пара сегодня ЗЕЛЁНАЯ
+  # (контрольная: гейт обязан уметь печатать и ✅, не только красное). sameIn: attr совпадает во ВСЕХ files.
+
+- id: secrets-cf-token          # пара 6 · честно unverifiable (§3.4, §6)
+  kind: secret-external
+  a: { "file": "belive-feed-bot/wrangler.toml", "marker": "BOT_TOKEN" }
+  b: { "external": "cloudflare-dashboard" }
+  rule: implies
+  level: fail
+  requires: cf-token
+  # feed-bot/wrangler.toml:13 упоминает BOT_TOKEN (секрет wrangler secret put).
+  # Из репо тип Secret в CF-дашборде НЕ проверяется ⇒ вердикт всегда ⚪ UNVERIFIABLE, никогда ✅ (§6).
+
+- id: env-single-source          # пара 7 · поправка-Б 201 (14:00) · v0.2 поднята в старт
+  kind: env-to-example
+  a: { "file": "src/Rehearsal/services/signaling-client.ts", "env": "VITE_REHEARSAL_SIGNALING_URL" }
+  b: { "file": ".env.example", "key": "VITE_REHEARSAL_SIGNALING_URL" }
+  rule: implies
+  level: warn
+  # Читается signaling-client.ts:21, throw :22 (DRIFT: путь = src/Rehearsal/services/;
+  # deep-link.service.ts:77 = new SignalingClient (бутовый путь); signClientTicket-HMAC — :31.
+  # Есть в .env:4 и deploy.yml:40, НЕТ в .env.example (там 8 VITE_-строк). CI инжектит ⇒ warn, НЕ fail.
+  # Фикс-строка = 🔴 Никита, НЕ в этом паке.

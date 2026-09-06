@@ -21,12 +21,13 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "verify:events": "npx tsx scripts/verify-event-map.ts",
     "verify:parity": "npx tsx scripts/verify-bridge-parity.ts",
-    "verify:ci": "npm run verify:events && npm run verify:parity",
+    "verify:ci": "npm run verify:events && npm run verify:parity && npm run verify:reach && npm run verify:inert && npm run verify:docvis && npm run verify:junction",
     "verify:refs": "node scripts/verify-refs.mjs",
     "verify:reach": "node scripts/verify-reach.mjs",
     "probe:bundle": "node scripts/probe-bundle.mjs",
     "verify:docvis": "node scripts/verify-doc-visibility.mjs",
     "verify:inert": "node scripts/verify-inert.mjs",
+    "verify:junction": "node scripts/verify-junction.mjs",
     "gen:docindex": "node scripts/gen-doc-index.mjs"
   },
   "repository": {
