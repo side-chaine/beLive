@@ -1,0 +1,106 @@
+# PULSE-ZONES.yaml · реестр зон патруля ПУЛЬСа · v0.1
+# Данные-истина для зонных агентов. Промпты ссылаются сюда, 007 режет по зонам.
+# Статусы: pilot (смена сейчас) · wave1 · wave2 · audit (разведка) · sandbox (песочница 007_2)
+
+meta:
+  system: ПУЛЬС (PULSE)          # N-12 DECISIONS.md, Никита 06.09
+  canon-line: "ПУЛЬС: 6 гейтов · violations=N · zones-active=N"   # 007 вшивает в CI-вывод
+  patrol-rule: "смены по диспатчу 007 (opencode run, без TUI); НЕ стоящие процессы — RAM-урок 05.09"
+  prod-code: "только Оператор через цепь; патруль мониторит + предлагает"
+  report: "LOG-блок «🛡 патруль [зона]» в SHARED-REGISTRY.md + цифры зоны + предложение недели"
+
+zones:
+  - id: B09
+    name: Порт Каталог
+    agent: agent-port
+    status: pilot            # волна 0
+    paths: [src/catalog/**, src/services/upload/**, src/components/welcome/**]
+    focus: "3 лифта загрузки (zip/TG/ручная) · целостность каталога · скорость стыка B01+B09"
+    forbidden: "визуал каталога (песочница 007_2+006) · чужие зоны"
+
+  - id: B08
+    name: Башня Sync
+    agent: agent-sync
+    status: pilot            # волна 0 — заказ Никиты: ПОЛНЫЙ разбор всех функций
+    paths: [src/sync/**, src/components/SyncWaveform*/**]
+    focus: "полный разбор всех функций Sync-редактора · word-sync · LRC/теги · карты синхронизации"
+    forbidden: "мимикрия под Оператора — только разбор + предложения"
+
+  - id: PHONE
+    name: Phone (горизонталь)
+    agent: agent-phone-audit
+    status: audit            # аудит-фаза → потом патруль responsive-слоя
+    paths: [src/**/*.css, src/hooks/*resize*, src/hooks/*media*]   # горизонталь по всем зонам
+    focus: "аудит: где уже есть @media (7 файлов) · что ломается 768/1024px · touch (pointer:coarse) · useResizeColumns/matchMedia"
+    rule: "горизонтальный слой: власть ТОЛЬКО над responsive-слоем (breakpoints/@media/touch), бизнес-логику зон не трогает"
+    forbidden: "бизнес-логика вертикальных зон · прод-код без Оператора"
+
+  - id: B01-screen
+    name: Завод · экран Репетиции
+    agent: agent-factory
+    status: wave1
+    paths: [src/components/RehearsalLyrics*, src/components/KaraokeLyricsBoard*, src/components/WagonTrain*, src/components/TransportBar*]
+    focus: "рендер лирики (data-model 006) · TrackMap (data-block-type) · тайминги транспорта · баг таймера 006"
+    forbidden: "микшер-этаж (у него свой агент) · frozen-зоны"
+
+  - id: B01-mixer
+    name: Завод · этаж Studio (микшер)
+    agent: agent-studio-mixer
+    status: wave1
+    paths: [src/components/MixerPanel*, src/stores/stem*, src/audio/engine-v3/pipeline/**]
+    focus: "MixerPanel · стемы · шины BusFader18 · solo/mute/V-Mix · эффективные гейны"
+    forbidden: "AudioEngineV2/patchV1/bridges (frozen-legacy, только чтение)"
+
+  - id: B02
+    name: Академия Quest
+    agent: agent-quest
+    status: wave1
+    paths: [src/deck/**(quest), src/takes/**]
+    focus: "тейки · квесты практики · сценарии (practice-scenarios) · кокпит Quest (находка 006)"
+    forbidden: "чужие зоны · прод-код без Оператора"
+
+  - id: B03
+    name: Театр Show
+    agent: agent-show
+    status: wave2
+    paths: [src/components/Show/**, src/services/show*]
+    focus: "show.html/show.image сервисы ([renamed]-кейс 301) · сцены показа"
+    forbidden: "снос без двойного подтверждения · чужие зоны"
+
+  - id: B06
+    name: Pitch (бывш. Notes) — ОТДЕЛЬНАЯ разработка
+    agent: agent-pitch
+    status: wave2             # переименование Notes→Pitch: [renamed], не [cleared] (A-15)
+    paths: [src/audio/pitch/**, src/components/PitchTab*]
+    focus: "PitchTab (живой, обе ноты) · pitch-engine/yin · очередь: узел-1 005_2 (bleed) · де-фриз наследие"
+    forbidden: "замена YIN до вердикта 005_2 · переименование руками без 007"
+
+  - id: B04
+    name: Башня Split
+    agent: agent-split
+    status: wave2
+    paths: [src/components/MonitorMixPanel*, src/audio/engine-v3/monitor/**]
+    focus: "маршруты SPLIT · MonitorRouter · калибровка задержки · авто-микс секций"
+    forbidden: "гейты монитора (V-Mix) — читать, ломать нельзя"
+
+  - id: B01-fx
+    name: Завод · этаж визуала
+    agent: agent-visual-fx
+    status: wave2
+    paths: [src/foundation/reactions/**, src/components/**/Background*, src/services/*trigger*]
+    focus: "фоны · HTML-эффекты · TriggerVisualService · audio-reactive (boot-гонка вылечена 6086bbf)"
+    forbidden: "перф-регрессии (порог 60fps) · чужие зоны"
+
+  - id: B05
+    name: Ателье Styles (Темы)
+    agent: agent-styles
+    status: wave2
+    paths: [src/components/StylesDeck*, src/components/ThemeSelector*]
+    focus: "темы · палитры · MODE_COLORS (конфликт семантики с be/LiVE-парой — узел-3 005_2)"
+    forbidden: "перезапись цветовой ДНК без вердикта цвет-науки"
+
+sandbox:
+  - id: B09-facade
+    name: Дизайн каталога → песочница 007_2+006
+    status: sandbox          # НЕ патруль: 006 уже делает пиксель-forensic GPT-референсов
+    note: "визуал каталога = ветка 007_2 по GO Никиты после снятия паузы дизайна"
