@@ -281,6 +281,19 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
    — это **тёмные этажи города**. По директиве «ноль мусора» они не проходят ревью.
 ---
 
+## LOG 2026-09-06 12:18 · agent-port [B09] — 🛡 ПАТРУЛЬ СМЕНЫ №1 (пилот зоны)
+
+**Модель: agent-port = Big Pickle Zen · ПК · Linux · HEAD `2295170` (canon: tsc 184 · vitest 812/68 · reach 51 hold/0 viol). Зона: src/catalog/** + upload* + welcome.**
+
+- **reach зоны: 4 флага из 51 hold → 0 тесты · 0 живые · 4 hold (владелец Никита):** CatalogBillyChat H-3 (Билли за isTrusted-гейтом) + тройка EventList/HeroStack/TrackScroll H-5. Пруф патруля: у всех четырёх **ноль импортёров** (rg по src, HEAD `2295170`); тройку держит только комментарий `feed.types.ts:121` «kept for HeroStack/EventList/TrackScroll». Лента жива другим путём: App→FeedScreen→FeedLayout (FeedPostCard/PostComposer). Развилка Никиты «подключить/снести/держать» — без изменений.
+- **TS зоны: 8** (FeedPostCard:49 toast · feed-data.store ×4 · upload.service ×2 = «kept unused as in legacy» `upload.service.ts:430` по контракту паритета) → микро-батч Оператору, риск 0.
+- **junction зоны: 0 пар B09 в реестре** (7 пар глобальных, violations=3 — все CF/belive-ai, не мои). Стык каталог↔TG-воркер гейтами НЕ покрыт.
+- **Лифты:** zip — `CatalogLayout.tsx:127`→`upload.service.ts:685` (JSZip dyn-import :692, прогресс 30/33/70/85/99, safety-timeout 60s) · **~НЕ ПРОВЕРЕНО** (замеров в логах нет) · TG-download — `CatalogContent.tsx:34` downloadTgTrack (retry + truncated-гейт, тест жив) · **~НЕ ПРОВЕРЕНО** · TG-upload — `tg-upload.service.ts:20`, зовётся ТОЛЬКО из B08 (SyncEditorPanel:235/:324, batch-publish:80), не из каталога · ручная — UploadPanel→saveTrack:393 (LRC-парс + cover-theme). **Узкое место общее: весь ZIP читается в RAM одним куском (`readFileAsArrayBuffer`) до JSZip.**
+- **Стык B01+B09:** loadTrack инструментирован [OrchTiming] ×14 (`track.loader.ts`); IDB re-read ~50-100ms из 1-3s total — сознательная жертва свежести (TC-85-03, задокументировано).
+- **Предложение недели (1 коммит, Оператор через цепь):** junction-пара B09 «CatalogContent `TG_API_URL:14` ↔ belive-feed-bot wrangler.toml» + правка лживого комментария `CatalogLayout.tsx:164` («TG download — не используется» — а он вызывается `CatalogContent.tsx:315`). Эффект: стык каталог↔воркер под ПУЛЬСом — родится красным на живой жертве, как G-7.
+
+⚠️ Флаг безопасности (не frozen, доклад вверх): `X-API-Key: 'belive2026'` хардкод в `tg-upload.service.ts:70` — кандидат в CF-батч секретов.
+
 ## LOG 2026-09-06 11:45 · 007 — ✅ ВСЕ ХВОСТЫ GO ЗАКРЫТЫ ЗА СМЕНУ: A-12 (70 тестов исключены) → TRIAGE-51 (0 живых · 30 на снос · 10 hold · 8 транзит) → D-4 ФЛИП (reach=fail + hold-носитель + PULSE-строка, CI зелёный) → DEADCODE-батч №1 (tsc 190→184)
 
 **Модель: 007 = GLM 5.3 (tokenrouter) · ПК · Linux · HEAD `2295170` = origin · CI 537 success. Канон НОВЫЙ: tsc=184 (−6) · TS6133=102 · vitest 812/68/0int (Δ0) · reach: 121 = 70 excluded (H-1) + 51 hold + 0 violations (fail-режим!) · junction violations=3 локально / CI-grace=3 · G-3b 0/0 · PARITY PASS.**
