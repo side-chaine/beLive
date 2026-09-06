@@ -297,6 +297,21 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 
 — agent-rehearsal [B01-HUB] · волна-1 · погружение сдано, код не тронут (только чтение) · **СТОП: жду план развития от Никиты**
 
+## LOG 2026-09-06 13:37 · agent-show [B03] — 🛡 ПОГРУЖЕНИЕ: Театр Show вскрыт (волна-2, формула шаг-1 сдана; артефакт `team-m/SHOW-IMMERSION-B03-2026-09-06.md`)
+
+**Модель: agent-show = Big Pickle Zen · ПК · Linux · HEAD `26e9256`. Канон: tsc 184 (зона 0) · vitest 812/68 (тест зоны 5/5 🟢) · reach 0 viol/51 hold (зона чистая) · junction зоны 0. src/ не тронут (0 байт, read-only).**
+
+- **Зона = «режиссёр номера»** (houses.yaml:134): сценарии показа (Points→Steps→SubSlides), редактор + плавающий PresenterDock поверх beLive. ~5.5K loc: StepWorkspace 886 · PresenterDock 655 · show-editor.store 753 (мозг: автосейв IDB 2s, lazy-миграция legacy→subSlides :53-109) · сервисы image/html (64/52) → IDB (scenario key `rec_studio_scenario_v1`, картинки/HTML в beLive_scenes). Git: рибренд Rec Studio→Show (`9e47cf5`) → sub-slides (`4872a56`) → тихо.
+- **[renamed]-кейс 301 — ЗАКРЫТ:** show-сервисы живы, 4 импортёра в 2 файлах (StepWorkspace:8,13 · PresenterDock:4,5), старых имён 0 — патч houses.yaml:138 `[cleared]→[renamed]` подтверждён фактом.
+- **Eventbus: 0** — зона не на шине (zustand + DOM-хоткеи; read-интеграция через useShowStore.getState() в useKeyboardShortcuts:20, useBillyKeyboard:15, ControlDeck:24). Город рисует 2 входящих события (sync:active-line-changed, ui:block-scenes-loaded) — **приёмников в коде НЕТ**.
+- **Смерть внутри живого (6 позиций, решение — план/цепь):** ① show-presentation.store.ts (60) — мёртвый дубликат, 0 потребителей вне барреля, reach не видит ② @deprecated на живом useShowStore (show.store:5 — маркировка врёт, переезд не случился) ③ заглушки «Фазы 2» с 0 вызовов: featureTransition (store:133), getCurrentScreenInfo (:178), moveStep (:168) ④ экспорты без потребителей: getFeaturesByCategory, deferredRevokeStepUrls, revokeHtmlUrl/removeStepHtml, deleteStepImagesByPrefix (idb:581) ⑤ двойная дорожка legacy-рендера (safety net в PresenterDock:261,499,517) ⑥ TODO/FIXME — 0.
+- **Внешние вердикты по зоне:** PHONE-аудит боль №4 (фикс 220px, 0 @media, mouse-only драг PresenterDock:339 — 🔴 тел/🟡 планш) — спека фазы-2 придёт от PHONE-агента; ShowEntry живёт вкладкой ControlDeck — при редизайне хаба B01-HUB (3-колоночный GPT-контракт) точка входа зоны двигается.
+- **НЕ ЗНАЮ / жду план Никиты:** вектор Show как отдельной разработки · сценарий «Фазы 2» · судьба presentation-дубля (снос/оживление) · мобильность зоны · каталог featureRegistry (сейчас 1: open-studio-mixer) · куда переезжает ShowEntry при новом Репетиции.
+
+**СТОП.** Шаг-1 формулы завершён. План развития — от Никиты.
+
+— agent-show [B03] · 06.09 13:37 · театр вскрыт, сцена чистая, жду сценария от режиссёра 🎭🛡
+
 ## LOG 2026-09-06 12:57 · agent-sync [B08] — 🛡 ПАТРУЛЬ СМЕНЫ 1: ПОЛНЫЙ РАЗБОР ВСЕХ ФУНКЦИЙ SYNC-РЕДАКТОРА (заказ Никиты) — досье сдано
 
 **Модель: agent-sync = Big Pickle Zen · ПК · Linux · HEAD `16d608c`. Зона: src/sync/** (31 файл · 4 575 LOC). Полное досье: `team-m/SYNC-DISSECTION-B08-2026-09-06.md` (32 КБ). Выжимка:**
