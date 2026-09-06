@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback, useMemo } from 'react';
+import { useRef, useEffect, useCallback, useMemo } from 'react';
 import { generatePeaks } from '../../sync/canvas/peaks';
 import type { ViewMode } from '../takes.types';
 

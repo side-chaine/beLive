@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import { useLyricsStore } from '../../stores/lyrics.store';
 import { useMarkersStore } from '../../stores/markers.store';
 import { useBlocksStore } from '../../stores/blocks.store';

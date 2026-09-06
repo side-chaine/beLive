@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useUIStore } from '../stores/ui.store';
 import { useModeStore } from '../stores/mode.store';
 import { CatalogLayout } from '../catalog/components/CatalogLayout';

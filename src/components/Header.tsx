@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { ModeButtons } from './ModeButtons';
 import { QuickActions } from './QuickActions';
 import { useModeStore } from '../stores/mode.store';

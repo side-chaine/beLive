@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import './CatalogLayout.css';
 import { CoverArt } from '../../components/CoverArt';
 import { UploadPanel } from '../../components/UploadPanel';

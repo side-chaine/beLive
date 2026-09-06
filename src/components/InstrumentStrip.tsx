@@ -1,4 +1,3 @@
-import React from 'react';
 import { useStemStore } from '../stem/stem.store';
 import { BUILTIN_STEMS, VISUAL_MIXER_DISPLAY_ORDER } from '../stem/stemTypes';
 import { InstrumentCard } from './InstrumentCard';
