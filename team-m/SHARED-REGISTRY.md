@@ -315,6 +315,18 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 
 ---
 
+## LOG 2026-09-06 23:1x · agent-studio [B01-mixer] — 🏗 ПЛАН НИКИТЫ ПРИНЯТ · этап-0 сдан (скаут ×6 пакетов) + этап-1 сдан (001: направление StudioSurface, GO-на-005); разнарядка 005 роздана
+
+**Модель: agent-studio = Big Pickle Zen · ПК · Linux · HEAD 906a746 · канон tsc 181/812/68. План Никиты (диктовка ~22:30): «от DOK избавляемся → отдельные кнопки → отображение Studio/микшера/плагинов по GPT-референсам». Прогон по конституции 83f0f73 запущен.**
+
+1. **Глаза связки:** Studio_006 сдал сверку #000 (текущее 01.png vs референсы 1/2/3.png: 5 полос shortLabel, серые фейдеры без glow, VU на статике невидим, M/S 20-22px, полки эффектов нет — сохранено zones/studio/006-REPORT-000.md). Блокеры 006 сняты головой: досье/PIXEL-DELTA/PHONE-AUDIT/конституция скопированы на мост; канал CHANNEL-studio жив (ответ головы 23:0x). Следующее задание глазам: смоук-серия 4 состояний панели.
+2. **План зафиксирован:** zones/studio/PLAN-KICKOFF-2026-09-06.md (рестейт направления + дельта-таблица 006 + код-ответы головы + вопросы Никите).
+3. **Этап-0 (скаут, 6 пакетов):** монтаж Studio сегодня (deck/modules:72-81 → ControlDeck:568-575 → App:237-243) · always-on соседи дока (Inst/Voc/VMix/Mic/BPM/Sync/DNA — карта стыков) · прецеденты отдельных поверхностей (ShowEditor/SyncEditorPanel условный рендер + fixed z) · полка-прецеденты (InstrumentCard 80px CSS-пульсация, StylesDeck, ai-tools 14 тулзов; MicSourceV3 = acquisition без DSP) · VU-фактура (AnalyserNode fftSize 256 post-fader, dB-шкала, meterFps по тирам 10-60) · loadedStems (DUO/FULL, loadStemsOnDemand). 4 коррекции к досье впитаны.
+4. **Этап-1 (001):** НАПРАВЛЕНИЕ = StudioSurface: отдельная поверхность (тулбар + микшер + полка плагинов) со своей кнопкой входа, монтаж по прецеденту ShowEditor/SyncEditorPanel (новая строка App.tsx, НЕ правка чужого), вкладка дока = переходный режим до вердикта хаба. Границы: полоса-ядро переиспользует MixerPanel (полные лейблы label vs shortLabel, glow-фейдеры, M/S ≥44px тач); плагины-полка по прецеденту карточек; music-bus фейдер + VMix = стыки (переезд — по Никите); mic-DSP в граф MonitorRouter = цепь (только Оператор). РАЗНАРЯДКА 005: A=UI-паттерны (radix/headless vertical slider + VU, карточки полки) · B=WebAudio DSP (WaveShaper=character, Biquad=tone, feedback-delay=echo + карта вставки в micInput→micDelay→monitorGain→vmixMicGate→monitorMaster без ломки). Вердикт: GO-на-005.
+5. **Вопросы Никите (не блокируют 005):** ① место кнопки Studio — текущий экран Репетиции или новый хаб-дизайн (007_2)? ② состав плагинов первого круга — все три с референсов (Mic Character/Echo/Vocal Tone)? ③ красный music-bus фейдер и VMix — переезжают в Studio или остаются стыком?
+
+— agent-studio [B01-mixer] · 06.09 23:1x · прогон жив: 001 ✅ → 005 запущены (пара, параллельно по конституции) 🎛🏗
+
 ## LOG 2026-09-06 18:1x · agent-studio [B01-mixer] — 🏗 СВЯЗКА ПОДНЯТА (конституция 83f0f73 впитана): промт Studio_006 → team-m/zones/studio/ + канал CHANNEL-studio запущен; СТОП: жду план Никиты
 
 **Модель: agent-studio = Big Pickle Zen · ПК · Linux · HEAD `d969f85`→`3ec26b6`. Протокольная сессия: Никита попросил оценить протокол до диктовки плана — конституция + прецеденты соседей (b01-hub/quest/pitch) прочитаны, связка поднята по образцу.**
