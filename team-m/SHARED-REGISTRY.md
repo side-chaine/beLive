@@ -283,6 +283,88 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 
 ---
 
+## LOG 2026-09-06 14:00 · agent-pitch [B06] — 🛡 ПОГРУЖЕНИЕ: ЗОНА PITCH (бывш. Notes) — ядро живое и сильное, 4 спящих слоя, входы не начаты; доклад сдан, СТОП: жду план развития от Никиты
+
+**Модель: agent-pitch = Big Pickle Zen · ПК · Linux · HEAD `26e9256`. Зона B06: `src/audio/pitch/**` (9 файлов, 1318 строк) + `src/components/PitchTab.tsx` (372) + PianoKeyboard (164) + стыки (pitch.store 97, MicSourceV3, vocalReferenceTap). Погружение по формуле Никиты: ① скан+скаут → ② доклад → ③ СТОП.**
+
+### 1. КАРТА ЗОНЫ (факты, все якоря проверены чтением)
+
+**Ядро детекции** — `src/audio/pitch/`:
+- `pitch-engine.ts` (337) — двухрежимный движок. **Mode A mic**: AudioWorklet-YIN на audio thread, HP 80Гц/LP 2000Гц, регистрация `yin-processor.js` через `import.meta.url` (Vite), глобальный `_workletLoaded`. **Mode B passive**: AnalyserNode 2048 + main-thread YIN, тик 46ms (~21.5Гц), SFM-шумометр 200-5000Гц (`_computeSFM` :184-200). ARC-2e-мина задокументирована в самом коде (:22-26): singleton-владелец = pitch.store/bridge; PitchTab владеет ЛОКАЛЬНЫМИ `new PitchEngine()` — его cleanup destroy() убил бы singleton под живым store.
+- `yin-processor.js` (222) — AudioWorklet-близнец, self-contained: gate → CMND O(N²) → threshold 0.15 → parabolic → octLock → rangeClamp 75-1200 → median-5 → postMessage. ~2% audio thread.
+- `yin-detect.ts` (200) — main-thread YIN (passive-контур). Отличия от worklet: fallback minTau при no-dip (worklet шлёт no_pitch) + **сабгармоник-метрика** subharmonicRatio (:126-135, F0/2 strength через cmnd[2T0]). CMND-точки защищены RASP-SNAPSHOT (:120/:183 — снос без OVERRIDE запрещён).
+- `note-quantizer.ts` (80) — snap с октавным гардом: обычные смены нот мгновенны, прыжки ±10-14 п/т = 3 подтверждения (~138ms); conf<0.5 → null.
+- `note-tracker.ts` (176) — стейт-машина SILENCE→ONSET→SUSTAIN→RELEASE (onset 0.6/offset 0.4, 3-кадровое подтверждение, MAX_ACTIVE 5).
+- `ring-buffer.ts` (54) — кольцевой буфер 300 PitchSample, zero-alloc push.
+- `pitch-visual-bridge.ts` (32) — мост на legacy `window.pianoKeyboard.feedExternalPitch`.
+- `types.ts` (56) — WorkletMessage-юнион, config, SCORE {10/25/50ц}, midiToNote/midiToCents.
+- `__tests__/pitch-engine-modes.test.ts` (161) — 4 кейса ARC-2e (К-3 passive-init, К-4 acquire/release-баланс, К-6 poison-continuation, К-7 static-grep ?raw).
+
+**UI**: `PitchTab.tsx` (372) — вкладка deck: id `'pitch'`, label **'Notes'** (TC-RENAME-PITCH, `deck/modules.ts:94-104`, order 40, режимы rehearsal/karaoke/concert). Два движка: vocal (passive, тап `__belive.pipeline.vocalReferenceTap` — HybridPipelineService:141) + mic (worklet, через `__belive.micSource.acquire()`). События: track-fully-loaded / track-stem-ready(vocals) / playback-state-changed / 3с-timeout. Хук useStableVocalData (:80-164): NoteQuantizer + EMA sub/noise + hold-ноты 500ms. **Матч = строгое равенство строк нот vocal vs mic (:338), без центов** — по промпту зоны. PianoKeyboard (164) рендерит обе ноты.
+
+### 2. ЦИФРЫ ПУЛЬСа зоны
+
+| Метрика | Значение |
+|---|---|
+| Ядро `src/audio/pitch/` | 9 файлов (8 модулей + тест), 1318 строк |
+| PitchTab.tsx / PianoKeyboard.tsx | 372 / 164 строки |
+| **Итого зона B06** | **~1854 строки** |
+| Тесты зоны | pitch-engine-modes: 4 it() · pitch-store.test.ts: 4 it() |
+| Импортов frozen-модулей | **0** (AudioEngineV2/patchV1/bridges/orchestrator — ни одного import) |
+| Канон (замер мной 06.09 14:00, HEAD 26e9256) | **tsc=184 (d0) · зона B06 в ошибках НЕ значится; vitest не гонял (канон 812/68 от 11:45 принят по SSOT)** |
+| Стенд VIS-14 (scripts/pitch-bench) | **НЕ СУЩЕСТВУЕТ** — спека готова, стенд не построен |
+| benchmarks/pitch/ | нет |
+
+### 3. ГОТОВЫЕ ВХОДЫ (жду план; в коде зоны НЕ НАЧАТ ни один)
+
+1. **Коридор ±33/±50ц (A-7 🟢, Бриф-2 005_2 сдан):** в коде зоны 0 строк про коридор. Есть SCORE-пороги {10/25/50ц} в types.ts и midiToCents — фундамент формулы |Δcents| = |midiToCents(vocal) − midiToCents(mic)|, но сравнение центов не реализовано.
+2. **VIS-14 A/B/C-стенд** (MICRO-PACK v1.4, «РЕШЕНО С УСЛОВИЯМИ» 02.09 21:46): YIN(A) vs pitchy-MPM(B) vs pYIN-голосование(C), CREPE-судья, дом `scripts/pitch-bench/`, тай-брейкер 002-У5. Скоуп = vocal-tap (yin-detect.ts); mic-worklet вне пака. Этап-2 после реформы. **Не построен** (см. §2).
+3. **Узел-1 pitch-bleed (005_2, A-5 ⏳ ждёт GO):** в коде 0 строк.
+4. **RASP-SNAPSHOT-защита CMND-точек** (yin-detect.ts:120/:183) — снос без OVERRIDE запрещён. Любой план, трогающий CMND-контур, идёт через OVERRIDE.
+5. **UI-CHANGE-SPEC (A-6 🟢):** PITCH-кнопка транспорта = live-детект, `〽 PITCH`, тонкий glow, НЕ огромный анализатор — стык с TransportBar/B01-HUB (в транспорте кнопки НЕТ, живёт вкладка в deck).
+
+### 4. СТЫКИ С СОСЕДЯМИ
+
+- **B01-HUB:** PitchTab — вкладка deck-панели хаба (modules.ts:94-104). Стык живой.
+- **MicSourceV3 (engine-v3/services):** mic-режим через `__belive.micSource.acquire()/release()` — refcount-дедуп с takes-REC (инвариант 82e1c76, охраняется К-4/К-6).
+- **vocalReferenceTap (engine-v3/pipeline/HybridPipelineService:141):** пассивный тап вокала, живой (VocalTap.test.ts охраняет).
+- **[renamed] Notes→Pitch (решение Никиты 06.09):** сегодня label='Notes' в modules.ts:97 + спека TC-RENAME-PITCH:94. По моему промпту — переименование применяет 007 по GO, не я.
+- **PHONE-аудит (26e9256):** PitchTab в красном списке 390px НЕ значится (судил только ControlDeck/MonitorMixPanel/ShowEditor/WaveformCanvas) — phone-вердикт по зоне НЕ ВЫНОСИЛСЯ, вопрос открыт.
+
+### 5. ⚠️ СПЯЩИЕ СЛОИ ЗОНЫ (4 из 8 модулей ядра — писатели/машины без потребителя)
+
+1. **NoteTracker-класс без инстанса:** PianoKeyboard импортирует только ТИП `NotePhase`; `new NoteTracker()` в src/ — 0. Машина нот готова, не подключена.
+2. **RingBuffer без читателя:** `ring.push` пишет движок (:328), `getRange/getLatest` в src/ никто не зовёт. Писатель без читателя.
+3. **pitch-visual-bridge → `window.pianoKeyboard`:** глобаль НЕ публикуется ни в src/, ни в js/, ни в index.html. `startPitch()` = консоль-ворнинг + пустой cleanup. Мост в никуда. [renamed]-правило: перед сносом — кадастр-проверка.
+4. **pitch.store singleton-владелец без UI-потребителя:** usePitchStore живёт только в собственном тесте; PitchTab store не использует (локальные движки по ARC-2e).
+
+**Следствие:** USP-метрики гроул/скрим (subScore/noiseScore) считаются движком и живут в state хука, **но НЕ рендерятся** в PitchTab — аналитик-гроул = недостроенный слой. Это главный развилка-материал для плана Никиты (не моё решение).
+
+### 6. ДОЛГИ И РИСКИ (факты для плана — НЕ мои решения)
+
+- **R-1 · `window.audioEngine.audioContext` (pitch-engine.ts:59-65):** ОБА режима (mic и passive) требуют глобаль — `_getContext()` throw'ит без неё. Это хвост God-object (ДГ-класс, волна V2→V3-похорон, план В-1…В-4 от 201 в реестре 01.09). Если глобаль умрёт — зона теряет AudioContext-источник целиком (вывод по чтению кода; живой смоук НЕ ПРОВЕРЕН). Для независимости нужна альтернатива (`__belive.pipeline`-контекст или свой ctx для mic-режима) — вопрос плана, не мой.
+- **R-2 · Протухший тест `medium-stores.test.ts:18/20`:** пишет/читает поле `pitchEnabled`, которого в PitchState НЕТ — 2 из 184 канон-ошибок tsc живут на моём store. Чинить = либо поле, либо тест (Оператор по GO; я только фиксирую).
+- **R-3 · Mic-fallback на `audioEngine.microphoneStream` (pitch-engine.ts:95-108):** ветка V2-режима (когда `__belive.micSource` нет) — второй God-object-хвост, умрёт вместе с ДГ-01.
+- **R-4 · Дубль алгоритма YIN** (yin-detect.ts vs yin-processor.js — близнецы в разных средах): VIS-14-стенд сознательно скоупится на vocal-tap; любые правки алгоритма надо синхронить в оба файла (риск рассинхрона, в спеке VIS-14 близнец = follow-up-кандидат).
+
+### 7. ВОПРОСЫ К НИКИТЕ (записаны, не решены)
+
+- **Q-1 (главный):** «Pitch = отдельная разработка» — это (а) мини: вкладка Notes + PITCH-кнопка транспорта (live-детект, A-6) как есть, или (б) макси: полноценный инструмент-анализатор с коридором ±33/±50ц (A-7), гроул-метриками в UI, NoteTracker-визуализацией? Мини уже в коде; макси = 4 спящих слоя просыпаются + 2 не начатых входа.
+- **Q-2:** Коридор ±33/±50ц (A-7, вход готов с 05.09) — строить сейчас или после VIS-14-стенда (стенд-вердикт может сменить детектор)?
+- **Q-3:** VIS-14-стенд: спека «решён с условиями» 02.09, Этап-2 «после реформы» — реформа закрыта (D-4 flip 06.09, канон 184). GO на стенд?
+- **Q-4:** Судьба God-object-хвостов R-1/R-3: ждать волны В-3 (201) или дать зоне независимый контекст в рамках плана B06?
+
+### 8. ЧЕСТНОЕ «НЕ ЗНАЮ / НЕ ПРОВЕРЕНО»
+
+- vitest канон 812/68 принят по SSOT (11:45), мной не гонялся — правок src/ не было, зона не менялась.
+- Живой смоук PitchTab в браузере (микрофон + стем) — НЕ ПРОВЕРЕНО (read-only погружение).
+- Существование `window.pianoKeyboard` в рантайме за пределами репо (внешний legacy?) — НЕ ЗНАЮ; в репо публикации нет.
+- Что решило 005_2 по узлу-1 (bleed) на сегодня — хвост CHANNEL-005 читан скаутом, конкретики по bleed НЕ НАЙДЕНО (тема живёт только в DECISIONS A-5).
+
+**ИТОГ: доклад сдан. Формула: ① → ② → ③ СТОП. Жду план развития от Никиты.**
+
+— **agent-pitch [B06] · 06.09 14:00 · погружение сдано · СТОП: план — от Никиты**
+
 ## LOG 2026-09-06 13:57 · agent-split [B04] — 🛡 ПОГРУЖЕНИЕ: Башня Split вскрыта (волна-2, формула шаг-1 сдана) — доклад сдан, СТОП: жду план Никиты
 
 **Модель: agent-split = Big Pickle Zen · ПК · Linux · HEAD `26e9256`. Канон: tsc 184 (зона 0) · vitest 812/68 — канон реестра, полный прогон НЕ делал (честно) · reach exit 0 (зона чиста; `monitor.state.ts` — единственный в hold, H-6) · тестов зоны: 0. src/ не тронут (read-only).**
