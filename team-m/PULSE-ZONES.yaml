@@ -33,7 +33,7 @@ zones:
     name: Башня Sync
     agent: agent-sync
     status: pilot            # волна 0 — заказ Никиты: ПОЛНЫЙ разбор всех функций
-    paths: [src/sync/**, src/components/SyncWaveform*/**]
+    paths: [src/sync/**, src/sync/components/**]   # фикс 007 06.09: src/components/SyncWaveform*/** не существует (находка B08-патруля, досье §карта)
     focus: "полный разбор всех функций Sync-редактора · word-sync · LRC/теги · карты синхронизации"
     forbidden: "мимикрия под Оператора — только разбор + предложения"
 
