@@ -284,6 +284,20 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 
 ---
 
+## LOG 2026-09-07 19:0x · agent-split [B04] — 🏁 ЗОННЫЙ ПРОГОН ЗАВЕРШЁН (полный цикл конституции): 001→005×3→002→скаут-V3→005-вызов×3→001-рев2→009 (14/14) · СПЕКА ДЛЯ 007_2 ГОТОВА · REPORT сдан
+
+**HEAD старт `89cc5c7` → финал `e2732e5` (009: канон-снапшот устарел, tsc/vitest перепрогнуть при применении). Полный отчёт: `team-m/zones/split/REPORT-2026-09-07.md` (+ мост).**
+
+1. **Прогон по доктринам дня (Никита):** план-диктовка (прорыв «аудио-суфлёр→3D-audio», V3-ONLY «нет V2, нет легаси», стабильность AutoMix=продукт, BV из проекта в жизнь) + вызов-раунд «мы точно взяли лучшее?» + тайминг: решения к 007_2 через Оператора, HUB решает когда.
+2. **Главные факты (009 перепроверил 14/14 по коду):** регистр-баг preChorus (pre-chorus ВСЕГДА рампит вокал в 0 — AutoMix:13/:86/:101); гвоздь немого SPLIT (enable v3 без ensure/resume — MonitorEngine:93-102); _mode='v2' default → панель до первого V3-груза на легаси-графе со СВОИМ AudioContext; персист AutoMix только в легаси (22 ключа); резолвер на window.lyricsDisplay; STRETCH_PRIORITY без backing/drums (evict 65535); backingVocal:0 в karaoke/live/concert → post-fader BV мёртв (выбран pre-fader); события не летят при паузе; setSinkId жив FF116+/Safari18.4+ (коррекция «Chromium-only»).
+3. **СПЕКА 4 фаз для 007_2:** Ф0 V3-хребет атомарным триплетом (v3-default ПО ФАКТУ V3-активации + enable{resume+ensureMainPlaying+sinkId-restore} + персист-владение теми же 22 ключами monitor:*) → Ф1 стабилизация AutoMix (кейс-фолд регистра, unknown→0 strict-zero parity, аналитический pin vs FF-Android, wiring тройки триггеров, V3-резолвер через setBlockResolver, equality-gate) → Ф2 BV (pre-fader тап от instance.outputNode + bvHallInput→_bvHallTrim→_mainDelay + DCA multi-target: ОДИН контроллер, конфиг {vocal,bv} per-target) → Ф3 снос легаси последним (дедуп эмиссии → 4 hidden audio → window.audioEngine×4 → setLineUpSource-V3 ДО сноса → script-тег). 6 условий 009 интегрированы.
+4. **Верификация:** 002 ТРЕБУЕТ ПАТЧА (8 ударов приняты, pre-fader закрыл 2 одним патчем); вызов-раунд: выбор подтверждён (Wilson-канон, X32-изоморф, кросс-браузерный хребет), 2 усиления впитаны (DCA-писатель, аналитический pin), 1 гвоздь найден (enable); 009: ГОДНА С УСЛОВИЯМИ → спека финализирована.
+5. **В котёл (каноны):** pre-fader monitor-tap · control-DCA (один писатель на AudioParam) · hall-bus _mainDelay (X32 mix-bus изоморф) · аналитический pin · MediaStream+setSinkId хребет 2026 · 3D-футур: monitor-шина стерео + слот StereoPanner в Router-конструкторе.
+6. **СТЫКИ → HUB:** B01-mixer: STRETCH_PRIORITY += backing (блокер Ф2) + drums-репорт pre-existing; B01-screen: BV-плашка = future; контракт V3-резолвера строк. **@Никита/@HUB: спека зоны готова к 007_2 — жду окна по вашему таймингу.**
+
+— agent-split [B04] · 07.09 19:0x · прогон закрыт, решения запечатаны, башня ждёт применения 🎛🏁
+
+
 ## LOG 2026-09-07 18:35 · **301** — 🔴 G-7 (junction) КРАСЕН НА ЧИСТОМ HEAD: CI зелёный ТОЛЬКО через `JUNCTION_GRACE` · три нарушения = один корень (долг CF) · честно: два гейта у меня не запускаются — это мой Мак
 
 **Модель: 301 · Mac · HEAD `e2732e5`, дерево чистое. Код не тронул.**
