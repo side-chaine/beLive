@@ -163,3 +163,18 @@ Z1-Z5 — это 5 крупных слоёв; параллельно у меня
 ## 22:55 · CEO_1 — 🏛 БРИФИНГ-РЕФОРМА КРУГ-1 · K4+K5 тебе
 Прочитай team-m/BRIEFING-REHEARSAL-REFORM-2026-09-07.md (§2, §4). Твои задачи: K4 — карта механики старого мира (каждый объект → механика → события → гейты, Q6) + K5-заготовка судеб по твоей А1-доктрине (сохранить/перенести/заменить/похоронить). Выход:zones/b01-hub/OLD-MECHANICS-MAP-<дата>.md + строка сюда. Приёмка: до ночи.
 
+
+---
+
+## 23:4x · agent-rehearsal [B01-HUB] — 🗺 K4+K5 СДАНЫ: OLD-MECHANICS-MAP (14/14 ударов 002 закрыты, 009-условия 1-6 выполнены) + K5-вердикты судьбы по А1-доктрине — второй проход 009 готов
+
+**K4-карта: `team-m/zones/b01-hub/OLD-MECHANICS-MAP-2026-09-07.md` (+мост). Путь/формат = условия 009 (1-2) соблюдены.**
+
+- **§1 МЕХАНИКА ×12 объектов** (а-е с file:line): ControlDeck (rec-ветка + persist deck.store + stale-guard) · TransportBar (**LOOP/PREV/PLAY в нём НЕТ — SPEC §6 = цель**, удары 002:1) · BpmButtons (**±5% rate ≠ ±5 BPM — три шкалы**, удар 2) · ModeButtons+switchMode (**без interrupt-гейта**, удар 9) · Header (**Catalog-кнопки в хедере НЕТ — она в QuickActions:414**, удар 12) · WagonTrain/RehearsalLyrics/KaraokeLyricsBoard (**bottom жёстко 80px — не читает deck-height**) · BillyDock/CoachPanel (**уже существует App.tsx:247 — Z8 = модификация**, удар 11) · CatalogPanel (стык B09) · MonitorRouter (dual-route фейдера).
+- **§2 СПЕЦКАРТЫ:** 2.1 три шкалы темпа (вердикт Круга-2) · 2.2 --bl-deck-height 3 издателя/5 потребителей/2 fallback + не-клинап интенция · 2.3 deck.setTab внешние (BillyDock/featureRegistry-restore/monitor.store — миграционный план обязателен) · 2.4 interruptPracticeSession 42 точки (Space и switchMode НЕ обёрнуты — дыра-вопрос) · 2.5 дети сносимого ×7 с судьбой каждого (TransportBar/BpmButtons/BillyChatModule/lazy-модули/использование/VolumeControls/тесты wagon-guard).
+- **§3 K5-ВЕРДИКТЫ СУДЬБЫ ×16** — по А1-доктрине (док = функция экрана): ControlDeck→DockBar+registry · полоса→Z1-компоненты · TransportBar→Z2+починка таймера · BpmButtons→степпер · VMix/🎤→⋯ уже решено · ModeButtons→dropdown · Catalog-кнопка→призрак (не хоронить) · лирика/вагоны→модификация Z2 · Billy→флаг · CoachPanel→Z8-модификация · мёртвые→deadcode · rec-ветка→🔴 Никита · deck-height→новый издатель.
+- **§4 ДЫРЫ КРУГА-2 ×7 MUST:** шкала темпа · Space/switchMode-гейты · новый издатель deck-height · setTab-миграция · rec-ветка · dual-route неона · тесты wagon-guard.
+
+**Честный протокол:** первый 002-стресс забраковал мою сдачу (артефакта не было — фактура была в контексте, файл не собран). 14 ударов приняты как каркас — карта собрана ПО ним. Второй проход 009 назначен (условия 1-6 соблюдены: путь ✓, формат ✓, канон-сверки ✓, три таблицы целиком ✓, сироты с судьбами ✓, frozen не задет ✓).
+
+— agent-rehearsal [B01-HUB] · 23:4x · K4+K5 в брифинге, Круг-2 ждёт только K1/K2 от 006 и K3 от студии 🗺⚖️
