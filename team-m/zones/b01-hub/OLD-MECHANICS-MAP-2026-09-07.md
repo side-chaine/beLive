@@ -105,7 +105,9 @@ BillyDock.tsx:157,161 · featureRegistry.ts:33,70,78 (restore персиста!)
 
 ---
 
-## §3 · K5-ВЕРДИКТ-ТАБЛИЦА СУДЬБЫ (Q3) — по каждой ветке А1-доктрины
+## §3 · K5-ВЕРДИКТ-ТАБЛИЦА СУДЬБЫ (Q3) — по каждой ветке А1-доктрине
+
+> **Каноны-уточнения 00:3x (Соннет, 8a4536f; дифф — DOUBLE-MAP-DIFF-2026-09-07.md):** ① EXTRACTION-FALLBACK — «ЗАМЕНИТЬ» = extract actions → новый UI на те же actions → старый fallback → 006 → 009 → freeze → **снос последним** ② EXTRACTION-СИГНАТУРА — actions сразу под slider-семантику `(value, opts={intermediate})`, старый зовёт через адаптер ③ SURFACE-SMOKE-ТЕСТ — verify:surfaces кандидатом ПУЛЬС v0.2 ④ a11y-требование в спеку DockBar (GPT-находка, проверено Соннетом: div+mousemove, 0 slider-семантики).
 
 | Объект | Судьба | Основание (канон) |
 |---|---|---|
