@@ -238,7 +238,7 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 | **301** | 30.08 13:47 | **`9b6bf83`** (лок. HEAD = `origin/main`, sshfs) | да — блок 200 (13:50) + блок 007 (14:55, метка в будущем): ARC-2d в каноне ✅, теневой слой переехал ✅, корень чист ✅; свои LOG 13:37 + 13:42 (самокоррекция HEAD) |
 | **301** | 30.08 14:10 | **`9b6bf83`** (лок. HEAD = `origin/main`, sshfs) | да — блок 707 (14:15, метка в будущем: mtime реестра 13:53): кадастр v0.3 собран, 7 вопросов → 301; свой LOG 14:10 — КРОСС-ЧЕК (4 расхождения из 7); в `team-m/` добавлены DEAD-CODE-MANIFEST + DOCS-AUDIT-MANIFEST + CROSSCHECK-REPLY (**untracked**, ждут 🔴 Никиты по STORAGE-POLICY) |
 | **301** | 30.08 14:40 | **`9b6bf83`** (лок. HEAD = `origin/main`, sshfs) | да — блок 707 (14:27, v0.3.1: кросс-чек применён полностью) + блок 200 (15:05, модельный ремонт + досье V2→V3); свои LOG 14:35 (вторая копия репо OneDrive 1.8 ГБ) и 14:38 (`STEPS-FROM-NIKITA-2026-08-30.md`: 24 позиции в 5 пакетов + 5 данных) |
-| **003** | 09.02 19:11 | `f5b9318` (ls-remote ✅) | [ОПРОС] 7 инициатив 003: DOC-CONVOY-CI · факт-генератор · единый индекс · ghost-floors · догон-рефлекс §0 · док-пара в каждую волну · тёплый старт |
+| **003** | 10.09 09:0x | `23d790d` (ls-remote ✅) | догон таймлайна: блоки 004/ФАБРИКА×7, CEO-аудиты×3, 007-YT×2, 006, Z2-цепь — headers прочитаны, репо-HEAD не ехал (замеры свежи). REPO-STUDY-CENSUS-003-2026-09-10 сдан (L1 100% · L3 32% · тени UI/stores/gateway; deck-surface уже у MO-dock) |
 | **003_2** | 04.09 20:20 | `f4354b1` (ls-remote ✅) | да — 🎤 голос сдан (микрофон раунд-2): DOC-CONVOY-CI + scanner-в-CI + параллельная приёмка; риск G-3b-до-mv; канон «число = команда» |
 
 | **005** | 02.09 21:46 | `23bed3d` (ls-remote ✅) | да — 3-я цепь дня: VIS-14 «РЕШЕНО С УСЛОВИЯМИ» (LOG 21:46); 3 фичи через прогон за 24ч, канон 68 файлов/822 |
@@ -315,6 +315,18 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 ---
 
 ---
+
+## LOG 2026-09-10 09:1x · 003 — 📏 REPO-STUDY-CENSUS (заказ Никиты «изученное vs неизученное»): ДОКИ честны 100% · КОД с механизмом в доке ≈32% (23 178/71 661 строк, 9 доменов) · тени названы числами · догон реестра 5 дней сделан (004-фабрика, CEO-аудиты, 007-YT, Z2)
+
+**Модель: 003 = GLM 5.3 Free (tokenrouter) · ПК (Linux) · HEAD `23d790d` (репо с 09-05 стояло — мои замеры свежи; события 09-08..10 = мост/сессии). Отчёт: REPO-STUDY-CENSUS-003-2026-09-10.md (мост+team-m). Каждое число — команда из отчёта.**
+
+1. ⚪ **Четыре уровня:** L0 инвентарь 100% (census 796/574) · L1 «доки не врут» 100% в скоупе конвоев (Д-4, тройная подпись; 1 ghost Onboarding:340 в догоне) · L2 «код назван в живом доке» 258/484 = **53%** · **L3 «механизм+слушатели+схема в доке» (строгий критерий Никиты): 9 доменных зон = 23 178 строк ≈ 32% src/ (2.54 МБ всего)**.
+
+2. ⚪ **НЕ изучено (главное):** src/components **14 170 строк** (семья deck-surface уже разобрана MO-dock atoms — в L3 не засчитаю до фиксации в доке) · services 9 127 · stores 4 441 (нет карты пишет/читает) · gateway 2 955 (Д-3 ждёт скрины) · js-legacy 1 892 · Rehearsal/triggers/theme ≈3 400. Ком-карта 201: 435 маркеров, 34/52 ссылок мёртвы. Вне-шинные эвенты ~14 не описаны.
+
+3. ⚪ **План добивания L4:** H-1 STORES-карта (1 смена) → H-2 UI-атлас (2-3 смены, главный пробел) → H-3 ком-карта v2 + 14 эвентов → H-4 gateway (после Д-3) → H-5 Rehearsal. Итог: 3-5 машино-смен без UI / 5-8 с ним. Козырь: 7 verify-гейтов держат L3 от протухания.
+
+— 003 · мерка честная, по числам 📏
 
 ## LOG 2026-09-08 17:0x · CEO_1 — ✅ Z2-ЦЕПЬ ВЕРИФИЦИРОВАНА CEO (4 круга за смену): 009-вердикт прочитан целиком, 2 убийцы проверены моим grep-ом independently · TRACK-UNLOCK локальным прокси (🔴 Никиты снят без CF!) · T4 открыт — единственная точка ожидания
 **Модель: CEO_1 = Z-AI GLM 5.3 (WSL) · входы: REF2Z2-009-VERDICT (мост to-200) + коммиты песочницы a38f322/08cdd47/493fbd5/8acfb3c/19cf01c + мои независимые grep-проверки**
@@ -442,6 +454,88 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 ---
 
 ---
+
+## LOG 2026-09-10 08:2x · 004 — 🏭 ФАБРИКА: ТРЕТИЙ МЕХАНИЗМ ВОЛНЫ-1 СФОРМИРОВАН — MO-loop «Луп-Хранитель» (запрос Никиты 08:2x) + улов Никиты «вкладки дока = инст-агенты» внесён в MO-реестр как матрица двойного дна
+**Модель: 004 = Z-AI GLM 5.3-free (WSL, opencode) · вход: запрос Никиты 08:2x («жду промт на MO-loop» + «вкладки дока уже сформированы как инст-агенты») · артефакты: team-m/HANDOFFS/HANDOFF-MO-loop.md + drafts/MO-REGISTRY-draft.md (formed + матрица) + TRIGGERS/MO-loop.md (мост)**
+
+**① §ФАБРИКА 5 ШАГОВ (MO-loop):** (1) суть — ROSTER-паспорт 3 + живые чтения 08:2x (loop.store 267 строк: isLooping :10, loopSubBlockKeys :12, recalculate :39-60, инвариант isLooping⇔loopSubBlockKeys≠∅; синапсы types.ts:46-48; loop-events.ts:81 Sync-канал; **repeat в audio.store = 0** — K-B-якорь); (2) from_repository — 0 двойников; (3) HANDOFF-MO-loop.md — самодостаточен (пилот-профиль 4 классов ①-④ §5, FINGERPRINT/СЛОЙ/СЫРЬЁ-v0, 3 задачи с приёмкой: погружение+прогон классов → доклад → СТОП); (4) строка MO-реестра: formed; (5) этот LOG + TRIGGERS/MO-loop.md. **Нюанс канона:** по Соннету Q6 loop = пилот-скрипт без LLM; Никита запросил полный хендоф — сессия = живой пилот-плюс, промоушен в полный L1 при своём инциденте через 301.
+
+**② УЛОВ НИКИТЫ ВНЕСЁН (двойное дно У4 — живая матрица):** вкладки дока (modules.ts: 7 живых registerModule) × зонные агенты × MO-ядра: show→agent-show(B03)→MO-show(в-2) · styles→agent-styles(B05)→textStyle(L3) · takes→agent-quest(B02)→takes+MO-practice(в-2) · mixer→agent-studio(B01-mixer)→MO-stem(в-2, приоритет УЗ-1) · monitor→agent-split(B04)→monitor(L3) · pitch→agent-pitch(B06)→pitch(L3) · **billy→НЕТ агента (остров в hold-листе 201, owner Никита)**. Мёртвые вкладки: mix/tools/ai (мёртвый 'mix' = находка MO-dock Ф1). From_repository фабрики теперь гоняется по ОБОИМ слоям (зонный ≠ MO — соседи по слоям, не дубли).
+
+**③ ФРАЗА ДЛЯ ОТКРЫТИЯ СЕССИИ:** «Ты — MO-loop «Луп-Хранитель». Твой стартовый комплект: team-m/HANDOFFS/HANDOFF-MO-loop.md — прочитай целиком, затем TRIGGERS/MO-loop.md, начни с задачи №1.»
+
+**④ ОЧЕРЕДЬ ФАБРИКИ:** волна-1 закрыта (dock live, mode-switch formed, loop formed); далее по директивам: MO-stem (приоритет УЗ-1) и др. волна-2; дайджест-замены ждут утверждения списка.
+
+— 004 · 10.09 08:2x · волна-1 укомплектована хендофами; матрица вкладок×агентов живёт в MO-реестре 🏭🫀
+
+## LOG 2026-09-10 08:1x · 004 — 🏭 ФАБРИКА: ВТОРОЙ АГЕНТ СФОРМИРОВАН — MO-mode-switch «Режим-Хранитель» (подтверждение Никиты 08:0x) · хендоф самодостаточен · фраза для открытия — ниже
+**Модель: 004 = Z-AI GLM 5.3-free (WSL, opencode) · вход: подтверждение Никиты 08:0x («формирую новую сессию с MO-mode-switch?») · артефакты: team-m/HANDOFFS/HANDOFF-MO-mode-switch.md + drafts/MO-REGISTRY-draft.md (formed) + TRIGGERS/MO-mode-switch.md (мост)**
+
+**① §ФАБРИКА 5 ШАГОВ:** (1) суть — ROSTER-паспорт 2 + живые чтения 08:1x (mode.store 14 строк БЕЗ persist; mode-switch.service emitModeChanged :30-33 + 4 call-sites :160/:169/:178/:202 + switchMode :216; mode-events.ts:81 eventBus→setMode+body-class+volume-policy; App.tsx:232-233 два центра; 9 файлов-потребителей mode-changed); (2) from_repository — 0 двойников; (3) **HANDOFF-MO-mode-switch.md** — самодостаточен (FINGERPRINT/СЛОЙ/СЫРЬЁ-v0, 10 документов, семья таблицей оба трека, границы с MO-dock по App-развилкам, 3 задачи с приёмкой: погружение → доклад → СТОП ждёт план Никиты); (4) строка MO-реестра: formed; (5) этот LOG + TRIGGERS/MO-mode-switch.md с задачей №1.
+
+**② ПЕРЕМЫЧКА ОТ БРАТА:** в хендоф вшит факт MO-dock (ATOM-DOSSIER): mode-switch-events.ts = DEAD CODE, единственный React-писатель mode.store — mode-events.ts:81; задача №1 агента — сверить карту брата своим чтением (первый импульс-кандидат).
+
+**③ ФРАЗА ДЛЯ ОТКРЫТИЯ СЕССИИ:** «Ты — MO-mode-switch «Режим-Хранитель». Твой стартовый комплект: team-m/HANDOFFS/HANDOFF-MO-mode-switch.md — прочитай целиком, затем TRIGGERS/MO-mode-switch.md, начни с задачи №1.»
+
+**④ ОЧЕРЕДЬ ФАБРИКИ:** 3 L2-семьи (loop/track-loader/v3-interceptor) — поля family в MAP-draft, промоушен через 301 при своём инциденте; дайджест-замены (5 кандидатов) — ждут утверждения списка.
+
+— 004 · 10.09 08:1x · второй агент волны-1 в проекте; сессия готова к открытию одной фразой 🏭🫀
+
+## LOG 2026-09-10 08:0x · 004 — 🏭 ВЕРДИКТ ФАБРИКАНТА: MO-dock ЖИВ, хендоф подтверждён живым прогоном (2 смены без фабриканта) · очередь: MO-mode-switch (паспорт готов, ждёт директивы) · MO-реестр обновлён
+**Модель: 004 = Z-AI GLM 5.3-free (WSL, opencode) · вход: 00-пас Никиты 08:00 («Док есть! проверь») · проверка: LOG-блоки MO-dock 00:4x/01:5x + zones/mo-dock/drafts/ ×3 + TRIGGERS/MO-dock.md + git (src/ не тронут, 0 строк)**
+
+**① ПРОВЕРКА ПРОЙДЕНА (хендоф = самодостаточен, приёмка §ФАБРИКА):** MO-dock отработал 2 смены одной фразой открытия: (а) погружение 00:4x — 10/10 документов, 9 файлов семьи на обоих HEAD, 3 факта-сюрприза с file:line (мёртвый таб 'mix' CatalogLayout:116/242-243; интерлок не восстанавливает таб CatalogPanel:33-46; pianoWasOpen-труп на SB), СТОП-формула соблюдена; (б) цепь 001→005→002→001-рев→002-ре→009 = РЕШЕНО С УСЛОВИЯМИ (заказ Никиты 00:4x) — атом-досье 27 file:line, финальный пакет 9 пунктов (P0×3: Space-гард, v3-writer-контракт, stale-guard). FINGERPRINT-дисциплина: оба блока несут `mechanism:deck.store · class:...` ✓. Границы: src/ не тронут (git status 0), frozen не тронуты, записи в drafts/ (DRAFT-режим) ✓.
+
+**② ОЧЕРЕДЬ ФАБРИКИ (кто следующий):** **MO-mode-switch** — второй живой волны-1 (Н-1 dual-transport, мина У5). Паспорт готов (ROSTER-паспорт 2), from_repository 0 двойников. **Новый факт от MO-dock для его хендофа:** mode-switch-events.ts = DEAD CODE (единственный React-писатель — mode-events.ts:81) — включу при формировании. Жду директивы CEO_1/007 + подтверждения Никиты (канон: агент = при СВОЁМ именованном инциденте).
+
+**③ МО-РЕЕСТР ОБНОВЛЁН:** MO-dock = **live** (2 смены, ждёт слово Никиты по 9-пакету); MO-mode-switch = queued-следующий; 3 L2-семьи — поля family в MAP-draft (union 167).
+
+— 004 · 10.09 08:0x · фабрика подтверждена живым выходом: одна фраза → 2 смены → цепь закрыта; следующий в очереди — MO-mode-switch 🏭🫀
+
+## LOG 2026-09-10 01:5x · 🛡 MO-dock — ПРОГОН «ПОСЛЕДНЕЕ СЛОВО ТЕХНИКИ» ЗАКРЫТ: цепь 001→005→002→001-рев→002-ре→009 = РЕШЕНО С УСЛОВИЯМИ · атом-досье дока сдано (каждый атом с file:line) · финальный пакет 9 пунктов (P0×3)
+**Модель: MO-dock = Z-AI GLM 5.3-free (WSL, opencode) · заказ Никиты 00:4x («сначала полное погружение… подключай скаутов» + «прогони 001-005-002-009, всё ли по последнему слову») · треки: SB 002eade (primary) / main f19ecd6 · канон [SB] 00:5x: tsc=276 Δ0 · vitest 67/803 PASS · PARITY PASS · артефакты: zones/mo-dock/drafts/{ATOM-DOSSIER, RUN-MODERN-AUDIT}-2026-09-10.md · FINGERPRINT: mechanism:deck.store · class:modern-audit-chain**
+
+**① АТОМ-ДОСЬЕ (я + 3 скаута):** ядро (deck.store 36/registry 50/modules 114/types 20, байт-идентично main↔SB) · компоненты (ControlDeck-SB 106 строк — в main 581; DeckBar 394+css; TransportPanel 319+css — V1B v2.1) · ДВ-арифметика: collapsed 76+112=188 (>1080) / 76+110=186 (≤1080) / +240 expanded — НИ ОДИН из 5 фоллбеков (240/76/76/76/80) не равен реальности · полный z-стек (9999999→0, док 999995, Header 999996 сверху, CatalogPanel 999994 — единственный ниже) · клавиатура: Space-каннибализация (гладит нативную активацию ВСЕХ кнопок дока), K без interrupt, неоны без practice-гейта, 20 глобальных слушателей-конкурентов · mode×deck: mode-changed → mode-events:81 — единственный React-писатель; mode-switch-events.ts = DEAD CODE; setTransportOpen пишет класс в LEGACY-DOM index.html:255 · 16 аномалий-кандидатов в §H.
+
+**② ХОД ЦЕПИ:** 001-круг-1: 10 осей эталона-2025-26, отстаём по 9/10, ГОРЯЧЕЕ-5, ТЗ-005 → 005 (Context7 ×5 библиотек): R1-R5 рецепты → 002-круг-1: **СЛОМАЛ R2** (гидрация при пустом registry = вайп персистов), **ГЛАВНАЯ МИНА: R1 слушал несуществующее событие bl:v3-active-change** (main.tsx:89 — прямой write, grep=0; реализация дословно = фейдер навсегда в wrong bus) → 001-рев: все удары принял (спот-чек 007: ✓), пакет 9 пунктов → 002-раунд-2 (точечный по-новым): init-запись мимо сеттера; **practice-нейминговая мина** (isPracticeSessionActive читает EXERCISE-store — гейт по нему убил бы scenario-mix override) → дизейбл Record/Metronome (state-lie рядом с реальным REC TakesControlStrip) → **009: 11/11 чек-листа ✅ личным чтением, фрод 0, ВЕРДИКТ РЕШЕНО С УСЛОВИЯМИ** (3 условия-границы: якорь main.tsx:89; HMR-аргумент убрать; warn DEV-only).
+
+**③ ФИНАЛЬНЫЙ ПАКЕТ (применение = Оператор через цепь, по плану Никиты; frozen НЕ тронут ни одним пунктом):** **P0×3**: П.1 Space-гард (button/menuitem/option; слайдеры глобалу) useKeyboardShortcuts:107 · П.2 v3-writer-контракт (dispatch+init-via-setter в main.tsx:88-90, ПОТОМ миграция 3 рендер-чтений на useSyncExternalStore) · П.3 stale-guard [mode, activeTabId] + expanded&&!activeTabId→clearTab (закрывает каталог-'mix' пустую панель). **P1×5**: П.4 ДВ-хук-издатель (3 call-site, константы 188/240, useBillyZoneCache→подписка) · П.5 BillyDock stopPropagation · П.6 ESC-scoping ⋯-меню · П.7 неон-гейт строго по usePracticeStore.isActive (LED исключён) · П.9 продукт-вопросы (L0-блокер Z2-N3; sync×karaoke App:232-233; судьба 'mix'). **P2**: П.8 dup-warn(mod.id) DEV-only + дизейбл пустышек (Record/Metronome/Undo/Prev/Next/Stop), статик-пилюли оставить (REF-2).
+
+**④ РЕЗЮМЕ НИКИТЕ:** док канонически чист (803/803, PARITY), но по 9/10 осей «последнего слова» отстаёт — три тихих класса поломки уже живут в коде (Space-глушение своих кнопок; 5 разных правд о высоте дока; фейдер на нереактивном флаге движка). Пакет закрывает всё без frozen-правок; слово Никиты ждут 3 продукт-вопроса (П.9). Прогон по формуле закрыт: 6 диспатчей, 2 стресс-круга 002, двойная ревизия 001, независимая верификация 009.
+
+— 🛡 MO-dock · 10.09 01:5x · ДОК = знаю каждый атом; цепь отработала; жду план Никиты 🫀
+
+## LOG 2026-09-10 00:4x · 🛡 MO-dock — ПОГРУЖЕНИЕ (первый агент волны-1 созвездия ПУЛЬСа): семья deck-surface обойдена живыми чтениями на обоих треках · 3 факта-сюрприза · СТОП: жду план Никиты
+**Модель: MO-dock = Z-AI GLM 5.3-free (WSL, opencode) · вход: TRIGGERS/MO-dock.md [00:2x] (мост) + HANDOFF-MO-dock.md · треки: main f19ecd6 / SB 002eade (primary) · артефакт: team-m/zones/mo-dock/drafts/IMMERSION-2026-09-10.md (полная карта) · FINGERPRINT: mechanism:deck.store · class:deck-surface-immersion**
+
+**① СЕМЬЯ (7 строк, ядро байт-идентично между ветками — git diff 4 файлов = 0):** deck.store 36 строк (persist bl-deck :31-34 = только expanded+activeTabId) · registry 50 (dup-id молча игнорируется :12, lazy-кэш навсегда :39-49) · modules 114 (7 живых: mixer/takes/show/monitor/styles/pitch/billy; live видит 3; **mix/tools/ai закомментированы** :4-59) · types 20 · ControlDeck [SB] **106 строк** (после Z1-реформы; в main — 581, push-док) · DeckBar 394+css 253 (K1-яд вычищен, правило .bl-deckbar живое — фикс d99a55d на месте) · TransportPanel 319+css (V1B v2.1; main-транспорт = TransportBar 134, другая эра).
+
+**② ТРИ УДИВИВШИХ ФАКТА (file:line, все верифицированы живыми чтениями):**
+**Ф1. Каталог пишет в deck.store мёртвый таб 'mix' — CatalogLayout.tsx:116/:242/:243 (play/Prev/Next) ставят activeTabId:'mix'+expanded:true, но модуль mix не существует (modules.ts:4-13 закомментирован) → getLazyComponent('mix')=null → panel рендерит пустоту (ControlDeck.tsx:95-103) = пустая панель 240px; stale-guard :50-55 не ловит (он гасит только при смене mode).** После запуска трека из каталога пользователь получает раскрытый пустой док.
+**Ф2. CatalogPanel-интерлок не восстанавливает таб — CatalogPanel.tsx:33-46: сохраняет ВСЁ prev-состояние (:34), восстанавливает только expanded (:45-46), prev.activeTabId не тронут** → таб висит hanging: плитка не подсвечена (data-active требует expanded, DeckBar.tsx:284), панель скрыта, клик вернёт. S04-подклетка прогона А подтверждена и уточнена.
+**Ф3. pianoWasOpen = труп поля на SB: 0 вызовов вне deck.store (setPianoWasOpen :26 — висячий экспорт); в main помечен удалённым TC-PITCH-03 (ControlDeck.tsx:43/:553 «pitch = tab now»).** Поле мигрировало трупом в DeckState :7/:11. Кандидат в NERVOUS-LOG после плана Никиты.
+
+**③ СВЕРКА С ДОКАМИ: 0 семантических расхождений.** ui.store deck-флаги = фантом подтверждён (grep -i deck по ui.store.ts обоих веток = 0 — находка 004 №3 верна, флаги дока в deck.store :20-23). SCENARIOS-DOCK-A (24 клетки): L0×expanded-блокер, S04, S22-«featureActive не гейтит док» — всё подтверждено живым кодом App.tsx:231-236 (ControlDeck гейтится только syncOpen/showActive; FeatureOverlay/PresenterDock рендерятся поверх :237-238). Единственный дельта-нюанс: «ControlDeck 581 строк» верен только для main — на SB 106 (реформа Z1, track-нюанс HANDOFF §семья уже описывал оба, размер не был указан для SB).
+
+**④ СТЫК-ГРАНИЦА (моё = наблюдение с fingerprint):** --bl-deck-height: 3 издателя-файла (ControlDeck RO+mount :23-46 с честным cleanup-комментарием, SyncEditorPanel :89-95, ShowEditor :19-25) × 5 потребителей (фоллбеки разъехались 240/76/76/76/80 — «константы ДВ» нет, подтверждение Δ-предиката прогона А) — зона B01-HUB, наблюдаю. Границы владения усвоены: TransportPanel ДВ/z-инвариант = мой, transport-семантика = волна-2; loop=MO-loop, sync=B08, show=B03; стыки/компоненты = B01-HUB.
+
+**⑤ СТАТУС: ПОГРУЖЕНИЕ завершено в одну смену (00:2x-00:4x). 10/10 документов §ЧИТАТЬ ПОРЯДОК прочитаны, 9 файлов семьи + App-развилки + стыки живо верифицированы на обоих HEAD. Режим DRAFT: записи в zones/mo-dock/drafts/ + этот LOG + TRIGGERS-отметка. Поллинг запрещён.**
+**СТОП: жду план Никиты** (формула: погружение → доклад → СТОП — план не выдумываю; три факта выше = импульс-кандидаты №1-3 для плана).
+
+— 🛡 MO-dock · 10.09 00:4x · первый нерв созвездия замкнул на ядре deck-surface; сессия ждёт слова 🫀
+
+## LOG 2026-09-10 00:2x · 004 — 🏭 ФАБРИКА: ПЕРВЫЙ АГЕНТ СОЗВЕЗДИЯ СФОРМИРОВАН — MO-dock «Док-Хранитель» (директива Никиты 00:13, подтверждена «она моя») · HANDOFF самодостаточен · Никита открывает сессию одной фразой
+**Модель: 004 = Z-AI GLM 5.3-free (WSL, opencode) · входы: TRIGGERS/004.md [23:50] вердикт + [23:58] директива · артефакты: team-m/HANDOFFS/HANDOFF-MO-dock.md + drafts/MO-REGISTRY-draft.md + TRIGGERS/MO-dock.md (мост)**
+
+**① №1.1 СДАНО ДО ФАБРИКИ (вердикт 23:50):** класс-2 расширен до src/services/*.ts (superset: 28 .service.ts + 5 без-суффиксных), UNION переснят = **167** (162+5, в ожидании ~167-170); seed-6 ядер все внутри (grep 1/1: track.loader, track.actions, upload.actions, cover-theme-applicator, device-calibrations, mode-switch.service, loop.store, upload.service, V3DataInterceptor, facade); delta-строка в шапке MAP-draft; GAP-строки рисовались только генератором. Приёмка: union=сумма-пересечения (80+94−7=167) ✓ · YAML валиден · id уникальны · все L3/unclassified ✓.
+
+**② ФАБРИКА §5 ШАГОВ (директива 23:58):** (1) суть — из ROSTER-паспорта 1 + SCENARIOS-DOCK-A-FINAL (24 клетки) + SCOUT-DOCK (вторая карта); (2) from_repository — 0 двойников (HANDOFFS пуст, промптов MO-* нет, grep вне спек пуст, проверено 00:13); (3) **HANDOFF-MO-dock.md собран**: самодостаточен (§КТО ТЫ с FINGERPRINT/СЛОЙ/СЫРЬЁ-v0, §ЧИТАТЬ ПОРЯДОК 10 документов, семья таблицей оба трека, track-нюанс primary=SB, границы, 3 задачи с приёмкой, СТОП-формула, интерфейсы); MAP-строка = deck.store :5-6 (не ui.store — моя находка №3 учтена); (4) строка MO-реестра: drafts/MO-REGISTRY-draft.md, статус **formed**; (5) этот LOG + TRIGGERS/MO-dock.md с задачей №1 (погружение → доклад → СТОП ждёт план Никиты).
+
+**③ ФРАЗА ДЛЯ ОТКРЫТИЯ СЕССИИ (канон §ФАБРИКА):** «Ты — MO-dock «Док-Хранитель». Твой стартовый комплект: team-m/HANDOFFS/HANDOFF-MO-dock.md — прочитай целиком, затем TRIGGERS/MO-dock.md, начни с задачи №1.»
+
+**④ ОЧЕРЕДЬ ФАБРИКИ:** MO-mode-switch (второй живой волны-1) — ждёт директивы CEO_1/007; 3 L2-семьи — поля family в MAP (промоушен через 301 при своём инциденте). Дайджест-замены (5 кандидатов) — ждут утверждения списка.
+
+— 004 · 10.09 00:2x · фабрика отработала первый цикл: директива → 0 двойников → хендоф → строка реестра → триггер → LOG; сессия MO-dock готова к открытию одной фразой 🏭🫀
 
 ## LOG 2026-09-09 23:38 · 004 — 🫀 ЗАДАЧИ №2+№3 СДАНЫ (смена продолжается): ROSTER-WAVE1-draft (2 живых паспорта + пилот + 3 L2, from_repository 0 двойников) + DIGEST-REPLACEMENTS-draft (5 кандидатов замен) · 2 новых расхождения спек §C
 **Модель: 004 = Z-AI GLM 5.3-free (WSL, opencode) · входы: HANDOFF-004 §ПЕРВЫЕ 3 ЗАДАЧИ №2/№3 · CONSTELLATION-В §B/§C/§D · SCENARIOS-DOCK-A-FINAL (мост) · артефакты: drafts/ROSTER-WAVE1-draft.md + drafts/DIGEST-REPLACEMENTS-draft.md**
@@ -7899,3 +7993,49 @@ docs/architecture/frozen-zones-v2.md:4
 ### Честный риск: скорость волн > экспертиза (D = 80КБ труп-контракт — снести ≠ понять). Гейт ГОЛОВЫ на снос живого — обязательный. Мой итог пары: конвейер пары масштабируется — двойная подпись не тормозит, а защищает.
 
 — 003 · голос отдан 🎤
+
+---
+
+## LOG 2026-09-10 09:0x · 🛡 MO-mode-switch — ПОГРУЖЕНИЕ (первый вход, задача №1 HANDOFF)
+
+**FINGERPRINT:** `ИМПУЛЬС MO-mode-switch · mechanism:mode.store · class:immersion-map`
+
+**Модель: MO-mode-switch = GLM 5.3 Free (tokenrouter) · Linux · main f19ecd6 + SB feature/yt-prep (primary). Объект: семья mode (mode.store / mode-switch.service / mode-events / mode-switch-events / facade-мост / App-развилки).**
+
+1. ⚪ **Карта семьи (полная — drafts/IMMERSION-REPORT-2026-09-10.md):** mode.store (14 строк, БЕЗ persist, default rehearsal) · mode-switch.service (switchMode :216, 4 активатора, legacy-экспорт beLiveSwitchMode :238) · mode-events.ts (:70 старт-синх + :81 подписка → setMode+body-class+volume-policy) · facade.ts (:143-158 monkey-patch dispatchEvent = единственный мост window-CustomEvent→eventBus; init на module-eval main.tsx:59) · App.tsx :224/:232/:233 (syncOpen НЕ гейтит karaoke-центр — S11/Д-1 подтверждён на обоих треках).
+
+2. 🔴 **Сверка с фактом MO-dock (mode-events:81 = единственный React-писатель): ОПРОВЕРГНУТА частично — писателей ЧЕТЫРЕ.** grep setMode по src: mode-events:77 (старт-синх syncModeFromBody) · :82 (mode-changed-подписка) · ai-tools:969 (store-fallback при недоступном beLiveSwitchMode) · practice-session.store:148 (fallback в restoreSnapshot). «Единственный писатель» держится только в мире с живым window.app.
+
+3. ⚪ **Три факта-сюрприза (file:line в отчёте):** ① dual-transport = не два равноправных, а ОДИН источник (window-CustomEvent :33) + фасад-репаблиш (facade.ts:143-158) — destroy()/HMR-dispose разрывает React-мир от mode-changed молча (класс dual-transport/facade-single-point) ② switchMode :217-218 молчаливый no-op без window.app (host-gate/silent-noop) — сам сервис порождает 2 fallback-писателя сторa ③ **mode-switch.service НЕ идентичен main↔SB (вопреки таблице HANDOFF)**: SB +deactivateLiveIfActive :19-21 (0 вызовов = мёртвый) + liveMode.activate() :209-212 (провайдера window.liveMode НЕТ нигде на SB = фантом, всегда no-op) — класс track-divergence/phantom-provider.
+
+4. ⚪ **Открытые вопросы для плана Никиты:** (а) F5 = всегда rehearsal (нет persist ни в сторе, ни в body — намеренно?) (б) три источника истины режима (module-scope currentMode / window.app.currentMode / body-class) (в) body-class пишется дважды (сервис setBodyMode И mode-events:83-85) (г) MECHANISM-MAP-draft не содержит mode-switch-events.ts (SB-only файл в wrappers-охвате) — reconcile-кандидат 004.
+
+**СТОП: жду план Никиты (задача №2 HANDOFF). Код не тронут. Рецепты — только через цепь.**
+
+— 🛡 MO-mode-switch «Режим-Хранитель» · первый вход · 00-режим · fingerprint прилагается 🫀
+
+---
+
+## LOG 2026-09-10 08:5x · 🛡 MO-loop — ПОГРУЖЕНИЕ (первый вход, задача №1 HANDOFF)
+
+**FINGERPRINT:** `ИМПУЛЬС MO-loop · mechanism:loop.store · class:immersion-map` (+ классы ①-④ в теле)
+
+**Модель: MO-loop = GLM 5.3 Free (tokenrouter) · Linux · main f19ecd6 + SB feature/yt-prep 002eade (primary). Объект: семья loop (loop.store 267 стр / loop-events 104 / синапсы types.ts:46-48 / 12 потребителей·34 использования). Ядро и синапсы байт-идентичны обоим трекам (git diff пуст). Полный отчёт: zones/mo-loop/drafts/IMMERSION-REPORT-2026-09-10.md.**
+
+1. ⚪ **Карта семьи (7 строк в отчёте):** ядро 8 мутаторов (toggleSubBlock :121 · toggleBlock :144 · rebindToBlock :178 · replaceLoop :196 · setBoundaryLines :215 · clearLoop :248 · setRawLoop :261) · инвариант держит recalculateFromSubBlockKeys :39-81 · loop-events.ts: 4 подписки (:78 store→engine, :81 Sync/loop-cleared engine→store, :88 Track/before-change, :95 UI/mode-changed) · регистрация живая main.tsx:77 · потребители: WagonTrain×10, RehearsalLyrics×7, WaveformCanvas×6, rehearsal-trigger.bridge×6, practice-session×6, ai-tools×3, slot-matrix×4, trigger-visual×2, Billy×4, панели×4.
+
+2. 🔴-кандидат → ⚪ **Факт-1 (мёртвый фасад):** channels/sync.ts:9-11 loopSet/loopCleared/loopcompleted — 0 вызовов; живые издатели = только V3 document-CustomEvent (TransportV3:264/:281, V3StatePublisher:158) + facade-репаблиш (facade.ts:143-158). MAP-семантика «synapses=sync.*» записывает маршрут, которым никто не ходит.
+
+3. ⚪ **Факт-2 (raw-писатели ломают безусловность инварианта):** rehearsal-trigger.bridge.ts:191-204 ('set-loop') и :346-356 (applySnapshot) пишут setState напрямую: isLooping:true при loopSubBlockKeys=[]+line-полях null. Инвариант §5② условен: держат 5/8 мутаторов, raw-пути осознанно игнорируют (:266 «NOT touching»). Расхождение спеки с деревом — НАБЛЮДЕНИЕ, не эскалация.
+
+4. ⚪ **Факт-3 (ошибка паспорта):** DeckBar.tsx и TransportPanel.tsx на SB = 0 упоминаний loop (grep живого show feature/yt-prep). «Стыки: DeckBar-неоны» в HANDOFF — неоны=стемы MO-dock; луп-стыки = WagonTrain/WaveformCanvas/RehearsalLyrics. Пересечение fingerprint-дедупа с MO-dock НЕ возникает. Правка паспорта — 004.
+
+5. ⚪ **ПРОГОН ①-④ (первый импульс, приёмка-1):** ① ДРЕЙФ = НАБЛЮДЕНИЕ ×2 (loop-set и loopcompleted в eventBus-шине — события-сироты: 0 подписчиков; реальные консументы слушают document-CustomEvent: practice:184, ai-tools:870) · ② NEAR-MISS = НАБЛЮДЕНИЕ (probe поймал: setRawLoop поверх блочного лупа → isLooping:true + keys:[] + line:null — WagonTrain и WaveformCanvas видят разные лупы одного стора; сценарий достижим: блочный луп + Shift+drag :413-416) · ③ СИНТЕТИКА = PASS 3/3 (пилот ловит аномалии обоих направлений; стор не защищает инвариант на прямом setState — zustand открыт) · ④ КОНТРАКТ-ЧЕК = ЧИСТО (repeat в audio.store=0 — K-B-якорь жив; autoplay=loadTrack-семья track.actions:11/:39, авто-пасс не угнан) + 2 микро-наблюдения (loopOrigin :17 — 0 потребителей; window.__syncClearLoop WaveformCanvas:506 — window-инъекция). **Счёт первого входа: 1 ЧИСТО-агрегат (④) + 4 НАБЛЮДЕНИЯ.** Probes — вне репо (/tmp), код не тронут; vitest loop.store.test 5/5 PASS живьём.
+
+6. ⚪ **Окружение (не моя семья):** verify:ci на живом дереве: PARITY PASS · reach 0 · junction G-7 красный (3 известных env-нарушения .env.production-класса, вне loop) — зафиксировано, не эскалирую. Опечатка HANDOFF п.10 «2029» → файл PULSE-NERVOUS-**2026**-09-09-final.md — доклад в TRIGGERS/004.md (тест внимательности пройден).
+
+**Открытые вопросы для плана Никиты: 4 (в отчёте §F: MAP-маршрут synapses, статус raw-исключений инварианта, судьба loopOrigin/__syncClearLoop, маршрут после разметки 004).**
+
+**СТОП: жду план Никиты (задача №2 HANDOFF). Код не тронут. Рецепты — только через цепь.**
+
+— 🛡 MO-loop «Луп-Хранитель» · первый вход · 00-режим · fingerprint прилагается 🫀
