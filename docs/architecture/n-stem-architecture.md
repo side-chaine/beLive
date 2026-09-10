@@ -1,9 +1,11 @@
 # 🎵 N-Stem Architecture — beLive Audio Engine
 
-**Status:** ✅ IMPLEMENTED (production-ready, all waves complete)
-**Last Updated:** April 23, 2026
+**Status:** ✅ IMPLEMENTED (V3 carrier: track.loader W4 + HybridPipelineService; история волн V2 — ниже)
+**Last Updated:** September 10, 2026 (конвой docs==code, 003 — Ш2 ПЛАН-5)
 **Owner:** beLive Audio Team
 **Related:** `audio-engine.md`, `architecture-map-2.1.md`
+
+> **⚠️ Конвой-2026-09-10 (003, Ш2):** V2-эра завершена (Волны A/B/C/D: patchV1 и src/bridges/ снесены, AudioEngineV2 снесён D-1). Живой носитель N-Stem — **track.loader W4 (loadStemsOnDemand) + HybridPipelineService (V3) + stem-engine-sync**. Разделы 7–8 ниже сохранены как историческая архитектура V2; места, где V2 был носителем, помечены `🏭 [V2-эра]`. 🔴 Открытая дыра: `loadAdditionalStems` отсутствует на фасаде V3 — см. §16.
 
 ---
 
@@ -15,7 +17,7 @@
 4. [Routing Architecture](#routing-architecture)
 5. [Data Flow Pipeline](#data-flow-pipeline)
 6. [ZIP Classification (W6)](#zip-classification-w6)
-7. [AudioEngineV2 N-Stem Loading](#audioenginev2-n-stem-loading)
+7. [N-Stem Loading (V2-эра → V3-носитель)](#n-stem-loading-v2-эra--v3-носитель)
 8. [Volume Control Architecture](#volume-control-architecture)
 9. [Mode Volume Policies](#mode-volume-policies)
 10. [Metering Infrastructure (W5)](#metering-infrastructure-w5)
@@ -190,22 +192,18 @@ const DEFAULT_ROLE_ORDER = {
 │    ├─ Resolve role from BUILTIN_STEMS, default 'music'              │
 │    └─ ae.loadTrack(iUrl, vUrl, additionalStems)                     │
 │    ↓                                                               │
-│  patchV1.ts  [W5fix: forwards 3rd param]                            │
-│    v1.loadTrack = (i, v?, additionalStems?) =>                      │
-│      v2.loadTrack(i, v ?? null, additionalStems)                    │
-│    ↓                                                               │
-│  AudioEngineV2.loadTrack(instrumentalUrl, vocalsUrl, additional)    │
-│    ├─ Register stem URLs + roles                                    │
-│    ├─ Load instrumental (master clock) first                        │
-│    ├─ Load other stems in parallel (Promise.allSettled)             │
-│    ├─ _rebuildFullRouting()                                         │
-│    │   ├─ Create bus gainNodes (master-bus, music-bus, vocal-bus)   │
-│    │   ├─ Route stems to buses by ROLE_ROUTING                      │
-│    │   ├─ _reconnectBusTaps()                                       │
-│    │   ├─ _reconnectAnalysers()  [W5: metering]                     │
-│    │   └─ _applyEffectiveGain() for each stem                       │
-│    ├─ _reconnectProgramBus()                                        │
-│    └─ _notifyTrackLoaded(loadedStems, hasVocals)                    │
+│  🏭 [V2-эра] патч-цепочка снесена (patchV1 — Волна A; V2 — D-1):
+│    v1.loadTrack → patchV1 W5fix → v2.loadTrack(i, v, additional)
+│  ЖИВОЙ ПУТЬ 2026-09 (W4, конвой Ш2):
+│  loadStemsOnDemand (track.loader.ts:491)
+│    ├─ Читает stemsData из IDB (fallback getTrackFromIDB)
+│    ├─ Строит StemLoadMap {data, type, role} из BUILTIN_STEMS
+│    ├─ Гард ae?.loadAdditionalStems — 🔴 ДЫРА §16 (метода нет
+│    │  на фасаде V3 → on-demand загрузка молча no-op)
+│    └─ [V3-план] loadAdditionalStems → HybridPipelineService
+│         (register stems + ROLE_ROUTING + bus taps + metering)
+│  stem-engine-sync.ts (initStemEngineSync:62) — Store→Engine мост
+│    Zustand-подписка + diffAndApply (volumes/mutes/solos/pans)
 │    ↓                                                               │
 │  audio-events.ts (wrapper; замена audio.bridge, Волна C)  [track-loaded event]                            │
 │    useStemStore.getState().initStems(loadedStems)                   │
@@ -265,9 +263,11 @@ Result:
 
 ---
 
-## 7. AUDIOENGINEV2 N-STEM LOADING
+## 7. N-STEM LOADING (V2-эра → V3-носитель)
 
-**File:** `src/audio/core/AudioEngineV2.ts`
+> **🏭 [V2-эра]** Ниже — историческая архитектура загрузки V2 (`src/audio/core/AudioEngineV2.ts`, снесён D-1). Живой путь 2026-09: **loadStemsOnDemand (track.loader.ts:491, W4-SAFE-перенос)** → MVSEP-классификация (upload.service, W6) → стемы в IDB (stemsData) → динамический import из QuickActions:214 / MixerPanel:179. V3-конвейер = HybridPipelineService; реактивный слой Store→Engine = stem-engine-sync.ts (initStemEngineSync:62, Zustand-подписка + diffAndApply). 🔴 Дыра конвоя: у фасада V3 нет `loadAdditionalStems` — гард track.loader:494 всегда false (детали §16).
+
+**File (V2-эра):** `src/audio/core/AudioEngineV2.ts` *(снесён D-1)* — живые наследники: `src/services/track.loader.ts` (W4), `src/audio/engine-v3/pipeline/HybridPipelineService.ts`
 
 ### loadTrack() Signature
 
@@ -340,7 +340,7 @@ private _applyEffectiveGain(stemId: string): void {
 }
 ```
 
-### State Storage (AudioEngineV2)
+### State Storage (V2-эра — AudioEngineV2; живой носитель: stem.store + HybridPipelineService)
 
 ```typescript
 private _stemVolumes: Record<string, number> = {};   // per-stem volume (0-1)
@@ -416,7 +416,7 @@ function getRolePolicyVolume(role: StemRole, policy: ModeStemPolicy): number {
 
 ## 10. METERING INFRASTRUCTURE (W5)
 
-**File:** `src/audio/core/AudioEngineV2.ts`
+**File (V2-эра):** `src/audio/core/AudioEngineV2.ts` *(снесён D-1)* — живой носитель: `src/audio/engine-v3/pipeline/HybridPipelineService.ts` (getStemMeterLevel через IPipelineController:51) + фасад `js/audio-facade-v3.js:109`
 
 ### Parallel AnalyserNode Architecture
 
@@ -466,7 +466,10 @@ private _reconnectAnalysers(): void {
 
 ### Exposed on patchV1
 
+> **🏭 [V2-эра]** patchV1 снесён Волной A. Живой путь: `js/audio-facade-v3.js` — `getStemMeterLevel:109` проксирует в pipeline (`p?.getStemMeterLevel?.(id)`); MixerPanel:238-259 читает уровни с pipeline и fallback-фасада.
+
 ```typescript
+// V2-эра (историческое):
 v1.getStemMeterLevel = (stemId: string) => v2.getStemMeterLevel(stemId);
 ```
 
@@ -634,6 +637,8 @@ Current implementation includes verbose console logs (`[Orchestrator] W5:`, `[Up
 
 ## 14. IMPLEMENTATION WAVES
 
+> **🏭 [V2-эра — историческая таблица.]** Замок FROZEN упразднён конвоем D-3 (frozen-таблица удалена из eventbus-доков 4223ff8); файлы ниже — родословная, не живые указатели. AudioEngineV2/patchV1/track.orchestrator/*bridge.ts снесены (Волны A–C, D-1). Живой носитель 2026-09: **track.loader.ts (W4) + HybridPipelineService (V3) + stem-engine-sync + stem.store**. Статусы «FROZEN» ниже читаются как «сделано в V2-эре».
+
 | Wave | Feature | Status | Files |
 |------|---------|--------|-------|
 | **W0** | Type registry, routing contracts, stem.store | ✅ FROZEN | `stemTypes.ts`, `stem.store.ts` |
@@ -664,10 +669,10 @@ Current implementation includes verbose console logs (`[Orchestrator] W5:`, `[Up
 | **W10-002** | MixerPanel Stems toggle button + CSS toolbar | ❄️ FROZEN | `MixerPanel.tsx`, `MixerPanel.module.css` |
 | **W10-003** | Remove W7.3 auto-mute + stems mode initialization | ❄️ FROZEN | `AudioEngineV2.ts`, `audio.bridge.ts` |
 | **W10** | Stems Polish & Progressive Loading | ✅ FROZEN | Multiple files (see below) |
-| **W11** | Per-stem pan controls | 📋 PLANNED | `AudioEngineV2.ts`, `stem.store.ts`, `patchV1.ts`, `MixerPanel.tsx` |
-| **W12** | Soft resync diagnostic logging | 📋 PLANNED | `AudioEngineV2.ts` |
-| **W13** | Initial sync stabilization (post-load) | 📋 PLANNED | `AudioEngineV2.ts` |
-| **TC-DEC-01** | skipDecode for instrumental — 7x load speedup | ✅ COMPLETE | `AudioEngineV2.ts` line 319 |
+| **W11** | Per-stem pan controls | 🚫 SUPERSEDED | V2-план; факт 2026-09: pan not supported by any engine (FR-007) — fader inert, stem-engine-sync warn-once (см. §12 stemPans) |
+| **W12** | Soft resync diagnostic logging | 🚫 V2-план, не состоится | носитель снесён D-1; живая диагностика — engine-v3/diagnostics |
+| **W13** | Initial sync stabilization (post-load) | 🚫 V2-план, не состоится | живой аналог — engine-v3 watchdog/drift-корректоры |
+| **TC-DEC-01** | skipDecode for instrumental — 7x load speedup | ✅ COMPLETE *(V2-эра)* | `AudioEngineV2.ts` line 319 *(снесён D-1)* |
 | **TC-DEC-02** | Fix instrumentation — accurate metrics | ✅ COMPLETE | `track.orchestrator.ts (удалён 01.09, Волна B)` lines 194, 250, 259, 290, 299 |
 
 **W10 Details — Stems Polish & Progressive Loading (Center 10)**
@@ -716,9 +721,22 @@ Current implementation includes verbose console logs (`[Orchestrator] W5:`, `[Up
 
 ## 📎 RELATED DOCUMENTS
 
-- [audio-engine.md](audio-engine.md) — Core AudioEngineV2 architecture
-- [architecture-map-2.1.md](architecture-map-2.1.md) — Ownership matrix, file authority
+- [audio-engine.md](audio-engine.md) — Core AudioEngineV2 architecture *(V2-эра; живое ядро — engine-v3)*
+- [architecture-map-2.1.md](architecture-map-2.1.md) — Ownership matrix, file authority *(V2-эра)*
 - [monitor-mix-v2.md](monitor-mix-v2.md) — Monitor mix panel (different from MixerPanel)
+
+---
+
+## 16. 🔴 OPEN CONVOY GAP: `loadAdditionalStems` отсутствует на фасаде V3 (source:fact, 003 · 10.09)
+
+**Класс:** docs==code-разрыв, пойман конвоем Ш2 при верификации формул §C (STEM-TAKES-DOGON 003_2).
+
+**Факт (rg, живое дерево):**
+- `loadStemsOnDemand` (src/services/track.loader.ts:491) — единственный on-demand загрузчик стемов; вызывается QuickActions.tsx:214 и MixerPanel.tsx:179.
+- Гард: `if (!tc?.tracks || !ae?.loadAdditionalStems) return;` (:494) — **метода `loadAdditionalStems` нет ни в `js/audio-facade-v3.js`, ни в engine-v3/pipeline** (rg по src+js: только track.loader сам).
+- Следствие: on-demand загрузка стемов **молча no-op** — тумблер stemsMode не грузит стемы за слушателем.
+
+**Маршрут (не док-решение):** код-фикс через цепь (Оператор) — выставить `loadAdditionalStems(StemLoadMap)` на фасад V3, проксировав в HybridPipelineService (или заменить гард на живой API). До фикса §7 честно помечает дыру.
 
 ---
 

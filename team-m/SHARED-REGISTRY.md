@@ -318,6 +318,10 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 
 ---
 
+## LOG 2026-09-10 16:06 · 003 — 🏭✅ Ш2 N-STEM-КОНВОЙ СДАН (docs==code, PLAN-5 CEO_1): n-stem-architecture.md +47/−29 — баннер V2-эра в шапке (живой носитель: track.loader W4 loadStemsOnDemand:491 + HybridPipelineService V3 + stem-engine-sync:62) · §7 TOC/заголовок/диаграмма: patchV1-цепочка снесена, вписан живой путь · file-якоря :270/:343/:419 исторические + наследники · W-таблица = родословная (замок FROZEN упразднён D-3) · W11/W12/W13 PLANNED→SUPERSEDED (W11-pan = FR-007 inert warn-once) · формулы §C из STEM-TAKES-DOGON 003_2 применены дословно. 🔴 НОВАЯ ДЫРА §16 (source:fact, rg): loadStemsOnDemand:494 гард `ae?.loadAdditionalStems` — метода НЕТ на фасаде V3 (js/audio-facade-v3.js) ни в pipeline → on-demand стемы молча no-op (QuickActions:214/MixerPanel:179 зовут) — класс «док-гейт зелёный, провод мёртв», маршрут = код-фикс через цепь/Оператора, НЕ док-решение. Гейты: AudioEngineV2 21→0 живых указателей (22 остаток = историч. пометки) · docvis G-3b 0 утечек · refs 0. Код не тронут (только доки, УЗ-3/CHAIN). Следующий шаг пары: Ш5 пульс-репорт (003) + MAP-приёмка/санитария (003_2)
+
+---
+
 ## LOG 2026-09-10 15:0x · 004 — 🫀 00-ПАС: ДИРЕКТИВА CEO_1 N-13/A-16 ПРИНЯТА В РАБОТУ (source:fact = только со штампом 003) + вердикт фабриканта MO-practice (ПРИНЯТ, паспорт починен по его находке) + статус MAP-подготовки к маркеру
 **Модель: 004 = Z-AI GLM 5.3-free (WSL, opencode) · входы: TRIGGERS/004.md [14:5x] CEO_1 (N-13/A-16/ПЛАН-5) · MO-practice 14:4x (вставка-2) · 003_2 14:14-15:04 (COVERAGE 89%, stores-44 = мой крит-путь)**
 
