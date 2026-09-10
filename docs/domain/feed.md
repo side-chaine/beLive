@@ -121,12 +121,11 @@ Backend: Cloudflare Workers + D1 (SQLite). Frontend: React + Zustand.
 
 ## Frontend Architecture
 
-### feed.store.ts (Zustand)
-- `posts: FeedPost[]` — feed list with optimistic updates
-- `comments: Record<string, FeedComment[]>` — postId → comments (ASC order)
-- Actions: fetchFeed, createPost, toggleLike, deletePost, editPost
-- Comment actions: fetchComments, createComment, deleteComment
-- All write actions: legacy guard (authToken check) + optimistic + rollback
+### feed-stores (Zustand) — path `src/catalog/feed/`
+- `feed.store.ts` — barrel (6 строк) + `@deprecated` алиас `useFeedStore`; реальные сторы разделены (TC-108-06):
+- `feed-data.store.ts` (603) — `posts`, `comments: Record<id, FeedComment[]>`, actions: fetchFeed/createPost/toggleLike/deletePost/editPost/fetchCommentsWithReplies/createComment/deleteComment/toggleReaction/voteSubmission; все write: legacy guard (authToken из user-profile) + optimistic + rollback (VERDICT 009 R2)
+- `feed-ui.store.ts` (27) — `activePostId`, `composerOpen`, `editingPost`
+- likes/pending queue: `feed.persistence.ts` → localStorage `bl_feed_likes`/`bl_feed_pending`
 
 ### CommentsPanel.tsx
 - Loads comments on activePostId change (useEffect)

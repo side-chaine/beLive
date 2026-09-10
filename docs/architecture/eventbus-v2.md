@@ -67,9 +67,20 @@ sub.unsubscribe()
 - **Error isolation:** ошибка в одном subscriber не ломает остальных
 - **Source-tag:** `publish()` принимает опциональный `source?: 'v2' | 'v3'` для dedup между V2 и V3
 
+## Вне-шинные каналы (эра V2-наследия) — догон инвентаря
+> Источник: 003_2 PB-2/PB-4 (OFFSHOOT-EVENTS-MAP, зонд на `3bdcc06`), верификация 003 (сироты 5/5 sed, aiHub-канал registry.ts:27/:51/:71). Корректирует census-003: «~14 вне-шинных» было **недооценкой — факт 31 имя / 40 эмиттеров / ~20 файлов**.
+
+**Четыре эвент-канала приложения:** ① шина EventBus — 28 типизированных событий (единственный «гражданин») · ② document CustomEvent — 31 имя вне шины (наследие мостовой эры) · ③ window-мосты (beLiveSwitchMode, trackCatalog…) · ④ **aiHub EventTarget** (`modelChanged` registry.ts:27/:51 → слушатели main.tsx:740, ai-chat-ui:177, model-dropdown-ui:31; `assistant.response.completed` :115).
+
+**Сироты document-канала (эмиттер жив, слушателей 0; 10 имён, modelChanged исключён — жив на канале ④):**
+- *legacy-хвосты эры мостов:* `mode-changed` · `lyrics-rendered` · `blocks-applied` · `catalog-cleared` · `loop-set` · `loop-cleared` · `vocalmix-state-changed` · `microphone-state-changed` — кандидаты в инвентарь Д-2 (эмиттеры в js-эре; судьба кода — цепь/007, не док)
+- *диагностика-в-никуда:* `track-load-failed` (track.loader) · `taxonomy-seek-mismatch` · `belive:v3-activation-failed` (V3DataInterceptor) — эмиттеры осознанны, обсерверов нет; кандидат: подписать на logger (класс BAC-109) — решение цепи
+
+**Каналы-гиганты и двойники:** `tracks-changed` — 14 эмиттеров (track.actions×1, upload.service×5, BlockScenesModal×7, CatalogLayout×1) при 1 слушателе (useBackgroundManagers) — семантическая дивергенция одного имени, шов для MO-catalog/track dossier (004) · `active-line-changed` — двойной канал (document из lyrics.service + шина через lyrics-events wrapper) — риск рассинхрона RehearsalBackground; wrapper-слой (README:50 «перехватчик legacy») перехватывает не всё — 31 имя вне шины тому доказательство.
+
 ## Frozen status
 
 | Компонент | Статус |
 |-----------|:------:|
 | `src/foundation/event-bus/*` | ✅ НЕ frozen |
-| `src/bridges/*` | ❄️ FROZEN — не трогать |
+| `src/bridges/*` | 🗑 удалён (волны C/D 09-10.09: 15 мостов + live-guard; манифест заморожен D-3) |
