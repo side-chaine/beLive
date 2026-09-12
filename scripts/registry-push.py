@@ -42,7 +42,7 @@ LOCAL.write_text(s[:i] + block + s[i:], encoding='utf-8')
 # 3. Копия на мост + verify
 shutil.copy2(LOCAL, BRIDGE)
 verify = BRIDGE.read_text(encoding='utf-8')
-head = block.splitlines()[0] if block.splitlines() else ''
+head = next((l for l in block.splitlines() if l.strip()), '')
 if head and head[:60] in verify:
     print('[registry-push] ✓ блок на мосту подтверждён:', head[:70])
 else:
