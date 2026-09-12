@@ -9,6 +9,8 @@ import type { TransportV3, TransportStateChangeDetail, PlaybackRateChangeDetail 
 
 const TICK_EPSILON_SEC = 0.05;
 const BACKGROUND_FALLBACK_MS = 250;
+/** В1 п.2: ended-watchdog — окно natural-end до конца трека. */
+const NATURAL_END_EPSILON_MS = 50; // тюнинг за Никитой (🔴-параметр, ORDER-V1 п.2)
 
 /**
  * NOTE on 'time-update': the task description asked for publishing a 'time-update'
@@ -32,6 +34,9 @@ export class V3StatePublisher {
 
   /** 369: last-seen time для детекции loop-wrap (loopcompleted) */
   private _lastTickTimeForLoop = -1;
+  /** В1 п.2: idempotent-гард ended-watchdog — не звать natural-end дважды за сеанс;
+   *  флаг снимается при новом play (statechange→playing) и при seek. */
+  private _naturalEndFired = false;
   constructor(private readonly transport: TransportV3) {
     // Subscribed eagerly, not inside start(): this is cheap, event-driven, and has
     // no environment dependency — unlike the tick loop below, there's no reason to
@@ -103,6 +108,8 @@ export class V3StatePublisher {
     // 369: при остановке сбрасываем базу детекции loop-wrap
     if (detail.state !== 'playing') this._lastTickTimeForLoop = -1;
     const isPlaying = detail.state === 'playing';
+    // В1 п.2: новый play-сеанс снимает идемпотент-флаг ended-watchdog
+    if (isPlaying) this._naturalEndFired = false;
     const currentTime = this.transport.currentTime;
     const duration = this.transport.duration;
 
@@ -141,6 +148,8 @@ export class V3StatePublisher {
     const detail = (e as CustomEvent<{ time?: number }>).detail;
     const t = typeof detail?.time === 'number' ? detail.time : this.transport.currentTime;
     this.publishSeek(t, this.transport.duration);
+    // В1 п.2: seek снимает идемпотент-флаг — natural-end должен сработать снова
+    this._naturalEndFired = false;
   };
 
   private _lastTickAt = 0
@@ -167,7 +176,25 @@ export class V3StatePublisher {
       }
     }
     this._lastTickTimeForLoop = t
+    // В1 п.2: ended-watchdog — natural-end, когда трек дошёл до конца
+    this._checkNaturalEnd()
     this._publishTickIfChanged(t)
+  }
+
+  /** В1 п.2: ended-watchdog — t ≥ duration−ε при живом play и БЕЗ loop-режима.
+   *  Идемпотентен: повторные тики для того же трека молчат (флаг снимается
+   *  только новым play/seek). Loop-режим исключён — HybridLoopStrategy не трогаем. */
+  private _checkNaturalEnd(): void {
+    if (this._naturalEndFired) return;
+    if (this.transport.state !== 'playing') return;
+    if (this.transport.loopEnabled) return;
+    const duration = this.transport.duration;
+    if (duration <= 0) return;
+    const t = this.transport.currentTime;
+    if (t >= duration - NATURAL_END_EPSILON_MS / 1000) {
+      this._naturalEndFired = true;
+      this.transport.notifyNaturalEnd();
+    }
   }
 
   private _publishTickIfChanged(currentTime: number): void {

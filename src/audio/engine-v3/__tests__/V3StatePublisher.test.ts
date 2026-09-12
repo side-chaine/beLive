@@ -79,4 +79,70 @@ describe('V3StatePublisher', () => {
     expect(spy).toHaveBeenCalledWith(expect.objectContaining({ isPlaying: true }));
     expect(useAudioStore.getState().isPlaying).toBe(true);
   });
+
+  // ── В1 п.2: ended-watchdog ──────────────────────────────────────────────
+
+  it('ended-watchdog (а): tick при t>=duration-eps зовёт notifyNaturalEnd ровно 1 раз; повторные тики не дублируют', async () => {
+    const spy = vi.spyOn(transport, 'notifyNaturalEnd');
+    const p = publisher as unknown as { _checkNaturalEnd(): void };
+
+    await transport.play();
+    expect(transport.state).toBe('playing');
+
+    now = 200 * 1000; // currentTime = 200s >= duration(200) − 50ms
+
+    p._checkNaturalEnd(); // первый тик в окне
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(transport.state).toBe('ended');
+
+    p._checkNaturalEnd(); // повторные тики после ended
+    p._checkNaturalEnd();
+    expect(spy).toHaveBeenCalledTimes(1); // без дублей
+  });
+
+  it('ended-watchdog (б): loop=true — natural-end НЕ срабатывает', async () => {
+    const spy = vi.spyOn(transport, 'notifyNaturalEnd');
+    const p = publisher as unknown as { _checkNaturalEnd(): void };
+
+    // loop-канон требует getChannelData у мастер-стема (StemOrchestrator.setLoopOnAllStems)
+    const loopableBuffer = {
+      duration: 200,
+      numberOfChannels: 1,
+      sampleRate: 48000,
+      getChannelData: () => new Float32Array(0),
+    } as unknown as AudioBuffer;
+    transport.orchestrator.addStem('instrumental', loopableBuffer);
+
+    await transport.setLoop(0, 30);
+    await transport.play();
+    expect(transport.loopEnabled).toBe(true);
+
+    now = 200 * 1000;
+    p._checkNaturalEnd();
+
+    expect(spy).not.toHaveBeenCalled();
+    expect(transport.state).toBe('playing');
+  });
+
+  it('ended-watchdog (в): повторный play снимает идемпотент-флаг — natural-end доступен снова, без дублей в сеансе', async () => {
+    const spy = vi.spyOn(transport, 'notifyNaturalEnd');
+    const p = publisher as unknown as { _checkNaturalEnd(): void };
+
+    await transport.play();
+    now = 200 * 1000;
+    p._checkNaturalEnd();
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(transport.state).toBe('ended');
+
+    // тики после ended НЕ дублируют
+    p._checkNaturalEnd();
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    // повторный play (ended → ready → playing) снимает флаг через statechange
+    now = 0;
+    await transport.play();
+    now = 200 * 1000;
+    p._checkNaturalEnd();
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
 });

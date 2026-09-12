@@ -284,6 +284,12 @@ export class TransportV3 extends EventTarget {
     }
   }
 
+  /** В1 п.2: тонкий публичный мост для ended-watchdog (V3StatePublisher._tickLoop).
+   *  Natural-end — когда трек дошёл до конца: те же последствия, что onTrackEnded. */
+  notifyNaturalEnd(): void {
+    this._handleTrackEnded();
+  }
+
   private _handleTrackEnded(): void {
     this.stems.pauseAll();
     this.clock.pause();
