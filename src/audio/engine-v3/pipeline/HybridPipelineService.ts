@@ -135,6 +135,11 @@ export class HybridPipelineService implements IPipelineController {
   get ctx(): AudioContext { return this._ctx; }
   get chainA(): StemChain { return this._chainA }
   get chainB(): StemChain { return this._chainB }
+  /** В1 п.1: живые стемы = загруженные в цепь A минус мёртвые (load failed / нет слота).
+   *  crashed стемы отдаём — crashed ≠ dead-провод (has()-семантика не врёт). */
+  get liveStems(): string[] {
+    return [...this._chainA.stems.keys()].filter(id => !this._deadStems.has(id))
+  }
   get stretchPool(): StretchInstancePool { return this._stretchPool }
   /** ARC-2e: фейдеронезависимый vocal-тап (pre-stretch, до volume/mute/solo) для питч-референса.
    *  null ⇔ вокал-стем не загружен (сам сигнал живости). Тап ДО stretchGain — mute/solo/volume не влияют. */
