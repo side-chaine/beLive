@@ -19,6 +19,7 @@
     "test": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "verify:asany": "node scripts/verify-asany.mjs",
     "verify:events": "npx tsx scripts/verify-event-map.ts",
     "verify:parity": "npx tsx scripts/verify-bridge-parity.ts",
     "verify:ci": "npm run verify:events && npm run verify:parity && npm run verify:reach && npm run verify:inert && npm run verify:docvis && npm run verify:junction",
