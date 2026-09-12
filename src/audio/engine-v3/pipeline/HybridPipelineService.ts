@@ -24,6 +24,12 @@ import {
   ROUTE_CHECK_EPSILON,
 } from '../diagnostics/DuplicateAudioRouteChecker'
 
+/** В1 п.4: fftSize-матрица по 005-2 — drums → 1024 (бин ≈ 46.9 Гц при 48k: бочка 50-150 Гц = бины 1-3),
+ *  остальные → 256 (бин ≈ 187.5 Гц — хватает для VU/волны, меньше CPU).
+ *  Hz→bin конверсия живёт в stem-reactive.ts Phase A (кросс-модульный потребитель бинов бочки). */
+const METER_FFT_SIZES: Record<string, number> = { drums: 1024 }
+const DEFAULT_METER_FFT_SIZE = 256
+
 export class HybridPipelineService implements IPipelineController {
   private readonly _ctx: AudioContext
   private _chainA: StemChain
@@ -245,7 +251,8 @@ export class HybridPipelineService implements IPipelineController {
         }
 
         const meter = this._ctx.createAnalyser()
-        meter.fftSize = 256
+        // В1 п.4: fftSize-матрица по 005-2 — drums → 1024 (бочка 50-150 Гц в бинах 1-3), остальные → 256
+        meter.fftSize = METER_FFT_SIZES[stemId] ?? DEFAULT_METER_FFT_SIZE
         stretchGain.connect(meter)
         this._stretchMeters.set(stemId, meter)
 

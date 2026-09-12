@@ -65,10 +65,21 @@ export function initStemReactiveEvents(): () => void {
           drumsFreqArray = new Uint8Array(expectedLen)
         }
         drumsAnalyser.getByteFrequencyData(drumsFreqArray)
-        // Bins 2-7 (50-150 Hz)
-        let kickSum = 0; const kickCount = Math.min(7, drumsFreqArray.length) - 2
-        for (let i = 2; i < Math.min(7, drumsFreqArray.length); i++) {
-          kickSum += drumsFreqArray![i] / 255
+        // В1 п.4: kick-бины выводятся ИЗ Гц по реальным параметрам анализатора
+        // (паттерн hzToBin — useStemWaveform.ts:146); drums fftSize=1024 из METER_FFT_SIZES (HPS)
+        // → бин ≈ 46.9 Гц при 48k → бочка 50-150 Гц = бины 1-3; вокал-bleed (375-1312 Гц) вне окна
+        const binCount = drumsFreqArray.length
+        const sampleRate = drumsAnalyser.context?.sampleRate || 44100
+        const hzToBin = (hz: number) =>
+          Math.min(binCount - 1, Math.max(0, Math.round((hz / (sampleRate / 2)) * binCount)))
+        const KICK_LOW_HZ = 50
+        const KICK_HIGH_HZ = 150
+        const lowBin = hzToBin(KICK_LOW_HZ)
+        const highBin = hzToBin(KICK_HIGH_HZ)
+        let kickSum = 0; let kickCount = 0
+        for (let i = lowBin; i <= highBin; i++) {
+          kickSum += drumsFreqArray[i] / 255
+          kickCount++
         }
         drumsKickEnergy = kickCount > 0 ? kickSum / kickCount : 0
         // prevKickEnergy НЕ обновляется здесь — сохраняется для Phase B сравнения (C-R3-2 fix)
