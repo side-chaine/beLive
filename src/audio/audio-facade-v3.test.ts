@@ -1,5 +1,5 @@
 /**
- * audio-facade-v3.test.ts — ARC-2d S3: контракт аудио-фасада V3 (22 кейса)
+ * audio-facade-v3.test.ts — ARC-2d S3: контракт аудио-фасада V3 (32 кейса; +9 /// В1 п.3 адаптеры 23-27c)
  *
  * Механика (прецедент BusFader18:22): ?raw-импорт исходника фасада → eval
  * через new Function в jsdom. Guard :81 (`if (!window.audioEngine)`) требует
@@ -194,10 +194,12 @@ describe('ARC-2d: audio-facade-v3 contract (transport routing)', () => {
     expect(monitorRouter.attachProgramSource).toHaveBeenCalledWith(gain, { kind: 'preview' })
   })
 
-  it('21. пустышек нет: retired members отсутствуют на объекте (G-5)', () => {
-    for (const m of ['enableVocalMix','disableVocalMix','setStemsEnabled','setStemPan','setStemsMode','detachProgramSource','disableMicrophone','ensureInstrumentalBuffer']) {
+  it('21. пустышек нет: retired members отсутствуют на объекте (G-5; В1 п.3d ratchet-амендация: detachProgramSource выписан из пустышек — стал живым адаптером)', () => {
+    for (const m of ['enableVocalMix','disableVocalMix','setStemsEnabled','setStemPan','setStemsMode','disableMicrophone','ensureInstrumentalBuffer']) {
       expect(ae()[m]).toBeUndefined()
     }
+    // В1 п.3d: добавили симметричный detach — объект фасада больше НЕ пустышка по нему
+    expect(typeof ae().detachProgramSource).toBe('function')
   })
 
   it('21b. setMicrophoneVolume живой: маршрутизирует в monitorRouter.setMicVolume (006 D-0c-fix)', () => {
@@ -206,6 +208,117 @@ describe('ARC-2d: audio-facade-v3 contract (transport routing)', () => {
     ;(window as any).__belive.monitorRouter = { setMicVolume: spy }
     ae().setMicrophoneVolume(0.2)
     expect(spy).toHaveBeenCalledWith(0.2)
+  })
+
+  // ── В1 п.3: фасад-адаптеры (6 шт) ─────────────────────────────────────────
+
+  it('23. isPlaying/duration-адаптеры: источник transport.state / transport.duration', () => {
+    const { transport } = mockBelive()
+    ;(transport as any).state = 'playing'
+    ;(transport as any).duration = 173.4
+    expect(ae().isPlaying).toBe(true)
+    expect(ae().duration).toBe(173.4)
+    ;(transport as any).state = 'paused'
+    expect(ae().isPlaying).toBe(false)
+  })
+
+  it('23b. isPlaying/duration fallback без транспорта: false / 0', () => {
+    mockBelive()
+    delete (window as any).__belive.transport
+    expect(ae().isPlaying).toBe(false)
+    expect(ae().duration).toBe(0)
+  })
+
+  it('24. stems → liveStems: pipeline.liveStems (п.1 геттер) с has()-семантикой без dead', () => {
+    const { pipeline } = mockBelive()
+    ;(pipeline as any).liveStems = ['drums', 'vocals', 'bass']
+    expect(ae().liveStems).toEqual(['drums', 'vocals', 'bass'])
+    expect(ae().stems.has('drums')).toBe(true)
+    expect(ae().stems.has('guitar')).toBe(false)
+  })
+
+  it('24b. liveStems без pipeline → [] / has() → false', () => {
+    mockBelive()
+    delete (window as any).__belive.pipeline
+    expect(ae().liveStems).toEqual([])
+    expect(ae().stems.has('vocals')).toBe(false)
+  })
+
+  it('25. setVMix(on) → monitorRouter.setVMix (унификация enable/disableVocalMix)', () => {
+    const spy = vi.fn()
+    mockBelive()
+    ;(window as any).__belive.monitorRouter = { setVMix: spy }
+    ae().setVMix(true)
+    ae().setVMix(false)
+    expect(spy).toHaveBeenNthCalledWith(1, true)
+    expect(spy).toHaveBeenNthCalledWith(2, false)
+  })
+
+  it('26. detachProgramSource(node) → monitorRouter.detachProgramSource (симметрично attach :20)', () => {
+    const spy = vi.fn()
+    mockBelive()
+    ;(window as any).__belive.monitorRouter = { detachProgramSource: spy }
+    const gain = { disconnect: vi.fn() }
+    ae().detachProgramSource(gain)
+    expect(spy).toHaveBeenCalledWith(gain)
+  })
+
+  it('27. loadAdditionalStems: decode → pipeline.loadStem (on-demand путь QuickActions/MixerPanel)', async () => {
+    const loadStem = vi.fn((_id: string, _buf: unknown) => Promise.resolve())
+    const pipeline = {
+      ctx: { ...fakeCtx, decodeAudioData: vi.fn(async () => ({ duration: 4 })) },
+      loadStem,
+    }
+    ;(window as any).__belive = { pipeline, transport: null, monitorRouter: null, currentTime: 0 }
+
+    const r = await ae().loadAdditionalStems({ drums: { data: new ArrayBuffer(8), type: 'audio/mpeg' } })
+
+    expect(loadStem).toHaveBeenCalledTimes(1)
+    expect(loadStem.mock.calls[0][0]).toBe('drums')
+    expect(r).toEqual(['drums'])
+  })
+
+  it('27b. loadAdditionalStems: уже-живой стем (liveStems) не пушит буфер дважды (дедуп HPS:713-715)', async () => {
+    const loadStem = vi.fn(() => Promise.resolve())
+    const pipeline = {
+      liveStems: ['drums'],
+      ctx: { ...fakeCtx, decodeAudioData: vi.fn(async () => ({ duration: 4 })) },
+      loadStem,
+    }
+    ;(window as any).__belive = { pipeline, transport: null, monitorRouter: null, currentTime: 0 }
+
+    const r = await ae().loadAdditionalStems({ drums: { data: new ArrayBuffer(8), type: 'audio/mpeg' } })
+
+    expect(loadStem).not.toHaveBeenCalled()
+    expect(r).toEqual([])
+  })
+
+  it('27c. loadAdditionalStems: generation-гард — устаревшая генерация не пушит свой decode', async () => {
+    let resolveDrums!: (b: unknown) => void
+    const loadStem = vi.fn((_id: string, _buf: unknown) => Promise.resolve())
+    const pipeline = {
+      liveStems: [],
+      ctx: {
+        ...fakeCtx,
+        decodeAudioData: vi.fn()
+          .mockImplementationOnce(() => new Promise((r) => { resolveDrums = r })) // drums — медленный decode
+          .mockImplementationOnce(async () => ({ duration: 7 })),                // bass — быстрый
+      },
+      loadStem,
+    }
+    ;(window as any).__belive = { pipeline, transport: null, monitorRouter: null, currentTime: 0 }
+
+    const p1 = ae().loadAdditionalStems({ drums: { data: new ArrayBuffer(8) } })
+    const p2 = ae().loadAdditionalStems({ bass: { data: new ArrayBuffer(8) } })
+    const r2 = await p2 // вторая генерация — текущая
+    expect(loadStem).toHaveBeenCalledTimes(1)
+    expect(loadStem.mock.calls[0][0]).toBe('bass')
+
+    resolveDrums({ duration: 3 }) // первая генерация устарела
+    const r1 = await p1
+    expect(r1).toEqual([])
+    expect(loadStem).toHaveBeenCalledTimes(1) // drums отброшен как stale
+    expect(r2).toEqual(['bass'])
   })
 
   it('22. hijack-инвариант guard :81: занятый window.audioEngine НЕ затирается повторным eval; delete → свежий экземпляр', () => {

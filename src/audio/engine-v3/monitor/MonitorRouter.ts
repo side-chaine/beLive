@@ -287,6 +287,12 @@ export class MonitorRouter {
     node.connect(this._captureGain)
   }
 
+  /** В1 п.3d: симметричный detach — отвязка внешнего источника от capture-шины
+   *  (утечка превью-тейка useTakesPlayback:74 в program-capture). */
+  detachProgramSource(node: AudioNode): void {
+    try { node.disconnect(this._captureGain) } catch {}
+  }
+
   /** Read-only monitor level for diagnostics (replaces ControlDeck `as any` access) */
   get monitorLevel(): number { return this._monitorGain.gain.value }
 }

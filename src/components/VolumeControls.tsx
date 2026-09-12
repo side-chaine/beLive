@@ -87,14 +87,19 @@ export function VolumeControls() {
   const toggleVocalMix = useCallback(() => {
     const ae = (window as any).audioEngine;
     if (!ae) return;
-    if (vocalMix) ae.disableVocalMix();
-    else {
+    if (vocalMix) {
+      // В1 п.3c: симметричный disable-гард — enable/disableVocalMix retired у V3-фасада (кейс-21),
+      // TypeError при выключении включённого V-Mix исключён (только setVMix)
+      if (typeof ae.setVMix !== 'function') return;
+      ae.setVMix(false);
+    } else {
       const engineMode = ENGINE_MODE;
       if (engineMode === 'v3') {
         // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
         return;
       }
-      ae.enableVocalMix();
+      if (typeof ae.setVMix === 'function') ae.setVMix(true);
+      else ae.enableVocalMix?.();
     }
   }, [vocalMix]);
 
