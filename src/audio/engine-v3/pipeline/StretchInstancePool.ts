@@ -9,7 +9,7 @@ export const MAX_STRETCH_INSTANCES = 7
 export type StretchSlot = 0 | 1 | 2 | 3 | 4 | 5 | 6
 type SlotState = 'free' | 'assigned' | 'clearing'
 
-/** Приоритет слотов: vocals > bass > guitar > keys > piano > other (Sonnet TC-план, Проблема 3) */
+/** Приоритет слотов: vocals > bass > guitar > keys > piano > drums > backing > other (Sonnet TC-план, Проблема 3; В1 п.5: drums+backing — drums НЕ последний, «главный визуальный стем — самый незащищённый») */
 const STRETCH_PRIORITY: Record<string, number> = {
   instrumental: 0,
   vocals: 1,
@@ -17,7 +17,9 @@ const STRETCH_PRIORITY: Record<string, number> = {
   guitar: 3,
   keys: 4,
   piano: 5,
-  other: 6,
+  drums: 6,
+  backing: 7,
+  other: 8,
 }
 
 export class StretchInstancePool {
