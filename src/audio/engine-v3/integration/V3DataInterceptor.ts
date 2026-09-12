@@ -255,6 +255,19 @@ export class V3DataInterceptor {
       try {
         document.dispatchEvent(new CustomEvent('track-fully-loaded', { detail }));
       } catch {}
+      // В1 п.8: все-dead = движок жив, данные мертвы → глитч-канал.
+      // loadedStemIds не пуст, но ни одного из них нет в живых HPS.liveStems
+      // (п.1-геттер: chainA.stems минус _deadStems) — все стемы в dead-наборе движка.
+      // Эскалация в СУЩЕСТВУЮЩИЙ канал TransportV3 'audioglitch' (единственный
+      // подписчик — useAudioContextHealth), новый канал/подписку не создаём.
+      const pipeline = this._pipeline;
+      if (pipeline && loadedStemIds.length > 0 && loadedStemIds.every((id) => !pipeline.liveStems.includes(id))) {
+        try {
+          this.transport.dispatchEvent(new Event('audioglitch'));
+        } catch (e) {
+          console.warn('[V3DataInterceptor] all-dead → audioglitch escalation failed:', e)
+        }
+      }
     }
 
     return { loadedStemIds, failedStemIds };
