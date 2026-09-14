@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "updated": "2026-09-14T10:30",
+  "bricks": [
+    { "id": "phase4-shell", "title": "Фаза-4 оболочки", "desc": "тумблер ПУЛЬС|АГЕНТ, прогоны-дерево, селектор моделей, молчание=красное — всё в проде, скрин-приёмка пройдена", "owner": "007", "status": "done", "due": null, "trigger": null },
+    { "id": "pulse-station", "title": "Станция Пульса в бою", "desc": "деплой+периметр доказаны; ждёт bootstrap: Босс будит агента pulse из opencode CLI первым сообщением", "owner": "Никита", "status": "waiting-owner", "due": null, "trigger": null },
+    { "id": "roadmap-contract", "title": "Контракт ROADMAP.json", "desc": "кирпич=id на карту×TRIGGERS×канал; mint одноместно; сироты-правила; тест честности", "owner": "007", "status": "active", "due": null, "trigger": "TRIGGERS/007.md" },
+    { "id": "rail-chatlist", "title": "Рельса = список чатов", "desc": "полировка Т2-карточек до TG-паттерна: персона-аватар, статус-глагол, пульс зелёного; инфраструктура не нужна", "owner": "007", "status": "planned", "due": null, "trigger": null },
+    { "id": "roadmap-strip", "title": "Полоса карты в CenterStage", "desc": "P5.1: рендер из файла (v1 замысел) → P5.2 JOIN с dispatch-state/children (v2 факт)", "owner": "007", "status": "planned", "due": null, "trigger": null },
+    { "id": "tg-push-bridge", "title": "TG-мост пуша", "desc": "врезан в диспетчер, спит enabled:false; разморозка = автономия резидента из морозилки, НЕ вынос наружу", "owner": "МО", "status": "frozen", "due": null, "trigger": null },
+    { "id": "resident-shadow", "title": "Теневая неделя резидента", "desc": "hit-rate ≥8/10 по night-log → исполнение 2/ч; кодинг после готовности оболочки", "owner": "МО", "status": "frozen", "due": null, "trigger": null },
+    { "id": "beLive-zones-plans", "title": "Планы зон от Босса", "desc": "5 погружений сданы (rehearsal-HUB/studio/quest/split/pitch) — все СТОП ждут план Никиты", "owner": "Никита", "status": "waiting-owner", "due": null, "trigger": "TRIGGERS/007.md" }
+  ]
+}
