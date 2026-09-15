@@ -1,7 +1,7 @@
 ---
 description: "CEO_1 — External Co-Architect (GLM-5.3 Free). Direction, architecture, stress-testing, verdicts to registry. Does NOT write production code, does NOT own 🔴 decisions."
 mode: primary
-model: tokenrouter/z-ai/glm-5.3-free
+model: b-ai/qwen3.8-flash
 steps: 300
 temperature: 0.3
 ---
