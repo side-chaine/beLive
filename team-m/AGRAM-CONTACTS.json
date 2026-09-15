@@ -5,8 +5,8 @@
   "note": "Реестр контактов AGRAM. Ведёт 004 (Хранитель реестра) — харнесс только окно. id = agent opencode или title-match для MO-сессий. Порядок в UI: pylons → пины Босса → активность; зоны = разделители внутри списка.",
   "pylons": ["CEO_1", "007"],
   "contacts": [
-    { "id": "CEO_1", "label": "CEO_1 · Стратег", "zone": "Ядро", "match": ["CEO_1"] },
-    { "id": "007", "label": "007 · Директор", "zone": "Ядро", "match": ["007"] },
+    { "id": "CEO_1", "label": "CEO_1 · Стратег", "zone": "Ядро", "match": ["CEO_1"], "session": "ses_f5c161f19ffeaicmtWM4OSBeDJ" },
+    { "id": "007", "label": "007 · Директор", "zone": "Ядро", "match": ["007"], "session": "ses_f8e3a9e56ffehIQqasKriWhgxD" },
     { "id": "pulse", "label": "PULSE · ОС", "zone": "Система", "match": ["pulse"] },
     { "id": "agent-rehearsal", "label": "Репетиция · HUB", "zone": "B01 · Репетиция", "match": ["agent-rehearsal"] },
     { "id": "agent-studio", "label": "Studio · микшер", "zone": "B01 · Репетиция", "match": ["agent-studio"] },
@@ -32,6 +32,7 @@
     { "id": "MO-welcome", "label": "MO · Welcome", "zone": "МО · созвездие", "match": ["MO-welcome", "MO welcome"] },
     { "id": "MO-user-room", "label": "MO · User-room", "zone": "МО · созвездие", "match": ["MO-user-room", "user-room"] },
     { "id": "MO-session-SP", "label": "MO · Session-SP", "zone": "МО · созвездие", "match": ["MO-session-SP", "session-SP"] },
-    { "id": "MO-usage", "label": "MO · Usage", "zone": "МО · созвездие", "match": ["MO-usage", "MO usage"] }
+    { "id": "MO-usage", "label": "MO · Usage", "zone": "МО · созвездие", "match": ["MO-usage", "MO usage"] },
+    { "id": "007_3", "label": "007_3 · Директор", "zone": "Ядро", "match": ["007_3"], "session": "ses_f5e43f4f3ffenvaZaUi4gsA39n" }
   ]
 }
