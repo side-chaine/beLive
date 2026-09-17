@@ -1,0 +1,186 @@
+{
+  "version": 7,
+  "updated": "2026-09-18",
+  "bricks": [
+    {
+      "id": "R-1",
+      "title": "3D-стек+бюджет (research)",
+      "desc": "three@0.171+r3f+drei, meshopt, lazy Vite-чанк, peer-deps зелёные — факты добыты 005-A",
+      "owner": "005-A",
+      "status": "done",
+      "due": "круг-2",
+      "trigger": "RESEARCH-005x-2026-09-17.md"
+    },
+    {
+      "id": "R-2",
+      "title": "Аватар: avatar3d+fallback (research)",
+      "desc": "UserProfile.avatar3d {src} + цепь glb→avatarUrl→'🎤'; RPM-стоп (лицензия не верифицирована)",
+      "owner": "005-B",
+      "status": "done",
+      "due": "круг-2",
+      "trigger": "RESEARCH-005x"
+    },
+    {
+      "id": "R-3",
+      "title": "Вайб: audio→3D read-only мост (research)",
+      "desc": "getStemAnalyser/createAnalyser (0 правок frozen) → PlaybackVisualScheduler→useFrame-uniforms + Bloom",
+      "owner": "005-B",
+      "status": "done",
+      "due": "круг-2",
+      "trigger": "RESEARCH-005x"
+    },
+    {
+      "id": "R-4",
+      "title": "metrics-провод (research)",
+      "desc": "едина точка completeAndKeep:274; 7/8 вердиктов; addPlayTimeMs — источника нет",
+      "owner": "005-C",
+      "status": "done",
+      "due": "круг-2",
+      "trigger": "RESEARCH-005x"
+    },
+    {
+      "id": "R-5",
+      "title": "Surface Холла (research)",
+      "desc": "ProfileStats self-contained; ~18 surface call-сайтов (2 dynamic); друг=relation authorId↔authorId",
+      "owner": "005-C",
+      "status": "done",
+      "due": "круг-2",
+      "trigger": "RESEARCH-005x"
+    },
+    {
+      "id": "R-6",
+      "title": "Blender→beLive пайплайн (research)",
+      "desc": "glTF Binary, Draco ВЫКЛ, gltfpack -cc (БЕЗ -tc), WebP; decoderPath meshopt 24.8 KB",
+      "owner": "005-A",
+      "status": "done",
+      "due": "круг-2",
+      "trigger": "RESEARCH-005x"
+    },
+    {
+      "id": "R-4a",
+      "title": "metrics+sync (реализация)",
+      "desc": "metrics.store (shape, recomputeHasAnyData:25, partialize:107, СТРИК-ФИКС по условию Суда 009: recomputeStreak ДО записи lastActiveAt + recomputeHasAnyData после actions) + facade-обёртка (totalPlayTimeMs:0 константа, scheduleSync после мутаций, try/catch, сужение types.ts:59-63) + metrics-sync.service в edit-листе + metrics.store.test.ts (4 кейса: first-touch→0, same-day no-op, next-day +1, persist-roundtrip со старым blob) + §4: registerInit initSyncLifecycle (metrics-sync.service.ts:123) в main.tsx + вызовы increment*/setElo из completeAndKeep-пути + scheduleSync после мутаций — иначе writers мертвы · ЛЕКАРСТВО-2 (код-баг): touchLastActive:76-77 set ПЕРЕД recomputeStreak — СВАП: recomputeStreak() ДО set({lastActiveAt:now}), иначе diffDays≈0 и +1:92 недостижим · УСЛОВИЕ-1 (009): после свопа streakDays=1 при lastActiveAt===null, иначе первый день даёт streak 0 (:82 не трогает инит :41)",
+      "owner": "operator",
+      "status": "planned",
+      "due": "09-18",
+      "trigger": "условие 009 закрыто; после GO Босса"
+    },
+    {
+      "id": "R-4b",
+      "title": "runtime: exercise-guard + streak-cell",
+      "desc": "prevExercisesCompleted в замыкании subscribe (write только при change) + streak-ячейка как earned-cell при streakDays>0",
+      "owner": "operator",
+      "status": "planned",
+      "due": "09-18",
+      "trigger": "после R-4a"
+    },
+    {
+      "id": "R-4d",
+      "title": "3D-слой (реализация)",
+      "desc": "gltfpack -cc; useGLTF(url,false,true); lazy Vite-чанк; probe:bundle как exit-gate (fail → эскалация 007)",
+      "owner": "operator",
+      "status": "planned",
+      "due": "09-19",
+      "trigger": "после R-4b; параллельно-независимо"
+    },
+    {
+      "id": "R-5",
+      "title": "GATE перед сдачей",
+      "desc": "tsc ≤181 сведённым edit-листом; vitest 824+4/68 без регрессов; PARITY re-check; инвариант metrics.store:44 покрыт кейсами; ВНИМАНИЕ по 009: frozen-audit вырожден — frozen-файлов (bridges/*, AudioEngineV2, patchV1, track.orchestrator) в репо НЕТ (снесены миграцией), реальные гейты = tsc/vitest/PARITY",
+      "owner": "007",
+      "status": "planned",
+      "due": "приёмка",
+      "trigger": "R-4a→R-4b→R-4d"
+    },
+    {
+      "id": "R-4c",
+      "title": "бэклог (parked, честно)",
+      "desc": "incrementRehearsal-МАППИНГ (по условию Суда 009: практика-события ЕСТЬ — practice:completed-kept :281→facade:57→practice:state-changed — мыbrtc-Rehearsal событий нет; РАЗВИЛКА: практика=rehearsal vs только teacher-Rehearsal — решение Босса до R-4b); gateway totalPlayTimeMs→optional (убрать константу); bus-level per-subscriber isolation; удаление app.store после rewire auth.service:13,109; KTX2 revisit при budget-проблеме",
+      "owner": "backlog",
+      "status": "planned",
+      "due": null,
+      "trigger": "маппинг-решение Босса блокирует только «Репетиций»-ячейку, не R-4a"
+    },
+    {
+      "id": "R-7",
+      "title": "Друзья: серверный эпик в belive-gateway",
+      "desc": "relation authorId↔authorId на готовом фундаменте JWT→authorId; клиент-only MVP — ловушка без persistence",
+      "owner": "Никита",
+      "status": "waiting-owner",
+      "due": null,
+      "trigger": "слово Босса: серверный эпик / social за рамками Холла"
+    },
+    {
+      "id": "R2-1",
+      "title": "Прогресс-паттерны «дракон» (research)",
+      "desc": "2-3 вида показа роста навыка в Холле; стык только с живым: streakDays:92/elo:98/exercisesCompleted:55 + practice:completed-kept; референсы Duolingo/Forza/Wrapped",
+      "owner": "005-B",
+      "status": "done",
+      "due": "RUN-2 круг-2",
+      "trigger": "RESEARCH-005x-RUN-2"
+    },
+    {
+      "id": "R2-2",
+      "title": "Стык Холл↔Сессия: invite→wait→start (research)",
+      "desc": "контракт стыка БЕЗ кода Rehearsal: новый канал EventBusChannel (types.ts:6-13) + state-машина «ожидаю педагога»; переиспользует deep-link:74-96 / POST /rooms билеты / RehearsalRoomDO",
+      "owner": "005-C",
+      "status": "done",
+      "due": "RUN-2 круг-2",
+      "trigger": "RESEARCH-005x-RUN-2"
+    },
+    {
+      "id": "R2-3",
+      "title": "3D-комфорт Холла: ambient+idle (research)",
+      "desc": "2-3 ambient-сценария + idle-анимация аватара (дыхание/моргание); бюджет вписан в R-4d probe:bundle; 0 новых зависимостей (three/r3f из R-1)",
+      "owner": "005-A",
+      "status": "done",
+      "due": "RUN-2 круг-2",
+      "trigger": "RESEARCH-005x-RUN-2"
+    },
+    {
+      "id": "R2-4",
+      "title": "Быстрый вход в практику + «сегодня покачал» (research)",
+      "desc": "one-тап Холл→последнее занятие→practice:state-changed (живой facade:57); ячейка на место UserRoom.tsx:274 «скоро...»; закрывает ось Б, отсутствовавшую в design §3",
+      "owner": "005-B",
+      "status": "done",
+      "due": "RUN-2 круг-2",
+      "trigger": "RESEARCH-005x-RUN-2"
+    },
+    {
+      "id": "R2-5",
+      "title": "practice-today.store + ячейки Б/В",
+      "desc": "изолированный persisted-стор (zustand persist+partialize) копит passesCount из practice:completed-kept:281; ячейка UserRoom.tsx:273: «🔥 Сегодня: N · ▶ Продолжить» на startPractice:208+currentTrack:19; metrics НЕ трогаем · ЛЕКАРСТВО-5: guard if(!scenarioId)return первой строкой startPractice:208 (фантом active-сессии без сценария блокирует следующий старт :210) + УСИЛЕНИЕ: completeAndKeep:281 payload += scenarioId+label (читается ДО сброса :284) → practice-today.persist lastScenarioId+label для ячейки «▶ Продолжить» · УСЛОВИЕ-4 (009): persist-ключ practice-today в src отсутствует (grep=0) — R2-5 создаёт; кнопка входа читает scenarioId с null-coalesce и СКРЫВАЕТСЯ при null, иначе guard ловит пустой старт",
+      "owner": "operator",
+      "status": "planned",
+      "due": "09-19",
+      "trigger": "R2-1+R2-4 done"
+    },
+    {
+      "id": "R2-6",
+      "title": "idle-скелет + ambient оси А",
+      "desc": "1 useFrame (дыхание 0.28Гц/uBlink/head-lerp, 0 setState) + Sparkles + points-ShaderMaterial←getStemAnalyser:617 read-only; Bloom-гало после R-4d probe:bundle · ЛЕКАРСТВО-4: дыхание АВТОНОМНО — useFrame sin(2π*0.28*clock.t)*BASE, uAmp только аддитив к свечению (getStemAnalyser:617 null до loadStem; audio-reactive:94 обнуляет кадры на паузе/госте → 0*sin=0) · УСЛОВИЕ-2 (009): дыхание sin(2π·0.28·t)·BASE считать ДО guard :94 (не под rafSyncActive/analyser), публиковать в те же CSS-vars/события, что glow; uAmp аддитивен",
+      "owner": "operator",
+      "status": "planned",
+      "due": "09-19",
+      "trigger": "R-3 done; С-3 после R-4d"
+    },
+    {
+      "id": "R2-7",
+      "title": "session-канал + state-машина оси Г",
+      "desc": "EventBusChannel.Session + 4 события + idle→…→ended на reuse (deep-link:74, POST /rooms, RehearsalRoomDO); 6 новых точек, 0 строк Rehearsal; ячейка UserRoom объединена с Б · ЛЕКАРСТВО-3: session-events wrapper на переходе 'connected' вешает window.__sc.onPeerLeft (есть signaling-client:16,36; DO шлёт do:48; deep-link:79-96 НЕ вешает — уход teacher = WS-message, не socket-close) → student: 'ended'; инвариант «0 строк Rehearsal» сохранён (wrapper вне src/Rehearsal) · УСЛОВИЕ-3 (009): onPeerLeft вешать ЛЕНИВО — после window.__sc (deep-link:94), только для role==='student', идемпотентно к reconnect и повторному connectRehearsalSession (новый sc)",
+      "owner": "operator",
+      "status": "planned",
+      "due": "09-20",
+      "trigger": "env VITE_REHEARSAL_HTTP_URL"
+    },
+    {
+      "id": "R-4a-server",
+      "title": "gateway elo — серверная формула (реализация)",
+      "desc": "metrics.ts:148-172: elo НИКОГДА не пишется (DO UPDATE SET 6 колонок БЕЗ elo; elo INTEGER DEFAULT 1500, 0005_metrics.sql:10) → merged.elo??1500 = константа, ось-Б мертва. ЛЕКАРСТВО: конст eloNew=1200+15*rehearsals+10*exercisesCompleted → INSERT elo-колонка + DO UPDATE SET elo=MAX(user_metrics.elo, excluded.elo) (монотонно, 1 bind, RETURNING * несёт вычисленное) → setElo:85 живой, eloToRank достижим (silver 1200→diamond 2400≈80 репетиций) · УСЛОВИЕ-5 (009, подтверждение): INSERT +1 bind elo + DO UPDATE SET elo=MAX(...) — монотонность держится (counters уже MAX-merge :155-158, формула возрастает по обоим); петля замыкается :196→sync:85",
+      "owner": "operator",
+      "status": "planned",
+      "due": "09-18",
+      "trigger": "параллельно R-4a; не зависит от фронта; gateway-деплой"
+    }
+  ]
+}
