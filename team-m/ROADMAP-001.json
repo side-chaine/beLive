@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "updated": "2026-09-18",
   "bricks": [
     {
@@ -181,6 +181,105 @@
       "status": "planned",
       "due": "09-18",
       "trigger": "параллельно R-4a; не зависит от фронта; gateway-деплой"
+    },
+    {
+      "id": "SP-1",
+      "title": "Ticket: build-env secret + demo-only client self-sign",
+      "desc": "Merge SP-5. Серверный билет уже на 90% (tickets.ts HMAC sign/verify + DO REHEARSAL_TICKET_SECRET do.ts:24). Убрать плейнтекст-секрет main.tsx:822 → import.meta.env (deploy.yml:42 инжектит); клиентский self-sign (deep-link:31-41,48-50) оставить ТОЛЬКО для ?phone=1. Условие 009: не ломать единственный рабочий демо-путь.",
+      "owner": "002",
+      "status": "active",
+      "due": "T0",
+      "trigger": "merge SP-5; 90% готово"
+    },
+    {
+      "id": "SP-9",
+      "title": "Substitution race: hardReset-on-rejoin + dedup channels",
+      "desc": "БЛОКЕР. Блин сети студента → do.ts:29-32 закрывают старого 4001 и :39 ребродкастит peer-joined выжившему → createDataChannels() (peer-connection:96-104, дедупа НЕТ) звенит 2-й раз на том же pc → дубль-каналы + m-line коллизия → медиа/синхра молча до перезагрузки педагога. Аудит 009: (1) применять к ОБЕИМ бутстрапам (deep-link:86 И main.tsx:794) или схлопнуть их; (2) в DO инверсия порядка — peer-joined уходит выжившему ДО peer-left от async-close старого сокета, фикс должен держать ОБА порядка; (3) добавить parity onConnectionStateChange в прод-путь.",
+      "owner": "002",
+      "status": "planned",
+      "due": "T0",
+      "trigger": "4G↔WiFi handoff"
+    },
+    {
+      "id": "SP-2",
+      "title": "Media reattach via camera.store on hardReset",
+      "desc": "БЛОКЕР. attachLocalTracks (peer-connection:229-231) — 0 вызовов в репо; onRemoteStream/setRemoteStream — 0 потребителей. Фикс: pc.attachLocalTracks(camera.store.stream) на onHardReset (bridge:105-110 уже подписан) БЕЗ пере-аквайра (store сам стопает треки camera.store:44-50 — нет гонки двойного getUserMedia). S3VideoPanel+startTeacherCamera — из готового неприменённого MICRO-PACK-S3-VIDEO-IMPL.patch.",
+      "owner": "002",
+      "status": "planned",
+      "due": "T0",
+      "trigger": "onHardReset hook"
+    },
+    {
+      "id": "SP-10",
+      "title": "Ticket-expiry: 401 resub + ceiling + session-expired",
+      "desc": "БЛОКЕР. exp+1ч (deep-link:32) → do.ts:26 HTTP 401 → WS-handshake fail → close 1006 (НЕ 4001, signaling-client:41 глушит реконнект только под 4001) → scheduleReconnect:46-50 backoff 2^n до 15с БЕЗ потолка → вечный 'reconnecting' протухшим билетом. Фикс: 1006 после N попыток → ре-подписка POST /rooms (index.ts:37-46) + потолок попыток + явный store 'session-expired'.",
+      "owner": "002",
+      "status": "planned",
+      "due": "T0",
+      "trigger": "exp+1h"
+    },
+    {
+      "id": "SP-12",
+      "title": "Codec order + TURN-both + relay-log + bitrate cap",
+      "desc": "peer-connection:48-49 codec prefs ВООБЩЕ нет; ICE_SERVERS:5-9 = 3 STUN Google, БЕЗ TURN. Фикс: setCodecPreferences(['video/H264','video/VP8','video/VP9']) ПОСЛЕ getCapabilities feature-detect на обоих концах + try/catch (FF<126 без метода; Firefox/Linux часто без H.264 — эксклюзивный H.264 = отказ). TURN: stun/turn/turns:443 (Cloudflare Realtime TURN, $0.05/GB, free tier 1000GB SFU+TURN — live-подтверждено 009) — ICE сам P2P-first. Лог selectedCandidatePair.remoteCandidate.candidateType: relay при живом P2P = тревога. maxBitrate cap 500kbps.",
+      "owner": "005",
+      "status": "planned",
+      "due": "T1",
+      "trigger": "demo quality"
+    },
+    {
+      "id": "SP-11",
+      "title": "rVFC + visibility/rAF fallback + overlay + autoplay-warm",
+      "desc": "Синхра видео-кадра: requestVideoFrameCallback + metadata.mediaTime + onClockSynced (не Insertable Streams — отвергнуто 002: термалы J8, deprecated→RTCRtpScriptTransform). Fallback: элемент не композируется (display:none/фон/перекрыт) → visibilitychange+rAF+currentTime. UI: fixed-overlay видео + RehearsalLyrics (НЕ PiP-API — системное окно перекрывает lyrics); dvh→visualViewport fallback (старый Chrome); autoplay-warm muted+playsinline в цепочке тапа (bridge:65-70 уже греет play()).",
+      "owner": "001",
+      "status": "planned",
+      "due": "T1",
+      "trigger": "demo UI"
+    },
+    {
+      "id": "SP-3",
+      "title": "Gestures via bridge API, no TransportV3 sub",
+      "desc": "Подтверждён существующим путём: broadcastTransport:397 + hijackAudioTransport:125-161 (BRG-2 guard :133). НЕ подписываем bridge на TransportV3 (002: bridge из контроллера в наблюдателя → рассинхрон собственной модели + двойной apply через ReplayGuard). Добираем student-side отправку жестов; 24 getTransport-жеста старого UI остаются старому UI.",
+      "owner": "001",
+      "status": "active",
+      "due": "T1",
+      "trigger": "already hijack"
+    },
+    {
+      "id": "SP-13",
+      "title": ".env.example += VITE_REHEARSAL_SIGNALING_URL; SPOF flag",
+      "desc": "signaling-client.ts:21-22 бросает, а переменная есть только в deploy.yml:42 + .env → throw на любой не-CI сборке. + SPOF: URL смотрит на личный workers.dev-субдомен — точка отказа демо Боссу.",
+      "owner": "005",
+      "status": "planned",
+      "due": "T1",
+      "trigger": "throw on non-CI build"
+    },
+    {
+      "id": "SP-14",
+      "title": "e2e fake-WS+fake-pc на семью S-P",
+      "desc": "0 автотестов на всё семейство (grep тест-импортов Rehearsal/* = 0; канон 181/824/68 — всё в стороне). Минимум: join→offer→sync→hardReset→reattach.",
+      "owner": "007",
+      "status": "planned",
+      "due": "T1",
+      "trigger": "regression net"
+    },
+    {
+      "id": "SP-15",
+      "title": "DO idle-eviction via alarm",
+      "desc": "do.ts:10 in-memory Map, без ctx.storage/hibernation. Heartbeat идёт по DataChannel (peer-connection:149-151, 4с) — DO его не видит; мёртвый pc = idle WS = эвикт. Демо не нужно (do.ts:46-51 чистит на close) → post-demo CF-alarm.",
+      "owner": "002",
+      "status": "planned",
+      "due": "T2",
+      "trigger": "post-demo"
+    },
+    {
+      "id": "SP-16",
+      "title": "SFU 1:N scale",
+      "desc": "DROPPED. do.ts:33 жёстко 1:1 (peers.size>=2→429; та же роль выбивает первого 4001). Весь scale-нарратив (SFU/RealtimeKit/N≈4-5) неприменим к первому демо. Ре-открыть только если Босс скажет 1:N — тогда смена стека.",
+      "owner": "005",
+      "status": "dropped",
+      "due": "T3",
+      "trigger": "do.ts:33 429"
     }
   ]
 }
