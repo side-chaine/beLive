@@ -1,3 +1,16 @@
+## LOG 2026-10-0x · agent-split [B04] — 🔴 P0 ПРОД-ИНЦИДЕНТ: SPLIT молчит на сайте (BT+ПК) — корень `.stream`-баг DeviceManager (прод-бандл вскрыт, код = HEAD) · фикс-спека для 007_2
+
+**Симптомы Никиты (Windows, переезд с мака):** 🎧=БТ + SPLIT → тишина везде (ни музыки, ни вокала); ползунок «Music with me» → оба «появляются в БТ»; консоль: ~15 повторов `TypeError srcObject is not MediaStream` из `_ensureAudio→setOutputDevice` при каждом выборе устройства. Скрины: `OneDrive\Изображения\Screenshots\chrome_*.png` (3 шт, разобраны).
+
+1. **Корень доказан:** прод-бандл `main-K_cLBshf.js` (1.19 МБ, тот же хеш что в логах) вскрыт — `p8._ensureAudio` побайтово = наш `DeviceManager._ensureAudio`: `el.srcObject = <MediaStreamAudioDestinationNode>` вместо `.stream`. `srcObject` требует MediaStream → throw ДО appendChild/play/this[key] → sink-элементы не создаются НИКОГДА → маршрутизация на устройства мертва на 100% (и на сайте, и в HEAD — баг живёт в обоих). Легаси делал правильно (`monitor-mix.js:98,111` — `this.dest.stream`); V3 потерял `.stream`, `as any` (:44) спрятал ошибку от tsc. **Прогон 001→009 этот баг не поймал — фиксирую пробел честно.**
+2. **Механика тишины:** `setRouteMain(true)` глушит `_defaultBranch` (системный выход) + открывает `_mainBranch→_mainDelay→mainStream` без потребителя (mainEl не создан: тот же баг + `enable()` не зовёт ensure — гвоздь Ф0 из REPORT) → музыка и вокал уходят в никуда. «Music with me» спасает через TASK-014c тап `_monitorMaster→ctx.destination` (полный микс на системный выход = БТ, если БТ — дефолт Windows) — это НЕ сплит, а обход.
+3. **Почему на маке работало:** вероятнее всего V3 там не грузился → режим 'v2' → вызовы шли в легаси-класс (корректный `.stream`). На Windows V3 грузится успешно (логи `V3 loadTrack completed` → `setBackendMode('v3')`) → включается сломанный V3-путь. SPLIT ломается ровно потому, что V3 работает.
+4. **Фикс-спека 007_2 (P0):** F-URGENT-1 `DeviceManager.ts:44` → `... .stream` + убрать `as any`; F-URGENT-2 `enable()` v3 → ensureMonitorPlaying + ensureMainPlaying(новый) + ctx.resume() (уже Ф0, теперь подтверждён вживую). Регресс-тест: `el.srcObject === stream`.
+5. **Смежный симптом (НЕ моя зона, стык B01-screen):** «видно только строчку под курсором» — на скрине плашка рендерит 3 строки (dim/active/dim), неактивные очень тёмные (dim-зелёный на чёрном; на Windows-гамме могут быть невидны). Вероятно CSS dim-уровней RehearsalLyrics/KaraokeLyricsBoard + hover-правила → передаю HUB/factory на проверку, со скрином-доказательством.
+
+— agent-split [B04] · 07.10 · строка названа, спека у 007_2 через HUB 🎯
+
+
 # SHARED-REGISTRY — общий реестр трёх команд
 
 **Создан:** 2026-08-30 00:30 GMT+3 · **Инициатор:** Никита («а то я как копипаста»)
@@ -339,6 +352,42 @@ git -C <repo> ls-remote origin main      # истинный tip, НЕ refs/remot
 
 ---
 
+
+---
+
+## LOG 2026-09-18 15:0x · 004 — [beLive] 📊 ТАБЛИЦА ПРОРАБОТОК + MO-TOPOLOGY + MO-REGISTRY ПОЧИНЕН: конвейер получил «где мы сейчас»
+
+**004 «Реестр-Пульс» · 18.09 15:0x · цепь N-18 (рекомендации 201 → CEO: карта → 004: таблица → CEO+Никита: первый фронт)**
+
+### СДАНО (4 артефакта, все мост IDENT)
+
+1. **`team-m/WORKTABLE-MO.md`** — единое место «где мы»: 16 строк × 9 колонок (МО/УЗЕЛ/СТАНЦИЯ/ФРОНТ/ВЕТКА·ПОРТ/🔴·🟡·⚪/БЛОКЕР/ВЕРДИКТ/ДАТА) + разделы СВЯЗКИ, ВЕТКИ-ПОРТЫ, СТОП-ЛИСТ. Фактура: ковёр CONVEYOR §4 (вся линия на К2; MO-upload единственный без К1) + карта ROADMAP-FRONTS (8 в карте, 8 в стопе). Роль принята: **структуратор + наблюдатель хода** — флаг, если МО стоит > суток.
+2. **`zones/004/drafts/MO-TOPOLOGY-2026-09-18.md`** — матрица 16×16, 38 рёбер, валентности, три контура, стыки-сироты. Правило параллели директивы §5 стало машинным.
+3. **`team-m/MO-REGISTRY.md`** — боевой (вне drafts): 16 строк, ни одна не рвётся.
+4. **`PULSE-CONTACTS.json`** — добавлен `CEO` (beLive, зона «Ядро»), с предупреждением о коллизии: CEO_1 = Пульс, CHANNEL-CEO.md = пара 201+301.
+
+### ФЛАГИ 004 (стоит больше суток)
+
+- 🔴🔴 **5 живых (dock/loop/mode-switch/stem/practice) — 8 дней** на К2.
+- 🔴 **5 formed (engine-v3/transport/sync-word/lyrics/welcome) — 6 дней** на К2.
+- **Причина не код и не песочница — пакет 🔴 у 301 не собран** (очередь A). Пока он не собран, К2 не двигается для стоп-листа.
+
+### ПОПРАВКА К ПЛАНУ (принята CEO, финал за ним)
+
+Wave 4 (`session-SP + sync-word + upload` одной волной) **нелегальна** — ребро `sync-word ↔ upload` (`upload.service.ts:7,10`). Починка: **W4a = session-SP + sync-word** (0 рёбер), **W4b = upload**. Бонус: Wave 3 (`v3-interceptor + user-room + lyrics`) — **чистая тройка**, 0 рёбер во всех парах.
+
+### ЧТО НЕ ДЕЛАЛ
+
+MO-REGISTRY-draft оставлен в DRAFT-режиме до маркера (как канон); боевой — зеркало, не замена. Веток/портов не создавал (К4 — 007_2); решений за зоны не принимал.
+
+**Клеймо:**
+```
+УТВЕРЖДЕНИЕ | ТАБЛИЦА ПРОРАБОТОК сдана (16 строк + СВЯЗКИ/ВЕТКИ-ПОРТЫ/СТОП-ЛИСТ); MO-TOPOLOGY на диске; MO-REGISTRY починен (16/16 целых); CEO добавлен в контакты
+ДОКАЗАТЕЛЬСТВО | ls team-m/WORKTABLE-MO.md, team-m/MO-REGISTRY.md, zones/004/drafts/MO-TOPOLOGY-2026-09-18.md; md5 мост≡team-m IDENT для всех 4 артефактов; PULSE-CONTACTS.json: 'CEO' in contacts
+ПРОВЕРЕНО | 004, 18.09 15:0x; станции — по CONVEYOR §4, фронты — по ROADMAP-FRONTS §1, рёбра — по §границы хендофов
+СКОУП | team-m/WORKTABLE-MO.md, team-m/MO-REGISTRY.md, zones/004/drafts/{MO-REGISTRY-draft.md, MO-TOPOLOGY-2026-09-18.md}, PULSE-CONTACTS.json (+ мост)
+СЛЕДУЮЩИЙ | слово CEO+Никита на первый фронт (рекомендация — №1 пилот MO-track-loader)
+```
 
 ---
 
