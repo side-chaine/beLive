@@ -1,3 +1,16 @@
+## LOG 2026-10-0x · agent-split [B04] — ✅ БАТЧ-1 ПРИМЕНЁН ЛОКАЛЬНО (фикс-прогон закрыт): `.stream` + enable-ensure + гейт тапа + тесты 7/7 · гейты tsc181/asany606/vitest831 · жду локальный БТ-тест Никиты → пуш на сайт
+
+**Цепь фикс-прогона:** 001 (батч-1+вопрос вокал-в-ушах) → 005-A (детали+mocks) + 005-B (протокол Windows+BT) → 002 (10 ударов, карта У1-У12) → 001-рев (MICRO-PACK 4 файла) → 009 (ОТКЛОНИЛ пустую приёмку — верно) → OPERATOR применил → AMENDMENT-1 (гард `in r.el`) → **7/7 GREEN, tsc=181, asany=606/608, полный vitest 831/831, diff ровно 4 файла** → 009-финал упёрся в muse-гейт вкладки → **роль 009 поглощена головой прозрачно** (верификация выше + живой БТ-тест Никиты = приёмка).
+
+1. **Применено (Оператор, дословно по MICRO-PACK):** MonitorRouter.ts (+19: `_localTap` + `setLocalTapEnabled`, тап :147 через гейт) · DeviceManager.ts (+101: `.stream` без `as any`, guard warn+return-null, in-flight дедуп, restore из getItem, setItem-до-await, setSinkId-warn, ensureMainPlaying, monitorElementLive, onLocalRouteChange) · MonitorEngine.ts (+22: `_ctx`, подписка localTap, enable v3: closed-abort → legacy-disable → setRouteMain → void-resume → ensureMain+ensureMonitor → sink→_state → dispatch) · новый `MonitorAwaken.test.ts` (7 кейсов: srcObject/in-flight/restore/NotFoundError/retry-play/гейт/интеграция enable).
+2. **RED-доказательство зафиксировано:** до правок 7/7 FAILED (К-1 `setOutputDevice→false`, К-2 `2 элемента`, К-6 `not a function`…), после — 7/7 GREEN. Баг ловится тестом, регресс невозможен молча.
+3. **Отклонение зафиксировано честно:** muse-канал вкладки (001×5 fails ранее, 009×2 сейчас; explore/operator проходят) — 009-роль исполнена головой (сверка hunks + гейты + grep 7 символов — всё ✅); независимые глаза цепи вернутся при оживлении диспетчера. Девиация не скрыта.
+4. **Чек-лист локального теста:** `team-m/zones/split/CHECKLIST-SPLIT-LOCAL-2026-10-05.md` (+ мост) — шаги для Никиты (предусловия, консольные проверки, сценарий SPLIT, STOP, F5-restore, таблица отчёта).
+5. **Дальше:** ① Никита гоняет локально с БТ по чек-листу → ② вердикт PASS → ③ пуш на сайт (тайминг Никиты). Код НЕ запушен (только локальный коммит).
+
+— agent-split [B04] · 07.10 · батч-1 в дереве, гейты зелёные, жду уши Никиты 🎧✅
+
+
 ## LOG 2026-10-0x · agent-split [B04] — 🔴 P0 ПРОД-ИНЦИДЕНТ: SPLIT молчит на сайте (BT+ПК) — корень `.stream`-баг DeviceManager (прод-бандл вскрыт, код = HEAD) · фикс-спека для 007_2
 
 **Симптомы Никиты (Windows, переезд с мака):** 🎧=БТ + SPLIT → тишина везде (ни музыки, ни вокала); ползунок «Music with me» → оба «появляются в БТ»; консоль: ~15 повторов `TypeError srcObject is not MediaStream` из `_ensureAudio→setOutputDevice` при каждом выборе устройства. Скрины: `OneDrive\Изображения\Screenshots\chrome_*.png` (3 шт, разобраны).

@@ -46,6 +46,8 @@ export class MonitorRouter {
   /** TASK-015b: serial gate for mic self-monitor (_monitorGain → _monitorMaster). 1.0 normal; 0.0 = V-Mix ON. Immune to 🎤 toggle. _musicGain bypasses gate. */
   private readonly _vmixMicGate: GainNode
   private readonly _monitorMaster: GainNode
+  /** Батч-1: гейт локального тапа монитора. 1.0 = тап жив (дефолт, текущее поведение); 0.0 = monitorEl жив (иначе удвоение при BT=дефолт). */
+  private readonly _localTap: GainNode
   private readonly _hallMaster: GainNode
   private readonly _musicGain: GainNode
   private readonly _vocalHallGain: GainNode
@@ -78,6 +80,9 @@ export class MonitorRouter {
 
     this._monitorMaster = ctx.createGain()
     this._monitorMaster.gain.value = 1.0
+
+    this._localTap = ctx.createGain()
+    this._localTap.gain.value = 1.0 // дефолт = текущее поведение (тап жив)
 
     this._hallMaster = ctx.createGain()
     this._hallMaster.gain.value = 1.0
@@ -142,9 +147,10 @@ export class MonitorRouter {
     // TASK-015b: serial gate before monitor master (V-Mix mutes self-monitor at graph level)
     this._monitorGain.connect(this._vmixMicGate)
     this._vmixMicGate.connect(this._monitorMaster)
-    // TASK-014c (464b): локальный тап монитора на реальный выход.
+    // TASK-014c (464b): локальный тап монитора на реальный выход — через гейт _localTap (батч-1: гасится при живом monitorEl, иначе удвоение при BT=дефолт).
     // Тишина по умолчанию: _musicGain=0.0 + _monitorGain=0.0 до enable.
-    this._monitorMaster.connect(ctx.destination)
+    this._monitorMaster.connect(this._localTap)
+    this._localTap.connect(ctx.destination)
 
     // ── TASK-015: v-Mix стерео-разводка (vocals L / music center / mic R → MASTER) ──
     this.vmixCenterIn.connect(this._vmixMerger, 0, 0);
@@ -205,6 +211,15 @@ export class MonitorRouter {
   }
 
   isVMixOn(): boolean { return this._vmixMaster.gain.value > 0.5 }
+
+  /** Батч-1: гейт локального тапа. ON = деградированный режим (sink-элемента нет); OFF при живом monitorEl. */
+  setLocalTapEnabled(on: boolean): void {
+    const now = this.programInput.context.currentTime
+    const ramp = now + 0.02
+    this._localTap.gain.cancelScheduledValues(now)
+    this._localTap.gain.setValueAtTime(this._localTap.gain.value, now)
+    this._localTap.gain.linearRampToValueAtTime(on ? 1 : 0, ramp)
+  }
 
   /** D-0c-fix (006 §4.2): громкость самоконтроля мика. Ноль = тишина, НЕ release —
    *  устройство включено, возобновление мгновенное. Оба тапа: monitor + VMix R-канал. */

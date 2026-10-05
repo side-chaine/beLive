@@ -31,6 +31,7 @@ export class MonitorEngine {
   private _calibrator: PulseCalibrator | null = null
   private _autoMix: AutoMixController | null = null
   private _deviceManager: DeviceManager | null = null
+  private _ctx: AudioContext | null = null
   private _state: MonitorEngineState = {
     enabled: false, delayMs: 120, includeMusic: false,
     musicLevel: 0.15, outputDeviceId: '', mainDeviceId: '',
@@ -58,8 +59,12 @@ export class MonitorEngine {
 
   /** Подключить Router + контроллеры (вызывается из bootAether после создания Router) */
   setBackend(router: MonitorRouter, ctx: AudioContext, deviceManager?: DeviceManager): void {
+    this._ctx = ctx
     this._router = router
     this._deviceManager = deviceManager ?? null
+    if (deviceManager) {
+      deviceManager.onLocalRouteChange = (live: boolean) => { try { router.setLocalTapEnabled(!live) } catch {} }
+    }
     this._calibrator = new PulseCalibrator(router, ctx)
     this._autoMix = new AutoMixController(router)
     this._autoMix.start()
@@ -92,7 +97,24 @@ export class MonitorEngine {
 
   async enable(opts?: any): Promise<void> {
     if (this._mode === 'v3' && this._router) {
+      if (this._ctx && this._ctx.state === 'closed') {
+        console.warn('[MonitorEngine] ctx closed — abort enable')
+        this._dispatch('monitor-state-changed')
+        return
+      }
+      try { this._legacy?.disable?.() } catch {}
       this._router.setRouteMain(true)
+      if (this._ctx && this._ctx.state !== 'running') {
+        void this._ctx.resume().catch((e) => console.warn('[MonitorEngine] ctx.resume() failed', e))
+      }
+      try {
+        const mainSink = await this._deviceManager?.ensureMainPlaying()
+        if (mainSink) this._state.mainDeviceId = mainSink
+      } catch (e) { console.warn('[MonitorEngine] ensureMainPlaying failed', e) }
+      try {
+        const monSink = await this._deviceManager?.ensureMonitorPlaying()
+        if (monSink) this._state.outputDeviceId = monSink
+      } catch (e) { console.warn('[MonitorEngine] ensureMonitorPlaying failed', e) }
       this._state.enabled = true
     } else if (this._legacy) {
       await this._legacy.enable?.(opts)
