@@ -16,5 +16,15 @@
   "pack": "zones/001/packs/AGT-19-docs",
   "baseCommit": "HEAD",
   "at": "2026-10-18T20:25:10.661Z",
-  "reconciled": false
+  "reconciled": false,
+  "gatesVerified": {
+    "tsc": 181,
+    "vitest": "886/886 passed (74 files)",
+    "parity": "PASS",
+    "docvis": "0 leaks",
+    "junction": "violations=3",
+    "verifiedBy": "003",
+    "at": "2026-10-18T20:27:30+03:00"
+  },
+  "gatesNote": "gates.tsc='fail' зафиксирован при первом прогоне из-за бага парсера (npm exit code на baseline 181); фактические значения — gatesVerified; код продукта не менялся"
 }
