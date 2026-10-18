@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "updated": "2026-10-18",
+  "bricks": [
+    { "id": "W0-DOD", "title": "Определение 100% (контракт)", "desc": "100% = 167/167 ядер MAP с docs+synapses+consumers и зелёными гейтами · tsc=0 · vitest полный зелёный · PARITY PASS · SB :3000 жив (T4-v2→Z2→cron→marker) · gateway/workers задеплоены и задокументированы · class-5 UI в генераторе · 0 P0 (FOUC-2/SEO) · 009 FULL-BASE drift=0. Шкалы: единицы 167/167, байты 100%.", "owner": "003", "status": "active", "due": "Ф0", "trigger": "team-m/ROADMAP-003.json" },
+    { "id": "W0-BASH", "title": "bash-GO для 003", "desc": "Разрешить 003 запуск гейтов и git (сейчас bash:deny): свежий tsc/vitest/verify:junction/docvis + коммит-снимок. Без этого все проценты — снимок 12.09.", "owner": "Никита", "status": "waiting-owner", "due": "Ф0", "trigger": null },
+    { "id": "W0-COMMIT", "title": "Коммит-снимок накопленного", "desc": "Эра-конвой ×10, n-stem §16 ЗАКРЫТО, transport-v3 В1, правки блока 201 (мост) — собрать 007 одним коммитом; base = последний HEAD (отчёт MO-engine-v3 4303477).", "owner": "007", "status": "planned", "due": "Ф0", "trigger": "TRIGGERS/007.md" },
+    { "id": "W0-NAME", "title": "Водораздел имён PULSE*", "desc": "⑤ блока 201: шапка-примечание или переименование PULSE-RUN-CONSTITUTION.md→BE-LIVE-ZONE-CONSTITUTION.md и PULSE-ZONES.yaml (носитель 007)→BE-LIVE-ZONES.yaml. Решение CEO_1/007, 003 не правит.", "owner": "CEO_1", "status": "waiting-owner", "due": "Ф0", "trigger": "TRIGGERS/007.md" },
+
+    { "id": "P1-SB", "title": "Поднять SB :3000", "desc": "КРИТИЧЕСКИЙ ПУТЬ. curl :3000 → 200 + health. Разблокирует T4-v2, Z2, cron, marker, session-семью. Без него stores-44 не размечается.", "owner": "Никита", "status": "waiting-owner", "due": "Ф1", "trigger": "TRIGGERS/007.md" },
+    { "id": "P1-T4V2", "title": "T4-v2 прогон", "desc": "После SB: прогнать T4-v2, зафиксировать факты session/track-потока, отчёт в реестр.", "owner": "007", "status": "planned", "due": "Ф1", "trigger": null },
+    { "id": "P1-Z2", "title": "Z2 разметка stores-44", "desc": "Маршруты через SB: карта «пишет/читает» для 44 unclassified stores (4 441 строка) → строки MECHANISM-MAP.", "owner": "004", "status": "planned", "due": "Ф1", "trigger": null },
+    { "id": "P1-CRON", "title": "cron + маркер Z2", "desc": "Закрыть цепочку cron→marker, зафиксировать в MECHANISM-MAP; после этого stores-44 перестаёт быть «тенью».", "owner": "007", "status": "planned", "due": "Ф1", "trigger": null },
+    { "id": "P1-D3", "title": "Д-3 CF-скрины", "desc": "Скрины Cloudflare (Никита) → 201: доказать деплой gateway/workers; без этого gateway-доки (2 955 строк) = теория.", "owner": "Никита", "status": "waiting-owner", "due": "Ф1", "trigger": "TRIGGERS/201.md" },
+
+    { "id": "P2-STORES", "title": "stores-44 → MAP (+26 ядер)", "desc": "После Z2: 44 стора разложить по MO-волнам/L2, заполнить docs+synapses+consumers. Самый тяжёлый байтовый хвост (4 441).", "owner": "MO-волны", "status": "planned", "due": "Ф2", "trigger": null },
+    { "id": "P2-SERVICES", "title": "services 12 → приёмка 009", "desc": "PB-1 сдал 21/33; добрать 12 (семья L2) + месячная приёмка 009. +12 ядер.", "owner": "003_2", "status": "planned", "due": "Ф2", "trigger": null },
+    { "id": "P2-GATEWAY", "title": "gateway/workers доки", "desc": "После Д-3: H-4 доки по воркерам (2 955 строк, вне MAP) + verify-компаньон.", "owner": "201", "status": "planned", "due": "Ф2", "trigger": null },
+    { "id": "P2-LEGACY", "title": "js legacy H-3b", "desc": "3 356 строк: фасад-провода 201 ✓, остальное — ком-карта и доки 003.", "owner": "003", "status": "planned", "due": "Ф2", "trigger": null },
+    { "id": "P2-MOWELCOME", "title": "DOC-проход MO-welcome", "desc": "app.store трек-разрыв (K11 только SB, main — deprecated-стаб), deep-link ?room= обходит витрину, мёртвый #loading-overlay:435, FOUC-2 (--bl-bg нигде), SEO public/ пуст.", "owner": "003", "status": "planned", "due": "Ф2", "trigger": "TRIGGERS/003.md" },
+
+    { "id": "P3-CLASS5", "title": "class-5 UI в генератор MAP", "desc": "14 170 строк экранов (Show/Sync/Rehearsal/Catalog/Takes) завести как класс-5 в MECHANISM-MAP — сейчас они ВООБЩЕ вне счётчика.", "owner": "004", "status": "planned", "due": "Ф3", "trigger": null },
+    { "id": "P3-UIATLAS", "title": "UI-атлас H-2 по экранам", "desc": "Док на экран по критерию L3: file:line, события, схема потока, гейт.", "owner": "003", "status": "planned", "due": "Ф3", "trigger": null },
+    { "id": "P3-FOUC", "title": "FOUC-2 P0 + SEO", "desc": "Определить --bl-bg, убрать дубль #loading-overlay, robots/sitemap в public/. P0 до деплой-приёмки.", "owner": "Оператор", "status": "planned", "due": "Ф3", "trigger": null },
+
+    { "id": "P4-TSC", "title": "tsc 181 → 0", "desc": "Типовая чистота: 181 ошибка (снимок 12.09) → 0 без подавлений. Гейт в CI.", "owner": "Оператор", "status": "planned", "due": "Ф4", "trigger": null },
+    { "id": "P4-GATES", "title": "Гейты зелёные и полные", "desc": "vitest полный зелёный (824+), PARITY PASS, verify:junction violations=3→0, verify:events, docvis 0 утечек.", "owner": "009", "status": "planned", "due": "Ф4", "trigger": null },
+
+    { "id": "P5-MAP100", "title": "MAP 167/167", "desc": "Генератор 007: все ядра с docs/synapses/consumers, class-5 включён, счётчик 167+ и байты 100%.", "owner": "007", "status": "planned", "due": "Ф5", "trigger": null },
+    { "id": "P5-BOARD", "title": "Доска 100/100", "desc": "Обе шкалы: единицы 167/167, байты 100%; 200 принимает доску как трекер задачи №1.", "owner": "200", "status": "planned", "due": "Ф5", "trigger": null },
+    { "id": "P5-AUDIT", "title": "FULL-BASE аудит 009", "desc": "Независимый аудит: drift=0, реестр валиден, документы соответствуют коду, доступы/деплой проверены.", "owner": "009", "status": "planned", "due": "Ф5", "trigger": null },
+    { "id": "P5-DEPLOY", "title": "Деплой-приёмка", "desc": "CF workers + SB + smoke-сценарий (трек→стемы→монитор→маркер). Только после P1/P3/P4.", "owner": "007", "status": "planned", "due": "Ф5", "trigger": null },
+    { "id": "P5-DOCSINDEX", "title": "Индекс доков Пульса живой", "desc": "Держатель 003: статусы через LOG [[PULSE]], сверка «доки=код» (сейчас 0 прогонов, §6.1 индекса), SPEC-TILES ждёт маркера.", "owner": "003", "status": "active", "due": "Ф5", "trigger": null }
+  ]
+}

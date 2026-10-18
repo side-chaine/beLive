@@ -1,5 +1,7 @@
 # Split (Monitor Mix) — Subsystem Architecture
 
+> **🏭 Эра-пометка (конвой 003, 12.09):** док живой (boundary engine); 1 якорь V2-эры. ⚠️ Живой баг: `monitor-mix.js:206` ждёт `instrumentalGain` на фасаде V3, у фасада его нет → музыкальный тап монитора молча не подключается — `MICRO-PACK-V3-WIRES` W-2 (цепь).
+
 **Status:** Active boundary engine — documented, verified
 **Version:** 2.1
 **Date:** 2026-07-18 (quick-fix: bridge retired, sizes corrected)

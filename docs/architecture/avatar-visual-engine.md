@@ -1,5 +1,7 @@
 # Avatar Visual Engine v3 — Architecture Document
 
+> **🏭 Эра-пометка (конвой 003, 12.09):** v3-док живой; 1 упоминание V2-эры — родословная.
+
 **Дата:** 2026-06-25  
 **Статус:** ✅ DEPLOYED  
 **Архитектор:** 001 (CEO Co-Architect)  

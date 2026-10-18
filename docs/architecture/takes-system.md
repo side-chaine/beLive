@@ -1,5 +1,7 @@
 # Takes System
 
+> **🏭 Эра-пометка (конвой 003, 12.09):** док живой; 2 исторические ссылки на V2-носителец (AudioEngineV2 era) помечены in-place — читать как родословную.
+
 > **⚠️ This document is a domain-specific reference. For the complete current architecture, see [Architecture Map 2.1](./architecture-map-2.1.md).**
 
 **Status:** Active subsystem architecture / working freeze anchor  

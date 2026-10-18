@@ -81,5 +81,7 @@ src/audio/engine-v3/           # 30 prod .ts/.tsx · 4914 LOC (+10 тест-фа
 | Файл | Статус |
 |------|:------:|
 | `src/audio/engine-v3/*` | ✅ НЕ frozen |
-| `src/audio/core/AudioEngineV2.ts` | ❄️ FROZEN — V2Adapter только читает |
+| `src/audio/core/AudioEngineV2.ts` | 🗑️ снесён 09.09 D-1 (V2Adapter — тоже снесён Волной B; замок FROZEN упразднён 03.09; памятник — git-история) |
+
+> **В1-движок (12.09, конвой 003):** ended-watchdog в V3StatePublisher ( `_tickLoop:156` rAF-цикл с троттлом 50ms; natural-end `:184` — `t ≥ duration−ε`, ε=50ms `:13`, 🔴-тюнинг ORDER-V1; идемпотент-гард `:37`, новый play-сеанс снимает `:111`). Фасадные адаптеры: `isPlaying` (facade:25, потребитель takes.time:36) · `liveStems` (facade:212) · `detachProgramSource` (facade:252) · `loadAdditionalStems` (facade:119 — закрывает конвой-дыру §16 n-stem).
 | `src/audio/compat/patchV1.ts` | 🗑️ удалён 01.09, Волна A (мёртвый экспорт; памятник — git-история (замок упразднён 03.09)) |

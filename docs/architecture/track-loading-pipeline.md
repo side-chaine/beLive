@@ -123,7 +123,7 @@ Async fire-and-forget. Corrects marker timing based on actual vocal audio. L2 (l
 
 ## §4. Phase 4: Audio Engine Loading
 
-**Owner:** `AudioEngineV2.ts` + `patchV1.ts`  
+**Owner (🏭 V2-эра):** `AudioEngineV2.ts` + `patchV1.ts` *(оба снесены D-1/B — живой носитель: `track.loader.ts` W4 + `engine-v3/integration/V3DataInterceptor.ts`)*  
 **Goal:** Load audio, build audio graph, prepare playback
 
 ### Loading Paths

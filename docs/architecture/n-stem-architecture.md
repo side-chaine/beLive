@@ -5,7 +5,7 @@
 **Owner:** beLive Audio Team
 **Related:** `audio-engine.md`, `architecture-map-2.1.md`
 
-> **⚠️ Конвой-2026-09-10 (003, Ш2):** V2-эра завершена (Волны A/B/C/D: patchV1 и src/bridges/ снесены, AudioEngineV2 снесён D-1). Живой носитель N-Stem — **track.loader W4 (loadStemsOnDemand) + HybridPipelineService (V3) + stem-engine-sync**. Разделы 7–8 ниже сохранены как историческая архитектура V2; места, где V2 был носителем, помечены `🏭 [V2-эра]`. 🔴 Открытая дыра: `loadAdditionalStems` отсутствует на фасаде V3 — см. §16.
+> **⚠️ Конвой-2026-09-10 (003, Ш2):** V2-эра завершена (Волны A/B/C/D: patchV1 и src/bridges/ снесены, AudioEngineV2 снесён D-1). Живой носитель N-Stem — **track.loader W4 (loadStemsOnDemand) + HybridPipelineService (V3) + stem-engine-sync**. Разделы 7–8 ниже сохранены как историческая архитектура V2; места, где V2 был носителем, помечены `🏭 [V2-эра]`. ✅ Дыра §16 (loadAdditionalStems) ЗАКРЫТА В1 12.09 — фасад-метод жив.
 
 ---
 
@@ -727,14 +727,12 @@ Current implementation includes verbose console logs (`[Orchestrator] W5:`, `[Up
 
 ---
 
-## 16. 🔴 OPEN CONVOY GAP: `loadAdditionalStems` отсутствует на фасаде V3 (source:fact, 003 · 10.09)
+## 16. ✅ ЗАКРЫТО В1 (12.09, коммиты `ed14896..251f757`, CEO_1-задание): `loadAdditionalStems` теперь на фасаде V3
 
 **Класс:** docs==code-разрыв, пойман конвоем Ш2 при верификации формул §C (STEM-TAKES-DOGON 003_2).
 
-**Факт (rg, живое дерево):**
-- `loadStemsOnDemand` (src/services/track.loader.ts:491) — единственный on-demand загрузчик стемов; вызывается QuickActions.tsx:214 и MixerPanel.tsx:179.
-- Гард: `if (!tc?.tracks || !ae?.loadAdditionalStems) return;` (:494) — **метода `loadAdditionalStems` нет ни в `js/audio-facade-v3.js`, ни в engine-v3/pipeline** (rg по src+js: только track.loader сам).
-- Следствие: on-demand загрузка стемов **молча no-op** — тумблер stemsMode не грузит стемы за слушателем.
+**Факт (rg, живое дерево, верифицировано 003 12.09):**
+- ~~Гард всегда false~~ → **ЗАКРЫТО В1:** фасад `js/audio-facade-v3.js:119` экспортирует `loadAdditionalStems` (дедуп-протекция `:118` push-not-replace; сопутствующие адаптеры: `isPlaying:25` ← transport.state, `liveStems:212` ← chainA.stems минус dead, `detachProgramSource:252`). Гард `track.loader:494` теперь живой — on-demand стемы снова работают.ended-watchdog см. transport-v3 (V3StatePublisher `_tickLoop:156`, natural-end `:184`, ε=50ms `:13`).
 
 **Маршрут (не док-решение):** код-фикс через цепь (Оператор) — выставить `loadAdditionalStems(StemLoadMap)` на фасад V3, проксировав в HybridPipelineService (или заменить гард на живой API). До фикса §7 честно помечает дыру.
 
