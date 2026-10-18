@@ -1,0 +1,17 @@
+{
+  "v": 2,
+  "taskId": "AGT-19",
+  "runId": "2026-10-18-003",
+  "agent": "001",
+  "sid": "docs-pack",
+  "token": "b7062f4f-dbe2-4307-a49b-673d72d3976c",
+  "leaseMin": 30,
+  "claimedAt": "2026-10-18T20:09:34.601Z",
+  "heartbeat": "2026-10-18T20:09:34.601Z",
+  "leaseUntil": "2026-10-18T20:39:34.601Z",
+  "paths": [
+    "team-m/M1-P2-ACCEPTANCE.md"
+  ],
+  "baseCommit": null,
+  "zone": "team-m/zones/001"
+}
