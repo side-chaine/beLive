@@ -1,0 +1,15 @@
+{
+  "v": 2,
+  "runId": "2026-10-18-003",
+  "taskId": "AGT-19",
+  "agent": "001",
+  "zone": "001",
+  "sid": "docs-pack",
+  "baseCommit": "HEAD",
+  "planRev": 1,
+  "startedAt": "2026-10-18T20:09:34+03:00",
+  "chain": [
+    "001",
+    "operator"
+  ]
+}

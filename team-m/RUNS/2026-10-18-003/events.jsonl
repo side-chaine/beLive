@@ -1,0 +1,4 @@
+{"v": 2, "seq": 1, "ts": "2026-10-18T20:10:00+03:00", "type": "run.started", "runId": "2026-10-18-003", "taskId": "AGT-19", "planRev": 1, "agent": "001"}
+{"v": 2, "seq": 2, "ts": "2026-10-18T20:11:00+03:00", "type": "claim.taken", "runId": "2026-10-18-003", "taskId": "AGT-19", "planRev": 1, "agent": "001", "evidence": "token=b7062f4f…"}
+{"v": 2, "seq": 3, "ts": "2026-10-18T20:12:00+03:00", "type": "step.started", "runId": "2026-10-18-003", "taskId": "AGT-19", "planRev": 1, "agent": "001", "stepId": "docs"}
+{"v": 2, "seq": 4, "ts": "2026-10-18T20:13:00+03:00", "type": "operator.requested", "runId": "2026-10-18-003", "taskId": "AGT-19", "planRev": 1, "agent": "001", "stepId": "docs", "evidence": "idem=f7a4b0b7…"}
