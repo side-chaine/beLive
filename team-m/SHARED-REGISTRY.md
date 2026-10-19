@@ -1,3 +1,111 @@
+## LOG 2026-10-19 17:0x · CEO_1 — [beLive] 🧪 ТЕСТ ХАРНЕССА ПРОЙДЕН (3/3 агента) + найдена мёртвая модель скаутов + КАРТА 19.10 (месяц работы только на диске)
+
+**Atria-Dawn-Preview · Linux · 19.10 17:0x.** Тестовая реализация по слову Никиты: три агента на исследование, посмотреть как работает в Харнессе, собрать дорожную карту.
+
+**1. ТЕСТ ХАРНЕССА — 2 фазы:**
+- **Фаза 1 (скауты): 🔴 ПРОВАЛ, и это ценный результат.** `arch-scout`/`sync-scout`/`gateway-scout` не запустились: `Model space-bunny-free has been deprecated. Use minimax-m3.1-flash-free instead.` Дверь/диспетчер задачу приняли — упал **модель-роутинг**, не транспорт.
+- **Фаза 2 (после фикса, `general`): ✅ 3/3 отчёта** — полные, с собственными замерами.
+- **ФИКС:** `opencode.json` — 4 агента (`arch-scout`/`sync-scout`/`gateway-scout`/`explore`) + глобальный `small_model`/`explore` переведены на `opencode/minimax-m3.1-flash-free`; JSON валиден, deprecated-строк 0. ⚠️ Конфиг не hot-reload → **скауты оживут после рестарта opencode**.
+
+**2. 🔴 ГЛАВНЫЙ ФАКТ: МЕСЯЦ РАБОТЫ ЛЕЖИТ ТОЛЬКО НА ДИСКЕ.** 165 грязных файлов (`40 M + 14 D + 111 ??`), из них код — 15. Последний кодовый коммит — `67e5e92` (05.10); после — только docs/audit. Вся волна B08 (D1–D4 + P0 + A+B) существует **лишь в рабочем дереве**. Риск №1 проекта — не код, а его незафиксированность (один `clean` = потеря месяца).
+
+**3. КОНВЕЙЕР МО НЕ СТАРТОВАЛ:** 0/6 фронтов исполнено · 0/8 🔴 снято · веток `mo/*` нет ни локально, ни в remote · `WORKTABLE-MO.md` и `ROADMAP-FRONTS-2026-09-18.md` не менялись с 18.09. Месяц ушёл в B08/ROADMAP-003/PULSE — план вытеснен. 5 живых МО стоят **39 дней** (с 10.09), не 8.
+
+**4. CF-JUNCTION ЗАМОРОЖЕН 6 НЕДЕЛЬ:** `violations=3 · warns=2 · unverified=1` — exact-set идентичен 06.09 (`6d13020`). Ноль коммитов в `gateway/`, `.env.example`, `belive-api/`, `belive-feed-bot/` за месяц. **BOT_TOKEN утёкшего значения всё ещё в истории git** (purge `7d165d1` вычистил дерево, историю не переписал); ротация 06.09 не подтверждается. `scripts/check-secrets.mjs` существует, но **не подключён** ни в `verify:ci`, ни в workflow — гейт-призрак.
+
+**5. ЖИВОЙ БАГ НЕ СДВИНУЛСЯ ЗА МЕСЯЦ:** `upload.service.ts:1161` пишет `{stemId, label}` · `stemTypes.ts:258-259` требует `position` · `stem.store.ts:317` читает `o.position` ⇒ `orderMap.get()` = `undefined` для всех ⇒ порядок стемов мёртв.
+
+**6. СВЯЗНОСТЬ B08 (для коммита):** P0-маркеры (2 файла) · D3-clean (2) · D4-хук (1) — отделимы; **бандл 10 файлов** (A+B+D1+D2+D3+D4-close) пофайлово НЕ делится (`blockEditor.service.ts` = A+B+D2, `paragraph-blocks.ts` = D2+D3, `UploadPanel.tsx` = D1+D3+D4, `upload.service.ts` = A+B+D3+D4). 🔴 **Дыра гейта: у D4 нет ни одного теста, счётчик идентичен D3 (886/74)** — зелёный доказывает отсутствие регрессий, не новое поведение.
+
+**7. КАНОН (мой замер, независимо двумя агентами): `tsc=181` · `vitest=886/74 PASS`** — совпал с заявленным.
+
+**8. КАРТА 19.10:** `beLive-bridge/ROADMAP-2026-10-19.md`. Порядок: **Ф0 фиксация месяца** (4 шага) → **Ф0.5 тест D4** → Ф1 CF-батч (ротация BOT_TOKEN) → Ф2 пилот track-loader (после Ф0 — B08 правит `track.actions.ts`, иначе пилот на устаревшей базе) → Ф3 upload×stem → Ф4 гигиена реестра.
+
+**9. ЛОВУШКА ЗАМЕРА (для всех):** `git log --since=2026-09-18` молча теряет 6 коммитов 18.09 (git берёт текущее время суток; 8 коммитов вместо 14). Всегда `--since='2026-09-18 00:00'`.
+
+⚪ **НЕ ПРОВЕРЕНО:** живой смоук B08 (нет браузера) · CF-дашборд (нет wrangler/ключей) · 700 грязных файлов вложенного `beLive-bridge` · прод-деплой · полный скан истории на секреты.
+
+---
+
+## LOG 2026-10-18 · agent-sync [B08] — ✅ ДЕЛЬТА D4 ПРИМЕНЕНА: Sync открывается поверх трека (каталог закрывается) + волна ждёт V3-URL (ретрай 6с) · гейты 181 / 886-74
+
+**Симптом (live, после Apply Genius):** D3 отработала (`D3 auto-blocks from paragraphs: 8`, `hasBlocks:true`, 58 строк, wait 5с), Sync открылся — но (а) каталог остался открыт поверх (виден CATALOG, а не трек), (б) в центре «No audio URLs available».
+**Корни:** (а) flow открывал Sync, не закрывая каталог (закрытие = событие `catalog-close`, `CatalogLayout.tsx:88`); (б) `useWaveformData.ts` читал `ae.hybridEngine.instrumentalUrl/vocalsUrl` ОДИН раз на mount — V3 публикует `window.__belive.trackUrls` через ~2с (`js/audio-facade-v3.js:42-48`) ⇒ гонка → ошибка без ретрая.
+**Правка (3 файла):** `useWaveformData.ts` — poll 200мс до 6000мс, пока URL не появятся (`loading:true`, ошибки нет), затем fetch/decode; cleanup таймера; timeout → прежняя ошибка · `upload.service.ts` + `UploadPanel.tsx` — в `openSync` dep перед `openSync()` → `document.dispatchEvent(new CustomEvent('catalog-close'))`.
+**Гейты (мой прогон):** `tsc`=**181** (0 NEW) · **полный 886/886, 74 файла** · scope: 3 файла (все уже в незакоммиченных дельтах; D4 добавила по 1 строке + hook-ретрай).
+**Ожидание live:** Apply Genius → каталог закрывается, открывается трек с Sync; волна появляется через ~1-2с (вместо красной ошибки); блоки уже авто (8, куплет/припев); маркеры 1/2; ZIP→TG.
+**Uncommitted:** P0-маркеры, A+B, D1, D2, D3, D4 — ждут слова Босса.
+
+— agent-sync [B08] · 18.10 · D4 в дереве, 886/886 · жду смоук/коммит 🧱✅
+
+## LOG 2026-10-18 · agent-sync [B08] — ✅ ДЕЛЬТА D3 ПРИМЕНЕНА: после Genius блоки АВТО (абзацы → куплет/припев), блок-редактор НЕ открывается, только Sync · гейты 181 / 886-74
+
+**Требование Босса:** Genius — источник блоков; после Genius блок-редактор не открывать, открывать только Sync (маркеры 1/2), затем ZIP→TG. Если lrclib пусто, а Genius есть — Sync. Блоки разных типов — разными цветами.
+**Правка (4 src + 2 теста):** `paragraph-blocks.ts` +`buildParagraphBlocks(sourceText, lineSpace)` — абзацы, маппинг lineSpace, **fingerprint первых 2 строк → повтор ≥2 = `chorus`** (иначе `verse`), имена Куплет/Припев · `UploadPanel.tsx` paste-save: нет LRC-матча и нет тегов → авто-блоки (≥2) в `idbFields.blocksData`; `waitForCache 17000→5000` · `auto-lyrics.service.ts` `extractCleanLyrics`: bracket-only строки (`[Testo di …]`) отброшены (TC-002 закрыт) · `upload.service.ts` ZIP-ветка: не-LRC + пустые blocksData + ≥2 абзаца → авто-блоки. Flow НЕ менялся: `blocks+no markers → open-sync`.
+**Гейты (мой прогон):** `tsc`=**181** (0 NEW) · targeted **12/12** · **полный 886/886, 74 файла** · scope: 4 M + 2 new tests.
+**Ожидание live:** повторный upload+Genius-текст → **открывается Sync** (не Block Editor), блоки уже в БД (8: v,v,c,c,v,v,c,c — зелёные/красные), заголовок `[Testo di…]` срезан, лирика не слипается; маркеры 1/2; ZIP→TG. Ручной Blocks остаётся кнопкой.
+**Uncommitted:** P0-маркеры, A+B, D1, D2, D3 — ждут слова Босса.
+
+— agent-sync [B08] · 18.10 · D3 в дереве, 886/886 · жду смоук/коммит 🧱✅
+
+## LOG 2026-10-18 · agent-sync [B08] — ✅ ДЕЛЬТА D2 ПРИМЕНЕНА: Block Editor снова строится из Genius-абзацев (не 2-строчные чанки) · гейты 181 / 879-73 · `[Testo di …]` срезается
+
+**Симптом (live-тест Босса):** редактор блоков резал Genius-текст на куски по ~2 строки («КУПЛЕТ» ×N), хотя исходник разделён абзацами (7–8 блоков). Босс напомнил: Genius — ответственный за блоки, механизм должен идти по его тексту.
+**Корень (регрессия A+B):** `blockEditor.service.ts:125-129` при no-seed кормил парсер `twoLineChunks(lines)`, а `lines` уже без пустых строк ⇒ структура абзацев терялась. До A+B при `\n\n` брался `lyricsOriginalContent` — абзацы сохранялись.
+**Правка (5 кейсов):** NEW pure `src/blocks/parser/paragraph-blocks.ts` (`buildParagraphEditorText`: CRLF, LRC-guard, split по пустым строкам, срез ведущих `[…]`, <2 абзацев → null) · `blockEditor.service.ts` no-seed: tags → `original` (store раздаёт блоки+типы), иначе абзацы Genius (original → track.lyrics → один блок); `twoLineChunks` удалён · NEW `paragraph-blocks.test.ts` (5).
+**Гейты (мой прогон):** `tsc`=**181** (0 NEW) · targeted **5/5** · **полный 879/879, 73 файла** · scope: `blockEditor.service.ts` M + 2 new (`paragraph-blocks.*`).
+**Замечание:** line-space пересобирается из source (правильные строки Genius) ⇒ существующие маркеры могут сместиться — порядок «блоки → маркеры», после Save проверить/переставить. B09 (intelligent-split, 17с wait) — отдельно.
+**Uncommitted:** P0-маркеры, A+B, D1, D2 — ждут слова Босса на коммит.
+
+— agent-sync [B08] · 18.10 · D2 в дереве, 879/879 · жду смоук/коммит 🧱✅
+
+## LOG 2026-10-18 · agent-sync [B08] — ✅ ДЕЛЬТА D1 ПРИМЕНЕНА: paste-путь UploadPanel зашит на `openPostUploadFlow` (Block Editor → Sync) · гейты 181 / 874-72 · живой смоук за Боссом
+
+**Симптом (live-тест Босса):** повторная загрузка с вставкой лирики — Block Editor не открылся; лог `[AutoLyrics] auto-sync not applied, opening Sync Editor` (старый мёртвый путь). **DB ни при чём** — блоков там не было (`hasBlocks:false`).
+**Причина:** финальный пакет A+B правил только `upload.service` (ZIP-ветку); call-site paste-потока в `UploadPanel.tsx:711-728` остался старым, flow не вызывался.
+**Правка (1 файл):** `UploadPanel.tsx` **+33/−18** — старый блок заменён на динамический вызов `openPostUploadFlow` (input из `idbFields`/`matchResult`, UI-флаги как в upload.service, deps: loadTrack/openBlockEditor/openSync); 300мс setTimeout убран. **Вынужденное отклонение:** удалён мёртвый флаг `autoSyncApplied` (2 строки — единственный читатель был в удалённом блоке), иначе `noUnusedLocals` давал tsc 182.
+**Гейты (мой независимый прогон):** `tsc`=**181** (0 NEW) · **полный 874/874, 72 файла** · `git status` = UploadPanel M (ровно 1 файл сверх A+B/P0-пакетов).
+**HEAD:** `8fec57a` (007: реестр-отметка + docs `301a541`); наши 3 пакета (P0-маркеры, A+B, D1) остаются **незакоммичены** — ждут слова Босса.
+**Смоук:** повторный upload + pasted lyrics → после сохранения должен открыться **Block Editor** (чистый текст) → Save → **Sync Editor**. Текущий уже сохранённый трек — вручную Sync → Blocks (flow срабатывает при загрузке/вставке).
+**В B09 (не блокер):** 17с `waitForCache` в paste-пути; `[TC-002]` — `[Testo di …]` не срезается из лирики.
+
+— agent-sync [B08] · 18.10 · D1 в дереве, 874/874, жду смоук/коммит 🧱✅
+
+## LOG 2026-10-18 · agent-sync [B08] — ✅ ПАКЕТ A+B «БЛОКИ → МАРКЕРЫ» ПРИМЕНЁН ЛОКАЛЬНО И ВЕРИФИЦИРОВАН: фикс индексов блоков + оркестрация «блоки первыми» · гейты 874/72 · коммит — по слову Босса
+
+**Цепь (001→002→001→009→Оператор):** 001 (A: filter пустых; B: чистая `resolvePostUploadFlow` + оркестратор) → 002 (15 ударов, 8 P0: id блоков/M2, line-space/tags, low-confidence, пустая лирика, save success/cross-track, обе ветки upload, load outcome, UI-контекст) → 001 (финал: 5 src + 2 теста, 32 кейса) → 009 (РЕШЕНО С УСЛОВИЯМИ: 8 условий) → Оператор применил.
+**Применено:** `blockEditor.store.ts` (фильтр пустых, seed с сохранением id/типов, tag-overlay опционален, cancel try/finally, Save guard, `false`=ошибка) · `track.actions.ts` (`loadTrack→Promise`, `saveLyricsBlocks→Promise<boolean>`, idMap M2, cross-track, пустой lyrics не пишется) · `blockEditor.service.ts` (`openBlockEditor(opts): boolean`, line-space=`ld.lyrics`, seed=`blocksData`, await persist, runtime apply только для текущего трека) · `postUploadFlow.ts` (NEW: чистый resolver + тонкий оркестратор, `confidence ?? 0`, busy/in-flight, id-сверка после await, `openSync` dep; без импорта sync.store) · `upload.service.ts` (flow в ОБЕИХ ветках до return, origin=`session.jsonMarkers`, waitForCache удалён, UI-флаги). Тесты: `blockEditor.store.test.ts` 11 + `postUploadFlow.test.ts` 22.
+**Гейты (мой прогон 18.10):** `tsc`=**181** (Δ0) · targeted **33/33** · **полный 874/874, 72 файла** (было 841/70) · B08-файлы (`markers-events*`) не тронуты · UploadPanel не тронут (UI-флаги через upload.service).
+**Отклонения (приняты):** R12 внутри R8 (33 кейса как заявлено); tag-overlay только по явному `opts.tagText` (удар 009); `updateBlockText` DEV-warn не добавлялся (вне extents — в C).
+**НЕ СДЕЛАНО:** коммит (по слову Босса) · пуш сайта (отдельно) · живой смоук (нужен dev/preview: новый upload без lrclib → Block Editor → Save → Sync; Celentano: Sync→Blocks (индексы теперь безопасны) → Save → маркеры перекрасятся).
+
+— agent-sync [B08] · 18.10 · A+B в дереве, 874/874 · жду «коммит»/смоук 🧱✅
+
+## LOG 2026-10-18 · agent-sync [B08] — 🧱 РАЗБОР «БЛОКИ → МАРКЕРЫ»: порядок Босса подтверждён кодом; найдены 3 разрыва (нет ветки «блоки первыми», мёртвый `openSyncEditor` с WAVE6, untagged-сдвиг lineIndices) · спека готова
+
+**Контракт:** маркер наследует тип/цвет от блока (`main.tsx:394-403` `_getBlockTypeForLine`); нет блока → `unknown` → color undefined → канвас рисует **зелёным fallback** (`draw-markers.ts:11`). Сохранение блоков перекрашивает маркеры (`blockEditor.service.ts:109-111` → `updateMarkerColors`). Поэтому порядок «блоки → маркеры» — обязателен (как и сказал Босс).
+
+**lrclib заменяет блок-редактор** только при тегированном тексте: `parseLrcVersion` → `blockFirstLineSync` (маркеры+блоки); без geniusText → `blocks: []`; `hasStructure` = только при `[Verse]/[Chorus]` (`tagged-lyrics.parser.ts:323`). Auto-sync → `shouldSkipEditorsForTrack`.
+
+**Разрывы:** (1) после upload ветки «нет lrclib → Block Editor первым» НЕТ (`upload.service.ts:660-675` ведёт в Sync); блок-редактор после загрузки не открывается нигде. (2) `openSyncEditor` — мёртвый флаг: WAVE6 `8f0b3ad` объявил auto-open dead, `LoadTrackOptions` оставлен 6 callers, чтения нет → после загрузки не открывается ничего. (3) **БАГ untagged:** `parseText` (`blockEditor.store.ts:34-59`) считает lineIndices по массиву С пустыми строками, а `loadImportedBlocks`/`_processLyrics` их фильтруют → блоки после 1-го абзаца сдвигаются (репликация: `[[0,1],[3,4]]` вместо `[[0,1],[2,3]]`); tagged-ветка чистая.
+
+**Артефакт:** `team-m/BLOCKS-MARKERS-FLOW-2026-10-18.md` (контракт, 3 разрыва, практика, фикс-пакет A/B/C). Практика сейчас: Sync → Blocks → типы → Save (маркеры перекрасятся), но до фикса A — проверять сдвиг блоков; безопасно — сначала фикс.
+**Зона:** `src/blocks/**` не закреплён в PULSE-ZONES (предложить B01-screen/отдельный); upload-оркестрация — B09.
+
+— agent-sync [B08] · 18.10 · связка вскрыта, жду решения по пакету 🧱
+
+## LOG 2026-10-18 · agent-sync [B08] — ✅ P0-ФИКС МАРКЕРОВ ПРИМЕНЁН ЛОКАЛЬНО И ВЕРИФИЦИРОВАН: клавиши 1/2 снова рисуют (real-time мост восстановлен) · гейты зелёные · коммит/пуш — по слову Босса
+
+**Применено (Оператор по MICRO-PACK, GO Босса):** `src/foundation/event-bus/wrappers/markers-events.ts` **+36/−1** (MM_EVENTS + I1 `mmUnsubs/retryTimer/retryDeadline/bound` + I2 `stopRetry/bindRealtime` + I3 старт retry + M1 teardown; У-1 order соблюдён, У-3 = 1 call-site :59) · новый `__tests__/markers-events.realtime.test.ts` (10 кейсов, fake-mm по контракту). Δ0 прочих; `main.tsx`/`markers.store.ts`/`js/marker-manager.js`/`SyncEditorPanel`/`WaveformCanvas` не тронуты.
+
+**Верификация (мой независимый прогон 18.10):** `npm run typecheck` = **181** (≤181, Δ0) · `npx vitest run src/foundation/event-bus/__tests__/` = **21/21** (11 старых + 10 новых) · **полный `npx vitest run` = 841/841, 70 файлов** (было 831; +10) · `rg "mm\.subscribe\(" src` = **1** (:59) · B08-скоуп = ровно 2 файла (`M` wrapper + `??` тест; дерево грязное pre-existing — сторонние изменения не мои).
+
+**Отклонение (принято):** в тест-harness добавлен `lyricsReady: true` — FOUC-gate `lyrics.store` при false стирает `lines` и арм-ит watchdog, иначе кейсы недостижимы. Продуктовый код не менялся; задокументировано в тесте.
+
+**НЕ СДЕЛАНО:** коммит (по инструкции — только по явному слову Босса) · пуш сайта (отдельное решение; прод пока на старом бандле main-K_cLBshf.js) · ручной смоук (нужен dev/preview: «1»×разные строки, «2», Del, drag, reload без дублей).
+
+— agent-sync [B08] · 18.10 · фикс в дереве, гейты 841/841 · жду «коммит»/смоук 🛡
+
 ## LOG 2026-10-18 18:2x · 007-main — ✅ W0-COMMIT: снимок 003 закоммичен `301a541` [[beLive]]
 
 **Модель: 007-main = deepseek-flash · PК/WSL · гейты прогнаны лично (не по докладу).**
@@ -1859,6 +1967,98 @@ b-ai/qwen3.8-flash · WSL · старт-протокол пройден: HANDOFF
 ---
 
 ## LOG 2026-09-12 12:5x · 003 — ✅ ЭРА-КОНВОЙ ЗАКРЫТ (продолжение 12:3x): точечные баннеры ×8 (dock-standard W-эра · takes/character/init/avatar ×1-2 пометки · central-bridge :33/:56→wrapper-слой · monitor-mix:206+отсылка W-2 V3-WIRES · README-индекс→каркас-классы). Итог долга: 10 помечено конвоем + 2 оказались тамбстоунами (эрратум) + 2 закрыты ранее (n-stem Ш2/slot-v2.2) = ЧИСТЫЙ ДОЛГ НОЛЬ. Каркас ERA → статус «исполнен». Жду: вердикт 003_2 (22 LOC+vitest 71/71) → полный штамп волны · аудит фасада MO-engine-v3 → W-4+ · 007: коммит-снимок пары + диспатч V3-WIRES в цепь
+
+---
+
+## LOG 2026-10-19 · 003 — [[PULSE]] 🛡 PREP-3 СДАН: **frozen** в `team.mjs` claim+verify (AudioEngineV2/patchV1/bridges/track.orchestrator; claim exit 1 frozen-path, verify reject) · **WIP=1** (вторая задача того же агента → exit 3 wip-active, owner в ответе) · **approval**: `pulse-door approve --idem ID --by BRO` пишет `PULSE/APPROVALS/<idem>.json` (0600), реальный `apply` требует файл (не только --confirm) · **door token**: опциональный `PULSE_DOOR_TOKEN` → POST без Bearer = 401 (локально по умолчанию выкл) · **operator** edit deny (продукт только через team/apply), bash/team allow · тесты: team **20/20**, door **25/25**; ручные: frozen exit 1, WIP exit 3, approve 0600. Осталось операционное: рестарт OpenCode → новые сессии `CEO` (agent CEO) и `MO-*` (agent MO); текущие 003_Dock/Sync/CEO — 007. После рестарта можно боевую.
+
+---
+
+## LOG 2026-10-19 · 003 — [[PULSE]] 🎭 PREP-2 СДАН (идентичности): `CEO.md` (primary, deepseek, read allow / edit+bash+task deny / pulse allow) · `MO.md` (primary, deepseek, read allow / edit+bash+task deny / team allow) · `.opencode/tools/pulse.ts` (assign/activate/status через pulse-door, execFile без shell) · `CEO_1` удалён из ШТАБА (дубль), осталось 3: 003_Dock, Sync, CEO · manifest PASS **8/8** (001/002/005/006/008/009/CEO/MO), 5 исключений; ROADMAP-CEO placeholder «ОЖИДАНИЕ CEO»; скрин `team-m/design/PULSE2-PREP2.png` (+ мост). ⚠️ Новые agent-конфиги и `pulse` tool подхватятся после рестарта OpenCode; текущие CEO/Sync/003_Dock сессии пока на 007. После рестарта: открыть новые сессии `CEO` (agent CEO) и `MO-*` (agent MO), затем CEO сможет assign/activate. Остаётся Prep-3: approve/токен двери + frozen/WIP в team.mjs.
+
+---
+
+## LOG 2026-10-19 · 003 — [[PULSE]] 🔐 PREP-1 СДАН (permission-manifest): `team-m/AGENT-PERMISSIONS.json` + `team-m/tools/verify-permissions.mjs` + `npm run verify:permissions` (в `verify:ci`); сверка `.opencode/agent/*.md` → **PASS 6/6**, 5 исключений (007 coordinator/identity — Prep-2; operator single-writer — Prep-3; 003/004/scouts). Закрыты дыры: **006** edit/bash/task deny; **008** edit deny (был весь репо); **009** team deny (read-only). 001/002/005 уже соответствовали. Остаются P0: 007/operator (identity/lane), door approve, frozen/WIP — Prep-2/3. Боевую не начинаем до них.
+
+---
+
+## LOG 2026-10-19 · 003 — [[PULSE]] 🧹 ПОДГОТОВКА К БОЕВОЙ ЗАДАЧЕ: A-1 снят (`status:done`), ACTIVE-блок убран; ROADMAP-CEO ушёл в архив `ROADMAP-CEO.draft-2026-10-19.json`, сверху placeholder «ОЖИДАНИЕ CEO»; аудит правил 009: **ОТЛОЖЕНО** — 10 P0 (007/CEO без permission-блока, 008 edit:allow весь репо, operator пишет без лейна, 006 без ограничений, 003 пишет ASSIGNMENTS, 009 team:allow, task:deny у 001/002/005/009, дверь без approve, --confirm самоподтверждение, frozen только в тексте) + MO=007 без своих prompt/ролей, CEO без assign tool, PULSE без активного prompt. Матрица: `zones/009/drafts/AGENT-RULES-MATRIX-2026-10-19.md`. 5 фиксов до боя: permission-manifest+тест; frozen/scope в team.mjs; дверь с approve/токеном; WIP=1+один писатель; идентичность CEO/MO. Боевую не начинаем до фиксов.
+
+---
+
+## LOG 2026-10-19 · 003 — [[PULSE]] 🔗 SYNC + CEO ПОДКЛЮЧЕНЫ: **Sync** `ses_f8a0629d8ffe…` (007/deepseek) — маркер 2, staff yellow; **CEO** `ses_f4c9be6a0ffe…` после рестарта — agent 007, model **deepseek-flash**, маркер 1, health ok; **CEO_1** старая сессия всё ещё space-bunny-free → red «модель недоступна» (не путать с новым CEO); MO-dock/MO-loop привязаны явно (сессии «ДОК»/«MO-loop…»), больше не «нет сессии»; PULSE ШТАБ 4, CEO/Sync показывают «сессия»; скрин `team-m/design/PULSE2-STAFF-5.png` (+ мост). CEO задал BRO два вопроса: (1) перемерить канон 10–15 мин? (2) B08 D1–D4 — коммит или сначала смоук? Рекомендация 003: контекст-рефреш + смоук, потом коммит; решение за BRO.
+
+---
+
+## LOG 2026-10-19 · 003 — [[PULSE]] 🪞 ЧАТ-ЗЕРКАЛО В ОБЕ СТОРОНЫ: ШТАБ поднят наверх (ШТАБ→АКТИВНЫЕ→MO), легенда «нет сессии/коннект/в задаче/потерян» удалена (лампы остались с title), default = **003_Dock** (живая сессия), шапка центра `003_Dock · live` вместо «68 мыслей», polling `/message` 2с + SSE, композер через дверь. ФАКТ: PULSE→OpenCode `[test-mirror-1]` → idem f1b79646…, `PULSE_DISPATCH` найден в `ses_fad20d…`; OpenCode→PULSE `[test-opencode-1]` появился за ~2.5с (54→55 пузырей) без refresh. probe:pulse2 **33/33**, typecheck 0, build success, pageerror 0; скрин `team-m/design/PULSE2-MIRROR.png` (+ мост); beLive delta 0. Дальше: CEO assign tool, заведение 9 MO, Telegram после стабилизации.
+
+---
+
+## LOG 2026-10-19 · 003 — [[PULSE]] 🚦 M2.5 СВЕТОФОР + НАЗНАЧЕНИЯ: лампы ⚪ нет сессии · 🟡 коннект OpenCode↔PULSE · 🟢 активное назначение+сессия · 🔴 потерян; секция **АКТИВНЫЕ · PULSE 2.0 · M2.5 светофор** (MO-dock+MO-loop, stage БРИФИНГ); **A-1** через дверь: briefings sent, **маркеры найдены** в `ses_f77…` («ДОК», 23) и `ses_f76…` («MO-loop…», 37); MO-dock running, MO-loop done; 25/25 тестов, probe:pulse2 31/31, typecheck 0, build success, pageerror 0; скрин `team-m/design/PULSE2-M2.5.png` (+ мост). 🔴 Поймана и исправлена реальная дыра: дверь слала `prompt_async` с `agent:"MO-dock"` (не существует), 204 без сообщения; теперь agent берётся из `/session/:id` (`007`), заголовок dispatch остаётся MO-id; добавлен `redispatch --nonce` (superseded + новый idem). Сейчас 2 зелёных, 6 жёлтых, 9 серых; 9 MO ждут сессий в OpenCode. Дальше: CEO-assign tool/UI, заведение 9 MO, Telegram после того как агенты заработают.
+
+---
+
+## LOG 2026-10-19 · 003 — [[PULSE]] 🚪 M2 ДВЕРЬ СДАНА: `team-m/tools/pulse-door.mjs` (enqueue/dispatch/reconcile/serve/list/gc) — content-idem, `PULSE/inbox/<idem>.json` O_EXCL до lookup, journal.lock+seq, marker `PULSE_DISPATCH`, 204=sent, reconcile delivered/running/done, no blind retry; serve `:4098` `/health` `/status` `/chat` `/dispatch`, CORS 5173; UI `CenterStage` шлёт **только** через дверь (sendChat выпилен), бейдж `door · M2`, door-down = честная ошибка; `pulse-serve`/`bl_h` поднимает дверь; тесты **16/16**, probe:pulse2 **25/25**, typecheck 0, build success, pageerror 0; скрин `team-m/design/PULSE2-M2.png` (+ мост); beLive delta 0 · door health 200, queue 0. Дальше H3 Telegram: long-polling Bot API через ту же дверь (/status,/approve,/deny, «нужен ты»), токен в env, без вебхука/порта.
+
+---
+
+## LOG 2026-10-19 · 003 — [[PULSE]] 🎖 ШТАБ ЗАКРЕПЛЁН: CEO + 003_Dock: в `BUNDLES/INDEX.json` добавлен `staff` (вне 17 MO): CEO_1 (role CEO, session `ses_f5aa06…`, match CEO_1/CEO) и 003_Dock (coordinator, exact title `003_Dock`, known session `ses_fad20d3…`); в LEFT секция «ШТАБ» первой строкой; центр 003_Dock = живая сессия, композер enabled «Написать 003_Dock…», бейдж direct; CEO — своя сессия; MO без live-агента — disabled «нет live-агента — M2/брифинг», с сессией без active — «сессия не активна — ответ может не прийти». Резолвер строгий: exact title/contacts, без fuzzy. probe:pulse2 **20/20**, typecheck 0, build success, pageerror 0; скрин `team-m/design/PULSE2-M1.png` (+ мост); beLive delta 0. Факт: MO-молчание = нет live-сессии/агента; 12/17 MO не заведены в opencode. Дальше M2 + CEO-брифинг: создать сессии/агентов MO.
+
+---
+
+## LOG 2026-10-19 · 003 — [[PULSE]] 💬 ЧАТ ВКЛЮЧЁН (M1.5 direct): композер enabled, если у контакта есть сессия (8/17 MO: dock/loop/mode-switch/stem/engine-v3/lyrics/session-SP/usage/track-loader/v3-interceptor — по факту сессий); placeholder «Написать MO-dock…», Enter/кнопка → sendChat в выбранную сессию, очистка+оптимистичная реплика; без сессии — disabled «нет сессии — сначала создайте/выберите MO-practice»; бейдж `direct · M2 заменит на PULSE`; probe:pulse2 **19/19**; typecheck 0, build success, pageerror 0; скрин `team-m/design/PULSE2-M1.png` (+ мост); beLive delta 0. M1.5 — временно, без journal/idem; M2 закроет через PULSE kind:chat.
+
+---
+
+## LOG 2026-10-19 · 003 — [[PULSE]] 👥 КОНТАКТЫ = 17 MO (субагенты убраны): левая колонка «КОНТАКТЫ 17», 3 группы — **MO · live (5)**: dock/loop/mode-switch/stem/practice · **MO · formed (11)**: engine-v3/upload/transport/sync-word/lyrics/welcome/user-room/session-SP/usage/track-loader/v3-interceptor · **MO · new (1)**: catalog; строки MO-id + family + status + task + сессии; 001/002/003/005/007/009 и UNASSIGNED **не показываются**; CEO + roadmap сверху; центр — чат выбранного MO (MO-dock), справа — family/status/handoff + «задача не назначена»; composer disabled «M2: через PULSE»; триггеры: **16/16** MO скопированы с моста (catalog без триггера); probe:pulse2 **17/17**, typecheck 0, build success, pageerror 0; скрин `team-m/design/PULSE2-M1.png` (+ мост); beLive delta 0. Факт: у 12 из 17 MO нет живой сессии — это состояние реестра, не дефект панели. Дальше: M2 (дверь) → CEO-брифинг MO, чтобы оживить контакты.
+
+---
+
+## LOG 2026-10-19 · 003 — [[PULSE]] 🛰 PULSE 2.0 · M1 СДАН (зеркало): три панели — LEFT группы bundle (core 7: 001/002/003/005/007/009/CEO_1 + 8 MO + UNASSIGNED свёрнут «17 ▸»), CENTER чат-зеркало opencode (composer disabled «M2: через PULSE»), RIGHT StepsPanel (001 AGT-19: 5/5, claim/pack/dryrun/apply/verify + evidence token/idem/commit/audit), TOP CEO + ROADMAP-CEO 5 фаз, **33%**; удалены Mission Control/Визуал/чипы/дубли/стена UNASSIGNED; `BUNDLES/INDEX.json` (16 MO/14 контактов, 9 bundle) + `ROADMAP-CEO.json` + `PULSE/CONTRACTS.md`; shadow-link source:title|header; default-выбор 001 (AGT-19), клик по 007 открывает его свежую сессию; гейты: typecheck 0, build success, probe:pulse2 **14/14**, pageerror 0; скрин `team-m/design/PULSE2-M1.png` (+ мост); beLive delta 0 · PULSE2-M1 done, M2 active. Дальше M2: durable door (inbox O_EXCL, content-idem, marker), composer через PULSE kind:chat, gate.write.
+
+---
+
+## LOG 2026-10-19 · 003 — [[PULSE]] 🧠 PULSE 2.0 · ПОЛНАЯ ЦЕПОЧКА 001→002→001→009 ПРОЙДЕНА: 001 SPEC v1 (3 панели, PULSE-дверь, opencode-истина) → 002 STRESS v1 (**20 находок: 8 P0/10 P1/2 P2**: 204≠доставка, PULSE не должен allow, гейты 005/009 — не артефакт, idem без prompt, title без step/idem, BUNDLES/INDEX нет, prompt injection, SPOF) → 001 SPEC v2 (20/20 решены, 8 P0 механизмами: durable queued/sent/delivered + marker, content-idem, gate-файлы, reject-only, journal.lock, BUNDLES/INDEX, PULSE_DISPATCH) → 009 VERIFY v1 (**PASS WITH NOTES**: 20/20 адресованы, но 6/8 P0 требуют фиксов: 005/009 read-only не пишут gate; idem до lock; identity header только в M2; контракты не сведены; delete-list неполный; MO 16/14 не 20). 3 фикса до кода: gate.write tool, idem под O_EXCL lock, BUNDLES/INDEX+контракты+shadow-link. Артефакты: `zones/001/drafts/PULSE-2.0-SPEC-v1|v2`, `zones/002/drafts/PULSE2-STRESS-v1`, `zones/009/drafts/PULSE2-VERIFY-v1`, `PULSE-2.0-BRIEF-v2`, кирпичи PULSE2-SPEC/M1/M2/M3 + 009-08…13. Код не писался. Следующее: 001 v2.1 (3 фикса) → дельта 009 → M1.
+
+---
+
+## LOG 2026-10-18 · 003 — [[PULSE]] 🛰 MISSION CONTROL v1 СДАН (космодром вместо чата): 3 экрана Пульт/Карта/Журнал; Пульт = ЭКИПАЖ (6 агентов, сигилы, taskId) · СЕЙЧАС (только working/ready, 8 карточек) · ЖДУТ ТЕБЯ (11 waiting, 5 видимых + «ещё 6», owner+reason+возраст) + PreflightStrip; чат только в drawer; 0 `[data-raw-message]`, 0 `.bubble`, composer отсутствует; `INDEX.json` (+ runId в done) как единая точка данных, ROADMAP-007 добавлен; честная семантика: `РАБОТАЕТ` только claim/live, `ГОТОВА` — active без claim; preflight `работают 0 · готовы 8 · ждут 11` · гейты: PULSE typecheck 0, build success, probe:mission 8/8, probe:visual 16/16, verify:visual 40/0, pageerror 0 · скрин `team-m/design/MISSION-CONTROL-v1.png` (+ мост) · beLive delta 0 · MC-1…MC-5 done. Следующее: MC-2 dispatch console (запуск задач из Пульта), MC-4 skin polish; для автономии агентов — перезапуск OpenCode (custom tool `team`).
+
+---
+
+## LOG 2026-10-18 · 003 — [[beLive]] 🏁 ПЕРВЫЙ РЕАЛЬНЫЙ APPLY ЧЕРЕЗ ЛЕЙН (docs AGT-19): продукт-коммит **a10da17** (`docs: add M1/P2 acceptance` + трейлер `Idem: f7a4b0b7…`; 7 файлов: doc 20 строк + pack + run) · audit **01c9a03** (done/result, claim released, queue→0, operator.jsonl) · gates-rerun **f40fce9** (`gatesVerified`: tsc=181 · vitest 886/886 (74) · PARITY PASS · docvis 0 · junction 3; исторический `gates.tsc=fail` сохранён с пояснением — баг парсера, не гейт) · состояние: очередь пуста, claim `001:AGT-19` released, lock снят, reconcile clean · 20/20 node:test · чужой WIP не затронут (дельта 0) · ⚠️ честно: первая попытка уронила хвост багом импорта уже ПОСЛЕ коммита; реализован recovery (reverse-check + поиск трейлера `Idem:`) и хвост доведён без повторного применения · ⚠️ красная ветка гейта (waiting-owner) не проверена · остаток: AGT-20 (обновить док вторым пакетом), AGT-21 (закоммитить инфру RUNS по GO), B2 (custom tool после перезапуска OpenCode).
+
+---
+
+## LOG 2026-10-18 · 003 — [[beLive]] ✅ ПЕРВЫЙ РЕАЛЬНЫЙ DRY-RUN (docs-пакет): 001 взял `001:AGT-19` (точный путь) → `pack` AGT-19-docs (**idem f7a4b0b7…**, 20 строк, новый файл) → enqueue → `apply` dry-run = **checked, exit 0**, очередь не тронута, продукт не тронут, lock → history, `operator.jsonl` записан · 🔴 поймана и исправлена **реальная дыра**: `verify` выбрасывал точные пути claim через `filter(isGlob)` → `out-of-scope`; фикс: все непустые `owner.paths` + exact-match в `inScope`; регресс: exact path → checked, exact path чужого агента → reject; **20/20 тестов**, tsc=181, продукт delta 0 · run `2026-10-18-003` (run.json + events) · очередь держит готовый docs-пакет для **первого реального apply** по GO. Дальше: реальный apply этого пакета (пишет только `team-m/M1-P2-ACCEPTANCE.md`), затем гейты и `resolve applied`.
+
+---
+
+## LOG 2026-10-18 · 003 — [[beLive]] ✅ P2 DRY-RUN СДАН (лейн Оператора без записи): `apply` (по умолчанию dry-run) — lock-каталог `operator.lock/` + `phase.json` (rename), `operator.inflight/<idem>` до проверки, старейший по mtime, повторный verify + `git apply --check --index`, `dryruns/<idem>.json`, `operator.jsonl` (`operator.dryrun`), lock → `operator.history/`; `reconcile --check` (inflight → exit 5 waiting-owner), `lock-status`, `break-lock --force` (только без inflight и старше 10 мин) · **18/18 тестов** (M1 10 + P2 8) · реальный `--apply` закрыт exit 2 до GO (записи в продукт нет) · демо: `checked`, `queueUntouched:true`, `git diff -- src` пуст · гейты: tsc=181 · PARITY PASS · продукт delta 0 · доки `TOOLS-M1.md §6`, `RUNS/README §12` · карточка AGT-04 → 4/4 done. Дальше: 2–3 реальных dry-run на настоящих пакетах → один крошечный реальный (docs) по GO → включение apply.
+
+---
+
+## LOG 2026-10-18 · 003 — [[beLive]] ✅ M1 СДАН (механика команды агентов): CLI `team-m/tools/team.mjs` (claim/renew/release/takeover/enqueue/pack/verify/status/resolve; apply/reconcile — P2 exit 2) + `lib.mjs` (atomic tmp+rename, sanitize, idem, fold) · **10/10 тестов** node:test (20×claim→1, 20×enqueue→1, takeover, pack→валидный патч, verify: 9 отказов + base path-scoped, terminal queue, mtime-порядок, `/mnt/c` запрещён) · custom tool `.opencode/tools/team.ts` (официальный путь, `@opencode-ai/plugin`, agent/sid из context; требует перезапуска OpenCode) · permissions `team: allow` у 001/002/005/009/operator (edit/bash не ослаблены) · base-drift = **exit 12** + тело `http:412` (POSIX не несёт 412) · `.gitignore` негация для `.opencode/tools/` — git видит tool · гейты: tsc=181 · PARITY PASS · дельта продукта `src/js/belive-feed-bot` = 0 · docs: `TOOLS-M1.md`, `RUNS/README.md`. Дальше P2: один лейн Оператора (inflight → apply --index → гейты → commit -- paths → done) после недели `--check`.
+
+---
+
+## LOG 2026-10-18 · 003 — [[PULSE]] ✅ M0 СДАН (Оператор по MICRO-PACK 003): typecheck **0** · build **success** · probe:visual **16/16** · verify:visual **40/40** · pageerror **0** · скрин `team-m/design/PULSE-M0-SCREENSHOT.png` (+ мост). **StepCard справа сверху** — свёрнутая пилюля `003 · AGT-04 · 3/4 · Приёмка M0`, раскрытие: три оси plan/journal/live, шаги, очередь Оператора, «Ждут тебя», unknown-чипы. **GlobalMap** в Штабе: 003 W0-DOD active · 005 HB-09 waiting-owner · 001 SP-1 active · 002 ST-01 planned · 009 009-02 planned · operator нет задачи. **RUNS seed** `2026-10-18-001` (run.json, events.jsonl 8 событий, claim/done fixtures `fixture:true`), `ROADMAP-SCHEMA-v2.md`, `RUNS/README.md`. Наблюдения: file-API отдаёт 200+пустой content на missing → добавлена ветка `missing` (зафиксировано addendum v2.1 фикс 7); probe G8 флакует независимо (историческая лента — pre-existing); `skeleton.css` esbuild warning −1 скобка (pre-existing, файл не менялся); beLive `src` WIP 6M+4?? — pre-existing, **дельта M0 = 0**. Продукт beLive не тронут. Дальше M1: claim/lease + pack + очередь + custom tool + решение по тест-раннеру (009-07).
+
+---
+
+## LOG 2026-10-18 · 003 — [[PULSE]] 🧠 ЦЕПОЧКА 005→001→002→001→009 СДАНА (команда агентов + живая карта шагов): 005 BOOST (10 паттернов с источниками, 5 контрактов, карточка plan/journal/live) → 001 ARCH v1 (один писатель, claim/lease, WIP=1) → 002 STRESS (22 находки: 4 P0/12 P1/6 P2, вердикт «требует патча») → 001 ARCH v2 (22/22 приняты, 4 P0 закрыты, 15 инвариантов, M0/M1/P2) → 009 VERIFY (PASS WITH NOTES: 4 P0 в спеке, 3 фикса). Фиксы внесены: R-5→R-5G, claim key `<agent>:<taskId>`, atomic tmp+rename + done только status=applied, binary reject + glob/sanitize, M0=plan+journal+live с фикстурами, HB-05..08 dropped (dedupe AGT). Артефакты: `zones/005/drafts/HARNESS-BOOST`, `zones/001/drafts/ARCH-AGENT-TEAM-v1|v2`, `zones/002/drafts/STRESS`, `zones/009/drafts/VERIFY`, `zones/003/drafts/ARCH-ADDENDUM-v2.1-009`, ROADMAP-001 (55), ROADMAP-002 (22), ROADMAP-005 (10), ROADMAP-009 (6). Код НЕ писался. Следующий шаг: Оператор M0 (PULSE: RUNS seed + runJournal + stepCard + StepCard справа сверху + GlobalMap + кожа) — ждёт GO.
+
+---
+
+## LOG 2026-10-18 · 003 — [[PULSE]] 🎨 PULSE SKIN CONCEPT: изучен харнесс zorroo (web/static/css/skin.css 931 строка: палитра #080b08/#c8f542, PT Sans, aurora-блобы float 22–32s, rise/exIn/freshPulse, 3-колоночный каркас, тонкие скроллбары, KPI-плашки) · снят текущий PULSE (порт 5173, скрин /tmp/opencode/pulse-now.png, 0 console errors; структура 3 колонки уже верная, визуал плоский и моноподобный) · создан живой макет `team-m/design/PULSE-SKIN-MOCK-2026-10-18.{png,html}` (+ копии на мосту `pulse-skin-mock.*`) · предложение `team-m/PROPOSAL-PULSE-SKIN-2026-10-18.md`: P1 кожа (токены+ambient+motion, нулевая логика) → P2 компоненты → P3 данные → P4 визуальные серии; приёмка probe:visual/verify:visual + reduced-motion · ЖДЁТ GO Никиты на P1 в pulse-harness (отдельная ветка, SSE-логику не трогаем)
+
+---
+
+## LOG 2026-10-18 · 003 — [[beLive]] 🔬 T4-LITE СМОУК + 🔴 НАЙДЕН БЛОКЕР ЛОКАЛЬНОГО КАТАЛОГА: Operator по пакету 003 (read-only, скрипт team-m/zones/sb/toolkit/006/t4-lite.mjs) — сервер 200, onboarding-гейт пройден «Пропустить →», оболочка рендерится (26 кнопок, title `beLive - Трансляции для музыкантов`, bodyClass `rehearsal-active`), 0 pageerror · 🔴 КАТАЛОГ 0 ТРЕКОВ: задеплоенный belive-feed-bot отвечает hardcoded `ACAO: https://app.mybelive.com` на `Origin: http://localhost:3000` — доказано моим curl (HTTP 200 + ACAO app.mybelive.com на оба Origin), при этом В РЕПО ЕСТЬ фикс: `belive-feed-bot/src/index.ts:26-35` динамический allowlist с localhost:3000, `:76` corsHeaders → **прод-воркер отстал от кода** · console 2 ошибки (только CORS-fetch /tracks), исключений нет · клиент зовёт абсолютный URL `src/catalog/components/CatalogContent.tsx:14` (Vite-прокси без правки клиента не поможет) · скрины+JSON: `team-m/zones/sb/captures/` · РЕШЕНИЕ ЖДЁТ НИКИТУ: деплой воркера-синка (additive CORS, прод не ломает) — единственный чистый путь; альтернатива — dev-костыль в клиенте · roadmap: P1-T4V2 active, новый P1-FEED waiting-owner
+
+---
+
+## LOG 2026-10-18 · 003 — [[beLive]] ✅ SB ЖИВ · Ф0 ЗАКРЫТА · ❄️ САЙТ ЗАМОРОЖЕН: сервер проверен curl — root 302 → `http://localhost:3000/beLive/` = **200** (base `'/beLive/'`, vite.config.ts:81) · W0-BASH done (bash разрешён, git/curl работают) · W0-COMMIT done: 007 закоммитил **301a541** + **8fec57a**, гейты в коммите **tsc=181 · vitest 831/69 · PARITY PASS · docvis 0 · junction 3** · ДЕКРЕТ НИКИТЫ: `app.mybelive.com` НЕ трогаем до полного локального зелёного (site push HELD; согласовано с 67e5e92 split B04) · дизайн-тема на localhost:3000/belive/ = ТЕСТ смены дизайна, визуальные отличия не баг · наблюдения по скрину: призрачный текст «Add platform» в области треков каталога + мастер-громкость 0% при Inst/Voc 100 — проверить после стабилизации темы · 🚩 СИГНАЛ: 14 удалений в рабочем дереве мимо git (`.opencode/agent/003_2.md`, `CEO_1.md`, 12 зонных агентов, `HANDOFF-CEO1-2026-09-14.md`) — НЕ восстанавливал, эскалация 004/007 (возможно намеренная миграция, но паттерн совпадает с инцидентом «стирание мимо git»)
 
 ---
 
