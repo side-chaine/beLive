@@ -40,6 +40,9 @@ jobs:
           VITE_GETSONGBPM_KEY: ${{ secrets.VITE_GETSONGBPM_KEY }}
           VITE_LASTFM_API_KEY: ${{ secrets.VITE_LASTFM_API_KEY }}
           VITE_REHEARSAL_SIGNALING_URL: 'wss://belive-rehearsal.nikitosss007.workers.dev/ws'
+          SEO_GOOGLE_SITE_VERIFICATION: ${{ secrets.SEO_GOOGLE_SITE_VERIFICATION }}
+          SEO_YANDEX_VERIFICATION: ${{ secrets.SEO_YANDEX_VERIFICATION }}
+          SEO_BING_VERIFICATION: ${{ secrets.SEO_BING_VERIFICATION }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

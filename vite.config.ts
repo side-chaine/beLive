@@ -3,6 +3,37 @@ import { VitePWA } from 'vite-plugin-pwa'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { resolve } from 'path'
 import * as fs from 'node:fs'
+import type { HtmlTagDescriptor } from 'vite'
+
+/**
+ * SEO: инъекция verification-мет в <head> index.html.
+ * Теги добавляются ТОЛЬКО если соответствующая env задана (непустая).
+ * Env: SEO_GOOGLE_SITE_VERIFICATION / SEO_YANDEX_VERIFICATION / SEO_BING_VERIFICATION
+ */
+function seoVerificationPlugin(): Plugin {
+  return {
+    name: 'seo-verification',
+    transformIndexHtml() {
+      const tags: HtmlTagDescriptor[] = []
+      const map: Array<[string, string]> = [
+        ['SEO_GOOGLE_SITE_VERIFICATION', 'google-site-verification'],
+        ['SEO_YANDEX_VERIFICATION', 'yandex-verification'],
+        ['SEO_BING_VERIFICATION', 'msvalidate.01'],
+      ]
+      for (const [envName, metaName] of map) {
+        const value = process.env[envName]
+        if (value && value.trim()) {
+          tags.push({
+            tag: 'meta',
+            attrs: { name: metaName, content: value.trim() },
+            injectTo: 'head',
+          })
+        }
+      }
+      return tags
+    },
+  }
+}
 
 /**
  * @TC-088: Mock feed API for local dev
@@ -103,6 +134,7 @@ export default defineConfig({
     tsconfigPaths(),
     feedMockPlugin(), // @TC-088: Remove for production
     copySignalsmithWorklet(),
+    seoVerificationPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',

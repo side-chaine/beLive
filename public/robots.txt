@@ -1,0 +1,9 @@
+# beLive — https://app.mybelive.com/
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /team-m/
+Disallow: /sw.js
+
+Sitemap: https://app.mybelive.com/sitemap.xml
