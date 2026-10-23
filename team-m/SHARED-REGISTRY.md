@@ -1,3 +1,17 @@
+## LOG 2026-10-22 23:5x · 007-main — ✅ SEO-СПРИНТ beLive ЗАКРЫТ: сайт в трёх поисковиках [[beLive]]
+
+**Модель: 007-main = deepseek-flash · приблизка живой прод-верификации (curl), не докладов.**
+
+**Коммиты:** `cfe98b6` (SEO-пакет: robots/sitemap/index-меты/плагин verification/deploy secrets/SEO.md) · `36a1bf1` (verification-файлы google9c48176acdff60bf/yandex_76298bbd8cad822a из Downloads Бро в public/) · `da63738` (title/description «вокальная студия в браузере» kw-first + Art Platform в description по решению Бро — Вариант А). Все на проде (`GitHub Pages`+CF, деплой авто на push).
+
+**Результат:** robots.txt (200 text/plain, 5/5) · sitemap.xml (200 application/xml) · мета href/favикон/canonical/OG живые · GSC 🟢 «URL есть в индексе Google» (бескошечный? который фиаско живой тест robots.txt — эпизодический сбой, повтор успешен) · Я.Вебмастер 🟢 вкладка (в выдаче по «belive трансляции» уже) · Bing 🟢 импорт из GSC. Секреты: SEO_GOOGLE_SITE_VERIFICATION — задан (остальные 2 опционально; Яндекс/Bing идут файлом/импортом).
+
+**Заметки на будущее:** og-image 1200×630 (сейчас icon-192) — доработка; title+Live при поднимании live-концертов; Я.Вебмастер sitemap/переобход в read-only по их сбою (вернуться через день); CF Pages строит из git и не знает GH-секретов — для мета-verify через CF придётся задавать env в Dashboard CF.
+
+— 007-main · SEO-спринт по промт Дипсика: аудит→план→7 файлов→3 гейта→3 коммита→3 панели 🏆
+
+---
+
 ## LOG 2026-10-19 17:0x · CEO_1 — [beLive] 🧪 ТЕСТ ХАРНЕССА ПРОЙДЕН (3/3 агента) + найдена мёртвая модель скаутов + КАРТА 19.10 (месяц работы только на диске)
 
 **Atria-Dawn-Preview · Linux · 19.10 17:0x.** Тестовая реализация по слову Никиты: три агента на исследование, посмотреть как работает в Харнессе, собрать дорожную карту.
@@ -1967,6 +1981,10 @@ b-ai/qwen3.8-flash · WSL · старт-протокол пройден: HANDOFF
 ---
 
 ## LOG 2026-09-12 12:5x · 003 — ✅ ЭРА-КОНВОЙ ЗАКРЫТ (продолжение 12:3x): точечные баннеры ×8 (dock-standard W-эра · takes/character/init/avatar ×1-2 пометки · central-bridge :33/:56→wrapper-слой · monitor-mix:206+отсылка W-2 V3-WIRES · README-индекс→каркас-классы). Итог долга: 10 помечено конвоем + 2 оказались тамбстоунами (эрратум) + 2 закрыты ранее (n-stem Ш2/slot-v2.2) = ЧИСТЫЙ ДОЛГ НОЛЬ. Каркас ERA → статус «исполнен». Жду: вердикт 003_2 (22 LOC+vitest 71/71) → полный штамп волны · аудит фасада MO-engine-v3 → W-4+ · 007: коммит-снимок пары + диспатч V3-WIRES в цепь
+
+---
+
+## LOG 2026-10-19 · 003 — [[PULSE]] 🧪 ТЕСТ CEO: НАЙДЕНЫ ОШИБКИ И ЗАКРЫТЫ: CEO-сессия `ses_f4c9…` всё ещё **agent 007**, `/agent` не содержит `CEO`/`MO` (конфиги не подхвачены без рестарта) → CEO запустил task-скаутов, не `pulse assign`; roadmap-tool отсутствовал; assignment не создан. Исправлено: `pulse.ts` + action **roadmap** (JSON→ROADMAP-CEO.json) + CEO prompt «не использовать task для MO, сначала roadmap, потом assign»; карта CEO из отчёта перенесена в `ROADMAP-CEO.json` (6 фаз F0/F0.5/F1/F2/F3/F4) и видна сверху; создан **A-2** «B08 · исследование месяца» (MO-track-loader, MO-upload, MO-stem): MO-stem sent, два pendingSession → в АКТИВНЫХ видны, нужны сессии. PULSE данные обновил **без рестарта** (roadmap+A-2 появились); конфиги агентов/моделей требуют рестарта OpenCode. Дальше: рестарт → новые сессии CEO (agent CEO) и MO-* (agent MO) → «открыл» → activate.
 
 ---
 
@@ -10534,3 +10552,21 @@ docs/architecture/frozen-zones-v2.md:4
 **5 РЕШЕНИЙ НИКИТЫ (через 301):** (1) демо **строго 1:1**? (архитектура DO да; если 1:N — смена стека, SP-16 ре-открыть) · (2) где секрет: build-env, НО `?phone=1` demo-only через клиентский self-sign, или гейтить демо через `POST /rooms` уже сейчас? · (3) **TURN ВКЛ** на демо (рекл. цепи; ≈$0 на 1:2) · (4) video one-way навсегда или bidirectional после демо? · (5) **GO на правку** `main.tsx`/`App.tsx`/`src/Rehearsal` (семейство GO; вне удалённого frozen).
 
 **СТОП: прогон сдан, план на столе (ROADMAP-001 v8 + 5 решений). Исполнение — Оператор по цепи после GO Босса. Самостоятельно не начинаю.**
+
+---
+
+## LOG 2026-10-22 06:3x · 003 — 🛡 PULSE 2.0 · ПЕРВЫЙ БОЕВОЙ ПОЛЁТ: старт-экран (репозиторий + лейблы), карта в drawer, локальная диктовка в браузере, живые частицы бренда · HANDOFF-003-2026-10-22.md
+
+**Модель: 003 = minimax-m3.1-flash-free · Linux · pulse-harness HEAD `c7de30e` — ВСЁ в рабочем дереве, коммита нет. Проба 06:31–06:44Z: opencode :4097 healthy 1.19.3 ✅ · PULSE :5173 ✅ · whisper :8080 ok ✅ · дверь :4100 ✅ (pid 42765, ppid=1).**
+
+1. **Стартовый экран** (`src/panels/StartScreen.tsx` + `src/lib/repos.ts`): выбор репозитория, ПРОВОДНИК папок (`showDirectoryPicker()`) с проверкой живым чтением `team-m/BUNDLES/INDEX.json`; реестр проектов в localStorage (`pulse.harness.projects`); лейблы из `team-m/PROJECT-LABEL.png` в репо проекта (байты через opencode `/file/content` → data-URL); две РАЗНЫЕ кнопки: «создать проект» (поднять нового CEO — в разработке, F-5) и «добавить проект» (взять папку).
+2. **Карта ушла из постоянной ленты в drawer** поверх центра: фазы → кирпичи → «Зачем это нужно»; `ROADMAP-CEO.json` перечитывается при открытии и каждые 4с, при смене `rev/updatedAt` выбор сбрасывается. ReportCard больше не дублирует текст (title = первое предложение, «Сводка» = остаток).
+3. **Диктовка в браузере** (`src/lib/dictation.ts` + `useDictation.ts`): WAV 16k mono → Vite proxy `/dictation` → whisper :8080 `/inference`; `language=ru`, `temperature=0`, `no_speech_thold=0.6`, prompt-словарь; состояния `Подключаю микрофон… → Слушаю (+RMS) → Расшифровываю…`; хвост 220мс; остановить = иконка-квадрат, прервать = иконка-×, Esc = отмена; текст вставляется в позицию курсора.
+4. **Разбор дефекта первого прогона (не «он плохо слышит», а конкретно):** слова терялись из-за ХОЛОДНОГО СТАРТА `getUserMedia`+AudioContext (речь уходила до готовности) + не было хвоста + не было нормализации. Модель `small-q5_1` — следующий апгрейд `large-v3-turbo` на тот же endpoint.
+5. **Частицы бренда** (`src/components/PulseParticles.tsx`): тонкие световые моты + один «ECG-свип» раз в цикл 40–70с СЛУЧАЙНО (набор/цвет/длина перегенерируются), `prefers-reduced-motion` → слой не рисуется.
+6. **Правка перекрытия:** чип `repo:` вынесен из шапки в строку вкладок — бренд «Pulse Harness 2.0» больше не режется.
+7. **First-flight reset (20.10 14:16):** `ROADMAP-CEO.json` → rev 0 / phases [] ; `PULSE/ASSIGNMENTS.json` → пусто; `pulse status` → total 0; архив `team-m/PULSE/archive-2026-10-20/` (35 файлов + journal + tmp + ASSIGNMENTS) и `team-m/ROADMAP-CEO.archive-2026-10-20.json`.
+8. **ПОРТ ДВЕРИ 4098 → 4100 (не догадка, факт):** `4098` держал **чужой** `openrouter-relay.py` (api-zorroo, pid 28072) — он и отдавал 502 на `/health`, из-за чего казалось, что дверь упала; наш door (pid 47216) был мёртв. Решение: свою дверь подняли на свободном 4100 (`setsid nohup env PULSE_DOOR_PORT=4100 node team-m/tools/pulse-door.mjs serve`, pid 42765, ppid=1, пережил конец сессии), клиент харнесса (`src/api/door.ts` → `DEFAULT_DOOR` 4100, переопределение `?door=`/`VITE_DOOR_URL` сохранено) и `team-m/PULSE/CONTRACTS.md` обновлены. Relay НЕ ТРОГАЕМ — это его проект.
+9. **ОТКРЫТО:** typecheck/build НЕ прогонялись (в сессии нет bash) · автостарта двери после ребута нет (нужен systemd-юнит) · «Создать назначение»/«Открыть карту» без handlers · гибридный центр не реализован · `src/lib/agentNames.ts` мёртвый (удалить) · весь визуал без коммита · F-1/F-5 в `team-m/PULSE-FEATURES-BACKLOG.md`.
+
+— 003 · Linux · 06:44Z · PULSE 2.0 первый полёт · путь: `team-m/HANDOFF-003-2026-10-22.md`
