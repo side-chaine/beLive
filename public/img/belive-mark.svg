@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 128 128"
+     width="128"
+     height="128">
+  <path
+    fill="#F59E0B"
+    fill-rule="evenodd"
+    d="M8 16 H23 V43
+       C29 37 37 34 45 34
+       C62 34 72 49 72 72
+       C72 95 61 112 43 112
+       C35 112 28 108 23 101
+       V112 H8 Z
+       M23 73
+       C23 60 29 52 40 52
+       C51 52 57 60 57 73
+       C57 86 51 94 40 94
+       C29 94 23 86 23 73 Z"/>
+  <path
+    fill="#FFFFFF"
+    d="M82 16 H99 V96 H120 V112 H82 Z"/>
+</svg>
