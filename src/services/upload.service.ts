@@ -10,16 +10,9 @@ import { isPersistedSyncMarkerArray, isPersistedTextBlockArray } from '../types/
 import type { AlignmentResult } from '../sync/word-sync/types';
 import type { StemDataEntry } from './idb.service';
 import { fetchCoverArtAndUpdate } from './cover-art.service';
-import { parseLrcString, lrcToMarkers, extractCleanLyrics } from './auto-lyrics.service';
+import { parseLrcString, lrcToMarkers } from './auto-lyrics.service';
 import { useTrackStore } from '../stores/track.store';
 import { loadTrack } from './track.actions';
-import { openBlockEditor } from '../blocks/bridge/blockEditor.service';
-import { openPostUploadFlow, type PostUploadFlowInput } from '../blocks/bridge/postUploadFlow';
-import { buildParagraphBlocks } from '../blocks/parser/paragraph-blocks';
-import { useBlockEditorStore } from '../blocks/store/blockEditor.store';
-import { useSyncStore } from '../sync/store/sync.store';
-import { useUIStore } from '../stores/ui.store';
-import { useShowStore } from '../stores/show.store';
 import { showToast } from '../utils/notification';
 
 // W6.2: Stem classification keywords (filename substring → stem slot)
@@ -394,28 +387,6 @@ export function getTrackTitle(): string | null {
   return getFileNameWithoutExtension(instrumental.name);
 }
 
-/** Single call-site for the editors gate — kept OUTSIDE postUploadFlow. */
-async function runPostUploadFlow(input: PostUploadFlowInput): Promise<void> {
-  try {
-    const { shouldSkipEditorsForTrack } = await import('./auto-lyrics.service');
-    if (shouldSkipEditorsForTrack(Number(input.trackId))) return;
-  } catch {
-    // gate is best-effort — never block the flow on it
-  }
-
-  await openPostUploadFlow(input, {
-    loadTrack: (index, opts) => loadTrack(index, opts),
-    openBlockEditor,
-    openSync: () => {
-      document.dispatchEvent(new CustomEvent('catalog-close'));
-      useSyncStore.getState().openSync();
-      return true;
-    },
-    onSaved: () => {},
-    onCancel: () => {},
-  });
-}
-
 /**
  * Save track to database — strict exact port from legacy
  * F58-TC-005v2: All 5 corrections from 007 included
@@ -502,10 +473,7 @@ export async function saveTrack(): Promise<void> {
         // (JSON markers are usually user-verified and higher quality)
         if (!Array.isArray(session.jsonMarkers) || session.jsonMarkers.length === 0) {
           trackData.syncMarkers = lrcMarkers;
-          // Keep JSON text blocks when present; clear only when we truly have none.
-          if (!Array.isArray(session.jsonTextBlocks) || session.jsonTextBlocks.length === 0) {
-            trackData.blocksData = [];
-          }
+          trackData.blocksData = []; // No blocks without Genius text
           if (import.meta.env.DEV) console.log(
             `[AutoLyrics] LRC parsed locally: ${lyricsLines.length} clean lines, ${lrcMarkers.length} markers`
           );
@@ -518,19 +486,6 @@ export async function saveTrack(): Promise<void> {
         trackData.dataVersion = 2;
       } catch (e) {
         console.warn('[AutoLyrics] LRC parse failed, saving raw:', e);
-      }
-    }
-
-    // ─── D3: non-LRC lyrics with paragraph structure → auto blocks (same rule as the paste path) ───
-    // Only when blocksData is still empty; otherwise ZIP/export blocks win.
-    if (!isLrcContent && (!Array.isArray(trackData.blocksData) || trackData.blocksData.length === 0)) {
-      const lyricsText = String(trackData.lyricsOriginalContent || trackData.lyrics || '');
-      if (lyricsText.trim()) {
-        const paragraphBlocks = buildParagraphBlocks(lyricsText, extractCleanLyrics(lyricsText));
-        if (paragraphBlocks.length >= 2) {
-          trackData.blocksData = paragraphBlocks;
-          if (import.meta.env.DEV) console.log(`[Upload] D3 auto-blocks from paragraphs: ${paragraphBlocks.length}`);
-        }
       }
     }
 
@@ -638,22 +593,9 @@ export async function saveTrack(): Promise<void> {
       console.warn('Не удалось применить маркеры из JSON сразу:', e);
     }
 
-    // JSON branch — origin of markers is session.jsonMarkers, NOT locally parsed LRC
-    const hasJsonMarkers = Array.isArray(session.jsonMarkers) && session.jsonMarkers.length > 0;
-
-    const showState = useShowStore.getState();
-    const flowInput: PostUploadFlowInput = {
-      trackId: savedTrack.id,
-      hasLyrics: typeof savedTrack.lyrics === 'string' && savedTrack.lyrics.trim().length > 0,
-      hasBlocks: Array.isArray(savedTrack.blocksData) && savedTrack.blocksData.length > 0,
-      hasMarkers: Array.isArray(savedTrack.syncMarkers) && savedTrack.syncMarkers.length > 0,
-      origin: hasJsonMarkers ? 'json' : (isLrcContent ? 'lrc' : 'plain'),
-      dataVersion: savedTrack.dataVersion,
-      feed: useUIStore.getState().appMode === 'feed',
-      showActive: showState.activeMode !== 'entry' && !showState.featureActive && !showState.isPresenting,
-      featureActive: showState.featureActive,
-      editorOpen: useBlockEditorStore.getState().isOpen,
-    };
+    // JSON branch — exact try/catch + exact order
+    const hasJsonMarkers = Array.isArray(savedTrack?.syncMarkers)
+      && savedTrack.syncMarkers.length > 0;
 
     if (hasJsonMarkers) {
       try {
@@ -679,8 +621,6 @@ export async function saveTrack(): Promise<void> {
       document.dispatchEvent(new CustomEvent('track-saved', {
         detail: { trackId: savedTrack.id, title: savedTrack.title, hasJson: true, hasLyrics }
       }));
-      // Flow runs in BOTH branches before return (У-4)
-      await runPostUploadFlow(flowInput);
       return;
     }
 
@@ -696,8 +636,42 @@ export async function saveTrack(): Promise<void> {
       }
     }));
     
-    // Flow runs in BOTH branches before return (У-4)
-    await runPostUploadFlow(flowInput);
+    // ═══ TC-FLOW-01: lrclib-зависимая логика без автооткрытия редакторов ═══
+    if (hasLyrics && savedTrack.id) {
+      import('./auto-lyrics.service').then(async ({ shouldSkipEditorsForTrack, waitForCache }) => {
+        // Если auto-sync уже применился — ничего не делаем
+        if (shouldSkipEditorsForTrack(savedTrack.id)) {
+          if (import.meta.env.DEV) {
+            if (import.meta.env.DEV) console.log('[AutoLyrics] Block Editor skipped in saveTrack — auto-sync applied for track', savedTrack.id);
+          }
+          return;
+        }
+
+        // Ждём lrclib максимум 5 секунд
+        const title = savedTrack.title || '';
+        const lrcResult = title ? await waitForCache(title, 5000) : null;
+
+        if (lrcResult) {
+          // lrclib нашёл данные — трек уже получит auto-sync через UploadPanel
+          if (import.meta.env.DEV) {
+            if (import.meta.env.DEV) console.log('[TC-FLOW] lrclib data cached for', title, '— no editor needed');
+          }
+          return;
+        }
+
+        // lrclib не нашёл — открываем sync editor
+        if (import.meta.env.DEV) {
+          if (import.meta.env.DEV) console.log('[TC-FLOW] lrclib NOT found for', title, '— opening sync editor');
+        }
+        const trackIndex = useTrackStore.getState().tracksMeta
+          .findIndex(t => String(t.id) === String(savedTrack.id));
+        if (trackIndex >= 0) {
+          loadTrack(trackIndex, { autoplay: false, openSyncEditor: true });
+        }
+      }).catch(() => {
+        // fallback — ничего не открываем, трек в каталоге
+      });
+    }
 
   } catch (err: any) {
     console.error('💾 saveTrack error:', err);
@@ -1083,8 +1057,8 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
 
   } catch (err: any) {
     console.error('handleZipFileSelect error:', err);
-    showNotification('error', `❌ Ошибка обработки ZIP: ${err.message}`);
     showToast(`❌ ${err.message}`, 'error');
+    showNotification('error', `❌ Ошибка обработки ZIP: ${err.message}`);
   }
 }
 
