@@ -92,14 +92,10 @@
   opacity: var(--bl-ps-opacity-grow);
 }
 
-.slotMatrixActive .line[data-loop-start="true"] {
-  border-top: var(--bl-loop-border-width) solid var(--bl-loop-color, #FF8C00);
-  padding-top: var(--bl-loop-padding);
-}
-
+.slotMatrixActive .line[data-loop-start="true"],
 .slotMatrixActive .line[data-loop-end="true"] {
-  border-bottom: var(--bl-loop-border-width) solid var(--bl-loop-color, #FF8C00);
-  padding-bottom: var(--bl-loop-padding);
+  position: relative;
+  justify-self: stretch;
 }
 
 .line {
@@ -308,7 +304,7 @@
   text-align: center;
 }
 
-.slotContainer > .loopBoundary {
+.slotMatrixActive .line > .loopBoundary {
   position: absolute;
   left: 0;
   right: 0;
@@ -322,7 +318,7 @@
   transition: height 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
 }
 
-.slotContainer > .loopBoundary:hover {
+.slotMatrixActive .line > .loopBoundary:hover {
   height: 6px;
   background: linear-gradient(90deg, rgba(255, 179, 71, 0.8) 0%, rgba(255, 140, 0, 1) 30%, rgba(255, 140, 0, 1) 70%, rgba(255, 179, 71, 0.8) 100%);
   box-shadow: 0 0 12px rgba(255, 140, 0, 0.4), 0 0 24px rgba(255, 140, 0, 0.15);
@@ -669,7 +665,7 @@
 
 
 /* Center dot indicator for loop boundary */
-.slotContainer > .loopBoundary::after {
+.slotMatrixActive .line > .loopBoundary::after {
   content: '';
   position: absolute;
   left: 50%;
@@ -684,6 +680,6 @@
   pointer-events: none;
 }
 
-.slotContainer > .loopBoundary:hover::after {
+.slotMatrixActive .line > .loopBoundary:hover::after {
   transform: translate(-50%, -50%) scale(1);
 }

@@ -673,7 +673,7 @@ export function RehearsalLyrics() {
   const handleBoundaryDrag = useCallback((type: 'start' | 'end', e: React.PointerEvent) => {
     if (!displayBlock || loopStartLine === null || loopEndLine === null) return;
     e.preventDefault();
-    const container = e.currentTarget.parentElement;
+    const container = (e.currentTarget.closest('[data-slot-container="true"]') as HTMLElement | null) ?? e.currentTarget.parentElement;
     if (!container) return;
     const lines = container.querySelectorAll('[data-line-index]');
     const lineEls = Array.from(lines) as HTMLElement[];
@@ -870,6 +870,8 @@ export function RehearsalLyrics() {
                     }
                     data-line-next={isNext ? 'true' : undefined}
                     data-line-next-level={isNext ? lineNextLevel : undefined}
+                    data-loop-start={isLooping && !slot.isPreview && slot.lineIndex === loopStartLine ? 'true' : undefined}
+                    data-loop-end={isLooping && !slot.isPreview && slot.lineIndex === loopEndLine ? 'true' : undefined}
                     style={{
                       color: slot.isPreview ? slot.previewBlockColor : undefined,
                       fontSize: slot.isPreview ? psFontSize : undefined,
@@ -889,36 +891,23 @@ export function RehearsalLyrics() {
                         blockType={slot.isPreview ? slot.previewBlockType ?? 'unknown' : displayBlock.type}
                       />
                     )}
-                  </div>
-                );
-              })}
-
-              {/* Grid path: Loop boundary rendering with slot.y positioning */}
-              {isLooping && slotMatrix && (() => {
-                const firstLoopSlot = slotMatrix.slots.find(s => !s.isPreview && !s.isEmpty && s.lineIndex === loopStartLine);
-                const lastLoopSlot = slotMatrix.slots.find(s => !s.isPreview && !s.isEmpty && s.lineIndex === loopEndLine);
-                const startInVisibleSub = firstLoopSlot && visibleLineIndices.includes(firstLoopSlot.lineIndex);
-                const endInVisibleSub = lastLoopSlot && visibleLineIndices.includes(lastLoopSlot.lineIndex);
-
-                return (
-                  <>
-                    {firstLoopSlot && startInVisibleSub && (
+                    {isLooping && !slot.isPreview && slot.lineIndex === loopStartLine && (
                       <div
                         className={styles.loopBoundary}
-                        style={{ top: firstLoopSlot.y - 2 }}
+                        style={{ top: -2 }}
                         onPointerDown={(e) => handleBoundaryDrag('start', e)}
                       />
                     )}
-                    {lastLoopSlot && endInVisibleSub && (
+                    {isLooping && !slot.isPreview && slot.lineIndex === loopEndLine && (
                       <div
                         className={styles.loopBoundary}
-                        style={{ top: lastLoopSlot.y + lastLoopSlot.height - 2 }}
+                        style={{ bottom: -2 }}
                         onPointerDown={(e) => handleBoundaryDrag('end', e)}
                       />
                     )}
-                  </>
+                  </div>
                 );
-              })()}
+              })}
 
               {/* Grid path: Loop boundary arrows for invisible boundaries */}
               {isLooping && slotMatrix && (() => {
