@@ -70,6 +70,13 @@
 
 .bl-welcome__vk-btn:active { transform: scale(0.99); }
 
+.bl-welcome__tg {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+  margin-top: 4px;
+}
+
 .bl-welcome__skip-btn {
   background: none; border: none;
   color: rgba(255,255,255,0.4);

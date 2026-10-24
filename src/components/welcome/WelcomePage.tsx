@@ -1,5 +1,10 @@
 import { authService } from '../../services/auth.service';
+import { TelegramLoginButton } from './TelegramLoginButton';
 import './WelcomePage.css';
+
+/** Имя бота для Telegram-входа (домен задаётся в BotFather: /setdomain) */
+const TG_BOT_NAME = import.meta.env.VITE_TG_BOT_NAME || 'belive_feed_bot';
+const AUTH_URL = import.meta.env.VITE_AUTH_WORKER_URL || 'https://auth.mybelive.com';
 
 export function WelcomePage() {
   return (
@@ -27,6 +32,8 @@ export function WelcomePage() {
           </svg>
           Войти через VK
         </button>
+
+        <TelegramLoginButton botName={TG_BOT_NAME} authUrl={`${AUTH_URL}/auth/telegram`} />
 
         <button className="bl-welcome__skip-btn" onClick={() => authService.skipAuth()}>
           Пропустить →
