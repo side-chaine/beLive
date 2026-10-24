@@ -1,4 +1,4 @@
-/* ─── beLive Button v5 · flat brand mark (no neon) ─── */
+/* ─── beLive Button v6 · 2 цвета, вращение кольца, без свечения ─── */
 
 .bl-wrap {
   position: relative;
@@ -9,12 +9,23 @@
   text-decoration: none;
 }
 
-/* плоское кольцо: 2px бренд-акцента, без градиента и вращения */
+/* кольцо: амбер → сирень (2 цвета, без glow), вращается при раскрытии */
+@property --bl-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
 .bl-border {
   position: absolute;
   inset: -2px;
   border-radius: 50%;
-  background: #F59E0B;
+  background: conic-gradient(
+    from var(--bl-angle),
+    #F59E0B 0deg,
+    #c44dff 180deg,
+    #F59E0B 360deg
+  );
   z-index: 0;
   transition: border-radius 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -36,7 +47,7 @@
   white-space: nowrap;
 }
 
-/* ── Буквы: be — амбер, Live — белый ── */
+/* ── Буквы: be — амбер, Live — сирень ── */
 .letter {
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 700;
@@ -48,8 +59,8 @@
 
 .letter-b   { color: #F59E0B; }
 .letter-e   { color: #F59E0B; }
-.letter-L   { color: #FFFFFF; }
-.letter-ive { color: #FFFFFF; }
+.letter-L   { color: #c44dff; }
+.letter-ive { color: #c44dff; }
 
 .letter-e,
 .letter-ive {
@@ -76,3 +87,16 @@
 .open .bl-border  { border-radius: 28px; }
 .open .letter-e   { max-width: 18px; opacity: 1; }
 .open .letter-ive { max-width: 46px; opacity: 1; }
+
+/* ── Вращение кольца при переключении ── */
+@keyframes bl-spin-fwd {
+  from { --bl-angle: 0deg; }
+  to   { --bl-angle: 360deg; }
+}
+@keyframes bl-spin-bwd {
+  from { --bl-angle: 0deg; }
+  to   { --bl-angle: -360deg; }
+}
+
+.bl-spin-open  { animation: bl-spin-fwd 0.55s cubic-bezier(0.4,0,0.2,1) forwards; }
+.bl-spin-close { animation: bl-spin-bwd 0.55s cubic-bezier(0.4,0,0.2,1) forwards; }
