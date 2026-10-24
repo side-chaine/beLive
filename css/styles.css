@@ -7184,3 +7184,11 @@ body.mode-rehearsal .scale-value-btn:hover {
     border: 1px solid rgba(255, 255, 255, 0.6);
     border-radius: 8px;
 }
+
+/* Шапка: div-кнопки не должны оставлять текстовую каретку/выделение по клику */
+.bl-header,
+.bl-header * {
+  user-select: none;
+  -webkit-user-select: none;
+  caret-color: transparent;
+}

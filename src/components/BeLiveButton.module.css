@@ -7,6 +7,12 @@
   justify-content: center;
   cursor: pointer;
   text-decoration: none;
+  /* кнопка — это div, а не <button>: без этого по клику в тексте
+     остаётся текстовый каретка (I-beam) и выделение */
+  user-select: none;
+  -webkit-user-select: none;
+  caret-color: transparent;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .bl-border {

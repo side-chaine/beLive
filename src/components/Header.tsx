@@ -35,6 +35,7 @@ export function Header() {
   return (
     <div
       ref={ref}
+      className="bl-header"
       style={{
         position: 'fixed',
         top: 0,
