@@ -18,6 +18,26 @@
 
 ---
 
+## TG-ВХОД · ОТЛОЖЕН (24.10)
+
+**Статус:** код готов и проверен гейтами, но **не запушен** — ждёт шагов Босса.
+
+**Сделано:**
+- воркер `belive-auth`: `GET /auth/telegram` — проверка подписи виджета `HMAC-SHA256(bot_token)`, свежесть `auth_date` ≤ 24 ч, сессия `provider=telegram` (cookie `bl_sid` 90 дней), `/auth/refresh` для telegram перевыпускает JWT без внешних вызовов. Задеплоено, деградирует в `auth_error=tg_not_configured`.
+- клиент: `src/components/welcome/TelegramLoginButton.tsx` (виджет), кнопка на экране входа; имя бота через `VITE_TG_BOT_NAME` (дефолт `belive_feed_bot`).
+- коммит `19796c3` (локальный), tsc=181 (база), build=0.
+
+**Блокеры (нужно от Босса):**
+1. @BotFather → `/setdomain` → `app.mybelive.com` для бота.
+2. Прислать username бота (+ токен либо самому добавить секрет `TG_BOT_TOKEN` в Cloudflare Workers → belive-auth).
+3. После этого: секрет → `VITE_TG_BOT_NAME` в CF Pages env → push `19796c3` → тест входа из РФ без VPN.
+
+**Почему отложено:** Босс переключается на комнату пользователя (MO-user-room) и usage; TG — следующий заход. VK-вход остаётся «спящим» до подтверждения бизнес-профиля VK (Госуслуги).
+
+— 007 · Linux · 24.10 · отложено по слову Босса
+
+---
+
 ## LOG 2026-10-22 23:5x · 007-main — ✅ SEO-СПРИНТ beLive ЗАКРЫТ: сайт в трёх поисковиках [[beLive]]
 
 **Модель: 007-main = deepseek-flash · приблизка живой прод-верификации (curl), не докладов.**
