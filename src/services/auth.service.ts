@@ -1,10 +1,20 @@
 const USE_MOCK_AUTH = import.meta.env.VITE_USE_MOCK_AUTH === 'true';
-const CF_WORKER_URL = import.meta.env.VITE_AUTH_WORKER_URL 
-  || 'https://belive-auth.nikitosss007.workers.dev';
+/**
+ * Воркер авторизации. С v5 (cookie-сессии) — свой домен: только оттуда можно
+ * поставить httpOnly cookie на mybelive.com. Legacy *.workers.dev остаётся
+ * рабочим для старых ссылок.
+ */
+const AUTH_URL = import.meta.env.VITE_AUTH_WORKER_URL || 'https://auth.mybelive.com';
 
 interface AuthCallbackData {
   authToken: string; name: string; email: string;
   avatarUrl?: string; serverId?: string;
+}
+
+interface RefreshResponse {
+  jwt: string;
+  expires_in: number;
+  user: { sub: string; email: string; name: string; avatar?: string };
 }
 
 export const authService = {
@@ -22,8 +32,7 @@ export const authService = {
       return;
     }
 
-    // Env guard
-    if (!CF_WORKER_URL) {
+    if (!AUTH_URL) {
       console.warn('[auth] VITE_AUTH_WORKER_URL not configured');
       if (import.meta.env.DEV) {
         await this._mockAuth();
@@ -36,19 +45,72 @@ export const authService = {
     // return to PWA after authorization. Callback URL params persist in
     // PWA's session and are processed on next app load.
     // v3.0: investigate ASWebAuthenticationSession or universal links.
-    // Редирект на Worker — он строит Google OAuth URL и обрабатывает callback
-    window.location.href = `${CF_WORKER_URL}/auth/google`;
+    window.location.href = `${AUTH_URL}/auth/google`;
   },
 
+  /**
+   * Молча продлить сессию по httpOnly cookie.
+   * Возвращает свежий короткий JWT или null, если сессии нет/она протухла.
+   */
+  async refreshSession(): Promise<RefreshResponse | null> {
+    try {
+      const res = await fetch(`${AUTH_URL}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) return null;
+      const data = (await res.json()) as RefreshResponse;
+      return data?.jwt ? data : null;
+    } catch (e) {
+      console.warn('[auth] refreshSession failed:', e);
+      return null;
+    }
+  },
+
+  /**
+   * Старт приложения. Приоритет:
+   * 1) cookie-сессия → молча продлеваем (переживает reload и деплои);
+   * 2) legacy JWT в localStorage (переходный период);
+   * 3) гость.
+   */
   async checkExistingAuth(): Promise<boolean> {
     const { useUserProfileStore } = await import('../stores/user-profile.store');
     const store = useUserProfileStore.getState();
-    // Любой существующий профиль = авторизован (гость или OAuth)
+
+    const session = await this.refreshSession();
+    if (session) {
+      if (!store.currentUser || store.currentUser.isGuest) {
+        store.createOAuthProfile({
+          name: session.user.name,
+          email: session.user.email,
+          avatarUrl: session.user.avatar || undefined,
+          serverId: session.user.sub,
+          authToken: session.jwt,
+        });
+      } else {
+        useUserProfileStore.setState({
+          currentUser: { ...store.currentUser, authToken: session.jwt },
+        });
+      }
+      return true;
+    }
+
     if (!store.currentUser) return false;
-    // Гостевой профиль — без authToken
-    if (!store.currentUser.authToken) return true;
-    // OAuth пользователь — проверить что токен не истёк
-    return this._isTokenValid(store.currentUser.authToken);
+    // Гость — токена нет по определению
+    if (store.currentUser.isGuest) return true;
+    // Legacy: старый токен мог остаться в localStorage до миграции
+    return this._isTokenValid(store.currentUser.authToken || '');
+  },
+
+  /** Выход: сносим серверную сессию (KV + cookie) и локальный профиль. */
+  async logout(): Promise<void> {
+    try {
+      await fetch(`${AUTH_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
+    } catch (e) {
+      console.warn('[auth] logout request failed:', e);
+    }
+    const { useUserProfileStore } = await import('../stores/user-profile.store');
+    useUserProfileStore.getState().logout();
   },
 
   async handleCallback(params: URLSearchParams): Promise<AuthCallbackData | null> {
@@ -90,16 +152,10 @@ export const authService = {
   _isTokenValid(token: string): boolean {
     try {
       const parts = token.split('.');
-      if (parts.length !== 3) {
-        console.warn('[007-DIAG] _isTokenValid: not 3 parts, got', parts.length);
-        return false;
-      }
+      if (parts.length !== 3) return false;
       const payload = JSON.parse(this._decodeBase64Url(parts[1]));
-      const isValid = payload.exp > Date.now() / 1000;
-      if (!isValid) console.warn('[007-DIAG] _isTokenValid: EXPIRED, exp:', payload.exp, 'now:', Date.now() / 1000);
-      return isValid;
-    } catch (e) {
-      console.warn('[007-DIAG] _isTokenValid: caught', e);
+      return payload.exp > Date.now() / 1000;
+    } catch {
       return false;
     }
   },

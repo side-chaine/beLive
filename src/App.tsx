@@ -155,6 +155,10 @@ export default function App() {
       });
       return;
     }
+    if (params.has('auth_error')) {
+      console.warn('[auth] OAuth error:', params.get('auth_error'));
+      window.history.replaceState({}, '', '/');
+    }
     authService.checkExistingAuth().then(isValid => {
       useAppStore.getState().setSurface(isValid ? 'app' : 'welcome');
       useAppStore.getState().setAuthChecked(true);

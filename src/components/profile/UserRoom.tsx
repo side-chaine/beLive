@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
+import { authService } from '../../services/auth.service';
 import { useAppStore } from '../../stores/app.store';
 import { useUserProfileStore } from '../../stores/user-profile.store';
-import { authService } from '../../services/auth.service';
 import { useThemeStore } from '../../theme/store/theme-store';
 import { themeRegistry, getThemeById } from '../../theme/themes/index';
 import { applyTheme, applyMode } from '../../theme/engine/css-injector';
@@ -10,7 +10,6 @@ import './UserRoom.css';
 export function UserRoom() {
   const setSurface = useAppStore(s => s.setSurface);
   const currentUser = useUserProfileStore(s => s.currentUser);
-  const logout = useUserProfileStore(s => s.logout);
   const userName = useUserProfileStore(s => s.userName);
   const userAvatar = useUserProfileStore(s => s.userAvatar);
   const isGuest = useUserProfileStore(s => s.isGuest);
@@ -46,7 +45,8 @@ export function UserRoom() {
   }, [setSurface]);
 
   const handleLogout = () => {
-    logout();
+    // Сессия живёт на сервере (KV + httpOnly cookie) — сносим и её, не только стор
+    void authService.logout();
     setSurface('welcome');
   };
 

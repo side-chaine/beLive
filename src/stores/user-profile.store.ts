@@ -203,7 +203,9 @@ export const useUserProfileStore = create<UserProfileStoreState>()(
       currentUserId: state.currentUserId,
       isOnboarded: state.isOnboarded,
       showOnboarding: state.showOnboarding,
-      currentUser: state.currentUser,
+      // Токен НЕ персистим: он живёт 15 минут, а сессию держит httpOnly cookie
+      // (refresh через /auth/refresh на старте приложения).
+      currentUser: state.currentUser ? { ...state.currentUser, authToken: '' } : null,
       isLoggedIn: state.isLoggedIn,
       isGuest: state.isGuest,
       isReturning: state.isReturning,
