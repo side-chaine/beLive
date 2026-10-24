@@ -22,12 +22,14 @@ export function BeLiveButton() {
       onClick={() => setAppMode(isOpen ? 'studio' : 'feed')}
     >
       <div className={styles['bl-border']} ref={borderRef} />
+      <div className={styles['bl-glow']} />
       <div className={styles['bl-inner']}>
         <span className={`${styles['letter']} ${styles['letter-b']}`}>b</span>
         <span className={`${styles['letter']} ${styles['letter-e']}`}>e</span>
         <span className={`${styles['letter']} ${styles['letter-L']}`}>L</span>
         <span className={`${styles['letter']} ${styles['letter-ive']}`}>ive</span>
       </div>
+      <div className={styles['bl-reflection']} />
     </div>
   );
 }
