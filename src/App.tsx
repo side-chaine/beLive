@@ -140,6 +140,7 @@ export default function App() {
   // Auth check
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    let stopKeepAlive: (() => void) | undefined;
 
     if (params.has('auth')) {
       authService.handleCallback(params).then(async (data) => {
@@ -162,7 +163,11 @@ export default function App() {
     authService.checkExistingAuth().then(isValid => {
       useAppStore.getState().setSurface(isValid ? 'app' : 'welcome');
       useAppStore.getState().setAuthChecked(true);
+      // JWT живёт 15 минут — продлеваем заранее, чтобы API не падал с 401
+      if (isValid) stopKeepAlive = authService.startSessionKeepAlive();
     });
+
+    return () => stopKeepAlive?.();
   }, []);
 
   // Auto-catalog

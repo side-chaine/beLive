@@ -79,19 +79,7 @@ export const authService = {
 
     const session = await this.refreshSession();
     if (session) {
-      if (!store.currentUser || store.currentUser.isGuest) {
-        store.createOAuthProfile({
-          name: session.user.name,
-          email: session.user.email,
-          avatarUrl: session.user.avatar || undefined,
-          serverId: session.user.sub,
-          authToken: session.jwt,
-        });
-      } else {
-        useUserProfileStore.setState({
-          currentUser: { ...store.currentUser, authToken: session.jwt },
-        });
-      }
+      await this.applySession(session);
       return true;
     }
 
@@ -102,9 +90,49 @@ export const authService = {
     return this._isTokenValid(store.currentUser.authToken || '');
   },
 
+  /** Кладём свежий токен в стор (профиль пересоздаём только гостю/пустому). */
+  async applySession(session: RefreshResponse): Promise<void> {
+    const { useUserProfileStore } = await import('../stores/user-profile.store');
+    const store = useUserProfileStore.getState();
+    if (!store.currentUser || store.currentUser.isGuest) {
+      store.createOAuthProfile({
+        name: session.user.name,
+        email: session.user.email,
+        avatarUrl: session.user.avatar || undefined,
+        serverId: session.user.sub,
+        authToken: session.jwt,
+      });
+      return;
+    }
+    useUserProfileStore.setState({
+      currentUser: { ...store.currentUser, authToken: session.jwt },
+    });
+  },
+
+  /**
+   * Тихий keep-alive: JWT живёт 15 минут, поэтому обновляем заранее —
+   * иначе при живой сессии API начнёт отвечать 401 через четверть часа.
+   * Возвращает функцию остановки.
+   */
+  startSessionKeepAlive(intervalMs = 12 * 60 * 1000): () => void {
+    const tick = async () => {
+      if (document.visibilityState === 'hidden') return;
+      const session = await this.refreshSession();
+      if (session) await this.applySession(session);
+    };
+    const timer = window.setInterval(() => { void tick(); }, intervalMs);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void tick();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  },
+
   /** Выход: сносим серверную сессию (KV + cookie) и локальный профиль. */
-  async logout(): Promise<void> {
-    try {
+  async logout(): Promise<void> {    try {
       await fetch(`${AUTH_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
     } catch (e) {
       console.warn('[auth] logout request failed:', e);
