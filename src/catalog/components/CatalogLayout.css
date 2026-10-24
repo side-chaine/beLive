@@ -51,3 +51,62 @@
   .bl-catalog-grid::-webkit-scrollbar { display: none; }
   .bl-catalog-col { min-width: 100vw; scroll-snap-align: center; }
 }
+
+/* ── Строка трека в каталоге ──────────────────────────────────────────────
+   Строка — div (не <button>), поэтому каретку и выделение гасим явно.
+   Кликабельна ВСЯ строка: обложка, название, пустые зоны. */
+.bl-track-row {
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  caret-color: transparent;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color .16s ease, border-color .16s ease, transform .12s ease;
+}
+.bl-track-row:hover {
+  background-color: rgba(245, 158, 11, .10) !important;
+  border-color: rgba(245, 158, 11, .40) !important;
+}
+.bl-track-row:active { transform: scale(.996); }
+.bl-track-row:focus-visible {
+  outline: 2px solid #F59E0B;
+  outline-offset: 2px;
+}
+
+/* обложка: затемнение + play по ховеру */
+.bl-track-cover {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.bl-track-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 8, 14, .55);
+  opacity: 0;
+  transition: opacity .16s ease;
+  pointer-events: none;
+}
+.bl-track-play {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  color: #fff;
+  opacity: 0;
+  transform: translateX(1px);
+  transition: opacity .16s ease, transform .16s ease;
+  pointer-events: none;
+}
+.bl-track-row:hover .bl-track-cover::after,
+.bl-track-row:hover .bl-track-play { opacity: 1; }
+.bl-track-row:hover .bl-track-play { transform: translateX(0); }
+
+/* экшены в строке — над ними курсор и они не запускают трек */
+.bl-track-actions { display: flex; gap: 1px; flex-shrink: 0; }
+.bl-track-actions button:hover { opacity: 1 !important; transform: scale(1.12); }
+.bl-track-actions button { transition: opacity .15s ease, transform .12s ease; }

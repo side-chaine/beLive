@@ -362,15 +362,28 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
             return (
               <div
                 key={t.id ?? i}
+                role="button"
+                tabIndex={0}
+                aria-label={`Воспроизвести ${lb}`}
+                className="bl-track-row"
+                onClick={() => play(t.index)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    play(t.index);
+                  }
+                }}
                 style={{
                   display: 'flex', alignItems: 'center', padding: '6px 10px', borderRadius: T.r,
                   marginBottom: 2, background: a ? T.orangeD : T.surface,
                   border: `1px solid ${a ? T.orange + '22' : T.border}`, cursor: 'pointer',
                 }}
               >
-                <CoverArt url={t.coverArtUrl} title={t.title} size={32} borderRadius={6} />
+                <span className="bl-track-cover">
+                  <CoverArt url={t.coverArtUrl} title={t.title} size={32} borderRadius={6} />
+                  <span className="bl-track-play" aria-hidden="true">▶</span>
+                </span>
                 <span
-                  onClick={() => play(t.index)}
                   style={{
                     flex: 1, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap', color: a ? T.orange : T.text, marginLeft: 8,
@@ -389,9 +402,9 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
                   if (ft?.vocalsData || sc === 2) return <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3, border: '1px solid #FF8C0066', color: '#FF8C00', letterSpacing: '0.05em', flexShrink: 0, marginLeft: 6 }}>‹ DUO ›</span>;
                   return null;
                 })()}
-                <div style={{ display: 'flex', gap: 1, flexShrink: 0 }}>
-                  {!inMy && <IB c={T.green} onClick={() => useCatalogStore.getState().addToMyMusic(Number(t.id))}>+</IB>}
-                  <IB c={T.red} onClick={() => del(t.id, lb)}>✕</IB>
+                <div className="bl-track-actions">
+                  {!inMy && <IB c={T.green} onClick={(e) => { e.stopPropagation(); useCatalogStore.getState().addToMyMusic(Number(t.id)); }}>+</IB>}
+                  <IB c={T.red} onClick={(e) => { e.stopPropagation(); del(t.id, lb); }}>✕</IB>
                 </div>
               </div>
             );
