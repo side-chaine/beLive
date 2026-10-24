@@ -21,8 +21,11 @@ export function WelcomePage() {
           Войти через Google
         </button>
 
-        <button className="bl-welcome__vk-btn" disabled>
-          VK Войти через VK
+        <button className="bl-welcome__vk-btn" onClick={() => authService.initiateVKOAuth()}>
+          <svg className="bl-welcome__vk-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path fill="#0077FF" d="M12.8 18.4c-5.06 0-8.2-3.5-8.33-9.3h2.62c.09 4.26 2.03 6.06 3.5 6.44V9.1h2.47v3.68c1.45-.16 2.96-1.83 3.47-3.68h2.46c-.39 2.28-2.03 3.95-3.19 4.64 1.16.56 3.03 2.01 3.74 4.66h-2.71c-.56-1.78-1.94-3.16-3.77-3.35v3.35h-.26z"/>
+          </svg>
+          Войти через VK
         </button>
 
         <button className="bl-welcome__skip-btn" onClick={() => authService.skipAuth()}>

@@ -59,8 +59,16 @@
   background: rgba(255,255,255,0.08); color: #fff;
   font-size: 1rem; font-weight: 500;
   width: 100%; justify-content: center;
-  opacity: 0.3; cursor: not-allowed;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.12s ease;
 }
+
+.bl-welcome__vk-btn:hover {
+  background: rgba(0, 119, 255, 0.18);
+  border-color: rgba(0, 119, 255, 0.55);
+}
+
+.bl-welcome__vk-btn:active { transform: scale(0.99); }
 
 .bl-welcome__skip-btn {
   background: none; border: none;

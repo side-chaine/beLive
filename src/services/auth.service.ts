@@ -48,6 +48,12 @@ export const authService = {
     window.location.href = `${AUTH_URL}/auth/google`;
   },
 
+  /** Вход через VK ID — основной путь для РФ, где Google OAuth недоступен. */
+  async initiateVKOAuth(): Promise<void> {
+    if (!AUTH_URL) throw new Error('Auth not configured');
+    window.location.href = `${AUTH_URL}/auth/vk`;
+  },
+
   /**
    * Молча продлить сессию по httpOnly cookie.
    * Возвращает свежий короткий JWT или null, если сессии нет/она протухла.
