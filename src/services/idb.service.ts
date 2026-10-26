@@ -129,123 +129,146 @@ let _dbPromise: Promise<IDBDatabase> | null = null;
 // MR-3b: warn о блокировке — один раз за жизнь страницы
 let _blockWarned = false;
 
-// 20s: блокировка апгрейда (другая вкладка со старой схемой) — не фейлим
-// мгновенно, а даём окно на закрытие блокера; onsuccess принимается и поздно.
-const OPEN_TIMEOUT_MS = 20000;
+// MR-IDB-UNBLOCK: одна попытка = таймаут 15s; снаружи ретрай-цикл (4×15s ≈ 1 мин).
+// Блокер (вкладка со старой схемой, без onversionchange) не должен убивать все
+// операции мгновенно: пока попытки продолжаются, закрытие блокера завершает апгрейд.
+const OPEN_TIMEOUT_MS = 15000;
+const OPEN_RETRIES = 4;
+const RETRY_DELAY_MS = 2500;
 
 let _versionRetried = false; // MR-4a Q5: ретрай без pinned-версии — один раз
 
-function _getDB(): Promise<IDBDatabase> {
-  if (_db) return Promise.resolve(_db);
+function _openOnce(version: number | undefined): Promise<IDBDatabase> {
+  return new Promise<IDBDatabase>((resolve, reject) => {
+    // version===undefined → open без пина: апгрейд не запускается, блокировка невозможна;
+    // браузер отдаёт соединение с фактической на диске версией
+    const req =
+      version === undefined
+        ? indexedDB.open(DB_NAME)
+        : indexedDB.open(DB_NAME, version);
 
-  const p = new Promise<IDBDatabase>((resolve, reject) => {
-    // version===undefined → open без пина: браузер отдаёт фактическую версию
-    const attempt = (version: number | undefined): void => {
-      const req =
-        version === undefined
-          ? indexedDB.open(DB_NAME)
-          : indexedDB.open(DB_NAME, version);
+    const openTimer = setTimeout(() => {
+      reject(new Error('[IDB] Upgrade blocked — другая вкладка beLive держит базу в старой схеме. Закрой все вкладки beLive (или перезапусти Chrome) и повтори действие.'));
+    }, OPEN_TIMEOUT_MS);
 
-      // ONBLOCKED (009-1): blocked сам по себе НЕ отклоняет и НЕ обнуляет промис.
-      // Ждём до 3с — затем reject + сброс (ретрай следующим вызовом).
-      // Поздний onsuccess всё равно принимается: _db выставляется в onsuccess.
-      const openTimer = setTimeout(() => {
-        if (!_blockWarned) {
-          _blockWarned = true;
-          console.warn('[IDB] Open blocked > 3s — journal degraded to no-op, retry on next call');
-        }
-        _dbPromise = null;
-        reject(new Error('[IDB] Database upgrade blocked (timeout 3s)'));
-      }, OPEN_TIMEOUT_MS);
+    req.onupgradeneeded = (e) => {
+      if (import.meta.env.DEV) console.log(`[IDB] Upgrade: v${e.oldVersion} → v${e.newVersion}`);
+      const db = (e.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains('tracks')) {
+        const s = db.createObjectStore('tracks', { keyPath: 'id' });
+        s.createIndex('title', 'title', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('app_state'))
+        db.createObjectStore('app_state', { keyPath: 'key' });
+      if (!db.objectStoreNames.contains('temp_audio_files'))
+        db.createObjectStore('temp_audio_files', { keyPath: 'id' });
+      if (!db.objectStoreNames.contains('my_music'))
+        db.createObjectStore('my_music', { keyPath: 'trackId' });
 
-      req.onupgradeneeded = (e) => {
-        if (import.meta.env.DEV) console.log(`[IDB] Upgrade: v${e.oldVersion} → v${e.newVersion}`);
-        const db = (e.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains('tracks')) {
-          const s = db.createObjectStore('tracks', { keyPath: 'id' });
-          s.createIndex('title', 'title', { unique: false });
-        }
-        if (!db.objectStoreNames.contains('app_state'))
-          db.createObjectStore('app_state', { keyPath: 'key' });
-        if (!db.objectStoreNames.contains('temp_audio_files'))
-          db.createObjectStore('temp_audio_files', { keyPath: 'id' });
-        if (!db.objectStoreNames.contains('my_music'))
-          db.createObjectStore('my_music', { keyPath: 'trackId' });
+      // TC-AUTH-003: users store
+      if (!db.objectStoreNames.contains('users')) {
+        const userStore = db.createObjectStore('users', { keyPath: 'id' });
+        userStore.createIndex('name', 'name', { unique: false });
+        userStore.createIndex('createdAt', 'createdAt', { unique: false });
+      }
 
-        // TC-AUTH-003: users store
-        if (!db.objectStoreNames.contains('users')) {
-          const userStore = db.createObjectStore('users', { keyPath: 'id' });
-          userStore.createIndex('name', 'name', { unique: false });
-          userStore.createIndex('createdAt', 'createdAt', { unique: false });
-        }
+      // MR-1: practice journal (этап 1, без UI)
+      if (!db.objectStoreNames.contains('practice_log')) {
+        const s = db.createObjectStore('practice_log', { keyPath: 'id' });
+        s.createIndex('day', 'day', { unique: false });
+        s.createIndex('sessionId', 'sessionId', { unique: false });
+        s.createIndex('kind', 'kind', { unique: false });
+        s.createIndex('ownerId', 'ownerId', { unique: false });
+      }
 
-        // MR-1: practice journal (этап 1, без UI)
-        if (!db.objectStoreNames.contains('practice_log')) {
-          const s = db.createObjectStore('practice_log', { keyPath: 'id' });
-          s.createIndex('day', 'day', { unique: false });
-          s.createIndex('sessionId', 'sessionId', { unique: false });
-          s.createIndex('kind', 'kind', { unique: false });
-          s.createIndex('ownerId', 'ownerId', { unique: false });
-        }
+      // TC-AUTH-003: userId index on tracks (for existing databases)
+      const trackStore = req.transaction?.objectStore('tracks');
+      if (trackStore && !trackStore.indexNames.contains('userId')) {
+        trackStore.createIndex('userId', 'userId', { unique: false });
+      }
 
-        // TC-AUTH-003: userId index on tracks (for existing databases)
-        const trackStore = req.transaction?.objectStore('tracks');
-        if (trackStore && !trackStore.indexNames.contains('userId')) {
-          trackStore.createIndex('userId', 'userId', { unique: false });
-        }
-
-
-
-        if (import.meta.env.DEV) console.log('[IDB] Upgrade complete, stores:', [...db.objectStoreNames]);
-      };
-
-      req.onsuccess = () => {
-        clearTimeout(openTimer);
-        _db = req.result;
-
-        // Handle version change from another tab — close gracefully
-        _db.onversionchange = () => {
-          console.warn('[IDB] Version change requested — closing connection');
-          _db?.close();
-          _db = null;
-          _dbPromise = null;
-        };
-
-        resolve(_db!);
-      };
-
-      req.onerror = () => {
-        clearTimeout(openTimer);
-        const err = req.error as DOMException | null;
-        // MR-4a Q5: VersionError — на диске версия ВПЕРЕДИ пина (застрявшая
-        // вкладка/деплой). Один ретрай open без версии: браузер отдаст
-        // фактическую (схема уже новее, сторы существуют) — журнал не глохнет.
-        if (err?.name === 'VersionError' && !_versionRetried) {
-          _versionRetried = true;
-          console.warn('[IDB] VersionError — retry open without pinned version');
-          attempt(undefined);
-          return;
-        }
-        console.error('[IDB] Open failed:', err);
-        _dbPromise = null; // Reset so next call can retry
-        reject(err);
-      };
-
-      req.onblocked = () => {
-        // warn only — решает таймаут (не reject, не null здесь)
-        if (!_blockWarned) {
-          _blockWarned = true;
-          console.warn('[IDB] Upgrade blocked — close other tabs with this app open (waiting up to 3s)');
-        }
-      };
+      if (import.meta.env.DEV) console.log('[IDB] Upgrade complete, stores:', [...db.objectStoreNames]);
     };
 
-    attempt(DB_VERSION);
-  });
+    req.onsuccess = () => {
+      clearTimeout(openTimer);
+      _db = req.result;
+      // Handle version change from another tab — close gracefully
+      _db.onversionchange = () => {
+        console.warn('[IDB] Version change requested — closing connection');
+        _db?.close();
+        _db = null;
+        _dbPromise = null;
+      };
+      resolve(_db!);
+    };
 
-  _dbPromise = p;
-  // MR-3b: глушитель — reject не всплывает как Uncaught; вызывающие ошибку по-прежнему получают
-  p.catch(() => {});
+    req.onerror = () => {
+      clearTimeout(openTimer);
+      reject(req.error);
+    };
+
+    req.onblocked = () => {
+      // warn only — решает таймаут и ретрай-цикл (не reject, не null здесь)
+      if (!_blockWarned) {
+        _blockWarned = true;
+        console.warn('[IDB] Upgrade blocked — другая вкладка beLive держит БД в старой схеме. Ждём… закрой её — апгрейд пройдёт сам.');
+      }
+    };
+  });
+}
+
+/** Фактическая версия БД на диске (без открытия соединения). */
+async function _actualVersion(): Promise<number | undefined> {
+  try {
+    const dbs = await (indexedDB as any).databases?.();
+    return dbs?.find((d: any) => d.name === DB_NAME)?.version;
+  } catch {
+    return undefined; // API нет / ошибка → откроемся с пином, как раньше
+  }
+}
+
+/** Ретрай-цикл: префикс-проверка версии + до OPEN_RETRIES попыток с паузой. */
+async function _openWithRetries(): Promise<IDBDatabase> {
+  const actual = await _actualVersion();
+  let lastErr: any;
+
+  for (let i = 0; i < OPEN_RETRIES; i++) {
+    try {
+      // Схема на диске уже актуальна (или VersionError ранее) → open БЕЗ пина:
+      // апгрейд не запускается → этот путь не может быть заблокирован.
+      const version =
+        (actual !== undefined && actual >= DB_VERSION) || _versionRetried
+          ? undefined
+          : DB_VERSION;
+      return await _openOnce(version);
+    } catch (err: any) {
+      // MR-4a Q5: версия на диске ВПЕРЕДИ пина → один ретрай без пина
+      if (err?.name === 'VersionError' && !_versionRetried) {
+        _versionRetried = true;
+        console.warn('[IDB] VersionError — retry open without pinned version');
+        continue;
+      }
+      lastErr = err;
+      if (i < OPEN_RETRIES - 1) {
+        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+      }
+    }
+  }
+  throw lastErr;
+}
+
+function _getDB(): Promise<IDBDatabase> {
+  if (_db) return Promise.resolve(_db);
+  if (!_dbPromise) {
+    const p = _openWithRetries();
+    // MR-3b: глушитель — reject не всплывает как Uncaught; вызывающие ошибку по-прежнему получают
+    p.catch(() => {});
+    _dbPromise = p;
+    p.finally(() => {
+      if (_dbPromise === p) _dbPromise = null; // следующий вызов стартует свежий цикл
+    });
+  }
   return _dbPromise;
 }
 
