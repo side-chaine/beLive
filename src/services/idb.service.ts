@@ -136,7 +136,8 @@ const OPEN_TIMEOUT_MS = 15000;
 const OPEN_RETRIES = 4;
 const RETRY_DELAY_MS = 2500;
 
-let _versionRetried = false; // MR-4a Q5: ретрай без pinned-версии — один раз
+// MR-4a Q5 (история): ретрай без пина больше не нужен — _getDB всегда открывается без пина,
+// VersionError на безпиновом open невозможен.
 
 function _openOnce(version: number | undefined): Promise<IDBDatabase> {
   return new Promise<IDBDatabase>((resolve, reject) => {
@@ -194,12 +195,7 @@ function _openOnce(version: number | undefined): Promise<IDBDatabase> {
       clearTimeout(openTimer);
       _db = req.result;
       // Handle version change from another tab — close gracefully
-      _db.onversionchange = () => {
-        console.warn('[IDB] Version change requested — closing connection');
-        _db?.close();
-        _db = null;
-        _dbPromise = null;
-      };
+      _db.onversionchange = _closeConn;
       resolve(_db!);
     };
 
@@ -218,50 +214,54 @@ function _openOnce(version: number | undefined): Promise<IDBDatabase> {
   });
 }
 
-/** Фактическая версия БД на диске (без открытия соединения). */
-async function _actualVersion(): Promise<number | undefined> {
-  try {
-    const dbs = await (indexedDB as any).databases?.();
-    return dbs?.find((d: any) => d.name === DB_NAME)?.version;
-  } catch {
-    return undefined; // API нет / ошибка → откроемся с пином, как раньше
-  }
+function _closeConn(): void {
+  const conn = _db;
+  console.warn('[IDB] Version change requested — closing connection');
+  conn?.close();
+  _db = null;
+  _dbPromise = null;
 }
 
-/** Ретрай-цикл: префикс-проверка версии + до OPEN_RETRIES попыток с паузой. */
-async function _openWithRetries(): Promise<IDBDatabase> {
-  const actual = await _actualVersion();
-  let lastErr: any;
-
+/**
+ * Фоновый апгрейд до актуальной схемы. Никто не ждёт.
+ * Каждый цикл: пауза → open с пином. Если ghost-вкладка (старый код)
+ * закроется — апгрейд пройдёт, журнал оживёт без перезагрузки.
+ */
+async function _upgradeInBackground(): Promise<void> {
   for (let i = 0; i < OPEN_RETRIES; i++) {
+    await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+    if (_db?.objectStoreNames.contains('practice_log')) return; // уже актуально
     try {
-      // Схема на диске уже актуальна (или VersionError ранее) → open БЕЗ пина:
-      // апгрейд не запускается → этот путь не может быть заблокирован.
-      const version =
-        (actual !== undefined && actual >= DB_VERSION) || _versionRetried
-          ? undefined
-          : DB_VERSION;
-      return await _openOnce(version);
-    } catch (err: any) {
-      // MR-4a Q5: версия на диске ВПЕРЕДИ пина → один ретрай без пина
-      if (err?.name === 'VersionError' && !_versionRetried) {
-        _versionRetried = true;
-        console.warn('[IDB] VersionError — retry open without pinned version');
-        continue;
-      }
-      lastErr = err;
-      if (i < OPEN_RETRIES - 1) {
-        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
-      }
+      console.info('[IDB] Фоновый апгрейд: попытка v' + DB_VERSION + '…');
+      const db = await _openOnce(DB_VERSION);
+      console.info('[IDB] Фоновый апгрейд OK — journal активен. Stores:', [...db.objectStoreNames]);
+      // соединение с новой схемой становится рабочим
+      db.onversionchange = _closeConn;
+      _db = db;
+      return;
+    } catch {
+      // блокер всё ещё жив — повторим на следующем цикле
     }
   }
-  throw lastErr;
+  console.warn(
+    '[IDB] Апгрейд не прошёл за ~1 мин — сайт работает на старой схеме, журнал в no-op. ' +
+      'Перезапусти Chrome (полный выход), чтобы закрыть вкладку-блокер со старым кодом.'
+  );
 }
 
 function _getDB(): Promise<IDBDatabase> {
   if (_db) return Promise.resolve(_db);
   if (!_dbPromise) {
-    const p = _openWithRetries();
+    const p = _openOnce(undefined); // БЕЗ ПИНА: не блокируется никогда
+    p.then((db) => {
+      _db = db;
+      _db.onversionchange = _closeConn; // не мешаем апгрейдам (в т.ч. своему)
+      // Схема отстаёт? Апгрейд — В ФОНЕ: каталог и загрузки не ждут ghost-вкладку,
+      // журнал деградирует до no-op (рассчитан на это с MR-3b).
+      if (!db.objectStoreNames.contains('practice_log')) {
+        _upgradeInBackground();
+      }
+    });
     // MR-3b: глушитель — reject не всплывает как Uncaught; вызывающие ошибку по-прежнему получают
     p.catch(() => {});
     _dbPromise = p;
