@@ -269,7 +269,7 @@ export default {
         let sentDone = false; // NEW: флаг для предотвращения двойного done
         
         // Start event
-        await writer.write(enc.encode(`data: ${JSON.stringify({ type: 'start', model: body.model, timestamp: Date.now() })}}\n\n`));
+        await writer.write(enc.encode(`data: ${JSON.stringify({ type: 'start', model: body.model, timestamp: Date.now() })}\n\n`));
 
         try {
           const reader = upstream.body!.getReader();
@@ -294,7 +294,7 @@ export default {
                 const token = parsed.choices?.[0]?.delta?.content ?? '';
                 if (token) {
                   fullText += token;
-                  await writer.write(enc.encode(`data: ${JSON.stringify({ type: 'token', data: token })}}\n\n`));
+                  await writer.write(enc.encode(`data: ${JSON.stringify({ type: 'token', data: token })}\n\n`));
                 }
               } catch (e) {
                 console.warn('Failed to parse SSE line:', line, e);
@@ -303,12 +303,12 @@ export default {
           }
           // NEW: Финальный done, если ещё не отправлен (защита от двойного done)
           if (!sentDone) {
-            await writer.write(enc.encode(`data: ${JSON.stringify({ type: 'done', data: { fullText: fullText, usage: usage } })}}\n\n`));
+            await writer.write(enc.encode(`data: ${JSON.stringify({ type: 'done', data: { fullText: fullText, usage: usage } })}\n\n`));
             sentDone = true;
           }
         } catch (e: any) {
           console.error('Stream processing error:', e);
-          await writer.write(enc.encode(`data: ${JSON.stringify({ type: 'error', data: { code: 'STREAM_ERROR', message: e?.message || String(e) } })}}\n\n`));
+          await writer.write(enc.encode(`data: ${JSON.stringify({ type: 'error', data: { code: 'STREAM_ERROR', message: e?.message || String(e) } })}\n\n`));
         } finally {
           await writer.close();
         }
@@ -395,6 +395,11 @@ export default {
       const auth = await getAuthCtx(request, env);
       if (!auth) {
         return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      // Только основатель: иначе любой юзер мог перезаписать оператор-промпт,
+      // который затем инъектится в чужие чаты (prompt injection).
+      if (!env.FOUNDER_SUB || auth.providerSub !== env.FOUNDER_SUB) {
+        return jsonResponse({ error: 'Forbidden' }, 403, origin, allowedOrigins);
       }
       const { prompt } = await request.json() as { prompt: string };
       if (!prompt || typeof prompt !== 'string') {
