@@ -8,7 +8,9 @@ import type { Playlist } from '../catalog/types';
 import type { StemAutomationData, StemDisplayOrder } from '../stem/stemTypes';
 
 const DB_NAME = (globalThis as any).__DB_NAME || 'TextAppDB';
-const DB_VERSION = 10;
+// MR-IDB-UNBLOCK: версия TextAppDB больше не пинуется при open (см. _getDB).
+// История схем: последняя v10 (practice_log вынесен в beLive_journal в
+// MR-IDB-UNBLOCK); остальные сторы существуют с v0.2/v9, у свежих баз v1.
 
 // ── Types ──────────────────────────────────────────────
 
@@ -126,30 +128,22 @@ export interface SceneMap {
 
 let _db: IDBDatabase | null = null;
 let _dbPromise: Promise<IDBDatabase> | null = null;
-// MR-3b: warn о блокировке — один раз за жизнь страницы
-let _blockWarned = false;
-
-// MR-IDB-UNBLOCK: одна попытка = таймаут 15s; снаружи ретрай-цикл (4×15s ≈ 1 мин).
-// Блокер (вкладка со старой схемой, без onversionchange) не должен убивать все
-// операции мгновенно: пока попытки продолжаются, закрытие блокера завершает апгрейд.
+// Страховка: безпиновый open не должен занимать 15s (только если браузер
+// зачем-то Queued его за RUNNING-апгрейдом — тогда честно отдаём ошибку).
 const OPEN_TIMEOUT_MS = 15000;
-const OPEN_RETRIES = 4;
-const RETRY_DELAY_MS = 2500;
 
 // MR-4a Q5 (история): ретрай без пина больше не нужен — _getDB всегда открывается без пина,
 // VersionError на безпиновом open невозможен.
 
-function _openOnce(version: number | undefined): Promise<IDBDatabase> {
+function _openOnce(): Promise<IDBDatabase> {
   return new Promise<IDBDatabase>((resolve, reject) => {
-    // version===undefined → open без пина: апгрейд не запускается, блокировка невозможна;
-    // браузер отдаёт соединение с фактической на диске версией
-    const req =
-      version === undefined
-        ? indexedDB.open(DB_NAME)
-        : indexedDB.open(DB_NAME, version);
+    // open БЕЗ ПИНА: апгрейд никогда не запрашивается → блокировка невозможна.
+    // Браузер отдаёт соединение с фактической на диске версией; для НЕСУЩЕСТВУЮЩЕЙ
+    // базы создаёт v1 и запускает onupgradeneeded (схема ниже).
+    const req = indexedDB.open(DB_NAME);
 
     const openTimer = setTimeout(() => {
-      reject(new Error('[IDB] Upgrade blocked — другая вкладка beLive держит базу в старой схеме. Закрой все вкладки beLive (или перезапусти Chrome) и повтори действие.'));
+      reject(new Error('[IDB] Open не завершился за 15s — закрой другие вкладки beLive и повтори действие.'));
     }, OPEN_TIMEOUT_MS);
 
     req.onupgradeneeded = (e) => {
@@ -173,15 +167,10 @@ function _openOnce(version: number | undefined): Promise<IDBDatabase> {
         userStore.createIndex('createdAt', 'createdAt', { unique: false });
       }
 
-      // MR-1: practice journal (этап 1, без UI)
-      if (!db.objectStoreNames.contains('practice_log')) {
-        const s = db.createObjectStore('practice_log', { keyPath: 'id' });
-        s.createIndex('day', 'day', { unique: false });
-        s.createIndex('sessionId', 'sessionId', { unique: false });
-        s.createIndex('kind', 'kind', { unique: false });
-        s.createIndex('ownerId', 'ownerId', { unique: false });
-      }
-
+      // ПРЕКЦИЯ (MR-IDB-UNBLOCK): practice_log живёт в beLive_journal; здесь оставлен
+      // только ретро-патч для баз, апгрейднутых в v10 до выноса (ради userId-индекса
+      // треков — он вносился в той же волне). Свежая база создаётся на v1 со всем
+      // набором сторов; practice_log в TextAppDB больше никуда не пишется.
       // TC-AUTH-003: userId index on tracks (for existing databases)
       const trackStore = req.transaction?.objectStore('tracks');
       if (trackStore && !trackStore.indexNames.contains('userId')) {
@@ -203,14 +192,6 @@ function _openOnce(version: number | undefined): Promise<IDBDatabase> {
       clearTimeout(openTimer);
       reject(req.error);
     };
-
-    req.onblocked = () => {
-      // warn only — решает таймаут и ретрай-цикл (не reject, не null здесь)
-      if (!_blockWarned) {
-        _blockWarned = true;
-        console.warn('[IDB] Upgrade blocked — другая вкладка beLive держит БД в старой схеме. Ждём… закрой её — апгрейд пройдёт сам.');
-      }
-    };
   });
 }
 
@@ -222,46 +203,14 @@ function _closeConn(): void {
   _dbPromise = null;
 }
 
-/**
- * Фоновый апгрейд до актуальной схемы. Никто не ждёт.
- * Каждый цикл: пауза → open с пином. Если ghost-вкладка (старый код)
- * закроется — апгрейд пройдёт, журнал оживёт без перезагрузки.
- */
-async function _upgradeInBackground(): Promise<void> {
-  for (let i = 0; i < OPEN_RETRIES; i++) {
-    await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
-    if (_db?.objectStoreNames.contains('practice_log')) return; // уже актуально
-    try {
-      console.info('[IDB] Фоновый апгрейд: попытка v' + DB_VERSION + '…');
-      const db = await _openOnce(DB_VERSION);
-      console.info('[IDB] Фоновый апгрейд OK — journal активен. Stores:', [...db.objectStoreNames]);
-      // соединение с новой схемой становится рабочим
-      db.onversionchange = _closeConn;
-      _db = db;
-      return;
-    } catch {
-      // блокер всё ещё жив — повторим на следующем цикле
-    }
-  }
-  console.warn(
-    '[IDB] Апгрейд не прошёл за ~1 мин — сайт работает на старой схеме, журнал в no-op. ' +
-      'Перезапусти Chrome (полный выход), чтобы закрыть вкладку-блокер со старым кодом.'
-  );
-}
-
 function _getDB(): Promise<IDBDatabase> {
   if (_db) return Promise.resolve(_db);
   if (!_dbPromise) {
-    const p = _openOnce(undefined); // БЕЗ ПИНА: не блокируется никогда
-    p.then((db) => {
-      _db = db;
-      _db.onversionchange = _closeConn; // не мешаем апгрейдам (в т.ч. своему)
-      // Схема отстаёт? Апгрейд — В ФОНЕ: каталог и загрузки не ждут ghost-вкладку,
-      // журнал деградирует до no-op (рассчитан на это с MR-3b).
-      if (!db.objectStoreNames.contains('practice_log')) {
-        _upgradeInBackground();
-      }
-    });
+    // open БЕЗ ПИНА — всегда: этот путь не может быть заблокирован и не
+    // становится в очередь за апгрейдами. Каталог, загрузки и MVSEP работают
+    // на любой версии диска — ghost-вкладка со старым кодом не роняет их.
+    // practice_log с этих пор живёт в beLive_journal (см. exports внизу файла).
+    const p = _openOnce();
     // MR-3b: глушитель — reject не всплывает как Uncaught; вызывающие ошибку по-прежнему получают
     p.catch(() => {});
     _dbPromise = p;
@@ -289,10 +238,58 @@ function _req<T>(request: IDBRequest<T>): Promise<T> {
   });
 }
 
-// ── Exports for practice journal (MR-1) ────────────────
+// ── Exports for practice journal (MR-1; MR-IDB-UNBLOCK: отдельная БД) ──
+
+/**
+ * Живёт В СВОЕЙ базе `beLive_journal` (прецедент — ScenesDB: «separate
+ * to avoid migration blocking»). Это единственный сторе, ради которого
+ * TextAppDB рос с v9 до v10; своя v1 создаётся мгновенно и НИКОГДА
+ * не блокируется ghost-вкладками. TextAppDB с этих пор не обязан
+ * содержать practice_log: v9-диски тоже валидны.
+ */
+const JOURNAL_DB_NAME = 'beLive_journal';
+const JOURNAL_STORE = 'practice_log';
+
+let _journalDb: IDBDatabase | null = null;
+let _journalDbPromise: Promise<IDBDatabase> | null = null;
+
+function _getJournalDB(): Promise<IDBDatabase> {
+  if (_journalDb) return Promise.resolve(_journalDb);
+
+  // open БЕЗ версии: new база создаётся на v1 со схемой ниже; заблокировать невозможно
+  const p = new Promise<IDBDatabase>((resolve, reject) => {
+    const req = indexedDB.open(JOURNAL_DB_NAME);
+
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(JOURNAL_STORE)) {
+        const s = db.createObjectStore(JOURNAL_STORE, { keyPath: 'id' });
+        s.createIndex('day', 'day', { unique: false });
+        s.createIndex('sessionId', 'sessionId', { unique: false });
+        s.createIndex('kind', 'kind', { unique: false });
+        s.createIndex('ownerId', 'ownerId', { unique: false });
+      }
+    };
+
+    req.onsuccess = () => {
+      _journalDb = req.result;
+      _journalDb.onversionchange = () => {
+        _journalDb?.close();
+        _journalDb = null;
+        _journalDbPromise = null;
+      };
+      resolve(_journalDb!);
+    };
+    req.onerror = () => reject(req.error);
+  });
+
+  p.catch(() => {}); // глушитель Uncaught
+  _journalDbPromise = p;
+  return _journalDbPromise;
+}
 
 export function getDB(): Promise<IDBDatabase> {
-  return _getDB();
+  return _getJournalDB();
 }
 
 export { _tx as tx, _req as req };
