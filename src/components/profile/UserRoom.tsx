@@ -1,10 +1,16 @@
 import { useEffect, useState, useRef } from 'react';
+import type { CSSProperties } from 'react';
 import { authService } from '../../services/auth.service';
 import { useAppStore } from '../../stores/app.store';
 import { useUserProfileStore } from '../../stores/user-profile.store';
+import { useCurrentTrackId } from '../../stores/track.store';
+import { usePracticeStore } from '../../stores/practice-session.store';
 import { useThemeStore } from '../../theme/store/theme-store';
 import { themeRegistry, getThemeById } from '../../theme/themes/index';
 import { applyTheme, applyMode } from '../../theme/engine/css-injector';
+import { WeekStrip } from './room/WeekStrip';
+import { ContinueCard } from './room/ContinueCard';
+import { useJournal } from './room/useJournal';
 import './UserRoom.css';
 
 export function UserRoom() {
@@ -13,8 +19,11 @@ export function UserRoom() {
   const userName = useUserProfileStore(s => s.userName);
   const userAvatar = useUserProfileStore(s => s.userAvatar);
   const isGuest = useUserProfileStore(s => s.isGuest);
+  const currentTrackId = useCurrentTrackId();
+  const { week, last, loading } = useJournal(currentUser?.id ?? 'guest');
   const [mvsepKeyInput, setMvsepKeyInput] = useState('');
   const [showMvsepKey, setShowMvsepKey] = useState(false);
+  const [mvsepOpen, setMvsepOpen] = useState(false);
   const mvsepKeyValue = useUserProfileStore(s => s.currentUser?.mvsepApiKey) || '';
 
   // Theme selector state
@@ -50,242 +59,218 @@ export function UserRoom() {
     setSurface('welcome');
   };
 
+  const handleContinue = () => {
+    if (!last?.scenarioId) return;
+    usePracticeStore.getState().startPractice(
+      last.scenarioId,
+      undefined,
+      undefined,
+      last.blockId ?? undefined,
+    );
+  };
+
+  const accent = getThemeById(activeThemeId).semantic.accentPrimary;
+
   const avatarContent = currentUser?.avatarUrl
     ? <img src={currentUser.avatarUrl} alt="" className="bl-userroom__avatar-img" />
     : <span className="bl-userroom__avatar-emoji">{userAvatar || '🎤'}</span>;
 
-  return (
-    <div className="bl-userroom-overlay" onClick={() => setSurface('app')}>
-      <div className="bl-userroom" onClick={e => e.stopPropagation()}>
-        <button className="bl-userroom__back" onClick={() => setSurface('app')}>
-          ← Назад
+  const providerLabel = currentUser?.authProvider === 'google' ? 'Google' : 'аккаунт';
+
+  const mvsepPanel = mvsepKeyValue ? (
+    <>
+      <div className="bl-userroom__mvsep-row">
+        <input
+          type={showMvsepKey ? 'text' : 'password'}
+          value={mvsepKeyValue}
+          readOnly
+          className="bl-userroom__mvsep-input"
+        />
+        <button
+          className="bl-userroom__mvsep-eye"
+          onClick={() => setShowMvsepKey(!showMvsepKey)}
+        >
+          {showMvsepKey ? '🙈' : '👁️'}
         </button>
+      </div>
+      <div className="bl-userroom__mvsep-ok">✅ Свой ключ — без лимита beLive</div>
+      <button
+        className="bl-userroom__mvsep-delete"
+        onClick={() => useUserProfileStore.getState().setMvsepApiKey(null)}
+      >
+        🗑️ Удалить ключ
+      </button>
+    </>
+  ) : (
+    <>
+      <input
+        type="text"
+        value={mvsepKeyInput}
+        onChange={(e) => setMvsepKeyInput(e.target.value)}
+        placeholder="Вставьте API ключ от mvsep.com"
+        className="bl-userroom__mvsep-input"
+      />
+      <button
+        className="bl-userroom__mvsep-save"
+        onClick={() => {
+          const key = mvsepKeyInput.trim();
+          if (key) {
+            useUserProfileStore.getState().setMvsepApiKey(key);
+            setMvsepKeyInput('');
+          }
+        }}
+        disabled={!mvsepKeyInput.trim()}
+      >
+        💾 Сохранить
+      </button>
+      <div className="bl-userroom__mvsep-hint">
+        Получите ключ на{' '}
+        <a href="https://mvsep.com/profile" target="_blank" rel="noopener" className="bl-userroom__mvsep-link">
+          mvsep.com/profile
+        </a>
+        <br />
+        Свой ключ — без лимита beLive (лимит MVSEP: ~49/день)
+      </div>
+    </>
+  );
 
-        {isGuest ? (
-          <div className="bl-userroom__guest-upgrade">
-            <div className="bl-userroom__guest-icon">🚀</div>
-            <h3 className="bl-userroom__guest-title">Зарегистрируйся!</h3>
-            <p className="bl-userroom__guest-desc">Статистика, прогресс, ИИ и сохранение данных</p>
-            <button
-              className="bl-userroom__google-btn"
-              onClick={() => authService.initiateGoogleOAuth()}
-            >
-              Войти через Google
+  return (
+    <div
+      className="bl-userroom-screen"
+      style={{ '--bl-room-accent': accent } as CSSProperties}
+    >
+      <div className="bl-userroom-scroll">
+        <div className="bl-userroom-content">
+          <div className="bl-userroom__topbar">
+            <button className="bl-userroom__back" onClick={() => setSurface('app')}>
+              ← В студию
             </button>
-          </div>
-        ) : (
-          <div className="bl-userroom__header">
-            <div className="bl-userroom__avatar">
-              {avatarContent}
+
+            <div className="bl-userroom__theme" ref={themeDropdownRef}>
+              <button
+                className="bl-userroom__theme-btn"
+                onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
+              >
+                <span className="bl-userroom__theme-dot" style={{ background: accent }} />
+                <span className="bl-userroom__theme-name">{getThemeById(activeThemeId).name}</span>
+                <span className="bl-userroom__theme-caret">▼</span>
+              </button>
+              {themeDropdownOpen && (
+                <div className="bl-userroom__theme-menu">
+                  {Object.values(themeRegistry).map(t => (
+                    <button
+                      key={t.id}
+                      className={
+                        t.id === activeThemeId
+                          ? 'bl-userroom__theme-item is-active'
+                          : 'bl-userroom__theme-item'
+                      }
+                      onClick={() => {
+                        useThemeStore.setState({ activeThemeId: t.id });
+                        applyTheme(t);
+                        applyMode(t, activeMode);
+                        setThemeDropdownOpen(false);
+                      }}
+                    >
+                      <span
+                        className="bl-userroom__theme-dot"
+                        style={{ background: t.semantic.accentPrimary }}
+                      />
+                      {t.name}
+                      {t.id === activeThemeId && (
+                        <span className="bl-userroom__theme-check">✓</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="bl-userroom__name">{currentUser?.name || userName}</div>
-            {currentUser?.email && (
-              <div className="bl-userroom__email">{currentUser.email}</div>
+          </div>
+
+          {/* ПРОФИЛЬ */}
+          <section className="bl-userroom__card bl-userroom__card--profile">
+            <div className="bl-userroom__profile-row">
+              <div className="bl-userroom__avatar">{avatarContent}</div>
+              <div className="bl-userroom__ident">
+                <div className="bl-userroom__name">
+                  {isGuest ? 'Гость' : (currentUser?.name || userName)}
+                </div>
+                {isGuest ? (
+                  <div className="bl-userroom__email">локальный профиль</div>
+                ) : (
+                  <>
+                    {currentUser?.email && (
+                      <div className="bl-userroom__email">{currentUser.email}</div>
+                    )}
+                    <span className="bl-userroom__chip">{providerLabel}</span>
+                  </>
+                )}
+              </div>
+            </div>
+            {isGuest ? (
+              <button
+                className="bl-userroom__google-btn"
+                onClick={() => authService.initiateGoogleOAuth()}
+              >
+                Войти через Google
+              </button>
+            ) : (
+              <button className="bl-userroom__logout" onClick={handleLogout}>
+                🚪 Выйти
+              </button>
             )}
-          </div>
-        )}
+          </section>
 
-        <div className="bl-userroom__section">
-          <div className="bl-userroom__section-title">Настройки</div>
-          <div className="bl-userroom__section-soon">скоро...</div>
-        </div>
-
-        {/* MVSEP API Key */}
-        <div className="bl-userroom__section">
-          <div className="bl-userroom__section-title">🔑 MVSEP API Key</div>
-          {mvsepKeyValue ? (
-            <div style={{ marginTop: 8 }}>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 }}>
-                <input
-                  type={showMvsepKey ? 'text' : 'password'}
-                  value={mvsepKeyValue}
-                  readOnly
-                  style={{
-                    flex: 1, padding: '6px 8px', borderRadius: 6,
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    background: 'rgba(255,255,255,0.05)', color: '#ccc',
-                    fontSize: 12, fontFamily: 'monospace', outline: 'none',
-                  }}
-                />
-                <button
-                  onClick={() => setShowMvsepKey(!showMvsepKey)}
-                  style={{
-                    padding: '4px 8px', borderRadius: 4,
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    background: 'transparent', color: '#888',
-                    fontSize: 11, cursor: 'pointer',
-                  }}
-                >
-                  {showMvsepKey ? '🙈' : '👁️'}
-                </button>
-              </div>
-              <div style={{ fontSize: 11, color: '#4ade80', marginBottom: 6 }}>
-                ✅ Свой ключ — без лимита beLive
-              </div>
-              <button
-                onClick={() => {
-                  useUserProfileStore.getState().setMvsepApiKey(null);
-                }}
-                style={{
-                  padding: '4px 10px', borderRadius: 4,
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  background: 'transparent', color: '#f97316',
-                  fontSize: 11, cursor: 'pointer',
-                }}
-              >
-                🗑️ Удалить ключ
-              </button>
-            </div>
+          {/* ЭТА НЕДЕЛЯ */}
+          {loading ? (
+            <div className="bl-userroom__skeleton" />
           ) : (
-            <div style={{ marginTop: 8 }}>
-              <input
-                type="text"
-                value={mvsepKeyInput}
-                onChange={(e) => setMvsepKeyInput(e.target.value)}
-                placeholder="Вставьте API ключ от mvsep.com"
-                style={{
-                  width: '100%', padding: '6px 8px', borderRadius: 6,
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  background: 'rgba(255,255,255,0.05)', color: '#ccc',
-                  fontSize: 12, fontFamily: 'monospace',
-                  marginBottom: 6, boxSizing: 'border-box', outline: 'none',
-                }}
-              />
-              <button
-                onClick={() => {
-                  const key = mvsepKeyInput.trim();
-                  if (key) {
-                    useUserProfileStore.getState().setMvsepApiKey(key);
-                    setMvsepKeyInput('');
-                  }
-                }}
-                disabled={!mvsepKeyInput.trim()}
-                style={{
-                  padding: '4px 10px', borderRadius: 4,
-                  border: `1px solid ${mvsepKeyInput.trim() ? '#6366f1' : 'rgba(255,255,255,0.15)'}`,
-                  background: mvsepKeyInput.trim() ? '#6366f1' : 'transparent',
-                  color: mvsepKeyInput.trim() ? '#fff' : '#555',
-                  fontSize: 11, cursor: mvsepKeyInput.trim() ? 'pointer' : 'default',
-                }}
-              >
-                💾 Сохранить
-              </button>
-              <div style={{
-                fontSize: 10, color: 'rgba(255,255,255,0.35)',
-                marginTop: 8, lineHeight: 1.4,
-              }}>
-                Получите ключ на{' '}
-                <a href="https://mvsep.com/profile" target="_blank" rel="noopener"
-                   style={{ color: '#6366f1' }}>
-                  mvsep.com/profile
-                </a>
-                <br />
-                Свой ключ — без лимита beLive (лимит MVSEP: ~49/день)
+            <WeekStrip stats={week} onStart={() => setSurface('app')} />
+          )}
+
+          {/* ПРОДОЛЖИТЬ */}
+          {loading ? (
+            <div className="bl-userroom__skeleton bl-userroom__skeleton--continue" />
+          ) : last ? (
+            <ContinueCard
+              target={last}
+              currentTrackId={currentTrackId}
+              onContinue={handleContinue}
+            />
+          ) : (
+            <section className="bl-userroom__card bl-userroom__continue-empty">
+              <div className="bl-userroom__muted-center">
+                Здесь появится последний трек — начни репетицию
               </div>
-            </div>
+            </section>
           )}
-        </div>
 
-        <div className="bl-userroom__section" ref={themeDropdownRef} style={{ position: 'relative' }}>
-          <div className="bl-userroom__section-title">Тема</div>
-          <button
-            onClick={() => setThemeDropdownOpen(!themeDropdownOpen)}
-            style={{
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: 8,
-              padding: '6px 12px',
-              color: '#ccc',
-              fontSize: 13,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              marginTop: 4,
-              width: '100%',
-              justifyContent: 'space-between',
-            }}
-          >
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{
-                width: 14, height: 14, borderRadius: '50%',
-                background: getThemeById(activeThemeId).semantic.accentPrimary,
-                border: '1.5px solid rgba(255,255,255,0.3)',
-                flexShrink: 0,
-              }} />
-              {getThemeById(activeThemeId).name}
-            </span>
-            <span style={{ fontSize: 10, color: '#666' }}>▼</span>
-          </button>
-          {themeDropdownOpen && (
-            <div style={{
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              top: '100%',
-              background: '#252540',
-              border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: 8,
-              padding: 4,
-              zIndex: 10,
-              backdropFilter: 'blur(12px)',
-              marginTop: 4,
-            }}>
-              {Object.values(themeRegistry).map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => {
-                    useThemeStore.setState({ activeThemeId: t.id });
-                    applyTheme(t);
-                    applyMode(t, activeMode);
-                    setThemeDropdownOpen(false);
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    width: '100%',
-                    padding: '6px 10px',
-                    background: t.id === activeThemeId ? 'rgba(255,255,255,0.1)' : 'none',
-                    border: 'none',
-                    borderRadius: 4,
-                    color: t.id === activeThemeId ? '#fff' : '#ccc',
-                    fontSize: 13,
-                    cursor: 'pointer',
-                    textAlign: 'left' as const,
-                    fontWeight: t.id === activeThemeId ? 600 : 400,
-                  }}
-                >
-                  <span style={{
-                    width: 14, height: 14, borderRadius: '50%',
-                    background: t.semantic.accentPrimary,
-                    border: '1.5px solid rgba(255,255,255,0.3)',
-                    flexShrink: 0,
-                  }} />
-                  {t.name}
-                  {t.id === activeThemeId && <span style={{ marginLeft: 'auto', fontSize: 12, color: '#9b59b6' }}>✓</span>}
-                </button>
-              ))}
+          {/* ТВОЙ ТЕМП */}
+          <section className="bl-userroom__card bl-userroom__card--tempo">
+            <div className="bl-userroom__card-title">Твой темп</div>
+            <div className="bl-userroom__muted">Прогоны покажут темп по блокам</div>
+          </section>
+
+          {/* СОВМЕСТНЫЕ СЕССИИ */}
+          <section className="bl-userroom__card bl-userroom__card--sessions">
+            <div className="bl-userroom__card-title">Совместные сессии</div>
+            <div className="bl-userroom__muted">∅ пока пусто · позже: спой с другом или педагогом</div>
+          </section>
+
+          {/* ФУТЕР · MVSEP */}
+          <div className="bl-userroom__footer">
+            <div className="bl-userroom__footer-row">
+              <span className="bl-userroom__footer-label">🔑 MVSEP — свой ключ без лимита</span>
+              <button
+                className="bl-userroom__footer-btn"
+                onClick={() => setMvsepOpen(v => !v)}
+              >
+                {mvsepOpen ? 'Скрыть' : 'Изменить'}
+              </button>
             </div>
-          )}
-        </div>
-
-        <div className="bl-userroom__section">
-          <div className="bl-userroom__section-title">Статистика</div>
-          <div className="bl-userroom__section-soon">
-            {isGuest ? 'Доступно после регистрации' : 'скоро...'}
+            {mvsepOpen && <div className="bl-userroom__mvsep">{mvsepPanel}</div>}
           </div>
         </div>
-
-        {isGuest ? (
-          <button className="bl-userroom__login-btn" onClick={() => authService.initiateGoogleOAuth()}>
-            Войти / Зарегистрироваться
-          </button>
-        ) : (
-          <button className="bl-userroom__logout" onClick={handleLogout}>
-            🚪 Выйти
-          </button>
-        )}
       </div>
     </div>
   );

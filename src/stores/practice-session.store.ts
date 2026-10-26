@@ -423,10 +423,12 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
 
   pausePractice: () => {
     set({ practiceStatus: 'paused' });
+    emitPracticeEvent('paused', {});
   },
 
   resumePractice: async () => {
     set({ practiceStatus: 'running' });
+    emitPracticeEvent('resumed', {});
   },
 
   completePractice: async () => {

@@ -1,0 +1,60 @@
+{
+  "version": 7,
+  "updated": "2026-10-24",
+  "bricks": [
+    {
+      "id": "MR-1",
+      "title": "Журнал прогонов (ядро, без UI)",
+      "desc": "IDB 'practice_log' в TextAppDB v9→10 (idb.service.ts:10-11): keyPath id, индексы day/sessionId/kind/ownerId. Записи session+pass (SPEC v1.1 §1). Подписчик на document-события (:245 started, :401 pass-complete, :412 completed, :281 completed-kept, :267 ended, :298 cancelled) + 2 emit'а пауз (:424/:428) + heartbeat 30с + prune 365д/10k + закрытие 'open' старше 2ч как 'interrupted' + пауза >30мин = автозакрытие 'interrupted'. durationMs = endedAt−startedAt−pausedMs. registerInit main.tsx:60-67. ПРИЁМКА: (1) 3 прогона 0.8/0.9/1.0 → 1 session (passes=3, rateStart=0.8, rateEnd=1.0) + 3 pass; (2) reload посреди прогона → boot 'interrupted', durationMs=lastSeenAt−startedAt; (3) пауза 10мин не входит в durationMs; (4) повторный close без дубля · УСЛОВИЯ 009 ПРИМЕНЕНЫ: (1) onblocked — не reject сразу, таймаут 3с + clearTimeout на success; (2) prune НИКОГДА не удаляет day===today; (3) миграция — read-modify-write cursor.value (НЕ частичный объект, эталон idb:357-361); (4) close читает только module-state кэш, не перезаписывает passes/rateEnd · ПАК: MICRO-PACK-MR-1-2026-10-24.md · СДАНО 24.10: tsc=181 (0 новых), vitest 892/75 passed (+6/+1), build exit 0; тесты 6/6 (3 прогона→1 session+3 pass; reload→interrupted; пауза 10мин вне минут; повторный close без дубля; migrateGuest полный record; prune с полом today)",
+      "owner": "operator",
+      "status": "done",
+      "due": null,
+      "trigger": "MICRO-PACK-MR-1-2026-10-24.md"
+    },
+    {
+      "id": "MR-2",
+      "title": "Агрегации журнала (чистые функции)",
+      "desc": "src/services/practice-journal/aggregate.ts: weekStats, tempoByBlock, mastery, lastSession, sessionMinutes, streak — без React/IDB. mastery → {done: rate>=1.0, total, almost: 0.95<=rate<1.0}; almost в счётчик НЕ входит. ПРИЁМКА: (1) streak через границу месяца/года; (2) пустой вход → {0,0,0,[0×7]}; (3) один день с двумя сессиями = 1 день; (4) 0.99 → almost, 1.0 → done; vitest на фикстурах · СДАНО 24.10: tsc=181 (0 новых) · vitest 904/76 (+12 тестов, +1 файл) · build exit 0 · localhost:3000/beLive HTTP 200 · aggregate без React/IDB · 12/12 кейсов (месяц/год, passes=0, almost, null-block, cancelled)",
+      "owner": "operator",
+      "status": "done",
+      "due": null,
+      "trigger": "MR-1"
+    },
+    {
+      "id": "MR-3",
+      "title": "Экран: каркас комнаты + WeekStrip + ContinueCard",
+      "desc": "КАРКАС (утв. Боссом): комната = экран внутри приложения, не оверлей. surface='profile' (App.tsx:262); fixed top:var(--react-header-height,64px) (Header.tsx:24-27) / bottom:var(--bl-deck-height,268px) (ControlDeck.tsx:82); без backdrop (UserRoom.css:2-11), z-index ниже 999995/999996; закрытие «← В студию»+Esc; внутренний скролл; мобильный — одна колонка; заголовок «Комната». + WeekStrip (минуты/прогоны/streak/спарклайн) + ContinueCard (▶ ВЕРНУТЬСЯ → startPractice, AiExpertPanel.tsx:640). ПРИЁМКА: (1) числа==IDB; (2) ContinueCard обновляется после новой сессии; (3) пустой журнал → empty; (4) хедер+транспорт живы и кликабельны, музыка играет при открытой комнате; (5) Esc/«← В студию» закрывают, клик по фону — нет; (6) внутренний скролл, страница не прыгает; (7) мобильный — одна колонка",
+      "owner": "operator",
+      "status": "active",
+      "due": null,
+      "trigger": "MR-1+MR-2"
+    },
+    {
+      "id": "MR-4",
+      "title": "Экран: TempoList + освоение",
+      "desc": "«Твой темп»: история rate по блокам (0.7→0.9→1.0), полоса rate*100%, ✓ done, полутон almost (0.95–0.99 не в счётчике), «Освоено N из M» (M=blocks.store). Empty → «пока нет прогонов». ПРИЁМКА: (1) N=count(rate=1.0), M=blocks.store; (2) 0.95–0.99 полутон, не в N; (3) порядок блоков как в blocks.store",
+      "owner": "operator",
+      "status": "planned",
+      "due": null,
+      "trigger": "MR-1+MR-2"
+    },
+    {
+      "id": "MR-5",
+      "title": "Гость: миграция журнала + настройки + Sessions",
+      "desc": "Гость пишет ownerId='guest', прогресс виден с бейджем «локально». При первом входе migrateGuestLog(accountId): один проход по индексу 'ownerId'='guest', cursor.update({ownerId:accountId, migrated:true}), локально; guard — если у аккаунта уже есть записи, не мигрируем; migrated:true = вторая защита; гостевые читаемы, только пока аккаунт не появился. SettingsPanel вместо заглушки UserRoom.tsx:88-91 + SessionsPlaceholder. ПРИЁМКА: (1) guest→login: записи переехали, нулей нет; (2) повторный вход миграцию не дублирует; (3) guest без аккаунта видит локальный прогресс",
+      "owner": "operator",
+      "status": "planned",
+      "due": null,
+      "trigger": "MR-3+MR-4"
+    },
+    {
+      "id": "MR-6",
+      "title": "Полировка комнаты: CSS, surface, тесты",
+      "desc": "Удалить мёртвые правила UserRoom.css:203,217,221,228,235; снять ColHeader «Профиль» в FeedScreen.tsx:50 (без дубля «профиль/комната»); surface-миграция app.store:18(@deprecated)→user-profile.store:26-28 (+тесты smoke.test.ts:36/app.store.test.ts:21); тесты комнаты (guest/auth, setSurface, MVSEP save/delete); тест prune. ПРИЁМКА: (1) grep мёртвых классов = 0; (2) app.store не используется в комнате; «Профиль» в панели ленты отсутствует; (3) tsc ≤181, vitest зелёный, PARITY PASS",
+      "owner": "operator",
+      "status": "planned",
+      "due": null,
+      "trigger": "MR-5"
+    }
+  ]
+}

@@ -477,12 +477,11 @@ export function QuickActions() {
             padding: '8px 16px', cursor: 'pointer',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}
-            onClick={() => { setSurface('profile'); closeMenu(); }}
+            onClick={() => { setCatalogOpen(false); setSurface('profile'); closeMenu(); }}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
           >
             <span style={{ fontWeight: 500, color: '#eee' }}>🏠 Комната</span>
-            <span style={{ fontSize: 10, color: '#666' }}>Profile</span>
           </div>
 
           {/* AI Settings */}

@@ -39,6 +39,7 @@ import { useRehearsalSessionStore } from './Rehearsal/store/rehearsal-session.st
 import { useAudioStore } from './stores/audio.store';
 import { useNotifyStore } from './stores/notify.store';
 import { MicSourceV3 } from './audio/engine-v3/services/MicSourceV3';
+import { init } from './services/practice-journal/init';
 
 // import '../css/main.css'; // loaded via <link> in index.html
 // import '../css/ai-chat.css'; // loaded via <link> in index.html
@@ -75,6 +76,7 @@ registerInit({ id: 'mode-events', init: initModeEvents })
 registerInit({ id: 'position-sync', init: initPositionSync })
 registerInit({ id: 'audio-events', init: initAudioEvents })
 registerInit({ id: 'loop-events', init: initLoopEvents })
+registerInit({ id: 'practice-journal', init })
 const cleanupAll = runAll()
 
 // ═══ AETHER v3.0 Boot ═══

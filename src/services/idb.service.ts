@@ -8,7 +8,7 @@ import type { Playlist } from '../catalog/types';
 import type { StemAutomationData, StemDisplayOrder } from '../stem/stemTypes';
 
 const DB_NAME = (globalThis as any).__DB_NAME || 'TextAppDB';
-const DB_VERSION = 9;
+const DB_VERSION = 10;
 
 // ── Types ──────────────────────────────────────────────
 
@@ -126,12 +126,28 @@ export interface SceneMap {
 
 let _db: IDBDatabase | null = null;
 let _dbPromise: Promise<IDBDatabase> | null = null;
+// MR-3b: warn о блокировке — один раз за жизнь страницы
+let _blockWarned = false;
+
+const OPEN_TIMEOUT_MS = 3000;
 
 function _getDB(): Promise<IDBDatabase> {
   if (_db) return Promise.resolve(_db);
 
-  _dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
+  const p = new Promise<IDBDatabase>((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
+
+    // ONBLOCKED (009-1): blocked сам по себе НЕ отклоняет и НЕ обнуляет промис.
+    // Ждём до 3с — затем reject + сброс (ретрай следующим вызовом).
+    // Поздний onsuccess всё равно принимается: _db выставляется в onsuccess.
+    const openTimer = setTimeout(() => {
+      if (!_blockWarned) {
+        _blockWarned = true;
+        console.warn('[IDB] Open blocked > 3s — journal degraded to no-op, retry on next call');
+      }
+      _dbPromise = null;
+      reject(new Error('[IDB] Database upgrade blocked (timeout 3s)'));
+    }, OPEN_TIMEOUT_MS);
 
     req.onupgradeneeded = (e) => {
       if (import.meta.env.DEV) console.log(`[IDB] Upgrade: v${e.oldVersion} → v${e.newVersion}`);
@@ -154,6 +170,15 @@ function _getDB(): Promise<IDBDatabase> {
         userStore.createIndex('createdAt', 'createdAt', { unique: false });
       }
 
+      // MR-1: practice journal (этап 1, без UI)
+      if (!db.objectStoreNames.contains('practice_log')) {
+        const s = db.createObjectStore('practice_log', { keyPath: 'id' });
+        s.createIndex('day', 'day', { unique: false });
+        s.createIndex('sessionId', 'sessionId', { unique: false });
+        s.createIndex('kind', 'kind', { unique: false });
+        s.createIndex('ownerId', 'ownerId', { unique: false });
+      }
+
       // TC-AUTH-003: userId index on tracks (for existing databases)
       const trackStore = req.transaction?.objectStore('tracks');
       if (trackStore && !trackStore.indexNames.contains('userId')) {
@@ -166,6 +191,7 @@ function _getDB(): Promise<IDBDatabase> {
     };
 
     req.onsuccess = () => {
+      clearTimeout(openTimer);
       _db = req.result;
 
       // Handle version change from another tab — close gracefully
@@ -180,18 +206,24 @@ function _getDB(): Promise<IDBDatabase> {
     };
 
     req.onerror = () => {
+      clearTimeout(openTimer);
       console.error('[IDB] Open failed:', req.error);
       _dbPromise = null; // Reset so next call can retry
       reject(req.error);
     };
 
     req.onblocked = () => {
-      console.warn('[IDB] Upgrade blocked — close other tabs with this app open');
-      _dbPromise = null; // Allow retry on next call
-      reject(new Error('[IDB] Database upgrade blocked. Please close other tabs and reload.'));
+      // warn only — решает таймаут (не reject, не null здесь)
+      if (!_blockWarned) {
+        _blockWarned = true;
+        console.warn('[IDB] Upgrade blocked — close other tabs with this app open (waiting up to 3s)');
+      }
     };
   });
 
+  _dbPromise = p;
+  // MR-3b: глушитель — reject не всплывает как Uncaught; вызывающие ошибку по-прежнему получают
+  p.catch(() => {});
   return _dbPromise;
 }
 
@@ -211,6 +243,14 @@ function _req<T>(request: IDBRequest<T>): Promise<T> {
     request.onerror = () => reject(request.error);
   });
 }
+
+// ── Exports for practice journal (MR-1) ────────────────
+
+export function getDB(): Promise<IDBDatabase> {
+  return _getDB();
+}
+
+export { _tx as tx, _req as req };
 
 // ── Tracks CRUD ────────────────────────────────────────
 

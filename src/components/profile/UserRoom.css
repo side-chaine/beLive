@@ -1,65 +1,241 @@
-.bl-userroom-overlay {
+/* ── MR-3c · Bento-комната: экран внутри приложения (не модалка, без бэкдропа) ── */
+.bl-userroom-screen {
+  /* токены */
+  --bl-room-surface-1: #0a0a14;
+  --bl-room-surface-2: #12121c;
+  --bl-room-border: rgba(255, 255, 255, 0.06);
+  --bl-room-muted: rgba(255, 255, 255, 0.55);
+  --bl-room-radius: 16px;
+  --bl-room-radius-btn: 10px;
+  --bl-room-accent: var(--bl-accent-primary, #6366f1);
+  --bl-room-s1: 8px;
+  --bl-room-s2: 12px;
+  --bl-room-s3: 16px;
+  --bl-room-s4: 24px;
+
   position: fixed;
-  inset: 0;
+  top: var(--react-header-height, 64px);
+  bottom: var(--bl-deck-height, 268px);
+  left: 0;
+  right: 0;
+  background: var(--bl-room-surface-1);
+  z-index: 999990;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.bl-userroom-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 16px;
+}
+
+/* клапан: низкий экран */
+@media (max-height: 640px) {
+  .bl-userroom-scroll {
+    overflow-y: auto;
+  }
+}
+
+/* ── Сетка bento ────────────────────────── */
+.bl-userroom-content {
+  height: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto minmax(150px, 1.2fr) minmax(90px, 0.8fr) minmax(110px, 1fr) auto;
+  grid-template-areas:
+    "topbar topbar"
+    "profile week"
+    "continue continue"
+    "tempo sessions"
+    "footer footer";
+  gap: 12px;
+}
+
+/* ── База карточки ──────────────────────── */
+.bl-userroom__card,
+.bl-weekstrip,
+.bl-continue,
+.bl-userroom__footer {
+  background: var(--bl-room-surface-2);
+  border: 1px solid var(--bl-room-border);
+  border-radius: var(--bl-room-radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  color: #fff;
+}
+
+.bl-userroom__card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.bl-userroom__muted {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--bl-room-muted);
+}
+
+.bl-userroom__muted-center {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  z-index: 999995;
-  animation: bl-overlay-in 0.2s ease-out;
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--bl-room-muted);
 }
 
-@keyframes bl-overlay-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.bl-userroom {
-  background: #1a1a2e;
-  border-radius: 16px;
-  max-width: 360px;
-  width: 90%;
-  padding: 1.5rem;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
-  animation: bl-room-in 0.25s ease-out;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-@keyframes bl-room-in {
-  from { opacity: 0; transform: translateY(16px) scale(0.96); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+/* ── Топбар ─────────────────────────────── */
+.bl-userroom__topbar {
+  grid-area: topbar;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 4px;
+  border-bottom: 1px solid var(--bl-room-border);
 }
 
 .bl-userroom__back {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 14px;
   cursor: pointer;
   padding: 0;
-  margin-bottom: 1rem;
   transition: color 0.2s;
 }
 
 .bl-userroom__back:hover {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.85);
 }
 
-.bl-userroom__header {
+/* компактный селектор темы */
+.bl-userroom__theme {
+  position: relative;
+}
+
+.bl-userroom__theme-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border: 1px solid var(--bl-room-border);
+  border-radius: var(--bl-room-radius-btn);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.bl-userroom__theme-btn:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.bl-userroom__theme-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.bl-userroom__theme-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bl-userroom__theme-caret {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.bl-userroom__theme-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 180px;
   display: flex;
   flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--bl-room-radius-btn);
+  background: #181826;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  z-index: 10;
+}
+
+.bl-userroom__theme-item {
+  display: flex;
   align-items: center;
-  margin-bottom: 2rem;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bl-userroom__theme-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.bl-userroom__theme-item.is-active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-weight: 600;
+}
+
+.bl-userroom__theme-check {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--bl-room-muted);
+}
+
+/* ── Профиль ────────────────────────────── */
+.bl-userroom__card--profile {
+  grid-area: profile;
+  gap: 12px;
+  justify-content: center;
+}
+
+.bl-userroom__profile-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
 
 .bl-userroom__avatar {
-  width: 64px;
-  height: 64px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   overflow: hidden;
-  margin-bottom: 0.75rem;
+  flex: 0 0 auto;
   background: rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
@@ -73,165 +249,384 @@
 }
 
 .bl-userroom__avatar-emoji {
-  font-size: 2rem;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.bl-userroom__ident {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .bl-userroom__name {
-  font-size: 1.2rem;
+  font-size: 16px;
   font-weight: 600;
   color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .bl-userroom__email {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.4);
-  margin-top: 0.25rem;
+  font-size: 12px;
+  color: var(--bl-room-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.bl-userroom__section {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.bl-userroom__section-title {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #ccc;
-  margin-bottom: 0.25rem;
-}
-
-.bl-userroom__section-soon {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.2);
-  font-style: italic;
-}
-
-.bl-userroom__logout {
-  display: block;
-  width: 100%;
-  padding: 0.75rem;
-  margin-top: 1.5rem;
-  border: 1px solid rgba(255, 59, 48, 0.2);
-  border-radius: 12px;
-  background: rgba(255, 59, 48, 0.08);
-  color: rgba(255, 59, 48, 0.8);
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.bl-userroom__logout:hover {
-  background: rgba(255, 59, 48, 0.15);
-  border-color: rgba(255, 59, 48, 0.3);
-  color: #ff3b30;
-}
-
-/* Guest Upgrade Block */
-.bl-userroom__guest-upgrade {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  margin-bottom: 2rem;
-  padding: 1.5rem 0;
-}
-
-.bl-userroom__guest-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-.bl-userroom__guest-title {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #fff;
-  margin: 0 0 0.5rem;
-}
-
-.bl-userroom__guest-desc {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.5);
-  margin: 0 0 1.5rem;
-  max-width: 240px;
-  line-height: 1.4;
+.bl-userroom__chip {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--bl-room-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bl-room-muted);
 }
 
 .bl-userroom__google-btn {
-  background: #fff;
-  color: #333;
+  align-self: flex-start;
+  padding: 8px 14px;
   border: none;
-  border-radius: 8px;
-  padding: 0.65rem 1.5rem;
-  font-size: 0.9rem;
+  border-radius: var(--bl-room-radius-btn);
+  background: #fff;
+  color: #111;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: opacity 0.15s;
 }
 
 .bl-userroom__google-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+  opacity: 0.88;
 }
 
-.bl-userroom__google-btn:active {
-  transform: translateY(0);
+.bl-userroom__logout {
+  align-self: flex-start;
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 59, 48, 0.25);
+  border-radius: var(--bl-room-radius-btn);
+  background: transparent;
+  color: rgba(255, 59, 48, 0.85);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
-.bl-userroom__login-btn {
-  display: block;
-  width: 100%;
-  padding: 0.75rem;
-  margin-top: 1.5rem;
-  border: 1px solid rgba(0, 122, 255, 0.3);
-  border-radius: 12px;
-  background: rgba(0, 122, 255, 0.1);
-  color: #007aff;
-  font-size: 0.9rem;
+.bl-userroom__logout:hover {
+  background: rgba(255, 59, 48, 0.1);
+  border-color: rgba(255, 59, 48, 0.4);
+  color: #ff5b52;
+}
+
+/* ── Эта неделя ─────────────────────────── */
+.bl-weekstrip {
+  grid-area: week;
+  gap: 8px;
+}
+
+.bl-weekstrip__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.bl-weekstrip__numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.bl-weekstrip__num {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bl-weekstrip__value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.05;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.bl-weekstrip__label {
+  font-size: 11px;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bl-room-muted);
+}
+
+.bl-weekstrip__spark {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 48px;
+}
+
+.bl-weekstrip__bar {
+  flex: 1;
+  min-width: 4px;
+  background: var(--bl-room-accent);
+  border-radius: 2px 2px 0 0;
+  opacity: 0.85;
+}
+
+/* ghost-ось: 7 штрихов 2px на базовой линии */
+.bl-weekstrip__tick {
+  flex: 1;
+  height: 2px;
+  border-radius: 1px;
+  background: #fff;
+  opacity: 0.25;
+}
+
+.bl-weekstrip__empty {
+  font-size: 11px;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.bl-weekstrip__cta {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--bl-room-radius-btn);
+  background: var(--bl-room-accent);
+  color: #fff;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: opacity 0.15s;
 }
 
-.bl-userroom__login-btn:hover {
-  background: rgba(0, 122, 255, 0.2);
-  border-color: rgba(0, 122, 255, 0.5);
+.bl-weekstrip__cta:hover {
+  opacity: 0.9;
 }
 
-/* ── MVSEP API Key ───────────────────────── */
-.bl-userroom__mvsep-input {
+/* ── Продолжить ─────────────────────────── */
+.bl-continue,
+.bl-userroom__continue-empty {
+  grid-area: continue;
+  gap: 6px;
+}
+
+.bl-continue__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.bl-continue__track {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.bl-continue__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--bl-room-muted);
+}
+
+.bl-continue__btn {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 7px 14px;
+  border: 1px solid var(--bl-room-border);
+  border-radius: var(--bl-room-radius-btn);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bl-continue__btn:disabled {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: default;
+}
+
+.bl-continue__hint {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Твой темп / Совместные сессии ──────── */
+.bl-userroom__card--tempo {
+  grid-area: tempo;
+}
+
+.bl-userroom__card--sessions {
+  grid-area: sessions;
+}
+
+/* ── Скелетон ───────────────────────────── */
+.bl-userroom__skeleton {
+  grid-area: week;
+  border-radius: var(--bl-room-radius);
+  background: var(--bl-room-surface-2);
+  border: 1px solid var(--bl-room-border);
+  min-height: 96px;
+}
+
+.bl-userroom__skeleton--continue {
+  grid-area: continue;
+}
+
+/* ── Футер · MVSEP ──────────────────────── */
+.bl-userroom__footer {
+  grid-area: footer;
+  justify-content: flex-start;
+  padding: 0 16px;
+}
+
+.bl-userroom__footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+}
+
+.bl-userroom__footer-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bl-userroom__footer-btn {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  border: 1px solid var(--bl-room-border);
+  border-radius: var(--bl-room-radius-btn);
+  background: transparent;
+  color: var(--bl-room-muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.bl-userroom__footer-btn:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.bl-userroom__mvsep {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding-bottom: 12px;
+}
+
+.bl-userroom__mvsep-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   width: 100%;
+}
+
+.bl-userroom__mvsep-input {
+  flex: 1;
+  min-width: 0;
   padding: 6px 8px;
-  border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.05);
   color: #ccc;
   font-size: 12px;
   font-family: monospace;
-  margin-bottom: 6px;
-  box-sizing: border-box;
   outline: none;
 }
 
-.bl-userroom__mvsep-input:focus {
-  border-color: #6366f1;
-}
-
-.bl-userroom__mvsep-btn {
-  padding: 4px 10px;
-  border-radius: 4px;
+.bl-userroom__mvsep-eye {
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: transparent;
+  color: #888;
   font-size: 11px;
   cursor: pointer;
 }
 
-.bl-userroom__mvsep-help {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.35);
-  margin-top: 8px;
-  line-height: 1.4;
+.bl-userroom__mvsep-ok {
+  font-size: 11px;
+  color: #4ade80;
 }
 
-.bl-userroom__mvsep-help a {
-  color: #6366f1;
+.bl-userroom__mvsep-delete {
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: transparent;
+  color: #f97316;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.bl-userroom__mvsep-save {
+  padding: 4px 10px;
+  border: 1px solid var(--bl-room-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.bl-userroom__mvsep-save:disabled {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.35);
+  cursor: default;
+}
+
+.bl-userroom__mvsep-hint {
+  font-size: 10px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.bl-userroom__mvsep-link {
+  color: var(--bl-room-accent);
+}
+
+/* ── Мобильный: одна колонка + единственный клапан ── */
+@media (max-width: 768px) {
+  .bl-userroom-scroll {
+    padding: 12px;
+    overflow-y: auto;
+  }
+
+  .bl-userroom-content {
+    height: auto;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    grid-template-areas:
+      "topbar"
+      "profile"
+      "week"
+      "continue"
+      "tempo"
+      "sessions"
+      "footer";
+  }
 }
