@@ -220,22 +220,6 @@ export function showNotification(type: 'info' | 'success' | 'error', message: st
     return current;
   }
 
-/**
- * Чистое имя файла для тостов: без mvsep/AppleDouble/техно-суффиксов.
- * «20260415051909-69e...04-points-of-authority._bs6stem_mt_0_vocals_[mvsep.com].mp3»
- *   → «points-of-authority »  (суффикс шума срезан, в скобках роль)
- */
-function _toastName(raw: string, role?: string): string {
-  const name = raw
-    .replace(/^\._/, '')
-    .replace(/\._bs6stem.*$/i, '')
-    .replace(/\[mvsep\.com\]/gi, '')
-    .replace(/\.mp3$/i, '')
-    .replace(/[-_]+$/, '')
-    .trim();
-  return role ? `${name} (${role})` : name;
-}
-
 export async function handleFileSelect(
   type: UploadFileType,
   file: File,
@@ -244,16 +228,11 @@ export async function handleFileSelect(
   switch (type) {
     case 'instrumental':
       uploadSession.instrumental = file;
-      if (!_fromZip) {
-        showNotification('info', `Инструментал: ${_toastName(file.name)}`);
-      }
+      // Безымянный тост не нужен: каталог + прогресс-полоса сами показывают результат
       break;
 
     case 'vocal':
       uploadSession.vocal = file;
-      if (!_fromZip) {
-        showNotification('info', `Вокал: ${_toastName(file.name)}`);
-      }
       break;
 
     case 'lyrics':
@@ -365,7 +344,6 @@ export async function handleFileSelect(
 
     case 'zip':
       uploadSession.zip = file;
-      showNotification('info', `ZIP архив ${file.name} загружен.`);
       break;
   }
 }
@@ -631,7 +609,6 @@ export async function saveTrack(): Promise<void> {
             w.lyricsDisplay.activateRehearsalDisplay();
           }
         }
-        showNotification('success', `✅ Трек "${savedTrack.title}" успешно сохранён`);
         document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'track-import' } }));
       } catch (e) {
         console.warn('Ошибка при применении JSON маркеров:', e);
@@ -645,7 +622,6 @@ export async function saveTrack(): Promise<void> {
     }
 
     // Non-JSON branch — delegate to legacy block editor tail
-    showNotification('success', `✅ Трек "${savedTrack.title}" успешно сохранён`);
     
     const hasLyrics = !!(session.lyrics || session.parsedLyricsContent);
     document.dispatchEvent(new CustomEvent('track-saved', {
@@ -715,10 +691,13 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
     const zipFileName = file.name;
     // ⚡ macOS AppleDouble metadata («._foo.zip») и прочий мусор вместо архива
     if (file.name.startsWith('._')) {
-      throw new Error('Это macOS-метаданные (файл «._…»), а не архив. Выберите сам ZIP — файл без «._» в начале (он в десятки раз больше).');
+      const realName = file.name.replace(/^\.(_)/, '');
+      throw new Error(
+        `«${realName}» — это скрытый служебный файл macOS (начинается с «._»), а не архив. Выбери настоящий ZIP — тот в десятки раз больше по размеру.`
+      );
     }
     if (file.size < 22) {
-      throw new Error(`Файл слишком мал для ZIP (${file.size} Б). Похоже, это не архив.`);
+      throw new Error(`«${file.name}» — файл слишком мал (${file.size} Б), это не ZIP-архив.`);
     }
     const zipHead = new Uint8Array(await file.slice(0, 4).arrayBuffer());
     const isZipSignature = zipHead.length === 4
@@ -727,7 +706,7 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
         || (zipHead[2] === 0x05 && zipHead[3] === 0x06)
         || (zipHead[2] === 0x07 && zipHead[3] === 0x08));
     if (!isZipSignature) {
-      throw new Error('Это не ZIP-архив (расширение «.zip» не совпадает с содержимым). Проверьте файл.');
+      throw new Error(`«${file.name}» — расширение .zip, но внутри не архив. Скачай архив заново и попробуй ещё раз.`);
     }
     const JSZip = (await import('jszip')).default;
     const zip = await JSZip.loadAsync(
@@ -1081,19 +1060,11 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
       }
     }
 
-    const sceneNote = importedCount > 0 ? ` (+${importedCount} сцен)` : '';
-    const stemCount = uploadSession.additionalStems?.length || 0;
-    const parts: string[] = [];
-    if (vocalFile) parts.push('вокал');
-    if (instrumentalFile) parts.push('инструментал');
-    if (lyricsFile) parts.push('текст');
-    if (stemCount) parts.push(`стемов: ${stemCount}`);
-    showNotification('success', `✅ ZIP готов (${parts.join(', ')}) и трек сохранён${sceneNote}`);
-
   } catch (err: any) {
     console.error('handleZipFileSelect error:', err);
+    // ОДИНОЧНЫЙ тост (UI-статус больше не дублирует): ошибки формата — единственные,
+    // о которых пользователь хочет слышать явно.
     showToast(`❌ ${err.message}`, 'error');
-    showNotification('error', `❌ Ошибка обработки ZIP: ${err.message}`);
   }
 }
 
@@ -1240,22 +1211,18 @@ export async function completeMvsepTrack(
 
   // Block 3: Stem count notification
   const totalStems = stemsMap.size;
-  if (totalStems < 7) {
-    showNotification('info', `✅ ${totalStems} из 7 стемов получено`);
-  } else {
-    showNotification('success', '✅ Все 7 стемов загружены!');
-  }
+  showNotification('info', `✅ Разделение завершено: ${totalStems} из 7 стемов`);
 
   // Notification
   if (totalReceived < totalExpected) {
     const { showNotification } = await import('./upload.service');
     showNotification(
-      'success',
-      `✅ ${totalReceived} из ${totalExpected} стемов получено`
+      'info',
+      `✅ Разделение завершено: ${totalReceived} из ${totalExpected} стемов`
     );
   } else {
     const { showNotification } = await import('./upload.service');
-    showNotification('success', '✅ Все стемы получены!');
+    showNotification('info', '✅ Разделение завершено: все стемы получены');
   }
 
   // Fire-and-forget enrichment
