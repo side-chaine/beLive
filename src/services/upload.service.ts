@@ -220,6 +220,22 @@ export function showNotification(type: 'info' | 'success' | 'error', message: st
     return current;
   }
 
+/**
+ * Чистое имя файла для тостов: без mvsep/AppleDouble/техно-суффиксов.
+ * «20260415051909-69e...04-points-of-authority._bs6stem_mt_0_vocals_[mvsep.com].mp3»
+ *   → «points-of-authority »  (суффикс шума срезан, в скобках роль)
+ */
+function _toastName(raw: string, role?: string): string {
+  const name = raw
+    .replace(/^\._/, '')
+    .replace(/\._bs6stem.*$/i, '')
+    .replace(/\[mvsep\.com\]/gi, '')
+    .replace(/\.mp3$/i, '')
+    .replace(/[-_]+$/, '')
+    .trim();
+  return role ? `${name} (${role})` : name;
+}
+
 export async function handleFileSelect(
   type: UploadFileType,
   file: File,
@@ -228,12 +244,16 @@ export async function handleFileSelect(
   switch (type) {
     case 'instrumental':
       uploadSession.instrumental = file;
-      showNotification('info', `Инструментал ${file.name} загружен.`);
+      if (!_fromZip) {
+        showNotification('info', `Инструментал: ${_toastName(file.name)}`);
+      }
       break;
 
     case 'vocal':
       uploadSession.vocal = file;
-      showNotification('info', `Вокал ${file.name} загружен.`);
+      if (!_fromZip) {
+        showNotification('info', `Вокал: ${_toastName(file.name)}`);
+      }
       break;
 
     case 'lyrics':
@@ -926,11 +946,11 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
     uploadSession.overrideTitle = preservedTitle;
 
     await handleFileSelect(instrumentalFile.name.split('.').pop() === 'json'
-      ? 'json' : 'instrumental', instrumentalFile);
+      ? 'json' : 'instrumental', instrumentalFile, true);
 
-    if (vocalFile) await handleFileSelect('vocal', vocalFile);
-    if (lyricsFile) await handleFileSelect('lyrics', lyricsFile);
-    if (jsonFile) await handleFileSelect('json', jsonFile);
+    if (vocalFile) await handleFileSelect('vocal', vocalFile, true);
+    if (lyricsFile) await handleFileSelect('lyrics', lyricsFile, true);
+    if (jsonFile) await handleFileSelect('json', jsonFile, true);
 
     // Attach alignment artifact if found
     if (alignmentArtifact) {
@@ -1062,7 +1082,13 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
     }
 
     const sceneNote = importedCount > 0 ? ` (+${importedCount} сцен)` : '';
-    showNotification('success', `✅ ZIP архив успешно распакован и файлы распределены!${sceneNote}`);
+    const stemCount = uploadSession.additionalStems?.length || 0;
+    const parts: string[] = [];
+    if (vocalFile) parts.push('вокал');
+    if (instrumentalFile) parts.push('инструментал');
+    if (lyricsFile) parts.push('текст');
+    if (stemCount) parts.push(`стемов: ${stemCount}`);
+    showNotification('success', `✅ ZIP готов (${parts.join(', ')}) и трек сохранён${sceneNote}`);
 
   } catch (err: any) {
     console.error('handleZipFileSelect error:', err);
