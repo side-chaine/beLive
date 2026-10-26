@@ -676,6 +676,9 @@ export async function saveTrack(): Promise<void> {
   } catch (err: any) {
     console.error('💾 saveTrack error:', err);
     showNotification('error', `❌ Ошибка сохранения: ${err.message}`);
+    // RE-THROW: вызывающие (ZIP-флоу, UploadPanel) должны знать, что трек НЕ сохранён —
+    // иначе ZIP показывал «успешно распакован» при провалившемся сохранении (IDB blocked).
+    throw err;
   }
 }
 
@@ -987,7 +990,13 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
     const sessionScenes = uploadSession.jsonScenes;
 
     onProgress?.(75);
-    await saveTrack();
+    // TC-BUG-IDB: saveTrack сам показывает тост ошибки и пробрасывает её —
+    // глотаем здесь (return), чтобы не спамить вторым тостом и не показывать «успех»
+    try {
+      await saveTrack();
+    } catch {
+      return;
+    }
     onProgress?.(85);
 
     // ── TC-29-09: Import block scenes from ZIP ──

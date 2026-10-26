@@ -8,26 +8,46 @@ export type NotificationType = 'info' | 'success' | 'error';
 
 /**
  * Plain DOM toast — always visible, independent of LyricsDisplay.
- * Pinned to the TOP center (away from the bottom player deck) with max z-index.
+ * Стиль beLive: тёмная плашка + бренд-бордер. Справа снизу (над Billy),
+ * стек вертикальный — не перекрывает хедер и транспорт.
  */
+let _toastStack: HTMLDivElement | null = null;
+function _getToastStack(): HTMLDivElement {
+  if (!_toastStack) {
+    _toastStack = document.createElement('div');
+    _toastStack.style.cssText =
+      'position:fixed;top:16px;left:50%;transform:translateX(-50%);' +
+      'display:flex;flex-direction:column;gap:8px;align-items:flex-end;' +
+      'z-index:2147483647;pointer-events:none;';
+    _toastStack.style.top = 'auto';
+    _toastStack.style.left = 'auto';
+    _toastStack.style.transform = 'none';
+    _toastStack.style.bottom = '88px'; // над доком Billy/транспорта
+    _toastStack.style.right = '20px';
+    document.body.appendChild(_toastStack);
+  }
+  return _toastStack;
+}
+
 export function showToast(message: string, type: 'info' | 'success' | 'error' = 'info'): void {
+  const ACCENT: Record<string, string> = {
+    error: 'rgba(239,68,68,0.85)',
+    success: 'rgba(245,158,11,0.85)', // амбер
+    info: 'rgba(196,77,255,0.85)',    // сирень
+  };
   const div = document.createElement('div');
   div.textContent = message;
   div.setAttribute('role', 'alert');
   div.style.cssText =
-    'position:fixed;top:16px;left:50%;transform:translateX(-50%);' +
-    'max-width:min(720px,90vw);' +
-    'padding:10px 20px;border-radius:5px;color:#fff;' +
-    'font:14px/1.4 system-ui,sans-serif;' +
-    'z-index:2147483647;pointer-events:none;' +
-    'box-shadow:0 6px 24px rgba(0,0,0,.35);' +
-    'background:' +
-    (type === 'error'
-      ? 'rgba(220,53,69,0.9)'
-      : type === 'success'
-      ? 'rgba(40,167,69,0.9)'
-      : 'rgba(0,123,255,0.9)');
-  document.body.appendChild(div);
+    'max-width:min(460px,90vw);' +
+    'padding:10px 14px;border-radius:8px;color:#F5F2FF;' +
+    'font:13px/1.45 system-ui,sans-serif;' +
+    'pointer-events:none;' +
+    'background:rgba(18,15,26,0.92);' +
+    `border:1px solid ${ACCENT[type]};` +
+    'border-left-width:3px;' +
+    'box-shadow:0 6px 24px rgba(0,0,0,.45);';
+  _getToastStack().appendChild(div);
   const duration = type === 'error' ? 8000 : 5000;
   setTimeout(() => {
     if (div.parentNode) div.parentNode.removeChild(div);
