@@ -111,7 +111,11 @@ async function validateEphemeral(env: Env, authHeader: string | null, ip: string
   if (data.uses >= data.maxUses) return { ok: false, error: 'USES_EXCEEDED' as const };
   // инкремент и сохранить (оставляем до истечения TTL)
   data.uses += 1;
-  await env.EPHEMERAL_KV.put(key, JSON.stringify(data), { expirationTtl: Math.ceil((data.exp - Date.now())/1000) });
+  // @SEC(007-audit): KV PUT с TTL<60s → 400 → воркер 1101 живьём (поймано
+  // wrangler tail). Clamp к KV-минимуму 60s: чуть дольше жить не вредит —
+  // срок действия всё равно проверяет data.exp.
+  const remainingSec = Math.ceil((data.exp - Date.now()) / 1000);
+  await env.EPHEMERAL_KV.put(key, JSON.stringify(data), { expirationTtl: Math.max(60, remainingSec) });
   return { ok: true as const, id };
 }
 
