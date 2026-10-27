@@ -139,6 +139,73 @@ export async function handleCreateFeedPost(
       );
     }
 
+    // @SEC(007-audit): блок ниже был ПОТЕРЯН в src (вероятно, worktree-race из
+    // логов 7b1667d) — endpoint возвращал ReferenceError→500 и НЕ вставлял пост.
+    // Восстановлен дословно из последней здоровой сборки gateway/dist-new/index.js.
+    if (body.title.length > 500) {
+      return new Response(
+        JSON.stringify({ error: 'title max 500 characters' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+    if (body.text && body.text.length > 10_000) {
+      return new Response(
+        JSON.stringify({ error: 'text max 10000 characters' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+    if (body.blocksData && JSON.stringify(body.blocksData).length > 50_000) {
+      return new Response(
+        JSON.stringify({ error: 'blocksData too large (max 50KB)' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const author_type = 'user';
+
+    await (env.FEED_DB.prepare(`
+      INSERT INTO feed_posts (
+        id, author_id, author_name, author_avatar, author_type,
+        type, title, body, tags, track_id, blocks_data,
+        base_track_id, battle_block_id, max_submissions, battle_status,
+        event_date, event_price, event_location,
+        source_type, status, created_at
+      ) VALUES (
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, ?, ?,
+        ?, 'published', ?
+      )
+    `) as any).bind(
+      id,
+      auth.sub,                     // author_id из JWT (IDOR fix)
+      auth.name || 'Пользователь',  // author_name из JWT
+      auth.picture || '',           // author_avatar из JWT
+      author_type,
+      body.type,
+      body.title.slice(0, 500),
+      body.text ? body.text.slice(0, 10_000) : null,
+      body.tags ? JSON.stringify(body.tags) : null,
+      body.trackId || null,
+      body.blocksData ? JSON.stringify(body.blocksData) : null,
+      body.baseTrackId || null,
+      body.battleBlockId || null,
+      body.maxSubmissions || 5,
+      body.battleStatus || 'open',
+      body.eventDate || null,
+      body.eventPrice || null,
+      body.eventLocation || null,
+      body.sourceType || 'manual',
+      now
+    ).run();
+
+    const created = await (env.FEED_DB.prepare(
+      'SELECT * FROM feed_posts WHERE id = ?'
+    ) as any).bind(id).first();
+
     return new Response(
       JSON.stringify({
         ...created,

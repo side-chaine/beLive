@@ -203,6 +203,12 @@ export default {
 
     // --- Ephemeral Token Endpoint ---
     if (request.method === 'POST' && url.pathname === '/auth/ephemeral') {
+      // @SEC(007-audit): P1-3 — каждый вызов = KV put; без лимита скрипт
+      // выжигает дневную write-квоту (тот же класс атаки, что и комменты).
+      const allowed = await checkRateLimit(env.RATE_LIMIT_KV, ip, 10); // 10 req/min
+      if (!allowed) {
+        return jsonResponse({ error: 'Rate limit exceeded' }, 429, origin, allowedOrigins);
+      }
       const token = await issueEphemeral(env, ip);
       return jsonResponse({ token, ttl: parseInt(env.EPHEMERAL_TTL || '60', 10) }, 200, origin, allowedOrigins);
     }
@@ -415,6 +421,11 @@ export default {
       if (!auth) {
         return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
       }
+      // @SEC(007-audit): GET-ветка пропущена в 07a13ee — закрыта теперь тоже (P0-2):
+      // читать промпт не-founder'у нельзя
+      if (!env.FOUNDER_SUB || auth.providerSub !== env.FOUNDER_SUB) {
+        return jsonResponse({ error: 'Forbidden' }, 403, origin, allowedOrigins);
+      }
       const prompt = await getOperatorPrompt(env.OPERATOR_PROMPT_KV);
       return jsonResponse({ prompt: prompt || '' }, 200, origin, allowedOrigins);
     }
@@ -477,6 +488,11 @@ export default {
       const auth = await getAuthCtx(request, env);
       if (!auth) {
         return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
+      }
+      // @SEC(007-audit): P2-1 — защита D1 write-квоты, тот же паттерн, что у комментов
+      const allowed = await checkRateLimit(env.RATE_LIMIT_KV, ip, 10); // 10 req/min
+      if (!allowed) {
+        return jsonResponse({ error: 'Rate limit exceeded' }, 429, origin, allowedOrigins);
       }
       return handleCreateFeedPost(request, env, auth, feedHeaders);
     }

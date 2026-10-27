@@ -2,7 +2,7 @@
 // Applies If-None-Match check against KV version key.
 // Returns 304 if version matches, otherwise passes through with new ETag.
 
-import { getCommentVersion, getCommentVersionKey, generateCommentETag } from './helpers';
+import { getCommentVersion, getCommentVersionKey, generateCommentETag, parseCommentETag } from './helpers';
 
 interface Env {
   FEED_KV?: KVNamespace;
