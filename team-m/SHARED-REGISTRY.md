@@ -10610,3 +10610,24 @@ docs/architecture/frozen-zones-v2.md:4
 9. **ОТКРЫТО:** typecheck/build НЕ прогонялись (в сессии нет bash) · автостарта двери после ребута нет (нужен systemd-юнит) · «Создать назначение»/«Открыть карту» без handlers · гибридный центр не реализован · `src/lib/agentNames.ts` мёртвый (удалить) · весь визуал без коммита · F-1/F-5 в `team-m/PULSE-FEATURES-BACKLOG.md`.
 
 — 003 · Linux · 06:44Z · PULSE 2.0 первый полёт · путь: `team-m/HANDOFF-003-2026-10-22.md`
+
+## 2026-10-27 · 007 · ПУШ+ДЕПЛОЙ GATEWAY: P0-аудит закрыт, прод обновлён
+
+- **Пуш:** `69831e7..73046d6` — 13 коммитов (бренд, auth, IDB-, gateway-фиксы).
+- **Деплой gateway:** 3 итерации → версия `b375daa2`
+  1. fail: `METRICS_DB` без database_id → заполнен `551fb86d-…`.
+  2. live-проба на 1101: `wrangler tail` поймал **KV PUT TTL=26 < 60** в `validateEphemeral`
+     (повторное использование ephemeral ~через 34s жизни) → clamp `Math.max(60, remaining)`.
+  3. пре-патчи аудита GLM 5.3: `07a13ee` (SSE-кадры, POST-403) и `b5b5890`
+     (P0-3 INSERT постов, P1-2 ETag-импорт, P1-3/P2-1 rate-limits, **GET-ветка admin**
+     была открыта — закрыта), плюс `gateway/tsconfig.json` (P2-4 частично).
+- **Живые пробы** (адрес `belive-gateway.nikitosss007.workers.dev`): /health 200 ·
+  admin GET мусорный JWT → 401 · feed POST без auth → 401 · ephemeral → 200 ·
+  SSE-кадры — валидный JSON (error-кадр; token/done-кадры валидны тем же fix'ом +
+  review-тесты 13/13).
+- **Открыто:** OpenRouter отдаёт **«Access denied by security policy»** на upstream
+  воркера (и `openrouter.ai/api/v1/models` → 403 из WSL) — WAF-блокировка IP вне
+  нашего кода; прод AI не затронут (`VITE_GATEWAY_URL` фронту не задан). Решение
+  (ключ-тариф/прокси) — на Боссе. belive-api: P1-1 Google state+PKCE и
+  constant-time TG-HMAC — TODO (мой контур, ~1ч). CI-шаг `tsc -p gateway` — TODO.
+
