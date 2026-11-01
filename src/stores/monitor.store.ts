@@ -532,10 +532,17 @@ export const useMonitorStore = create<MonitorState & MonitorActions>(
         let outs: MediaDeviceInfo[] = await mix.listOutputs();
         const noLabels = !outs?.length || outs.every((d: MediaDeviceInfo) => !d.label);
         if (noLabels && navigator.mediaDevices?.getUserMedia) {
+          // Probe once so the browser reveals device labels, then ALWAYS release
+          // the stream. A stream left open pins Bluetooth headsets to HFP
+          // (low-quality, mono) and keeps the recording indicator on.
+          let probe: MediaStream | null = null;
           try {
-            await navigator.mediaDevices.getUserMedia({ audio: true });
+            probe = await navigator.mediaDevices.getUserMedia({ audio: true });
             outs = await mix.listOutputs();
           } catch { /* permission denied — use what we have */ }
+          finally {
+            probe?.getTracks().forEach((track) => track.stop());
+          }
         }
         set({
           devices: (outs || []).map((d: MediaDeviceInfo) => ({
