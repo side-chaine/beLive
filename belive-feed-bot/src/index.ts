@@ -43,6 +43,29 @@ export default {
     if (request.method === 'GET') {
       const url = new URL(request.url);
 
+      // Каталог и стемы закрыты входом.
+      //
+      // До этого /tracks отдавал кому угодно полный список треков вместе с
+      // Telegram file_id, а /download/<file_id> по этому id отдавал сам файл.
+      // То есть каталог был не «утечкой», а открытой раздачей: любой скрипт
+      // в интернете получал индекс и качал по нему стемы без учётной записи.
+      // Закрываем оба маршрута тем же JWT, что уже стоит на /upload.
+      const protectedPath = url.pathname === '/tracks' || url.pathname.startsWith('/download/');
+      if (protectedPath) {
+        if (!env.JWT_SECRET) {
+          console.error('[catalog] JWT_SECRET не задан — каталог закрыт');
+          return new Response('Server misconfigured', { status: 503, headers: corsHeaders(reqOrigin) });
+        }
+        const authHeader = request.headers.get('Authorization');
+        if (!authHeader?.startsWith('Bearer ')) {
+          return new Response('Unauthorized', { status: 401, headers: corsHeaders(reqOrigin) });
+        }
+        const auth = await verifyJwt(authHeader.slice('Bearer '.length), env.JWT_SECRET);
+        if (!auth) {
+          return new Response('Unauthorized', { status: 401, headers: corsHeaders(reqOrigin) });
+        }
+      }
+
       if (url.pathname === "/tracks") {
         const trackList = await env.EPHEMERAL_KV.list({ prefix: "track_data:t:", limit: 200 });
         const entries = await Promise.all(trackList.keys.map((k) => env.EPHEMERAL_KV.get(k.name, { type: "json" })));
