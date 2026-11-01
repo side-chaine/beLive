@@ -22,9 +22,31 @@ export async function sendMessage(
   return res.json();
 }
 
-export async function getFile(token: string, fileId: string): Promise<{ file_path?: string }> {
-  const res = await fetch(`${TG_API}${token}/getFile?file_id=${fileId}`);
-  const data: any = await res.json();
+/**
+ * Информация о файле. При ошибке Telegram возвращаем её как есть, а не
+ * пустой объект: иначе вызывающий не отличает «файла нет» от «токен не тот»
+ * и «файл больше 20 МБ» — все три случая выглядели одинаково.
+ */
+export interface TgFileInfo {
+  file_path?: string;
+  error_code?: number;
+  description?: string;
+}
+
+export async function getFile(token: string, fileId: string): Promise<TgFileInfo> {
+  const res = await fetch(`${TG_API}${token}/getFile?file_id=${encodeURIComponent(fileId)}`);
+  let data: any = null;
+  try {
+    data = await res.json();
+  } catch {
+    data = null;
+  }
+  if (!res.ok || !data || data.ok === false) {
+    return {
+      error_code: data?.error_code ?? res.status,
+      description: data?.description ?? `HTTP ${res.status} ${res.statusText}`,
+    };
+  }
   return data.result || {};
 }
 

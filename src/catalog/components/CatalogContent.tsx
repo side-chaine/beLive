@@ -4,6 +4,7 @@ import { CoverArt } from '../../components/CoverArt';
 import { useTrackStore } from '../../stores/track.store';
 import { useCatalogStore } from '../store/catalog.store';
 import { useGhostStore } from '../../stores/ghost.store';
+import { useUserProfileStore } from '../../stores/user-profile.store';
 import { parseTrackName } from '../types';
 import { T, IB } from '../theme';
 import { GhostTrackCard } from './GhostTrackCard';
@@ -22,6 +23,14 @@ interface TgTrack {
 const TG_DL_MAX_ATTEMPTS = 3;
 const TG_DL_MIN_BPS = 300_000;
 const TG_DL_TIMEOUT_SAFETY = 2;
+
+// Каталог и стемы на воркере закрыты JWT: без входа /tracks и /download
+// отвечают 401. Заголовок собираем в одном месте, чтобы оба запроса не
+// разъехались.
+function feedAuthHeaders(): Record<string, string> {
+  const token = useUserProfileStore.getState().currentUser?.authToken;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 export function isTransient(err: unknown): boolean {
   if (!err || typeof err !== 'object') return false;
@@ -51,8 +60,18 @@ export async function downloadTgTrack(
     const ac = new AbortController();
     const to = setTimeout(() => ac.abort(), timeoutMs);
     try {
-      const resp = await fetcher(baseUrl + '/download/' + fileId, { signal: ac.signal });
+      const resp = await fetcher(baseUrl + '/download/' + fileId, { signal: ac.signal, headers: feedAuthHeaders() });
+      if (resp.status === 401) {
+        // Без входа файл не отдаётся — это не сбой сети, повторять нечего.
+        console.error('[TG] download требует входа: 401');
+        useGhostStore.getState().updateGhost(gid, { phase: 'error' }); return;
+      }
       if (!resp.ok) {
+        // Тело ответа теперь содержит настоящую причину от Telegram
+        // (TG_FILE_NOT_FOUND / FILE_TOO_LARGE_FOR_BOT_API / TG_GETFILE_FAILED).
+        // Без этого в консоли был только код, и отладить было нечем.
+        const body = await resp.text().catch(() => '');
+        console.error('[TG] download failed:', resp.status, body.slice(0, 300));
         if (resp.status >= 500) throw new Error('server5xx');
         useGhostStore.getState().updateGhost(gid, { phase: 'error' }); return;
       }
@@ -112,8 +131,8 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
   // Fetch Telegram tracks — вынесено для переиспользования
   const fetchTgTracks = useCallback(() => {
     let cancelled = false;
-    fetch(TG_API_URL)
-      .then(r => r.json())
+    fetch(TG_API_URL, { headers: feedAuthHeaders() })
+      .then(r => { if (r.status === 401) throw new Error('AUTH_REQUIRED'); return r.json(); })
       .then(data => { if (!cancelled && data?.tracks) setTgTracks(data.tracks); })
       .catch(() => { if (!cancelled) setTgError(true); });
     return () => { cancelled = true; };

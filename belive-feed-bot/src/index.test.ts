@@ -197,6 +197,55 @@ describe('с валидным токеном /upload работает', () => {
   });
 });
 
+// ─── каталог и стемы закрыты входом ────────────────────────
+
+describe('/tracks и /download требуют JWT', () => {
+  const TRACKS_URL = 'https://feed-bot.test/tracks';
+  const DOWNLOAD_URL = 'https://feed-bot.test/download/BQACAgIAAxkBAAOw';
+
+  const get = (url: string, headers: Record<string, string> = {}) =>
+    new Request(url, { method: 'GET', headers });
+
+  it('анонимный /tracks → 401 (каталог больше не раздаётся)', async () => {
+    const res = await worker.fetch(get(TRACKS_URL), makeEnv());
+    expect(res.status).toBe(401);
+  });
+
+  it('анонимный /download/<file_id> → 401 и в Telegram не ходим', async () => {
+    const res = await worker.fetch(get(DOWNLOAD_URL), makeEnv());
+    expect(res.status).toBe(401);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('токен с неверной подписью → 401 на обоих маршрутах', async () => {
+    const bad = (await makeJwt('google:me')) + 'x';
+    const headers = { Authorization: `Bearer ${bad}` };
+    expect((await worker.fetch(get(TRACKS_URL, headers), makeEnv())).status).toBe(401);
+    expect((await worker.fetch(get(DOWNLOAD_URL, headers), makeEnv())).status).toBe(401);
+  });
+
+  it('при незаданном JWT_SECRET каталог закрывается (503), а не открывается', async () => {
+    const res = await worker.fetch(get(TRACKS_URL), makeEnv({ JWT_SECRET: '' }));
+    expect(res.status).toBe(503);
+  });
+
+  it('с валидным токеном /tracks отдаёт каталог', async () => {
+    const res = await worker.fetch(
+      get(TRACKS_URL, { Authorization: `Bearer ${await makeJwt('google:me')}` }),
+      makeEnv(),
+    );
+    expect(res.status).toBe(200);
+    const json: any = await res.json();
+    expect(Array.isArray(json.tracks)).toBe(true);
+    expect(json.tracks.length).toBeGreaterThan(0);
+  });
+
+  it('health-заглушка остаётся публичной', async () => {
+    const res = await worker.fetch(get('https://feed-bot.test/health'), makeEnv());
+    expect(res.status).toBe(200);
+  });
+});
+
 // ─── сама проверка токена ──────────────────────────────────
 
 describe('verifyJwt', () => {

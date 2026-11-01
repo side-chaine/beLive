@@ -43,6 +43,29 @@ export default {
     if (request.method === 'GET') {
       const url = new URL(request.url);
 
+      // Каталог и стемы закрыты входом.
+      //
+      // До этого /tracks отдавал кому угодно полный список треков вместе с
+      // Telegram file_id, а /download/<file_id> по этому id отдавал сам файл.
+      // То есть каталог был не «утечкой», а открытой раздачей: любой скрипт
+      // в интернете получал индекс и качал по нему стемы без учётной записи.
+      // Закрываем оба маршрута тем же JWT, что уже стоит на /upload.
+      const protectedPath = url.pathname === '/tracks' || url.pathname.startsWith('/download/');
+      if (protectedPath) {
+        if (!env.JWT_SECRET) {
+          console.error('[catalog] JWT_SECRET не задан — каталог закрыт');
+          return new Response('Server misconfigured', { status: 503, headers: corsHeaders(reqOrigin) });
+        }
+        const authHeader = request.headers.get('Authorization');
+        if (!authHeader?.startsWith('Bearer ')) {
+          return new Response('Unauthorized', { status: 401, headers: corsHeaders(reqOrigin) });
+        }
+        const auth = await verifyJwt(authHeader.slice('Bearer '.length), env.JWT_SECRET);
+        if (!auth) {
+          return new Response('Unauthorized', { status: 401, headers: corsHeaders(reqOrigin) });
+        }
+      }
+
       if (url.pathname === "/tracks") {
         const trackList = await env.EPHEMERAL_KV.list({ prefix: "track_data:t:", limit: 200 });
         const entries = await Promise.all(trackList.keys.map((k) => env.EPHEMERAL_KV.get(k.name, { type: "json" })));
@@ -82,7 +105,30 @@ export default {
         const fileId = url.pathname.replace("/download/", "");
         if (!fileId) return new Response("Missing file_id", { status: 400, headers: corsHeaders(reqOrigin) });
         const tgFile = await getFile(env.BOT_TOKEN, fileId);
-        if (!tgFile.file_path) return new Response("File not found", { status: 404, headers: corsHeaders(reqOrigin) });
+        if (!tgFile.file_path) {
+          // Раньше здесь был голый 404 "File not found" на ЛЮБУЮ ошибку
+          // Telegram: неверный BOT_TOKEN, удалённый файл, файл больше 20 МБ
+          // (официальный предел Bot API на скачивание) — всё выглядело как
+          // «файла нет». Отладить по такому ответу нельзя, поэтому отдаём
+          // настоящую причину и код.
+          const detail = tgFile.description || "Telegram не вернул file_path";
+          const code = tgFile.error_code ?? null;
+          console.error(`[download] getFile без file_path: code=${code ?? "—"} desc=${detail}`);
+
+          const tooBig = /too big|too large/i.test(detail);
+          const notFound = /not found|invalid file_id|wrong file/i.test(detail);
+          const status = tooBig ? 413 : notFound ? 404 : 502;
+          return new Response(JSON.stringify({
+            error: tooBig ? "FILE_TOO_LARGE_FOR_BOT_API"
+                 : notFound ? "TG_FILE_NOT_FOUND"
+                 : "TG_GETFILE_FAILED",
+            detail,
+            tg_error_code: code,
+          }), {
+            status,
+            headers: { "Content-Type": "application/json", ...corsHeaders(reqOrigin) },
+          });
+        }
         const fileRes = await fetch(fileUrl(env.BOT_TOKEN, tgFile.file_path));
         if (!fileRes.ok) return new Response("Download failed", { status: 502, headers: corsHeaders(reqOrigin) });
         return new Response(fileRes.body, {
