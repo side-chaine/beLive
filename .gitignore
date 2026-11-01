@@ -7,8 +7,11 @@ recon/
 
 *.log
 *.bak
-*.backu
+*.backup
 *.tmp
+
+# Scratch space — не часть продукта
+tmp/
 
 .DS_Store
 Thumbs.db
