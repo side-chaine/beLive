@@ -9,7 +9,7 @@ import { useBlocksStore } from '../../stores/blocks.store';
 import { useTrackStore } from '../../stores/track.store';
 import {
   appendSession,
-  appendPass,
+  appendPassAndPatch,
   patchSession,
   closeSession,
   heartbeat,
@@ -21,6 +21,16 @@ import {
 
 const HEARTBEAT_MS = 30_000;
 const PAUSE_TIMEOUT_MS = 30 * 60_000;
+
+/** MR-4a Q2: detail из CustomEvent стора; getState() — fallback. */
+function detailOf(e: Event): Record<string, unknown> {
+  const d = (e as CustomEvent<unknown>).detail;
+  return d && typeof d === 'object' ? (d as Record<string, unknown>) : {};
+}
+
+function numOf(v: unknown): number | null {
+  return typeof v === 'number' && Number.isFinite(v) ? v : null;
+}
 
 export function init(): () => void {
   if (typeof document === 'undefined') return () => {};
@@ -70,13 +80,17 @@ export function init(): () => void {
     startHeartbeat();
   };
 
-  // practice:pass-complete (store:401)
-  const onPassComplete = (): void => {
+  // practice:pass-complete (store:401) — Q1: pass+патч ОДНОЙ транзакцией
+  const onPassComplete = (e: Event): void => {
     const s = usePracticeStore.getState();
-    void (async () => {
-      await appendPass({ rate: s.currentRate, passIndex: s.passesCount, label: s.passLabel });
-      await patchSession({ passes: s.passesCount, rateEnd: s.currentRate });
-    })();
+    const d = detailOf(e);
+    const rate = numOf(d.currentRate) ?? s.currentRate;
+    const passIndex = numOf(d.passesCount) ?? s.passesCount;
+    const label =
+      d.passLabel === null || typeof d.passLabel === 'string'
+        ? (d.passLabel as string | null)
+        : s.passLabel;
+    void appendPassAndPatch({ rate, passIndex, label }, { passes: passIndex, rateEnd: rate });
   };
 
   // practice:completed (store:412) — НЕ закрываем, isActive ещё true
@@ -99,6 +113,7 @@ export function init(): () => void {
   };
 
   // practice:cancelled (store:298) — close читает кэш; нет кэша → no-op
+  // (в списках refresh-событий useJournal:24 — с MR-4a тоже)
   const onCancelled = (): void => {
     clearPauseTimer();
     stopHeartbeat();
@@ -106,8 +121,8 @@ export function init(): () => void {
   };
 
   // practice:paused (store:424) — пауза >30 мин → interrupted
-  const onPaused = (): void => {
-    markPaused();
+  const onPaused = (e: Event): void => {
+    markPaused(numOf(detailOf(e).at) ?? Date.now());
     clearPauseTimer();
     pauseTimer = setTimeout(() => {
       pauseTimer = null;
@@ -117,9 +132,9 @@ export function init(): () => void {
   };
 
   // practice:resumed (store:428)
-  const onResumed = (): void => {
+  const onResumed = (e: Event): void => {
     clearPauseTimer();
-    markResumed();
+    markResumed(numOf(detailOf(e).at) ?? Date.now());
   };
 
   const handlers: Array<[string, EventListener]> = [
