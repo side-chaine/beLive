@@ -1,0 +1,67 @@
+name: PR Gate
+
+# Зачем: до этого гейта не было вообще. `npm test`, `verify:ci` и `build`
+# жили только в deploy.yml, а он срабатывает на push в main — то есть уже
+# после мержа. Красный гейт обнаруживался на main, а не на PR.
+#
+# Здесь те же три шага, что в deploy.yml, но на pull_request: PR не станет
+# зелёным, пока они не пройдут. Деплоя тут нет намеренно — эта работа
+# остаётся за deploy.yml.
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+# Новый пуш в тот же PR отменяет предыдущий прогон — не жжём минуты.
+concurrency:
+  group: pr-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test -- --run
+
+      # Те же шесть гейтов, что в deploy.yml, и тот же JUNCTION_GRACE:
+      # без него G-7 краснеет на известных жертвах CF-батча.
+      - name: Verify Gates
+        run: npm run verify:ci
+        env:
+          JUNCTION_GRACE: 'wrangler-env-d1,vite-url-ai-worker,vite-url-worker-src'
+
+      # Переменные те же, что в deploy.yml, чтобы сборка на PR была
+      # побайтово той же сборкой, что потом поедет на Pages. Иначе гейт
+      # слабее деплоя: PR зелёный, а build на main падает.
+      #
+      # Значений здесь нет — только имена. Vite действительно инлайнит
+      # VITE_* в бандл (правило R1 секрет-гейта), но подставляются они
+      # из GitHub secrets ровно как в deploy.yml:40-41.
+      - name: Build
+        run: npm run build
+        env:
+          # secret-ok-next-line: имя переменной, значение из GitHub secrets
+          VITE_GETSONGBPM_KEY: ${{ secrets.VITE_GETSONGBPM_KEY }}
+          # secret-ok-next-line: имя переменной, значение из GitHub secrets
+          VITE_LASTFM_API_KEY: ${{ secrets.VITE_LASTFM_API_KEY }}
+          VITE_REHEARSAL_SIGNALING_URL: 'wss://belive-rehearsal.nikitosss007.workers.dev/ws'
+          SEO_GOOGLE_SITE_VERIFICATION: ${{ secrets.SEO_GOOGLE_SITE_VERIFICATION }}
+          SEO_YANDEX_VERIFICATION: ${{ secrets.SEO_YANDEX_VERIFICATION }}
+          SEO_BING_VERIFICATION: ${{ secrets.SEO_BING_VERIFICATION }}
