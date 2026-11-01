@@ -3,6 +3,7 @@
 
 import { sendMessage, answerCallbackQuery, getFile, fileUrl } from './tg';
 import { isAllowedUser, getUserId } from './auth';
+import { verifyJwt } from './jwt';
 import { getDraft, clearDraft } from './state-machine';
 import {
   cmdStart, cmdCancel, cmdCatalog, cmdTrack,
@@ -16,7 +17,7 @@ interface Env {
   ALLOWED_TG_IDS: string;
   EPHEMERAL_KV: KVNamespace;
   UPLOAD_CHAT_ID: string;
-  UPLOAD_API_KEY_SECRET: string;
+  JWT_SECRET: string;
   ALLOWED_ORIGIN: string;
 }
 
@@ -30,7 +31,7 @@ export default {
       return {
         'Access-Control-Allow-Origin': allowed,
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       };
     };
     // ── CORS preflight ──
@@ -103,7 +104,7 @@ export default {
       const corsHeaders = {
         'Access-Control-Allow-Origin': 'https://app.mybelive.com',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       };
 
       // A2: Strict origin check (=== не includes!)
@@ -119,16 +120,26 @@ export default {
         return new Response('Payload Too Large', { status: 413, headers: corsHeaders });
       }
 
-      // A4: X-API-Key check
-      const apiKey = request.headers.get('X-API-Key');
-      if (!apiKey) {
+      // A4: JWT — тот же HS256, что у gateway и belive-mvsep.
+      //
+      // Раньше здесь был общий статический ключ в заголовке X-API-Key. Он не
+      // давал защиты: значение захардкожено в клиенте
+      // (src/services/tg-upload.service.ts), то есть лежало в публичном
+      // бандле и в публичном репозитории. Любой мог залить ZIP, который
+      // уходил в наш Telegram и появлялся в каталоге через GET /tracks.
+      // Статический ключ в публичном клиенте — не аутентификация.
+      if (!env.JWT_SECRET) {
+        // Fail closed: без секрета проверить токен нечем, а принимать всех
+        // подряд нельзя. Лучше явная ошибка, чем открытая дверь.
+        console.error('[upload] JWT_SECRET не задан — /upload закрыт');
+        return new Response('Server misconfigured', { status: 503, headers: corsHeaders });
+      }
+      const authHeader = request.headers.get('Authorization');
+      if (!authHeader?.startsWith('Bearer ')) {
         return new Response('Unauthorized', { status: 401, headers: corsHeaders });
       }
-      const encoder = new TextEncoder();
-      const apiKeyBytes = encoder.encode(apiKey);
-      const expectedKeyBytes = encoder.encode(env.UPLOAD_API_KEY_SECRET || 'belive2026');
-      if (apiKeyBytes.length !== expectedKeyBytes.length ||
-          !(crypto.subtle as any).timingSafeEqual(apiKeyBytes, expectedKeyBytes)) {
+      const auth = await verifyJwt(authHeader.slice('Bearer '.length), env.JWT_SECRET);
+      if (!auth) {
         return new Response('Unauthorized', { status: 401, headers: corsHeaders });
       }
 
