@@ -33,6 +33,24 @@ export function mimeToExtension(mime: string): string {
   return 'bin';
 }
 
+/**
+ * Deterministic encode rate for takes.
+ *
+ * 128 kbps is what Chrome already picks for Opus when no rate is given, so this
+ * is not a quality change — it pins the value so Chrome (webm/Opus) and Safari
+ * (mp4/AAC) stop drifting apart. Do NOT lower it: takes are the source for the
+ * publish pipeline, and 48 kbps costs roughly 2.7x the bitrate for no gain.
+ */
+export const TAKE_AUDIO_BITS_PER_SECOND = 128_000;
+
+/** Options handed to MediaRecorder. Exported so the contract can be asserted in tests. */
+export function buildRecorderOptions(mimeType: string): MediaRecorderOptions {
+  return {
+    mimeType,
+    audioBitsPerSecond: TAKE_AUDIO_BITS_PER_SECOND,
+  };
+}
+
 export class TakesRecorder {
   private recorder: MediaRecorder | null = null;
   private chunks: Blob[] = [];
@@ -119,7 +137,7 @@ export class TakesRecorder {
 
     // Create recorder
     this.chunks = [];
-    this.recorder = new MediaRecorder(stream, { mimeType: this._mimeType });
+    this.recorder = new MediaRecorder(stream, buildRecorderOptions(this._mimeType));
     this.recorder.ondataavailable = (e: BlobEvent) => {
       if (e.data.size > 0) this.chunks.push(e.data);
     };
