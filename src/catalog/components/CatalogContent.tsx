@@ -24,12 +24,20 @@ const TG_DL_MAX_ATTEMPTS = 3;
 const TG_DL_MIN_BPS = 300_000;
 const TG_DL_TIMEOUT_SAFETY = 2;
 
-// Каталог и стемы на воркере закрыты JWT: без входа /tracks и /download
-// отвечают 401. Заголовок собираем в одном месте, чтобы оба запроса не
-// разъехались.
-function feedAuthHeaders(): Record<string, string> {
-  const token = useUserProfileStore.getState().currentUser?.authToken;
-  return token ? { Authorization: `Bearer ${token}` } : {};
+// Каталог и стемы на воркере закрыты JWT.
+//
+// Токен живёт 15 минут и намеренно НЕ персистится (сессию держит httpOnly
+// cookie, см. user-profile.store partialize). Поэтому перед запросом его
+// надо либо взять из стора, либо молча продлить через /auth/refresh —
+// иначе после перезагрузки страницы каталог отдаёт 401 и список пуст.
+async function ensureFeedToken(force = false): Promise<string | null> {
+  const current = useUserProfileStore.getState().currentUser?.authToken;
+  if (!force && current) return current;
+  const { authService } = await import('../../services/auth.service');
+  const session = await authService.refreshSession();
+  if (!session) return null;
+  await authService.applySession(session);
+  return useUserProfileStore.getState().currentUser?.authToken ?? null;
 }
 
 export function isTransient(err: unknown): boolean {
@@ -45,6 +53,7 @@ export async function downloadTgTrack(
   handleZip: (file: File, onProgress?: (pct: number) => void) => Promise<void>,
   setSearchQuery: (q: string) => void,
   fetcher: typeof fetch = fetch,
+  authToken?: string,
 ): Promise<void> {
   const fileId = t.fileIds?.instrumental || t.fileIds?.full;
   if (!fileId) return;
@@ -60,7 +69,10 @@ export async function downloadTgTrack(
     const ac = new AbortController();
     const to = setTimeout(() => ac.abort(), timeoutMs);
     try {
-      const resp = await fetcher(baseUrl + '/download/' + fileId, { signal: ac.signal, headers: feedAuthHeaders() });
+      const resp = await fetcher(baseUrl + '/download/' + fileId, {
+        signal: ac.signal,
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+      });
       if (resp.status === 401) {
         // Без входа файл не отдаётся — это не сбой сети, повторять нечего.
         console.error('[TG] download требует входа: 401');
@@ -119,7 +131,7 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
   const ghosts = useGhostStore(s => s.ghosts);
 
   const [tgTracks, setTgTracks] = useState<TgTrack[]>([]);
-  const [tgError, setTgError] = useState(false);
+  const [tgError, setTgError] = useState<false | 'auth' | 'other'>(false);
   const trackListRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const [batchProgress, setBatchProgress] = useState<BatchTrackProgress | null>(null);
@@ -131,10 +143,22 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
   // Fetch Telegram tracks — вынесено для переиспользования
   const fetchTgTracks = useCallback(() => {
     let cancelled = false;
-    fetch(TG_API_URL, { headers: feedAuthHeaders() })
-      .then(r => { if (r.status === 401) throw new Error('AUTH_REQUIRED'); return r.json(); })
-      .then(data => { if (!cancelled && data?.tracks) setTgTracks(data.tracks); })
-      .catch(() => { if (!cancelled) setTgError(true); });
+    (async () => {
+      let token = await ensureFeedToken();
+      if (!token) throw new Error('AUTH_REQUIRED');
+      let resp = await fetch(TG_API_URL, { headers: { Authorization: `Bearer ${token}` } });
+      if (resp.status === 401) {
+        // Токен протух (живёт 15 минут) — продлеваем один раз и повторяем.
+        token = await ensureFeedToken(true);
+        if (!token) throw new Error('AUTH_REQUIRED');
+        resp = await fetch(TG_API_URL, { headers: { Authorization: `Bearer ${token}` } });
+      }
+      if (!resp.ok) throw new Error(`catalog ${resp.status}`);
+      const data = await resp.json();
+      if (!cancelled && data?.tracks) setTgTracks(data.tracks);
+    })().catch((err) => {
+      if (!cancelled) setTgError(err?.message === 'AUTH_REQUIRED' ? 'auth' : 'other');
+    });
     return () => { cancelled = true; };
   }, []);
 
@@ -331,7 +355,10 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
               return (
                 <div
                   key={t.id}
-                  onClick={hasFile ? () => downloadTgTrack(t, handleZip, setSearchQuery) : undefined}
+                  onClick={hasFile ? async () => {
+                    const token = await ensureFeedToken();
+                    await downloadTgTrack(t, handleZip, setSearchQuery, fetch, token ?? undefined);
+                  } : undefined}
                   title={hasFile ? undefined : 'файл недоступен'}
                   style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', cursor: hasFile ? 'pointer' : 'help', borderBottom: `1px solid ${T.border}`, opacity: hasFile ? 1 : 0.7 }}
                 >
@@ -345,7 +372,7 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
           document.body
         )}
       </div>
-      {tgError && <div style={{ fontSize: 10, color: T.mute, marginBottom: 8, textAlign: 'center', flexShrink: 0 }}>TG каталог недоступен</div>}
+      {tgError && <div style={{ fontSize: 10, color: T.mute, marginBottom: 8, textAlign: 'center', flexShrink: 0 }}>{tgError === 'auth' ? 'Войди, чтобы открыть каталог' : 'TG каталог недоступен'}</div>}
 
       {/* Batch publish header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexShrink: 0 }}>
