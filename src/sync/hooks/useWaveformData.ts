@@ -9,6 +9,10 @@ export interface WaveformData {
   error: string | null;
 }
 
+/** D4: stems land ~2s after Sync opens — poll instead of failing on mount. */
+const URL_POLL_INTERVAL_MS = 200;
+const URL_POLL_TIMEOUT_MS = 6000;
+
 async function fetchAndDecode(
   url: string,
   ctx: AudioContext
@@ -30,6 +34,8 @@ export function useWaveformData(): WaveformData {
 
   useEffect(() => {
     let cancelled = false;
+    let pollTimer: ReturnType<typeof setTimeout> | undefined;
+    const deadline = Date.now() + URL_POLL_TIMEOUT_MS;
 
     async function load() {
       try {
@@ -49,6 +55,12 @@ export function useWaveformData(): WaveformData {
           ae.hybridEngine.vocalsUrl;
 
         if (!iUrl && !vUrl) {
+          // D4: V3 publishes trackUrls shortly after loadTrack — keep
+          // waiting (loading stays true, no error) until they show up.
+          if (Date.now() < deadline) {
+            pollTimer = setTimeout(load, URL_POLL_INTERVAL_MS);
+            return;
+          }
           setState((s) => ({
             ...s,
             loading: false,
@@ -99,6 +111,7 @@ export function useWaveformData(): WaveformData {
     load();
     return () => {
       cancelled = true;
+      if (pollTimer !== undefined) clearTimeout(pollTimer);
     };
   }, []);
 

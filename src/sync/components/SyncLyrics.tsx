@@ -6,6 +6,7 @@ import { useAudioStore } from '../../stores/audio.store';
 import { useWordSyncStore } from '../../stores/wordSync.store';
 import { useTriggerStore } from '../../triggers/trigger.store';
 import { getCanonicalBlockColor } from '../../structure/block-colors';
+import type { WordTiming } from '../word-sync/types';
 
 // Local special cases (non-canonical block types)
 const LOCAL_BLOCK_COLORS: Record<string, string> = {
@@ -13,6 +14,26 @@ const LOCAL_BLOCK_COLORS: Record<string, string> = {
 };
 
 const DEFAULT_COLOR = '#888888';
+
+// Hold-last word selection: keeps the previous word lit through the gaps that
+// CTC alignment leaves between words, instead of blinking off between them.
+// Constants mirror ACTIVE_WORD_TIME_OFFSET / ACTIVE_WORD_EPSILON in
+// stores/wordSync.store.ts — keep them in sync if that selector changes.
+const HOLD_WORD_TIME_OFFSET = 0.18;
+const HOLD_WORD_EPSILON = 0.03;
+
+function getHoldWordForLine(words: WordTiming[], currentTime: number): WordTiming | null {
+  const t = currentTime + HOLD_WORD_TIME_OFFSET;
+  let current: WordTiming | null = null;
+  for (const word of words) {
+    if (t >= word.start - HOLD_WORD_EPSILON) {
+      current = word;
+    } else {
+      break;
+    }
+  }
+  return current;
+}
 
 export function SyncLyrics() {
   const lines = useLyricsStore((s) => s.lines);
@@ -24,7 +45,6 @@ export function SyncLyrics() {
   const isPlaying = useAudioStore((s) => s.isPlaying);
   const getWordsForLine = useWordSyncStore((s) => s.getWordsForLine);
   const hasUsableWordSyncForLine = useWordSyncStore((s) => s.hasUsableWordSyncForLine);
-  const getActiveWordForLine = useWordSyncStore((s) => s.getActiveWordForLine);
   const wordSyncStatus = useWordSyncStore((s) => s.status);
   const alignmentData = useWordSyncStore((s) => s.alignmentData);
   const showDebug = useTriggerStore((s) => s.showDebug);
@@ -131,7 +151,7 @@ export function SyncLyrics() {
         const hasWordSync = hasUsableWordSyncForLine(idx);
         const words = hasWordSync ? getWordsForLine(idx) : [];
         const activeWord = isActive && hasWordSync
-          ? getActiveWordForLine(idx, currentTime)
+          ? getHoldWordForLine(words, currentTime)
           : null;
 
         return (

@@ -13,10 +13,16 @@ import { EventBusChannel, Subscription } from '../types'
 import { useMarkersStore } from '../../../stores/markers.store'
 import { useLyricsStore } from '../../../stores/lyrics.store'
 
+const MM_EVENTS = ['markerAdded', 'markerUpdated', 'markerDeleted', 'markersReset'] as const
+
 export function initMarkersEvents(): () => void {
   const subs: Subscription[] = []
   let pendingTimer: ReturnType<typeof setTimeout> | null = null
   let settleTimer: ReturnType<typeof setInterval> | null = null
+  const mmUnsubs: Array<() => void> = []
+  let retryTimer: ReturnType<typeof setInterval> | null = null
+  let retryDeadline: ReturnType<typeof setTimeout> | null = null
+  let bound = false
 
   const clearPending = () => {
     if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null }
@@ -38,6 +44,22 @@ export function initMarkersEvents(): () => void {
         trackDuration: mm.trackDuration || 0,
       })
     }
+  }
+
+  const stopRetry = () => {
+    if (retryTimer) { clearInterval(retryTimer); retryTimer = null }
+    if (retryDeadline) { clearTimeout(retryDeadline); retryDeadline = null }
+  }
+
+  const bindRealtime = () => {
+    if (bound) return
+    const mm = (window as any).markerManager
+    if (typeof mm?.subscribe !== 'function') return
+    if (!MM_EVENTS.every((ev) => Array.isArray(mm.subscribers?.[ev]))) return
+    for (const ev of MM_EVENTS) mmUnsubs.push(mm.subscribe(ev, syncMarkers))
+    bound = true
+    stopRetry()
+    syncMarkers()
   }
 
   const scheduleSyncForTrack = (_detail?: any) => {
@@ -63,8 +85,21 @@ export function initMarkersEvents(): () => void {
     }
   }
 
+  retryTimer = setInterval(bindRealtime, 100)
+  retryDeadline = setTimeout(() => {
+    if (bound) return
+    console.error('[MARKERS] B08 realtime bind timeout (5000ms): mm.subscribe unavailable — live markers disabled')
+    stopRetry()
+  }, 5000)
+  bindRealtime()
+
   subs.push(eventBus.subscribe(EventBusChannel.Audio, 'track-loaded', (p) => scheduleSyncForTrack(p)))
   subs.push(eventBus.subscribe(EventBusChannel.Sync, 'sections-updated', () => { clearPending(); syncMarkers() }))
 
-  return () => { clearPending(); subs.forEach(s => s.unsubscribe()) }
+  return () => {
+    stopRetry()
+    clearPending()
+    subs.forEach(s => s.unsubscribe())
+    mmUnsubs.splice(0).forEach(u => u())
+  }
 }
