@@ -2,15 +2,20 @@
 // Prep-1 · сверка .opencode/agent/*.md с team-m/AGENT-PERMISSIONS.json.
 // Дрейф прав = exit 1. Исключения из manifest печатаются как SKIP (не PASS).
 //
-// Guard all-or-skip (B+, 2026-11-01): промпты агентов живут локально и в git
-// попадают не все, поэтому в чистом клоне полная сверка невозможна. Пока набор
-// из manifest.agents неполон — печатаем громкий SKIP и выходим 0. Как только
-// все агенты на месте (живое дерево, либо governance-решение опубликовать всё),
-// guard перестаёт срабатывать сам собой и включается полная валидация.
+// LOCAL-ONLY (2026-11-01, по ревью): промпты агентов живут локально и в git
+// попадают не все, поэтому в чистом клоне полная сверка невозможна, а в CI
+// скрипт всегда печатал SKIP с exit 0 — зелёный, который ничего не проверяет.
+// Из verify:ci убран; запускать вручную: npm run verify:permissions:local
 //
-// Ловушка: в CI каталог .opencode/agent/ НЕ пуст — там лежат старые версии
-// трекаемых файлов, и они красные по содержанию ("team missing"). Поэтому
-// пропуск считается по неполноте НАБОРА агентов, а не по пустоте каталога.
+// Guard all-or-skip: пока набор из manifest.agents неполон — печатаем громкий
+// SKIP и выходим 0. Как только все агенты на месте (живое дерево, либо
+// governance-решение опубликовать всё), guard перестаёт срабатывать сам собой
+// и включается полная валидация.
+//
+// Ловушка: в чистом клоне каталог .opencode/agent/ может быть НЕ пуст — там
+// лежат старые версии трекаемых файлов, и они красные по содержанию
+// ("team missing"). Поэтому пропуск считается по неполноте НАБОРА агентов,
+// а не по пустоте каталога.
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -24,7 +29,7 @@ const agentFile = (agent) => path.join(root, '.opencode/agent', `${agent}.md`)
 const missing = agents.filter((agent) => !fs.existsSync(agentFile(agent)))
 if (missing.length) {
   const list = missing.map((agent) => `${agent}.md`).join(', ')
-  console.log(`SKIP verify:permissions: agent tree incomplete (missing: ${list}) — prompts local-only by design`)
+  console.log(`SKIP verify:permissions:local: agent tree incomplete (missing: ${list}) — prompts local-only by design`)
   process.exit(0)
 }
 
