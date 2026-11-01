@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "updated": "2026-10-19",
+  "note": "Машиночитаемый manifest прав. verify-permissions сверяет .opencode/agent/*.md с этим файлом; дрейф = FAIL.",
+  "agents": {
+    "001": {
+      "read": "allow",
+      "edit": "deny",
+      "bash": "deny",
+      "task": "deny",
+      "team": "allow",
+      "clipboard": "allow"
+    },
+    "002": {
+      "read": "allow",
+      "edit": "deny",
+      "bash": "deny",
+      "task": "deny",
+      "team": "allow",
+      "clipboard": "allow"
+    },
+    "005": {
+      "read": "allow",
+      "edit": "deny",
+      "bash": "deny",
+      "task": "deny",
+      "team": "allow",
+      "clipboard": "allow"
+    },
+    "006": {
+      "read": "allow",
+      "edit": "deny",
+      "bash": "deny",
+      "task": "deny",
+      "clipboard": "allow"
+    },
+    "008": {
+      "read": "allow",
+      "edit": "deny",
+      "bash": "deny",
+      "clipboard": "allow"
+    },
+    "009": {
+      "read": "allow",
+      "edit": "deny",
+      "bash": "deny",
+      "task": "deny",
+      "team": "deny",
+      "clipboard": "allow"
+    },
+    "ceo": {
+      "read": "allow",
+      "edit": "deny",
+      "bash": "deny",
+      "task": "deny",
+      "team": "deny",
+      "pulse": "allow",
+      "tab": "allow",
+      "notify": "allow",
+      "clipboard": "allow"
+    },
+    "mo": {
+      "read": "allow",
+      "edit": "deny",
+      "bash": "deny",
+      "task": "deny",
+      "team": "allow",
+      "clipboard": "allow"
+    },
+    "release": {
+      "read": "allow",
+      "edit": "deny",
+      "bash": "allow",
+      "task": "deny",
+      "team": "allow",
+      "clipboard": "allow"
+    }
+  },
+  "exceptions": {
+    "007": "Координатор. edit/bash пока не ограничены — это сессия 003_Dock; фикс в Prep-2 (identity) с отдельным CEO/003 агентом.",
+    "operator": "Единственный писатель продукта; edit/bash allow by design. Запрет обхода лейна — approval/claim в Prep-3.",
+    "003": "Доки/реестр; edit-scope team-m/docs — вне Prep-1.",
+    "004": "4 зоны; частичный bash — вне Prep-1.",
+    "scouts": "Мёртвые модели space-bunny — вне Prep-1; заменить/выключить отдельно."
+  }
+}
