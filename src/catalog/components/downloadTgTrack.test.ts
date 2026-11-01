@@ -2,7 +2,22 @@ import { describe, it, expect, vi } from 'vitest';
 if (typeof (globalThis as any).Blob === 'undefined') { (globalThis as any).Blob = class { constructor(p:any,_o?:any){ (this as any)._p=p; } }; }
 if (typeof (globalThis as any).File === 'undefined') { (globalThis as any).File = class { constructor(p:any,n:string,o?:any){ (this as any).blob=p; (this as any).name=n; (this as any).type=o?.type; } }; }
 const mod = await import('./CatalogContent');
-const { isTransient, downloadTgTrack } = mod as any;
+const { isTransient, downloadTgTrack, computeDownloadTimeout } = mod as any;
+describe('computeDownloadTimeout', () => {
+  it('неизвестный размер → пол в 10 минут, а не 30 секунд', () => {
+    // Регресс-страж: пол в 30 с обрывал ZIP со стемами на середине
+    // (AbortError), а retry сбрасывал прогресс — «загрузка пошла вспять».
+    expect(computeDownloadTimeout(undefined)).toBe(600_000);
+    expect(computeDownloadTimeout(0)).toBe(600_000);
+  });
+  it('маленький файл всё равно получает пол', () => {
+    expect(computeDownloadTimeout(1_000_000)).toBe(600_000);
+  });
+  it('большой файл считается по размеру', () => {
+    // 300 МБ при 300 кБ/с с двукратным запасом = 2000 с.
+    expect(computeDownloadTimeout(300_000_000)).toBe(2_000_000);
+  });
+});
 describe('isTransient', () => {
   it('AbortError true', () => expect(isTransient(new DOMException('a','AbortError'))).toBe(true));
   it('server5xx true', () => expect(isTransient(new Error('server5xx'))).toBe(true));
