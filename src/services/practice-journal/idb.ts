@@ -2,6 +2,9 @@
  * Practice Journal — ЕДИНСТВЕННЫЙ писатель журнала прогонов (MR-1, этап 1).
  * Best-effort: любая ошибка IDB → no-op. Журнал не должен ломать практику.
  * Читают журнал только агрегации/UI (этап 2+).
+ *
+ * MR-4a Q1: ВСЕ мутации идут через одну очередь `enqueueWrite` — closeSession
+ * физически не может встать перед незавершённым патчем (патч не теряется).
  */
 
 import { getDB, tx, req } from '../idb.service';
@@ -19,6 +22,20 @@ const RETENTION_DAYS = 365;
 const DAY_MS = 86_400_000;
 const MAX_RECORDS = 10_000;
 const STALE_MS = 2 * 60 * 60 * 1000;
+
+// ── Сериализатор записи (MR-4a Q1) ─────────────────────
+
+let _tail: Promise<unknown> = Promise.resolve();
+
+/**
+ * Поставить мутацию журнала в сериализованную очередь.
+ * Провал одной операции не отменяет следующую (op и на reject-ветке).
+ */
+export function enqueueWrite<T>(op: () => Promise<T>): Promise<T> {
+  const run = _tail.then(op, op);
+  _tail = run.then(() => {}, () => {});
+  return run;
+}
 
 /** Module-state кэш активной сессии (условие 009-4). */
 interface ActiveSession {
@@ -65,6 +82,26 @@ function awaitTx(t: IDBTransaction): Promise<void> {
   });
 }
 
+function passRecord(
+  input: { rate: number; passIndex: number; label: string | null },
+  cache: ActiveSession,
+  now: number,
+): PassRecord {
+  return {
+    id: newId(),
+    kind: 'pass',
+    at: now,
+    day: localDay(),
+    ownerId: ownerId(),
+    sessionId: cache.sessionId,
+    blockId: cache.blockId,
+    blockType: cache.blockType,
+    passIndex: input.passIndex,
+    rate: input.rate,
+    label: input.label,
+  };
+}
+
 // ── Writer: session ────────────────────────────────────
 
 export interface AppendSessionInput {
@@ -78,7 +115,7 @@ export interface AppendSessionInput {
   trackArtist: string | null;
 }
 
-export async function appendSession(input: AppendSessionInput): Promise<void> {
+async function _appendSession(input: AppendSessionInput): Promise<void> {
   try {
     const now = Date.now();
     const id = newId();
@@ -131,7 +168,11 @@ export async function appendSession(input: AppendSessionInput): Promise<void> {
   }
 }
 
-export async function appendPass(input: {
+export function appendSession(input: AppendSessionInput): Promise<void> {
+  return enqueueWrite(() => _appendSession(input));
+}
+
+async function _appendPass(input: {
   rate: number;
   passIndex: number;
   label: string | null;
@@ -139,19 +180,7 @@ export async function appendPass(input: {
   try {
     if (!active) return;
     const now = Date.now();
-    const record: PassRecord = {
-      id: newId(),
-      kind: 'pass',
-      at: now,
-      day: localDay(),
-      ownerId: ownerId(),
-      sessionId: active.sessionId,
-      blockId: active.blockId,
-      blockType: active.blockType,
-      passIndex: input.passIndex,
-      rate: input.rate,
-      label: input.label,
-    };
+    const record = passRecord(input, active, now);
 
     active.passes = input.passIndex;
     active.rateEnd = input.rate;
@@ -163,7 +192,59 @@ export async function appendPass(input: {
   }
 }
 
-export async function patchSession(
+export function appendPass(input: {
+  rate: number;
+  passIndex: number;
+  label: string | null;
+}): Promise<void> {
+  return enqueueWrite(() => _appendPass(input));
+}
+
+/**
+ * MR-4a Q1: pass + патч сессии в ОДНОЙ readwrite-транзакции.
+ * real fix гонки: патч и запись прогона либо оба на диске, либо ни одного.
+ */
+async function _appendPassAndPatch(
+  pass: { rate: number; passIndex: number; label: string | null },
+  patch: Partial<Omit<SessionRecord, 'id' | 'kind'>>,
+): Promise<void> {
+  try {
+    if (!active) return;
+    const cache = active;
+    const now = Date.now();
+    const record = passRecord(pass, cache, now);
+
+    const db = await getDB();
+    const t = db.transaction([STORE], 'readwrite');
+    const store = t.objectStore(STORE);
+    store.put(record);
+
+    const get = store.get(cache.sessionId);
+    get.onsuccess = () => {
+      const current = get.result as SessionRecord | undefined;
+      if (!current) return;
+      store.put({ ...current, ...patch } as SessionRecord);
+    };
+
+    await awaitTx(t);
+
+    cache.passes = pass.passIndex;
+    cache.rateEnd = pass.rate;
+    if (patch.passes != null) cache.passes = patch.passes;
+    if (patch.rateEnd != null) cache.rateEnd = patch.rateEnd;
+  } catch {
+    // best-effort
+  }
+}
+
+export function appendPassAndPatch(
+  pass: { rate: number; passIndex: number; label: string | null },
+  patch: Partial<Omit<SessionRecord, 'id' | 'kind'>>,
+): Promise<void> {
+  return enqueueWrite(() => _appendPassAndPatch(pass, patch));
+}
+
+async function _patchSession(
   patch: Partial<Omit<SessionRecord, 'id' | 'kind'>>,
 ): Promise<void> {
   try {
@@ -180,9 +261,18 @@ export async function patchSession(
   }
 }
 
-export async function heartbeat(): Promise<void> {
-  if (!active) return;
-  await patchSession({ lastSeenAt: Date.now() });
+export function patchSession(
+  patch: Partial<Omit<SessionRecord, 'id' | 'kind'>>,
+): Promise<void> {
+  return enqueueWrite(() => _patchSession(patch));
+}
+
+/** Тоже в очереди (Q1: мутации — только через неё); внутри — нерекурсивный патч. */
+export function heartbeat(): Promise<void> {
+  return enqueueWrite(async () => {
+    if (!active) return;
+    await _patchSession({ lastSeenAt: Date.now() });
+  });
 }
 
 /** Пауза: отметка в кэше (pausedMs копится, в запись уходит на close). */
@@ -201,7 +291,7 @@ export function markResumed(now: number = Date.now()): void {
  * Закрытие сессии. Читает ТОЛЬКО кэш; passes/rateEnd не перезаписывает;
  * идемпотентно (status !== 'open' → skip).
  */
-export async function closeSession(
+async function _closeSession(
   status: Exclude<SessionRecord['status'], 'open'>,
 ): Promise<void> {
   try {
@@ -235,9 +325,15 @@ export async function closeSession(
   }
 }
 
+export function closeSession(
+  status: Exclude<SessionRecord['status'], 'open'>,
+): Promise<void> {
+  return enqueueWrite(() => _closeSession(status));
+}
+
 // ── Ретеншен ───────────────────────────────────────────
 
-export async function prune(now: number = Date.now()): Promise<void> {
+async function _prune(now: number): Promise<void> {
   try {
     const db = await getDB();
     const all = await req<JournalRecord[]>(tx(db, STORE).getAll());
@@ -273,36 +369,50 @@ export async function prune(now: number = Date.now()): Promise<void> {
   }
 }
 
+export function prune(now: number = Date.now()): Promise<void> {
+  return enqueueWrite(() => _prune(now));
+}
+
 // ── Миграция гостя ─────────────────────────────────────
 
-export async function migrateGuest(accountId: string): Promise<number> {
+/** MR-4a Q4: guard («у аккаунта уже есть записи?») — ВНУТРИ миграционной tx. */
+async function _migrateGuest(accountId: string): Promise<number> {
   try {
     if (!accountId || accountId === GUEST) return 0;
     const db = await getDB();
 
-    // Guard: у аккаунта уже есть записи → не мигрируем
-    const owned = await req<number>(tx(db, STORE).index('ownerId').count(accountId));
-    if (owned > 0) return 0;
-
+    // ОДНА readwrite-транзакция: count-гвард и read-modify-write в ней же.
     const t = db.transaction([STORE], 'readwrite');
     const index = t.objectStore(STORE).index('ownerId');
 
     return await new Promise<number>((resolve, reject) => {
       let migrated = 0;
-      const request = index.openCursor(IDBKeyRange.only(GUEST));
-      request.onsuccess = () => {
-        const cursor = request.result;
-        if (cursor) {
-          // read-modify-write: полный объект, НЕ частичный
-          const r = cursor.value as JournalRecord;
-          r.ownerId = accountId;
-          r.migrated = true;
-          cursor.update(r);
-          migrated++;
-          cursor.continue();
+      let blocked = false;
+
+      const guard = index.count(accountId);
+      guard.onerror = () => reject(guard.error);
+      guard.onsuccess = () => {
+        if ((guard.result as number) > 0) {
+          blocked = true; // записей нет — транзакция завершится пустой
+          return;
         }
+        const request = index.openCursor(IDBKeyRange.only(GUEST));
+        request.onsuccess = () => {
+          const cursor = request.result;
+          if (cursor) {
+            // read-modify-write: полный объект, НЕ частичный
+            const r = cursor.value as JournalRecord;
+            r.ownerId = accountId;
+            r.migrated = true;
+            cursor.update(r);
+            migrated++;
+            cursor.continue();
+          }
+        };
+        request.onerror = () => reject(request.error);
       };
-      t.oncomplete = () => resolve(migrated);
+
+      t.oncomplete = () => resolve(blocked ? 0 : migrated);
       t.onerror = () => reject(t.error);
       t.onabort = () => reject(t.error);
     });
@@ -311,9 +421,13 @@ export async function migrateGuest(accountId: string): Promise<number> {
   }
 }
 
+export function migrateGuest(accountId: string): Promise<number> {
+  return enqueueWrite(() => _migrateGuest(accountId));
+}
+
 // ── Boot: закрытие зависших open ───────────────────────
 
-export async function closeStale(now: number = Date.now()): Promise<number> {
+async function _closeStale(now: number): Promise<number> {
   try {
     const db = await getDB();
     const sessions = await req<SessionRecord[]>(tx(db, STORE).index('kind').getAll('session'));
@@ -338,4 +452,8 @@ export async function closeStale(now: number = Date.now()): Promise<number> {
   } catch {
     return 0;
   }
+}
+
+export function closeStale(now: number = Date.now()): Promise<number> {
+  return enqueueWrite(() => _closeStale(now));
 }

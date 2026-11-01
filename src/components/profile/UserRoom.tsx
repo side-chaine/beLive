@@ -253,8 +253,9 @@ export function UserRoom() {
 
           {/* СОВМЕСТНЫЕ СЕССИИ */}
           <section className="bl-userroom__card bl-userroom__card--sessions">
-            <div className="bl-userroom__card-title">Совместные сессии</div>
-            <div className="bl-userroom__muted">∅ пока пусто · позже: спой с другом или педагогом</div>
+            <div className="bl-userroom__footer-row">
+              <span className="bl-userroom__footer-label">Совместные сессии · ∅ пока пусто · позже: спой с другом или педагогом</span>
+            </div>
           </section>
 
           {/* ФУТЕР · MVSEP */}
