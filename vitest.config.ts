@@ -7,13 +7,14 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
-    // belive-mvsep/**/*.test.js — тесты воркера. Без этой строки они бы
+    // Тесты воркеров (belive-mvsep, belive-feed-bot). Без этих строк они бы
     // существовали, но никогда не запускались (как gateway/test/*.test.ts,
     // которые лежат вне include и в CI не идут).
     include: [
       'src/**/*.{test,spec}.{ts,tsx}',
       'src/**/__tests__/**/*.{test,spec}.{ts,tsx}',
       'belive-mvsep/**/*.test.js',
+      'belive-feed-bot/**/*.test.ts',
     ],
   },
 });
