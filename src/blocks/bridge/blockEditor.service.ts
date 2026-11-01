@@ -4,122 +4,149 @@
 
 import { useBlockEditorStore } from '../store/blockEditor.store';
 import { saveLyricsBlocks } from '../../services/track.actions';
+import { parseTaggedLyrics } from '../parser/tagged-lyrics.parser';
+import { buildParagraphEditorText } from '../parser/paragraph-blocks';
+
+export interface OpenBlockEditorOptions {
+  trackId?: number | string | null;
+  trackIndex?: number | null;
+  /** Explicit line-space text override (tests / callers with ready display lines) */
+  text?: string | null;
+  /** Persisted blocksData — ids/indices survive the round-trip */
+  seedBlocks?: any[] | null;
+  /** Original text with structural tags — overlay for types only */
+  tagText?: string | null;
+  onSaved?: () => void;
+  onCancel?: () => void;
+}
+
+function nonEmptyLines(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(l => String(l ?? '').trim()).filter(l => l.length > 0);
+}
 
 /**
  * openBlockEditor — единственный вход в живой BlockEditorModal.
- * Логика перенесена 1:1 из удалённого WaveformEditor stub:
- * guard'ы (нет трека/каталога → error-нотификация), RTF-парс,
- * авто-нарезка блоков (boundary припев|проигрыш + аккумулятор 2 строк),
- * save-колбэк (saveLyricsBlocks + loadImportedBlocks + updateMarkerColors
- * + success/error-нотификации).
+ * Guard'ы (нет трека/каталога → error-нотификация), line-space из lyricsDisplay,
+ * seed из track.blocksData, tag-overlay только когда нужен,
+ * await persist + runtime apply только если трек всё ещё текущий.
  */
-export function openBlockEditor(): void {
+export function openBlockEditor(opts: OpenBlockEditorOptions = {}): boolean {
   const w = window as any;
 
   const tc = w.trackCatalog;
   if (!tc) {
     w.showAppNotification?.('Ошибка: Каталог треков недоступен', 'error');
-    return;
+    return false;
   }
 
-  const idx = tc.currentTrackIndex;
-  const track = (idx >= 0 && idx < tc.tracks.length) ? tc.tracks[idx] : null;
+  const tracks: any[] = Array.isArray(tc.tracks) ? tc.tracks : [];
+  let track: any = null;
+  let idx: number = -1;
+
+  if (opts.trackId !== undefined && opts.trackId !== null) {
+    idx = tracks.findIndex((t: any) => String(t.id) === String(opts.trackId));
+    if (idx >= 0) track = tracks[idx];
+  }
+  if (!track) {
+    idx = typeof opts.trackIndex === 'number' ? opts.trackIndex : tc.currentTrackIndex;
+    track = (idx >= 0 && idx < tracks.length) ? tracks[idx] : null;
+  }
+
   const currentTrackId = track?.id ?? null;   // нативный тип из каталога, НЕ String()
-
-  if (!currentTrackId) {
+  if (currentTrackId === null || currentTrackId === undefined) {
     w.showAppNotification?.('Ошибка: Трек не выбран', 'error');
-    return;
+    return false;
   }
 
-  let currentLyrics = '';
+  const original = typeof track.lyricsOriginalContent === 'string'
+    ? track.lyricsOriginalContent
+    : '';
 
-  if (track.lyricsOriginalContent) {
-    if (track.lyricsOriginalContent.trim().startsWith('{\\rtf')) {
+  // Line-space = lyricsDisplay.lyrics (markers live in this index space).
+  let lines = nonEmptyLines(w.lyricsDisplay?.lyrics);
+
+  if (opts.text !== null && opts.text !== undefined) {
+    lines = String(opts.text).replace(/\r\n|\r/g, '\n').split('\n').map(l => l.trim()).filter(Boolean);
+  }
+
+  if (lines.length === 0) {
+    let fallbackText = '';
+    if (original.trim().startsWith('{\\rtf')) {
       try {
-        const raw = String(track.lyricsOriginalContent);
         const svc = w.parsingService;
-        let txt = svc?.rtfToText ? svc.rtfToText(raw) : raw;
-        txt = txt
-          .replace(/\r\n|\r/g, '\n')
-          .replace(/\n{3,}/g, '\n\n')
-          .trim();
-        currentLyrics = txt;
+        const txt = svc?.rtfToText ? svc.rtfToText(original) : original;
+        fallbackText = txt.replace(/\r\n|\r/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
       } catch {
-        currentLyrics = track.lyricsOriginalContent;
+        fallbackText = original;
       }
-    } else {
-      currentLyrics = track.lyricsOriginalContent;
+    } else if (track.lyrics) {
+      fallbackText = String(track.lyrics);
+    } else if (original) {
+      fallbackText = original;
+    } else if (w.lyricsDisplay?.fullText) {
+      fallbackText = String(w.lyricsDisplay.fullText);
     }
-  } else if (track.lyrics) {
-    currentLyrics = track.lyrics;
-  } else if (w.lyricsDisplay?.fullText) {
-    currentLyrics = w.lyricsDisplay.fullText;
+
+    lines = fallbackText.split(/\r\n|\r|\n/).map(l => l.trim()).filter(Boolean);
   }
 
-  try {
-    const hasDoubleNewlines = /\n\s*\n/.test(currentLyrics || '');
-    if (
-      !hasDoubleNewlines &&
-      w.lyricsDisplay &&
-      Array.isArray(w.lyricsDisplay.lyrics) &&
-      w.lyricsDisplay.lyrics.length > 0
-    ) {
-      const lines = w.lyricsDisplay.lyrics
-        .map((l: any) => String(l || '').trim())
-        .filter(Boolean);
-      const blocks: string[] = [];
-      const boundary = /(\[?\s*(припев|проигрыш)\s*\]?)/i;
-      let acc: string[] = [];
-      for (const line of lines) {
-        if (boundary.test(line)) {
-          if (acc.length) {
-            blocks.push(acc.join('\n'));
-            acc = [];
-          }
-          blocks.push(line);
-          continue;
-        }
-        acc.push(line);
-        if (acc.length >= 2) {
-          blocks.push(acc.join('\n'));
-          acc = [];
-        }
-      }
-      if (acc.length) blocks.push(acc.join('\n'));
-      if (blocks.length > 0) currentLyrics = blocks.join('\n\n');
+  const seedBlocks = Array.isArray(opts.seedBlocks)
+    ? opts.seedBlocks
+    : (Array.isArray(track.blocksData) ? track.blocksData : []);
+
+  const hasSeed = seedBlocks.length > 0;
+  // 009 strike: no automatic tagText overlay — seed/2-line chunker closes the structure.
+  const tagText = !hasSeed && opts.tagText ? opts.tagText : null;
+
+  let editorText: string;
+  if (hasSeed || tagText) {
+    editorText = lines.join('\n');
+  } else {
+    // D2: теги → original (store сам раздаст блоки+типы); иначе — абзацы Genius, один блок.
+    const tagged = parseTaggedLyrics(original);
+    if (tagged.hasStructure && tagged.blocks.length >= 2) {
+      editorText = original;
+    } else {
+      const fromSource = buildParagraphEditorText(original) ?? buildParagraphEditorText(track.lyrics);
+      editorText = fromSource ?? lines.join('\n');
     }
-  } catch (e) {
-    console.warn('WaveformEditor: LyricsDisplay fallback failed', e);
   }
 
   useBlockEditorStore.getState().open(
-    currentLyrics,
+    editorText,
     track,
     async (editedBlocks: any, newLyricsText: string) => {
-      if (w.trackCatalog && currentTrackId) {
-        try {
-          saveLyricsBlocks(currentTrackId, editedBlocks, newLyricsText);
-          if (w.lyricsDisplay?.loadImportedBlocks) {
-            w.lyricsDisplay.loadImportedBlocks(
-              editedBlocks,
-              newLyricsText,
-              true
-            );
-          }
-          if (w.markerManager?.updateMarkerColors) {
-            w.markerManager.updateMarkerColors();
-          }
-          w.showAppNotification?.('Текст и блоки сохранены успешно!', 'success');
-        } catch (error: any) {
-          w.showAppNotification?.(
-            `Ошибка сохранения: ${error?.message || error}`,
-            'error'
-          );
+      const saved = await saveLyricsBlocks(currentTrackId, editedBlocks, newLyricsText);
+      if (!saved) {
+        // У-2: false = failure — store keeps the modal open, no onSaved.
+        throw new Error('saveLyricsBlocks returned false');
+      }
+
+      // Runtime apply only if the edited track is still the current one.
+      const current = tc.tracks?.[tc.currentTrackIndex];
+      const sameTrack = !!current && String(current.id) === String(currentTrackId);
+      if (sameTrack) {
+        if (w.lyricsDisplay?.loadImportedBlocks) {
+          w.lyricsDisplay.loadImportedBlocks(editedBlocks, newLyricsText, true);
+        }
+        if (w.markerManager?.updateMarkerColors) {
+          w.markerManager.updateMarkerColors();
         }
       }
+
+      w.showAppNotification?.('Текст и блоки сохранены успешно!', 'success');
     },
     () => {
+      opts.onCancel?.();
       w.showAppNotification?.('Редактирование блоков отменено.', 'info');
-    }
+    },
+    {
+      seedBlocks,
+      tagText,
+      onSaved: opts.onSaved ?? null,
+    },
   );
+
+  return true;
 }

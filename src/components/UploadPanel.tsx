@@ -534,14 +534,13 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                     // Old flow: save lyrics(663ms) → getTrack(890ms) → match → save markers(593ms) = 2166ms
                     // New flow: match → single save lyrics+markers = ~600ms
 
-                    let autoSyncApplied = false;
                     let matchResult: { markers: any[]; blocks: any[]; confidence: number } | null = null;
 
                     try {
                       const autoLyrics = await import('../services/auto-lyrics.service');
                       // W11: ждём кэш максимум 17 сек
                       const lrcResult = pendingTrackTitle
-                        ? await autoLyrics.waitForCache(pendingTrackTitle, 17000)
+                        ? await autoLyrics.waitForCache(pendingTrackTitle, 5000)
                         : null;
                       if (import.meta.env.DEV) console.log(`[LyricsPaste] waitForCache: ${(performance.now() - _t0).toFixed(1)}ms`);
 
@@ -641,6 +640,15 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                     } else if (tagResult?.blocks?.length > 0) {
                       // TC-ZIP-03: No LRC match, but tagged lyrics have structure — save blocks as PersistedTextBlock[]
                       idbFields.blocksData = detectedBlocksToPersistedBlocks(tagResult.blocks, cleanLyricLines);
+                    } else if (!matchResult) {
+                      // D3: Genius без LRC-матча — блоки строятся автоматически из абзацев
+                      // (редактор блоков не открываем: hasBlocks ⇒ flow уходит сразу в Sync)
+                      const { buildParagraphBlocks } = await import('../blocks/parser/paragraph-blocks');
+                      const paragraphBlocks = buildParagraphBlocks(pastedText, cleanLyricLines);
+                      if (paragraphBlocks.length >= 2) {
+                        idbFields.blocksData = paragraphBlocks;
+                        if (import.meta.env.DEV) console.log(`[LyricsPaste] D3 auto-blocks from paragraphs: ${paragraphBlocks.length}`);
+                      }
                     }
 
                     await w.idbService?.updateTrackField(pendingTrackId, idbFields);
@@ -672,7 +680,6 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                     if (matchResult && matchResult.confidence >= LOW_CONFIDENCE_ACCEPT) {
                       const autoLyrics = await import('../services/auto-lyrics.service');
                       autoLyrics.markAutoSyncApplied(pendingTrackId);
-                      autoSyncApplied = true;
 
                       if (matchResult.confidence < HIGH_CONFIDENCE) {
                         // LOW_CONFIDENCE (0.5-0.79) — применяем legacy для ревью
@@ -708,23 +715,41 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                     }
                     document.dispatchEvent(new CustomEvent('blocks-applied'));
 
-                    // ═══ TC-FLOW-02: fallback — открыть sync editor вместо Block Editor ═══
-                    if (!autoSyncApplied) {
-                      if (import.meta.env.DEV) {
-                        if (import.meta.env.DEV) console.log('[AutoLyrics] auto-sync not applied, opening Sync Editor');
-                      }
-                      const track = await w.idbService?.getTrack(pendingTrackId);
-                      if (track) {
+                    // ═══ D1: post-upload flow — Block Editor → Sync Editor ═══
+                    {
+                        const { openPostUploadFlow } = await import('../blocks/bridge/postUploadFlow');
+                        const { openBlockEditor } = await import('../blocks/bridge/blockEditor.service');
+                        const { useSyncStore } = await import('../sync/store/sync.store');
+                        const { useUIStore } = await import('../stores/ui.store');
+                        const { useShowStore } = await import('../stores/show.store');
+                        const { useBlockEditorStore } = await import('../blocks/store/blockEditor.store');
                         const { loadTrack } = await import('../services/track.actions');
-                        const { useTrackStore } = await import('../stores/track.store');
-                        const trackIndex = useTrackStore.getState().tracksMeta
-                          .findIndex(t => String(t.id) === String(pendingTrackId));
-                        if (trackIndex >= 0) {
-                          setTimeout(() => {
-                            loadTrack(trackIndex, { autoplay: false, openSyncEditor: true });
-                          }, 300);
-                        }
-                      }
+                        await openPostUploadFlow(
+                            {
+                                trackId: pendingTrackId,
+                                hasLyrics: typeof idbFields.lyrics === 'string' && idbFields.lyrics.trim().length > 0,
+                                hasBlocks: Array.isArray(idbFields.blocksData) && idbFields.blocksData.length > 0,
+                                hasMarkers: Array.isArray(idbFields.syncMarkers) && idbFields.syncMarkers.length > 0,
+                                origin: matchResult ? 'lrc' : 'plain',
+                                confidence: matchResult?.confidence ?? 0,
+                                dataVersion: (idbFields as any).dataVersion,
+                                feed: useUIStore.getState().appMode === 'feed',
+                                showActive: useShowStore.getState().activeMode !== 'entry'
+                                    && !useShowStore.getState().featureActive
+                                    && !useShowStore.getState().isPresenting,
+                                featureActive: useShowStore.getState().featureActive,
+                                editorOpen: useBlockEditorStore.getState().isOpen,
+                            },
+                            {
+                                loadTrack: (i, o) => loadTrack(i, o),
+                                openBlockEditor,
+                                openSync: () => {
+                                    document.dispatchEvent(new CustomEvent('catalog-close'));
+                                    useSyncStore.getState().openSync();
+                                    return true;
+                                },
+                            },
+                        );
                     }
                     onSaved?.();
                     if (import.meta.env.DEV) console.log(`[LyricsPaste] TOTAL: ${(performance.now() - _t0).toFixed(1)}ms`);
