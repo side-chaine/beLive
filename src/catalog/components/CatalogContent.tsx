@@ -23,6 +23,25 @@ interface TgTrack {
 const TG_DL_MAX_ATTEMPTS = 3;
 const TG_DL_MIN_BPS = 300_000;
 const TG_DL_TIMEOUT_SAFETY = 2;
+// Пол со временем ожидания. Раньше здесь было 30 секунд — и это обрывало
+// закачку ровно на середине: полный ZIP со стемами весит десятки мегабайт,
+// а у треков из Telegram `fileSize` часто не заполнен, поэтому таймаут
+// всегда упирался в пол. Снаружи это выглядело как «дошло до половины,
+// сбросилось в ноль и пропало» (AbortError + retry с чистого листа).
+const TG_DL_MIN_TIMEOUT_MS = 10 * 60_000;
+
+/**
+ * Сколько ждать закачку: по размеру, но не меньше десяти минут.
+ *
+ * `fileSize / BPS` даёт СЕКУНДЫ, а таймер ждёт миллисекунды — без `* 1000`
+ * формула возвращала секунды, и `Math.max(30_000, …)` всегда выбирал пол.
+ * То есть таймаут не зависел от размера вообще: любой файл обрывался на
+ * 30-й секунде.
+ */
+export function computeDownloadTimeout(fileSize: number | undefined): number {
+  const bySizeMs = ((fileSize || 0) / TG_DL_MIN_BPS) * TG_DL_TIMEOUT_SAFETY * 1000;
+  return Math.max(TG_DL_MIN_TIMEOUT_MS, bySizeMs);
+}
 
 // Каталог и стемы на воркере закрыты JWT.
 //
@@ -62,7 +81,7 @@ export async function downloadTgTrack(
   useGhostStore.getState().addGhost({ id: gid, title: t.title, artist: t.artist, phase: 'download', progress: 0 });
   const baseUrl = TG_API_URL.replace('/tracks', '');
   if (baseUrl === TG_API_URL) { useGhostStore.getState().updateGhost(gid, { phase: 'error' }); return; }
-  const timeoutMs = Math.max(30_000, ((t.fileSize || 0) / TG_DL_MIN_BPS) * TG_DL_TIMEOUT_SAFETY);
+  const timeoutMs = computeDownloadTimeout(t.fileSize);
   let attempt = 0;
   while (attempt < TG_DL_MAX_ATTEMPTS) {
     attempt++;
