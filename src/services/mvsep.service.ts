@@ -1,9 +1,9 @@
 /**
  * MVSEP Service — Stem Separation API Integration
  * TC-MVSEP-001: Core service for MVSEP API communication
- * 
- * Phase 1: Direct MVSEP API (VITE_MVSEP_API_KEY)
- * Phase 2: CF Worker proxy (JWT auth) — only this file changes
+ *
+ * Разделение идёт через CF Worker proxy (JWT auth). Прямого вызова MVSEP с
+ * ключом из бандла нет: MVSEP_API_KEY живёт только в воркере (`wrangler secret`).
  */
 
 import { useUserProfileStore } from '../stores/user-profile.store';
@@ -15,9 +15,8 @@ import {
 
 // ─── Constants ───────────────────────────────────────────────
 
-// Phase 1.5: CF Worker proxy (primary) + direct fallback (user key)
+// Phase 1.5: CF Worker proxy (primary). Прямого fallback с ключом из бандла нет.
 const MVSEP_WORKER_URL = import.meta.env.VITE_MVSEP_WORKER_URL || 'https://belive-mvsep.nikitosss007.workers.dev';
-const MVSEP_API_TOKEN = import.meta.env.VITE_MVSEP_API_KEY || '';  // direct fallback only
 
 const MVSEP_RENDER_ID = 63;         // BS Roformer SW (6 stems)
 const MVSEP_OUTPUT_FORMAT = 0;      // mp3 320kbps
@@ -59,14 +58,13 @@ export function resolveApiKey(): { key: string; source: MvsepKeySource } {
     return { key: userKey.trim(), source: 'user' };
   }
 
-  // Phase 1.5: Worker has the shared key — client doesn't need it
+  // Worker держит общий ключ — клиенту он не нужен.
+  // Ниже была ветка «прямой вызов с ключом из VITE-переменной», но она
+  // недостижима: MVSEP_WORKER_URL выше имеет жёсткий дефолт и всегда truthy.
+  // Ветку убрали: читать секретоподобную VITE-переменную в клиенте нельзя
+  // в принципе (Vite инлайнит её в бандл), даже если код мёртв.
   if (MVSEP_WORKER_URL) {
     return { key: '', source: 'beLive' };
-  }
-
-  const sharedKey = MVSEP_API_TOKEN;
-  if (sharedKey) {
-    return { key: sharedKey, source: 'beLive' };
   }
 
   return { key: '', source: 'none' };
@@ -237,9 +235,28 @@ export async function submitTrack(
 
 // ─── API: Poll Status ────────────────────────────────────────
 
+/**
+ * Заголовок авторизации для воркера belive-mvsep.
+ *
+ * /status и /download теперь требуют тот же JWT HS256, что /submit:
+ * раньше они были открыты, /status жёг наш MVSEP_API_KEY на анонимные
+ * запросы, а /download работал открытым прокси.
+ */
+function workerAuthHeaders(): Record<string, string> {
+  const token = useUserProfileStore.getState().currentUser?.authToken;
+  if (!token) throw new Error('AUTH_REQUIRED');
+  return { Authorization: `Bearer ${token}` };
+}
+
 export async function pollStatus(hash: string): Promise<MvsepJobStatus> {
   if (MVSEP_WORKER_URL) {
-    const resp = await fetch(`${MVSEP_WORKER_URL}/status?hash=${encodeURIComponent(hash)}`);
+    // Поллинг не должен бросать: без токена просто сообщаем 'error',
+    // вызывающий цикл сам решит, что делать.
+    const token = useUserProfileStore.getState().currentUser?.authToken;
+    if (!token) return 'error';
+    const resp = await fetch(`${MVSEP_WORKER_URL}/status?hash=${encodeURIComponent(hash)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     if (!resp.ok) return 'error';
     const json = await resp.json();
     return mapMvsepStatus(json.status);
@@ -270,7 +287,9 @@ export async function downloadStems(hash: string): Promise<Map<string, Blob>> {
   let files: MvsepFileResult[];
 
   if (MVSEP_WORKER_URL) {
-    const resp = await fetch(`${MVSEP_WORKER_URL}/status?hash=${encodeURIComponent(hash)}`);
+    const resp = await fetch(`${MVSEP_WORKER_URL}/status?hash=${encodeURIComponent(hash)}`, {
+      headers: workerAuthHeaders(),
+    });
     if (!resp.ok) throw new Error(`MVSEP_STATUS_FETCH_ERROR_${resp.status}`);
     const json = await resp.json();
     if (json.status !== 'done' || !json.data?.files) {
@@ -301,7 +320,8 @@ export async function downloadStems(hash: string): Promise<Map<string, Blob>> {
     let blob: Blob;
     if (MVSEP_WORKER_URL && keySource === 'beLive') {
       const resp = await fetch(
-        `${MVSEP_WORKER_URL}/download?url=${encodeURIComponent(file.url)}`
+        `${MVSEP_WORKER_URL}/download?url=${encodeURIComponent(file.url)}`,
+        { headers: workerAuthHeaders() },
       );
       if (!resp.ok) throw new Error(`DOWNLOAD_ERROR_${resp.status}: ${key}`);
       blob = await resp.blob();
