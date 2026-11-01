@@ -53,6 +53,11 @@ export async function downloadTgTrack(
     try {
       const resp = await fetcher(baseUrl + '/download/' + fileId, { signal: ac.signal });
       if (!resp.ok) {
+        // Тело ответа теперь содержит настоящую причину от Telegram
+        // (TG_FILE_NOT_FOUND / FILE_TOO_LARGE_FOR_BOT_API / TG_GETFILE_FAILED).
+        // Без этого в консоли был только код, и отладить было нечем.
+        const body = await resp.text().catch(() => '');
+        console.error('[TG] download failed:', resp.status, body.slice(0, 300));
         if (resp.status >= 500) throw new Error('server5xx');
         useGhostStore.getState().updateGhost(gid, { phase: 'error' }); return;
       }

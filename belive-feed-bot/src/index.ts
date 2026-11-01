@@ -82,7 +82,30 @@ export default {
         const fileId = url.pathname.replace("/download/", "");
         if (!fileId) return new Response("Missing file_id", { status: 400, headers: corsHeaders(reqOrigin) });
         const tgFile = await getFile(env.BOT_TOKEN, fileId);
-        if (!tgFile.file_path) return new Response("File not found", { status: 404, headers: corsHeaders(reqOrigin) });
+        if (!tgFile.file_path) {
+          // Раньше здесь был голый 404 "File not found" на ЛЮБУЮ ошибку
+          // Telegram: неверный BOT_TOKEN, удалённый файл, файл больше 20 МБ
+          // (официальный предел Bot API на скачивание) — всё выглядело как
+          // «файла нет». Отладить по такому ответу нельзя, поэтому отдаём
+          // настоящую причину и код.
+          const detail = tgFile.description || "Telegram не вернул file_path";
+          const code = tgFile.error_code ?? null;
+          console.error(`[download] getFile без file_path: code=${code ?? "—"} desc=${detail}`);
+
+          const tooBig = /too big|too large/i.test(detail);
+          const notFound = /not found|invalid file_id|wrong file/i.test(detail);
+          const status = tooBig ? 413 : notFound ? 404 : 502;
+          return new Response(JSON.stringify({
+            error: tooBig ? "FILE_TOO_LARGE_FOR_BOT_API"
+                 : notFound ? "TG_FILE_NOT_FOUND"
+                 : "TG_GETFILE_FAILED",
+            detail,
+            tg_error_code: code,
+          }), {
+            status,
+            headers: { "Content-Type": "application/json", ...corsHeaders(reqOrigin) },
+          });
+        }
         const fileRes = await fetch(fileUrl(env.BOT_TOKEN, tgFile.file_path));
         if (!fileRes.ok) return new Response("Download failed", { status: 502, headers: corsHeaders(reqOrigin) });
         return new Response(fileRes.body, {
