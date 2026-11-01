@@ -61,6 +61,17 @@ export const useMarkersStore = create<MarkersState>((set, get) => ({
 
   // CRUD — call legacy MM, bridge auto-syncs store
   addMarker: (marker) => {
+    // Сигнатура — ОДИН объект { lineIndex, time }. Позиционный вызов
+    // (addMarker(3, 12.5)) проходил сюда как marker === 3, и легаси-MM
+    // ставил маркер с undefined-полями. Молча испортить тайминги хуже,
+    // чем упасть заметно, поэтому не-объект отсекаем здесь.
+    if (typeof marker !== 'object' || marker === null) {
+      console.error(
+        '[markers.store] addMarker expects one object { lineIndex, time }, got:',
+        typeof marker,
+      );
+      return;
+    }
     const mm = (window as any).markerManager;
     if (mm?.addMarker) mm.addMarker(marker);
   },
