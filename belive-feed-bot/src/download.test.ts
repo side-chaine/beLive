@@ -28,15 +28,39 @@ function makeEnv(overrides: Record<string, any> = {}) {
   } as any;
 }
 
-function downloadReq(fileId = FILE_ID) {
+/** HS256-токен ровно в том контракте, что ждёт воркер. */
+async function makeJwt(sub: string, expOffsetSec = 3600) {
+  const enc = new TextEncoder();
+  const b64 = (bytes: Uint8Array) => Buffer.from(bytes).toString('base64url');
+  const header = b64(enc.encode(JSON.stringify({ alg: 'HS256', typ: 'JWT' })));
+  const payload = b64(enc.encode(JSON.stringify({
+    sub,
+    exp: Math.floor(Date.now() / 1000) + expOffsetSec,
+  })));
+  const data = `${header}.${payload}`;
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode('secret'), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(data));
+  return `${data}.${b64(new Uint8Array(sig))}`;
+}
+
+function downloadReq(fileId = FILE_ID, token: string | null = TOKEN) {
+  const headers: Record<string, string> = { Origin: 'https://app.mybelive.com' };
+  if (token) headers.Authorization = `Bearer ${token}`;
   return new Request(`https://feed-bot.test/download/${fileId}`, {
     method: 'GET',
-    headers: { Origin: 'https://app.mybelive.com' },
+    headers,
   });
 }
 
-/** Ответ Telegram в формате Bot API. */
-function tgError(code: number, description: string) {
+// Токен для запросов: /download с 02.11 закрыт JWT, и без него все тесты
+// ниже получали 401 вместо проверяемого статуса. Это не «подгонка под
+// зелёное»: сам гейт проверяется отдельным блоком в конце файла — аноним
+// обязан получить 401, иначе тест краснеет.
+const TOKEN = await makeJwt('google:test', 3600);
+
+/** Ответ Telegram в формате Bot API. */function tgError(code: number, description: string) {
   return new Response(JSON.stringify({ ok: false, error_code: code, description }), {
     status: code === 400 ? 400 : code,
     headers: { 'Content-Type': 'application/json' },
@@ -116,6 +140,14 @@ describe('/download отдаёт настоящую причину', () => {
     expect(res.headers.get('Content-Disposition')).toBe('attachment');
     expect(res.headers.get('Content-Type')).toBe('application/zip');
     expect(String(fetchSpy.mock.calls[1][0])).toContain('api.telegram.org/file/bot');
+  });
+});
+
+describe('/download закрыт входом', () => {
+  it('аноним → 401, до Telegram не доходит', async () => {
+    const res = await worker.fetch(downloadReq(FILE_ID, null), makeEnv());
+    expect(res.status).toBe(401);
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
 
