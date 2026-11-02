@@ -13,7 +13,7 @@
 
 import { webcrypto } from 'node:crypto';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import worker from './index';
+import worker, { MAX_UPLOAD_BYTES } from './index';
 import { verifyJwt } from './jwt';
 
 // jsdom даёт crypto без subtle — подставляем webcrypto из node:crypto.
@@ -247,6 +247,71 @@ describe('/tracks и /download требуют JWT', () => {
 });
 
 // ─── сама проверка токена ──────────────────────────────────
+
+// ─── лимит размера ─────────────────────────────────────────
+
+/**
+ * Запрос с файлом заданного размера и БЕЗ Content-Length.
+ *
+ * Именно так обходился единственный гейт: chunked-запрос
+ * (Transfer-Encoding: chunked) приходит без Content-Length, проверка выше
+ * не срабатывает, и ZIP любого размера уходил в formData() — в память
+ * изолята, а потом в Telegram.
+ *
+ * Размер подделываем через defineProperty, чтобы не выделять 50 МБ:
+ * воркеру на этом гейте нужен только file.size.
+ */
+function uploadRequestWithSize(size: number, headers: Record<string, string> = {}) {
+  const fd = new FormData();
+  const f = makeFile();
+  Object.defineProperty(f, 'size', { value: size });
+  fd.append('file', f);
+  fd.append('artist', 'Linkin Park');
+  fd.append('title', 'Breaking the Habit');
+  fd.append('stemType', 'full');
+  return {
+    method: 'POST',
+    url: UPLOAD_URL,
+    headers: new Headers({ Origin: APP_ORIGIN, ...headers }),
+    formData: async () => fd,
+  } as any;
+}
+
+describe('/upload: лимит размера', () => {
+  it('chunked без Content-Length, файл больше лимита → 413', async () => {
+    const res = await worker.fetch(
+      uploadRequestWithSize(MAX_UPLOAD_BYTES + 1, {
+        Authorization: `Bearer ${await makeJwt('google:me')}`,
+      }),
+      makeEnv(),
+    );
+    expect(res.status).toBe(413);
+    // Главное: до Telegram дело не дошло.
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('Content-Length больше лимита → 413 до чтения тела', async () => {
+    const res = await worker.fetch(
+      uploadRequestWithBody({
+        Authorization: `Bearer ${await makeJwt('google:me')}`,
+        'Content-Length': String(MAX_UPLOAD_BYTES + 1),
+      }),
+      makeEnv(),
+    );
+    expect(res.status).toBe(413);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('файл ровно в лимит → не 413 (граница не сдвинута)', async () => {
+    const res = await worker.fetch(
+      uploadRequestWithSize(MAX_UPLOAD_BYTES, {
+        Authorization: `Bearer ${await makeJwt('google:me')}`,
+      }),
+      makeEnv(),
+    );
+    expect(res.status).not.toBe(413);
+  });
+});
 
 describe('verifyJwt', () => {
   it('принимает корректный токен и возвращает sub', async () => {
