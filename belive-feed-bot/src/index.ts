@@ -24,6 +24,15 @@ interface Env {
   ALLOWED_ORIGINS?: string;
 }
 
+/**
+ * Потолок размера загружаемого ZIP.
+ *
+ * 50 МБ — это лимит Telegram Bot API на документ, выше него TG всё равно
+ * откажет. Значение одно на оба гейта ниже: раньше оно было вписано числом
+ * только в проверке Content-Length, а второй гейт отсутствовал вовсе.
+ */
+export const MAX_UPLOAD_BYTES = 52_428_800;
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const reqOrigin = request.headers.get('Origin') || '';
@@ -153,7 +162,7 @@ export default {
 
       // A3: Content-Length check ДО formData (heap protection)
       const contentLength = request.headers.get('Content-Length');
-      if (contentLength && parseInt(contentLength) > 52_428_800) { // 50MB (TG limit)
+      if (contentLength && parseInt(contentLength) > MAX_UPLOAD_BYTES) {
         return new Response('Payload Too Large', { status: 413, headers: corsHdr });
       }
 
@@ -184,6 +193,23 @@ export default {
       const file = formData.get('file');
       if (!file || !(file instanceof File)) {
         return new Response('Missing file', { status: 400, headers: corsHdr });
+      }
+
+      // A3-b: размер ФАКТИЧЕСКОГО файла, а не заголовка.
+      //
+      // Проверка Content-Length выше срабатывает только если заголовок есть.
+      // Chunked-запрос (Transfer-Encoding: chunked) приходит без него — и
+      // тогда ZIP любого размера проходил мимо лимита целиком: сначала в
+      // память изолята через formData(), потом в Telegram. На Free-плане
+      // память изолята 128 МБ, то есть это ещё и способ уронить воркер.
+      //
+      // Гейт стоит ДО чтения magic bytes: незачем разбирать содержимое того,
+      // что всё равно не примем.
+      if (file.size > MAX_UPLOAD_BYTES) {
+        return new Response(
+          `File too large — max ${Math.floor(MAX_UPLOAD_BYTES / 1024 / 1024)} MB`,
+          { status: 413, headers: corsHdr },
+        );
       }
 
       // A5: Server-side file type validation — ZIP magic bytes
