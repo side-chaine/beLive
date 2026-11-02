@@ -23,7 +23,6 @@ function makeEnv(overrides: Record<string, any> = {}) {
     EPHEMERAL_KV: { get: async () => null, put: async () => {}, delete: async () => {}, list: async () => ({ keys: [] }) },
     UPLOAD_CHAT_ID: '-100123',
     JWT_SECRET: 'secret',
-    ALLOWED_ORIGIN: 'https://app.mybelive.com',
     ...overrides,
   } as any;
 }
