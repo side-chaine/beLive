@@ -95,16 +95,22 @@ export async function verifyJWT(token: string, secret: string): Promise<AuthCtx 
 // Возвращаем именно Uint8Array (view), а не `bytes.buffer`.
 //
 // Почему это не косметика: `crypto.subtle.verify` принимает BufferSource и
-// проверяет аргумент на принадлежность к своему realm. В jsdom (тесты идут
-// в environment: 'jsdom') голый ArrayBuffer из realm Node не проходит
-// `instanceof ArrayBuffer` — verify бросает TypeError, `catch` ниже глотает
-// его и функция возвращает null. То есть на Node 20 любой ВАЛИДНЫЙ токен
-// выглядел как невалидный. Ровно это и краснело в CI на gateway/test.
+// проверяет аргумент на принадлежность к своему realm. В jsdom голый
+// ArrayBuffer из realm Node не проходит `instanceof ArrayBuffer` — verify
+// бросает TypeError, `catch` ниже глотает его и функция возвращает null.
+// То есть на Node 20 любой ВАЛИДНЫЙ токен выглядел как невалидный. Ровно это
+// и краснело в CI на gateway/test.
 //
 // `ArrayBuffer.isView` работает кросс-realm, поэтому view проходит проверку
 // и в jsdom, и в Workers. В belive-feed-bot/src/jwt.ts та же функция с самого
 // начала возвращает view — и те же тесты там зелёные.
-function base64UrlDecode(str: string): Uint8Array {
+//
+// ⚠️ Экспортируется ТОЛЬКО ради теста типа. Поведенческий тест verifyJWT эту
+// регрессию ловит не всегда: 02.11.2026 откат на голый `.buffer` краснил тесты
+// только в jsdom на Node 20, а на Node 22, Node 24 и в environment: 'node'
+// проходил зелёным. Явная проверка `toBeInstanceOf(Uint8Array)` краснеет во
+// всех комбинациях — она и держит охрану.
+export function base64UrlDecode(str: string): Uint8Array {
   // Restore standard base64
   const base64 = str
     .replace(/-/g, '+')
