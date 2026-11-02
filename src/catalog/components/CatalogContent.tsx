@@ -49,14 +49,36 @@ export function computeDownloadTimeout(fileSize: number | undefined): number {
 // cookie, см. user-profile.store partialize). Поэтому перед запросом его
 // надо либо взять из стора, либо молча продлить через /auth/refresh —
 // иначе после перезагрузки страницы каталог отдаёт 401 и список пуст.
-async function ensureFeedToken(force = false): Promise<string | null> {
+//
+// Один общий inflight на все вызовы. После перезагрузки страница делает
+// несколько запросов сразу (каталог, стемы, повтор после 401), и без
+// дедупликации каждый шёл в /auth/refresh. При ротации refresh-токена
+// параллельные продления гасят друг друга: первое инвалидирует старый
+// refresh, остальные получают 401 и разлогинивают пользователя — хотя
+// сессия была жива. Теперь все ждут один и тот же промис.
+let inflightRefresh: Promise<string | null> | null = null;
+
+/** Экспортируется для теста на дедупликацию — больше нигде не нужен. */
+export async function ensureFeedToken(force = false): Promise<string | null> {
   const current = useUserProfileStore.getState().currentUser?.authToken;
   if (!force && current) return current;
-  const { authService } = await import('../../services/auth.service');
-  const session = await authService.refreshSession();
-  if (!session) return null;
-  await authService.applySession(session);
-  return useUserProfileStore.getState().currentUser?.authToken ?? null;
+  if (inflightRefresh) return inflightRefresh;
+
+  inflightRefresh = (async () => {
+    try {
+      const { authService } = await import('../../services/auth.service');
+      const session = await authService.refreshSession();
+      if (!session) return null;
+      await authService.applySession(session);
+      return useUserProfileStore.getState().currentUser?.authToken ?? null;
+    } finally {
+      // Снимаем ровно по завершении: следующий 401 начнёт новое продление,
+      // но параллельные вызовы этого не сделают.
+      inflightRefresh = null;
+    }
+  })();
+
+  return inflightRefresh;
 }
 
 export function isTransient(err: unknown): boolean {
