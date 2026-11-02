@@ -90,8 +90,21 @@ export async function verifyJWT(token: string, secret: string): Promise<AuthCtx 
   }
 }
 
-// ─── base64url → ArrayBuffer (Node Web Crypto compatible) ───
-function base64UrlDecode(str: string): ArrayBuffer {
+// ─── base64url → байты ───
+//
+// Возвращаем именно Uint8Array (view), а не `bytes.buffer`.
+//
+// Почему это не косметика: `crypto.subtle.verify` принимает BufferSource и
+// проверяет аргумент на принадлежность к своему realm. В jsdom (тесты идут
+// в environment: 'jsdom') голый ArrayBuffer из realm Node не проходит
+// `instanceof ArrayBuffer` — verify бросает TypeError, `catch` ниже глотает
+// его и функция возвращает null. То есть на Node 20 любой ВАЛИДНЫЙ токен
+// выглядел как невалидный. Ровно это и краснело в CI на gateway/test.
+//
+// `ArrayBuffer.isView` работает кросс-realm, поэтому view проходит проверку
+// и в jsdom, и в Workers. В belive-feed-bot/src/jwt.ts та же функция с самого
+// начала возвращает view — и те же тесты там зелёные.
+function base64UrlDecode(str: string): Uint8Array {
   // Restore standard base64
   const base64 = str
     .replace(/-/g, '+')
@@ -103,5 +116,5 @@ function base64UrlDecode(str: string): ArrayBuffer {
   for (let i = 0; i < binaryStr.length; i++) {
     bytes[i] = binaryStr.charCodeAt(i);
   }
-  return bytes.buffer;
+  return bytes;
 }
