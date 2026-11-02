@@ -47,7 +47,6 @@ function makeEnv(overrides: Record<string, any> = {}) {
     },
     UPLOAD_CHAT_ID: '-100123',
     JWT_SECRET: 'secret',
-    ALLOWED_ORIGIN: PROD_ORIGIN,
     ...overrides,
   } as any;
 }

@@ -47,7 +47,6 @@ function makeEnv(overrides: Record<string, any> = {}) {
     EPHEMERAL_KV: makeKv(),
     UPLOAD_CHAT_ID: '-100123',
     JWT_SECRET: SECRET,
-    ALLOWED_ORIGIN: APP_ORIGIN,
     ...overrides,
   } as any;
 }
