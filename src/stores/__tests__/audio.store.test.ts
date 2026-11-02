@@ -1,22 +1,15 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { useAudioStore } from '../audio.store';
 
+// Тавтология снята: beforeEach писал isPlaying=false / currentTime=0 /
+// playbackRate=1, тест «начальное состояние — idle» проверял их же.
 describe('audio.store', () => {
-  beforeEach(() => {
-    useAudioStore.setState({
-      isPlaying: false,
-      currentTime: 0,
-      duration: 0,
-      hasVocals: false,
-      playbackRate: 1,
-      vocalMixEnabled: false,
-      micEnabled: false,
-      micVolume: 1,
-    });
-  });
-
-  it('начальное состояние — idle', () => {
-    const s = useAudioStore.getState();
+  it('начальное состояние — idle (реальный инициализатор)', async () => {
+    // resetModules + динамический импорт: стор создаётся заново настоящим
+    // инициализатором, а не значением, которое тест сам же и записал выше.
+    vi.resetModules();
+    const store = (await import('../audio.store')).useAudioStore;
+    const s = store.getState();
     expect(s.isPlaying).toBe(false);
     expect(s.currentTime).toBe(0);
     expect(s.playbackRate).toBe(1);

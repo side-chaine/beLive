@@ -1,23 +1,19 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { useTrackStore } from '../track.store';
 
 const mockTrack = (id: string, title: string) => ({
   id, title, index: 0, artist: 'Test',
 });
 
+// Тавтология снята: beforeEach писал tracksMeta=[] / currentTrackIndex=-1 и т.д.,
+// а тест «начальное состояние — пусто» проверял ровно эти значения.
 describe('track.store', () => {
-  beforeEach(() => {
-    useTrackStore.setState({
-      tracksMeta: [],
-      currentTrack: null,
-      currentTrackIndex: -1,
-      currentCoverTheme: null,
-      hasBlockScenes: false,
-    });
-  });
-
-  it('начальное состояние — пусто', () => {
-    const s = useTrackStore.getState();
+  it('начальное состояние — пусто (реальный инициализатор)', async () => {
+    // resetModules + динамический импорт: стор создаётся заново настоящим
+    // инициализатором, а не значением, которое тест сам же и записал выше.
+    vi.resetModules();
+    const store = (await import('../track.store')).useTrackStore;
+    const s = store.getState();
     expect(s.tracksMeta).toEqual([]);
     expect(s.currentTrack).toBeNull();
     expect(s.currentTrackIndex).toBe(-1);

@@ -1,15 +1,19 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { useAppStore } from '../app.store';
 
+// Тавтология снята: раньше здесь стоял
+//   beforeEach(() => useAppStore.setState({ surface: 'welcome', authChecked: false }))
+// и следующий тест проверял именно эти два значения — то есть setState
+// сравнивался со своим же аргументом. Дефолт в сторе мог стать любым,
+// тест оставался зелёным.
 describe('app.store', () => {
-  beforeEach(() => {
-    useAppStore.setState({ surface: 'welcome', authChecked: false });
-  });
-
-  it('начальное состояние — welcome', () => {
-    const s = useAppStore.getState();
-    expect(s.surface).toBe('welcome');
-    expect(s.authChecked).toBe(false);
+  it('начальное состояние — welcome, authChecked=false (реальный инициализатор)', async () => {
+    // resetModules + динамический импорт: стор создаётся заново настоящим
+    // инициализатором, а не значением, которое тест сам же и записал выше.
+    vi.resetModules();
+    const store = (await import('../app.store')).useAppStore;
+    expect(store.getState().surface).toBe('welcome');
+    expect(store.getState().authChecked).toBe(false);
   });
 
   it('setSurface(app) переключает поверхность', () => {
