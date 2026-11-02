@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import { freshStore } from '../../test/fresh-store';
 
 // Мокаем зависимые stores
 vi.mock('../audio.store', () => ({
@@ -55,26 +56,14 @@ vi.mock('../../practice/practice-scenarios', async (importOriginal) => {
 
 import { usePracticeStore } from '../practice-session.store';
 
+// Тавтология снята: beforeEach писал isActive=false / practiceStatus='idle' /
+// passesCount=0, а тест «начальное состояние — idle» проверял их же.
 describe('practice-session.store', () => {
-  beforeEach(() => {
-    usePracticeStore.setState({
-      isActive: false,
-      scenarioId: null,
-      targetBlockId: null,
-      snapshot: null,
-      label: null,
-      passLabel: null,
-      passesCount: 0,
-      currentRate: 1,
-      practiceStatus: 'idle',
-      totalExpectedPasses: 0,
-      isAutoAdvance: false,
-      isPassInProgress: false,
-    });
-  });
-
-  it('начальное состояние — idle', () => {
-    const s = usePracticeStore.getState();
+  it('начальное состояние — idle (реальный инициализатор)', async () => {
+    const store = await freshStore(
+      async () => (await import('../practice-session.store')).usePracticeStore,
+    );
+    const s = store.getState();
     expect(s.isActive).toBe(false);
     expect(s.practiceStatus).toBe('idle');
     expect(s.passesCount).toBe(0);

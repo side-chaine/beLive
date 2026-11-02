@@ -1,22 +1,13 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { freshStore } from '../../test/fresh-store';
 import { useAudioStore } from '../audio.store';
 
+// Тавтология снята: beforeEach писал isPlaying=false / currentTime=0 /
+// playbackRate=1, тест «начальное состояние — idle» проверял их же.
 describe('audio.store', () => {
-  beforeEach(() => {
-    useAudioStore.setState({
-      isPlaying: false,
-      currentTime: 0,
-      duration: 0,
-      hasVocals: false,
-      playbackRate: 1,
-      vocalMixEnabled: false,
-      micEnabled: false,
-      micVolume: 1,
-    });
-  });
-
-  it('начальное состояние — idle', () => {
-    const s = useAudioStore.getState();
+  it('начальное состояние — idle (реальный инициализатор)', async () => {
+    const store = await freshStore(async () => (await import('../audio.store')).useAudioStore);
+    const s = store.getState();
     expect(s.isPlaying).toBe(false);
     expect(s.currentTime).toBe(0);
     expect(s.playbackRate).toBe(1);

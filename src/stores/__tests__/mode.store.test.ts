@@ -1,13 +1,12 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { freshStore } from '../../test/fresh-store';
 import { useModeStore } from '../mode.store';
 
+// Тавтология снята: beforeEach писал mode='rehearsal', тест это же и проверял.
 describe('mode.store', () => {
-  beforeEach(() => {
-    useModeStore.setState({ mode: 'rehearsal' });
-  });
-
-  it('начальное состояние — rehearsal', () => {
-    expect(useModeStore.getState().mode).toBe('rehearsal');
+  it('начальное состояние — rehearsal (реальный инициализатор)', async () => {
+    const store = await freshStore(async () => (await import('../mode.store')).useModeStore);
+    expect(store.getState().mode).toBe('rehearsal');
   });
 
   it('setMode(karaoke) переключает режим', () => {

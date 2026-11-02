@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { freshStore } from '../../test/fresh-store';
 import { useUIStore } from '../ui.store';
 
+// Тавтология снята: beforeEach писал catalogOpen=false / karaokeLinesCount=2 /
+// karaokeLyricsScale=120, а тест «начальное состояние» их же и проверял.
 describe('ui.store', () => {
-  beforeEach(() => {
-    useUIStore.setState({ catalogOpen: false, karaokeLinesCount: 2, karaokeLyricsScale: 120 });
-  });
-
-  it('начальное состояние', () => {
-    const s = useUIStore.getState();
+  it('начальное состояние (реальный инициализатор)', async () => {
+    const store = await freshStore(async () => (await import('../ui.store')).useUIStore);
+    const s = store.getState();
     expect(s.catalogOpen).toBe(false);
     expect(s.karaokeLinesCount).toBe(2);
     expect(s.karaokeLyricsScale).toBe(120);
