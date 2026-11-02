@@ -1,11 +1,13 @@
-import { describe, it, expect } from 'vitest';
-import { freshStore } from '../../test/fresh-store';
+import { describe, it, expect, vi } from 'vitest';
 import { useModeStore } from '../mode.store';
 
 // Тавтология снята: beforeEach писал mode='rehearsal', тест это же и проверял.
 describe('mode.store', () => {
   it('начальное состояние — rehearsal (реальный инициализатор)', async () => {
-    const store = await freshStore(async () => (await import('../mode.store')).useModeStore);
+    // resetModules + динамический импорт: стор создаётся заново настоящим
+    // инициализатором, а не значением, которое тест сам же и записал выше.
+    vi.resetModules();
+    const store = (await import('../mode.store')).useModeStore;
     expect(store.getState().mode).toBe('rehearsal');
   });
 

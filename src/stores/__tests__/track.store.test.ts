@@ -1,5 +1,4 @@
-import { describe, it, expect } from 'vitest';
-import { freshStore } from '../../test/fresh-store';
+import { describe, it, expect, vi } from 'vitest';
 import { useTrackStore } from '../track.store';
 
 const mockTrack = (id: string, title: string) => ({
@@ -10,7 +9,10 @@ const mockTrack = (id: string, title: string) => ({
 // а тест «начальное состояние — пусто» проверял ровно эти значения.
 describe('track.store', () => {
   it('начальное состояние — пусто (реальный инициализатор)', async () => {
-    const store = await freshStore(async () => (await import('../track.store')).useTrackStore);
+    // resetModules + динамический импорт: стор создаётся заново настоящим
+    // инициализатором, а не значением, которое тест сам же и записал выше.
+    vi.resetModules();
+    const store = (await import('../track.store')).useTrackStore;
     const s = store.getState();
     expect(s.tracksMeta).toEqual([]);
     expect(s.currentTrack).toBeNull();

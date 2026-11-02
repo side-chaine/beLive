@@ -1,5 +1,4 @@
 import { describe, it, expect, vi } from 'vitest';
-import { freshStore } from '../../test/fresh-store';
 
 // Мокаем зависимые stores
 vi.mock('../audio.store', () => ({
@@ -60,9 +59,10 @@ import { usePracticeStore } from '../practice-session.store';
 // passesCount=0, а тест «начальное состояние — idle» проверял их же.
 describe('practice-session.store', () => {
   it('начальное состояние — idle (реальный инициализатор)', async () => {
-    const store = await freshStore(
-      async () => (await import('../practice-session.store')).usePracticeStore,
-    );
+    // resetModules + динамический импорт: стор создаётся заново настоящим
+    // инициализатором, а не значением, которое тест сам же и записал выше.
+    vi.resetModules();
+    const store = (await import('../practice-session.store')).usePracticeStore;
     const s = store.getState();
     expect(s.isActive).toBe(false);
     expect(s.practiceStatus).toBe('idle');

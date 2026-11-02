@@ -1,12 +1,14 @@
-import { describe, it, expect } from 'vitest';
-import { freshStore } from '../../test/fresh-store';
+import { describe, it, expect, vi } from 'vitest';
 import { useUIStore } from '../ui.store';
 
 // Тавтология снята: beforeEach писал catalogOpen=false / karaokeLinesCount=2 /
 // karaokeLyricsScale=120, а тест «начальное состояние» их же и проверял.
 describe('ui.store', () => {
   it('начальное состояние (реальный инициализатор)', async () => {
-    const store = await freshStore(async () => (await import('../ui.store')).useUIStore);
+    // resetModules + динамический импорт: стор создаётся заново настоящим
+    // инициализатором, а не значением, которое тест сам же и записал выше.
+    vi.resetModules();
+    const store = (await import('../ui.store')).useUIStore;
     const s = store.getState();
     expect(s.catalogOpen).toBe(false);
     expect(s.karaokeLinesCount).toBe(2);

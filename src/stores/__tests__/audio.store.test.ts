@@ -1,12 +1,14 @@
-import { describe, it, expect } from 'vitest';
-import { freshStore } from '../../test/fresh-store';
+import { describe, it, expect, vi } from 'vitest';
 import { useAudioStore } from '../audio.store';
 
 // Тавтология снята: beforeEach писал isPlaying=false / currentTime=0 /
 // playbackRate=1, тест «начальное состояние — idle» проверял их же.
 describe('audio.store', () => {
   it('начальное состояние — idle (реальный инициализатор)', async () => {
-    const store = await freshStore(async () => (await import('../audio.store')).useAudioStore);
+    // resetModules + динамический импорт: стор создаётся заново настоящим
+    // инициализатором, а не значением, которое тест сам же и записал выше.
+    vi.resetModules();
+    const store = (await import('../audio.store')).useAudioStore;
     const s = store.getState();
     expect(s.isPlaying).toBe(false);
     expect(s.currentTime).toBe(0);

@@ -1,5 +1,4 @@
-import { describe, it, expect } from 'vitest';
-import { freshStore } from '../../test/fresh-store';
+import { describe, it, expect, vi } from 'vitest';
 import { useAppStore } from '../app.store';
 
 // Тавтология снята: раньше здесь стоял
@@ -9,7 +8,10 @@ import { useAppStore } from '../app.store';
 // тест оставался зелёным.
 describe('app.store', () => {
   it('начальное состояние — welcome, authChecked=false (реальный инициализатор)', async () => {
-    const store = await freshStore(async () => (await import('../app.store')).useAppStore);
+    // resetModules + динамический импорт: стор создаётся заново настоящим
+    // инициализатором, а не значением, которое тест сам же и записал выше.
+    vi.resetModules();
+    const store = (await import('../app.store')).useAppStore;
     expect(store.getState().surface).toBe('welcome');
     expect(store.getState().authChecked).toBe(false);
   });
