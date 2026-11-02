@@ -21,6 +21,18 @@ workers_dev = true
 [vars]
 ALLOWED_ORIGIN = "https://app.mybelive.com"
 
+# Куда бот шлёт принятый ZIP. Это chat_id, не секрет: без BOT_TOKEN по нему
+# ничего не отправить. Раньше значение жило ТОЛЬКО в Dashboard и в репозитории
+# его не было — и 02.11.2026 первый же `wrangler deploy` его снёс:
+# `Uploading the Worker will override the remote configuration with your local
+# one`. Версия ec4b71a6 уехала без UPLOAD_CHAT_ID, и /upload начал ходить в
+# Telegram с chat_id = undefined.
+#
+# Теперь значение здесь, в единственном источнике правды, и переживёт любой
+# деплой. Секреты (BOT_TOKEN, JWT_SECRET, WEBHOOK_SECRET, ALLOWED_TG_IDS)
+# по-прежнему в Cloudflare — их деплой не затирает.
+UPLOAD_CHAT_ID = "435558710"
+
 # Секреты (wrangler secret put):
 # BOT_TOKEN — токен @BeLiveCommunity_bot
 # WEBHOOK_SECRET — секрет для вебхука
