@@ -56,18 +56,29 @@ export async function verifyJWT(token: string, secret: string): Promise<AuthCtx 
     const payload = JSON.parse(payloadStr);
 
     // 3. Check expiry
-    if (payload.exp && Date.now() / 1000 > payload.exp) return null;
+    //
+    // exp ОБЯЗАТЕЛЕН, а не «если есть». Было `if (payload.exp && ...)`:
+    // токен без срока жизни проходил как вечный — тот же класс дыры, что
+    // закрыт в belive-feed-bot/src/jwt.ts и belive-mvsep/index.js.
+    // Минтер один — belive-auth — и он всегда ставит TTL, поэтому токен
+    // без exp не наш.
+    if (typeof payload.exp !== 'number') return null;
+    if (Date.now() / 1000 > payload.exp) return null;
 
     // 4. Check issuer (must be our auth worker)
     if (payload.iss !== 'belive-auth') return null;
 
-    // 5. Resolve role hint (⚠️ NOT FOR AUTHORIZATION — use getUserRole for authz)
+    // 5. sub обязателен: без него authCtx.sub = undefined, а на нём держится
+    //    вся авторизация записи (author_id === auth.sub в feed.ts).
+    if (!payload.sub) return null;
+
+    // 6. Resolve role hint (⚠️ NOT FOR AUTHORIZATION — use getUserRole for authz)
     const roleHint = payload.role || 'user';
 
     return {
-      sub: payload.sub,
+      sub: String(payload.sub),
       provider: payload.provider || 'google',
-      providerSub: payload.sub?.replace(/^google:/, '') || payload.sub || '',
+      providerSub: String(payload.sub).replace(/^google:/, ''),
       roleHint,
       email: payload.email,
       name: payload.name,
