@@ -10,7 +10,7 @@
 // — токен без exp проходил как вечный.
 
 import { describe, it, expect } from 'vitest';
-import { verifyJWT, getAuthCtx } from '../src/handlers/auth';
+import { verifyJWT, getAuthCtx, base64UrlDecode } from '../src/handlers/auth';
 
 const SECRET = 'test-secret';
 const enc = new TextEncoder();
@@ -120,5 +120,38 @@ describe('gateway getAuthCtx', () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(await getAuthCtx(req, env)).toBeNull();
+  });
+});
+
+// Зачем этот блок отдельно от поведенческих тестов выше.
+//
+// Регрессия, которую ловим: `base64UrlDecode` вернул голый `bytes.buffer`
+// вместо view. Тогда crypto.subtle.verify в jsdom отбивает аргумент как
+// «чужой», catch в verifyJWT глотает TypeError и отдаёт null — валидный
+// токен выглядит невалидным.
+//
+// Замер откатом (02.11.2026, три машины):
+//   jsdom,  Node 20 → поведенческие тесты КРАСНЕЮТ (2 failed)
+//   jsdom,  Node 22 → зелёные, охрана молчит
+//   jsdom,  Node 24 → зелёные, охрана молчит
+//   node,   Node 20 → зелёные, охрана молчит
+//   node,   Node 24 → зелёные, охрана молчит
+//
+// То есть поведенческий тест зависел от версии Node и от среды. Явная
+// проверка типа ниже краснеет во всех пяти комбинациях.
+describe('gateway base64UrlDecode: тип возврата', () => {
+  it('возвращает Uint8Array, а не голый ArrayBuffer', () => {
+    expect(base64UrlDecode('AQID')).toBeInstanceOf(Uint8Array);
+  });
+
+  it('декодирует base64url без padding', () => {
+    expect(Array.from(base64UrlDecode('AQID'))).toEqual([1, 2, 3]);
+  });
+
+  it('понимает - и _ вместо + и /', () => {
+    const bytes = new Uint8Array([0xfb, 0xff, 0x00]);
+    const encoded = Buffer.from(bytes).toString('base64url');
+    expect(encoded).toContain('-');
+    expect(Array.from(base64UrlDecode(encoded))).toEqual([0xfb, 0xff, 0x00]);
   });
 });
