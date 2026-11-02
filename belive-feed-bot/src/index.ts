@@ -4,6 +4,7 @@
 import { sendMessage, answerCallbackQuery, getFile, fileUrl } from './tg';
 import { isAllowedUser, getUserId } from './auth';
 import { verifyJwt } from './jwt';
+import { corsHeaders, isAllowedOrigin, parseAllowedOrigins } from './cors';
 import { getDraft, clearDraft } from './state-machine';
 import {
   cmdStart, cmdCancel, cmdCatalog, cmdTrack,
@@ -19,24 +20,20 @@ interface Env {
   UPLOAD_CHAT_ID: string;
   JWT_SECRET: string;
   ALLOWED_ORIGIN: string;
+  /** Необязательный список точных origin'ов через запятую (LAN-телефон и т.п.). */
+  ALLOWED_ORIGINS?: string;
 }
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const reqOrigin = request.headers.get('Origin') || '';
-    const corsHeaders = (origin: string) => {
-      const allow = ['https://app.mybelive.com', 'http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:3000', 'http://0.0.0.0:5173'];
-      const allowed = allow.includes(origin) || origin.startsWith('http://192.168.')
-        ? origin : 'https://app.mybelive.com';
-      return {
-        'Access-Control-Allow-Origin': allowed,
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      };
-    };
+    // CORS — из одного хелпера (src/cors.ts). Раньше здесь было замыкание с
+    // `origin.startsWith('http://192.168.')`, а на /upload — второй, отдельный
+    // набор заголовков с фиксированным origin. Два места → две разные дыры.
+    const corsHdr = corsHeaders(reqOrigin, parseAllowedOrigins(env.ALLOWED_ORIGINS));
     // ── CORS preflight ──
     if (request.method === "OPTIONS") {
-      return new Response(null, { headers: corsHeaders(reqOrigin) });
+      return new Response(null, { headers: corsHdr });
     }
 
     // ── GET /tracks (API) + /download/<file_id> + health ──
@@ -54,15 +51,15 @@ export default {
       if (protectedPath) {
         if (!env.JWT_SECRET) {
           console.error('[catalog] JWT_SECRET не задан — каталог закрыт');
-          return new Response('Server misconfigured', { status: 503, headers: corsHeaders(reqOrigin) });
+          return new Response('Server misconfigured', { status: 503, headers: corsHdr });
         }
         const authHeader = request.headers.get('Authorization');
         if (!authHeader?.startsWith('Bearer ')) {
-          return new Response('Unauthorized', { status: 401, headers: corsHeaders(reqOrigin) });
+          return new Response('Unauthorized', { status: 401, headers: corsHdr });
         }
         const auth = await verifyJwt(authHeader.slice('Bearer '.length), env.JWT_SECRET);
         if (!auth) {
-          return new Response('Unauthorized', { status: 401, headers: corsHeaders(reqOrigin) });
+          return new Response('Unauthorized', { status: 401, headers: corsHdr });
         }
       }
 
@@ -97,13 +94,13 @@ export default {
         }
         const catalog = Array.from(bySlug.values()).sort((a: any, b: any) => (a.title || '').localeCompare(b.title || ''));
         return new Response(JSON.stringify({ updatedAt: Date.now(), total: catalog.length, tracks: catalog }), {
-          headers: { 'Content-Type': 'application/json', ...corsHeaders(reqOrigin) }
+          headers: { 'Content-Type': 'application/json', ...corsHdr }
         });
       }
 
       if (url.pathname.startsWith("/download/")) {
         const fileId = url.pathname.replace("/download/", "");
-        if (!fileId) return new Response("Missing file_id", { status: 400, headers: corsHeaders(reqOrigin) });
+        if (!fileId) return new Response("Missing file_id", { status: 400, headers: corsHdr });
         const tgFile = await getFile(env.BOT_TOKEN, fileId);
         if (!tgFile.file_path) {
           // Раньше здесь был голый 404 "File not found" на ЛЮБУЮ ошибку
@@ -126,16 +123,16 @@ export default {
             tg_error_code: code,
           }), {
             status,
-            headers: { "Content-Type": "application/json", ...corsHeaders(reqOrigin) },
+            headers: { "Content-Type": "application/json", ...corsHdr },
           });
         }
         const fileRes = await fetch(fileUrl(env.BOT_TOKEN, tgFile.file_path));
-        if (!fileRes.ok) return new Response("Download failed", { status: 502, headers: corsHeaders(reqOrigin) });
+        if (!fileRes.ok) return new Response("Download failed", { status: 502, headers: corsHdr });
         return new Response(fileRes.body, {
           headers: {
             "Content-Disposition": "attachment",
             "Content-Type": fileRes.headers.get("Content-Type") || "application/octet-stream",
-            ...corsHeaders(reqOrigin)
+            ...corsHdr
           }
         });
       }
@@ -146,24 +143,18 @@ export default {
     // ── POST /upload (from beLive client — battle vocals ZIP) ──
     const requestUrl = new URL(request.url);
     if (requestUrl.pathname === '/upload') {
-      // A1: CORS headers для всех ответов
-      const corsHeaders = {
-        'Access-Control-Allow-Origin': 'https://app.mybelive.com',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      };
-
-      // A2: Strict origin check (=== не includes!)
+      // Origin проверяется тем же хелпером, что и GET-маршруты. Раньше здесь
+      // стоял свой список плюс `startsWith('http://192.168.')`, а заголовки
+      // ответа — фиксированные, поэтому /upload и GET расходились поведением.
       const origin = request.headers.get('Origin') || '';
-      const allowedDev = ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:3000', 'http://0.0.0.0:5173'];
-      if (origin !== 'https://app.mybelive.com' && !allowedDev.includes(origin) && !origin.startsWith('http://192.168.')) {
-        return new Response('Forbidden', { status: 403, headers: corsHeaders });
+      if (!isAllowedOrigin(origin, parseAllowedOrigins(env.ALLOWED_ORIGINS))) {
+        return new Response('Forbidden', { status: 403, headers: corsHdr });
       }
 
       // A3: Content-Length check ДО formData (heap protection)
       const contentLength = request.headers.get('Content-Length');
       if (contentLength && parseInt(contentLength) > 52_428_800) { // 50MB (TG limit)
-        return new Response('Payload Too Large', { status: 413, headers: corsHeaders });
+        return new Response('Payload Too Large', { status: 413, headers: corsHdr });
       }
 
       // A4: JWT — тот же HS256, что у gateway и belive-mvsep.
@@ -178,21 +169,21 @@ export default {
         // Fail closed: без секрета проверить токен нечем, а принимать всех
         // подряд нельзя. Лучше явная ошибка, чем открытая дверь.
         console.error('[upload] JWT_SECRET не задан — /upload закрыт');
-        return new Response('Server misconfigured', { status: 503, headers: corsHeaders });
+        return new Response('Server misconfigured', { status: 503, headers: corsHdr });
       }
       const authHeader = request.headers.get('Authorization');
       if (!authHeader?.startsWith('Bearer ')) {
-        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+        return new Response('Unauthorized', { status: 401, headers: corsHdr });
       }
       const auth = await verifyJwt(authHeader.slice('Bearer '.length), env.JWT_SECRET);
       if (!auth) {
-        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+        return new Response('Unauthorized', { status: 401, headers: corsHdr });
       }
 
       const formData = await request.formData();
       const file = formData.get('file');
       if (!file || !(file instanceof File)) {
-        return new Response('Missing file', { status: 400, headers: corsHeaders });
+        return new Response('Missing file', { status: 400, headers: corsHdr });
       }
 
       // A5: Server-side file type validation — ZIP magic bytes
@@ -202,7 +193,7 @@ export default {
                     (magicBytes[2] === 0x03 || magicBytes[2] === 0x05) &&
                     magicBytes[3] === 0x04;
       if (!isZip) {
-        return new Response('Invalid file type — ZIP only', { status: 415, headers: corsHeaders });
+        return new Response('Invalid file type — ZIP only', { status: 415, headers: corsHdr });
       }
 
       // A6: Filename sanitize
@@ -227,7 +218,7 @@ export default {
         });
       } catch (err) {
         clearTimeout(tgTimeout);
-        return new Response('Upload failed — TG timeout', { status: 502, headers: corsHeaders });
+        return new Response('Upload failed — TG timeout', { status: 502, headers: corsHdr });
       }
       clearTimeout(tgTimeout);
 
@@ -241,18 +232,18 @@ export default {
               method: 'POST', body: tgForm,
             });
           } catch {
-            return new Response('Upload failed', { status: 502, headers: corsHeaders });
+            return new Response('Upload failed', { status: 502, headers: corsHdr });
           }
         }
         if (!tgRes.ok) {
-          return new Response('Upload failed', { status: 502, headers: corsHeaders });
+          return new Response('Upload failed', { status: 502, headers: corsHdr });
         }
       }
 
       const tgData: any = await tgRes.json();
       const fileId = tgData?.result?.document?.file_id;
       if (!fileId) {
-        return new Response('No file_id returned', { status: 502, headers: corsHeaders });
+        return new Response('No file_id returned', { status: 502, headers: corsHdr });
       }
 
       // A9: Catalog write with dedup by slug+contentHash
@@ -286,7 +277,7 @@ export default {
             return new Response(JSON.stringify({
               success: true, duplicate: true, slug,
               fileId, id: existing.id,
-            }), { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
+            }), { headers: { 'Content-Type': 'application/json', ...corsHdr } });
           }
           // Content changed — overwrite existing entry
           trackEntry = {
@@ -334,7 +325,7 @@ export default {
       }), {
         headers: {
           'Content-Type': 'application/json',
-          ...corsHeaders,
+          ...corsHdr,
         },
       });
     }
