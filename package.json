@@ -30,7 +30,8 @@
     "verify:inert": "node scripts/verify-inert.mjs",
     "verify:junction": "node scripts/verify-junction.mjs",
     "gen:docindex": "node scripts/gen-doc-index.mjs",
-    "verify:permissions:local": "node team-m/tools/verify-permissions.mjs"
+    "verify:permissions:local": "node team-m/tools/verify-permissions.mjs",
+    "verify:jwt": "node scripts/smoke-jwt.mjs"
   },
   "repository": {
     "type": "git",

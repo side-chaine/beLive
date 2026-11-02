@@ -32,8 +32,15 @@ async function verifyJWT(token, secret) {
     const valid = await crypto.subtle.verify('HMAC', key, sig, data);
     if (!valid) return null;
     const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
-    if (payload.exp && payload.exp < Date.now() / 1000) return null;
-    return { sub: payload.sub };
+    // exp обязателен, как и в belive-feed-bot/src/jwt.ts.
+    //
+    // Было `if (payload.exp && ...)` — токен без exp считался вечным.
+    // Плюс не проверялся sub: без него лимиты считались бы на "undefined",
+    // то есть все анонимные запросы делили бы один дневной счётчик.
+    if (typeof payload.exp !== 'number') return null;
+    if (payload.exp < Date.now() / 1000) return null;
+    if (!payload.sub) return null;
+    return { sub: String(payload.sub) };
   } catch { return null; }
 }
 

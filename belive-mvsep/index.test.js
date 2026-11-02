@@ -45,13 +45,14 @@ function makeEnv(kv = makeKv()) {
   };
 }
 
-async function makeJwt(sub) {
+async function makeJwt(sub, overrides = {}) {
   const enc = new TextEncoder();
   const b64 = (bytes) => Buffer.from(bytes).toString('base64url');
   const header = b64(enc.encode(JSON.stringify({ alg: 'HS256', typ: 'JWT' })));
   const payload = b64(enc.encode(JSON.stringify({
     sub,
     exp: Math.floor(Date.now() / 1000) + 3600,
+    ...overrides,
   })));
   const data = `${header}.${payload}`;
   const key = await crypto.subtle.importKey(
@@ -141,6 +142,43 @@ describe('закрытые роуты требуют JWT', () => {
   it('без токена воркер НЕ ходит в mvsep.com (не жжёт наш ключ)', async () => {
     await worker.fetch(req('/status?hash=abc'), makeEnv());
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
+// ─── контракт payload: exp и sub обязательны ───────────────
+//
+// До этого exp проверялся как `if (payload.exp && ...)`, то есть токен без
+// срока жизни проходил насквозь. Единственный минтер — belive-auth — всегда
+// ставит TTL, поэтому токен без exp не наш. Здесь фиксируем отказ.
+
+describe('payload-контракт: exp и sub обязательны', () => {
+  it('токен без exp → 401 INVALID_TOKEN', async () => {
+    const token = await makeJwt('user-1', { exp: undefined });
+    const res = await worker.fetch(req('/status?hash=abc', { token }), makeEnv());
+    expect(res.status).toBe(401);
+    expect((await res.json()).errors).toEqual(['INVALID_TOKEN']);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('токен без sub → 401 INVALID_TOKEN (иначе лимит считался бы на undefined)', async () => {
+    const token = await makeJwt(undefined);
+    const res = await worker.fetch(req('/status?hash=abc', { token }), makeEnv());
+    expect(res.status).toBe(401);
+    expect((await res.json()).errors).toEqual(['INVALID_TOKEN']);
+  });
+
+  it('exp в прошлом → 401 INVALID_TOKEN', async () => {
+    const token = await makeJwt('user-1', { exp: Math.floor(Date.now() / 1000) - 60 });
+    const res = await worker.fetch(req('/status?hash=abc', { token }), makeEnv());
+    expect(res.status).toBe(401);
+    expect((await res.json()).errors).toEqual(['INVALID_TOKEN']);
+  });
+
+  it('exp не число ("3600" строкой) → 401 INVALID_TOKEN', async () => {
+    const token = await makeJwt('user-1', { exp: '3600' });
+    const res = await worker.fetch(req('/status?hash=abc', { token }), makeEnv());
+    expect(res.status).toBe(401);
+    expect((await res.json()).errors).toEqual(['INVALID_TOKEN']);
   });
 });
 

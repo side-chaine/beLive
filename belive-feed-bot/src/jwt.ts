@@ -6,7 +6,8 @@
 
 export interface JwtPayload {
   sub: string;
-  exp?: number;
+  /** Обязателен: токен без срока жизни — не наш токен. См. проверку ниже. */
+  exp: number;
 }
 
 /** base64url → байты. Именно base64url: `-` и `_` вместо `+` и `/`. */
@@ -55,7 +56,15 @@ export async function verifyJwt(token: string, secret: string): Promise<JwtPaylo
     if (!valid) return null;
 
     const payload = b64urlToJson(parts[1]);
-    if (typeof payload?.exp === 'number' && payload.exp < Date.now() / 1000) return null;
+    // exp обязателен, а не «если есть».
+    //
+    // Было: `typeof payload.exp === 'number' && payload.exp < now` — то есть
+    // токен вообще без exp считался вечным и проходил проверку. Единственный
+    // минтер (belive-auth) всегда ставит TTL 15 минут, поэтому токен без exp
+    // не может быть нашим: это либо самоделка, либо сломанный минтер. В обоих
+    // случаях правильный ответ — отказ, а не «живём дальше».
+    if (typeof payload?.exp !== 'number') return null;
+    if (payload.exp < Date.now() / 1000) return null;
     if (!payload?.sub) return null;
 
     return { sub: String(payload.sub), exp: payload.exp };
