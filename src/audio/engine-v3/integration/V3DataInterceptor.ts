@@ -150,13 +150,22 @@ export class V3DataInterceptor {
         }
       } else {
         failedStemIds.push(r.id);
+        // @PR-2: причина 0-стемовой загрузки — теперь в логе, всегда (Crawling +144с без причины)
+        console.error(`[V3DataInterceptor] ❌ decode failed for "${r.id}":`, (r as { error?: unknown }).error);
       }
     }
 
     // 7. Ждём загрузки всех стемов в WASM
     if (pipelineJobs.length > 0) {
       await Promise.all(pipelineJobs)
-      console.log(`[V3DataInterceptor] ✅ Pipeline: ${loadedStemIds.length} stems loaded`)
+    }
+    // @PR-2 (C6): честный счётчик стемов в WASM — N/M, и явная 0/N при пустой очереди
+    console.log(`[V3DataInterceptor] ✅ Pipeline: ${loadedStemIds.length}/${jobs.length} stems in WASM`)
+    if (loadedStemIds.length === 0 && jobs.length > 0) {
+      console.error('[V3DataInterceptor] ❌ 0 stems loaded — track unusable:', failedStemIds)
+      try {
+        window.dispatchEvent(new CustomEvent('belive:track-load-failed', { detail: { failedStemIds } }))
+      } catch {}
     }
 
     // R1: generation-check ПОСЛЕ decode+reset+loadStem×N — сталый лад не активирует клетку/флаг
