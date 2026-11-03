@@ -292,7 +292,16 @@ export class HybridPipelineService implements IPipelineController {
         if (stale) { try { node.removeEventListener('stretch-crash', stale) } catch {} }
         const handler = ((e: Event) => {
           const stemId = (e as CustomEvent).detail.id
-          console.warn(`[HybridPipeline] ⚠️ Stretch "${stemId}" crashed — fallback to varispeed (per-stem)`)
+          const inst = stemId ? this._stretchPool.get(stemId) : null
+          // 🔁 Фолбэк доступен (ворклет упал, но сырой буфер есть) — играем напрямую,
+          // НЕ глушим (иначе фолбэк тоже был бы в тишине).
+          if (inst?.hasFallback) {
+            console.warn(`[HybridPipeline] ⚠️ Stretch "${stemId}" crashed — fallback to raw playback (per-stem)`)
+            this._crashedStems.delete(stemId)
+            this._applyEffectiveGain(stemId)
+            return
+          }
+          console.warn(`[HybridPipeline] ⚠️ Stretch "${stemId}" crashed — silent (no fallback)`)
           // №18-BUS H1.2: двусторонний crash — effective gain 0, play/seek не воскрешают
           this._crashedStems.add(stemId)
           if (!stemId) return
@@ -362,11 +371,12 @@ export class HybridPipelineService implements IPipelineController {
         }
       }
 
-      // Bus A: REGIME 3 — параллельный старт stretch
+      // Bus A: REGIME 3 — параллельный старт stretch (включая фолбэк-инстансы)
       await Promise.all([...this._chainA.stems].map(async ([stemId, stem]) => {
         const instance = this._stretchPool.get(stemId)
         const stretchGain = this._stretchGains.get(stemId)
-        if (instance?.isActive && stretchGain) {
+        // 🔁 hasFallback — ворклет упал, но сырой буфер играет через фолбэк
+        if ((instance?.isActive || instance?.hasFallback) && stretchGain) {
           try {
             await instance.start(offset, rate)
             // №18-BUS H1.2: resurrection-гвард — crashed stem не получает gain обратно
