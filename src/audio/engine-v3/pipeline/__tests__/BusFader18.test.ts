@@ -278,6 +278,42 @@ describe('№18-BUS: pipeline bus fader core', () => {
     expect(eff(pipeline, 'bass')).toBeCloseTo(1)
   })
 
+  // @Gate-R F1: перед повтором накопленные чанки ЧИСТЯТСЯ.
+  // Мутация (убрать clearBuffers) → worklet получит chunk1..N-1 + chunk1..M:
+  // дубли в начале и неверная длина. Здесь ловится по порядку вызовов.
+  it('retry (Gate-R F1): clearBuffers строго между двумя chunkedLoad', async () => {
+    await pipeline.loadStem('bass', BUF)
+    const inst = (pipeline as any)._stretchPool.get('bass')
+    const seq: string[] = []
+    inst.clearBuffers.mockImplementation(async () => { seq.push('clear') })
+    inst.chunkedLoad.mockImplementation(async () => {
+      seq.push('load')
+      if (seq.filter((s) => s === 'load').length === 1) throw new Error('boom')
+    })
+    await pipeline.loadStem('bass', BUF)
+    expect(seq).toEqual(['load', 'clear', 'load'])
+  })
+
+  // @Gate-R F2: retry грузит буфер — и ОБЯЗАН его подключить. Раньше обвязка жила
+  // внутри try, retry её пропускал: буфер в WASM есть, нод не подключён → стем молчит,
+  // лог врёт «retry OK», баннер не показывается. Мутация: убрать обвязку на retry
+  // → _stretchGains пуст → тест краснеет.
+  it('retry (Gate-R F2): после retry стем ПОДКЛЮЧЁН (gain + meter + connect)', async () => {
+    await pipeline.loadStem('bass', BUF)
+    const inst = (pipeline as any)._stretchPool.get('bass')
+    // «чистое» состояние: обвязки ещё нет (иначе тест зелен по наследству)
+    ;(pipeline as any)._stretchGains.delete('bass')
+    ;(pipeline as any)._stretchMeters.delete('bass')
+    inst.outputNode.connect.mockClear()
+    inst.chunkedLoad
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockResolvedValueOnce(undefined)
+    await pipeline.loadStem('bass', BUF)
+    expect((pipeline as any)._stretchGains.has('bass')).toBe(true)
+    expect((pipeline as any)._stretchMeters.has('bass')).toBe(true)
+    expect(inst.outputNode.connect).toHaveBeenCalled()
+  })
+
   // @PR-2: видимая деградация — при ОБЕИХ неудачах летит belive:stem-degraded (UI слушает)
   it('dead-stem (PR-2): обе попытки fail → событие belive:stem-degraded', async () => {
     await pipeline.loadStem('bass', BUF)
