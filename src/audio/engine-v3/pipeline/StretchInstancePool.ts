@@ -188,7 +188,8 @@ export class StretchInstancePool {
     }
     const promises: Promise<void>[] = []
     for (const [slot, inst] of this._instances) {
-      if (inst.isActive && assignedSlots.has(slot)) {
+      // 🔁 Включаем и фолбэк-инстансы (ворклет упал, но сырой буфер играет)
+      if ((inst.isActive || inst.hasFallback) && assignedSlots.has(slot)) {
         promises.push(inst.start(offset, rate))
       }
     }
@@ -201,7 +202,7 @@ export class StretchInstancePool {
     if (assignedSlots.size === 0) return
     const promises: Promise<void>[] = []
     for (const [slot, inst] of this._instances) {
-      if (inst.isActive && assignedSlots.has(slot)) {
+      if ((inst.isActive || inst.hasFallback) && assignedSlots.has(slot)) {
         promises.push(inst.scheduleRate(rate, semitones))
       }
     }
@@ -241,17 +242,17 @@ export class StretchInstancePool {
     if (assignedSlots.size === 0) return
     const promises: Promise<void>[] = []
     for (const [slot, inst] of this._instances) {
-      if (inst.isActive && assignedSlots.has(slot)) {
+      if ((inst.isActive || inst.hasFallback) && assignedSlots.has(slot)) {
         promises.push(inst.seek(time, rate))
       }
     }
     await Promise.allSettled(promises)
   }
 
-  /** Стоп всех */
+  /** Стоп всех (включая фолбэк-инстансы) */
   stopAll(): void {
     for (const inst of this._instances.values()) {
-      if (inst.isActive) inst.stop()
+      if (inst.isActive || inst.hasFallback) inst.stop()
     }
   }
 
