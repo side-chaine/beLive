@@ -22,6 +22,10 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 //      (pr-gate.yml), и поднимать её нельзя, не проверив, что охрана всё
 //      ещё кусается.
 export default defineConfig({
+  // @PR-1 build-sha: инжектируем тот же глобал, что в vite.config.ts, чтобы тесты видели непустой SHA.
+  define: {
+    __BUILD_SHA__: JSON.stringify(process.env.CF_PAGES_COMMIT_SHA ?? '000000000'),
+  },
   plugins: [tsconfigPaths()],
   test: {
     projects: [
