@@ -55,6 +55,9 @@ import { AIChatUI } from './js/ui/ai-chat-ui'; // Новый импорт
 
 declare global { interface Window { __BELIVE_BOOTED__?: boolean } }
 
+// @PR-1 build-sha: одна строка лога на буте — идентификатор сборки для приёмки ДО/ПОСЛЕ на J8.
+console.log(`[belive] build ${__BUILD_SHA__} ${new Date().toISOString()}`)
+
 // --- HMR-safe wrapper init (module-eval, без DOM) ---
 void bridgeFacade.init()
 registerInit({ id: 'exercise-events', init: initExerciseEvents })
@@ -91,6 +94,8 @@ function bootAether(): void {
     const transport = getTransport()
     ;(window as any).__belive = (window as any).__belive || {}
     ;(window as any).__belive.transport = transport
+    // @PR-1 build-sha: видимое место в UI — читается через window.__belive.build (CDP/консоль)
+    ;(window as any).__belive.build = __BUILD_SHA__
     if (!transport) return // V2 not available
 
     // 1. Publisher — публикация времени в UI
