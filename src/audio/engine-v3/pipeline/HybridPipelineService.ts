@@ -281,8 +281,27 @@ export class HybridPipelineService implements IPipelineController {
         this._crashedStems.delete(stemId)
         this._applyEffectiveGain(stemId)
       } catch (e) {
-        console.warn(`[HybridPipeline] ❌ Stretch load failed for ${stemId}:`, e)
-        this._deadStems.add(stemId)   // №18-BUS H1.5: мёртвый стем — gain 0
+        console.warn(`[HybridPipeline] ❌ Stretch load failed for ${stemId} (первая попытка):`, e)
+        // @PR-2: retry чанками+transfer — OOM-путь уже другой (фикс Y), даём второй шанс
+        try {
+          await new Promise<void>((r) => setTimeout(r, 250))
+          await instance.chunkedLoad(buffer)
+          // повторный успех — снимаем dead/crash и применяем effective gain (H1.5)
+          this._deadStems.delete(stemId)
+          this._crashedStems.delete(stemId)
+          this._applyEffectiveGain(stemId)
+          console.log(`[HybridPipeline] 🔥 "${stemId}" → retry OK (Single: Stretch only)`)
+        } catch (e2) {
+          console.error(`[HybridPipeline] ❌ Stretch load failed for ${stemId} (retry тоже):`, e2)
+          this._deadStems.add(stemId)   // №18-BUS H1.5: мёртвый стем — gain 0
+          // @PR-2: видимая деградация вместо STEM SILENT — UI слушает и показывает
+          // «вокал недоступен — играет инструментал». Не глушим трек целиком.
+          try {
+            window.dispatchEvent(new CustomEvent('belive:stem-degraded', {
+              detail: { stemId, error: String((e2 as Error)?.message ?? e2) }
+            }))
+          } catch {}
+        }
       }
     } else {
       console.error(`[HybridPipeline] ❌ "${stemId}": нет stretch-слота. Стем НЕ звучит (single-path: varispeed fallback запрещён).`)

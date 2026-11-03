@@ -26,6 +26,10 @@ export { findZeroCrossing, computeCanonicalLoop } from './integration/LoopEngine
 export type { ZeroCrossingOptions, CanonicalLoop } from './integration/LoopEngineV3'
 export { AudioCrashModal } from './integration/AudioCrashModal'
 export { useAudioContextHealth } from './integration/useAudioContextHealth'
+// C1–C3 (PR-2): немодальный баннер видимой деградации стемов (вместо AudioCrashModal/«STEM SILENT»)
+export { StemDegradedBanner } from './integration/StemDegradedBanner'
+export { useStemDegradation } from './integration/useStemDegradation'
+export type { DegradedStem, StemDegradationState } from './integration/useStemDegradation'
 
 // Legacy singleton factory — for backward compat (MonitorMixPanel, TakesPanel, etc.)
 // Returns null if AudioContext not yet available (must be called after user gesture)

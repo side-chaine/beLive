@@ -104,24 +104,50 @@ export class StretchInstance {
   }
 
   /**
-   * Загрузить буфер одним вызовом addBuffers (REGIME 3).
-   * subarray() НЕ ИСПОЛЬЗОВАТЬ — signalsmith передаёт ArrayBuffer через
-   * transferable postMessage, что детачит исходный буфер.
-   * Весь буфер целиком — безопасно, addBuffers асинхронна (postMessage).
+   * Загрузка буфера в WASM-инстанс чанками с transfer (REGIME 3).
+   *
+   * Почему чанки + transfer, а не «весь буфер одним клоном» (как было):
+   *  - postMessage без transfer-list делает structured clone всего PCM —
+   *    на 32-бит J8 это 28–38 МБ непрерывного блока на канал → DataCloneError
+   *    "out of memory" (прод-лог j8-live2.log, One Step +56с).
+   *  - Vendor принимает transfer-list ДОПОЛНИТЕЛЬНЫМ аргументом сверх argCount
+   *    (SignalsmithStretch.mjs:714–720) → postMessage(msg, transfer) — 0-copy.
+   *  - Worklet аккумулирует чанки: audioBuffers.push, audioBuffersEnd += length
+   *    — инкрементальная подача = штатный режим API.
+   *
+   * Ограничение: НЕ используем buffer.getChannelData(c).buffer как transfer —
+   * это внутренний ArrayBuffer AudioBuffer, трансфер его детачнет и сломает
+   * остальных потребителей (StemPlayerV3.duration, waveform, VOC-анализ).
+   * Каждый чанк — собственная Float32Array, копируется copyFromChannel.
    */
   async chunkedLoad(buffer: AudioBuffer): Promise<void> {
     if (!this._node || !this._active) return
     this._buffer = buffer
 
-    const channels: Float32Array[] = []
-    for (let c = 0; c < buffer.numberOfChannels; c++) {
-      channels.push(buffer.getChannelData(c))
+    // 15 с ≈ 2.7 МБ/канал @48к — любая 32-битная куча тянет; в 10 раз меньше
+    // бывшего единоразового блока. Меньше 10с не нужно: лишние round-trip'ы.
+    const CHUNK_SEC = 15
+    const chunkLen = Math.ceil(CHUNK_SEC * buffer.sampleRate)
+
+    for (let start = 0; start < buffer.length; start += chunkLen) {
+      const end = Math.min(start + chunkLen, buffer.length)
+      const piece: Float32Array[] = []
+      for (let c = 0; c < buffer.numberOfChannels; c++) {
+        const part = new Float32Array(end - start)
+        // копия ТОЛЬКО чанка из AudioBuffer (без getChannelData-детача)
+        buffer.copyFromChannel(part, c, start)
+        piece.push(part)
+      }
+      // ← КЛЮЧЕВАЯ СТРОКА: второй аргумент = transfer-list (vendor wrapper
+      //    ловит его как args.length > argCount → args.pop()).
+      //    Клон невозможен by construction: transfer не клонирует.
+      await (this._node as any).addBuffers(piece, piece.map((p) => p.buffer))
     }
 
-    await (this._node as any).addBuffers(channels)
-
-    console.log(`[StretchInstance:${this._id}] ✅ Load complete (${buffer.duration.toFixed(1)}s, ${buffer.length} samples)`)
-
+    console.log(
+      `[StretchInstance:${this._id}] ✅ Load complete (${buffer.duration.toFixed(1)}s, ` +
+      `${buffer.length} samples, chunked ${CHUNK_SEC}s + transfer)`
+    )
   }
 
 

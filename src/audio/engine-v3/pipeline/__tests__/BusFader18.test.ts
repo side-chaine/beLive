@@ -251,15 +251,47 @@ describe('№18-BUS: pipeline bus fader core', () => {
     expect(eff(pipeline, 'drums')).toBeCloseTo(0.42)
   })
 
-  it('dead-stem (H1.5): chunkedLoad fail → gain 0; успешный reload resurrect', async () => {
+  // @PR-2: контракт H1.5 изменился — dead-stem ставится только если упали ОБЕ попытки
+  // (первая + retry через 250мс). mockRejectedValue бьёт ВСЕ вызовы chunkedLoad.
+  it('dead-stem (H1.5): обе попытки chunkedLoad fail → gain 0; успешный reload resurrect', async () => {
     await pipeline.loadStem('bass', BUF)
     const inst = (pipeline as any)._stretchPool.get('bass')
-    inst.chunkedLoad.mockRejectedValueOnce(new Error('boom'))
-    await pipeline.loadStem('bass', BUF) // catch → _deadStems.add
+    inst.chunkedLoad.mockRejectedValue(new Error('boom'))
+    await pipeline.loadStem('bass', BUF) // catch → retry(250мс) → тоже fail → _deadStems.add
     expect(eff(pipeline, 'bass')).toBe(0)
 
+    // успешный повторный лоад снимает dead (событие не дёргаем — проверяем ниже)
+    inst.chunkedLoad.mockResolvedValue(undefined)
     await pipeline.loadStem('bass', BUF) // успех → delete dead/crash + applyEffectiveGain
     expect(eff(pipeline, 'bass')).toBeCloseTo(1)
+  })
+
+  // @PR-2: retry-устойчивость — первая попытка упала, retry OK → НЕ dead, gain = effective
+  it('dead-stem retry (PR-2): первая попытка fail, retry OK → НЕ dead, gain = effective', async () => {
+    await pipeline.loadStem('bass', BUF)
+    const inst = (pipeline as any)._stretchPool.get('bass')
+    inst.chunkedLoad
+      .mockRejectedValueOnce(new Error('boom')) // первая попытка
+      .mockResolvedValueOnce(undefined)          // retry OK
+    await pipeline.loadStem('bass', BUF)
+    expect((pipeline as any)._deadStems.has('bass')).toBe(false)
+    expect(eff(pipeline, 'bass')).toBeCloseTo(1)
+  })
+
+  // @PR-2: видимая деградация — при ОБЕИХ неудачах летит belive:stem-degraded (UI слушает)
+  it('dead-stem (PR-2): обе попытки fail → событие belive:stem-degraded', async () => {
+    await pipeline.loadStem('bass', BUF)
+    const inst = (pipeline as any)._stretchPool.get('bass')
+    inst.chunkedLoad.mockRejectedValue(new Error('boom'))
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent')
+    await pipeline.loadStem('bass', BUF)
+    expect(eff(pipeline, 'bass')).toBe(0)
+    // @PR-2: прод-код шлёт видимую деградацию (не «STEM SILENT») вместо немого стема
+    const degraded = dispatchSpy.mock.calls.find(
+      (c: any) => c[0]?.type === 'belive:stem-degraded' && (c[0] as CustomEvent)?.detail?.stemId === 'bass'
+    )
+    expect(degraded).toBeDefined()
+    dispatchSpy.mockRestore()
   })
 
   // ── Тест 7: регресс симптома №18 ──
