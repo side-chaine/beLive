@@ -121,6 +121,13 @@ export function StructureDiagram() {
             onClick={() => {
               // Set clicked block context for AI Expert
               useTrackInfoStore.getState().setClickedBlockType(bd.block.type);
+              // A (TrackMap click): мгновенно переключаем плейхэд (активный блок)
+              // напрямую, независимо от рассинхрона маркеров (window.markerManager vs store).
+              // Без этого подсветка блока не двигается при клике, даже если аудио-сик прошёл.
+              if (bd.block.lineIndices && bd.block.lineIndices.length) {
+                const firstLine = Math.min(...bd.block.lineIndices);
+                useLyricsStore.getState().setActiveLineIndex(firstLine);
+              }
               const range = getBlockTimeRange(bd.block, markers);
               if (range) {
                 try { getTransport()?.seek(range.startTime) } catch {}

@@ -11,19 +11,22 @@ import { eventBus } from '../event-bus'
 import { EventBusChannel } from '../types'
 import { useAudioStore } from '../../../stores/audio.store'
 import { useLyricsStore } from '../../../stores/lyrics.store'
+import { useMarkersStore } from '../../../stores/markers.store'
 import { getTransport } from '../../../audio/engine-v3'
 
 const POLL_INTERVAL_MS = 100 // 10Hz
 
 /** По времени трека определить активную строку (1:1 из audio.bridge.ts computeLineIndex) */
 function resolveLineByTime(t: number): number {
-  // M1-2 (342): getMarkers() не существует в marker-manager.js — маркеры в свойстве .markers.
-  // Исправляем pre-existing баг: клик по блоку (seek) теперь обновит activeLineIndex.
-  const mm = (window as any).markerManager
-  const markers = (mm?.getMarkers?.() ?? mm?.markers ?? []) as any[]
+  // B (TrackMap click): берём маркеры из ТОГО ЖЕ стора, что и клик (StructureDiagram →
+  // useMarkersStore), а не из window.markerManager. Два источника рассинхронятся при смене
+  // трека (GUARD: "old markers vs new lines"), из-за чего resolveLineByTime возвращал -1 и
+  // activeLineIndex не обновлялся после сика. M2-маркеры пропускаем (parity с detector).
+  const markers = (useMarkersStore.getState().markers ?? []) as any[]
   let bestLine = -1
   let bestTime = -Infinity
   for (const m of markers) {
+    if (m.markerType === 'M2') continue
     if (m.time <= t && m.time > bestTime) {
       bestTime = m.time
       bestLine = m.lineIndex
