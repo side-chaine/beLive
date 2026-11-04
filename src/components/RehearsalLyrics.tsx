@@ -662,13 +662,81 @@ export function RehearsalLyrics() {
   const bcRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // 706-loop: во время лупы скроллом владеет fitLoopIntoView — не конфликтуем
+    // с ним (именно этот конфликт давал "то правильно то не правильно").
+    if (isLooping) return;
     if (!displayBlock && activeRef.current) {
       activeRef.current.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
       });
     }
-  }, [activeLineIndex, displayBlock]);
+  }, [activeLineIndex, displayBlock, isLooping]);
+
+  // 706-loop: держим ОБЕ границы лупы в видимой области короткой плашки
+  // (развёрнутый док). Иначе нижняя граница уходит за край и её нельзя перетащить.
+  // Базируется на min-height:0 у .activeBlock (чинит flexbox-обрезание).
+  // Не дёргаем, если обе границы уже в кадре; нет лупы в разных суб-блоках —
+  // там стрелки loopBoundaryArrow сами всё показывают.
+  const fitLoopIntoView = useCallback((smooth = true) => {
+    const block = activeBlockRef.current;
+    const loop = useLoopStore.getState();
+    if (!block || !loop.isLooping) return;
+    const { loopStartLine: s, loopEndLine: e } = loop;
+    if (s === null || e === null) return;
+    const startEl = block.querySelector<HTMLElement>(`[data-line-index="${s}"]`);
+    const endEl = block.querySelector<HTMLElement>(`[data-line-index="${e}"]`);
+    if (!startEl || !endEl) return; // границы в разных суб-блоках — стрелки покажут
+
+    const blockRect = block.getBoundingClientRect();
+    const startRect = startEl.getBoundingClientRect();
+    const endRect = endEl.getBoundingClientRect();
+    const viewTop = blockRect.top;
+    const viewBottom = blockRect.bottom;
+
+    const startVisible = startRect.top >= viewTop - 1 && startRect.top <= viewBottom;
+    const endVisible = endRect.bottom >= viewTop && endRect.bottom <= viewBottom + 1;
+    if (startVisible && endVisible) return; // уже в кадре — не дёргаем
+
+    const regionTop = startRect.top - blockRect.top + block.scrollTop;
+    const regionBottom = endRect.bottom - blockRect.top + block.scrollTop;
+    const regionHeight = regionBottom - regionTop;
+    const viewHeight = block.clientHeight;
+    // Регион влезает — центрируем. Иначе (развёрнутый док, короткая плашка)
+    // держим НИЖНЮЮ границу видимой у нижнего края — жалоба "нижней линии нет".
+    const targetScroll = regionHeight <= viewHeight
+      ? regionTop - (viewHeight - regionHeight) / 2
+      : Math.max(0, regionBottom - viewHeight + 8);
+    block.scrollTo({ top: Math.max(0, targetScroll), behavior: smooth ? 'smooth' : 'auto' });
+  }, []);
+
+  // 706-loop: подгоняем лупу в кадр при смене лупы / активного блока / суб-блока.
+  // Двойной rAF: ждём коммита новых строк + оседания лейаута, иначе замер
+  // позиций гонит (это и давало "то правильно то не правильно").
+  useEffect(() => {
+    if (!isLooping) return;
+    let raf1 = 0, raf2 = 0;
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => fitLoopIntoView(true));
+    });
+    return () => { cancelAnimationFrame(raf1); cancelAnimationFrame(raf2); };
+  }, [isLooping, loopStartLine, loopEndLine, displayBlock?.id, activeSubBlockIndex, fitLoopIntoView]);
+
+  // 706-loop: ресайз плашки (развёрнутый/свёрнутый док, прогресс-бар трека)
+  // меняет высоту .activeBlock — короткая плашка снова может спрятать нижнюю
+  // границу. Дебаунс через rAF + мгновенный ре-фит, чтобы не плодить
+  // smooth-скроллы во время CSS-перехода дока.
+  useEffect(() => {
+    const el = activeBlockRef.current;
+    if (!el) return;
+    let raf = 0;
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => fitLoopIntoView(false));
+    });
+    ro.observe(el);
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  }, [fitLoopIntoView]);
 
   const handleBoundaryDrag = useCallback((type: 'start' | 'end', e: React.PointerEvent) => {
     if (!displayBlock || loopStartLine === null || loopEndLine === null) return;

@@ -60,21 +60,26 @@ export function WagonTrain() {
     return isAdjacent ? 'adjacent' : 'idle';
   }, [loopBlockIds, isLooping, blocks]);
 
-  // Publish height as CSS var (RehearsalLyrics reads it)
+  // Publish height as CSS var (RehearsalLyrics reads it).
+  // 706: WagonTrain may mount with blocks.length === 0 and render null, so the ref
+  // is not ready and a []-effect would never run again. Re-publish when blocks
+  // appear, and use offsetHeight (contentRect excludes the root padding).
   useEffect(() => {
     const el = rootRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(([entry]) => {
+
+    const apply = () => {
       document.documentElement.style.setProperty(
-        '--wagon-train-height', `${entry.contentRect.height}px`
+        '--wagon-train-height', `${el.offsetHeight}px`
       );
-    });
-    ro.observe(el);
-    return () => {
-      ro.disconnect();
-      document.documentElement.style.removeProperty('--wagon-train-height');
     };
-  }, []);
+
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+
+    return () => ro.disconnect();
+  }, [blocks.length]);
 
   // Auto-scroll to active wagon
   useEffect(() => {
