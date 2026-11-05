@@ -1,0 +1,203 @@
+/* ─── Play / Pause roundel — the deck twin of the top "bL" button ───
+   Matte rim in the resting state: the saturated conic + halo are gone.
+   A click on EITHER twin flashes both rims and runs a specular highlight
+   across the glass for ~620 ms (see src/utils/roundel-pulse.ts).
+
+   The 52px circle is an ABSOLUTE layer over a 22px layout box: the deck row
+   stays 36px tall, so --bl-deck-height / BillyDock / TransportBar never move. */
+
+.root {
+  --bl-roundel-size: 52px;
+  position: relative;
+  width: var(--bl-roundel-size);
+  height: 22px;              /* same box as the Inst/Voc faders */
+  flex-shrink: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  z-index: 2;
+}
+
+.root.decorative {
+  cursor: default;
+  pointer-events: none;
+}
+
+.face {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--bl-roundel-size);
+  height: var(--bl-roundel-size);
+  /* lifted 10px so the circle does not get clipped by the bottom of the viewport */
+  transform: translate(-50%, calc(-50% - 10px));
+  border-radius: 50%;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Matte rim: same hue stops as .bl-border, desaturated + knocked down ── */
+.border {
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.24)),
+    conic-gradient(
+      from 0deg,
+      #6b5232 0deg,
+      #51425f 120deg,
+      #36495e 200deg,
+      #51425f 280deg,
+      #6b5232 360deg
+    );
+  background-blend-mode: soft-light, normal;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.55);
+  transition: filter 0.25s ease;
+}
+
+.inner {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #0e0e18;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 -6px 12px rgba(0, 0, 0, 0.55);
+}
+
+.icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── PLAY: triangle — muted metal, no drop-shadow ── */
+.play {
+  width: 18px;
+  height: 20px;
+  margin-left: 2px; /* optical centring of the triangle */
+  background: linear-gradient(135deg, #a0958a 0%, #7d746e 38%, #6a6478 100%);
+  clip-path: polygon(6% 0, 100% 50%, 6% 100%);
+}
+
+/* ── PAUSE: two bars ── */
+.pause {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pauseBar {
+  width: 5px;
+  height: 18px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #948b84 0%, #686276 100%);
+}
+
+/* ── Pulse (mounted only while pulsing; key=pulseKey restarts it) ── */
+.pulse {
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  z-index: 3;              /* above the icon: the highlight is specular */
+  pointer-events: none;
+  animation: bl-roundel-pulse-fade 0.62s ease-out forwards;
+}
+
+/* Colour returns on the RIM only — padding + mask XOR = clean 3px ring. */
+.pulseLit {
+  position: absolute;
+  inset: 0;
+  padding: 3px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #FF8C00 0deg,
+    #c44dff 120deg,
+    #4d8fff 200deg,
+    #c44dff 280deg,
+    #FF8C00 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0.9;
+}
+
+/* Specular sweep across the glass — a lens flare, not a glow. */
+.pulseSweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(
+    108deg,
+    rgba(255, 255, 255, 0) 34%,
+    rgba(255, 255, 255, 0.10) 45%,
+    rgba(255, 255, 255, 0.52) 50%,
+    rgba(255, 255, 255, 0.10) 55%,
+    rgba(255, 255, 255, 0) 66%
+  );
+  background-size: 260% 100%;
+  background-position: 190% 0;
+  animation: bl-roundel-specular 0.62s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+/* ── states: brightness only. No halo, no reflection, no neon. ── */
+.root:hover .face {
+  transform: translate(-50%, calc(-50% - 10px)) scale(1.05);
+}
+.root:hover .border { filter: brightness(1.22); }
+
+.root:active .face {
+  transform: translate(-50%, calc(-50% - 10px)) scale(0.96);
+}
+.root:active .border { filter: brightness(0.9); }
+
+/* Playing is carried by the two bars, not by a permanent glow. */
+.root[data-playing='true'] .border { filter: brightness(1.18); }
+.root[data-playing='true'] .pauseBar {
+  background: linear-gradient(180deg, #b9aca2 0%, #827b96 100%);
+}
+
+.root:focus-visible { outline: none; }
+.root:focus-visible .face {
+  outline: 2px solid rgba(255, 255, 255, 0.42);
+  outline-offset: 4px;
+}
+
+@keyframes bl-roundel-pulse-fade {
+  0%   { opacity: 0; }
+  9%   { opacity: 1; }
+  58%  { opacity: 0.92; }
+  100% { opacity: 0; }
+}
+
+@keyframes bl-roundel-specular {
+  from { background-position: 190% 0; }
+  to   { background-position: -90% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .face { transition: none; }
+  .root:hover .face { transform: translate(-50%, calc(-50% - 10px)); }
+  .root:active .face { transform: translate(-50%, calc(-50% - 10px)); }
+  .pulseSweep { animation: none; opacity: 0.28; background-position: 50% 0; }
+  .pulse { animation-duration: 0.3s; }
+}
+
+/* Short viewports: shrink instead of clipping. */
+@media (max-height: 620px) {
+  .root { --bl-roundel-size: 40px; }
+}

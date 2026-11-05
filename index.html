@@ -29,9 +29,42 @@
     <link rel="icon" href="img/belive-mark-small.svg" type="image/svg+xml">
     <link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="icon" href="img/favicon-16.png" sizes="16x16" type="image/png">
+
+    <!-- Boot splash: paints at FIRST paint, before any JS module is fetched or
+         evaluated. React's LoadingSplash fades this out once the video has its
+         first frame (see #bl-boot-splash--hide). The relative URL follows the
+         convention of the other assets here: Vite rebases it to /beLive/ in dev
+         and / in the CF Pages build, so the poster URL stays correct.
+         The layer owns its own CSS-only watchdog: no inline JS on the critical
+         path, and no duplicated dismissal logic between HTML and React. -->
+    <link rel="preload" as="image" href="splash-poster.jpg" fetchpriority="high">
+    <style id="bl-boot-style">
+      #bl-boot-splash {
+        position: fixed; inset: 0; z-index: 10000000;
+        background: #000; overflow: hidden; pointer-events: none;
+        opacity: 1; transition: opacity 0.5s ease;
+        /* If the whole JS graph fails, the layer still fades and becomes inert
+           at 12s. React cancels this by adding the hide class. */
+        animation: bl-boot-watchdog 12s linear forwards;
+      }
+      #bl-boot-splash img {
+        display: block; width: 100%; height: 100%;
+        object-fit: cover; object-position: center;
+      }
+      #bl-boot-splash.bl-boot-splash--hide { animation: none; opacity: 0; }
+      @keyframes bl-boot-watchdog {
+        0%, 95.8% { opacity: 1; visibility: visible; }
+        100% { opacity: 0; visibility: hidden; }
+      }
+      @media (prefers-reduced-motion: reduce) { #bl-boot-splash { transition: none; } }
+    </style>
+
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/karaoke-styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Dead render-blocking request removed: Font Awesome 5 had zero consumers
+         (no `fa-*` class anywhere in src/, css/, public/js/ or index.html), but a
+         cross-origin stylesheet in <head> still gated first paint on a CDN TLS
+         handshake. Same class of dead weight as the esm.sh/pitchy import below. -->
     
     <!-- FINAL-W1: MediaPipe removed (mask-system disabled since S0) -->
     <!--
@@ -46,12 +79,16 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
     -->
     
-    <!-- Pitchy Library for Professional Pitch Detection -->
-    <script type="module">
+    <!-- Dead boot request removed: this loaded https://esm.sh/pitchy@4 and set
+         window.PitchDetector, but no live source consumes it (the only candidate,
+         src/js/main.js, reads window.Pitchy.PitchDetector and is no longer
+         imported since FINAL2). It cost a cross-origin TLS handshake on the
+         critical path for nothing. Restore only if a real consumer returns. -->
+    <!-- <script type="module">
         import { PitchDetector } from "https://esm.sh/pitchy@4";
         window.PitchDetector = PitchDetector;
-        console.log('✅ Pitchy библиотека загружена в beLive');
-    </script>
+        console.log('Pitchy loaded');
+    </script> -->
     <link rel="stylesheet" href="css/rehearsal-styles.css">
     <style>
       /* FOUC-2 P0 (006/200): тёмная база под прозрачным body — белому неоткуда взяться */
@@ -60,14 +97,21 @@
       html.bl-surface-welcome div#app-root > .app-container { display: none !important; }
     </style>
 
-    <!-- Google Fonts for Font Selector -->
+    <!-- Web fonts: ONE stylesheet, NON render-blocking.
+         All 13 families used by the Font Selector + Space Grotesk (beLIVE button)
+         + Orbitron (cockpit) are combined into a single css2 request. `media=print`
+         keeps the request off the first-paint critical path; `onload` promotes it
+         to `all` once it has arrived (the handler runs after load, so no inline JS
+         sits on the critical path). The splash covers the app while fonts arrive.
+         First paint therefore depends only on local CSS + splash-poster.jpg. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@400;700&family=Open+Sans:wght@400;700&family=Bebas+Neue&family=Playfair+Display:wght@400;700&family=Merriweather:wght@400;700&family=Lora:wght@400;700&family=PT+Serif:wght@400;700&family=Oswald:wght@400;700&family=Lobster&family=Pacifico&family=Caveat&display=swap" rel="stylesheet">
-    <!-- Space Grotesk for beLive button -->
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
-    <!-- Orbitron font for cockpit design -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" media="print" onload="this.media='all'" fetchpriority="low"
+          href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@400;700&family=Open+Sans:wght@400;700&family=Bebas+Neue&family=Playfair+Display:wght@400;700&family=Merriweather:wght@400;700&family=Lora:wght@400;700&family=PT+Serif:wght@400;700&family=Oswald:wght@400;700&family=Lobster&family=Pacifico&family=Caveat&family=Space+Grotesk:wght@700&family=Orbitron:wght@400;500;700;900&display=swap">
+    <noscript>
+      <link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Montserrat:wght@400;700&family=Open+Sans:wght@400;700&family=Bebas+Neue&family=Playfair+Display:wght@400;700&family=Merriweather:wght@400;700&family=Lora:wght@400;700&family=PT+Serif:wght@400;700&family=Oswald:wght@400;700&family=Lobster&family=Pacifico&family=Caveat&family=Space+Grotesk:wght@700&family=Orbitron:wght@400;500;700;900&display=swap">
+    </noscript>
     <script>
 (function(){
         // Определяем сборку по окружению
@@ -219,8 +263,46 @@
         } catch(e) {}
       })();
     </script>
+
+    <!-- Text contract: a caret / I-beam belongs ONLY to a real text field.
+         Both the legacy lyrics host and the React chrome inherit
+         `user-select:auto` and a WHITE `caret-color` from body, so clicking a
+         letter or a button produced a blinking bar on the start screen.
+         This lives in <head> (last in the cascade) so it applies at first
+         paint and still holds if the whole JS graph fails. Add new editable
+         surfaces through `data-bl-text-input="true"` or `contenteditable`. -->
+    <style id="bl-text-contract">
+      html, body { caret-color: transparent !important; }
+      body, button, [role="button"], a, label,
+      h1, h2, h3, h4, h5, h6, p, li,
+      .welcome-message, .welcome-message *, .bl-welcome, .bl-hint {
+        -webkit-user-select: none !important;
+        user-select: none !important;
+        caret-color: transparent !important;
+      }
+      /* No I-beam over static text. Inline `cursor:pointer` on buttons wins. */
+      h1, h2, h3, h4, h5, h6, p, label,
+      .welcome-message, .welcome-message * { cursor: default; }
+      /* Allowlist: chat inputs, search, lyric editors, marked text surfaces. */
+      input, textarea, select,
+      [contenteditable]:not([contenteditable="false"]),
+      [data-bl-text-input="true"] {
+        -webkit-user-select: text !important;
+        user-select: text !important;
+        caret-color: auto !important;
+        cursor: text !important;
+      }
+      input[type="range"], input[type="checkbox"], input[type="radio"],
+      input[type="button"], input[type="submit"] { cursor: pointer !important; }
+    </style>
 </head>
 <body>
+    <!-- Static first-paint splash. No JS needed: this is visible while the whole
+         module graph (main.tsx + ~45 imports + bootAether) downloads and runs. -->
+    <div id="bl-boot-splash" aria-hidden="true">
+      <img src="splash-poster.jpg" alt="" />
+    </div>
+
     <div class="app-container" id="app-root">
         <!-- 1. Верхняя панель с логотипом и кнопками режимов -->
         <header class="app-header">

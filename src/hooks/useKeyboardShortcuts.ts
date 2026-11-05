@@ -3,6 +3,8 @@ import { useTrackStore, TrackState } from '../stores/track.store';
 import { interruptPracticeSession } from '../exercises/exercise.interruption';
 import { useShowStore } from '../stores/show.store';
 import { getTransport } from '../audio/engine-v3';
+import { togglePlayback } from '../audio/transport-control';
+import { emitRoundelPulse } from '../utils/roundel-pulse';
 
 export function useKeyboardShortcuts() {
   const tracksMeta = useTrackStore((s: TrackState) => s.tracksMeta);
@@ -66,24 +68,19 @@ export function useKeyboardShortcuts() {
 
       if (e.code === 'Space') {
         if (e.repeat) return;
+        // Both roundels handle their own Space/Enter activation (the deck one
+        // natively, the top bL via onKeyDown). Skip the global shortcut here or
+        // playback would toggle twice / bL would start music by accident.
+        if ((e.target as HTMLElement)?.closest?.('[data-bl-playpause], [data-bl-roundel]')) return;
         console.log('[KEYBOARD] Space pressed', { isTrusted: e.isTrusted, target: (e.target as HTMLElement)?.tagName, time: performance.now().toFixed(0) });
         // Show scenario guard: в презентации при showSlide=true — PresenterDock обрабатывает сам
         const showState = useShowStore.getState();
         if (showState.activeMode === 'scenario' && showState.isPresenting && showState.showSlide) return;
         e.preventDefault();
-        const transport = getTransport();
-        // 🛡 Единый V3 блок: __v3Active ИЛИ старый orchestrator guard
-        if (transport && ((window as any).__v3Active || (transport.state !== 'idle' && transport.orchestrator.all().length > 0))) {
-          if (transport.state === 'playing') {
-            void transport.pause();
-          } else if (transport?.isAudioContextRunning ?? true) {
-            void transport.play();
-          }
-          } else {
-            const transport = getTransport();
-            const isPlaying = transport?.state === 'playing';
-            if (isPlaying) { transport?.pause(); } else { transport?.play(); }
-          }
+        // Same code path as the roundel — see src/audio/transport-control.ts.
+        togglePlayback();
+        // Space is a third way in: both rims still answer the click.
+        emitRoundelPulse('keyboard');
         return;
       }
     };

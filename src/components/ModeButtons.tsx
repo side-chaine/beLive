@@ -15,28 +15,53 @@ export function ModeButtons() {
   const mode = useModeStore((s) => s.mode);
   const appMode = useUIStore(s => s.appMode);
   const setAppMode = useUIStore(s => s.setAppMode);
+  const modeChosen = useUIStore(s => s.modeChosen);
+  const markModeChosen = useUIStore(s => s.markModeChosen);
 
   const handleSwitch = useCallback((newMode: string) => {
     switchMode(newMode as any);
     setAppMode('studio');
-  }, [setAppMode]);
+    // Only an explicit click turns the bright accent on. The store default is
+    // `rehearsal`, but on a fresh load nobody has chosen it yet — showing a
+    // saturated orange "active" tab reads as a loud, unasked-for CTA.
+    markModeChosen();
+  }, [setAppMode, markModeChosen]);
 
   return (
+    // Symmetric 3-column grid: the middle column is the bL roundel and BOTH
+    // side columns are equal `1fr`. That puts bL EXACTLY on the viewport centre
+    // — the same axis used by the deck fader trio and the splash faders.
+    // The old plain flex row had 2 buttons left / 2 right of different widths
+    // (Concert+Karaoke vs Rehearsal+Live), which pushed bL 7.3px off centre.
+    // `auto` for the middle column also keeps bL centred when it expands to
+    // the "beLive" pill in feed mode.
     <div style={{
-      display: 'flex', gap: 24, alignItems: 'center',
+      display: 'grid',
+      // `minmax(0, 1fr)` NOT `1fr`: plain 1fr has a min-content floor, so on
+      // narrow windows the wider left pair forced the two columns apart and
+      // pushed bL 7.3px off centre again. Zero floor = strictly equal columns
+      // at every width; overflowing buttons simply extend outwards.
+      gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)',
+      alignItems: 'center',
+      gap: 24,
     }}>
-      {MODES.slice(0, 2).map((m) => renderModeBtn(m))}
-
-      <div style={{ margin: '0 8px' }}>
-        <BeLiveButton />
+      <div style={{ display: 'flex', gap: 24, alignItems: 'center', justifyContent: 'flex-end' }}>
+        {MODES.slice(0, 2).map((m) => renderModeBtn(m))}
       </div>
 
-      {MODES.slice(2).map((m) => renderModeBtn(m))}
+      <BeLiveButton />
+
+      <div style={{ display: 'flex', gap: 24, alignItems: 'center', justifyContent: 'flex-start' }}>
+        {MODES.slice(2).map((m) => renderModeBtn(m))}
+      </div>
     </div>
   );
 
   function renderModeBtn(m: typeof MODES[number]) {
-    const isActive = mode === m.id && appMode !== 'feed';
+    // Quiet start: until the user picks a mode ALL four tabs share the muted
+    // resting style. Functional mode is still `rehearsal` — only its visual
+    // claim to be "selected" is withheld.
+    const isActive = modeChosen && mode === m.id && appMode !== 'feed';
     return (
       <button
         key={m.id}
