@@ -11,6 +11,7 @@ import { applyTheme, applyMode } from '../../theme/engine/css-injector';
 import { WeekStrip } from './room/WeekStrip';
 import { ContinueCard } from './room/ContinueCard';
 import { useJournal } from './room/useJournal';
+import { HintToggle } from '../../hints/HintToggle';
 import './UserRoom.css';
 
 export function UserRoom() {
@@ -249,6 +250,12 @@ export function UserRoom() {
           <section className="bl-userroom__card bl-userroom__card--tempo">
             <div className="bl-userroom__card-title">Твой темп</div>
             <div className="bl-userroom__muted">Прогоны покажут темп по блокам</div>
+          </section>
+
+          {/* ПОДСКАЗКИ · guided tour — компактная плашка под слово + тумблер.
+              bl-hint-plate (hints.css) даёт width:fit-content, НЕ растягивать. */}
+          <section className="bl-userroom__card bl-userroom__card--hints bl-hint-plate">
+            <HintToggle />
           </section>
 
           {/* СОВМЕСТНЫЕ СЕССИИ */}
