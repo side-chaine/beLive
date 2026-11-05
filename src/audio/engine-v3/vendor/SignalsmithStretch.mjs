@@ -472,14 +472,16 @@ function registerWorkletProcessor(Module, audioNodeKey) {
 								let channelBuffer = audioBuffer[c%audioBuffer.length];
 								buffer.subarray(blockSamples).set(channelBuffer.subarray(startIndex, startIndex + count));
 							});
-							audioSamples += count;
+							// FIX(multi-buffer): продвигаем позицию ВО ВХОДНОМ потоке, а не начало буфера
+							inputSamples += count;
 							blockSamples += count;
 						} else { // we're already past this buffer - skip it
 							// 067-E v6.7: count skipped buffers — measurement only
 							if (instr) this._instr.skipCount++
 							skipDelta++   // v6.20 (MICRO-PACK-080): дельта skip за квант — measurement only
-							audioSamples += audioBuffer[0].length;
 						}
+						// FIX(multi-buffer): следующий буфер начинается там, где закончился этот
+						audioSamples = bufferEnd;
 						++audioBufferIndex;
 					}
 					if (blockSamples < this.bufferLength) {
@@ -585,7 +587,7 @@ function registerWorkletProcessor(Module, audioNodeKey) {
 				return true;
 			} catch (e) {
 				// A6: throttle — не чаще 1 ошибки в секунду
-				const now = performance.now ? performance.now() : Date.now()
+				const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now() // FIX: в AudioWorkletGlobalScope performance не определён → catch сам бросал ReferenceError и убивал процессор
 				this._errorCount++
 				if (this._errorCount === 1) {
 				  this._firstErrorTime = now

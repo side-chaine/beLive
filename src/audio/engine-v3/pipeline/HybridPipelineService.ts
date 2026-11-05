@@ -451,7 +451,8 @@ export class HybridPipelineService implements IPipelineController {
       for (const [stemId, stem] of this._chainA.stems) {
         const instance = this._stretchPool.get(stemId)
         const stretchGain = this._stretchGains.get(stemId)
-        if (instance?.isActive && stretchGain) {
+        // 🔁 hasFallback — ворклет упал, сырой фолбэк должен перепозиционироваться, иначе клик по TrackMap двигает только UI
+        if ((instance?.isActive || instance?.hasFallback) && stretchGain) {
           seekPromises.push(
             instance.seek(time, rate)
               .then(() => {
