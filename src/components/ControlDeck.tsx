@@ -1,17 +1,16 @@
 import { ENGINE_MODE } from '../engine-mode';
-import { Suspense, useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useDeckStore } from '../stores/deck.store';
 import { useModeStore } from '../stores/mode.store';
-import { usePianoStore } from '../stores/piano.store';
 import { getModulesForMode, getLazyComponent } from '../deck/registry';
 import '../deck/modules';
 import { TransportBar } from './TransportBar';
+import { DeckPlayPause } from './DeckPlayPause';
 import styles from './ControlDeck.module.css';
 import { useAudioStore } from '../stores/audio.store';
 import { usePracticeStore } from '../stores/practice-session.store';
 import { useStemStore } from '../stem/stem.store';
 import { BUILTIN_STEMS } from '../stem/stemTypes';
-import { useSyncStore } from '../sync/store/sync.store';
 import { useSyncStore } from '../sync/store/sync.store';
 import { useMonitorStore } from '../stores/monitor.store';
 import { useRecordingStore } from '../stores/recording.store';
@@ -23,18 +22,25 @@ import { useTrackStore } from '../stores/track.store';
 import { useTrackInfoStore } from '../stores/trackInfo.store';
 import { useShowStore } from '../stores/show.store';
 
+// Exact wing-core colors (sampled from welcome-splash.mp4) — keep in sync with LoadingSplash.
+const WING_RED = '#FE5C55';
+const WING_BLUE = '#39A4FE';
+const INST_GLOW = 'rgba(254, 92, 85, 0.55)';
+const VOC_GLOW = 'rgba(57, 164, 254, 0.55)';
+const INST_GLOW_HOT = 'rgba(254, 92, 85, 0.9)';
+const VOC_GLOW_HOT = 'rgba(57, 164, 254, 0.9)';
+
 export function ControlDeck() {
   const expanded = useDeckStore(s => s.expanded);
   const activeTabId = useDeckStore(s => s.activeTabId);
-  const stemsMode = useStemStore(s => s.stemsMode);
   const toggle = useDeckStore(s => s.toggle);
   const setTab = useDeckStore(s => s.setTab);
   const mode = useModeStore(s => s.mode);
   const recFeatureActive = useShowStore(s => s.featureActive);
   const deactivateFeature = useShowStore(s => s.deactivateFeature);
   const rootRef = useRef<HTMLDivElement>(null);
-  // TC-PITCH-03: Piano = tab, not overlay
-  const pianoOpen = activeTabId === 'pitch';
+  // 707 brief: hover/drag glow boost on the wing faders (does NOT touch click/drag math).
+  const [hotFader, setHotFader] = useState<'' | 'inst' | 'voc'>('');
 
   const syncOpen = useSyncStore(s => s.open);
   const trackInfoOpen = useTrackInfoStore(s => s.isOpen);
@@ -64,7 +70,6 @@ export function ControlDeck() {
   const __v3Active = !!(window as any).__v3Active;
   const hasMusicStems = loadedStems.some(id => BUILTIN_STEMS[id]?.role === 'music');
   const instFaderValue = __v3Active && hasMusicStems ? musicBusVolume : instrumentalVolume;
-  const hasVocals = useAudioStore(s => s.hasVocals);
   const playbackRate = useAudioStore(s => s.playbackRate);
   const isPracticeActive = usePracticeStore(s => s.isActive);
   const practiceCurrentRate = usePracticeStore(s => s.currentRate);
@@ -168,7 +173,10 @@ export function ControlDeck() {
           })}
         </div>
 
-        {/* TC-SLIDERS-CENTER-01: Sliders group — centered with flexbox */}
+        {/* TC-SLIDERS-CENTER-01: Sliders group. The three transport controls
+            are anchored to the SAME 50% axis as the top bL roundel, so their
+            position can no longer drift when tab / BPM / VMix widths change
+            (a loaded track adds a "Split" tab and used to push play ~19px right). */}
         <div style={{
           flex: 1,
           display: 'flex',
@@ -177,17 +185,34 @@ export function ControlDeck() {
           gap: 6,
           minWidth: 0,
         }}>
+          {/* Nearest positioned ancestor is `.tabs` (this group is static),
+              so 50% here means 50% of the viewport, not of the leftover flex
+              space. All other controls keep their old flow positions. */}
+          <div style={{
+            position: 'absolute',
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            zIndex: 2,
+          }}>
           <div
             style={{
               position: 'relative',
               width: 180,
               height: 22,
               borderRadius: 4,
-              background: 'rgba(255, 255, 255, 0.06)',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(254, 92, 85, 0.4)',
+              filter: hotFader === 'inst' ? `drop-shadow(0 0 13px ${INST_GLOW_HOT})` : `drop-shadow(0 0 7px ${INST_GLOW})`,
               overflow: 'hidden',
               cursor: 'pointer',
               flexShrink: 0,
             }}
+            onMouseEnter={() => setHotFader('inst')}
+            onMouseLeave={() => setHotFader('')}
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               const x = e.clientX - rect.left;
@@ -240,10 +265,23 @@ export function ControlDeck() {
               position: 'absolute',
               left: 0, top: 0, bottom: 0,
               width: `${Math.round(instFaderValue * 100)}%`,
-              background: 'rgba(255, 60, 60, 0.3)',
+              background: `linear-gradient(180deg, rgba(254, 92, 85, 0.9) 0%, rgba(254, 92, 85, 0.22) 50%, rgba(254, 92, 85, 0.9) 100%)`,
+              boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.35), inset 0 -3px 6px rgba(0,0,0,0.45)',
               transition: 'width 0.05s',
               pointerEvents: 'none',
-            }} />
+            }}>
+              <div style={{
+                position: 'absolute', inset: 0,
+                background: 'repeating-linear-gradient(90deg, transparent 0, transparent 6px, rgba(255,255,255,0.14) 6px, rgba(255,255,255,0.14) 7px)',
+                mixBlendMode: 'overlay', pointerEvents: 'none',
+              }} />
+              <div style={{
+                position: 'absolute', right: -1, top: -1, bottom: -1, width: 2,
+                background: '#ffffff',
+                boxShadow: `0 0 6px 1px ${WING_RED}, 0 0 12px 3px ${INST_GLOW}`,
+                pointerEvents: 'none',
+              }} />
+            </div>
             <span style={{
               position: 'relative',
               zIndex: 1,
@@ -252,26 +290,35 @@ export function ControlDeck() {
               justifyContent: 'center',
               height: '100%',
               fontSize: 9,
-              color: 'rgba(255, 255, 255, 0.45)',
+              color: 'rgba(255, 255, 255, 0.55)',
               userSelect: 'none',
               pointerEvents: 'none',
+              textShadow: '0 1px 2px rgba(0,0,0,0.65)',
             }}>
               Inst {Math.round(instFaderValue * 100)}
             </span>
           </div>
 
-          {hasVocals && (
-            <div
+          {/* 707: visual play/pause — the deck twin of the top "bL" roundel.
+              Sits EXACTLY between the two wing faders; the splash renders the
+              same RoundelFace so the hand-off stays pixel-identical. */}
+          <DeckPlayPause />
+
+          <div
               style={{
                 position: 'relative',
                 width: 180,
                 height: 22,
                 borderRadius: 4,
-                background: 'rgba(255, 255, 255, 0.06)',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(57, 164, 254, 0.4)',
+                filter: hotFader === 'voc' ? `drop-shadow(0 0 13px ${VOC_GLOW_HOT})` : `drop-shadow(0 0 7px ${VOC_GLOW})`,
                 overflow: 'hidden',
                 cursor: 'pointer',
                 flexShrink: 0,
               }}
+              onMouseEnter={() => setHotFader('voc')}
+              onMouseLeave={() => setHotFader('')}
               onClick={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const x = e.clientX - rect.left;
@@ -306,10 +353,23 @@ export function ControlDeck() {
                 position: 'absolute',
                 left: 0, top: 0, bottom: 0,
                 width: `${Math.round(vocalsVolume * 100)}%`,
-                background: 'rgba(74, 158, 255, 0.3)',
+              background: `linear-gradient(180deg, rgba(57, 164, 254, 0.9) 0%, rgba(57, 164, 254, 0.22) 50%, rgba(57, 164, 254, 0.9) 100%)`,
+              boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.35), inset 0 -3px 6px rgba(0,0,0,0.45)',
                 transition: 'width 0.05s',
                 pointerEvents: 'none',
-              }} />
+              }}>
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: 'repeating-linear-gradient(90deg, transparent 0, transparent 6px, rgba(255,255,255,0.14) 6px, rgba(255,255,255,0.14) 7px)',
+                  mixBlendMode: 'overlay', pointerEvents: 'none',
+                }} />
+                <div style={{
+                  position: 'absolute', right: -1, top: -1, bottom: -1, width: 2,
+                  background: '#ffffff',
+                  boxShadow: `0 0 6px 1px ${WING_BLUE}, 0 0 12px 3px ${VOC_GLOW}`,
+                  pointerEvents: 'none',
+                }} />
+              </div>
               <span style={{
                 position: 'relative',
                 zIndex: 1,
@@ -318,14 +378,18 @@ export function ControlDeck() {
                 justifyContent: 'center',
                 height: '100%',
                 fontSize: 9,
-                color: 'rgba(255, 255, 255, 0.45)',
+                color: 'rgba(255, 255, 255, 0.55)',
                 userSelect: 'none',
                 pointerEvents: 'none',
+                textShadow: '0 1px 2px rgba(0,0,0,0.65)',
               }}>
-                Voc {Math.round(vocalsVolume * 100)}
-              </span>
+              Voc {Math.round(vocalsVolume * 100)}
+            </span>
             </div>
-          )}
+          </div>
+          {/* Reserves exactly the trio width (180 + 6 + 52 + 6 + 180 = 424)
+              inside the flex row, so BpmButtons / VMix stay pixel-identical. */}
+          <div aria-hidden="true" style={{ width: 424, height: 22, flexShrink: 0, pointerEvents: 'none' }} />
 
           <BpmButtons
             playbackRate={(isPracticeActive ? practiceCurrentRate : playbackRate) || 1}

@@ -1,0 +1,496 @@
+import { bridgeFacade } from '../foundation/event-bus';
+import { patchLyricsDisplaySlimMethods } from '../services/lyrics.service';
+import { getColorForBlockType, buildBlocksFromMarkers, computeSections, getBlockTypeForLine } from '../utils/markerUtils';
+import { aiHub } from '../js/ai/registry';
+import { GatewayProvider } from '../js/ai/providers/gateway-provider';
+import { OpenRouterDirectProvider } from '../js/ai/providers/openrouter-direct.provider';
+import { BeliveProvider } from '../js/ai/providers/belive.provider';
+import { useAiSettingsStore } from '../stores/ai-settings.store';
+import { ModelDropdownUI } from '../js/ui/model-dropdown-ui';
+import { AIChatUI } from '../js/ui/ai-chat-ui';
+
+/**
+ * Legacy DOM host patches. Runs once on DOMContentLoaded and installs the
+ * window.app stub, MarkerManager methods, AI providers and AI chat UI that the
+ * classic (non-module) scripts in index.html still expect.
+ */
+export async function installLegacyHost(): Promise<void> {
+  if ((window as any).__BELIVE_BOOTED__) return; // Legacy guard для MM-патчей
+  (window as any).__BELIVE_BOOTED__ = true;
+
+  // --- App host stub (replaces legacy app.js) ---
+  if (!(window as any).app) {
+    (window as any).app = {
+      currentMode: null,
+      previousMode: null,
+      initComplete: true,
+      lyricsEnabled: true,
+      lyricsDisplay: (window as any).lyricsDisplay || null,
+      audioEngine: (window as any).audioEngine || null,
+      concertBackgroundManager: null,
+      karaokeBackgroundManager: null,
+      rehearsalBackgroundManager: null,
+      showNotification: (...args: any[]) => {
+        const fn = (window as any).showAppNotification;
+        if (fn) fn(...args);
+      },
+      _showWelcomeIfNoTracks: () => {},
+    };
+  }
+
+  // initLoopBridge();  // retired → loop-events in initRegistry
+  // initAudioReactiveBridge();  // retired → audio-reactive wrapper in registerInit
+  // Phase 5.1: cleanup bridgeFacade on page unload
+  window.addEventListener('beforeunload', () => { bridgeFacade.destroy() })
+
+  // AETHER v2.3 — TransportV3 будет создан при первой загрузке трека
+  // (см. StemOrchestrator.addStem + TransportV3 в V3StatePublisher)
+
+  // F60: patch slim methods onto existing window.lyricsDisplay (no object swap)
+  patchLyricsDisplaySlimMethods();
+
+  // --- MM helper patches (Phase 3: helper extraction) ---
+  const mm = (window as any).markerManager ?? {};
+  if (mm) {
+    mm._getColorForBlockType = (blockType: string) => getColorForBlockType(blockType);
+    mm._buildBlocksFromMarkers = (markers: any[]) => buildBlocksFromMarkers(markers);
+    mm._computeSections = (markers: any[], trackDuration?: number) => computeSections(markers, trackDuration);
+    mm._getBlockTypeForLine = (lineIndex: number) => {
+      const ld = (window as any).lyricsDisplay;
+      return getBlockTypeForLine(lineIndex, ld?.textBlocks || []);
+    };
+    mm.resetMarkers = () => {
+      mm.markers = [];
+      mm._notifySubscribers?.('markersReset', []);
+      return;
+    };
+    mm.updateMarkerColors = () => {
+      if (!mm.markers || mm.markers.length === 0) return;
+      let updated = false;
+      const ld = mm.lyricsDisplay || (window as any).lyricsDisplay;
+      const hasBlocks = !!(ld && Array.isArray(ld.textBlocks) && ld.textBlocks.length > 0);
+      mm.markers.forEach((marker: any) => {
+        // M2 markers keep their color (#1a1a1a) — never overwrite
+        if (marker.markerType === 'M2') return;
+        const newBlockType = mm._getBlockTypeForLine(marker.lineIndex);
+        if (!hasBlocks || newBlockType === 'unknown') return;
+        const newColor = mm._getColorForBlockType(newBlockType);
+        if (marker.blockType !== newBlockType || marker.color !== newColor) { marker.blockType = newBlockType; marker.color = newColor; updated = true; }
+      });
+      if (updated) mm._notifySubscribers?.('markersReset', mm.markers);
+    };
+    mm.setMarkers = (markers: any[]) => {
+      if (!Array.isArray(markers)) { console.error('Invalid markers array'); return; }
+      const ld = mm.lyricsDisplay || (window as any).lyricsDisplay;
+      const totalLyricLines = ld ? ld.lyrics.length : 0;
+      const validMarkers: any[] = [], usedLineIndexes = new Set<number>();
+      markers.forEach((marker: any) => {
+        if (marker && typeof marker.lineIndex === 'number' && marker.lineIndex >= 0 && marker.lineIndex < totalLyricLines && !usedLineIndexes.has(marker.lineIndex)) {
+          usedLineIndexes.add(marker.lineIndex); const updatedMarker = { ...marker };
+          if (!updatedMarker.blockType) updatedMarker.blockType = mm._getBlockTypeForLine(marker.lineIndex);
+          // M2 markers keep their color (#1a1a1a) — never overwrite with block color
+          if (marker.markerType === 'M2') {
+            if (!updatedMarker.blockType) updatedMarker.blockType = 'closing';
+            if (!updatedMarker.color) updatedMarker.color = '#1a1a1a';
+          } else if (!updatedMarker.color) { const typeForColor = updatedMarker.blockType && updatedMarker.blockType !== 'unknown' ? updatedMarker.blockType : mm._getBlockTypeForLine(marker.lineIndex); updatedMarker.color = mm._getColorForBlockType(typeForColor); }
+          validMarkers.push(updatedMarker);
+        }
+      });
+      mm.markers = validMarkers;
+      mm.markers.sort((a: any, b: any) => a.time - b.time);
+      try {
+        const hasExistingBlocks = !!(ld && Array.isArray(ld.textBlocks) && ld.textBlocks.length > 0);
+        const hasTypedMarkers = mm.markers.some((m: any) => m.blockType && m.blockType !== 'unknown');
+        if (!hasExistingBlocks && ld && hasTypedMarkers) { const synthesized = mm._buildBlocksFromMarkers(mm.markers); if (synthesized.length > 0) { ld.textBlocks = synthesized; ld.currentActiveBlock = null; if (typeof ld?.updateDefinedBlocksDisplay === 'function') ld.updateDefinedBlocksDisplay(); } }
+      } catch (e) {
+        console.warn('MarkerManager: Error synthesizing blocks from markers:', e);
+      }
+      mm._notifySubscribers?.('markersReset', mm.markers);
+    };
+    mm.addMarker = (lineIndex: number, time?: number | null) => {
+      const ld = mm.lyricsDisplay || (window as any).lyricsDisplay;
+      const ae = mm.audioEngine || (window as any).audioEngine;
+      if (lineIndex < 0 || lineIndex >= ld.lyrics.length) {
+        console.error('Invalid line index:', lineIndex);
+        return null;
+      }
+      let t = time;
+      if (t === undefined || t === null) t = ae.getCurrentTime();
+      const blockType = mm._getBlockTypeForLine(lineIndex);
+      const markerColor = blockType && blockType !== 'unknown' ? mm._getColorForBlockType(blockType) : undefined;
+      const marker = {
+        id: Date.now() + Math.random().toString(36).substr(2, 5),
+        lineIndex,
+        time: t,
+        text: ld.lyrics[lineIndex],
+        blockType,
+        color: markerColor,
+      };
+      const existingIndex = mm.markers.findIndex((m: any) => m.lineIndex === lineIndex && m.markerType !== 'M2');
+      if (existingIndex >= 0) {
+        mm.markers[existingIndex] = marker;
+        mm._notifySubscribers?.('markerUpdated', marker);
+      } else {
+        mm.markers.push(marker);
+        mm.markers.sort((a: any, b: any) => a.time - b.time);
+        mm._notifySubscribers?.('markerAdded', marker);
+      }
+      return marker;
+    };
+    mm.updateMarker = (markerId: string, updates: any) => {
+      const index = mm.markers.findIndex((marker: any) => marker.id === markerId);
+      if (index === -1) {
+        console.error('Marker not found:', markerId);
+        return null;
+      }
+      mm.markers[index] = { ...mm.markers[index], ...updates };
+      if (updates.time !== undefined) {
+        mm.markers.sort((a: any, b: any) => a.time - b.time);
+      }
+      mm._notifySubscribers?.('markerUpdated', mm.markers[index]);
+      mm.updateMarkerColors();
+      return mm.markers[index];
+    };
+    mm.deleteMarker = (markerId: string) => {
+      const index = mm.markers.findIndex((marker: any) => marker.id === markerId);
+      if (index === -1) {
+        console.error('Marker not found:', markerId);
+        return false;
+      }
+      const deletedMarker = mm.markers[index];
+      mm.markers.splice(index, 1);
+      mm._notifySubscribers?.('markerDeleted', deletedMarker);
+      return true;
+    };
+    mm.getMarkers = (): any[] => {
+      return [...mm.markers];
+    };
+    mm.getMarkerForLine = (lineIndex: number): any | null => {
+      return mm.markers.find((marker: any) => marker.lineIndex === lineIndex) || null;
+    };
+    mm.subscribe = (event: string, callback: (data: any) => void): (() => void) => {
+      if (!mm.subscribers[event]) {
+        console.error('Invalid event type:', event);
+        return () => {};
+      }
+      mm.subscribers[event].push(callback);
+      return () => {
+        mm.subscribers[event] = mm.subscribers[event].filter((cb: any) => cb !== callback);
+      };
+    };
+    mm._notifySubscribers = (event: string, data: any): void => {
+      if (!mm.subscribers[event]) { return; }
+      mm.subscribers[event].forEach((callback: any) => {
+        try {
+          callback(data);
+        } catch (error) {
+          console.error('Error in event subscriber:', error);
+        }
+      });
+    };
+    mm.saveMarkersToTrack = (): boolean => {
+      if (!(window as any).trackCatalog || (window as any).trackCatalog.currentTrackIndex < 0) {
+        console.error('No current track to save markers to');
+        return false;
+      }
+      const currentTrack = (window as any).trackCatalog.tracks[(window as any).trackCatalog.currentTrackIndex];
+      const event = new CustomEvent('save-track-markers', {
+        detail: {
+          trackId: currentTrack.id,
+          markers: mm.markers
+        }
+      });
+      document.dispatchEvent(event);
+      return true;
+    };
+    mm.importMarkers = (json: string): boolean => {
+      try {
+        let jsonContent = json;
+        if (json.charCodeAt(0) === 0xFEFF) {
+          jsonContent = json.substring(1);
+        }
+        const data = JSON.parse(jsonContent);
+        if (Array.isArray(data)) {
+          mm.setMarkers(data);
+        } else if (data && data.markers && Array.isArray(data.markers)) {
+          mm.setMarkers(data.markers);
+          if (data.lyrics && (window as any).lyricsDisplay) {
+            const ae = mm.audioEngine || (window as any).audioEngine;
+            if (ae && ae.duration > 0) {
+              (window as any).lyricsDisplay.loadLyrics(data.lyrics, ae.duration);
+            }
+          }
+        } else {
+          throw new Error('Invalid markers format');
+        }
+        return true;
+      } catch (error) {
+        console.error('Error importing markers:', error);
+        return false;
+      }
+    };
+    mm._activateNextLine = (lineIndex: number): void => {
+      const ld = mm.lyricsDisplay || (window as any).lyricsDisplay;
+      if (lineIndex < 0 || lineIndex >= ld.lyrics.length) { return; }
+      ld.setActiveLine(lineIndex);
+    };
+    mm._addMarkerForActiveLine = (): void => {
+      const ae = mm.audioEngine || (window as any).audioEngine;
+      if (!ae) {
+        console.error('Audio engine not available');
+        return;
+      }
+
+      const currentTime = ae.getCurrentTime();
+      const activeLine = document.querySelector<HTMLElement>('.lyric-line.active');
+
+      if (!activeLine) {
+        console.warn('No active lyric line found when pressing "1"');
+        return;
+      }
+
+      const indexStr = activeLine.dataset.index;
+      if (!indexStr) {
+        console.error('No index data attribute in active line');
+        return;
+      }
+      const lineIndex = parseInt(indexStr, 10);
+      if (isNaN(lineIndex)) {
+        console.error('Invalid line index in active line');
+        return;
+      }
+
+      const existingMarker = mm.getMarkerForLine(lineIndex);
+      if (existingMarker) {
+        let nextLine = lineIndex + 1;
+        while (nextLine < mm.lyricsDisplay.lyrics.length) {
+          if (!mm.getMarkerForLine(nextLine)) {
+            mm.addMarker(nextLine, currentTime);
+            mm._activateNextLine(nextLine);
+            return;
+          }
+          nextLine++;
+        }
+      } else {
+        mm.addMarker(lineIndex, currentTime);
+        mm._activateNextLine(lineIndex + 1);
+      }
+    };
+  }
+
+  // M2: Optional closing marker — cuts off playback/run-through at a specific point
+  // Does NOT replace M1. M2 is a separate marker that sets block endTime.
+  // Without M2, the next M1 naturally closes the block (Priority 2 in getBlockTimeRange).
+  // With M2, the block ends at M2 time — cutting off any run-through/interlude.
+  mm._addM2Marker = (): void => {
+    const ae = mm.audioEngine || (window as any).audioEngine;
+    if (!ae) {
+      console.error('[M2] Audio engine not available');
+      return;
+    }
+
+    const currentTime = ae.getCurrentTime();
+
+    // Use the active line from DOM — this is the block user is currently working on
+    const activeLine = document.querySelector<HTMLElement>('.lyric-line.active');
+    const ld = mm.lyricsDisplay || (window as any).lyricsDisplay;
+    const blocks = ld?.textBlocks || [];
+
+    let afterBlockId = '';
+    if (activeLine) {
+      const indexStr = activeLine.dataset.index;
+      if (indexStr) {
+        const activeLineIndex = parseInt(indexStr, 10);
+        if (!isNaN(activeLineIndex)) {
+          // Find which block this active line belongs to
+          const block = blocks.find((b: any) => b.lineIndices?.includes(activeLineIndex));
+          if (block) {
+            // Check if this block has at least one M1 marker
+            const hasM1 = mm.markers.some(
+              (m: any) => m.markerType !== 'M2' && block.lineIndices?.includes(m.lineIndex)
+            );
+            if (hasM1) {
+              afterBlockId = block.id;
+              if (import.meta.env.DEV) console.log('[M2] Active line', activeLineIndex, '→ block', block.id, '(has M1 markers)');
+            } else {
+              // Active line's block has no M1 yet — find previous block that has markers
+              const blockIdx = blocks.indexOf(block);
+              for (let i = blockIdx - 1; i >= 0; i--) {
+                const prevBlock = blocks[i];
+                const hasPrevM1 = mm.markers.some(
+                  (m: any) => m.markerType !== 'M2' && prevBlock.lineIndices?.includes(m.lineIndex)
+                );
+                if (hasPrevM1) {
+                  afterBlockId = prevBlock.id;
+                  if (import.meta.env.DEV) console.log('[M2] Active line block has no M1 → using previous block', prevBlock.id);
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (!afterBlockId) {
+      // Fallback: find block with the most recent M1 before currentTime
+      const lastM1 = [...mm.markers]
+        .filter((m: any) => m.markerType !== 'M2' && m.time <= currentTime)
+        .sort((a: any, b: any) => b.time - a.time)[0];
+      if (lastM1) {
+        const block = blocks.find((b: any) => b.lineIndices?.includes(lastM1.lineIndex));
+        if (block) afterBlockId = block.id;
+      }
+    }
+
+    if (!afterBlockId) {
+      afterBlockId = 'block-0';
+    }
+
+    // Check if M2 already exists for this block — update it
+    const existingM2 = mm.markers.find(
+      (m: any) => m.markerType === 'M2' && m.afterBlockId === afterBlockId
+    );
+    if (existingM2) {
+      mm.updateMarker(existingM2.id, {
+        time: currentTime,
+        isSuggested: false,
+      });
+      if (import.meta.env.DEV) console.log('[M2] Updated M2 for block', afterBlockId, 'time:', currentTime.toFixed(2) + 's');
+    } else {
+      // Create new M2 marker — NOT attached to any line, purely a time boundary
+      const m2Marker = {
+        id: `m2-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        lineIndex: -1,
+        time: currentTime,
+        text: '⟩',
+        markerType: 'M2' as const,
+        afterBlockId,
+        blockType: 'closing',
+        color: '#1a1a1a',
+        isSuggested: false,
+      };
+      mm.markers.push(m2Marker);
+      mm.markers.sort((a: any, b: any) => a.time - b.time);
+      mm._notifySubscribers?.('markerAdded', m2Marker);
+      if (import.meta.env.DEV) console.log('[M2] Placed M2 closing marker after block', afterBlockId, 'time:', currentTime.toFixed(2) + 's');
+    }
+  };
+
+  // F44: notification utility
+  import('../utils/notification').then(n => {
+    (window as any).showAppNotification = n.showAppNotification;
+    (window as any).showNotification = n.showAppNotification;
+  });
+
+  // F38: parsing service → window global (used by lyrics-display.js wrappers)
+  import('../services/parsing.service').then(ps => {
+    (window as any).parsingService = ps;
+  });
+
+  // F39: IDB service for legacy access
+  import('../services/idb.service').then(idb => {
+    (window as any).idbService = idb;
+  });
+
+  // F42: RTF service — uses TS rtfToText (ported SimpleRtf)
+  (window as any).rtfService = {
+    parseRtf: async (rtfText: string) => {
+      if (typeof rtfText !== 'string') return '';
+      if (!rtfText.trim().startsWith('{\\rtf')) return rtfText;
+      const { rtfToText } = await import('../services/parsing.service');
+      return rtfToText(rtfText);
+    },
+  };
+
+  // (openCatalog removed)
+
+  const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL;
+  if (GATEWAY_URL) {
+    const gatewayProvider = new GatewayProvider(GATEWAY_URL);
+    aiHub.register(gatewayProvider);
+  }
+
+  // ── OpenRouter Direct Provider (works without localhost gateway) ──
+  const orProvider = new OpenRouterDirectProvider();
+  aiHub.register(orProvider);
+
+  // ── beLive AI Provider (built-in, requires OAuth) ──
+  const aiWorkerUrl = import.meta.env.VITE_AI_WORKER_URL;
+  if (aiWorkerUrl) {
+    const beliveProvider = new BeliveProvider();
+    aiHub.register(beliveProvider);
+  }
+
+  // Auto-select model after persist hydrates from localStorage
+  // (persist loads async — settings may not be available at boot)
+  useAiSettingsStore.persist.onFinishHydration(() => {
+    const settings = useAiSettingsStore.getState();
+    if (!aiHub.getActiveModel() && settings.openRouterApiKey && settings.modelId) {
+      aiHub.setActiveModel(settings.modelId);
+      if (import.meta.env.DEV) console.log('[AI] Hydrated: set model:', settings.modelId);
+    } else if (!aiHub.getActiveModel() && settings.openRouterApiKey) {
+      const defaultModel = 'deepseek/deepseek-chat-v3-0324';
+      aiHub.setActiveModel(defaultModel);
+      useAiSettingsStore.getState().setModelId(defaultModel);
+      if (import.meta.env.DEV) console.log('[AI] Hydrated: set default model:', defaultModel);
+    }
+  });
+
+  // Fallback: if already hydrated before this code runs
+  const currentSettings = useAiSettingsStore.getState();
+  if (!aiHub.getActiveModel() && currentSettings.openRouterApiKey && currentSettings.modelId) {
+    aiHub.setActiveModel(currentSettings.modelId);
+    if (import.meta.env.DEV) console.log('[AI] Fallback: set model:', currentSettings.modelId);
+  } else if (!aiHub.getActiveModel() && currentSettings.openRouterApiKey) {
+    const defaultModel = 'deepseek/deepseek-chat-v3-0324';
+    aiHub.setActiveModel(defaultModel);
+    useAiSettingsStore.getState().setModelId(defaultModel);
+    if (import.meta.env.DEV) console.log('[AI] Fallback: set default model:', defaultModel);
+  }
+
+  new AIChatUI(); // Инициализация AIChatUI
+  new ModelDropdownUI(); // Инициализация ModelDropdownUI
+
+
+  // Подписка на изменение модели для обновления UI кнопки "Operator"
+  aiHub.on('modelChanged', (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const activeModel = customEvent.detail;
+      const operatorButton = document.getElementById('toggle-loopblock-mode');
+      if (operatorButton) {
+          operatorButton.innerHTML = '';
+          const span = document.createElement('span');
+          span.className = 'operator-text';
+          if (activeModel) {
+              span.textContent = activeModel.shortName;
+              operatorButton.classList.add('ai-active');
+          } else {
+              span.textContent = 'Operator';
+              operatorButton.classList.remove('ai-active');
+          }
+          operatorButton.appendChild(span);
+      }
+  });
+
+  // ▼ Слой «эмоций» персонажа (звук на завершение ответа) саморегистрируется через
+  // ./character → registerInit('character-layer') в initRegistry (engine-agnostic, R9).
+
+  // Убедимся, что начальное состояние кнопки правильное при загрузке
+  const initialActiveModel = aiHub.getActiveModel();
+  const operatorButton = document.getElementById('toggle-loopblock-mode');
+  if (operatorButton) {
+      operatorButton.innerHTML = '';
+      const span = document.createElement('span');
+      span.className = 'operator-text';
+      if (initialActiveModel) {
+          span.textContent = initialActiveModel.shortName;
+          operatorButton.classList.add('ai-active');
+      } else {
+          span.textContent = 'Operator';
+          operatorButton.classList.remove('ai-active');
+      }
+      operatorButton.appendChild(span);
+  }
+
+}

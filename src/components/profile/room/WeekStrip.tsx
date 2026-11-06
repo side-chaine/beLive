@@ -12,6 +12,12 @@ interface Props {
 const SPARK_MAX = 48;
 const TICKS = 7;
 
+/* MR-4b Q8: humanize-минуты — ≥60 → «X ч Y м», иначе «N м» */
+function humanizeMinutes(n: number): string {
+  if (n >= 60) return `${Math.floor(n / 60)} ч ${n % 60} м`;
+  return `${n} м`;
+}
+
 export function WeekStrip({ stats, onStart }: Props) {
   const empty = stats.runs === 0;
   const max = Math.max(...stats.spark, 1);
@@ -23,7 +29,7 @@ export function WeekStrip({ stats, onStart }: Props) {
 
       <div className="bl-weekstrip__numbers">
         <div className="bl-weekstrip__num">
-          <span className="bl-weekstrip__value">{value(stats.minutes)}</span>
+          <span className="bl-weekstrip__value">{stats.minutes === 0 ? '—' : humanizeMinutes(stats.minutes)}</span>
           <span className="bl-weekstrip__label">мин</span>
         </div>
         <div className="bl-weekstrip__num">

@@ -50,9 +50,31 @@ export function useBillyZoneCache() {
     // Первичное вычисление
     compute();
 
-    // Пересчёт при resize
+    // ═══ ФИКС (Билли-левитация): пересчёт на следующем кадре ═══
+    // На маунте ControlDeck публикует реальный --bl-deck-height асинхронно
+    // (свой effect + ResizeObserver). Первый compute() гоняет его и читает
+    // заглушку 80 → Билли левитирует на загрузке. rAF ловит значение уже
+    // после публикации ControlDeck, до первого видимого тика Surface Snap.
+    const rafId = requestAnimationFrame(compute);
+
+    // Пересчёт при resize viewport
     const ro = new ResizeObserver(compute);
     ro.observe(document.documentElement);
+
+    // ═══ ФИКС (Билли-поверхность): ловим ЛЮБУЮ публикацию --bl-deck-height ═══
+    // ControlDeck пишет эту CSS-var при: первичной публикации, ленивом маунте
+    // панели дока, появлении прогресс-бара трека, переходе высоты дока.
+    // useBillyZoneCache не смотрит на сам док, поэтому подписываемся на
+    // CSS-var через MutationObserver на <html>. Билли теперь ВСЕГДА стоит на
+    // живой поверхности дока и едет вместе с ней (раскрытие/скрытие/трек).
+    let lastDeckH = document.documentElement.style.getPropertyValue('--bl-deck-height');
+    const mo = new MutationObserver(() => {
+      const v = document.documentElement.style.getPropertyValue('--bl-deck-height');
+      if (v === lastDeckH) return; // только при реальном изменении высоты дока
+      lastDeckH = v;
+      compute();
+    });
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
 
     // Пересчёт при изменении состояния дока (сворачивание/разворачивание)
     // ControlDeck — fixed элемент, viewport ResizeObserver не ловит его
@@ -63,12 +85,14 @@ export function useBillyZoneCache() {
       setTimeout(compute, 600);  // финальная стабилизация
     });
 
-    // Post-layout settle
+    // Post-layout settle (belt-and-suspenders)
     const settle1 = setTimeout(compute, 300);
     const settle2 = setTimeout(compute, 1000);
 
     return () => {
+      cancelAnimationFrame(rafId);
       ro.disconnect();
+      mo.disconnect();
       clearTimeout(settle1);
       clearTimeout(settle2);
       unsubDeck();

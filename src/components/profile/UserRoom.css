@@ -28,15 +28,26 @@
 .bl-userroom-scroll {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  /* Ревью Q8: клапан @media(max-height:640px) убран — скролл контента
+     постоянный (desktop тоже), иначе на низких экранах карточки обрезались.
+     Скроллбар тонкий и полупрозрачный, чтобы не спорить с bento. */
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
   padding: 16px;
 }
 
-/* клапан: низкий экран */
-@media (max-height: 640px) {
-  .bl-userroom-scroll {
-    overflow-y: auto;
-  }
+.bl-userroom-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.bl-userroom-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.bl-userroom-scroll::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 /* ── Сетка bento ────────────────────────── */
@@ -46,7 +57,7 @@
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto minmax(150px, 1.2fr) minmax(90px, 0.8fr) minmax(110px, 1fr) auto;
+  grid-template-rows: auto minmax(150px, 1.2fr) minmax(90px, 0.8fr) minmax(110px, 1.4fr) auto;
   grid-template-areas:
     "topbar topbar"
     "profile week"
@@ -72,6 +83,7 @@
   min-height: 0;
   box-sizing: border-box;
   color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .bl-userroom__card-title {
@@ -97,6 +109,13 @@
   font-size: 12px;
   line-height: 1.4;
   color: var(--bl-room-muted);
+}
+
+/* Q10: нота-призрак — пустой стейт «Продолжить» не слепая зона */
+.bl-userroom__muted-center::before {
+  content: '🎵';
+  opacity: 0.3;
+  margin-right: 8px;
 }
 
 /* ── Топбар ─────────────────────────────── */
@@ -293,18 +312,18 @@
 .bl-userroom__google-btn {
   align-self: flex-start;
   padding: 8px 14px;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: var(--bl-room-radius-btn);
-  background: #fff;
-  color: #111;
+  background: transparent;
+  color: #fff;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: border-color 0.15s;
 }
 
 .bl-userroom__google-btn:hover {
-  opacity: 0.88;
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .bl-userroom__logout {
@@ -356,13 +375,14 @@
   line-height: 1.05;
   color: #fff;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .bl-weekstrip__label {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: var(--bl-room-muted);
 }
 
@@ -371,6 +391,7 @@
   align-items: flex-end;
   gap: 4px;
   height: 48px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .bl-weekstrip__bar {
@@ -379,6 +400,11 @@
   background: var(--bl-room-accent);
   border-radius: 2px 2px 0 0;
   opacity: 0.85;
+}
+
+/* Q10: старение спарка — внимание к «сегодня» */
+.bl-weekstrip__bar:nth-child(-n+3) {
+  opacity: 0.5;
 }
 
 /* ghost-ось: 7 штрихов 2px на базовой линии */
@@ -437,8 +463,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  font-size: 11px;
-  letter-spacing: 0.04em;
+  min-height: 34px;
+  align-content: flex-start;
+  font-size: 12px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--bl-room-muted);
 }
@@ -474,6 +502,10 @@
 
 .bl-userroom__card--sessions {
   grid-area: sessions;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 16px;
 }
 
 /* ── Скелетон ───────────────────────────── */
@@ -628,5 +660,46 @@
       "tempo"
       "sessions"
       "footer";
+  }
+}
+
+/* ── MR-4b Q10: focus-visible ghost-обводка · reduced-motion ── */
+.bl-userroom__back:focus-visible,
+.bl-userroom__theme-btn:focus-visible,
+.bl-userroom__theme-item:focus-visible,
+.bl-userroom__google-btn:focus-visible,
+.bl-userroom__logout:focus-visible,
+.bl-weekstrip__cta:focus-visible,
+.bl-continue__btn:focus-visible,
+.bl-userroom__footer-btn:focus-visible,
+.bl-userroom__mvsep-eye:focus-visible,
+.bl-userroom__mvsep-delete:focus-visible,
+.bl-userroom__mvsep-save:focus-visible {
+  outline: 2px solid rgba(139, 122, 255, 0.75);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bl-userroom__back,
+  .bl-userroom__theme-btn,
+  .bl-userroom__theme-item,
+  .bl-userroom__google-btn,
+  .bl-userroom__logout,
+  .bl-weekstrip__cta,
+  .bl-continue__btn,
+  .bl-userroom__footer-btn,
+  .bl-userroom__mvsep-eye,
+  .bl-userroom__mvsep-delete,
+  .bl-userroom__mvsep-save {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Q8: мобильный — плотнее сетка, компактнее радиус */
+@media (max-width: 768px) {
+  .bl-userroom-content {
+    --bl-room-radius: 14px;
+    gap: 10px;
   }
 }

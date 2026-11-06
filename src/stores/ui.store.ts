@@ -18,6 +18,12 @@ interface UIState {
   activeFeedColumn: number;
   catalogTab: CatalogTab;
   appMode: AppMode;
+  /** Session-only: has the user actively picked a mode? Until then the mode
+   *  tabs stay visually quiet — `rehearsal` is the functional default, not a
+   *  choice the user made. Deliberately NOT persisted: every fresh load starts
+   *  neutral again (see ModeButtons / Header). */
+  modeChosen: boolean;
+  markModeChosen: () => void;
   feedCol0Visible: boolean;
   feedCol2Visible: boolean;
   feedColWidths: FeedColWidths;
@@ -42,6 +48,8 @@ export const useUIStore = create<UIState>()(
       activeFeedColumn: 1,
       catalogTab: 'my-music',
       appMode: 'studio',
+      modeChosen: false,
+      markModeChosen: () => set({ modeChosen: true }),
       feedCol0Visible: true,
       feedCol2Visible: true,
       feedColWidths: { col0: null, col2: null },

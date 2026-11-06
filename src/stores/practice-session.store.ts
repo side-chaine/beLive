@@ -10,6 +10,7 @@ import { useModeStore } from './mode.store';
 import { useLoopStore } from './loop.store';
 import { useBlocksStore } from './blocks.store';
 import { useStemStore } from '../stem/stem.store';
+import { useTrackStore } from './track.store';
 import type { PracticeScenarioId, PracticeContext, PracticeProgress } from '../practice/practice-scenarios';
 import { getScenario, BLOCK_TYPE_NAMES } from '../practice/practice-scenarios';
 import { runPracticeActions } from '../practice/billy-action-runner';
@@ -166,6 +167,21 @@ function emitPracticeEvent(type: string, detail: unknown) {
   }
 }
 
+/**
+ * MR-4a Q2: полный detail события практики — что есть в момент.
+ * elapsed в сторе нет → paused/resumed несут `at` (+счётчики), без pausedElapsedMs.
+ */
+function practiceDetail(extra: Record<string, unknown> = {}): Record<string, unknown> {
+  const s = usePracticeStore.getState();
+  return {
+    trackId: useTrackStore.getState().currentTrack?.id ?? null,
+    passesCount: s.passesCount,
+    currentRate: s.currentRate,
+    at: Date.now(),
+    ...extra,
+  };
+}
+
 // Auto-pass: listen for loop completion
 let autoPassListener: ((e: Event) => void) | null = null;
 
@@ -242,7 +258,7 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
       passLabel: scenarioId === 'focus-mix' ? 'Full Mix' : null,
     });
     startAutoPassDetection();
-    emitPracticeEvent('started', { scenarioId });
+    emitPracticeEvent('started', practiceDetail({ scenarioId }));
     // Execute scenario startActions (seek, loop, rate — инициализация аудио)
     const scenario = getScenario(scenarioId as PracticeScenarioId);
     if (scenario) {
@@ -264,7 +280,7 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
     if (s.snapshot) {
       restoreSnapshot(s.snapshot);
     }
-    emitPracticeEvent('ended', { scenarioId: s.scenarioId });
+    emitPracticeEvent('ended', practiceDetail({ scenarioId: s.scenarioId }));
     set({
       isActive: false, scenarioId: null, targetBlockId: null, snapshot: null, label: null,
       passesCount: 0, currentRate: 1.0, practiceStatus: 'idle',
@@ -278,7 +294,7 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
     if (loopState.isLooping) {
       loopState.clearLoop();
     }
-    emitPracticeEvent('completed-kept', { passesCount: get().passesCount });
+    emitPracticeEvent('completed-kept', practiceDetail());
     set({
       isActive: false, scenarioId: null, targetBlockId: null, snapshot: null, label: null,
       passesCount: 0, currentRate: 1.0, practiceStatus: 'idle',
@@ -288,14 +304,14 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
   toggleAutoAdvance: () => {
     const current = get().isAutoAdvance;
     set({ isAutoAdvance: !current });
-    emitPracticeEvent(current ? 'auto-paused' : 'auto-resumed', {});
+    emitPracticeEvent(current ? 'auto-paused' : 'auto-resumed', practiceDetail());
   },
 
   cancelPractice: () => {
     stopAutoPassDetection();
     const s = get();
     if (s.practiceStatus !== 'idle') {
-      emitPracticeEvent('cancelled', { scenarioId: s.scenarioId });
+      emitPracticeEvent('cancelled', practiceDetail({ scenarioId: s.scenarioId }));
     }
     set({
       isActive: false, scenarioId: null, targetBlockId: null, snapshot: null, label: null,
@@ -314,7 +330,7 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
       isActive: false, scenarioId: null, targetBlockId: null, snapshot: null, label: null,
       passesCount: 0, currentRate: 1.0, practiceStatus: 'idle',
     });
-    emitPracticeEvent('cancelled', { reason: 'partial-failure' });
+    emitPracticeEvent('cancelled', practiceDetail({ reason: 'partial-failure' }));
   },
 
   getSnapshot: () => {
@@ -398,7 +414,7 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
         console.warn('[PracticeStore] Loop cleared during nextPass');
       }
 
-      emitPracticeEvent('pass-complete', { passesCount: newPasses, currentRate: newRate, passLabel });
+      emitPracticeEvent('pass-complete', practiceDetail({ passesCount: newPasses, currentRate: newRate, passLabel }));
 
       // Check completion
       if (scenario.isComplete(progress, ctx)) {
@@ -409,7 +425,7 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
           await runPracticeActions({ actions: completeActions });
         }
         set({ practiceStatus: 'completed' });
-        emitPracticeEvent('completed', { passesCount: newPasses, currentRate: newRate, scenarioId: s.scenarioId });
+        emitPracticeEvent('completed', practiceDetail({ passesCount: newPasses, currentRate: newRate, scenarioId: s.scenarioId }));
       }
     } finally {
       set({ isPassInProgress: false });
@@ -423,12 +439,12 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
 
   pausePractice: () => {
     set({ practiceStatus: 'paused' });
-    emitPracticeEvent('paused', {});
+    emitPracticeEvent('paused', practiceDetail());
   },
 
   resumePractice: async () => {
     set({ practiceStatus: 'running' });
-    emitPracticeEvent('resumed', {});
+    emitPracticeEvent('resumed', practiceDetail());
   },
 
   completePractice: async () => {

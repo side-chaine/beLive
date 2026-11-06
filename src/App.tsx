@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { AudioCrashModal, useAudioContextHealth, getTransport, StemDegradedBanner } from './audio/engine-v3';
 // retired: audio.bridge → audio-events (main.tsx)
 // retired: lyrics.bridge → lyrics-events in main.tsx
@@ -68,6 +68,12 @@ import { useFeedStore } from './catalog/feed/feed.store';
 
 import { initSyncLifecycle } from './services/metrics-sync.service';
 import { handleRehearsalDeepLink, connectRehearsalSession } from './Rehearsal/services/deep-link.service';
+
+// Guided tour is deliberately OFF the critical path: the chunk is requested
+// only after the splash has finished and the app surface is live. Nothing from
+// src/hints/ (except the tiny settings store) is pulled into first paint.
+const HintLayer = lazy(() => import('./hints/HintLayer').then((m) => ({ default: m.HintLayer })));
+
 export default function App() {
   const mode = useModeStore((s) => s.mode);
   const syncOpen = useSyncStore((s) => s.open);
@@ -137,37 +143,52 @@ export default function App() {
     return () => html.classList.remove('bl-surface-welcome');
   }, [surface]);
 
-  // Auth check
+  // Auth check — ALWAYS settles. `authChecked` gates the whole app render, so a
+  // rejected promise used to leave the app blank behind the fading splash.
+  // `refreshSession` is now bounded; this catch is the second, final guard.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let stopKeepAlive: (() => void) | undefined;
+    let disposed = false;
+
+    const settle = (isValid: boolean) => {
+      useAppStore.getState().setSurface(isValid ? 'app' : 'welcome');
+      useAppStore.getState().setAuthChecked(true);
+      // JWT живёт 15 минут — продлеваем заранее, чтобы API не падал с 401
+      if (isValid && !disposed) stopKeepAlive = authService.startSessionKeepAlive();
+    };
 
     if (params.has('auth')) {
-      authService.handleCallback(params).then(async (data) => {
-        if (data) {
-          const { useUserProfileStore } = await import('./stores/user-profile.store');
-          useUserProfileStore.getState().createOAuthProfile(data);
-        } else {
-          console.warn('[auth] handleCallback returned null!');
-        }
-        useAppStore.getState().setSurface('app');
-        useAppStore.getState().setAuthChecked(true);
-        window.history.replaceState({}, '', '/');
-      });
+      authService.handleCallback(params)
+        .then(async (data) => {
+          if (data) {
+            const { useUserProfileStore } = await import('./stores/user-profile.store');
+            useUserProfileStore.getState().createOAuthProfile(data);
+          } else {
+            console.warn('[auth] handleCallback returned null!');
+          }
+          useAppStore.getState().setSurface('app');
+          useAppStore.getState().setAuthChecked(true);
+          window.history.replaceState({}, '', '/');
+        })
+        .catch((e) => {
+          console.warn('[auth] handleCallback failed:', e);
+          settle(false);
+        });
       return;
     }
     if (params.has('auth_error')) {
       console.warn('[auth] OAuth error:', params.get('auth_error'));
       window.history.replaceState({}, '', '/');
     }
-    authService.checkExistingAuth().then(isValid => {
-      useAppStore.getState().setSurface(isValid ? 'app' : 'welcome');
-      useAppStore.getState().setAuthChecked(true);
-      // JWT живёт 15 минут — продлеваем заранее, чтобы API не падал с 401
-      if (isValid) stopKeepAlive = authService.startSessionKeepAlive();
-    });
+    authService.checkExistingAuth()
+      .then(settle)
+      .catch((e) => {
+        console.warn('[auth] checkExistingAuth failed:', e);
+        settle(false);
+      });
 
-    return () => stopKeepAlive?.();
+    return () => { disposed = true; stopKeepAlive?.(); };
   }, []);
 
   // Auto-catalog
@@ -219,51 +240,66 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [surface]);
 
-  if (!authChecked) return <LoadingSplash />;
-  if (surface === 'welcome') return <WelcomePage />;
+  // Keep the splash mounted as a stable overlay so the intro video never
+  // restarts mid-load. It plays once to the end, then crossfades to reveal the
+  // already-mounted app — no hard cut / flash, no second-loop rewind glitch.
+  const [splashGone, setSplashGone] = useState(false);
+  const splash = !splashGone ? (
+    <LoadingSplash authReady={authChecked} onComplete={() => setSplashGone(true)} />
+  ) : null;
 
   return (
     <>
-      <Header />
-      <CatalogPanel />
-      {appMode === 'feed' ? <FeedScreen /> : (
-      <div id="belive-react" data-track-info={trackInfoOpen ? 'active' : 'inactive'}>
-      <BlockEditorModal />
-      <BlockScenesModal />
-      {mode === 'rehearsal' && !syncOpen && !showActive && !featureActive && (
+      {authChecked && (surface === 'welcome' ? <WelcomePage /> : (
         <>
-          <div data-wagon-train-wrapper>
-            <WagonTrain />
-          </div>
-          <RehearsalLyrics />
+          <Header />
+          <CatalogPanel />
+          {appMode === 'feed' ? <FeedScreen /> : (
+          <div id="belive-react" data-track-info={trackInfoOpen ? 'active' : 'inactive'}>
+          <BlockEditorModal />
+          <BlockScenesModal />
+          {mode === 'rehearsal' && !syncOpen && !showActive && !featureActive && (
+            <>
+              <div data-wagon-train-wrapper>
+                <WagonTrain />
+              </div>
+              <RehearsalLyrics />
+            </>
+          )}
+          {syncOpen && !showActive && !featureActive && <SyncLyrics />}
+          {(mode === 'karaoke' || mode === 'concert') && !showActive && !featureActive && <KaraokeLyricsBoard />}
+          {!showActive && !featureActive && <CameraPreview />}
+          {!showActive && !featureActive && <LiveSubtitle />}
+          {!showActive && !featureActive && <LiveControls />}
+          {syncOpen ? (
+            <SyncEditorPanel />
+          ) : showActive ? (
+            <ShowEditor />
+          ) : (
+            <ControlDeck />
+          )}
+          {featureActive && <FeatureOverlay />}
+          {isPresenting && <PresenterDock />}
+          {!showActive && !featureActive && <BillyDock />}
+          {coachPanelOpen && <CoachPanel onClose={() => useCoachPanelStore.getState().setOpen(false)} />}
+          {!showActive && !featureActive && <TriggerDebugOverlay />}
+          {!showActive && !featureActive && <PlaybackPerfOverlay />}
+          <AudioCrashModal visible={!isHealthy} />
+          {/* C1–C3 (PR-2): немодальный баннер деградации стемов. Не блокирует UI. */}
+          <StemDegradedBanner />
+          {trackInfoOpen && <TrackInfoBoard />}
+          {aiSettingsOpen && <AiSettingsModal onClose={() => useAiSettingsStore.getState().setShowSettings(false)} />}
+          {surface === 'profile' && <UserRoom />}
+        </div>
+          )}
         </>
+      ))}
+      {splashGone && surface === 'app' && (
+        <Suspense fallback={null}>
+          <HintLayer />
+        </Suspense>
       )}
-      {syncOpen && !showActive && !featureActive && <SyncLyrics />}
-      {(mode === 'karaoke' || mode === 'concert') && !showActive && !featureActive && <KaraokeLyricsBoard />}
-      {!showActive && !featureActive && <CameraPreview />}
-      {!showActive && !featureActive && <LiveSubtitle />}
-      {!showActive && !featureActive && <LiveControls />}
-      {syncOpen ? (
-        <SyncEditorPanel />
-      ) : showActive ? (
-        <ShowEditor />
-      ) : (
-        <ControlDeck />
-      )}
-      {featureActive && <FeatureOverlay />}
-      {isPresenting && <PresenterDock />}
-      {!showActive && !featureActive && <BillyDock />}
-      {coachPanelOpen && <CoachPanel onClose={() => useCoachPanelStore.getState().setOpen(false)} />}
-      {!showActive && !featureActive && <TriggerDebugOverlay />}
-      {!showActive && !featureActive && <PlaybackPerfOverlay />}
-      <AudioCrashModal visible={!isHealthy} />
-      {/* C1–C3 (PR-2): немодальный баннер деградации стемов. Не блокирует UI. */}
-      <StemDegradedBanner />
-      {trackInfoOpen && <TrackInfoBoard />}
-      {aiSettingsOpen && <AiSettingsModal onClose={() => useAiSettingsStore.getState().setShowSettings(false)} />}
-      {surface === 'profile' && <UserRoom />}
-    </div>
-      )}
+      {splash}
     </>
   );
 }

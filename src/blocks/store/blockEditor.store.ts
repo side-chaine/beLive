@@ -32,7 +32,7 @@ function detectType(content: string): BlockType {
 
 /** Parse raw lyrics text into EditingBlock[] with tracked lineIndices */
 function parseText(text: string): { blocks: EditingBlock[]; lyricsLines: string[] } {
-  const lyricsLines = (text || '').split('\n').map(l => l.trim());
+  const lyricsLines = (text || '').split('\n').map(l => l.trim()).filter(l => l.length > 0);
   if (!text || !text.trim()) return { blocks: [], lyricsLines };
 
   const normalized = text.replace(/\r\n|\r/g, '\n');
@@ -106,6 +106,54 @@ function parseTextWithTagDetection(text: string): {
   return { ...fallback, wasTagDetected: false };
 }
 
+/** Seed blocks from persisted blocksData — preserve id/type/lineIndices, text from line-space */
+function buildSeededBlocks(seedBlocks: any[], lyricsLines: string[]): EditingBlock[] {
+  return seedBlocks.map((b: any) => {
+    const lineIndices = Array.isArray(b?.lineIndices)
+      ? b.lineIndices.filter((i: any) => typeof i === 'number' && i >= 0 && i < lyricsLines.length)
+      : [];
+    return {
+      id: typeof b?.id === 'string' && b.id ? b.id : uid(),
+      text: lineIndices.map((i: number) => lyricsLines[i]).join('\n'),
+      type: b?.type ?? 'verse',
+      lineIndices,
+      instrument: b?.instrument,
+      variant: b?.variant,
+    };
+  });
+}
+
+/** Tag overlay without seed: types/indices are mapped onto the line-space, tags stay out of lines */
+function buildTagOverlay(tagText: string, lyricsLines: string[]): EditingBlock[] {
+  const tagResult = parseTaggedLyrics(tagText);
+  if (!tagResult.hasStructure || tagResult.blocks.length === 0) return [];
+
+  const blocks: EditingBlock[] = [];
+  let cursor = 0;
+  for (const b of tagResult.blocks) {
+    const contentLines = b.contentLines.map(l => l.trim()).filter(Boolean);
+    if (contentLines.length === 0) continue;
+
+    const lineIndices: number[] = [];
+    for (const line of contentLines) {
+      const idx = lyricsLines.indexOf(line, cursor);
+      if (idx !== -1) {
+        lineIndices.push(idx);
+        cursor = idx + 1;
+      }
+    }
+    if (lineIndices.length === 0) continue;
+
+    blocks.push({
+      id: uid(),
+      text: contentLines.join('\n'),
+      type: b.type,
+      lineIndices,
+    });
+  }
+  return blocks;
+}
+
 function serialize(blocks: EditingBlock[]): string {
   return JSON.stringify(blocks);
 }
@@ -118,6 +166,12 @@ function deserialize(json: string): EditingBlock[] {
 
 type SaveCb = (blocks: SavedBlock[], lyrics: string, trackInfo: any) => Promise<any>;
 type CancelCb = () => void;
+
+export interface BlockEditorExtras {
+  seedBlocks?: any[] | null;
+  tagText?: string | null;
+  onSaved?: (() => void) | null;
+}
 
 interface BlockEditorState {
   /* modal */
@@ -141,9 +195,10 @@ interface BlockEditorState {
   /* legacy callbacks (set by bridge) */
   _onSave: SaveCb | null;
   _onCancel: CancelCb | null;
+  _onSaved: (() => void) | null;
 
   /* ── actions ── */
-  open: (text: string, trackInfo: any, onSave: SaveCb | null, onCancel?: CancelCb | null) => void;
+  open: (text: string, trackInfo: any, onSave: SaveCb | null, onCancel?: CancelCb | null, extras?: BlockEditorExtras) => void;
   close: () => void;
   cancel: () => void;
 
@@ -185,6 +240,7 @@ const EMPTY: Partial<BlockEditorState> = {
   redoStack: [],
   _onSave: null,
   _onCancel: null,
+  _onSaved: null,
 };
 
 // ── Store ──────────────────────────────
@@ -194,8 +250,17 @@ export const useBlockEditorStore = create<BlockEditorState>((set, get) => ({
 
   /* ── lifecycle ── */
 
-  open: (text, trackInfo, onSave, onCancel) => {
-    const { blocks, lyricsLines, wasTagDetected } = parseTextWithTagDetection(text);
+  open: (text, trackInfo, onSave, onCancel, extras) => {
+    const { blocks: parsedBlocks, lyricsLines, wasTagDetected } = parseTextWithTagDetection(text);
+
+    let blocks = parsedBlocks;
+    if (Array.isArray(extras?.seedBlocks) && extras.seedBlocks.length > 0) {
+      blocks = buildSeededBlocks(extras.seedBlocks, lyricsLines);
+    } else if (extras?.tagText) {
+      const overlay = buildTagOverlay(extras.tagText, lyricsLines);
+      if (overlay.length > 0) blocks = overlay;
+    }
+
     if (wasTagDetected) {
       console.debug('[BlockEditor] Auto-detected', blocks.length, 'blocks from tags');
     }
@@ -212,14 +277,18 @@ export const useBlockEditorStore = create<BlockEditorState>((set, get) => ({
       redoStack: [],
       _onSave: onSave ?? null,
       _onCancel: onCancel ?? null,
+      _onSaved: extras?.onSaved ?? null,
     });
   },
 
   close: () => set(EMPTY),
 
   cancel: () => {
-    get()._onCancel?.();
-    set(EMPTY);
+    try {
+      get()._onCancel?.();
+    } finally {
+      set(EMPTY);
+    }
   },
 
   /* ── selection ── */
@@ -328,6 +397,7 @@ export const useBlockEditorStore = create<BlockEditorState>((set, get) => ({
   save: async () => {
     const state = get();
     if (state.isSaving) return;
+    if (state.lyricsLines.length === 0) return;
     set({ isSaving: true });
 
     try {
@@ -358,10 +428,13 @@ export const useBlockEditorStore = create<BlockEditorState>((set, get) => ({
       const lyricsText = state.lyricsLines.join('\n');
 
       if (state._onSave) {
-        await state._onSave(savedBlocks, lyricsText, state.trackInfo);
+        const result = await state._onSave(savedBlocks, lyricsText, state.trackInfo);
+        if (result === false) throw new Error('Block save rejected');
       }
 
+      const onSaved = state._onSaved;
       set(EMPTY);
+      onSaved?.();
 
     } catch (error) {
       console.error('[BlockEditor] Save failed:', error);

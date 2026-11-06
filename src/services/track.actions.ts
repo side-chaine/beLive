@@ -8,7 +8,7 @@ import { loadTrack as orchestrateLoadTrack } from './track.loader';
 import { parseTrackName } from '../catalog/types';
 import { useTrackStore } from '../stores/track.store';
 
-export function loadTrack(index: number, options?: { autoplay?: boolean; openSyncEditor?: boolean }): void {
+export async function loadTrack(index: number, options?: { autoplay?: boolean; openSyncEditor?: boolean }): Promise<void> {
   // MVSEP guard: block playback for tracks still being processed
   const tracks = getTracksArray();
   const track = tracks[index];
@@ -36,7 +36,7 @@ export function loadTrack(index: number, options?: { autoplay?: boolean; openSyn
       currentTrackIndex: index,
     });
   }
-  orchestrateLoadTrack(index, options ?? { autoplay: true, openSyncEditor: false });
+  return await orchestrateLoadTrack(index, options ?? { autoplay: true, openSyncEditor: false });
 }
 
 export async function deleteTrack(id: number): Promise<void> {
@@ -91,33 +91,60 @@ export function getTracksArray(): any[] {
   return tc?.tracks || [];
 }
 
-export function saveLyricsBlocks(
+export async function saveLyricsBlocks(
   trackId: number | string,
   blocksData: any,
-  newLyricsText?: string
-): void {
+  newLyricsText?: string,
+  idMap?: Record<string, string>
+): Promise<boolean> {
   const w = window as any;
   const tc = w.trackCatalog;
   const idb = w.idbService;
-  if (!tc) return;
+  if (!tc) return false;
 
-  const track = tc.tracks.find((t: any) => t.id === trackId);
+  const track = tc.tracks?.find((t: any) => String(t.id) === String(trackId));
   if (!track) {
     w.showAppNotification?.('Track not found for saving blocks and lyrics.', 'error');
-    return;
+    return false;
   }
+  if (!idb?.saveTrack) return false;
 
-  track.blocksData = blocksData;
-  if (newLyricsText !== undefined) track.lyrics = newLyricsText;
-  track.lastModified = new Date();
+  // Build the next snapshot first — IDB failure must not leave partial mutations.
+  const nextTrack: any = { ...track };
+  nextTrack.blocksData = blocksData;
+  // У-6: never write empty lyrics
+  if (newLyricsText !== undefined && String(newLyricsText).trim().length > 0) {
+    nextTrack.lyrics = newLyricsText;
+  }
+  nextTrack.lastModified = new Date();
 
-  if (idb?.saveTrack) {
-    idb.saveTrack(track).then(() => {
-      w.showAppNotification?.(`Lyric blocks for "${track.title}" saved.`, 'success');
-    }).catch((err: any) => {
-      w.showAppNotification?.(`Error saving blocks: ${err.message}`, 'error');
+  if (idMap && Array.isArray(track.syncMarkers)) {
+    nextTrack.syncMarkers = track.syncMarkers.map((m: any) => {
+      if (m?.markerType === 'M2' && m.afterBlockId && idMap[m.afterBlockId]) {
+        return { ...m, afterBlockId: idMap[m.afterBlockId] };
+      }
+      return m;
     });
   }
+
+  try {
+    await idb.saveTrack(nextTrack);
+  } catch (err: any) {
+    w.showAppNotification?.(`Error saving blocks: ${err?.message ?? err}`, 'error');
+    return false;
+  }
+
+  // Cross-track guard: re-find by id after await and never touch another track.
+  const target = tc.tracks?.find((t: any) => String(t.id) === String(trackId));
+  if (target) {
+    target.blocksData = nextTrack.blocksData;
+    if (nextTrack.lyrics !== undefined) target.lyrics = nextTrack.lyrics;
+    target.lastModified = nextTrack.lastModified;
+    if (nextTrack.syncMarkers !== undefined) target.syncMarkers = nextTrack.syncMarkers;
+  }
+
+  w.showAppNotification?.(`Lyric blocks for "${track.title}" saved.`, 'success');
+  return true;
 }
 
 export function initTrackEventListeners(): void {

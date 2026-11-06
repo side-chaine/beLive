@@ -10,6 +10,14 @@ recon/
 *.backup
 *.tmp
 
+# 707 (2026-11-01): секреты и локальные бэкапы не должны попадать в историю.
+# *.bak не ловил датированные копии вида .env.bak-2026-10-29 — теперь ловит.
+.env.bak*
+.env.local
+.env.*.local
+*.bak-*
+*.bak_*
+
 # Scratch space — не часть продукта
 tmp/
 
@@ -74,6 +82,11 @@ AGENTS.md
 !.opencode/agent/
 .opencode/agent/*
 !.opencode/agent/agent-*.md
+!.opencode/agent/CEO.md
+!.opencode/agent/MO.md
+# custom tools команды (claim/queue/pack/verify) — прод-инструмент, в git
+!.opencode/tools/
+!.opencode/tools/**
 .continue.config.example.yaml
 research/
 

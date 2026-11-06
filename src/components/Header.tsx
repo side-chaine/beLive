@@ -2,7 +2,12 @@ import { useEffect, useRef } from 'react';
 import { ModeButtons } from './ModeButtons';
 import { QuickActions } from './QuickActions';
 import { useModeStore } from '../stores/mode.store';
+import { useUIStore } from '../stores/ui.store';
 import { CurrentTrackBadge } from './CurrentTrackBadge';
+
+
+/** Neutral header accent while no mode has been actively chosen. */
+const QUIET_ACCENT = '#8b8b96';
 
 
 const MODE_COLORS: Record<string, string> = {
@@ -15,7 +20,10 @@ const MODE_COLORS: Record<string, string> = {
 export function Header() {
   const ref = useRef<HTMLDivElement>(null);
   const mode = useModeStore((s) => s.mode);
-  const color = MODE_COLORS[mode] || '#fff';
+  const modeChosen = useUIStore((s) => s.modeChosen);
+  // The orange logo + orange header rule used to announce "Rehearsal" before
+  // the user had chosen anything. Keep them matte until a real click happens.
+  const color = modeChosen ? (MODE_COLORS[mode] || '#fff') : QUIET_ACCENT;
 
   useEffect(() => {
     const el = ref.current;

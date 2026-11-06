@@ -1622,10 +1622,12 @@ export function extractCleanLyrics(geniusText: string): string[] {
     return lines;
   }
   // No structure (plain text without bracket tags) → simple split
+  // D3: bracket-only metadata lines ([Testo di …], [ti:…]) are not lyrics — TC-002 invariant
   return geniusText
     .split('\n')
     .map(l => l.trim())
-    .filter(l => l.length > 0);
+    .filter(l => l.length > 0)
+    .filter(l => !/^\[[^\]]+\]$/.test(l));
 }
 
 /**

@@ -59,10 +59,18 @@ export const authService = {
    * Возвращает свежий короткий JWT или null, если сессии нет/она протухла.
    */
   async refreshSession(): Promise<RefreshResponse | null> {
+    // Bounded by design: `App` gates its whole render on `authChecked`, so an
+    // unbounded fetch to an unreachable auth worker would leave the app blank
+    // after the splash. 8s is generous for a real network — on timeout we simply
+    // fall through to the local profile check in `checkExistingAuth`.
+    // A healthy session is unaffected: a normal response resolves long before.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
     try {
       const res = await fetch(`${AUTH_URL}/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
+        signal: controller.signal,
       });
       if (!res.ok) return null;
       const data = (await res.json()) as RefreshResponse;
@@ -70,6 +78,8 @@ export const authService = {
     } catch (e) {
       console.warn('[auth] refreshSession failed:', e);
       return null;
+    } finally {
+      clearTimeout(timeout);
     }
   },
 

@@ -10,6 +10,7 @@ import type { PerformanceTier } from '../performance/performance.types';
 import { useTrackStore } from '../stores/track.store';
 import { useBlockSceneStore } from '../stores/blockScene.store';
 import { useUserProfileStore } from '../stores/user-profile.store';
+import { HintToggle } from '../hints/HintToggle';
 
 const MODE_COLORS: Record<string, string> = {
   concert: '#3498db',
@@ -411,7 +412,9 @@ export function QuickActions() {
 
   return (
     <div style={{ display: 'flex', gap: 6, alignItems: 'center', position: 'relative' }}>
-      <button onClick={openCatalog} style={btnStyle()}>Catalog</button>
+      {/* Anchor for the guided-tour layer. HintLayer measures this node; never
+          replace it with hard-coded coordinates. */}
+      <button data-bl-hint-target="catalog" onClick={openCatalog} style={btnStyle()}>Catalog</button>
       <button
         ref={avatarBtnRef}
         onClick={toggleMenu}
@@ -493,6 +496,14 @@ export function QuickActions() {
           >
             <span style={{ fontWeight: 500, color: '#eee' }}>AI Settings</span>
             <span style={{ fontSize: 10, color: '#666' }}>Configure</span>
+          </div>
+
+          {/* Guided-tour master switch — ONE line. */}
+          <div
+            style={{ padding: '8px 12px', borderTop: '1px solid #333', marginTop: 6 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <HintToggle />
           </div>
 
           {/* Graphics section - performance tier controls */}

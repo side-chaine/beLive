@@ -21,7 +21,7 @@ export interface JournalData {
 const EMPTY_WEEK: WeekStats = { minutes: 0, runs: 0, streak: 0, spark: [0, 0, 0, 0, 0, 0, 0] };
 
 /** События, после которых журнал уже дописан — обновляемся в микротаске. */
-const EVENTS = ['practice:ended', 'practice:completed-kept'];
+const EVENTS = ['practice:ended', 'practice:completed-kept', 'practice:cancelled'];
 
 export function useJournal(ownerId: string): JournalData {
   const [sessions, setSessions] = useState<SessionRecord[]>([]);

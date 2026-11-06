@@ -1,6 +1,16 @@
 .root {
   position: fixed;
-  top: calc(var(--react-header-height, 64px) + var(--wagon-train-height, 0px));
+  /* 706: explicit top anchor - header + WagonTrain + guaranteed gap.
+     --bl-plate-top-gap can be overridden from outside; safe-area for mobile. */
+  top: calc(
+    var(--react-header-height, 64px)
+    + var(--wagon-train-height, 0px)
+    /* 706 (A, rev2): гэп 0 — плашка ВПЛОТНУЮ к низу TopBar (прижата к потолку,
+       без щели). Header = 64px и публикует --react-header-height, поэтому top=64
+       = низ хедера. Дыхание первой строки — внутри, через padding-top .activeBlock. */
+    + var(--bl-plate-top-gap, 0px)
+    + env(safe-area-inset-top, 0px)
+  );
   left: 0;
   right: 0;
   bottom: var(--bl-deck-height, 76px);
@@ -22,15 +32,23 @@
   border: 1px solid var(--bl-cover-border, rgba(255, 255, 255, 0.08));
   border-radius: var(--bl-radius-lg, 12px);
   box-shadow: 0 0 var(--plate-glow-size, 0px) var(--bl-cover-glow, transparent);
-  padding: 24px 40px;
+  /* 706 (A): комфортная «подушка» сверху — первая строка не припирается
+     к TopBar при развёрнутом доке (safe-center откатывается в start). */
+  padding: 40px 40px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* 706: safe center - when content overflows, the first line stays scroll-reachable */
+  justify-content: safe center;
   gap: 8px;
   width: 80%;
   max-width: 900px;
   flex: 1;
+  /* 706-loop: min-height:0 — чинит flexbox-ловушку (min-height:auto по умолчанию),
+     из-за которой .activeBlock раздувался до высоты контента и низ обрезался
+     .root{overflow:hidden}: нижняя граница лупы уходила за край и была недостижима.
+     Теперь плашка честно СКРОЛЛИТ контент, граница достижима. */
+  min-height: 0;
   margin-top: 0;
   overflow: auto;
   text-align: center;

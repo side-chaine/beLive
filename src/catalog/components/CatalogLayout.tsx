@@ -199,8 +199,8 @@ export function CatalogLayout({ color, onClose }: Props) {
         {/* ═══ COL 2: CATALOG ═══ */}
         <div className="bl-catalog-col" style={colBase}>
           <div style={{ display:'flex', gap:4, marginBottom:8, flexShrink:0 }}>
-            <button onClick={()=>setCatalogTab('my-music')} style={{ flex:1, padding:'6px 0', fontSize:11, fontWeight:700, cursor:'pointer', color:catalogTab==='my-music'?T.green:T.dim, borderBottom:catalogTab==='my-music'?`2px solid ${T.green}`:'2px solid transparent', background:'none', border:'none', letterSpacing:'0.05em' }}>МОЯ МУЗЫКА</button>
-            <button onClick={goToUpload} style={{ flex:1, padding:'6px 0', fontSize:11, fontWeight:700, cursor:'pointer', color:catalogTab==='upload'?T.orange:T.dim, borderBottom:catalogTab==='upload'?`2px solid ${T.orange}`:'2px solid transparent', background:'none', border:'none', letterSpacing:'0.05em' }}>ЗАГРУЗКА</button>
+            <button onClick={()=>setCatalogTab('my-music')} style={{ flex:1, padding:'6px 0', fontSize:11, fontWeight:700, cursor:'pointer', color:catalogTab==='my-music'?T.green:T.dim, borderBottom:catalogTab==='my-music'?`2px solid ${T.green}`:'2px solid transparent', background:'none', borderTop:'none', borderLeft:'none', borderRight:'none', letterSpacing:'0.05em' }}>МОЯ МУЗЫКА</button>
+            <button data-bl-hint-target="upload" onClick={goToUpload} style={{ flex:1, padding:'6px 0', fontSize:11, fontWeight:700, cursor:'pointer', color:catalogTab==='upload'?T.orange:T.dim, borderBottom:catalogTab==='upload'?`2px solid ${T.orange}`:'2px solid transparent', background:'none', borderTop:'none', borderLeft:'none', borderRight:'none', letterSpacing:'0.05em' }}>ЗАГРУЗКА</button>
           </div>
 
           <div style={{ display:catalogTab==='my-music'?'flex':'none', flexDirection:'column', flex:1, minHeight:0 }}>
