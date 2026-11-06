@@ -58,6 +58,7 @@ import { useAppStore } from './stores/app.store';
 import { authService } from './services/auth.service';
 import { WelcomePage } from './components/welcome/WelcomePage';
 import { LoadingSplash } from './components/welcome/LoadingSplash';
+import { SplashSimple } from './components/welcome/SplashSimple';
 import { UserRoom } from './components/profile/UserRoom';
 import { useUIStore } from './stores/ui.store';
 import { useUserProfileStore } from './stores/user-profile.store';
@@ -240,16 +241,22 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [surface]);
 
-  // Keep the splash mounted as a stable overlay so the intro video never
-  // restarts mid-load. It plays once to the end, then crossfades to reveal the
-  // already-mounted app — no hard cut / flash, no second-loop rewind glitch.
+  // Трёхэтапный старт (решение Никиты, 06.11):
+  //   1) authChecked === false → простой загрузчик «beLive + точки» (SplashSimple),
+  //      никакого видео/крыльев — только лёгкий фидбэк загрузки.
+  //   2) authChecked && surface === 'welcome' → страница регистрации (WelcomePage).
+  //      Видео-сплеш НЕ показываем — иначе он перекрывает регу (был баг на проде).
+  //   3) authChecked && surface === 'app' → видео-сплеш с крыльями (LoadingSplash),
+  //      затем приложение. Старт анимации ИМЕННО после реги/пропуска.
   const [splashGone, setSplashGone] = useState(false);
-  const splash = !splashGone ? (
+  const showVideoSplash = !splashGone && authChecked && surface === 'app';
+  const splash = showVideoSplash ? (
     <LoadingSplash authReady={authChecked} onComplete={() => setSplashGone(true)} />
   ) : null;
 
   return (
     <>
+      {!authChecked && <SplashSimple />}
       {authChecked && (surface === 'welcome' ? <WelcomePage /> : (
         <>
           <Header />
