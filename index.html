@@ -31,32 +31,51 @@
     <link rel="icon" href="img/favicon-16.png" sizes="16x16" type="image/png">
 
     <!-- Boot splash: paints at FIRST paint, before any JS module is fetched or
-         evaluated. React's LoadingSplash fades this out once the video has its
-         first frame (see #bl-boot-splash--hide). The relative URL follows the
-         convention of the other assets here: Vite rebases it to /beLive/ in dev
-         and / in the CF Pages build, so the poster URL stays correct.
-         The layer owns its own CSS-only watchdog: no inline JS on the critical
-         path, and no duplicated dismissal logic between HTML and React. -->
-    <link rel="preload" as="image" href="splash-poster.jpg" fetchpriority="high">
+         evaluated. Stage 1 = plain "beLive + dots" loader (mirrors React
+         SplashSimple) — NO wings poster. The wings appear only at stage 3
+         (after registration/skip) via LoadingSplash's <video> poster. The layer
+         owns its own CSS-only watchdog: no inline JS on the critical path, and no
+         duplicated dismissal logic between HTML and React. React's SplashSimple
+         dismisses this layer on mount (see #bl-boot-splash--hide). -->
     <style id="bl-boot-style">
       #bl-boot-splash {
         position: fixed; inset: 0; z-index: 10000000;
-        background: #000; overflow: hidden; pointer-events: none;
+        background: #0a0a0a; overflow: hidden; pointer-events: none;
         opacity: 1; transition: opacity 0.5s ease;
+        display: flex; align-items: center; justify-content: center;
         /* If the whole JS graph fails, the layer still fades and becomes inert
            at 12s. React cancels this by adding the hide class. */
         animation: bl-boot-watchdog 12s linear forwards;
       }
-      #bl-boot-splash img {
-        display: block; width: 100%; height: 100%;
-        object-fit: cover; object-position: center;
+      /* Stage-1 loader — mirrors React SplashSimple: plain "beLive + dots",
+         NO wings poster. Wings appear only at stage 3 (after registration/skip)
+         via LoadingSplash's <video> poster. */
+      #bl-boot-inner { display: flex; flex-direction: column; align-items: center; }
+      #bl-boot-word {
+        font-size: 2rem; font-weight: 700; color: #fff;
+        margin-bottom: 2rem; letter-spacing: 0.04em;
+      }
+      #bl-boot-dots { display: flex; }
+      #bl-boot-dots span {
+        display: inline-block; width: 8px; height: 8px;
+        border-radius: 50%; background: rgba(255,255,255,0.5);
+        margin: 0 4px; animation: bl-dot-bounce 1.2s infinite;
+      }
+      #bl-boot-dots span:nth-child(2) { animation-delay: 0.2s; }
+      #bl-boot-dots span:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes bl-dot-bounce {
+        0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+        40% { transform: scale(1); opacity: 1; }
       }
       #bl-boot-splash.bl-boot-splash--hide { animation: none; opacity: 0; }
       @keyframes bl-boot-watchdog {
         0%, 95.8% { opacity: 1; visibility: visible; }
         100% { opacity: 0; visibility: hidden; }
       }
-      @media (prefers-reduced-motion: reduce) { #bl-boot-splash { transition: none; } }
+      @media (prefers-reduced-motion: reduce) {
+        #bl-boot-splash { transition: none; }
+        #bl-boot-dots span { animation: none; opacity: 0.7; }
+      }
     </style>
 
     <link rel="stylesheet" href="css/styles.css">
@@ -103,7 +122,8 @@
          keeps the request off the first-paint critical path; `onload` promotes it
          to `all` once it has arrived (the handler runs after load, so no inline JS
          sits on the critical path). The splash covers the app while fonts arrive.
-         First paint therefore depends only on local CSS + splash-poster.jpg. -->
+         First paint therefore depends only on local CSS (the #bl-boot-splash
+         loader — plain "beLive + dots", no wings poster). -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" media="print" onload="this.media='all'" fetchpriority="low"
@@ -298,9 +318,13 @@
 </head>
 <body>
     <!-- Static first-paint splash. No JS needed: this is visible while the whole
-         module graph (main.tsx + ~45 imports + bootAether) downloads and runs. -->
+         module graph (main.tsx + ~45 imports + bootAether) downloads and runs.
+         Plain "beLive + dots" — wings appear only at stage 3 (after registration). -->
     <div id="bl-boot-splash" aria-hidden="true">
-      <img src="splash-poster.jpg" alt="" />
+      <div class="bl-boot-inner">
+        <div class="bl-boot-word">beLive</div>
+        <div class="bl-boot-dots"><span></span><span></span><span></span></div>
+      </div>
     </div>
 
     <div class="app-container" id="app-root">
