@@ -32,8 +32,15 @@ async function verifyJWT(token, secret) {
     const valid = await crypto.subtle.verify('HMAC', key, sig, data);
     if (!valid) return null;
     const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
-    if (payload.exp && payload.exp < Date.now() / 1000) return null;
-    return { sub: payload.sub };
+    // exp обязателен, как и в belive-feed-bot/src/jwt.ts.
+    //
+    // Было `if (payload.exp && ...)` — токен без exp считался вечным.
+    // Плюс не проверялся sub: без него лимиты считались бы на "undefined",
+    // то есть все анонимные запросы делили бы один дневной счётчик.
+    if (typeof payload.exp !== 'number') return null;
+    if (payload.exp < Date.now() / 1000) return null;
+    if (!payload.sub) return null;
+    return { sub: String(payload.sub) };
   } catch { return null; }
 }
 
@@ -69,6 +76,29 @@ async function acquireConcurrentLock(kv, userId) {
 
 async function releaseConcurrentLock(kv) {
   await kv.delete(CONCURRENT_LOCK_KEY);
+}
+
+/**
+ * Снять лок, только если он принадлежит этому пользователю.
+ *
+ * Лок один на весь воркер (`mvsep:shared:active`) и защищает платную квоту
+ * MVSEP: одновременно обрабатывается один трек. Безусловное снятие (как было
+ * в /status) позволяло любому, кто знает чужой hash, освободить чужой лок
+ * и запустить второй трек параллельно — то есть обойти лимит.
+ */
+async function releaseConcurrentLockIfOwner(kv, userId) {
+  const raw = await kv.get(CONCURRENT_LOCK_KEY);
+  if (!raw) return false;
+  try {
+    const lock = JSON.parse(raw);
+    if (lock.userId !== userId) return false;
+  } catch {
+    // Битый лок восстановить нельзя, но и снимать его «на всякий» нельзя:
+    // это мог быть чужой лок. Оставляем до истечения expirationTtl.
+    return false;
+  }
+  await kv.delete(CONCURRENT_LOCK_KEY);
+  return true;
 }
 
 // ─── Handlers ────────────────────────────────────────────
@@ -130,7 +160,7 @@ async function handleSubmit(request, env, userId, cors) {
   });
 }
 
-async function handleStatus(request, env, cors) {
+async function handleStatus(request, env, userId, cors) {
   const hash = new URL(request.url).searchParams.get('hash');
   if (!hash) {
     return new Response(JSON.stringify({ status: 'error', errors: ['Missing hash'] }), {
@@ -143,9 +173,10 @@ async function handleStatus(request, env, cors) {
   });
   const data = await resp.json();
 
-  // Release concurrent lock if done/failed
+  // Снимаем лок только если он наш: иначе любой, кто знает чужой hash,
+  // освобождал бы чужую обработку и обходил лимит одновременности.
   if (data.status === 'done' || data.status === 'failed') {
-    await releaseConcurrentLock(env.MVSEP_RATES);
+    await releaseConcurrentLockIfOwner(env.MVSEP_RATES, userId);
   }
 
   return new Response(JSON.stringify(data), {
@@ -180,17 +211,7 @@ async function handleQuota(request, env, userId, cors) {
 
 async function handleCancel(request, env, userId, cors) {
   // Release concurrent lock (only the locking user can cancel)
-  const lockRaw = await env.MVSEP_RATES.get(CONCURRENT_LOCK_KEY);
-  if (lockRaw) {
-    try {
-      const lock = JSON.parse(lockRaw);
-      if (lock.userId === userId) {
-        await releaseConcurrentLock(env.MVSEP_RATES);
-      }
-    } catch {
-      await releaseConcurrentLock(env.MVSEP_RATES);
-    }
-  }
+  await releaseConcurrentLockIfOwner(env.MVSEP_RATES, userId);
   return new Response(JSON.stringify({ status: 'ok', cancelled: true }), {
     headers: { ...cors, 'Content-Type': 'application/json' }
   });
@@ -216,17 +237,13 @@ export default {
       });
     }
 
-    // Download — no auth required (URLs are temporary/signed)
-    if (url.pathname === '/download' && request.method === 'GET') {
-      return handleDownload(request, env, cors);
-    }
-
-    // Status — no auth required
-    if (url.pathname === '/status' && request.method === 'GET') {
-      return handleStatus(request, env, cors);
-    }
-
     // Auth required below
+    //
+    // /status и /download раньше стояли ВЫШЕ этой проверки и были открыты.
+    // /status ходит в mvsep.com с нашим MVSEP_API_KEY: анонимный перебор
+    // hash'ей жёг платный ключ и вдобавок снимал глобальный лок, обходя
+    // лимит одновременности. /download был открытым прокси на mvsep.com.
+    // Оба теперь требуют тот же JWT HS256, что /submit.
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ status: 'error', errors: ['AUTH_REQUIRED'] }), {
@@ -240,6 +257,15 @@ export default {
       });
     }
 
+    if (url.pathname === '/status' && request.method === 'GET') {
+      return handleStatus(request, env, user.sub, cors);
+    }
+    if (url.pathname === '/download' && request.method === 'GET') {
+      // userId здесь не нужен: /download только проксирует готовый файл и
+      // не трогает лок. Передавать его четвёртым аргументом нельзя —
+      // handleDownload(request, env, cors), и cors уехал бы на место userId.
+      return handleDownload(request, env, cors);
+    }
     if (url.pathname === '/submit' && request.method === 'POST') {
       return handleSubmit(request, env, user.sub, cors);
     }

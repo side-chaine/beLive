@@ -7,7 +7,7 @@ recon/
 
 *.log
 *.bak
-*.backu
+*.backup
 *.tmp
 
 # 707 (2026-11-01): секреты и локальные бэкапы не должны попадать в историю.
@@ -17,6 +17,9 @@ recon/
 .env.*.local
 *.bak-*
 *.bak_*
+
+# Scratch space — не часть продукта
+tmp/
 
 .DS_Store
 Thumbs.db

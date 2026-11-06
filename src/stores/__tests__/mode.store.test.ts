@@ -1,13 +1,14 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { useModeStore } from '../mode.store';
 
+// Тавтология снята: beforeEach писал mode='rehearsal', тест это же и проверял.
 describe('mode.store', () => {
-  beforeEach(() => {
-    useModeStore.setState({ mode: 'rehearsal' });
-  });
-
-  it('начальное состояние — rehearsal', () => {
-    expect(useModeStore.getState().mode).toBe('rehearsal');
+  it('начальное состояние — rehearsal (реальный инициализатор)', async () => {
+    // resetModules + динамический импорт: стор создаётся заново настоящим
+    // инициализатором, а не значением, которое тест сам же и записал выше.
+    vi.resetModules();
+    const store = (await import('../mode.store')).useModeStore;
+    expect(store.getState().mode).toBe('rehearsal');
   });
 
   it('setMode(karaoke) переключает режим', () => {

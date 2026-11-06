@@ -410,7 +410,10 @@ export default function SyncEditorPanel() {
     useSyncStore.getState().pushUndo();
 
     // Place marker via store (delegates to legacy MM, bridge syncs back)
-    addMarker(targetLine, currentTime);
+    // addMarker принимает ОДИН объект { lineIndex, time }, а не два позиционных
+    // аргумента. Позиционный вызов молча терял currentTime: в легаси-MM уходило
+    // число вместо объекта, marker.lineIndex/time становились undefined.
+    addMarker({ lineIndex: targetLine, time: currentTime });
     if (import.meta.env.DEV) console.log('[Sync] marker placed: line', targetLine, 'at', currentTime.toFixed(2) + 's');
   }, []);
 

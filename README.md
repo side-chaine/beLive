@@ -125,9 +125,8 @@ npm run build     # production build → dist/
 
 ```
 src/
-├── audio/          # AudioEngineV2 — N-stem transport, buses, progressive loading
+├── audio/          # engine-v3 — N-stem transport, buses, progressive loading
 ├── stem/           # stem.store, stemTypes (StemRole, ROLE_ROUTING, REACTIVITY_PROFILES)
-├── bridges/        # 18 bridges — React ↔ legacy boundary fabric
 ├── components/     # UI: ControlDeck, MixerPanel, WagonTrain, MonitorMixPanel…
 ├── exercises/      # Quest system — runtime, store, 7 generators
 ├── performance/    # Performance budget — 6 domains, tier system, recording-safe clamp
@@ -171,7 +170,7 @@ Full architecture in `docs/architecture/`. Key docs:
 | Doc | Covers |
 |-----|--------|
 | `architecture-map-2.1.md` | Master system map, bridge topology, ownership matrix |
-| `audio-engine.md` | AudioEngineV2, N-stem routing, progressive loading |
+| `audio-engine.md` | engine-v3, N-stem routing, progressive loading |
 | `n-stem-architecture.md` | Stem roles, buses, Visual Mixer reactive pipeline |
 | `sync-system.md` | Line sync, word sync, LRC picker, waveform editor |
 | `zip-pipeline.md` | Export/import format spec |

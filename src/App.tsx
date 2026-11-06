@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { AudioCrashModal, useAudioContextHealth, getTransport } from './audio/engine-v3';
+import { AudioCrashModal, useAudioContextHealth, getTransport, StemDegradedBanner } from './audio/engine-v3';
 // retired: audio.bridge → audio-events (main.tsx)
 // retired: lyrics.bridge → lyrics-events in main.tsx
 // retired: markers.bridge → markers-events
@@ -285,6 +285,8 @@ export default function App() {
           {!showActive && !featureActive && <TriggerDebugOverlay />}
           {!showActive && !featureActive && <PlaybackPerfOverlay />}
           <AudioCrashModal visible={!isHealthy} />
+          {/* C1–C3 (PR-2): немодальный баннер деградации стемов. Не блокирует UI. */}
+          <StemDegradedBanner />
           {trackInfoOpen && <TrackInfoBoard />}
           {aiSettingsOpen && <AiSettingsModal onClose={() => useAiSettingsStore.getState().setShowSettings(false)} />}
           {surface === 'profile' && <UserRoom />}

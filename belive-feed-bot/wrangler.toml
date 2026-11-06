@@ -3,17 +3,46 @@ main = "src/index.ts"
 compatibility_date = "2024-01-10"
 workers_dev = true
 
-[limits]
-cpu_ms = 30000
+# [limits] cpu_ms = 30000 — УБРАН 02.11.2026.
+#
+# Блок не давал задеплоить воркер вообще: аккаунт на Free-плане, и Cloudflare
+# отклоняет загрузку целиком —
+#   CPU limits are not supported for the Free plan [code: 100328]
+#
+# Добавлен 26.06.2026 (cb509dea2), последний успешный `wrangler deploy` был
+# 28.08.2026 — значит тогда план был платный. После перехода на Free все
+# обновления воркера шли мимо wrangler, через Dashboard (в истории деплоев они
+# помечены «Unknown (deployment)»). То есть репозиторий перестал быть
+# источником правды для этого воркера.
+#
+# На Free CPU-лимит и так 10 мс на запрос — настраивать нечего, удаление
+# ничего не меняет в поведении. Вернуть при переходе на платный план.
 
 [vars]
-ALLOWED_ORIGIN = "https://app.mybelive.com"
+# `ALLOWED_ORIGIN` (единственное число) убрана 02.11.2026: она объявлялась в
+# Env, лежала здесь и НЕ ЧИТАЛАСЬ НИГДЕ — прод-origin зашит в src/cors.ts
+# константой PROD_ORIGIN. Две почти одинаковые переменные, из которых работает
+# одна, — это ловушка «поменял настройку, ничего не изменилось». Если понадобится
+# добавить origin (LAN-телефон, превью-домен) — писать в ALLOWED_ORIGINS
+# (множественное, через запятую) и не забывать, что оно необязательное.
+
+# Куда бот шлёт принятый ZIP. Это chat_id, не секрет: без BOT_TOKEN по нему
+# ничего не отправить. Раньше значение жило ТОЛЬКО в Dashboard и в репозитории
+# его не было — и 02.11.2026 первый же `wrangler deploy` его снёс:
+# `Uploading the Worker will override the remote configuration with your local
+# one`. Версия ec4b71a6 уехала без UPLOAD_CHAT_ID, и /upload начал ходить в
+# Telegram с chat_id = undefined.
+#
+# Теперь значение здесь, в единственном источнике правды, и переживёт любой
+# деплой. Секреты (BOT_TOKEN, JWT_SECRET, WEBHOOK_SECRET, ALLOWED_TG_IDS)
+# по-прежнему в Cloudflare — их деплой не затирает.
+UPLOAD_CHAT_ID = "435558710"
 
 # Секреты (wrangler secret put):
 # BOT_TOKEN — токен @BeLiveCommunity_bot
 # WEBHOOK_SECRET — секрет для вебхука
 # ALLOWED_TG_IDS — Telegram ID администратора (через запятую)
-# UPLOAD_API_KEY_SECRET — API key для /upload
+# JWT_SECRET — тот же, что у gateway и belive-mvsep (проверка /upload)
 
 [[kv_namespaces]]
 binding = "EPHEMERAL_KV"

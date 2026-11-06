@@ -56,18 +56,29 @@ export async function verifyJWT(token: string, secret: string): Promise<AuthCtx 
     const payload = JSON.parse(payloadStr);
 
     // 3. Check expiry
-    if (payload.exp && Date.now() / 1000 > payload.exp) return null;
+    //
+    // exp ОБЯЗАТЕЛЕН, а не «если есть». Было `if (payload.exp && ...)`:
+    // токен без срока жизни проходил как вечный — тот же класс дыры, что
+    // закрыт в belive-feed-bot/src/jwt.ts и belive-mvsep/index.js.
+    // Минтер один — belive-auth — и он всегда ставит TTL, поэтому токен
+    // без exp не наш.
+    if (typeof payload.exp !== 'number') return null;
+    if (Date.now() / 1000 > payload.exp) return null;
 
     // 4. Check issuer (must be our auth worker)
     if (payload.iss !== 'belive-auth') return null;
 
-    // 5. Resolve role hint (⚠️ NOT FOR AUTHORIZATION — use getUserRole for authz)
+    // 5. sub обязателен: без него authCtx.sub = undefined, а на нём держится
+    //    вся авторизация записи (author_id === auth.sub в feed.ts).
+    if (!payload.sub) return null;
+
+    // 6. Resolve role hint (⚠️ NOT FOR AUTHORIZATION — use getUserRole for authz)
     const roleHint = payload.role || 'user';
 
     return {
-      sub: payload.sub,
+      sub: String(payload.sub),
       provider: payload.provider || 'google',
-      providerSub: payload.sub?.replace(/^google:/, '') || payload.sub || '',
+      providerSub: String(payload.sub).replace(/^google:/, ''),
       roleHint,
       email: payload.email,
       name: payload.name,
@@ -79,8 +90,27 @@ export async function verifyJWT(token: string, secret: string): Promise<AuthCtx 
   }
 }
 
-// ─── base64url → ArrayBuffer (Node Web Crypto compatible) ───
-function base64UrlDecode(str: string): ArrayBuffer {
+// ─── base64url → байты ───
+//
+// Возвращаем именно Uint8Array (view), а не `bytes.buffer`.
+//
+// Почему это не косметика: `crypto.subtle.verify` принимает BufferSource и
+// проверяет аргумент на принадлежность к своему realm. В jsdom голый
+// ArrayBuffer из realm Node не проходит `instanceof ArrayBuffer` — verify
+// бросает TypeError, `catch` ниже глотает его и функция возвращает null.
+// То есть на Node 20 любой ВАЛИДНЫЙ токен выглядел как невалидный. Ровно это
+// и краснело в CI на gateway/test.
+//
+// `ArrayBuffer.isView` работает кросс-realm, поэтому view проходит проверку
+// и в jsdom, и в Workers. В belive-feed-bot/src/jwt.ts та же функция с самого
+// начала возвращает view — и те же тесты там зелёные.
+//
+// ⚠️ Экспортируется ТОЛЬКО ради теста типа. Поведенческий тест verifyJWT эту
+// регрессию ловит не всегда: 02.11.2026 откат на голый `.buffer` краснил тесты
+// только в jsdom на Node 20, а на Node 22, Node 24 и в environment: 'node'
+// проходил зелёным. Явная проверка `toBeInstanceOf(Uint8Array)` краснеет во
+// всех комбинациях — она и держит охрану.
+export function base64UrlDecode(str: string): Uint8Array {
   // Restore standard base64
   const base64 = str
     .replace(/-/g, '+')
@@ -92,5 +122,5 @@ function base64UrlDecode(str: string): ArrayBuffer {
   for (let i = 0; i < binaryStr.length; i++) {
     bytes[i] = binaryStr.charCodeAt(i);
   }
-  return bytes.buffer;
+  return bytes;
 }

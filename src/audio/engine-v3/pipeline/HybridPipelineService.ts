@@ -217,7 +217,37 @@ export class HybridPipelineService implements IPipelineController {
     const instance = await this._stretchPool.ensureSlot(stemId)
     if (instance) {
       try {
-        await instance.chunkedLoad(buffer)
+        // @Gate-R F1/F2: загрузка (первая попытка + retry) — в отдельном try.
+        // Обвязка ниже выполняется РОВНО ОДИН раз и только после успешной загрузки,
+        // поэтому retry больше не может «прогрузить буфер и не подключить его».
+        try {
+          await instance.chunkedLoad(buffer)
+        } catch (e) {
+          console.warn(`[HybridPipeline] ❌ Stretch load failed for ${stemId} (первая попытка):`, e)
+          // @PR-2: retry чанками+transfer — OOM-путь уже другой (фикс Y), даём второй шанс
+          try {
+            // @Gate-R F1: перед повтором ОБЯЗАТЕЛЬНО чистим накопленное. Worklet копит
+            // чанки (SignalsmithStretch.mjs:258-263 — audioBuffers.push + audioBuffersEnd += length),
+            // поэтому повтор после падения на чанке N дал бы chunk1..N-1 + chunk1..M:
+            // дубли в начале и неверная длина буфера. dropBuffers() без аргумента
+            // обнуляет буферы и audioBuffersStart/End (SignalsmithStretch.mjs:229-237).
+            await instance.clearBuffers()
+            await new Promise<void>((r) => setTimeout(r, 250))
+            await instance.chunkedLoad(buffer)
+            console.log(`[HybridPipeline] 🔥 "${stemId}" → retry OK (Single: Stretch only)`)
+          } catch (e2) {
+            console.error(`[HybridPipeline] ❌ Stretch load failed for ${stemId} (retry тоже):`, e2)
+            this._deadStems.add(stemId)   // №18-BUS H1.5: мёртвый стем — gain 0
+            // @PR-2: видимая деградация вместо STEM SILENT — UI слушает и показывает
+            // «вокал недоступен — играет инструментал». Не глушим трек целиком.
+            try {
+              window.dispatchEvent(new CustomEvent('belive:stem-degraded', {
+                detail: { stemId, error: String((e2 as Error)?.message ?? e2) }
+              }))
+            } catch {}
+            return
+          }
+        }
 
         // 053-B2: снести дубликат stretch gain
         const staleGain = this._stretchGains.get(stemId)
@@ -262,7 +292,16 @@ export class HybridPipelineService implements IPipelineController {
         if (stale) { try { node.removeEventListener('stretch-crash', stale) } catch {} }
         const handler = ((e: Event) => {
           const stemId = (e as CustomEvent).detail.id
-          console.warn(`[HybridPipeline] ⚠️ Stretch "${stemId}" crashed — fallback to varispeed (per-stem)`)
+          const inst = stemId ? this._stretchPool.get(stemId) : null
+          // 🔁 Фолбэк доступен (ворклет упал, но сырой буфер есть) — играем напрямую,
+          // НЕ глушим (иначе фолбэк тоже был бы в тишине).
+          if (inst?.hasFallback) {
+            console.warn(`[HybridPipeline] ⚠️ Stretch "${stemId}" crashed — fallback to raw playback (per-stem)`)
+            this._crashedStems.delete(stemId)
+            this._applyEffectiveGain(stemId)
+            return
+          }
+          console.warn(`[HybridPipeline] ⚠️ Stretch "${stemId}" crashed — silent (no fallback)`)
           // №18-BUS H1.2: двусторонний crash — effective gain 0, play/seek не воскрешают
           this._crashedStems.add(stemId)
           if (!stemId) return
@@ -281,8 +320,18 @@ export class HybridPipelineService implements IPipelineController {
         this._crashedStems.delete(stemId)
         this._applyEffectiveGain(stemId)
       } catch (e) {
-        console.warn(`[HybridPipeline] ❌ Stretch load failed for ${stemId}:`, e)
+        // @Gate-R F2: сюда попадаем только если упала ОБВЯЗКА (createGain/connect/
+        // createAnalyser на мёртвом ctx). Повторная загрузка буфера тут не поможет —
+        // раньше этот catch делал retry, грузил буфер, но НЕ подключал его: стем молчал,
+        // лог говорил «retry OK», баннер не показывался. Тихо — то есть ровно тот
+        // STEM SILENT, который PR-2 должен был убрать.
+        console.error(`[HybridPipeline] ❌ Stretch wiring failed for ${stemId}:`, e)
         this._deadStems.add(stemId)   // №18-BUS H1.5: мёртвый стем — gain 0
+        try {
+          window.dispatchEvent(new CustomEvent('belive:stem-degraded', {
+            detail: { stemId, error: String((e as Error)?.message ?? e) }
+          }))
+        } catch {}
       }
     } else {
       console.error(`[HybridPipeline] ❌ "${stemId}": нет stretch-слота. Стем НЕ звучит (single-path: varispeed fallback запрещён).`)
@@ -322,11 +371,12 @@ export class HybridPipelineService implements IPipelineController {
         }
       }
 
-      // Bus A: REGIME 3 — параллельный старт stretch
+      // Bus A: REGIME 3 — параллельный старт stretch (включая фолбэк-инстансы)
       await Promise.all([...this._chainA.stems].map(async ([stemId, stem]) => {
         const instance = this._stretchPool.get(stemId)
         const stretchGain = this._stretchGains.get(stemId)
-        if (instance?.isActive && stretchGain) {
+        // 🔁 hasFallback — ворклет упал, но сырой буфер играет через фолбэк
+        if ((instance?.isActive || instance?.hasFallback) && stretchGain) {
           try {
             await instance.start(offset, rate)
             // №18-BUS H1.2: resurrection-гвард — crashed stem не получает gain обратно
@@ -401,7 +451,8 @@ export class HybridPipelineService implements IPipelineController {
       for (const [stemId, stem] of this._chainA.stems) {
         const instance = this._stretchPool.get(stemId)
         const stretchGain = this._stretchGains.get(stemId)
-        if (instance?.isActive && stretchGain) {
+        // 🔁 hasFallback — ворклет упал, сырой фолбэк должен перепозиционироваться, иначе клик по TrackMap двигает только UI
+        if ((instance?.isActive || instance?.hasFallback) && stretchGain) {
           seekPromises.push(
             instance.seek(time, rate)
               .then(() => {

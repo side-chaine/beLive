@@ -4,6 +4,7 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 import { resolve } from 'path'
 import * as fs from 'node:fs'
 import type { HtmlTagDescriptor } from 'vite'
+import { execSync } from 'node:child_process'
 
 /**
  * SEO: инъекция verification-мет в <head> index.html.
@@ -107,10 +108,30 @@ function copySignalsmithWorklet(): Plugin {
   }
 }
 
+/**
+ * @PR-1 build-sha: детерминированный короткий SHA сборки для приёмки ДО/ПОСЛЕ на J8.
+ * CI: CF_PAGES_COMMIT_SHA → локально: git rev-parse --short HEAD → иначе 'dev'.
+ */
+function resolveBuildSha(): string {
+  const fromEnv = process.env.CF_PAGES_COMMIT_SHA
+  if (fromEnv && fromEnv.trim()) return fromEnv.trim().slice(0, 9)
+  try {
+    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .trim()
+      .slice(0, 9)
+  } catch {
+    return 'dev'
+  }
+}
+
 export default defineConfig({
   root: './',
   base: process.env.CF_PAGES ? '/' : '/beLive/',
   publicDir: 'public',
+  define: {
+    __BUILD_SHA__: JSON.stringify(resolveBuildSha()),
+  },
 
   build: {
     outDir: 'dist',

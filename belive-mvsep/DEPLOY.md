@@ -57,10 +57,15 @@ git push origin main
 |----------|------|----------|
 | `GET /health` | ❌ | Health check |
 | `POST /submit` | ✅ JWT | Submit track to MVSEP |
-| `GET /status?hash=` | ❌ | Poll job status |
-| `GET /download?url=` | ❌ | Download stem file |
+| `GET /status?hash=` | ✅ JWT | Poll job status |
+| `GET /download?url=` | ✅ JWT | Download stem file |
 | `GET /quota` | ✅ JWT | Get daily usage |
 | `POST /cancel` | ✅ JWT | Release concurrent lock |
+
+> `/status` и `/download` были открыты и закрыты JWT в PR `fix/mvsep-auth`.
+> Причина: `/status` ходит в mvsep.com с нашим `MVSEP_API_KEY` — анонимный
+> перебор hash'ей жёг платный ключ, а снятие глобального лока в `/status`
+> позволяло обходить лимит одновременности. `/download` был открытым прокси.
 
 ## Headers
 

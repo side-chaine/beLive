@@ -20,6 +20,14 @@ export class StretchInstance {
   private readonly _outputGain: GainNode
   private _active = false
   private _stemId: string | null = null
+  // 🔁 Фолбэк: ворклет упал (WASM processor error на мобиле) → играем сырой буфер.
+  // _failed отделён от _active: _active = ворклет жив; _failed = ворклет пытался работать и рухнул.
+  private _failed = false
+  // Сырой буфер храним ВСЕГДА (независимо от ворклета) — он нужен для фолбэка.
+  private _rawBuffer: AudioBuffer | null = null
+  private _lastOffset = 0
+  private _lastRate = 1
+  private _fallbackSource: AudioBufferSourceNode | null = null
 
 
   constructor(id: string, opts: StretchInstanceOptions) {
@@ -38,6 +46,8 @@ export class StretchInstance {
   get outputNode(): AudioNode { return this._outputGain }
   get isActive(): boolean { return this._active }
   get buffer(): AudioBuffer | null { return this._buffer }
+  /** Есть ли рабочий фолбэк: ворклет упал, но сырой буфер загружен → играем напрямую. */
+  get hasFallback(): boolean { return this._failed && !!(this._rawBuffer || this._buffer) }
 
   set stemId(value: string) {
     this._stemId = value
@@ -71,10 +81,12 @@ export class StretchInstance {
       // stretchNode.output по-прежнему подключен для schedule({ active: true })
       ;(this._node as unknown as AudioNode).connect(this._outputGain)
 
-      // 🛡️ WASM crash guard: если processor упал — флаг _active = false
+      // 🛡️ WASM crash guard: если processor упал — фолбэк на сырой буфер (а не вечная тишина)
       ;(this._node as AudioWorkletNode).onprocessorerror = () => {
-        console.warn(`[StretchInstance:${this._id}] ⚠️ WASM processor error — fallback to varispeed`)
+        console.warn(`[StretchInstance:${this._id}] ⚠️ WASM processor error — fallback to raw playback`)
         this._active = false
+        this._failed = true
+        if (this._rawBuffer || this._buffer) this._playFallback(this._lastOffset, this._lastRate)
       }
 
       // 🛡️ Live error listener — ловим детали краха из try/catch в WasmProcessor
@@ -85,10 +97,12 @@ export class StretchInstance {
         if (Array.isArray(data) && data[0] === 'error') {
           console.warn(`[StretchInstance:${this._id}] ❌ WASM runtime error (from worklet):`, data[1])
           this._active = false
+          this._failed = true
           // Notify external listeners through outputGain
           this._outputGain.dispatchEvent(new CustomEvent('stretch-crash', {
             detail: { id: this._stemId ?? this._id, error: data[1] }
           }))
+          if (this._rawBuffer || this._buffer) this._playFallback(this._lastOffset, this._lastRate)
         }
         // time messages handled by signalsmith internally via its own handler
       })
@@ -96,7 +110,8 @@ export class StretchInstance {
       this._active = true
     } catch (e) {
       this._active = false
-      console.warn(`[StretchInstance:${this._id}] ❌ Init failed — fallback to varispeed:`, e)
+      this._failed = true
+      console.warn(`[StretchInstance:${this._id}] ❌ Init failed — fallback to raw playback:`, e)
       // Оставляем bypass routing (inputGain → outputGain)
       this._inputGain.gain.value = 1.0
       this._outputGain.gain.value = 1.0
@@ -104,24 +119,55 @@ export class StretchInstance {
   }
 
   /**
-   * Загрузить буфер одним вызовом addBuffers (REGIME 3).
-   * subarray() НЕ ИСПОЛЬЗОВАТЬ — signalsmith передаёт ArrayBuffer через
-   * transferable postMessage, что детачит исходный буфер.
-   * Весь буфер целиком — безопасно, addBuffers асинхронна (postMessage).
+   * Загрузка буфера в WASM-инстанс чанками с transfer (REGIME 3).
+   *
+   * Почему чанки + transfer, а не «весь буфер одним клоном» (как было):
+   *  - postMessage без transfer-list делает structured clone всего PCM —
+   *    на 32-бит J8 это 28–38 МБ непрерывного блока на канал → DataCloneError
+   *    "out of memory" (прод-лог j8-live2.log, One Step +56с).
+   *  - Vendor принимает transfer-list ДОПОЛНИТЕЛЬНЫМ аргументом сверх argCount
+   *    (SignalsmithStretch.mjs:714–720) → postMessage(msg, transfer) — 0-copy.
+   *  - Worklet аккумулирует чанки: audioBuffers.push, audioBuffersEnd += length
+   *    — инкрементальная подача = штатный режим API.
+   *
+   * Ограничение: НЕ используем buffer.getChannelData(c).buffer как transfer —
+   * это внутренний ArrayBuffer AudioBuffer, трансфер его детачнет и сломает
+   * остальных потребителей (StemPlayerV3.duration, waveform, VOC-анализ).
+   * Каждый чанк — собственная Float32Array, копируется copyFromChannel.
+   *
+   * 🔁 Фолбэк: сырой буфер сохраняем ВСЕГДА (до гварда ворклета) — он нужен,
+   * если ворклет упадёт и нам придётся играть напрямую.
    */
   async chunkedLoad(buffer: AudioBuffer): Promise<void> {
+    // Сохраняем сырой буфер для фолбэка независимо от состояния ворклета.
+    this._rawBuffer = buffer
     if (!this._node || !this._active) return
     this._buffer = buffer
 
-    const channels: Float32Array[] = []
-    for (let c = 0; c < buffer.numberOfChannels; c++) {
-      channels.push(buffer.getChannelData(c))
+    // 15 с ≈ 2.7 МБ/канал @48к — любая 32-битная куча тянет; в 10 раз меньше
+    // бывшего единоразового блока. Меньше 10с не нужно: лишние round-trip'ы.
+    const CHUNK_SEC = 15
+    const chunkLen = Math.ceil(CHUNK_SEC * buffer.sampleRate)
+
+    for (let start = 0; start < buffer.length; start += chunkLen) {
+      const end = Math.min(start + chunkLen, buffer.length)
+      const piece: Float32Array[] = []
+      for (let c = 0; c < buffer.numberOfChannels; c++) {
+        const part = new Float32Array(end - start)
+        // копия ТОЛЬКО чанка из AudioBuffer (без getChannelData-детача)
+        buffer.copyFromChannel(part, c, start)
+        piece.push(part)
+      }
+      // ← КЛЮЧЕВАЯ СТРОКА: второй аргумент = transfer-list (vendor wrapper
+      //    ловит его как args.length > argCount → args.pop()).
+      //    Клон невозможен by construction: transfer не клонирует.
+      await (this._node as any).addBuffers(piece, piece.map((p) => p.buffer))
     }
 
-    await (this._node as any).addBuffers(channels)
-
-    console.log(`[StretchInstance:${this._id}] ✅ Load complete (${buffer.duration.toFixed(1)}s, ${buffer.length} samples)`)
-
+    console.log(
+      `[StretchInstance:${this._id}] ✅ Load complete (${buffer.duration.toFixed(1)}s, ` +
+      `${buffer.length} samples, chunked ${CHUNK_SEC}s + transfer)`
+    )
   }
 
 
@@ -130,44 +176,66 @@ export class StretchInstance {
     return this.chunkedLoad(buffer)
   }
 
-  /** 🎯 Начать REGIME 3 playback — start() вместо schedule() для корректной инициализации */
+  /** 🎯 Начать REGIME 3 playback — start() вместо schedule() для корректной инициализации.
+   *  Если ворклет мёртв, но сырой буфер есть — фолбэк (сырой playback без тайм-стретча). */
   async start(offset: number, rate: number): Promise<void> {
-    if (!this._node || !this._active) return
-    const maxTime = this._buffer?.duration ?? 3600
-    const safeOffset = Math.min(offset, maxTime - 0.1)
-    if (safeOffset < 0 || !Number.isFinite(safeOffset)) return
-    await (this._node as any).start({
-      input: safeOffset,
-      rate,
-      semitones: 0,
-      active: true
-    })
-    if (import.meta.env.DEV) console.log(`[RECON-1] StretchInstance:${this._id} | start(offset=${safeOffset.toFixed(2)}, rate=${rate.toFixed(3)}) ✅ resolved | buffer=${this._buffer?.duration.toFixed(1)}s | active=${this._active} | node=${!!this._node}`)
+    this._lastOffset = offset
+    this._lastRate = rate
+    if (this._node && this._active) {
+      const maxTime = this._buffer?.duration ?? 3600
+      const safeOffset = Math.min(offset, maxTime - 0.1)
+      if (safeOffset < 0 || !Number.isFinite(safeOffset)) return
+      await (this._node as any).start({
+        input: safeOffset,
+        rate,
+        semitones: 0,
+        active: true
+      })
+      if (import.meta.env.DEV) console.log(`[RECON-1] StretchInstance:${this._id} | start(offset=${safeOffset.toFixed(2)}, rate=${rate.toFixed(3)}) ✅ resolved | buffer=${this._buffer?.duration.toFixed(1)}s | active=${this._active} | node=${!!this._node}`)
+      return
+    }
+    // 🔁 Фолбэк: ворклет недоступен, но сырой буфер загружен → играем напрямую.
+    if (this._rawBuffer || this._buffer) {
+      this._playFallback(offset, rate)
+    }
   }
 
-  /** Запланировать rate change с сохранением pitch (semitones=0) */
+  /** Запланировать rate change с сохранением pitch (semitones=0).
+   *  В фолбэке — playbackRate (меняет и тон; приемлемо для деградированного режима). */
   async scheduleRate(rate: number, semitones: number = 0): Promise<void> {
-    if (!this._node || !this._active) return
-    await (this._node as any).schedule({
-      rate,
-      semitones,
-      active: true
-    })
+    this._lastRate = rate
+    if (this._node && this._active) {
+      await (this._node as any).schedule({
+        rate,
+        semitones,
+        active: true
+      })
+      return
+    }
+    if (this._fallbackSource) {
+      this._fallbackSource.playbackRate.value = rate
+    }
   }
 
-  /** Seek с валидацией границ — защита от WASM RangeError */
+  /** Seek с валидацией границ — защита от WASM RangeError.
+   *  В фолбэке — перезапуск сырого источника с новой позиции. */
   async seek(offset: number, rate: number): Promise<void> {
-    if (!this._node || !this._active) return
-    // Валидация: не выходим за пределы буфера
-    const maxTime = this._buffer?.duration ?? 3600
-    const safeOffset = Math.min(offset, maxTime - 0.1)
-    if (safeOffset < 0 || !Number.isFinite(safeOffset)) return
-    await (this._node as any).schedule({
-      input: safeOffset,
-      rate,
-      semitones: 0,
-      active: true
-    })
+    this._lastOffset = offset
+    this._lastRate = rate
+    if (this._node && this._active) {
+      // Валидация: не выходим за пределы буфера
+      const maxTime = this._buffer?.duration ?? 3600
+      const safeOffset = Math.min(offset, maxTime - 0.1)
+      if (safeOffset < 0 || !Number.isFinite(safeOffset)) return
+      await (this._node as any).schedule({
+        input: safeOffset,
+        rate,
+        semitones: 0,
+        active: true
+      })
+      return
+    }
+    if (this._rawBuffer || this._buffer) this._playFallback(offset, rate)
   }
 
   /** Запланировать loop (native — без щелчков) */
@@ -185,14 +253,20 @@ export class StretchInstance {
 
   /** Запланировать seek */
   async scheduleSeek(time: number): Promise<void> {
-    if (!this._node || !this._active) return
-    await (this._node as any).schedule({ input: time })
+    this._lastOffset = time
+    if (this._node && this._active) {
+      await (this._node as any).schedule({ input: time })
+      return
+    }
+    if (this._rawBuffer || this._buffer) this._playFallback(time, this._lastRate)
   }
 
   /** Стоп */
   stop(): void {
     if (!this._node) return
-    ;(this._node as any).stop()
+    try { (this._node as any).stop() } catch {}
+    try { this._fallbackSource?.stop() } catch {}
+    this._fallbackSource = null
   }
 
   /** 🧹 Очистить все буферы в WASM — вызывается при reset() для предотвращения утечки памяти между треками */
@@ -202,20 +276,47 @@ export class StretchInstance {
       // Без аргумента signalsmith очищает все буферы и сбрасывает audioBuffersStart/End в 0
       await (this._node as any).dropBuffers()
       this._buffer = null
+      this._rawBuffer = null
       if (import.meta.env.DEV) console.log(`[StretchInstance:${this._id}] 🧹 Buffers cleared`)
     } catch (e) {
       console.warn(`[StretchInstance:${this._id}] clearBuffers failed:`, e)
     }
+    try { this._fallbackSource?.stop() } catch {}
+    this._fallbackSource = null
   }
 
+  /** 🔁 Реальный фолбэк: ворклет недоступен (WASM processor error на мобиле) —
+   *  играем сырой AudioBuffer через AudioBufferSourceNode. БЕЗ тайм-стретча,
+   *  но звук ЕСТЬ (в отличие от прежней вечной тишины). Деградированный режим. */
+  private _playFallback(offset: number, rate: number): void {
+    const buf = this._rawBuffer ?? this._buffer
+    if (!buf) return
+    try { this._fallbackSource?.stop() } catch {}
+    const src = this._ctx.createBufferSource()
+    src.buffer = buf
+    src.playbackRate.value = rate
+    src.connect(this._outputGain)   // = outputNode → stretchGain → chainA.mergeGain
+    const safe = Math.max(0, Math.min(offset, buf.duration - 0.05))
+    try {
+      src.start(0, safe)
+    } catch (e) {
+      console.warn(`[StretchInstance:${this._id}] ⚠️ fallback start failed:`, e)
+      return
+    }
+    this._fallbackSource = src
+    console.warn(`[StretchInstance:${this._id}] 🔁 Fallback: raw playback (no time-stretch) — worklet unavailable`)
+  }
 
 
   dispose(): void {
     this.stop()    // stop() больше не проверяет _active — disconnect и при крахе
+    try { this._fallbackSource?.stop() } catch {}
+    this._fallbackSource = null
     try { (this._node as any)?.disconnect?.() } catch {}
     this._inputGain.disconnect()
     this._outputGain.disconnect()
     this._node = null
     this._buffer = null
+    this._rawBuffer = null
   }
 }

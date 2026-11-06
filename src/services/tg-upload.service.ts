@@ -1,6 +1,8 @@
 /**
  * TG Upload Service — upload ZIP blob to Telegram via belive-feed-bot Worker
  */
+import { useUserProfileStore } from '../stores/user-profile.store';
+
 const TG_UPLOAD_URL = 'https://belive-feed-bot.nikitosss007.workers.dev/upload';
 
 export interface TgUploadCallbacks {
@@ -26,6 +28,16 @@ export function uploadBlobToTelegram(
   stemType?: string,
 ): Promise<TgUploadResult> {
   return new Promise((resolve) => {
+    // Авторизация — тот же JWT, что у /submit в mvsep и у gateway.
+    // Раньше здесь стоял общий ключ 'belive2026', захардкоженный в этом файле:
+    // он уезжал в публичный бандл, поэтому защиты не давал никакой.
+    const token = useUserProfileStore.getState().currentUser?.authToken;
+    if (!token) {
+      callbacks?.onError?.(401, 'AUTH_REQUIRED');
+      resolve({ success: false });
+      return;
+    }
+
     const formData = new FormData();
     formData.append('file', blob, `${artist} - ${title}.zip`);
     formData.append('artist', artist);
@@ -67,7 +79,7 @@ export function uploadBlobToTelegram(
     };
 
     xhr.open('POST', TG_UPLOAD_URL);
-    xhr.setRequestHeader('X-API-Key', 'belive2026');
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
     xhr.send(formData);
   });
 }

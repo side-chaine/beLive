@@ -1,13 +1,15 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { useUIStore } from '../ui.store';
 
+// Тавтология снята: beforeEach писал catalogOpen=false / karaokeLinesCount=2 /
+// karaokeLyricsScale=120, а тест «начальное состояние» их же и проверял.
 describe('ui.store', () => {
-  beforeEach(() => {
-    useUIStore.setState({ catalogOpen: false, karaokeLinesCount: 2, karaokeLyricsScale: 120 });
-  });
-
-  it('начальное состояние', () => {
-    const s = useUIStore.getState();
+  it('начальное состояние (реальный инициализатор)', async () => {
+    // resetModules + динамический импорт: стор создаётся заново настоящим
+    // инициализатором, а не значением, которое тест сам же и записал выше.
+    vi.resetModules();
+    const store = (await import('../ui.store')).useUIStore;
+    const s = store.getState();
     expect(s.catalogOpen).toBe(false);
     expect(s.karaokeLinesCount).toBe(2);
     expect(s.karaokeLyricsScale).toBe(120);
