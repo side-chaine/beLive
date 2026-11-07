@@ -1,8 +1,8 @@
-import { useMemo, useRef, useEffect, useCallback } from 'react';
+import { useMemo, useRef, useEffect, useCallback, type CSSProperties } from 'react';
 import { useBlocksStore } from '../stores/blocks.store';
 import { useMarkersStore } from '../stores/markers.store';
 import { useLyricsStore } from '../stores/lyrics.store';
-import { getActiveBlock, createSubBlocks, getActiveSubBlockIndex } from '../utils/block-utils';
+import { getActiveBlock, getActiveSubBlockIndex } from '../utils/block-utils';
 import { getTransport } from '../audio/engine-v3';
 import { useLoopStore } from '../stores/loop.store';
 import { useDeckStore } from '../stores/deck.store';
@@ -10,8 +10,13 @@ import { useTakesStore } from '../takes/takes.store';
 import { MAX_SUB_BLOCK_LINES } from '../slot-matrix/slot-matrix.utils';
 import type { TextBlock } from '../stores/blocks.store';
 import styles from './WagonTrain.module.css';
-import { BLOCK_TYPE_CONFIG } from '../blocks/types';
+import { BLOCK_TYPE_CONFIG, getBlockTypeConfig } from '../blocks/types';
 import { interruptPracticeSession } from '../exercises/exercise.interruption';
+import { useTrackMapStore } from '../trackmap/trackmap.store';
+import { useTrackMapFx } from '../trackmap/use-trackmap-fx';
+import { useLoopContourGeometry } from './useLoopContourGeometry';
+import { LoopContour } from './LoopContour';
+import { SubSegmentRow } from './SubSegmentRow';
 
 export function WagonTrain() {
   const blocks = useBlocksStore(s => s.blocks);
@@ -22,10 +27,17 @@ export function WagonTrain() {
   const loopBlockIds = useLoopStore(s => s.loopBlockIds);
   const loopSubBlockKeys = useLoopStore(s => s.loopSubBlockKeys);
   const isLooping = useLoopStore(s => s.isLooping);
-  const toggleBlock = useLoopStore(s => s.toggleBlock);
-  const replaceLoop = useLoopStore(s => s.replaceLoop);
   const takesPanelActive = useDeckStore(s => s.activeTabId === 'takes' && s.expanded);
   const setActiveBlock = useTakesStore(s => s.setActiveBlock);
+
+  // TrackMap control layer (see src/trackmap/) — dim mode, selection, startup blink.
+  const dimMode = useTrackMapStore(s => s.dimMode);
+  const selection = useTrackMapStore(s => s.selection);
+  const fxRun = useTrackMapFx(blocks.length);
+
+  // Единый контур петли — отдельный хук (Центр_2, 07.11): геометрия loop-вагонов
+  // → массив силуэтов (заливка + обводка + верхняя кромка для искры прогресса).
+  const loopShapes = useLoopContourGeometry(rootRef, [loopBlockIds.join(','), blocks.length]);
 
   // Exercise execution lock for WagonTrain guard - replaced with interruption model
   // REMOVED: exerciseLocked blanket check - now uses interruptPracticeSession()
@@ -92,6 +104,8 @@ export function WagonTrain() {
     }
   }, [activeBlock?.id]);
 
+  // Контур петли теперь считается в хуке useLoopContourGeometry (см. импорт выше).
+
   if (blocks.length === 0) return null;
 
   const handleWagonClick = (block: TextBlock) => {
@@ -149,13 +163,42 @@ export function WagonTrain() {
     });
   };
 
+  const handleToggleSub = (block: TextBlock, subIndex: number) => {
+    interruptPracticeSession(() => {
+      const loopStore = useLoopStore.getState();
+      loopStore.toggleSubBlock(block, subIndex, lines);
+    });
+  };
+
   return (
-    <div ref={rootRef} className={styles.root} data-reactive="true">
+    <div
+      ref={rootRef}
+      className={styles.root}
+      data-reactive="true"
+      data-tm-fx={fxRun.fxId ?? undefined}
+      data-tm-dim={dimMode === 'off' ? undefined : dimMode}
+      data-tm-has-active={activeBlock ? 'true' : undefined}
+      style={{
+        '--tm-fx-k': fxRun.intensity,
+        '--tm-fx-duration': fxRun.durationMs > 0 ? `${fxRun.durationMs}ms` : undefined,
+      } as CSSProperties}
+    >
       {blocks.map((block, i) => {
-        const subBlocks = createSubBlocks(block.lineIndices, MAX_SUB_BLOCK_LINES, lines);
-        const isMulti = subBlocks.length > 1;
         const isActive = block.id === activeBlock?.id;
         const activeSubIdx = isActive ? activeSubBlockIndex : -1;
+
+        // Loop state per wagon: 'in-loop' | 'adjacent' | 'idle'.
+        // adjacent → the «+» badge lights up so the user can extend the loop.
+        const loopState = getLoopToggleState(block.id);
+        const loopJoin = (() => {
+          if (loopState !== 'adjacent') return undefined;
+          const hasLeft = loopBlockIds.some(id => blocks.findIndex(b => b.id === id) === i - 1);
+          const hasRight = loopBlockIds.some(id => blocks.findIndex(b => b.id === id) === i + 1);
+          if (hasLeft && hasRight) return 'both';
+          if (hasLeft) return 'left';
+          if (hasRight) return 'right';
+          return undefined;
+        })();
 
         return (
           <button
@@ -164,13 +207,16 @@ export function WagonTrain() {
             data-block-type={block.type}
             data-active={isActive || undefined}
             data-in-loop={loopBlockIds.includes(block.id) || undefined}
-            data-has-sub-blocks={isMulti || undefined}
+            data-loop-state={loopState}
+            data-loop-join={loopJoin}
+            data-tm-selected={selection.includes(block.id) || undefined}
             onClick={() => handleWagonClick(block)}
             title={block.name}
             style={{
-              opacity: 1,
               cursor: 'pointer',
-            }}
+              '--tm-color': getBlockTypeConfig(block.type).color,
+              '--tm-fx-delay': `${fxRun.delays[i] ?? 0}ms`,
+            } as CSSProperties}
           >
             <span className={styles.title}>
               {(() => {
@@ -182,57 +228,30 @@ export function WagonTrain() {
                 return block.name || 'Block';
               })()}
             </span>
-            {isMulti && (
-              <div className={styles.subSegments}>
-                {subBlocks.map((sub, si) => (
-                  <div
-                    key={sub.id}
-                    className={styles.subSegmentWrapper}
-                    style={{ flex: sub.lineIndices.length }}
-                  >
-                    <div
-                      className={styles.subSegment}
-                      data-sub-active={isActive && si === activeSubIdx || undefined}
-                      data-in-loop={loopSubBlockKeys.includes(`${block.id}:${si}`) || undefined}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSubBlockClick(block, sub.lineIndices[0]);
-                      }}
-                    />
-                    {isLooping && loopBlockIds.includes(block.id) && (
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        className={styles.subLoopToggle}
-                        data-active={loopSubBlockKeys.includes(`${block.id}:${si}`) || undefined}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          interruptPracticeSession(() => {
-                            const loopStore = useLoopStore.getState();
-                            loopStore.toggleSubBlock(block, si, lines);
-                          });
-                        }}
-                        title="Loop sub-block"
-                      >
-                        {loopSubBlockKeys.includes(`${block.id}:${si}`) ? '−' : '+'}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Слой света: заливка + «лампочки под стеклом».
+                Одна формула на два состояния — активный блок и презентация. */}
+            <span className={styles.lamp} aria-hidden="true" />
+            <SubSegmentRow
+              block={block}
+              lines={lines}
+              isActive={isActive}
+              activeSubIdx={activeSubIdx}
+              inLoopBlock={loopBlockIds.includes(block.id)}
+              loopSubBlockKeys={loopSubBlockKeys}
+              onSubClick={handleSubBlockClick}
+              onToggleSub={handleToggleSub}
+            />
             <span
               role="button"
               tabIndex={0}
               className={styles.loopToggle}
               data-active={loopBlockIds.includes(block.id) || undefined}
-              data-loop-state={getLoopToggleState(block.id)}
+              data-loop-state={loopState}
               onClick={(e) => {
                 e.stopPropagation();
                 interruptPracticeSession(() => {
-                  const state = getLoopToggleState(block.id);
                   const loopStore = useLoopStore.getState();
-                  if (state === 'idle' && loopStore.isLooping) {
+                  if (loopState === 'idle' && loopStore.isLooping) {
                     loopStore.replaceLoop(block);
                   } else {
                     loopStore.toggleBlock(block);
@@ -240,26 +259,26 @@ export function WagonTrain() {
                 });
               }}
               title={(() => {
-                const state = getLoopToggleState(block.id);
-                if (state === 'in-loop') return 'Remove from loop';
-                if (state === 'adjacent') return 'Add to loop';
+                if (loopState === 'in-loop') return 'Remove from loop';
+                if (loopState === 'adjacent') return 'Add to loop';
                 return 'Start loop';
               })()}
               style={{
-                opacity: 1,
                 cursor: 'pointer',
               }}
             >
-              {(() => {
-                const state = getLoopToggleState(block.id);
-                if (state === 'in-loop') return '−';
-                if (state === 'adjacent') return '+';
-                return '∞';
-              })()}
+              {/* Глиф рисуем, а не печатаем: шрифтовой «+» на 22px выглядит
+                  рвано и не масштабируется. idle — ∞ текстом, остальное — CSS. */}
+              {loopState === 'idle' ? (
+                <span className={styles.loopInfinity} aria-hidden="true">∞</span>
+              ) : (
+                <span className={styles.loopGlyph} aria-hidden="true" />
+              )}
             </span>
           </button>
         );
       })}
+      <LoopContour shapes={loopShapes} />
     </div>
   );
 }

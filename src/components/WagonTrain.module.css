@@ -7,13 +7,22 @@
   align-items: stretch;
   gap: var(--bl-spacing-sm, 8px);
   flex-wrap: nowrap;
-  padding: 2px 12px;
+  /* 5px по вертикали: контур петли (outline 1px + offset 3px) должен
+     помещаться целиком — при 2px он срезался overflow'ом корня. */
+  padding: 5px 12px;
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
   scrollbar-width: none;
   background: var(--bl-surface-base, #0a0a14);
   border-radius: 0;
+
+  /* ── TrackMap control surface (see src/trackmap/) ──────────────────────
+     --tm-color      per-wagon block color, set inline from BLOCK_TYPE_CONFIG
+     --tm-fx-delay   per-wagon stagger, set inline by the FX runner
+     --tm-fx-k       0..1 glow multiplier (fxIntensity)                     */
+  --tm-fx-k: 1;
+  --tm-color: var(--bl-accent, #8b5cf6);
 }
 
 .root::-webkit-scrollbar {
@@ -29,7 +38,7 @@
   padding-top: var(--bl-spacing-xs, 4px);
   padding-bottom: var(--bl-spacing-xs, 4px);
   padding-left: var(--bl-spacing-sm, 8px);
-  padding-right: calc(var(--bl-spacing-sm, 8px) + 18px);
+  padding-right: calc(var(--bl-spacing-sm, 8px) + 22px);
   min-height: 34px;
   flex: 1 1 0;
   width: auto;
@@ -70,19 +79,57 @@
 }
 
 .wagon:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.55);
-  box-shadow:
-    inset 0 0 0 1px var(--bl-border-strong, rgba(255,255,255,0.22)),
-    0 0 10px var(--bl-accent, rgba(155,89,182,0.35)),
-    0 0 12px var(--bl-cover-glow, transparent);
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: color-mix(in srgb, var(--tm-color) 45%, transparent);
+  box-shadow: 0 0 calc(9px * var(--tm-fx-k)) color-mix(in srgb, var(--tm-color) 24%, transparent);
 }
 
+/* ── слой света: одна формула на активный блок и на презентацию ───────────
+   Никита 07.11: презентация должна подсвечивать блок ТАК ЖЕ, как активный,
+   а не «по-своему». Поэтому заливка + лампочки вынесены в отдельный слой
+   .lamp: активный включает его статично, fx — анимирует.
+   ::before остаётся цветовым градиентом типа, ::after — глянцем. */
+.lamp {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  background:
+    radial-gradient(22% 95% at 8% 118%, color-mix(in srgb, var(--tm-color) 55%, white) 0%, transparent 74%),
+    radial-gradient(18% 85% at 30% 126%, color-mix(in srgb, var(--tm-color) 45%, white) 0%, transparent 72%),
+    radial-gradient(16% 80% at 50% 132%, color-mix(in srgb, var(--tm-color) 40%, white) 0%, transparent 70%),
+    radial-gradient(18% 85% at 70% 126%, color-mix(in srgb, var(--tm-color) 45%, white) 0%, transparent 72%),
+    radial-gradient(22% 95% at 92% 118%, color-mix(in srgb, var(--tm-color) 55%, white) 0%, transparent 74%),
+    linear-gradient(180deg, color-mix(in srgb, var(--tm-color) 30%, transparent) 0%, color-mix(in srgb, var(--tm-color) 12%, transparent) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.26) 0%, transparent 44%);
+  filter: blur(0.4px);
+}
+
+/* Активный блок = зажжённая лампа под стеклом.
+   Никита 07.11: контур убран (было «толстая синяя линия»), но еле заметный
+   свет не читается — блок должен ГОРЕТЬ ЦЕЛИКОМ. */
 .wagon[data-active="true"] {
-  border-color: rgba(100, 200, 255, 0.9);
-  box-shadow: 0 0 0 2px rgba(100, 200, 255, 0.55),
-              0 0 14px var(--bl-cover-glow-strong, transparent);
-  background: rgba(100, 200, 255, 0.15);
+  border-color: color-mix(in srgb, var(--tm-color) 62%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--tm-color) 40%, transparent),
+    0 0 calc(18px * var(--tm-fx-k)) color-mix(in srgb, var(--tm-color) 40%, transparent);
+}
+
+.wagon[data-active="true"] .lamp {
+  opacity: 1;
+}
+
+.wagon[data-active="true"]::before {
+  opacity: 0.34;
+  transform: translateY(4%);
+}
+
+.wagon[data-active="true"] .title {
+  color: #ffffff;
+  text-shadow: 0 0 calc(9px * var(--tm-fx-k)) color-mix(in srgb, var(--tm-color) 60%, transparent);
 }
 
 .wagon[data-block-type="verse"]::before {
@@ -223,16 +270,14 @@
 
 .loopToggle {
   position: absolute;
-  z-index: 1;
-  right: 4px;
+  z-index: 2;
+  right: 5px;
   top: 50%;
-  transform: translateY(-50%) scale(0.92);
-  width: 20px;
-  height: 20px;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
   padding: 0;
   border-radius: 50%;
-  font-size: 13px;
-  line-height: 1;
   display: grid;
   place-items: center;
   background: rgba(0, 0, 0, 0.4);
@@ -241,80 +286,266 @@
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
-  transition: all 150ms ease;
+  transition:
+    opacity 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
   font-family: system-ui, -apple-system, sans-serif;
 }
 
 .loopToggle:hover {
-  background: rgba(255, 255, 255, 0.18);
-  color: #ffffff;
   transform: translateY(-50%) scale(1.08);
 }
 
-.loopToggle[data-active="true"] {
-  background: rgba(255, 140, 0, 0.55);
-  border-color: rgba(255, 140, 0, 0.8);
-  color: #ffffff;
+/* ── глифы ────────────────────────────────────────────────────────────────
+   Шрифтовой «+» на 22px рваный: у него разная толщина штрихов и он не
+   центруется. Рисуем крест двумя полосами — он чистый на любом масштабе. */
+.loopGlyph {
+  position: relative;
+  display: block;
+  width: 10px;
+  height: 10px;
+  color: inherit;
 }
 
-.loopToggle[data-active="true"]:hover {
-  background: rgba(255, 140, 0, 0.75);
+.loopGlyph::before,
+.loopGlyph::after {
+  content: "";
+  position: absolute;
+  border-radius: 1.5px;
+  background: currentColor;
 }
 
-.loopToggle[data-loop-state="idle"] {
-  font-weight: 400;
+/* вертикаль */
+.loopGlyph::before {
+  left: 50%;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+/* горизонталь */
+.loopGlyph::after {
+  top: 50%;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  transform: translateY(-50%);
+}
+
+/* в петле — минус: вертикаль убираем, остаётся черта */
+.loopToggle[data-loop-state="in-loop"] .loopGlyph::before {
+  display: none;
+}
+
+.loopInfinity {
+  font-size: 14px;
+  line-height: 1;
   letter-spacing: -0.5px;
+  transform: translateY(-1px);
+}
+
+/* ── состояния ────────────────────────────────────────────────────────── */
+
+/* idle: ∞ видно, но тихо — чтобы полоса не превращалась в ряд кнопок */
+.loopToggle[data-loop-state="idle"] {
+  opacity: 0.32;
+  pointer-events: auto;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .loopToggle[data-loop-state="idle"]:hover {
+  opacity: 1;
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.25);
 }
 
+/* Лампа петли: та же формула, что у активного блока — тёплое ядро снизу,
+   светлый ободок, янтарный ореол. Никита 07.11: «+» должен гореть так же
+   ярко, как блок в петле, иначе связка блоков не читается. */
+.loopToggle[data-loop-state="in-loop"],
 .loopToggle[data-loop-state="adjacent"] {
-  background: rgba(255, 140, 0, 0.2);
-  border-color: rgba(255, 140, 0, 0.45);
-  color: rgba(255, 200, 120, 0.9);
-  animation: loopPulse 2s ease-in-out infinite;
+  opacity: 1;
+  pointer-events: auto;
+  border-color: rgba(255, 230, 190, 0.9);
+  background:
+    radial-gradient(circle at 50% 140%, #fffaf0 0%, #ffe3b6 22%, #ffb861 56%, #ef8a1c 100%);
+  color: #4a2400;
+  box-shadow:
+    0 0 0 1px rgba(255, 178, 66, 0.4),
+    0 0 calc(13px * var(--tm-fx-k)) rgba(255, 167, 38, 0.55),
+    inset 0 calc(-3px * var(--tm-fx-k)) calc(7px * var(--tm-fx-k)) rgba(255, 255, 255, 0.72),
+    inset 0 1px 2px rgba(92, 46, 0, 0.28);
 }
 
-@keyframes loopPulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(255, 140, 0, 0.2);
-    transform: translateY(-50%) scale(0.92);
+.loopToggle[data-loop-state="in-loop"]:hover,
+.loopToggle[data-loop-state="adjacent"]:hover {
+  background:
+    radial-gradient(circle at 50% 140%, #ffffff 0%, #ffecce 24%, #ffc27c 60%, #ff9a2e 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 200, 110, 0.55),
+    0 0 calc(17px * var(--tm-fx-k)) rgba(255, 176, 52, 0.7),
+    inset 0 calc(-3px * var(--tm-fx-k)) calc(8px * var(--tm-fx-k)) rgba(255, 255, 255, 0.82),
+    inset 0 1px 2px rgba(92, 46, 0, 0.22);
+}
+
+/* Сосед: та же лампа, но дышит — приглашение достроить петлю.
+   Анимируется только ореол: transform занят ховером, иначе кнопка дёргается. */
+.loopToggle[data-loop-state="adjacent"] {
+  animation: loopInvite 2.6s ease-in-out infinite;
+}
+
+@keyframes loopInvite {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(255, 178, 66, 0.3),
+      0 0 calc(8px * var(--tm-fx-k)) rgba(255, 167, 38, 0.35),
+      inset 0 calc(-3px * var(--tm-fx-k)) calc(7px * var(--tm-fx-k)) rgba(255, 255, 255, 0.62),
+      inset 0 1px 2px rgba(92, 46, 0, 0.28);
   }
   50% {
-    box-shadow: 0 0 6px 1px rgba(255, 140, 0, 0.2);
-    transform: translateY(-50%) scale(1.0);
+    box-shadow:
+      0 0 0 1px rgba(255, 205, 130, 0.65),
+      0 0 calc(18px * var(--tm-fx-k)) rgba(255, 176, 52, 0.75),
+      inset 0 calc(-3px * var(--tm-fx-k)) calc(9px * var(--tm-fx-k)) rgba(255, 255, 255, 0.85),
+      inset 0 1px 2px rgba(92, 46, 0, 0.22);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loopToggle[data-loop-state="adjacent"] {
+    animation: none;
   }
 }
 
 .wagon:hover .loopToggle,
 .wagon:focus-within .loopToggle {
-  opacity: 0.85;
   pointer-events: auto;
   transform: translateY(-50%) scale(1);
 }
 
-.wagon .loopToggle[data-loop-state="adjacent"] {
-  opacity: 0.7;
-  pointer-events: auto;
-}
-
-.wagon:hover .loopToggle[data-loop-state="adjacent"] {
-  opacity: 0.9;
+.wagon:hover .loopToggle[data-loop-state="idle"],
+.loopToggle[data-loop-state="idle"]:focus-visible {
+  opacity: 1;
 }
 
 .loopToggle:focus-visible {
-  opacity: 0.85;
   pointer-events: auto;
   transform: translateY(-50%) scale(1);
 }
 
+/* Сосед петли: тёплый край со стороны, где петля уже идёт — читается как
+   «пристёгивается сюда». Только тень, геометрия не меняется. */
+.wagon[data-loop-join="left"]:not([data-active="true"]):not(:hover) {
+  box-shadow: inset 3px 0 calc(9px * var(--tm-fx-k)) calc(-4px * var(--tm-fx-k)) rgba(255, 167, 38, 0.5);
+}
+
+.wagon[data-loop-join="right"]:not([data-active="true"]):not(:hover) {
+  box-shadow: inset -3px 0 calc(9px * var(--tm-fx-k)) calc(-4px * var(--tm-fx-k)) rgba(255, 167, 38, 0.5);
+}
+
+.wagon[data-loop-join="both"]:not([data-active="true"]):not(:hover) {
+  box-shadow:
+    inset 3px 0 calc(9px * var(--tm-fx-k)) calc(-4px * var(--tm-fx-k)) rgba(255, 167, 38, 0.45),
+    inset -3px 0 calc(9px * var(--tm-fx-k)) calc(-4px * var(--tm-fx-k)) rgba(255, 167, 38, 0.45);
+}
+
+/* Петля: единый контур поверх группы блоков (см. SVG-слой в WagonTrain.tsx).
+   Никита 07.11: вместо отдельных коробок на каждом блоке — один силуэт
+   вокруг подряд идущих блоков петли, с тёплой заливкой и бегущим импульсом.
+   Периметр рисует SVG, здесь только тёплая «помывка» самого блока. */
 .wagon[data-in-loop="true"] {
-  border-color: rgba(255, 140, 0, 0.9);
-  box-shadow: 0 0 0 2px rgba(255, 140, 0, 0.55),
-              0 0 14px var(--bl-cover-glow-strong, transparent);
+  background-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, #ffa726 5%, transparent) 58%,
+    color-mix(in srgb, #ffa726 14%, transparent) 100%
+  );
+}
+
+/* SVG-слой контура петли — поверх вагонов, скроллится вместе с содержимым. */
+.loopSvg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.loopFill {
+  fill: color-mix(in srgb, #ffa726 9%, transparent);
+  stroke: none;
+}
+
+.loopOutline {
+  fill: none;
+  stroke: #ffb347;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  filter:
+    drop-shadow(0 0 3px rgba(255, 167, 38, 0.75))
+    drop-shadow(0 0 7px rgba(255, 167, 38, 0.45));
+  /* Контур петли «дышит» (Центр_2, 07.11): равномерная пульсация обводки —
+     это янтарь = петля. Нижний край НЕ анимируется направленно (старый
+     бегущий импульс по низу читался как «пульс в подблоках»). */
+  animation: loopBreath 3.4s ease-in-out infinite;
+}
+
+@keyframes loopBreath {
+  0%,
+  100% {
+    opacity: 0.62;
+    filter:
+      drop-shadow(0 0 2px rgba(255, 167, 38, 0.55))
+      drop-shadow(0 0 5px rgba(255, 167, 38, 0.3));
+  }
+  50% {
+    opacity: 1;
+    filter:
+      drop-shadow(0 0 4px rgba(255, 167, 38, 0.85))
+      drop-shadow(0 0 9px rgba(255, 167, 38, 0.55));
+  }
+}
+
+/* Искра прогресса — ТОЛЬКО по верхней кромке (loopSpark рисуется отдельным
+   путём, см. LoopContour.tsx). Нижний край (ряд суб-блоков) не задевается. */
+.loopSpark {
+  fill: none;
+  stroke: #ffd089;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 7 93;
+  stroke-dashoffset: 100;
+  filter: drop-shadow(0 0 3px rgba(255, 200, 120, 0.9));
+  animation: loopSparkRun 3.4s linear infinite;
+}
+
+@keyframes loopSparkRun {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loopOutline {
+    animation: none;
+    opacity: 0.9;
+  }
+  .loopSpark {
+    animation: none;
+    opacity: 0;
+  }
 }
 
 /* === Sub-block segments === */
@@ -357,11 +588,6 @@
   bottom: 0;
 }
 
-/* Активный подблок — яркая полоска */
-.subSegment[data-sub-active="true"] {
-  background: rgba(255, 255, 255, 0.5);
-}
-
 /* Hover на неактивный сегмент в активном блоке */
 .wagon[data-active="true"] .subSegment:not([data-sub-active="true"]):hover {
   background: rgba(255, 255, 255, 0.3);
@@ -376,22 +602,6 @@
   bottom: 0;
   width: 1px;
   background: rgba(255, 255, 255, 0.25);
-}
-
-/* Sub-segment loop highlight */
-.subSegment[data-in-loop="true"] {
-  background: rgba(255, 140, 0, 0.6);
-  box-shadow: 0 0 6px rgba(255, 140, 0, 0.5);
-}
-
-.subSegment[data-in-loop="true"]:hover {
-  background: rgba(255, 140, 0, 0.8);
-  box-shadow: 0 0 10px rgba(255, 140, 0, 0.7);
-}
-
-.subSegment[data-in-loop="true"][data-sub-active="true"] {
-  background: rgba(255, 140, 0, 0.7);
-  box-shadow: 0 0 8px rgba(255, 140, 0, 0.6);
 }
 
 /* Sub-loop toggle button */
@@ -419,9 +629,13 @@
   font-family: system-ui, -apple-system, sans-serif;
 }
 
+/* Sub-loop toggle: нейтральный контрол, БЕЗ янтаря — иначе ряд суб-блоков
+   «зеркалит» петлю блока (toggleBlock зеркалит состояние на все sub-keys ⇒
+   у каждого data-active=true ⇒ ряд янтарных кружков). Никита 07.11: петлю
+   показывает только общий контур. */
 .subLoopToggle[data-active="true"] {
-  background: rgba(255, 140, 0, 0.55);
-  border-color: rgba(255, 140, 0, 0.8);
+  background: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.28);
   color: #ffffff;
   opacity: 0.9;
   pointer-events: auto;
@@ -438,6 +652,360 @@
 }
 
 .subLoopToggle[data-active="true"]:hover {
-  background: rgba(255, 140, 0, 0.75);
+  background: rgba(255, 255, 255, 0.22);
   transform: translateX(-50%) scale(1.15);
+}
+
+/* ============================================================================
+   TRACKMAP FX — control layer
+   ----------------------------------------------------------------------------
+   Everything below is driven by data-attributes on .root / .wagon, never by
+   inline animation names. That keeps the visual language in one place and lets
+   presets (later) just swap a data-tm-fx value.
+
+   Rules of the house:
+   1. Every @keyframes starts AND ends at the neutral state — the runner uses
+      animation-fill-mode: both, so a non-neutral 100% frame would stick.
+   2. Glow radius is always `calc(<base> * var(--tm-fx-k))` so fxIntensity
+      scales the whole language without touching individual effects.
+   3. Nothing here moves layout — only box-shadow, transform, opacity, filter.
+   ========================================================================== */
+
+/* ── focus modes ────────────────────────────────────────────────────────── */
+
+.wagon {
+  transition:
+    opacity 220ms ease,
+    filter 220ms ease,
+    transform 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+/* soft: активный блок горит, остальные уходят в тень и теряют цвет.
+   Никита 07.11: без гашения активный Chorus не отличить от соседних Chorus —
+   у них одинаковый красный градиент от ::before.
+   Гасим ТОЛЬКО когда есть активный блок (data-tm-has-active): до старта
+   трека и на паузе полоса остаётся нормальной, иначе интерфейс мрачнеет.
+   🔴 Гасим СЛОИ, а не сам вагон: opacity/filter на .wagon гасит и бейдж
+   петли внутри него — из-за этого «+» на соседе выглядел тусклее «−» на
+   активном блоке (Никита 07.11 10:07), а добавленный в петлю блок терял
+   янтарный контур. Чипы в петле не гасим никогда — петля это состояние. */
+.root[data-tm-dim="soft"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-in-loop="true"]) {
+  background: color-mix(in srgb, var(--bl-surface-overlay, rgba(0, 0, 0, 0.18)) 55%, #05050b);
+  border-color: color-mix(in srgb, var(--bl-border-subtle, rgba(255, 255, 255, 0.12)) 55%, transparent);
+}
+
+.root[data-tm-dim="soft"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-in-loop="true"])::before {
+  opacity: 0.1;
+  filter: saturate(0.5);
+}
+
+.root[data-tm-dim="soft"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-in-loop="true"])::after {
+  opacity: 0.22;
+}
+
+.root[data-tm-dim="soft"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-in-loop="true"]) .title {
+  opacity: 0.5;
+}
+
+/* solo: выживают активный, выбранное и всё, что в петле.
+   Тот же слойный принцип: сам вагон не трогаем, только его слои. */
+.root[data-tm-dim="solo"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-in-loop="true"]):not([data-tm-selected="true"]) {
+  background: color-mix(in srgb, var(--bl-surface-overlay, rgba(0, 0, 0, 0.18)) 40%, #030309);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.root[data-tm-dim="solo"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-in-loop="true"]):not([data-tm-selected="true"])::before {
+  opacity: 0.06;
+  filter: saturate(0.3);
+}
+
+.root[data-tm-dim="solo"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-in-loop="true"]):not([data-tm-selected="true"])::after {
+  opacity: 0.12;
+}
+
+.root[data-tm-dim="solo"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-in-loop="true"]):not([data-tm-selected="true"]) .title {
+  opacity: 0.3;
+}
+
+/* ── selection (LoopLearn material) ─────────────────────────────────────── */
+
+.wagon[data-tm-selected="true"] {
+  border-color: var(--tm-color);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--tm-color) 70%, transparent),
+    0 0 calc(10px * var(--tm-fx-k)) color-mix(in srgb, var(--tm-color) 55%, transparent);
+}
+
+/* ── fx runner hook ─────────────────────────────────────────────────────── */
+
+/* Две анимации на вагон: движение (tm*) + «загорание» (tmLitBody).
+   Слой .lamp получает свою кривую с тем же стаггером — поэтому презентация
+   выглядит ровно как активный блок, а не как отдельный эффект. */
+.root[data-tm-fx] .wagon {
+  animation-duration: var(--tm-fx-duration, 2400ms), var(--tm-fx-duration, 2400ms);
+  animation-delay: var(--tm-fx-delay, 0ms), var(--tm-fx-delay, 0ms);
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1), ease-out;
+  animation-fill-mode: both, both;
+  will-change: transform, box-shadow, opacity;
+}
+
+.root[data-tm-fx] .wagon .lamp {
+  animation: tmLamp var(--tm-fx-duration, 2400ms) cubic-bezier(0.4, 0, 0.2, 1)
+    var(--tm-fx-delay, 0ms) both;
+}
+
+.root[data-tm-fx="cascade"] .wagon,
+.root[data-tm-fx="cascade-rev"] .wagon {
+  animation-name: tmCascade, tmLitBody;
+}
+
+.root[data-tm-fx="tree"] .wagon {
+  animation-name: tmTree, tmLitBody;
+}
+
+.root[data-tm-fx="chase"] .wagon {
+  animation-name: tmChase, tmLitBody;
+  animation-timing-function: linear, ease-out;
+}
+
+.root[data-tm-fx="breath"] .wagon {
+  animation-name: tmBreath, tmLitBody;
+  animation-timing-function: ease-in-out, ease-out;
+}
+
+.root[data-tm-fx="spark"] .wagon {
+  animation-name: tmSpark, tmLitBody;
+}
+
+.root[data-tm-fx="pair"] .wagon {
+  animation-name: tmPair, tmLitBody;
+}
+
+.root[data-tm-fx="settle"] .wagon {
+  animation-name: tmSettle, tmLitBody;
+}
+
+.root[data-tm-fx="ripple"] .wagon {
+  animation-name: tmRipple, tmLitBody;
+}
+
+.root[data-tm-fx="lift"] .wagon {
+  animation-name: tmLift, tmLitBody;
+}
+
+/* Загорание: чип выходит из тени, вспыхивает и снова уходит в тень. */
+@keyframes tmLitBody {
+  0%,
+  100% {
+    opacity: 0.45;
+    filter: saturate(0.55) brightness(0.85);
+  }
+  22% {
+    opacity: 1;
+    filter: saturate(1.1) brightness(1.12);
+  }
+  58% {
+    opacity: 0.78;
+    filter: saturate(0.85) brightness(0.98);
+  }
+}
+
+/* Слой света включается на пике — те же «лампочки под стеклом», что у активного. */
+@keyframes tmLamp {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 0.5;
+  }
+}
+
+/* ── keyframes ──────────────────────────────────────────────────────────── */
+
+/* cascade / cascade-rev — свет бежит по полосе.
+   🔴 Только свет, никакой геометрии: translateY давал «дёрганье» (баг 07.11). */
+@keyframes tmCascade {
+  0%,
+  100% {
+    box-shadow: 0 0 6px var(--bl-cover-glow, transparent);
+    border-color: var(--bl-cover-border, var(--bl-border-subtle, rgba(255, 255, 255, 0.12)));
+  }
+  22% {
+    border-color: color-mix(in srgb, var(--tm-color) 85%, white);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--tm-color) 65%, transparent),
+      0 0 calc(16px * var(--tm-fx-k)) var(--tm-color);
+  }
+  55% {
+    box-shadow: 0 0 calc(6px * var(--tm-fx-k)) color-mix(in srgb, var(--tm-color) 45%, transparent);
+  }
+}
+
+/* tree — double beat: bright, fade, weaker echo (ёлочка перемигивается) */
+@keyframes tmTree {
+  0%,
+  100% {
+    box-shadow: 0 0 6px var(--bl-cover-glow, transparent);
+  }
+  16% {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--tm-color) 70%, transparent),
+      0 0 calc(18px * var(--tm-fx-k)) var(--tm-color);
+    border-color: var(--tm-color);
+  }
+  38% {
+    box-shadow: 0 0 calc(4px * var(--tm-fx-k)) color-mix(in srgb, var(--tm-color) 30%, transparent);
+  }
+  56% {
+    box-shadow: 0 0 calc(11px * var(--tm-fx-k)) color-mix(in srgb, var(--tm-color) 60%, transparent);
+  }
+}
+
+/* chase — two tight passes, no vertical movement */
+@keyframes tmChase {
+  0%,
+  100% {
+    box-shadow: 0 0 6px var(--bl-cover-glow, transparent);
+  }
+  8% {
+    box-shadow: 0 0 calc(14px * var(--tm-fx-k)) var(--tm-color);
+    border-color: color-mix(in srgb, var(--tm-color) 80%, white);
+  }
+  20% {
+    box-shadow: 0 0 4px color-mix(in srgb, var(--tm-color) 20%, transparent);
+  }
+  32% {
+    box-shadow: 0 0 calc(14px * var(--tm-fx-k)) var(--tm-color);
+  }
+  46% {
+    box-shadow: 0 0 4px color-mix(in srgb, var(--tm-color) 20%, transparent);
+  }
+}
+
+/* breath — вся полоса дышит светом, синхронно (без scale: он давал дрожь) */
+@keyframes tmBreath {
+  0%,
+  100% {
+    box-shadow: 0 0 6px var(--bl-cover-glow, transparent);
+  }
+  25% {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--tm-color) 45%, transparent),
+      0 0 calc(14px * var(--tm-fx-k)) color-mix(in srgb, var(--tm-color) 65%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 5px color-mix(in srgb, var(--tm-color) 25%, transparent);
+  }
+  75% {
+    box-shadow: 0 0 calc(10px * var(--tm-fx-k)) color-mix(in srgb, var(--tm-color) 45%, transparent);
+  }
+}
+
+/* spark — резкая вспышка без поворота (rotate/scale читались как баг) */
+@keyframes tmSpark {
+  0%,
+  100% {
+    box-shadow: 0 0 6px var(--bl-cover-glow, transparent);
+  }
+  10% {
+    border-color: color-mix(in srgb, var(--tm-color) 90%, white);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--tm-color) 80%, transparent),
+      0 0 calc(20px * var(--tm-fx-k)) var(--tm-color);
+  }
+  24% {
+    box-shadow: 0 0 calc(5px * var(--tm-fx-k)) color-mix(in srgb, var(--tm-color) 35%, transparent);
+  }
+}
+
+/* pair — two beats, one per wagon in the pair */
+@keyframes tmPair {
+  0%,
+  100% {
+    box-shadow: 0 0 6px var(--bl-cover-glow, transparent);
+  }
+  14% {
+    box-shadow: 0 0 calc(15px * var(--tm-fx-k)) var(--tm-color);
+    border-color: var(--tm-color);
+  }
+  30% {
+    box-shadow: 0 0 4px transparent;
+  }
+  46% {
+    box-shadow: 0 0 calc(15px * var(--tm-fx-k)) var(--tm-color);
+  }
+  66% {
+    box-shadow: 0 0 4px transparent;
+  }
+}
+
+/* settle — rise, then a soft landing with a lingering glow */
+@keyframes tmSettle {
+  0%,
+  100% {
+    box-shadow: 0 0 6px var(--bl-cover-glow, transparent);
+  }
+  18% {
+    box-shadow: 0 0 calc(18px * var(--tm-fx-k)) var(--tm-color);
+    border-color: color-mix(in srgb, var(--tm-color) 85%, white);
+  }
+  42% {
+    box-shadow: 0 0 calc(9px * var(--tm-fx-k)) color-mix(in srgb, var(--tm-color) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 calc(4px * var(--tm-fx-k)) color-mix(in srgb, var(--tm-color) 30%, transparent);
+  }
+}
+
+/* ripple — the glow expands outward like a ring */
+@keyframes tmRipple {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  20% {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--tm-color) 60%, transparent),
+      0 0 0 1px color-mix(in srgb, var(--tm-color) 55%, transparent);
+    border-color: var(--tm-color);
+  }
+  55% {
+    box-shadow:
+      0 0 0 calc(5px * var(--tm-fx-k)) color-mix(in srgb, var(--tm-color) 20%, transparent),
+      0 0 calc(16px * var(--tm-fx-k)) color-mix(in srgb, var(--tm-color) 35%, transparent);
+  }
+}
+
+/* lift — pure physics: the strip breathes upward, colour stays untouched */
+@keyframes tmLift {
+  0%,
+  100% {
+    transform: translateY(0);
+    filter: brightness(1);
+  }
+  30% {
+    transform: translateY(-4px);
+    filter: brightness(1.28);
+  }
+  62% {
+    transform: translateY(1px);
+    filter: brightness(1.05);
+  }
+}
+
+/* Accessibility: no motion, keep a single quiet brightness cue instead.
+   Note: @keyframes cannot take a selector list, so the animation is simply
+   switched off and replaced by one static cue for the effect window. */
+@media (prefers-reduced-motion: reduce) {
+  .root[data-tm-fx] .wagon {
+    animation: none;
+    filter: brightness(1.18);
+  }
 }
