@@ -36,11 +36,11 @@ export function revokeTrackUrls(
   revoke: RevokeFn = (url) => URL.revokeObjectURL(url)
 ): void {
   const tu = host.trackUrls;
-  if (!tu) return;
+  if (!tu) {return;}
 
   for (const key of ['instrumentalUrl', 'vocalsUrl'] as const) {
     const url = tu[key];
-    if (!url) continue;
+    if (!url) {continue;}
     try {
       revoke(url);
     } catch {

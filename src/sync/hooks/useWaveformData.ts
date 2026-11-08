@@ -37,7 +37,7 @@ const PIPELINE_GRACE_MS = 1200;
 function pipelineBuffer(ae: any, stemId: string): AudioBuffer | null {
   try {
     const buf = ae?.getStemAudioBuffer?.(stemId);
-    if (!buf || typeof buf.duration !== 'number' || !(buf.duration > 0)) return null;
+    if (!buf || typeof buf.duration !== 'number' || !(buf.duration > 0)) {return null;}
     return buf as AudioBuffer;
   } catch {
     return null;
@@ -127,7 +127,7 @@ export function useWaveformData(): WaveformData {
         // Пайплайн жив, но отдал не всё → короткий грейс вместо немедленного декода.
         const covered = (!iUrl || iReady) && (!vUrl || vReady);
         if (pipelineAlive && !covered) {
-          if (!pipelineSeenAt) pipelineSeenAt = Date.now();
+          if (!pipelineSeenAt) {pipelineSeenAt = Date.now();}
           if (Date.now() - pipelineSeenAt < PIPELINE_GRACE_MS) {
             pollTimer = setTimeout(load, URL_POLL_INTERVAL_MS);
             return;
