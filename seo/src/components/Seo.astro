@@ -4,7 +4,7 @@
  * the limits from rules/ROLE-711.md — a silent 74-character title is a real SEO
  * defect that is invisible in review, so it must not reach production.
  */
-import { SITE, BRAND, LOCALE, OG_DEFAULT } from '../lib/site.mjs';
+import { SITE, BRAND, LOCALE, OG_DEFAULT, canonicalUrl } from '../lib/site.mjs';
 
 interface Props {
   title: string;
@@ -41,8 +41,7 @@ if (problems.length > 0) {
 }
 
 const rawPath = canonicalPath ?? Astro.url.pathname;
-const canonicalPathname = rawPath === '/' ? '/' : `/${rawPath.replace(/^\/+|\/+$/g, '')}/`;
-const canonical = new URL(canonicalPathname, SITE).href;
+const canonical = canonicalUrl(rawPath);
 const ogImageUrl = new URL(ogImage, SITE).href;
 
 // Verification tokens come from CI secrets at build time. Never hardcode them.

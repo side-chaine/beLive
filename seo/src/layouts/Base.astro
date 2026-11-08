@@ -3,6 +3,7 @@ import Seo from '../components/Seo.astro';
 import Schema from '../components/Schema.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import { canonicalUrl } from '../lib/site.mjs';
 import '../styles/global.css';
 
 interface Props {
@@ -26,7 +27,7 @@ const { schemas = [], ...seo } = Astro.props;
     <meta name="theme-color" content="#6366f1" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0b0b12" media="(prefers-color-scheme: dark)" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="alternate" hreflang="ru" href={new URL(seo.canonicalPath ?? '/', Astro.site).href} />
+    <link rel="alternate" hreflang="ru" href={canonicalUrl(seo.canonicalPath ?? Astro.url.pathname)} />
     <Seo {...seo} />
     <Schema schemas={schemas} />
   </head>

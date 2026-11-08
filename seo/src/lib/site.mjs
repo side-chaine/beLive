@@ -15,3 +15,10 @@ export const LANG = 'ru';
 
 // Default social preview (1200x630) served from seo/public/og/.
 export const OG_DEFAULT = '/og/og-default.png';
+
+// One canonical form for every page: `/<slug>/`, root stays `/`. Both the
+// canonical link and hreflang go through here so they can never disagree.
+export const normalizePath = (path) =>
+  path === '/' ? '/' : `/${String(path).replace(/^\/+|\/+$/g, '')}/`;
+
+export const canonicalUrl = (path) => new URL(normalizePath(path), SITE).href;
