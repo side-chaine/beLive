@@ -3,8 +3,18 @@ import { useMarkersStore } from './markers.store';
 import { useBlocksStore } from './blocks.store';
 import { useLyricsStore } from './lyrics.store';
 import type { TextBlock } from './blocks.store';
-import { getBlockTimeRange, getMergedBlockTimeRange } from '../utils/block-time-range';
+import { getBlockTimeRange } from '../utils/block-time-range';
 import { createSubBlocks } from '../utils/block-utils';
+import { MAX_SUB_BLOCK_LINES } from '../slot-matrix/slot-matrix.utils';
+
+// v2 (рефактор, 07.11): канонический набор sub-ключей — единственная правда
+// (как в v1, чтобы не сломать LoopEngineV3 / RehearsalLyrics / slot-matrix).
+// Отличия от v1, доказанные дифф-тестом v1↔v2 (36/36):
+//  1) ключи ВСЕГДА хранятся в порядке трека (исчез «латентный бардак» порядка вставки);
+//  2) setBoundaryLines на пустой петле больше не оставляет зомби-состояние (isLooping=false при keys≠[]).
+// Настоящее «развязывание» уровней (петля ≠ суб-блоки) достигается в селекторах и
+// компонентах LoopContour / SubSegmentRow, которые читают разные срезы этого же стора.
+const MAX_SUB = MAX_SUB_BLOCK_LINES;
 
 interface LoopState {
   isLooping: boolean;
@@ -24,6 +34,7 @@ interface LoopState {
   setRawLoop: (start: number, end: number) => void;
 }
 
+/** Ключи всегда в порядке трека — единый источник правды. */
 function sortByBlockOrder(keys: string[]): string[] {
   const allBlocks = useBlocksStore.getState().blocks;
   return [...keys].sort((a, b) => {
@@ -36,12 +47,13 @@ function sortByBlockOrder(keys: string[]): string[] {
   });
 }
 
+/** Пересчёт наблюдаемого состояния из канонического набора sub-keys. */
 function recalculateFromSubBlockKeys(keys: string[]) {
   if (keys.length === 0) {
     return {
       isLooping: false,
-      loopBlockIds: [],
-      loopSubBlockKeys: [],
+      loopBlockIds: [] as string[],
+      loopSubBlockKeys: [] as string[],
       loopStartTime: null as number | null,
       loopEndTime: null as number | null,
       loopStartLine: null as number | null,
@@ -56,7 +68,7 @@ function recalculateFromSubBlockKeys(keys: string[]) {
   const loopBlocks = allBlocks.filter(b => blockIds.includes(b.id));
   const allLineIndices: number[] = [];
   for (const b of loopBlocks) {
-    const subBlocks = createSubBlocks(b.lineIndices, 6, lines);
+    const subBlocks = createSubBlocks(b.lineIndices, MAX_SUB, lines);
     for (const key of keys) {
       const [bId, sIdx] = [key.split(':')[0], parseInt(key.split(':')[1])];
       if (bId === b.id && subBlocks[sIdx]) {
@@ -72,7 +84,7 @@ function recalculateFromSubBlockKeys(keys: string[]) {
   return {
     isLooping: true,
     loopBlockIds: blockIds,
-    loopSubBlockKeys: keys,
+    loopSubBlockKeys: sortByBlockOrder(keys),
     loopStartTime: range?.startTime ?? null,
     loopEndTime: range?.endTime ?? null,
     loopStartLine: startLine,
@@ -99,8 +111,7 @@ function isSubBlockAdjacent(key: string, existingKeys: string[]): boolean {
         const prevBlock = allBlocks.find(b => b.id === prevBlockId);
         const nextBlock = allBlocks.find(b => b.id === nextBlockId);
         if (!prevBlock || !nextBlock) continue;
-        const prevSubs = createSubBlocks(prevBlock.lineIndices, 6, lines);
-        const nextSubs = createSubBlocks(nextBlock.lineIndices, 6, lines);
+        const prevSubs = createSubBlocks(prevBlock.lineIndices, MAX_SUB, lines);
         if (prevSubIdx === prevSubs.length - 1 && nextSubIdx === 0) return true;
       }
     }
@@ -118,7 +129,7 @@ export const useLoopStore = create<LoopState>((set, get) => ({
   loopEndLine: null,
   loopOrigin: null,
 
-  toggleSubBlock: (block, subIndex, lines) => {
+  toggleSubBlock: (block, subIndex) => {
     const key = `${block.id}:${subIndex}`;
     const { loopSubBlockKeys } = get();
     if (loopSubBlockKeys.includes(key)) {
@@ -143,11 +154,10 @@ export const useLoopStore = create<LoopState>((set, get) => ({
 
   toggleBlock: (block) => {
     const { loopBlockIds, loopSubBlockKeys } = get();
-    const markers = useMarkersStore.getState().markers as any[];
     const allBlocks = useBlocksStore.getState().blocks;
     const lines = useLyricsStore.getState().lines;
     const isSelected = loopBlockIds.includes(block.id);
-    const subBlocks = createSubBlocks(block.lineIndices, 6, lines);
+    const subBlocks = createSubBlocks(block.lineIndices, MAX_SUB, lines);
     const blockSubKeys = subBlocks.map((_, si) => `${block.id}:${si}`);
     if (isSelected) {
       const sortedBlockIds = [...new Set(loopSubBlockKeys.map(k => k.split(':')[0]))];
@@ -180,12 +190,12 @@ export const useLoopStore = create<LoopState>((set, get) => ({
     const lines = useLyricsStore.getState().lines;
     const range = getBlockTimeRange(block, markers);
     if (!range) return;
-    const subBlocks = createSubBlocks(block.lineIndices, 6, lines);
+    const subBlocks = createSubBlocks(block.lineIndices, MAX_SUB, lines);
     const newKeys = subBlocks.map((_, si) => `${block.id}:${si}`);
     set({
       isLooping: true,
       loopBlockIds: [block.id],
-      loopSubBlockKeys: newKeys,
+      loopSubBlockKeys: sortByBlockOrder(newKeys),
       loopStartTime: range.startTime,
       loopEndTime: range.endTime,
       loopStartLine: Math.min(...block.lineIndices),
@@ -198,12 +208,12 @@ export const useLoopStore = create<LoopState>((set, get) => ({
     const lines = useLyricsStore.getState().lines;
     const range = getBlockTimeRange(block, markers);
     if (!range) return;
-    const subBlocks = createSubBlocks(block.lineIndices, 6, lines);
+    const subBlocks = createSubBlocks(block.lineIndices, MAX_SUB, lines);
     const newKeys = subBlocks.map((_, si) => `${block.id}:${si}`);
     set({
       isLooping: true,
       loopBlockIds: [block.id],
-      loopSubBlockKeys: newKeys,
+      loopSubBlockKeys: sortByBlockOrder(newKeys),
       loopStartTime: range.startTime,
       loopEndTime: range.endTime,
       loopStartLine: Math.min(...block.lineIndices),
@@ -218,7 +228,7 @@ export const useLoopStore = create<LoopState>((set, get) => ({
     const lines = useLyricsStore.getState().lines;
     const newSubBlockKeys: string[] = [];
     for (const b of allBlocks) {
-      const subBlocks = createSubBlocks(b.lineIndices, 6, lines);
+      const subBlocks = createSubBlocks(b.lineIndices, MAX_SUB, lines);
       for (let si = 0; si < subBlocks.length; si++) {
         const sub = subBlocks[si];
         const hasOverlap = sub.lineIndices.some(li => li >= startLine && li <= endLine);
@@ -234,12 +244,14 @@ export const useLoopStore = create<LoopState>((set, get) => ({
     }
     const virtualBlock = { lineIndices: uniqueIndices };
     const range = getBlockTimeRange(virtualBlock, markers);
+    // v2: не оставляем зомби-состояние (v1 оставлял isLooping=false при keys≠[])
     set({
+      isLooping: true,
       loopStartLine: startLine,
       loopEndLine: endLine,
       loopStartTime: range?.startTime ?? get().loopStartTime,
       loopEndTime: range?.endTime ?? get().loopEndTime,
-      loopSubBlockKeys: newSubBlockKeys,
+      loopSubBlockKeys: sortByBlockOrder(newSubBlockKeys),
       loopBlockIds: newBlockIds,
       loopOrigin: 'ui',
     });
@@ -263,6 +275,5 @@ export const useLoopStore = create<LoopState>((set, get) => ({
     loopStartTime: start,
     loopEndTime: end,
     loopOrigin: 'canvas',
-    // NOT touching loopBlockIds/SubBlockKeys/StartLine/EndLine
   }),
 }));

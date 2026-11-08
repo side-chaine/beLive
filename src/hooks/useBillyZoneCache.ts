@@ -67,11 +67,19 @@ export function useBillyZoneCache() {
     // useBillyZoneCache не смотрит на сам док, поэтому подписываемся на
     // CSS-var через MutationObserver на <html>. Билли теперь ВСЕГДА стоит на
     // живой поверхности дока и едет вместе с ней (раскрытие/скрытие/трек).
-    let lastDeckH = document.documentElement.style.getPropertyValue('--bl-deck-height');
+    // 708 / 07.11 · шаг 4: следим за ВСЕМИ тремя высотами, а не только за доком.
+    // В нашем каноне header+wagon = 108 константа, но в Compare-режиме TrackMap
+    // будет менять высоту на ходу (несколько дорожек) => Билли должен ехать сразу.
+    const readLayoutH = () => ({
+      deck: document.documentElement.style.getPropertyValue('--bl-deck-height'),
+      wagon: document.documentElement.style.getPropertyValue('--wagon-train-height'),
+      header: document.documentElement.style.getPropertyValue('--react-header-height'),
+    });
+    let lastLayout = readLayoutH();
     const mo = new MutationObserver(() => {
-      const v = document.documentElement.style.getPropertyValue('--bl-deck-height');
-      if (v === lastDeckH) return; // только при реальном изменении высоты дока
-      lastDeckH = v;
+      const v = readLayoutH();
+      if (v.deck === lastLayout.deck && v.wagon === lastLayout.wagon && v.header === lastLayout.header) return;
+      lastLayout = v;
       compute();
     });
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
