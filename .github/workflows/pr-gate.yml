@@ -40,12 +40,11 @@ jobs:
       - name: Test
         run: npm test -- --run
 
-      # Те же шесть гейтов, что в deploy.yml, и тот же JUNCTION_GRACE:
-      # без него G-7 краснеет на известных жертвах CF-батча.
+      # Те же шесть гейтов, что в deploy.yml. JUNCTION_GRACE снят (N1f):
+      # все 3 записи (wrangler-env-d1, vite-url-ai-worker, vite-url-worker-src)
+      # помечены гейтом как GRACE-STALE — соответствующих нарушений больше нет.
       - name: Verify Gates
         run: npm run verify:ci
-        env:
-          JUNCTION_GRACE: 'wrangler-env-d1,vite-url-ai-worker,vite-url-worker-src'
 
       # Переменные те же, что в deploy.yml, чтобы сборка на PR была
       # побайтово той же сборкой, что потом поедет на Pages. Иначе гейт

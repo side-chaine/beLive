@@ -130,3 +130,9 @@ beLive-bridge
 .wrangler/
 .dev.vars
 .dev.vars.*
+
+# 805 (N1e): скомпилированные бандлы воркера + генеримый prebuild + бинарники в src
+gateway/dist-*/
+public/team-m/
+src/**/*.tar.gz
+team-m/tmp/

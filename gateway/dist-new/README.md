@@ -1,1 +1,0 @@
-This folder contains the built output assets for the worker "belive-gateway" generated at 2026-06-22T21:29:54.922Z.
