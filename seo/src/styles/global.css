@@ -1,0 +1,311 @@
+/* beLive marketing site — zero JS, system fonts, adaptive theme.
+   Accent matches the app (#6366f1) so the handoff to app.mybelive.com is seamless. */
+
+:root {
+  --bg: #ffffff;
+  --bg-soft: #f6f6fb;
+  --surface: #ffffff;
+  --border: #e4e4ef;
+  --text: #14141c;
+  --text-dim: #5b5b70;
+  --accent: #6366f1;
+  --accent-strong: #4f46e5;
+  --accent-contrast: #ffffff;
+  --shadow: 0 1px 2px rgb(20 20 28 / 6%), 0 12px 32px -12px rgb(20 20 28 / 12%);
+  --radius: 14px;
+  --maxw: 1080px;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0b12;
+    --bg-soft: #12121b;
+    --surface: #15151f;
+    --border: #26263a;
+    --text: #ececf4;
+    --text-dim: #a0a0b8;
+    --accent: #8b8dff;
+    --accent-strong: #6366f1;
+    --accent-contrast: #0b0b12;
+    --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 18px 48px -20px rgb(0 0 0 / 60%);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.65;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+}
+
+.skip:focus {
+  left: 16px;
+  top: 16px;
+  z-index: 10;
+  padding: 10px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.wrap {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── header ─────────────────────────────────────────────────────────────── */
+
+.site-header {
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  backdrop-filter: blur(10px);
+}
+
+.site-header .wrap {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-height: 64px;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.brand span {
+  color: var(--accent);
+}
+
+.site-nav {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.site-nav a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 15px;
+}
+
+.site-nav a:hover {
+  color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .site-nav .nav-optional {
+    display: none;
+  }
+}
+
+/* ── hero ───────────────────────────────────────────────────────────────── */
+
+.hero {
+  padding: 88px 0 72px;
+}
+
+.eyebrow {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 17px;
+  color: var(--text-dim);
+  margin: 0 0 18px;
+}
+
+h1 {
+  font-size: clamp(32px, 5vw, 52px);
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  margin: 0 0 20px;
+  max-width: 22ch;
+}
+
+.lede {
+  font-size: clamp(17px, 2vw, 20px);
+  color: var(--text-dim);
+  max-width: 58ch;
+  margin: 0 0 32px;
+}
+
+/* ── buttons ────────────────────────────────────────────────────────────── */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: var(--shadow);
+}
+
+.btn-primary:hover {
+  background: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.btn-ghost:hover {
+  background: var(--bg-soft);
+}
+
+.btn-note {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+/* ── sections ───────────────────────────────────────────────────────────── */
+
+section {
+  padding: 56px 0;
+}
+
+section + section {
+  border-top: 1px solid var(--border);
+}
+
+h2 {
+  font-size: clamp(24px, 3vw, 32px);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0 0 28px;
+}
+
+h3 {
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: step;
+}
+
+.steps li {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  counter-increment: step;
+}
+
+.steps li::before {
+  content: counter(step);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 14px;
+}
+
+.steps p {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 16px;
+}
+
+.note {
+  border-left: 3px solid var(--accent);
+  padding: 4px 0 4px 20px;
+  color: var(--text-dim);
+  margin: 32px 0 0;
+}
+
+/* ── footer ─────────────────────────────────────────────────────────────── */
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  padding: 40px 0 56px;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.site-footer .wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 32px;
+  align-items: baseline;
+}
+
+.site-footer a {
+  color: var(--text-dim);
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  color: var(--text);
+}
+
+.site-footer .copyright {
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .site-footer .copyright {
+    margin-left: 0;
+  }
+}

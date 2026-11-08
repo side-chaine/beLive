@@ -1,0 +1,19 @@
+---
+/**
+ * Single CTA for the whole site. Marketing pages must always hand off to the
+ * application at app.mybelive.com — never render app UI here.
+ */
+import { APP_URL } from '../lib/site.mjs';
+
+interface Props {
+  label?: string;
+  note?: string;
+}
+
+const { label = 'Открыть студию', note = 'Бесплатно, без установки' } = Astro.props;
+---
+
+<div class="actions">
+  <a class="btn btn-primary" href={APP_URL} rel="noopener">{label}</a>
+  <span class="btn-note">{note}</span>
+</div>
