@@ -188,7 +188,7 @@ let autoPassListener: ((e: Event) => void) | null = null;
 function startAutoPassDetection() {
   if (autoPassListener) {return;}
   
-  autoPassListener = ((e: Event) => {
+  autoPassListener = (() => {
     const state = usePracticeStore.getState();
     if (!state.isActive || state.practiceStatus !== 'running' || !state.isAutoAdvance) {return;}
     if (state.isPassInProgress) {return;}

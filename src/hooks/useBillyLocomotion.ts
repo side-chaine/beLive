@@ -21,7 +21,6 @@ import { isBillyControlActive } from './useBillyControl';
 import {
   BILLY_HALF_WIDTH,
   BILLY_HEIGHT,
-  POSITION_DEADZONE,
   PUPIL_OFFSET_MAX_X,
   PUPIL_OFFSET_MAX_Y,
   PUPIL_RADIUS_BASE,

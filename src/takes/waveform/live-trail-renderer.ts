@@ -100,7 +100,6 @@ export class LiveTrailRenderer {
    * @param accumulator - Source of accumulated waveform data
    * @param skin - Visual appearance settings
    */
-  private drawCallCount = 0;
   
   draw(
     accumulator: LiveWaveformAccumulator,

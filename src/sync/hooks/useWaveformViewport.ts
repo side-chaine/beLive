@@ -19,8 +19,6 @@ interface UseWaveformViewportOptions {
  * Handles stable viewport calculations without touching interaction core.
  */
 export function useWaveformViewport({
-  containerRef,
-  canvasRef,
   playheadRef,
   sizeRef,
   scrollLeftRef,

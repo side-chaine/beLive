@@ -13,11 +13,6 @@ interface LastFmImage {
   size: string;
 }
 
-interface LastFmTrack {
-  album?: {
-    image?: LastFmImage[];
-  };
-}
 
 export async function fetchCoverArt(artist: string, title: string): Promise<string | null> {
   try {
@@ -274,7 +269,7 @@ function hslToHex(h: number, s: number, l: number): string {
 }
 
 function medianCutExtract(imageData: ImageData, coverUrl: string): CoverArtTheme {
-  const { data, width, height } = imageData;
+  const { data } = imageData;
   const pixels: HslPixel[] = [];
   const step = 7; // Sample every 7th pixel
 

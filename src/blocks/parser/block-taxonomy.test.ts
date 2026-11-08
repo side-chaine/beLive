@@ -52,7 +52,7 @@ describe('resolveBlockAlias', () => {
 
   it('all aliases resolve to valid types', () => {
     const validTypes = new Set(['intro','verse','prechorus','chorus','postchorus','bridge','interlude','outro','hook','solo','instrumental','build','drop','breakdown','spoken','rap']);
-    for (const [alias, entry] of Object.entries(BLOCK_ALIAS_MAP)) {
+    for (const [, entry] of Object.entries(BLOCK_ALIAS_MAP)) {
       expect(validTypes.has(entry.type)).toBe(true);
     }
   });

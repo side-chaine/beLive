@@ -114,7 +114,7 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
       const res = await fetch(`${FEED_API}/api/feed/posts`);
       if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
       const data = await res.json();
-      const posts = data.posts.map(mapPost);
+      const posts: FeedPost[] = data.posts.map(mapPost);
       const savedLikes = loadLikes();
       const withLikes = posts.map(p => ({
         ...p,
@@ -228,11 +228,11 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
           lastEvent: { type: newLiked ? 'like' : 'neutral', postId, timestamp: Date.now() },
         }));
       } else {
-        set(s => ({ lastEvent: { type: 'neutral', postId, timestamp: Date.now() } }));
+        set(() => ({ lastEvent: { type: 'neutral', postId, timestamp: Date.now() } }));
       }
     } catch (err) {
       console.error('[feed.store] toggleLike error:', err);
-      set(s => ({ lastEvent: { type: 'neutral', postId, timestamp: Date.now() } }));
+      set(() => ({ lastEvent: { type: 'neutral', postId, timestamp: Date.now() } }));
     }
   },
 
@@ -317,7 +317,7 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
       const res = await fetch(`${FEED_API}/api/feed/posts/${postId}/comments`);
       if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
       const data = await res.json();
-      const comments = (data.comments || []).slice().reverse();
+      const comments: FeedComment[] = (data.comments || []).slice().reverse();
       set(s => ({
         comments: { ...s.comments, [postId]: comments },
         commentsStatus: { ...s.commentsStatus, [postId]: 'ready' },
@@ -343,7 +343,7 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
       const res = await fetch(`${FEED_API}/api/feed/posts/${postId}/comments`);
       if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
       const data = await res.json();
-      const comments = (data.comments || []).slice().reverse();
+      const comments: FeedComment[] = (data.comments || []).slice().reverse();
 
       // 2. Fetch replies for each top-level comment in parallel
       const replyPromises = comments.map(c =>
@@ -554,7 +554,7 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
 
       // Refresh counts from server (one reaction per user logic)
       get().fetchReactions(postId);
-      set(s => ({ lastEvent: { type: 'react', postId, timestamp: Date.now() } }));
+      set(() => ({ lastEvent: { type: 'react', postId, timestamp: Date.now() } }));
     } catch (err) {
       // Rollback to previous state
       set(s => ({

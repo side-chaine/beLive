@@ -17,7 +17,7 @@ import type {
   StemDisplayOrder,
   StemAutomationData,
 } from './stemTypes';
-import { BUILTIN_STEMS, sortStemsForDisplay } from './stemTypes';
+import { sortStemsForDisplay } from './stemTypes';
 
 // ─── State Interface ──────────────────────────────────────
 

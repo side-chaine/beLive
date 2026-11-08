@@ -32,7 +32,7 @@ export function ControlPanel() {
 
   if (mode === 'live') {return null;}
 
-  const btnStyle = (active = false): React.CSSProperties => ({
+  const btnStyle = (_active = false): React.CSSProperties => ({
     padding: '6px 14px',
     background: 'var(--bl-surface-raised, rgba(40, 40, 40, 0.8))',
     border: `1px solid ${color}33`,

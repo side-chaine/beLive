@@ -96,15 +96,6 @@ function getCurrentMode(): AppMode | undefined {
   return 'rehearsal';
 }
 
-function detectBodyMode(): AppMode | undefined {
-  const body = document.body.className;
-  if (body.includes('mode-concert')) {return 'concert';}
-  if (body.includes('mode-karaoke')) {return 'karaoke';}
-  if (body.includes('mode-rehearsal')) {return 'rehearsal';}
-  if (body.includes('mode-live')) {return 'live';}
-  return undefined;
-}
-
 function saveCurrentMode(mode: AppMode): void {
   previousMode = currentMode;
   currentMode = mode;

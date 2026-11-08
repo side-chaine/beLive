@@ -273,7 +273,6 @@ export function parseTaggedLyrics(text: string): ParseResult {
   // Типы с отдельными счётчиками нумерации
   const typesToNumber = new Set(['verse', 'chorus', 'postchorus', 'hook', 'rap', 'bridge', 'solo', 'build', 'drop', 'breakdown']);
   // Типы которые нумеруются ТОЛЬКО если ≥2 в треке
-  const typesNumberIfMultiple = new Set(['prechorus']);
   // Solo нумерация per-subType (guitar, piano...)
   const soloSubCounts: Record<string, number> = {};
   const typeCounts: Record<string, number> = {};
@@ -339,7 +338,7 @@ interface CurrentBlock {
 
 function finalizeBlock(
   current: CurrentBlock,
-  lastLineIndex: number,
+  _lastLineIndex: number,
 ): DetectedBlock {
   const content = [...current.contentLines];
   while (content.length > 0 && !content[content.length - 1].trim()) {content.pop();}

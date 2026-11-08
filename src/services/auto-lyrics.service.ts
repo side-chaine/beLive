@@ -1135,7 +1135,6 @@ export function matchGeniusToLrc(
   geniusText: string,
   lrcResult: LrcResult,
 ): MatchResult {
-  const geniusLines = geniusText.split('\n');
 
   // Парсим блоки из Genius тегов (parseTaggedLyrics — pure TS, без React/DOM)
   const tagResult = parseTaggedLyrics(geniusText);
@@ -1198,7 +1197,6 @@ export function matchGeniusToLrc(
     const lrcLine = lrcResult.lines[li];
     if (!lrcLine.text.trim()) {continue;}
 
-    let bestScore = 0;
     let bestRawIdx = -1;
     let bestEffective = 0;
     let mergedNorm = normalizedLrc[li];
@@ -1210,7 +1208,6 @@ export function matchGeniusToLrc(
 
     // Try matching: first as single line, then merged with next line(s)
     for (let attempt = 0; attempt < 3; attempt++) {  // TC-008: Allow 3-line merge
-      bestScore = 0;
       bestRawIdx = -1;
       bestEffective = 0;
 
@@ -1222,7 +1219,6 @@ export function matchGeniusToLrc(
         const timePenalty = (Math.abs(i - expectedIdx) / totalRaw) * TIME_PENALTY_FACTOR;
         const effective = score - timePenalty;
         if (effective >= 0.75) {
-          bestScore = score;
           bestRawIdx = i;
           bestEffective = effective;
           break;
@@ -1238,7 +1234,6 @@ export function matchGeniusToLrc(
           const timePenalty = (Math.abs(i - expectedIdx) / totalRaw) * TIME_PENALTY_FACTOR;
           const effective = score - timePenalty;
           if (effective > bestEffective) {
-            bestScore = score;
             bestRawIdx = i;
             bestEffective = effective;
           }
@@ -1520,7 +1515,6 @@ export function matchGeniusToLrc(
     }
   }
 
-  const autoM2Count = 0;
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i];
     const nextBlock = blocks[i + 1] ?? null;

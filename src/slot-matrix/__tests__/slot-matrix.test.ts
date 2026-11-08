@@ -1,7 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import {
   remToPx,
-  getRootFontSize,
   resetRootFontSizeCache,
   computeLineHeight,
   computeSlotY,
@@ -50,7 +49,7 @@ vi.mock('../../utils/block-utils', () => ({
   getActiveBlock: (activeLine: number, blocks: any[]) => {
     return blocks.find((b: any) => b.lineIndices.includes(activeLine)) ?? null;
   },
-  getActiveSubBlockIndex: (activeLine: number, block: any, max: number) => {
+  getActiveSubBlockIndex: (_activeLine: number, _block: any, _max: number) => {
     return 0;
   },
 }));

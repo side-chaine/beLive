@@ -1,7 +1,7 @@
 import { ENGINE_MODE } from '../../engine-mode';
 import React from 'react';
 import { useTakesStore } from '../takes.store';
-import { useAudioStore } from '../../stores/audio.store';
+import '../../stores/audio.store';
 import { TakesRecorder } from '../takes.recorder';
 import { takeAssets } from '../takes.assets';
 import { createTakeId } from '../takes.types';
@@ -33,7 +33,7 @@ interface TakesControlStripProps {
 }
 
 export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
-  activeBlockId, timeRange, onCountdownChange, compareMode = 'off', onCompareModeChange, activeCompareSlot, onActiveCompareSlotChange, onRecorderAnalyserChange, onRecordAbort,
+  activeBlockId, timeRange, onCountdownChange, compareMode = 'off', onCompareModeChange: _onCompareModeChange, activeCompareSlot, onActiveCompareSlotChange, onRecorderAnalyserChange, onRecordAbort,
 }) => {
   const isRecording = useTakesStore(s => s.isRecording);
   const recordingSlot = useTakesStore(s => s.recordingSlot);
@@ -55,7 +55,6 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
   
   // Round capture state for slot locking
   const roundCapture = useExerciseStore((s) => s.roundCapture);
-  const setRoundCaptureLockedSlot = useExerciseStore((s) => s.setRoundCaptureLockedSlot);
   const setRoundCaptureRecorderArmed = useExerciseStore((s) => s.setRoundCaptureRecorderArmed);
   const setRoundCaptureResponseActive = useExerciseStore((s) => s.setRoundCaptureResponseActive);
   const setRoundCaptureWindowIndex = useExerciseStore((s) => s.setRoundCaptureWindowIndex);
@@ -76,16 +75,14 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
 
   const [countdown, setCountdown] = React.useState<number | null>(null);
   // Reference playback constant
-  const PLAYING_REFERENCE_ID = '__reference__';
 
   const blockTakes = blockTakesMap[activeBlockId] ?? useTakesStore.getState().getBlockTakes(activeBlockId);
   const nextSlot = getNextEmptySlot(activeBlockId);
   const PRE_ROLL_SEC = 3;
   const previewMode = useTakesStore(s => s.previewMode);
-  const setPreviewMode = useTakesStore(s => s.setPreviewMode);
   
   // Preview/playback hook
-  const { handlePlayTake, stopPreview, playingTakeId, setPlayingTakeId } = useTakesPlayback({
+  const { handlePlayTake, stopPreview, playingTakeId } = useTakesPlayback({
     activeBlockId,
     timeRange,
     previewMode,
@@ -103,7 +100,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
   });
   
   // Practice interrupt hook
-  const { handlePracticeInterrupt } = usePracticeInterrupt({
+  usePracticeInterrupt({
     countdownRef,
     timeCheckRef,
     stopTimerRef,

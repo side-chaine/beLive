@@ -16,7 +16,6 @@ import {
   getSceneBlob,
   saveScene as idbSaveScene,
   deleteScene as idbDeleteScene,
-  clearScenesForTrack as idbClearScenes,
   getScenesCountForTrack,
 } from './idb.service';
 import type { BlockScene, BlockSceneMeta, SceneMap, SceneEntry } from './idb.service';

@@ -9,9 +9,6 @@ interface MarkerHitResult {
   color: string;
 }
 
-interface LoopHandleDetection {
-  type: 'start' | 'end' | 'body' | null;
-}
 
 /**
  * Find the nearest marker to a click position.

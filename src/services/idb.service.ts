@@ -452,7 +452,7 @@ export async function migrateGuestTracksToProfile(profileId: string): Promise<nu
   });
 }
 
-export async function migrateGuestMyMusicToProfile(profileId: string): Promise<number> {
+export async function migrateGuestMyMusicToProfile(_profileId: string): Promise<number> {
   const db = await _getDB();
   const rows = await _req<any[]>(_tx(db, 'my_music').getAll());
   return rows.length;

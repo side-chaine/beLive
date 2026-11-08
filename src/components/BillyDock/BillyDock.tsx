@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
-import { useBillyAnimation, useBillyIsLooping, useBillyIsRecording, useBillyTrackInfoOpen, type BillyAnimation } from '../../hooks/useBillyState';
+import { useBillyIsLooping, useBillyIsRecording, useBillyTrackInfoOpen, type BillyAnimation } from '../../hooks/useBillyState';
 import { useBillyAudioReactive } from '../../hooks/useBillyAudioReactive';
 import { useBillyLocomotion } from '../../hooks/useBillyLocomotion';
 import { useBillyControl } from '../../hooks/useBillyControl';
@@ -55,7 +55,6 @@ interface BillyRefs {
 
 export function BillyDock() {
   useBillyZoneCache();  // ← Zone Bounds — реальная геометрия из CSS vars
-  const animation = useBillyAnimation();
   const isLooping = useBillyIsLooping();
   const isRecording = useBillyIsRecording();
   const trackInfoOpen = useBillyTrackInfoOpen();

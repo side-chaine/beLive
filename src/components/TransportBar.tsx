@@ -14,7 +14,6 @@ const MODE_COLORS: Record<string, string> = {
 };
 
 export function TransportBar() {
-  const isPlaying = useAudioStore((s) => s.isPlaying);
   const currentTime = useAudioStore((s) => s.currentTime);
   const duration = useAudioStore((s) => s.duration);
   const mode = useModeStore((s) => s.mode);

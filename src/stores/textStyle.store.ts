@@ -170,6 +170,7 @@ export const useTextStyleStore = create<TextStyleState>((set, get) => ({
       lineActiveLevel: s.lineActiveLevel,
       lineNextLevel: s.lineNextLevel,
       lineOthersLevel: s.lineOthersLevel,
+      lineOthersSource: s.lineOthersSource,
     });
   },
 
@@ -270,6 +271,7 @@ export const useTextStyleStore = create<TextStyleState>((set, get) => ({
       lineActiveLevel: s.lineActiveLevel,
       lineNextLevel: s.lineNextLevel,
       lineOthersLevel: s.lineOthersLevel,
+      lineOthersSource: s.lineOthersSource,
     });
   },
 

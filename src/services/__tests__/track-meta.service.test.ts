@@ -23,7 +23,7 @@ describe('track-meta.service', () => {
     // Проверяем через fetchGetSongBPM с замоканным fetch
     it('конвертирует open_key в camelot (интеграционно)', async () => {
       const mockTrack = { search: [{ tempo: 120, key_of: 'C', open_key: '8m', camelot: null }] };
-      global.fetch = vi.fn().mockResolvedValue({
+      globalThis.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: () => Promise.resolve(mockTrack),
       });
@@ -46,7 +46,7 @@ describe('track-meta.service', () => {
       (getTrack as any).mockResolvedValue({ trackMeta: { genre: ['rock'], bpm: null } });
 
       const { fetchTrackMeta } = await import('../track-meta.service');
-      global.fetch = vi.fn().mockResolvedValue({ ok: false });
+      globalThis.fetch = vi.fn().mockResolvedValue({ ok: false });
 
       const meta = await fetchTrackMeta(1, 'Artist - Song');
 
@@ -69,7 +69,7 @@ describe('track-meta.service', () => {
     const { getTrack } = await import('../idb.service');
     (getTrack as any).mockResolvedValue({ trackMeta: existingMeta });
 
-    global.fetch = vi.fn().mockResolvedValue({ ok: false });
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: false });
 
     const meta = await fetchTrackMeta(1, 'Artist - Song');
 

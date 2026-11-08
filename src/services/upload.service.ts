@@ -426,12 +426,10 @@ export async function saveTrack(): Promise<void> {
         || await readFileAsText(session.lyrics);
     }
 
-    // Read json — exact contract parity (vars kept unused as in legacy)
-    let jsonFileName: string | null = null;
-    let jsonContent: string | null = null;
+    // Read json — exact contract parity: the read stays (legacy behaviour),
+    // the values themselves are unused as in legacy.
     if (session.json) {
-      jsonContent = await readFileAsText(session.json);
-      jsonFileName = session.json.name;
+      await readFileAsText(session.json);
     }
 
     // Build trackData — EXACT LEGACY SCHEMA

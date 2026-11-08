@@ -181,7 +181,6 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
     const handlePracticeCompleted = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       const passesCount = detail?.passesCount ?? 0;
-      const scenarioId = detail?.scenarioId;
 
       const blocks = useBlocksStore.getState().blocks || [];
       const suggestions = suggestScenarios(blocks);
@@ -308,7 +307,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
               // Check for nested [SEEK] commands in continuation
               const cmd = parseTextCommand(continuationText);
               if (cmd) {
-                executeToolCall(cmd.tool, cmd.args).then(r => {
+                executeToolCall(cmd.tool, cmd.args).then(() => {
 
                 });
               }

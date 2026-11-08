@@ -113,7 +113,7 @@ async function ensureInit(): Promise<void> {
       // Strategy 2: Vite ?url import (package exports: "./wasm" → "./dist/sonare.wasm")
       try {
         const wasmModule = await import('@libraz/libsonare/wasm?url');
-        await libsonare.init({ wasmPath: wasmModule.default });
+        await libsonare.init({ locateFile: () => wasmModule.default });
         _analyzeFn = libsonare.analyze;
         
         if (import.meta.env.DEV) {console.log('[AudioAnalysis] WASM initialized (explicit wasm path)');}

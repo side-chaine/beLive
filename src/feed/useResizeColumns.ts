@@ -1,6 +1,6 @@
 // @TC-102: Resizable Columns — Pointer Events drag + ResizeObserver + clamp
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useUIStore, type FeedColWidths } from '../stores/ui.store';
+import { useUIStore } from '../stores/ui.store';
 
 const MIN_COL0 = 180;
 const MAX_COL0 = 400;
@@ -171,7 +171,7 @@ export function useResizeColumns(gridRef: React.RefObject<HTMLDivElement | null>
     };
   }, [isDragging, viewport, liveWidths, setFeedColWidths]);
 
-  const onDoubleClick = useCallback((side: 'col0' | 'col2') => {
+  const onDoubleClick = useCallback((_side: 'col0' | 'col2') => {
     resetFeedColWidths();
     setLiveWidths(null);
   }, [resetFeedColWidths]);

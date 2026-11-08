@@ -115,6 +115,7 @@ export function computeSlotGroups(params: ComputeSlotGroupsParams): SlotGroup[] 
       endSlotIndex: visibleLineIndices.length - 1,
       isFirst: subBlock.isFirst,
       isLast: subBlock.isLast,
+      lineIndices: visibleLineIndices,
     };
 
     // Grid template rows

@@ -46,7 +46,7 @@ export function FeedPostCard({ post }: Props) {
   const [shareOpen, setShareOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const shareRef = useRef<HTMLDivElement>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     if (!menuOpen) {return;}

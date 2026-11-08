@@ -26,7 +26,7 @@ interface UseTakesPlaybackReturn {
 }
 
 export function useTakesPlayback({
-  activeBlockId,
+  activeBlockId: _activeBlockId,
   timeRange,
   previewMode,
 }: UseTakesPlaybackOptions): UseTakesPlaybackReturn {

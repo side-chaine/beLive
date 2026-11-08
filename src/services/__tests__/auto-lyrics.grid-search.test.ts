@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { blockFirstLineSync, DEFAULT_TUNING, type SyncTuning } from '../auto-lyrics.service';
+import { blockFirstLineSync, type SyncTuning } from '../auto-lyrics.service';
 
 // ── Helpers ──
 

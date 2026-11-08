@@ -8,7 +8,7 @@
  * Version: 1.0.0 (initial extraction)
  */
 
-import type { Exercise, BackingMode } from '../exercise.types';
+import type { Exercise } from '../exercise.types';
 import type { GeneratorDef, GeneratorParams } from './generator.types';
 import { genExerciseId } from './gen-id.util';
 
@@ -108,7 +108,7 @@ export const acappellaBossGenerator: GeneratorDef = {
     },
   },
 
-  generate: (blockId: string, params?: GeneratorParams): Exercise => ({
+  generate: (blockId: string, _params?: GeneratorParams): Exercise => ({
     id: genExerciseId('boss', blockId),
     recipeId: 'acappella-boss',
     name: 'A Cappella Boss',

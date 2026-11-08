@@ -5,7 +5,6 @@ import { useStemStore } from '../../stem/stem.store';
 import { useLyricsStore } from '../../stores/lyrics.store';
 import { useMarkersStore } from '../../stores/markers.store';
 import { WaveformCanvas } from './WaveformCanvas';
-import { useSyncStore } from '../store/sync.store';
 import { getTrack, updateTrackField } from '../../services/idb.service';
 import { useTrackStore } from '../../stores/track.store';
 import { useWordSyncStore } from '../../stores/wordSync.store';
@@ -1089,7 +1088,7 @@ export default function SyncEditorPanel() {
               }}>
                 {lrcVersions.length} version{lrcVersions.length !== 1 ? 's' : ''} from lrclib.net
               </div>
-              {lrcVersions.map((v, idx) => (
+              {lrcVersions.map((v) => (
                 <button
                   key={v.id}
                   onClick={() => handleLrcVersionSelect(v)}

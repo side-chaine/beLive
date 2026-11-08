@@ -23,7 +23,7 @@ export function initAudioReactiveEvents(): () => void {
 
   // AnalyserNode lifecycle
   let analyser: AnalyserNode | null = null
-  let dataArray: Uint8Array | null = null
+  let dataArray: Uint8Array<ArrayBuffer> | null = null
 
   const teardownAnalyser = () => {
     try {

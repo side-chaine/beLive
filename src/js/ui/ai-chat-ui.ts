@@ -1,6 +1,6 @@
 import { aiHub } from '../ai/registry';
 import { VoiceInput } from '../utils/voice-input';
-import { parseTextCommand, stripTextCommands, executeToolCall } from '../../components/TrackInfoBoard/ai-tools';
+import { parseTextCommand, executeToolCall } from '../../components/TrackInfoBoard/ai-tools';
 import { PerformanceMonitor } from '../utils/performance-monitor';
 import { lockScroll, unlockScroll } from '../utils/scroll-lock'; // Импорт scroll-lock
 

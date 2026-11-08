@@ -60,7 +60,6 @@ export const TakesPanel: React.FC = () => {
   const savedVmixEnabled = useExerciseStore((s) => s.savedVmixEnabled);
   const scenarioMixOverride = useExerciseStore((s) => s.scenarioMixOverride);
   const completionMoment = useExerciseStore((s) => s.completionMoment);
-  const clearCompletionMoment = useExerciseStore((s) => s.clearCompletionMoment);
   const setResolvedTimeRange = useExerciseStore((s) => s.setResolvedTimeRange);
   const setSavedVolumes = useExerciseStore((s) => s.setSavedVolumes);
   const setSavedPlaybackRate = useExerciseStore((s) => s.setSavedPlaybackRate);
@@ -317,19 +316,6 @@ export const TakesPanel: React.FC = () => {
       return chosen;
     }
   }, [activeBlockId, blockTakesMap, compareMode, activeCompareSlot, isRecording, countdownOverlay, phase, currentExerciseStep]);
-  
-  // Derive whether current block has enough ready takes for meaningful compare
-  const canCompare = React.useMemo(() => {
-    if (!activeBlockId) {return false;}
-    const bt = blockTakesMap[activeBlockId];
-    if (!bt) {return false;}
-    
-    const readyTakesCount = bt.takes.filter(
-      (t): t is NonNullable<typeof t> => t?.status === 'ready'
-    ).length;
-    
-    return readyTakesCount >= 2;
-  }, [activeBlockId, blockTakesMap]);
   
   // Canvas zone refs for width caching and playhead
   const canvasZoneRef = React.useRef<HTMLDivElement>(null);
@@ -1159,7 +1145,7 @@ export const TakesPanel: React.FC = () => {
     // REFERENCE LISTEN PATH: Standard playback for 'reference' or undefined listenSource
     // Seek to start and play (guard: only play if not already playing)
     try { seekTo(range.startTime) } catch {}
-    if (!ae?.isPlaying) {getTransport().play();}
+    if (!ae?.isPlaying) {getTransport()?.play();}
     
     // Determine if next step requires continuous handoff (Call & Response)
     const currentExercise = activeExercise;
@@ -1240,7 +1226,7 @@ export const TakesPanel: React.FC = () => {
         }
   
         // Standard path: pause then advance
-        getTransport().pause();
+        getTransport()?.pause();
         window.clearTimeout(timeoutId!);
           
         // Stale-run guard before advancing
@@ -1273,7 +1259,7 @@ export const TakesPanel: React.FC = () => {
       }
         
       // Standard path
-      getTransport().pause();
+      getTransport()?.pause();
       advanceRef.current();
     }, fallbackMs);
   
@@ -1420,7 +1406,6 @@ export const TakesPanel: React.FC = () => {
               const progress = (e.clientX - rect.left) / rect.width;
               const t = timeRange.startTime + 
                         progress * (timeRange.endTime - timeRange.startTime);
-              const ae = (window as any).audioEngine;
               try { seekTo(t) } catch {};
             });
           }}

@@ -141,7 +141,6 @@ export function useBillyAudioReactive(
     }
 
     // Arm chaos from mid + high — applied to INNER groups
-    const armChaos = (audio.mid + audio.high) * 0.5;
     const time = frameCountRef.current * 0.15;
 
     // Arms: static in dance — animated only in celebrations (W2)

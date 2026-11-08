@@ -57,7 +57,12 @@ export interface PlaybackVisualFrameDetector {
 /** Writes computed visual state to DOM/CSS/Canvas */
 export interface PlaybackVisualFrameWriter {
   id: string;
-  write(ctx: PlaybackVisualFrameContext): void;
+  /**
+   * `ctx` is provided when the scheduler drives the frame. Writers that read
+   * their own singleton state (and are also invoked directly, outside a frame)
+   * may omit it.
+   */
+  write(ctx?: PlaybackVisualFrameContext): void;
 }
 
 /** Runtime metrics for scheduler performance monitoring */

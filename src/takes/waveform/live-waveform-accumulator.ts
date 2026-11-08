@@ -55,7 +55,7 @@ export class LiveWaveformAccumulator {
   update(
     analyser: AnalyserNode,
     progress: number,
-    scratch: Float32Array
+    scratch: Float32Array<ArrayBuffer>
   ): void {
     // Get analyser data into scratch buffer
     analyser.getFloatTimeDomainData(scratch);

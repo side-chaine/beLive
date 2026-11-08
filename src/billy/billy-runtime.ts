@@ -1,11 +1,7 @@
 import {
   CORNER_POS,
-  BILLY_WIDTH,
-  BILLY_HEIGHT,
   BILLY_HALF_WIDTH,
   BILLY_VISUAL_FOOT_Y,
-  type BillyMode,
-  type BillyZone,
 } from './billy.constants';
 
 // ═══ Billy Runtime — Module-Level Singleton ═══

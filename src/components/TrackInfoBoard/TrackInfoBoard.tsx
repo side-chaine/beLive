@@ -237,7 +237,7 @@ export function TrackInfoBoard() {
             wide
             loading={isFetchingApi && !meta?.genre && !meta?.tags}
           >
-            <TagsList genres={meta?.genre} tags={meta?.tags} />
+            <TagsList genres={meta?.genre ?? null} tags={meta?.tags ?? null} />
           </MetaCard>
           <MetaCard
             label="Key"
@@ -278,7 +278,7 @@ export function TrackInfoBoard() {
             wide
             loading={isFetchingApi && !meta?.similarTracks}
           >
-            <SimilarTracksList tracks={meta?.similarTracks} />
+            <SimilarTracksList tracks={meta?.similarTracks ?? null} />
           </MetaCard>
         </div>
 

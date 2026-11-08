@@ -513,22 +513,6 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                         }
                       });
                     }
-                    let cleanLyrics: string;
-                    
-                    if (tagResult.hasStructure && tagResult.blocks.length >= 1) {
-                      // M2: no separator lines — M2 closing marker replaces separator lines
-                      const cleanLines: string[] = [];
-                      for (const b of tagResult.blocks) {
-                        for (const line of b.contentLines) {
-                          const trimmed = line.trim();
-                          if (trimmed) {cleanLines.push(trimmed);}
-                        }
-                      }
-                      cleanLyrics = cleanLines.join('\n');
-                    } else {
-                      // Теги не найдены — используем сырой текст
-                      cleanLyrics = pastedText.trim();
-                    }
 
                     // ── PERF: Do matching FIRST (no IDB needed), then single IDB write ──
                     // Old flow: save lyrics(663ms) → getTrack(890ms) → match → save markers(593ms) = 2166ms

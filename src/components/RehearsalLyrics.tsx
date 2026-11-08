@@ -37,7 +37,6 @@ export function RehearsalLyrics() {
   const activeBlockRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const isLooping = useLoopStore(s => s.isLooping);
-  const loopBlockIds = useLoopStore(s => s.loopBlockIds);
   const loopStartLine = useLoopStore(s => s.loopStartLine);
   const loopEndLine = useLoopStore(s => s.loopEndLine);
   const setBoundaryLines = useLoopStore(s => s.setBoundaryLines);
@@ -426,7 +425,7 @@ export function RehearsalLyrics() {
       id: targetBlockId,
       type: targetBlockType,
       lineIndices: targetLineIndices,
-      label: '',
+      name: '',
     };
 
     const measurement = measureNextBlock({
@@ -803,30 +802,6 @@ export function RehearsalLyrics() {
     }
   }, []);
 
-  // CSS variables for Block Cue (structural first-line-of-next-block cue)
-  const getBlockCueStyle = useCallback((level: typeof lineNextLevel): React.CSSProperties => {
-    switch (level) {
-      case 'off':
-        return {
-          '--bl-preview-opacity': '0.35',
-          '--bl-preview-color': 'rgba(0, 210, 160, 0.38)',
-          '--bl-preview-weight': '400',
-        } as React.CSSProperties;
-      case 'hint':
-        return {
-          '--bl-preview-opacity': '0.55',
-          '--bl-preview-color': 'rgba(0, 210, 160, 0.65)',
-          '--bl-preview-weight': '400',
-        } as React.CSSProperties;
-      case 'guide':
-      default:
-        return {
-          '--bl-preview-opacity': '0.85',
-          '--bl-preview-color': 'rgba(0, 210, 160, 0.90)',
-          '--bl-preview-weight': '500',
-        } as React.CSSProperties;
-    }
-  }, []);
 
   // BAC-001 (VMO-035): hide until the late load signal flips lyricsReady true,
   // so the early raw lyrics mirror from the frozen orchestrator never flashes.

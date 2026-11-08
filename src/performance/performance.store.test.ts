@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { usePerformanceStore, useVisualBudget, useEffectiveTier } from './performance.store';
+import { describe, it, expect } from 'vitest';
+import { usePerformanceStore } from './performance.store';
 import { DEFAULT_PERFORMANCE_TIER, PERFORMANCE_PRESETS } from './performance.presets';
 
 describe('usePerformanceStore state access', () => {

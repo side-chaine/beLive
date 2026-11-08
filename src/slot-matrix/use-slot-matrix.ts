@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { SlotMatrix, SubBlockRange, SlotGroup } from './slot-matrix.types';
 import { computeSlotMatrix } from './compute-slot-matrix';
-import { computeOffsetY } from './slot-matrix.utils';
+import './slot-matrix.utils';
 import { MAX_SUB_BLOCK_LINES } from './slot-matrix.utils';
 import { getActiveBlock, createSubBlocks, getBlockFontSize } from '../utils/block-utils';
 import { getCanonicalBlockColor } from '../structure/block-colors';

@@ -37,7 +37,7 @@ function GraphicsTierControls({
   customBgUrl,
 }: GraphicsTierControlsProps) {
   const { tier, autoDetect, detectedTier } = usePerformanceTier();
-  const { setTier, setAutoDetect } = usePerformanceStore();
+  const { setTier } = usePerformanceStore();
   const useAutoBg = usePlateStore(s => s.useAutoBg);
   const setUseAutoBg = usePlateStore(s => s.setUseAutoBg);
   const hasBlockScenes = useTrackStore(s => s.hasBlockScenes);

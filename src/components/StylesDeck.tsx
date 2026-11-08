@@ -9,16 +9,12 @@ import { TRANSITION_PRESETS } from '../data/transition-presets';
 import {
   FONT_CATEGORIES,
   TRANSITIONS,
-  LINE_OTHERS_SOURCES,
-  LINE_OTHERS_SOURCE_LABELS,
   type WordFocusLevel,
   type WordFxMode,
-  type WordCompletedMode,
   type WordTrailDepth,
   type LineActiveLevel,
   type LineNextLevel,
   type LineOthersLevel,
-  type LineOthersSource,
 } from '../types/textStyle.types';
 import { REHEARSAL_STYLE_RECIPES } from '../styles/style-recipes';
 import { LineFxSelectorModal } from './LineFxSelectorModal';
@@ -61,10 +57,6 @@ const WORD_FX_LABELS: Record<WordFxMode, string> = {
   bounce: 'Bounce',
 };
 
-const WORD_COMPLETED_LABELS: Record<WordCompletedMode, string> = {
-  off: 'Off',
-  full: 'On',
-};
 
 // Public UI labels for Trail — Scene removed (exploratory, not shipping-grade)
 const WORD_TRAIL_LABELS: Record<Exclude<WordTrailDepth, 'scene'>, string> = {
@@ -119,7 +111,6 @@ const MODE_UI = {
 
 const WORD_LEVELS: WordFocusLevel[] = ['off', 'soft', 'strong'];
 const WORD_FX_MODES: WordFxMode[] = ['progress', 'neon', 'underline', 'bounce'];
-const WORD_COMPLETED_MODES: WordCompletedMode[] = ['off', 'full'];
 // Public UI options for Trail — Scene removed (exploratory, not shipping-grade)
 const WORD_TRAIL_DEPTHS: Exclude<WordTrailDepth, 'scene'>[] = ['off', 'line'];
 const LINE_ACTIVE_LEVELS: LineActiveLevel[] = ['off', 'soft', 'strong'];
@@ -241,7 +232,6 @@ export function StylesDeck() {
   const transitionSet = useTextStyleStore(st => st.transitionSet);
   const wordFocusLevel = useTextStyleStore(st => st.wordFocusLevel);
   const wordFxMode = useTextStyleStore(st => st.wordFxMode);
-  const wordCompletedMode = useTextStyleStore(st => st.wordCompletedMode);
   const wordTrailDepth = useTextStyleStore(st => st.wordTrailDepth);
   const lineActiveLevel = useTextStyleStore(st => st.lineActiveLevel);
   const lineNextLevel = useTextStyleStore(st => st.lineNextLevel);
@@ -252,7 +242,6 @@ export function StylesDeck() {
   const setTransSet = useTextStyleStore(st => st.setTransitionSet);
   const setWordFocusLevel = useTextStyleStore(st => st.setWordFocusLevel);
   const setWordFxMode = useTextStyleStore(st => st.setWordFxMode);
-  const setWordCompletedMode = useTextStyleStore(st => st.setWordCompletedMode);
   const setWordTrailDepth = useTextStyleStore(st => st.setWordTrailDepth);
   const setLineActiveLevel = useTextStyleStore(st => st.setLineActiveLevel);
   const setLineNextLevel = useTextStyleStore(st => st.setLineNextLevel);

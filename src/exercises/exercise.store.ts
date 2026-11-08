@@ -98,7 +98,7 @@ function createEmptySessionProgress(): SessionProgress {
 
 function activateCurrentStep(
   exercise: Exercise,
-  currentRound: number,
+  _currentRound: number,
   currentStepIndex: number,
 ): ActivationState {
   const step = getCurrentExerciseStep(exercise, currentStepIndex);

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { computeSlotGroups } from '../compute-slot-groups';
 import type { TextBlock } from '../../stores/blocks.store';
 import { createSubBlocks } from '../../utils/block-utils';

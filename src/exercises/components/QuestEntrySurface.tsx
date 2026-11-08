@@ -37,7 +37,7 @@ export interface QuestEntrySurfaceProps {
 export const QuestEntrySurface: React.FC<QuestEntrySurfaceProps> = ({
   blockId,
   onClose,
-  visibility = 'stable',
+  visibility: _visibility = 'stable',
 }) => {
   const startRecipe = useExerciseStore((s) => s.startRecipe);
   const blocks = useBlocksStore((s) => s.blocks);

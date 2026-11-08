@@ -29,7 +29,7 @@ export class LiveTrailController {
   // Owned components
   private readonly accumulator: LiveWaveformAccumulator;
   private readonly renderer: LiveTrailRenderer;
-  private readonly scratchBuffer: Float32Array;
+  private readonly scratchBuffer: Float32Array<ArrayBuffer>;
   
   // State
   private analyser: AnalyserNode | null = null;
@@ -41,7 +41,6 @@ export class LiveTrailController {
   private frameCount: number = 0;
   
   // Diagnostic logging
-  private _logCount = 0;
 
   /**
    * Create a new live trail controller
@@ -122,7 +121,6 @@ export class LiveTrailController {
 
     this.isRunning = true;
     this.frameCount = 0;
-    this._logCount = 0;
     this.tick();
   }
 

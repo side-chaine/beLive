@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { isExerciseExecutionLocked } from './exercise.runtime';
-import type { Exercise, ExercisePhase } from './exercise.types';
+import type { Exercise } from './exercise.types';
 
 const mockExercise: Exercise = {
   id: 'test-exercise',

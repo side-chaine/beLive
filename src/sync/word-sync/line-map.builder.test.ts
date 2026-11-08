@@ -83,7 +83,7 @@ describe('buildLineMap', () => {
 
   it('returns alignableLines array with correct structure', () => {
     const lyrics = 'A\n\nB';
-    const { lineMap, alignableLines } = buildLineMap(lyrics);
+    const { alignableLines } = buildLineMap(lyrics);
 
     expect(alignableLines).toHaveLength(2);
     expect(alignableLines[0].text).toBe('A');
