@@ -29,10 +29,8 @@ jobs:
       - name: Test
         run: npm test -- --run
 
-      - name: Verify Gates (events+parity+reach+inert+docvis+junction; G-7 victims in grace until CF-batch)
+      - name: Verify Gates (events+parity+reach+inert+docvis+junction; N1f: JUNCTION_GRACE снят — 3 stale-записи больше не нужны)
         run: npm run verify:ci
-        env:
-          JUNCTION_GRACE: 'wrangler-env-d1,vite-url-ai-worker,vite-url-worker-src'
 
       - name: Build
         run: npm run build
