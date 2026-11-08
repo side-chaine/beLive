@@ -28,9 +28,10 @@ const ALLOWLIST = new Set([
   '@types/jszip',
   'vite-tsconfig-paths', // плагин, подключается строкой в vite.config
   'vite-plugin-pwa',     // плагин
-  'acorn',
-  'acorn-jsx',
-  'lodash.merge',
+  'eslint',              // 805 (N1g): CLI-линтер — запускается из npm-скрипта, не импортируется
+  // 805 (N1g): acorn/acorn-jsx/lodash.merge убраны из allowlist — это балласт
+  // (транзитивки eslint, ошибочно зафиксированные как прямые зависимости),
+  // см. ROADMAP 0.5 / NODES §1.7. Теперь они проходят проверку на реальное использование.
 ]);
 
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
