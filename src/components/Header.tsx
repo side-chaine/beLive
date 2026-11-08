@@ -49,7 +49,9 @@ export function Header() {
         top: 0,
         left: 0,
         right: 0,
-        height: 64,
+        /* 708 / 07.11 · шаг 1: 64→54, +10 отдаём TrackMap (root 44→54).
+           Сумма header + wagon = 108 как была => лирика/центр не двигаются. */
+        height: 54,
         background: 'rgba(0,0,0,0.95)',
         display: 'flex',
         alignItems: 'center',

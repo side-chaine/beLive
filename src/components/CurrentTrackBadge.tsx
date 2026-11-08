@@ -17,7 +17,7 @@ export function CurrentTrackBadge() {
 
   const text = useMemo(() => {
     if (!current) return '';
-    const { artist, title, coverArtUrl } = current;
+    const { artist, title } = current;
     if (!artist) return title || '';
     if (!title) return artist;
     if (title.startsWith(artist)) {
@@ -39,7 +39,8 @@ export function CurrentTrackBadge() {
     borderRadius: 8,
     background: `${color}15`,
     border: `1px solid ${color}30`,
-    maxWidth: 420,
+    /* 708 / 07.11: плашка была 237.8px при лимите 420 — сужаем по просьбе Никиты. */
+    maxWidth: 200,
     cursor: 'default',
   };
 
@@ -55,7 +56,8 @@ export function CurrentTrackBadge() {
 
   return (
     <div title={text} style={containerStyle}>
-      <CoverArt url={coverArtUrl} title={current?.title || current?.artist || ''} size={40} borderRadius={6} />
+      {/* 708: 40→32, чтобы плашка 49.6→41.6px влезла в хедер 54px с воздухом ~6px. */}
+      <CoverArt url={coverArtUrl} title={current?.title || current?.artist || ''} size={32} borderRadius={6} />
       <span style={textStyle}>{text}</span>
     </div>
   );
