@@ -32,14 +32,25 @@
 .wagon {
   position: relative;
   display: flex;
-  align-items: center;
+  /* 708 / 07.11 · шаг 2: ОДИН вагон = один этаж. Имя сверху, подблоки под ним.
+     Никаких отдельных полосок имён и второго flex-ряда (канон Никиты). */
+  flex-direction: column;
+  align-items: stretch;
   justify-content: flex-start;
-  gap: var(--bl-spacing-xs, 4px);
+  gap: 3px;
+  /* 708 / 23:3x · поля вынесены в переменные: линейка строк обязана начинаться
+     ровно там же, где начинается полоса строк, иначе засечки и подсветка
+     расходятся (баг v3 — несимметричный padding 8/30). */
+  --wagon-pad-l: var(--bl-spacing-sm, 8px);
+  --wagon-pad-r: calc(var(--bl-spacing-sm, 8px) + 22px);
   padding-top: var(--bl-spacing-xs, 4px);
   padding-bottom: var(--bl-spacing-xs, 4px);
-  padding-left: var(--bl-spacing-sm, 8px);
-  padding-right: calc(var(--bl-spacing-sm, 8px) + 22px);
-  min-height: 34px;
+  padding-left: var(--wagon-pad-l);
+  padding-right: var(--wagon-pad-r);
+  /* 708 / 07.11 · шаг 1: 34→44. root = 44 + padding 5+5 = 54,
+     --wagon-train-height переопубликуется ResizeObserver'ом сам.
+     Шаг 2 разведёт имя наверх, а подблоки сделает строкой в теле. */
+  min-height: 44px;
   flex: 1 1 0;
   width: auto;
   min-width: 54px;
@@ -256,16 +267,44 @@
 .title {
   position: relative;
   z-index: 1;
-  flex: 1 1 auto;
+  /* 708 / шаг 2: имя закреплено в верхней строке, не делит высоту с подблоками. */
+  flex: 0 0 auto;
+  width: 100%;
   min-width: 0;
-  font-size: var(--bl-font-size-sm, 12px);
-  font-weight: 600;
+  font-size: calc(var(--bl-font-size-sm, 12px) + 1px);
+  font-weight: 700;
   line-height: 1.15;
   color: var(--bl-text-primary, #ffffff);
-  text-shadow: 0 1px 0 var(--bl-surface-base, rgba(0,0,0,0.65));
+  /* Никита 08.11: на чёрных вагонах — мягкое белое свечение для читаемости. */
+  text-shadow:
+    0 0 7px rgba(255, 255, 255, 0.28),
+    0 1px 2px rgba(0, 0, 0, 0.6);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: text-shadow 160ms ease, color 160ms ease;
+}
+
+/* Никита 08.11: при наведении название загорается цветом самого блока. */
+.wagon:hover .title,
+.wagon:focus-within .title {
+  color: color-mix(in srgb, var(--tm-color) 50%, #ffffff);
+  text-shadow:
+    0 0 10px color-mix(in srgb, var(--tm-color) 70%, transparent),
+    0 0 4px color-mix(in srgb, var(--tm-color) 45%, transparent);
+}
+
+/* 708 / 22.1x · Никита: блок БЕЗ подблоков не должен выглядеть пустым.
+   Тело у него свободно ⇒ имя крупнее и по центру вагона. У блоков с
+   подблоками имя остаётся мелким в верхней строке, потому что низ занят.
+   Разница «есть тело / нет тела» читается сразу, без рамок и заглушек. */
+.wagon:not([data-has-subs]) {
+  justify-content: center;
+}
+
+.wagon:not([data-has-subs]) .title {
+  font-size: calc(var(--bl-font-size-sm, 12px) + 2px);
+  text-align: center;
 }
 
 .loopToggle {
@@ -454,18 +493,11 @@
     inset -3px 0 calc(9px * var(--tm-fx-k)) calc(-4px * var(--tm-fx-k)) rgba(255, 167, 38, 0.45);
 }
 
-/* Петля: единый контур поверх группы блоков (см. SVG-слой в WagonTrain.tsx).
-   Никита 07.11: вместо отдельных коробок на каждом блоке — один силуэт
-   вокруг подряд идущих блоков петли, с тёплой заливкой и бегущим импульсом.
-   Периметр рисует SVG, здесь только тёплая «помывка» самого блока. */
-.wagon[data-in-loop="true"] {
-  background-image: linear-gradient(
-    180deg,
-    transparent 0%,
-    color-mix(in srgb, #ffa726 5%, transparent) 58%,
-    color-mix(in srgb, #ffa726 14%, transparent) 100%
-  );
-}
+/* 708 / 22.1x · Блок в петле больше НЕ подсвечивается: ни заливки, ни
+   градиента, ни отдельного цвета имени. Канон Никиты: «блоки которые в лупе
+   не должны все гореть — это сбивает с актуального блока; сделаем их такими
+   же как все». Петлю показывают ТОЛЬКО скобки (SVG-слой), поэтому правила
+   `.wagon[data-in-loop="true"]` здесь намеренно НЕТ. */
 
 /* SVG-слой контура петли — поверх вагонов, скроллится вместе с содержимым. */
 .loopSvg {
@@ -479,11 +511,10 @@
   z-index: 3;
 }
 
-.loopFill {
-  fill: color-mix(in srgb, #ffa726 9%, transparent);
-  stroke: none;
-}
-
+/* 708 / 22.1x · СКОБКИ петли. Заливки и искры больше нет: блоки в петле не
+   горят, сигнал даёт только янтарная обводка-скобки. Скругление малое (5px),
+   концы усиков закруглены (linecap: round) — читается как «( ---- )»,
+   а не как капсула вокруг группы. */
 .loopOutline {
   fill: none;
   stroke: #ffb347;
@@ -491,73 +522,312 @@
   stroke-linejoin: round;
   stroke-linecap: round;
   filter:
-    drop-shadow(0 0 3px rgba(255, 167, 38, 0.75))
-    drop-shadow(0 0 7px rgba(255, 167, 38, 0.45));
-  /* Контур петли «дышит» (Центр_2, 07.11): равномерная пульсация обводки —
-     это янтарь = петля. Нижний край НЕ анимируется направленно (старый
-     бегущий импульс по низу читался как «пульс в подблоках»). */
+    drop-shadow(0 0 2px rgba(255, 167, 38, 0.5))
+    drop-shadow(0 0 5px rgba(255, 167, 38, 0.28));
+  /* Дыхание обводки — единственное движение петли. Направленной искры нет:
+     активный блок и так ходит по треку, бегущий блик был лишним шумом. */
   animation: loopBreath 3.4s ease-in-out infinite;
 }
 
 @keyframes loopBreath {
   0%,
   100% {
-    opacity: 0.62;
-    filter:
-      drop-shadow(0 0 2px rgba(255, 167, 38, 0.55))
-      drop-shadow(0 0 5px rgba(255, 167, 38, 0.3));
+    opacity: 0.7;
   }
   50% {
     opacity: 1;
-    filter:
-      drop-shadow(0 0 4px rgba(255, 167, 38, 0.85))
-      drop-shadow(0 0 9px rgba(255, 167, 38, 0.55));
-  }
-}
-
-/* Искра прогресса — ТОЛЬКО по верхней кромке (loopSpark рисуется отдельным
-   путём, см. LoopContour.tsx). Нижний край (ряд суб-блоков) не задевается. */
-.loopSpark {
-  fill: none;
-  stroke: #ffd089;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-dasharray: 7 93;
-  stroke-dashoffset: 100;
-  filter: drop-shadow(0 0 3px rgba(255, 200, 120, 0.9));
-  animation: loopSparkRun 3.4s linear infinite;
-}
-
-@keyframes loopSparkRun {
-  from {
-    stroke-dashoffset: 100;
-  }
-  to {
-    stroke-dashoffset: 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .loopOutline {
     animation: none;
-    opacity: 0.9;
+    opacity: 0.95;
   }
-  .loopSpark {
-    animation: none;
-    opacity: 0;
-  }
+}
+
+/* ============================================================================
+   ПЕТЛЯ КАК РЕГИОН (23:3x)
+   ----------------------------------------------------------------------------
+   Три слоя, все — чистый CSS от одного атрибута `data-loop-grab` на корне:
+     1) линейка строк на дне вагона (в покое серая, на жесте — цвет режима);
+     2) ручки-зоны на вертикалях скобок (верх = шаг, низ = строки);
+     3) подсветка ТОЛЬКО той половины скобки, за которую взялись.
+   Цветов не выдумываем: шаг — янтарь петли, строки — бледный лёд (в палитре
+   блоков такого тона нет, поэтому он читается как инструмент, а не как блок).
+   ========================================================================== */
+
+.root[data-loop-grab="step"] {
+  --loop-grab: #ffb347;
+}
+
+.root[data-loop-grab="line"] {
+  --loop-grab: #cfe9ff;
+}
+
+/* ── линейка строк ───────────────────────────────────────────────────────── */
+
+.loopRuler {
+  position: absolute;
+  left: var(--wagon-pad-l);
+  right: var(--wagon-pad-r);
+  bottom: 1px;
+  height: 6px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.loopTick,
+.loopTickMajor {
+  position: absolute;
+  bottom: 0;
+  width: 1px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.16);
+  transition:
+    background 120ms ease,
+    height 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.loopTickMajor {
+  height: 5px;
+  width: 1.5px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* На жесте засечки оживают цветом режима. В шаговом режиме строчные остаются
+   серыми: они там не цели, а фон — иначе шкала читается как «всё активно». */
+.root[data-loop-grab] .loopTick {
+  background: var(--loop-grab);
+  height: 5px;
+}
+
+.root[data-loop-grab] .loopTickMajor {
+  height: 8px;
+  width: 2px;
+  box-shadow: 0 0 6px var(--loop-grab);
+}
+
+.root[data-loop-grab="step"] .loopTick {
+  background: rgba(255, 255, 255, 0.16);
+  height: 3px;
+}
+
+/* ── ручки захвата: две зоны на каждой вертикали (50/50) ─────────────────── */
+
+.loopHandle {
+  position: absolute;
+  width: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.loopZone {
+  position: absolute;
+  left: 0;
+  width: 20px;
+  height: 50%;
+  transform: translateX(-50%);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: ew-resize;
+  outline: none;
+}
+
+.loopZoneTop {
+  top: 0;
+}
+
+.loopZoneBottom {
+  top: 50%;
+  cursor: col-resize;
+}
+
+.loopZone:focus-visible {
+  outline: 2px solid var(--loop-grab, #ffd089);
+  outline-offset: 1px;
+  border-radius: 5px;
+}
+
+.loopGripStep,
+.loopGripLine {
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+
+/* Шаг: три насечки, читается как «ступеньки». */
+.loopGripStep {
+  width: 8px;
+  height: 15px;
+  background: linear-gradient(
+    180deg,
+    transparent 0 2px,
+    #ffb347 2px 3.5px,
+    transparent 3.5px 6.5px,
+    #ffb347 6.5px 8px,
+    transparent 8px 11px,
+    #ffb347 11px 12.5px,
+    transparent 12.5px
+  );
+}
+
+/* Строки: частые вертикальные штрихи, читается как «линейка». */
+.loopGripLine {
+  width: 10px;
+  height: 8px;
+  background: repeating-linear-gradient(90deg, #cfe9ff 0 1px, transparent 1px 3.2px);
+}
+
+.loopZone:hover .loopGripStep,
+.loopZone:hover .loopGripLine,
+.loopZone:focus-visible .loopGripStep,
+.loopZone:focus-visible .loopGripLine {
+  opacity: 1;
+}
+
+/* ── половина скобки, за которую взялись ─────────────────────────────────── */
+
+.loopOutline[data-grabbed="true"] {
+  stroke: var(--loop-grab, #ffb347);
+  stroke-width: 2.8;
+  filter:
+    drop-shadow(0 0 4px var(--loop-grab, #ffb347))
+    drop-shadow(0 0 12px var(--loop-grab, #ffb347));
+  opacity: 1;
+  animation: none;
+}
+
+/* Магнит: пунктир в точке прилипания — видно, КУДА прилипнет, ещё до отпускания. */
+.loopMagnet {
+  stroke: var(--loop-grab, #ffb347);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* ── цвет блока = регион ────────────────────────────────────────────────────
+   Новых цветов нет: природный цвет блока и есть петля. За её пределами цвет
+   просто выключается. Активный блок при этом не теряется — он горит слоем
+   .lamp (своя формула), поэтому «плейхед» и «петля» читаются раздельно. */
+.root[data-loop-on="true"] .wagon[data-loop-region="out"]::before {
+  opacity: 0;
+}
+
+.root[data-loop-on="true"] .wagon[data-loop-region="out"] .title {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.root[data-loop-on="true"] .wagon[data-loop-region="out"]:hover::before {
+  opacity: 0.16;
+}
+
+/* 23:4x · Никита: «чуть подсвечивать блок в регионе выбранных строчек».
+   До этого регион читался ТОЛЬКО по скобкам, и активный блок со своим .lamp
+   перетягивал внимание: Pre-Chorus в петле выглядел обычным, Chorus 1 вне
+   петли — ярким.
+   🔴 Иерархия соблюдена: активный блок сильнее (у него заливка-лампа и
+   ореол по цвету трека), петля — слабее, иначе они снова начнут спорить.
+   🔴 Рамку получает только блок, выбранный ЦЕЛИКОМ. Частично выбранный блок
+   рамки не получает — у него родной цвет просто обрезан маской по отсечкам. */
+.root[data-loop-on="true"] .wagon[data-loop-region="in"]:not([data-active="true"]) {
+  border-color: rgba(255, 179, 71, 0.55);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 179, 71, 0.22),
+    0 0 9px rgba(255, 179, 71, 0.16);
+}
+
+.root[data-loop-on="true"] .wagon[data-loop-region="in"]:not([data-active="true"]):hover {
+  border-color: rgba(255, 179, 71, 0.8);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 179, 71, 0.32),
+    0 0 14px rgba(255, 179, 71, 0.24);
+}
+
+/* Блок в петле, который к тому же активен: лампа остаётся главной, но к ней
+   добавляется янтарное ребро — чтобы «играет» и «в петле» читались вместе. */
+.root[data-loop-on="true"] .wagon[data-loop-region="in"][data-active="true"] {
+  border-color: rgba(255, 179, 71, 0.75);
+}
+
+/* ── подсветка ТОЛЬКО выбранной части ──────────────────────────────────────
+   23:5x · Никита: «такие же квадратные области, не смотрится».
+   Причина была в способе: второй слой света ПОВЕРХ уже светящегося блока
+   делал долю вдвое ярче, и граница читалась наклейкой. Любая подсветка
+   «поверх» — это всегда прямоугольник.
+   Теперь наоборот: НЕ добавляем свет, а ОТРЕЗАЕМ родной. У вагона уже есть
+   свой цвет в ::before — маска оставляет его только на выбранных строках.
+   Один слой, не два ⇒ патча не существует физически: блок буквально гаснет
+   за отсечкой.
+   `--loop-cut-l/-r` — проценты ГАБАРИТА вагона (маска считается от него),
+   их ставит WagonTrain из геометрии строк. */
+/* 🔴 00:21 · Маска режет ОБА слоя света блока — и ::before (базовый цвет), и
+   .lamp (лампа активного/играющего блока). Раньше маска была только на
+   ::before, поэтому активный «частично в петле» блок светил .lamp целиком и
+   читался как «не режется». Теперь отсечка одинакова для обоих слоёв.
+   🔴 00:38 · Край мягкий (градиент) только на СТЫКЕ СТРОКИ (--loop-soft-r/-l =
+   16px), а на границе блока — резкий (0). Иначе цвет = прямоугольник с
+   вертикальной кромкой («квадратность», на которую жаловался Никита). */
+.wagon[data-loop-region="part"]::before,
+.wagon[data-loop-region="part"] .lamp {
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent var(--loop-cut-l, 0%),
+    #000 calc(var(--loop-cut-l, 0%) + var(--loop-soft-l, 0px)),
+    #000 calc(100% - var(--loop-cut-r, 0%) - var(--loop-soft-r, 0px)),
+    transparent calc(100% - var(--loop-cut-r, 0%))
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent var(--loop-cut-l, 0%),
+    #000 calc(var(--loop-cut-l, 0%) + var(--loop-soft-l, 0px)),
+    #000 calc(100% - var(--loop-cut-r, 0%) - var(--loop-soft-r, 0px)),
+    transparent calc(100% - var(--loop-cut-r, 0%))
+  );
+}
+
+/* На жесте доля вспыхивает вместе с блоком — тот же «как активный», но
+   обрезанный по строкам. */
+.root[data-loop-grab] .wagon[data-loop-region="part"]::before {
+  opacity: 0.34;
+}
+
+/* ── жест: блоки региона горят как активные ────────────────────────────────
+   23:5x · Никита: «при выделении подсвечиваются блоки все ярко, как активные,
+   так луп читается лучше». На время жеста блоки региона включают ТУ ЖЕ лампу,
+   что у активного блока, только слабее — ноль новых цветов и ноль новых слоёв.
+   Отпустил — лампа гаснет, остаётся тихая метка региона.
+   🔴 `:not([data-active])` обязателен: иначе активный блок ПОТУХНЕТ до 0.6
+   во время жеста (наше правило специфичнее его собственного). */
+.root[data-loop-grab] .wagon[data-loop-region="in"]:not([data-active="true"]) .lamp,
+.root[data-loop-grab] .wagon[data-loop-region="part"]:not([data-active="true"]) .lamp {
+  opacity: 0.6;
+}
+
+.root[data-loop-grab] .wagon[data-loop-region="in"] .title,
+.root[data-loop-grab] .wagon[data-loop-region="part"] .title {
+  color: #ffffff;
 }
 
 /* === Sub-block segments === */
 .subSegments {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
+  /* 708 / 07.11 · шаг 2: подблоки стали ТЕЛОМ вагона, а не 4px полоской у дна.
+     Занимают всю оставшуюся высоту (при root=54 это ~19px на карточку). */
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 18px;
+  width: 100%;
+  height: auto;
   display: flex;
+  align-items: stretch;
   gap: 2px;
-  padding: 0 4px;
+  padding: 0;
   pointer-events: auto;
   z-index: 2;
 }
@@ -565,28 +835,38 @@
 .subSegmentWrapper {
   position: relative;
   display: flex;
-  align-items: flex-end;
+  align-items: stretch;
+  min-width: 0;
 }
 
 .subSegment {
   width: 100%;
-  height: 4px;
+  height: 100%;
   position: relative;
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 0 0 2px 2px;
-  transition: background 0.2s ease;
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 4px;
+  transition: background 0.2s ease, border-color 0.2s ease;
   cursor: pointer;
 }
 
-/* Увеличить клик-зону сегмента вверх на 8px */
+/* Плейхед = заливка карточки. Петля = знак +/- внутри, янтаря на карточках нет. */
+.subSegment[data-sub-active="true"] {
+  background: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.34);
+}
+
+/* 708: карточка теперь на всю высоту — клик-зона = сама карточка. */
 .subSegment::before {
   content: '';
   position: absolute;
-  top: -8px;
-  left: -2px;
-  right: -2px;
-  bottom: 0;
+  inset: 0;
 }
+
+/* 708 / 23:5x · Заливка карточек УДАЛЕНА (канон Никиты: «убираем квадраты»).
+   Ровный цветной прямоугольник поверх тёмного блока читался наклейкой, а не
+   огнём. Регион теперь показывает только маска на родном слое цвета вагона,
+   обрезанное по отсечке. */
 
 /* Hover на неактивный сегмент в активном блоке */
 .wagon[data-active="true"] .subSegment:not([data-sub-active="true"]):hover {
@@ -598,18 +878,19 @@
   content: '';
   position: absolute;
   left: -2px;
-  top: -6px;
-  bottom: 0;
+  top: 2px;
+  bottom: 2px;
   width: 1px;
   background: rgba(255, 255, 255, 0.25);
 }
 
 /* Sub-loop toggle button */
 .subLoopToggle {
+  /* 708 / шаг 2: знак +/- ВНУТРИ карточки подблока, по её центру (канон Никиты). */
   position: absolute;
-  bottom: calc(100% + 1px);
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   width: 14px;
   height: 14px;
   padding: 0;
@@ -622,8 +903,9 @@
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
-  opacity: 0;
-  pointer-events: none;
+  /* 708: знаки видны ВСЕГДА (не только по hover) — состояние петли читается по ним. */
+  opacity: 0.6;
+  pointer-events: auto;
   transition: opacity 150ms ease, background 150ms ease, transform 150ms ease;
   z-index: 3;
   font-family: system-ui, -apple-system, sans-serif;
@@ -646,14 +928,16 @@
   pointer-events: auto;
 }
 
+/* 708 / шаг 2: база стала translate(-50%, -50%) — ховер обязан сохранять
+   обе оси, иначе знак при наведении прыгает вниз на полвысоты карточки. */
 .subLoopToggle:hover {
   background: rgba(255, 255, 255, 0.22);
-  transform: translateX(-50%) scale(1.15);
+  transform: translate(-50%, -50%) scale(1.15);
 }
 
 .subLoopToggle[data-active="true"]:hover {
   background: rgba(255, 255, 255, 0.22);
-  transform: translateX(-50%) scale(1.15);
+  transform: translate(-50%, -50%) scale(1.15);
 }
 
 /* ============================================================================
@@ -690,43 +974,45 @@
    трека и на паузе полоса остаётся нормальной, иначе интерфейс мрачнеет.
    🔴 Гасим СЛОИ, а не сам вагон: opacity/filter на .wagon гасит и бейдж
    петли внутри него — из-за этого «+» на соседе выглядел тусклее «−» на
-   активном блоке (Никита 07.11 10:07), а добавленный в петлю блок терял
-   янтарный контур. Чипы в петле не гасим никогда — петля это состояние. */
-.root[data-tm-dim="soft"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-in-loop="true"]) {
+   активном блоке (Никита 07.11 10:07).
+   708 / 22.1x: блоки в петле гасим НАРАВНЕ со всеми. Раньше они были
+   исключены из затемнения и «горели» — это сбивало с актуального блока.
+   Петлю теперь показывают только скобки, поэтому исключение снято. */
+.root[data-tm-dim="soft"][data-tm-has-active="true"] .wagon:not([data-active="true"]) {
   background: color-mix(in srgb, var(--bl-surface-overlay, rgba(0, 0, 0, 0.18)) 55%, #05050b);
   border-color: color-mix(in srgb, var(--bl-border-subtle, rgba(255, 255, 255, 0.12)) 55%, transparent);
 }
 
-.root[data-tm-dim="soft"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-in-loop="true"])::before {
+.root[data-tm-dim="soft"][data-tm-has-active="true"] .wagon:not([data-active="true"])::before {
   opacity: 0.1;
   filter: saturate(0.5);
 }
 
-.root[data-tm-dim="soft"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-in-loop="true"])::after {
+.root[data-tm-dim="soft"][data-tm-has-active="true"] .wagon:not([data-active="true"])::after {
   opacity: 0.22;
 }
 
-.root[data-tm-dim="soft"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-in-loop="true"]) .title {
+.root[data-tm-dim="soft"][data-tm-has-active="true"] .wagon:not([data-active="true"]) .title {
   opacity: 0.5;
 }
 
 /* solo: выживают активный, выбранное и всё, что в петле.
    Тот же слойный принцип: сам вагон не трогаем, только его слои. */
-.root[data-tm-dim="solo"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-in-loop="true"]):not([data-tm-selected="true"]) {
+.root[data-tm-dim="solo"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-tm-selected="true"]) {
   background: color-mix(in srgb, var(--bl-surface-overlay, rgba(0, 0, 0, 0.18)) 40%, #030309);
   border-color: rgba(255, 255, 255, 0.06);
 }
 
-.root[data-tm-dim="solo"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-in-loop="true"]):not([data-tm-selected="true"])::before {
+.root[data-tm-dim="solo"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-tm-selected="true"])::before {
   opacity: 0.06;
   filter: saturate(0.3);
 }
 
-.root[data-tm-dim="solo"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-in-loop="true"]):not([data-tm-selected="true"])::after {
+.root[data-tm-dim="solo"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-tm-selected="true"])::after {
   opacity: 0.12;
 }
 
-.root[data-tm-dim="solo"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-in-loop="true"]):not([data-tm-selected="true"]) .title {
+.root[data-tm-dim="solo"][data-tm-has-active="true"] .wagon:not([data-active="true"]):not([data-tm-selected="true"]) .title {
   opacity: 0.3;
 }
 
