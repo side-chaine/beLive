@@ -6,6 +6,8 @@ import { getAudioContext } from '../audio/core/audioContext';
 import { useAudioStore } from '../stores/audio.store';
 import { useNotifyStore } from '../stores/notify.store';
 import { MicSourceV3 } from '../audio/engine-v3/services/MicSourceV3';
+import { publishTrackUrls } from './track-urls';
+import type { TrackUrlSource } from './track-urls';
 
 /**
  * Aether v3 audio engine boot. Ordering is a contract, not an accident:
@@ -185,17 +187,10 @@ export function bootAether(): void {
             // фасад читает window.__belive.trackUrls (см. js/audio-facade-v3.js).
             try {
               const belive = (window as any).__belive || ((window as any).__belive = {})
-              const r = record as any
-              if (r?.instrumentalData) {
-                const blob = new Blob([r.instrumentalData], { type: r.instrumentalType ?? 'audio/mpeg' })
-                belive.trackUrls = belive.trackUrls || {}
-                belive.trackUrls.instrumentalUrl = URL.createObjectURL(blob)
-              }
-              if (r?.vocalsData) {
-                const blob = new Blob([r.vocalsData], { type: r.vocalsType ?? 'audio/mpeg' })
-                belive.trackUrls = belive.trackUrls || {}
-                belive.trackUrls.vocalsUrl = URL.createObjectURL(blob)
-              }
+              // 702-F0': каждый новый трек создавал 2 blob-URL и НИКОГДА не отзывал старые.
+              // Blob держит сжатую копию стема живой до revokeObjectURL ⇒ ~6-8 МиБ мусора
+              // на трек, накапливается за сессию. Логика вынесена в track-urls.ts и покрыта тестом.
+              publishTrackUrls(belive, record as unknown as TrackUrlSource)
             } catch (e) {
               console.warn('[AETHER] trackUrls publish failed:', e)
             }
