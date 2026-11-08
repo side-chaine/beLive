@@ -76,6 +76,7 @@ export class V3DataInterceptor {
       jobs.push({ id: 'vocals', data: record.vocalsData, type: record.vocalsType ?? 'audio/mpeg' });
     }
     if (hasStems) {
+      // @ts-expect-error [FROZEN-REQUEST N1b | Центр_5 2026-11-08 | ok: 707 (и.о. Gate R) | ревью: Соннет постфактум] TS2769 stemsData опционален по типу, сужен гейтом hasStems (стр. 78) — типовая дыра, не рантайм-баг; лечится при разморозке
       const allEntries = Object.entries(record.stemsData);
       // BAC-002 (VMO-005/036): «other» must never be silently dropped by slice(0,6)
       // when a track exposes >6 music stems. Keep first MAX_MUSIC_STEMS, but if

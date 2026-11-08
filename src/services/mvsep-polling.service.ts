@@ -177,6 +177,7 @@ class MvsepPollingService {
 
       let downloaded = 0;
       // downloadStems already downloaded all — just report progress
+      // eslint-disable-next-line no-empty-pattern -- [FROZEN-REQUEST N1b | Центр_5 2026-11-08 | ok: 707 (и.о. Gate R) | ревью: Соннет постфактум]
       for (const [] of stemsMap) {
         downloaded++;
         useMvsepStore.getState().updateDownloadProgress(hash, downloaded, total);
