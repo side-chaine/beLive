@@ -34,7 +34,7 @@ export const FallbackAvatar = memo(function FallbackAvatar({ mode, className }: 
     const unsub = useFeedStore.subscribe((state) => {
       if (!el) {return;}
       const event = state.lastEvent;
-      let mood: AvatarStateId = 'idle';
+      let mood: AvatarStateId;
       if (!event) {
         mood = 'idle';
       } else {

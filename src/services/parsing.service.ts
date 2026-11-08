@@ -52,10 +52,11 @@ export function extractLinesDirectlyFromRtf(rtfText: string): string[] {
   for (let line of rtfLines) {
     line = line.replace(/\\[a-z]+\d*\s?/g, '');
     line = line.replace(/\\\*[^{}\r\n]*/g, '');
-    line = line.replace(/\\[\\\{\}]/g, '');
-    line = line.replace(/[\{\}]/g, '');
+    line = line.replace(/\\[\\{}]/g, '');
+    line = line.replace(/[{}]/g, '');
     line = line.replace(/\\'([0-9a-fA-F]{2})/g, (_m, hex) =>
       String.fromCharCode(parseInt(hex, 16)));
+    // eslint-disable-next-line no-control-regex -- deliberate: strips control chars from pasted lyrics/RTF
     line = line.replace(/[\x00-\x1F]/g, '');
     if (line.trim().length > 0) {lines.push(line.trim());}
   }
@@ -68,8 +69,8 @@ export function detectTextLanguage(text: string): string {
   if (text.includes('\\rtf')) {
     clean = text.replace(/\\[a-z]+\d*\s?/g, '');
     clean = clean.replace(/\\\*[^{}\r\n]*/g, '');
-    clean = clean.replace(/\\[\\\{\}]/g, '');
-    clean = clean.replace(/[\{\}]/g, '');
+    clean = clean.replace(/\\[\\{}]/g, '');
+    clean = clean.replace(/[{}]/g, '');
   }
   const ruCount = (clean.match(/[а-яёА-ЯЁ]/g) || []).length;
   const enCount = (clean.match(/[a-zA-Z]/g) || []).length;
@@ -145,7 +146,7 @@ export function improveEnglishText(text: string): string {
   let improved = text.replace(/([.!?])\s*(?=[A-Z])/g, '$1\n');
   improved = improved.replace(/([a-zA-Z])([A-Z])/g, '$1 $2');
   improved = improved.replace(/(Yeah|Oh|Yeah,|Oh,)(?=[A-Z])/g, '$1\n');
-  improved = improved.replace(/(?<=\w)([,\.!?])(?=\s[A-Z])/g, '$1\n');
+  improved = improved.replace(/(?<=\w)([,.!?])(?=\s[A-Z])/g, '$1\n');
   improved = improved.replace(/Flying at the speed of light(?=\s*Thoughts)/i, 'Flying at the speed of light\n');
   improved = improved.replace(/It's out of my control(?=\s*Flying)/i, "It's out of my control\n");
   improved = improved.replace(/This is not what I had planned(?=\s*It's)/i, 'This is not what I had planned\n');
@@ -174,6 +175,7 @@ export function cleanText(text: string): string {
   let cleaned = text;
   if (isBOM) {cleaned = cleaned.slice(1);}
   if (!isRtf) {
+    // eslint-disable-next-line no-control-regex -- deliberate: strips control chars from pasted lyrics/RTF
     cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '');
     cleaned = cleaned.replace(/\r(?!\n)/g, ' ');
     cleaned = cleaned.replace(/\r\n/g, '\n');
@@ -310,6 +312,7 @@ export function extractStructuredContentFromRtf(rtfText: string): string | null 
     });
     text = text.replace(/###NL###/g, '\n');
     text = text.replace(/[{}\\]/g, '');
+    // eslint-disable-next-line no-control-regex -- deliberate: strips control chars from pasted lyrics/RTF
     text = text.replace(/[\x00-\x1F]/g, '');
     text = text.replace(/^\s+/gm, '').replace(/\s+$/gm, '');
     text = text.replace(/\n{3,}/g, '\n\n');
@@ -364,6 +367,7 @@ export function sanitizeEnglishText(text: string, isRtfContent: boolean): string
   s = s.replace(/\\uc\d+/g, '').replace(/\\pard/g, '');
   s = s.replace(/\\par/g, '\n').replace(/\\tab/g, '\t');
   s = s.replace(/\\f\d+/g, '').replace(/\\fs\d+/g, '').replace(/\\cf\d+/g, '');
+  // eslint-disable-next-line no-control-regex -- deliberate: strips control chars from pasted lyrics/RTF
   s = s.replace(/\s{2,}/g, ' ').replace(/[\x00-\x1F]/g, '');
   return improveEnglishText(s);
 }

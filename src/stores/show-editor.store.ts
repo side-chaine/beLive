@@ -409,7 +409,7 @@ export const useShowEditorStore = create<ShowState>()((set, get) => ({
   prevStep: () => {
     const { scenario, activePointIndex, activeStepIndex } = get();
     let newPointIdx = activePointIndex;
-    let newStepIdx = activeStepIndex;
+    let newStepIdx: number;
 
     if (activeStepIndex > 0) {
       newStepIdx = activeStepIndex - 1;

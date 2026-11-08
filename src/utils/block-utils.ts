@@ -369,10 +369,9 @@ function computeBalancedSplit(totalLines: number): number[] {
  */
 export function createSubBlocks(
   lineIndices: number[],
-  maxLines: number = 6,
+  _maxLines: number = 6,
   lines?: string[]
 ): SubBlock[] {
-  if (maxLines < 1) {maxLines = 1;}
   if (lineIndices.length === 0) {return [];}
 
   // 1. Базовое деление по принципу дополненного квадрата

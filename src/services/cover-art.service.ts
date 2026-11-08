@@ -69,7 +69,7 @@ async function fetchCoverOnce(
   artist: string,
   title: string,
 ): Promise<string | null> {
-  let coverUrl: string | null = null;
+  let coverUrl: string | null;
 
   // Strategy 1: iTunes Search API (CORS-friendly, works from browser)
   coverUrl = await fetchCoverArtFromItunes(artist, title);
@@ -246,7 +246,7 @@ function rgbToHsl(r: number, g: number, b: number): HslPixel {
   if (max === min) {return { h: 0, s: 0, l };}
   const d = max - min;
   const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-  let h = 0;
+  let h: number;
   if (max === r) {h = ((g - b) / d + (g < b ? 6 : 0)) / 6;}
   else if (max === g) {h = ((b - r) / d + 2) / 6;}
   else {h = ((r - g) / d + 4) / 6;}

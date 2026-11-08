@@ -84,7 +84,7 @@ export default {
         const trackList = await env.EPHEMERAL_KV.list({ prefix: "track_data:t:", limit: 200 });
         const entries = await Promise.all(trackList.keys.map((k) => env.EPHEMERAL_KV.get(k.name, { type: "json" })));
         const tTracks: any[] = entries.filter(Boolean);
-        let rawCatalog: any = null;
+        let rawCatalog: any;
         try { rawCatalog = await env.EPHEMERAL_KV.get('track_data:catalog', { type: 'json' }); } catch { rawCatalog = null; }
         const cTracks: any[] = Array.isArray(rawCatalog) ? rawCatalog : [];
         const kvTracks: any[] = [...tTracks, ...cTracks];
@@ -232,7 +232,7 @@ export default {
 
       // A6: Filename sanitize
       const sanitizeName = (name: string) =>
-        name.replace(/[^a-zA-Z0-9._\-]/g, '_').slice(0, 64);
+        name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 64);
       const safeFileName = sanitizeName(file.name);
 
       // A7: Отправка в Telegram

@@ -93,7 +93,7 @@ export function parseTitleToArtistTrack(
 ): { artist: string; track: string } {
   // Убираем суффиксы: (Remastered), (Live), feat., ft.
   const cleaned = title
-    .replace(/\s*[\(\[](remastered|live|acoustic|demo|edit|remix|feat\.?.*|ft\.?.*)[\)\]]/gi, '')
+    .replace(/\s*[([](remastered|live|acoustic|demo|edit|remix|feat\.?.*|ft\.?.*)[)\]]/gi, '')
     .trim();
 
   // Разделители: " - " / " – " / " — "
@@ -300,7 +300,7 @@ export function blockFirstLineSync(
   // Фильтруем строки-заглушки ("♪", "...", "~") чтобы они не
   // раздували M и не искажали gap/ratio в DP.
   // ═══════════════════════════════════════════════════════════════
-  const FILLER_REGEX = /[♪~…\.\s]/g;
+  const FILLER_REGEX = /[♪~….\s]/g;
   function isFillerLine(text: string): boolean {
     return text.replace(FILLER_REGEX, '').length === 0;
   }

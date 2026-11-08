@@ -218,7 +218,7 @@ export class LyricsService {
     const isRtf = rtfSignatures.some((sig) => text.includes(sig));
     const isLrc = text.includes('[') && text.includes(']') && /\[\d+:\d+/i.test(text);
     const hasUnicode = text.includes('\\u') || text.includes("\\'");
-    let processedText = '';
+    let processedText: string;
     const w = window as any;
     const ps = w.parsingService;
     if (isRtf) {

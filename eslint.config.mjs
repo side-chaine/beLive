@@ -62,6 +62,21 @@ export default [
     },
   },
 
+  // AudioWorklet-процессоры: исполняются в AudioWorkletGlobalScope, а линтуются
+  // как обычный JS. Глобалы этого scope не входят в browser/node наборы.
+  {
+    files: ["src/audio/pitch/**/*.js"],
+    languageOptions: {
+      globals: {
+        AudioWorkletProcessor: "readonly",
+        registerProcessor: "readonly",
+        sampleRate: "readonly",
+        currentTime: "readonly",
+        currentFrame: "readonly",
+      },
+    },
+  },
+
   // Игнорируемые зоны (по RULES-CORE §6 + бриф N1a: dist/node_modules/.git/public/vendor).
   {
     ignores: [

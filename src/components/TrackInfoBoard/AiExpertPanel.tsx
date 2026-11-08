@@ -66,6 +66,7 @@ function renderMd(text: string): React.ReactNode[] {
   }
 
   if (lastIndex < displayText.length) {
+    // eslint-disable-next-line no-useless-assignment -- key++ yields a unique React key per push; the post-increment value is read by the next iteration
     parts.push(<span key={key++}>{displayText.slice(lastIndex)}</span>);
   }
 
@@ -222,7 +223,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
   }, [addAiMessage]);
 
   // Build context for AI messages
-  // eslint-disable-next-line react-hooks/exhaustive-deps — stores stable, not reactive deps
+  // Deps intentionally omitted: stores are stable, not reactive deps
   const buildCtx = useCallback(() => {
     const parsed = parseTrackName(currentTrack?.title || '');
 

@@ -141,7 +141,7 @@ export function TrackInfoBoard() {
       }
       // Fetch fresh from API (skip if backfill is already fetching this track)
       setFetchingApi(true);
-      let fresh: null | any = null;
+      let fresh: any;
       if (!_inFlight.has(trackId)) {
         _inFlight.add(trackId);
         fresh = await fetchTrackMeta(trackId, currentTrack?.title || '');

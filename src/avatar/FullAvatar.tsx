@@ -82,7 +82,7 @@ export const FullAvatar = memo(function FullAvatar({ mode, className }: FullAvat
     const unsub = useFeedStore.subscribe((state) => {
       if (!el) {return;}
       const event = state.lastEvent;
-      let mood: AvatarStateId = 'idle';
+      let mood: AvatarStateId;
       if (!event) {
         mood = 'idle';
       } else {

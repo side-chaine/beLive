@@ -88,7 +88,7 @@ export class TakesRecorder {
     const ae = (window as any).audioEngine;
     if (!ae) {throw new Error('AudioEngine not available');}
     const engineMode = ENGINE_MODE;
-    let stream: MediaStream | null = null;
+    let stream: MediaStream | null;
 
     if (engineMode === 'v3') {
       // F-1 (431): acquisition через MicSourceV3 (мик ВЫШЕ плейбек-pipeline)
