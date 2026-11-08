@@ -613,7 +613,7 @@ async function saveToAppState<T>(key: string, value: T): Promise<void> {
 
 // ── Show Scenario Persistence ──
 
-const REC_SCENARIO_KEY = 'rec_studio_scenario_v1';
+const REC_SCENARIO_KEY = 'rec_studio_scenario_v1'; // secret-ok: REC_SCENARIO_KEY — имя ключа сценария в IndexedDB, не креденшл (ложное срабатывание R3)
 
 interface ShowScenarioPersisted {
   schemaVersion: number;

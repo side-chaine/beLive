@@ -35,7 +35,9 @@ jobs:
       - name: Build
         run: npm run build
         env:
+          # secret-ok-next-line: публичный клиентский ключ, значение из GitHub secrets, инлайн по дизайну Vite
           VITE_GETSONGBPM_KEY: ${{ secrets.VITE_GETSONGBPM_KEY }}
+          # secret-ok-next-line: публичный клиентский ключ, значение из GitHub secrets, инлайн по дизайну Vite
           VITE_LASTFM_API_KEY: ${{ secrets.VITE_LASTFM_API_KEY }}
           VITE_REHEARSAL_SIGNALING_URL: 'wss://belive-rehearsal.nikitosss007.workers.dev/ws'
           SEO_GOOGLE_SITE_VERIFICATION: ${{ secrets.SEO_GOOGLE_SITE_VERIFICATION }}

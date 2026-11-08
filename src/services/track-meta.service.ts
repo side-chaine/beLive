@@ -91,7 +91,7 @@ async function fetchMusicBrainz(
 }
 
 // ─── Last.fm API ───
-const LASTFM_API_KEY = import.meta.env.VITE_LASTFM_API_KEY || '';
+const LASTFM_API_KEY = import.meta.env.VITE_LASTFM_API_KEY || ''; // secret-ok: публичные клиентские ключи (Last.fm / GetSongBPM) — решение Никиты 08.11
 
 async function fetchLastFm(
   artist: string,
@@ -158,7 +158,7 @@ function openKeyToCamelot(openKey: string): string | null {
 }
 
 // ─── GetSongBPM API ───
-const GETSONGBPM_KEY = import.meta.env.VITE_GETSONGBPM_KEY || '';
+const GETSONGBPM_KEY = import.meta.env.VITE_GETSONGBPM_KEY || ''; // secret-ok: публичные клиентские ключи (Last.fm / GetSongBPM) — решение Никиты 08.11
 
 async function fetchGetSongBPM(
   artist: string,

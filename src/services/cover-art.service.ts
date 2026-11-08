@@ -6,7 +6,7 @@ import { parseTrackName } from '../catalog/types';
 
 // ─── Last.fm API ───
 
-const LASTFM_API_KEY = import.meta.env.VITE_LASTFM_API_KEY || '';
+const LASTFM_API_KEY = import.meta.env.VITE_LASTFM_API_KEY || ''; // secret-ok: публичный клиентский ключ Last.fm — решение Никиты 08.11
 
 interface LastFmImage {
   '#text': string;

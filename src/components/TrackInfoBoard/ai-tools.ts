@@ -369,7 +369,7 @@ async function executeSearchAudioDB(args: Record<string, unknown>): Promise<Tool
     if (import.meta.env.DEV) {console.log('[GetSongBPM] Searching:', { artist, song });}
 
     // GetSongBPM API
-    const url = `https://api.getsong.co/search/?api_key=${import.meta.env.VITE_GETSONGBPM_KEY}&type=both&lookup=song:${encodeURIComponent(song)}+artist:${encodeURIComponent(artist)}`;
+    const url = `https://api.getsong.co/search/?api_key=${import.meta.env.VITE_GETSONGBPM_KEY}&type=both&lookup=song:${encodeURIComponent(song)}+artist:${encodeURIComponent(artist)}`; // secret-ok: публичный клиентский ключ GetSongBPM (класс Last.fm — решение Никиты 08.11)
 
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
 
