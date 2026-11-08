@@ -18,7 +18,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --report-unused-disable-directives",
     "verify:asany": "node scripts/verify-asany.mjs",
     "verify:events": "npx tsx scripts/verify-event-map.ts",
     "verify:parity": "npx tsx scripts/verify-bridge-parity.ts",
@@ -31,7 +31,9 @@
     "verify:junction": "node scripts/verify-junction.mjs",
     "gen:docindex": "node scripts/gen-doc-index.mjs",
     "verify:permissions:local": "node team-m/tools/verify-permissions.mjs",
-    "verify:jwt": "node scripts/smoke-jwt.mjs"
+    "verify:jwt": "node scripts/smoke-jwt.mjs",
+    "verify:typecheck": "node scripts/verify-typecheck.mjs",
+    "verify:lint-baseline": "node scripts/verify-lint-baseline.mjs"
   },
   "repository": {
     "type": "git",
