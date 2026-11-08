@@ -52,7 +52,7 @@ export class AIHub extends EventTarget {
   }
 
   getActiveModel(): ModelInfo | null {
-    if (this._activeModel) return this._activeModel;
+    if (this._activeModel) {return this._activeModel;}
     // Fallback: auto-select first belive model when none is set
     const fallback = this.models.find(m => m.provider === 'belive');
     if (fallback) {
@@ -110,7 +110,7 @@ export class AIHub extends EventTarget {
     const wrapped: StreamCallbacks = {
       ...callbacks,
       onDone: (fullText, usage) => {
-        if (completionHandled) return;
+        if (completionHandled) {return;}
         completionHandled = true;
         this.dispatchEvent(new CustomEvent(ASSISTANT_RESPONSE_COMPLETED, {
           detail: { fullText, source: 'aiHub' },

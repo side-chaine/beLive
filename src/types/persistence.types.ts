@@ -59,7 +59,7 @@ export interface TransitionZone {
  */
 
 export function isPersistedSyncMarker(obj: unknown): obj is PersistedSyncMarker {
-  if (!obj || typeof obj !== 'object') return false;
+  if (!obj || typeof obj !== 'object') {return false;}
   const o = obj as Record<string, unknown>;
   return (
     typeof o.id === 'string' &&
@@ -79,7 +79,7 @@ export function isPersistedSyncMarkerArray(obj: unknown): obj is PersistedSyncMa
 }
 
 export function isPersistedTextBlock(obj: unknown): obj is PersistedTextBlock {
-  if (!obj || typeof obj !== 'object') return false;
+  if (!obj || typeof obj !== 'object') {return false;}
   const o = obj as Record<string, unknown>;
   return (
     typeof o.id === 'string' &&

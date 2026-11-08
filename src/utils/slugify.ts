@@ -21,7 +21,7 @@ function randomId(): string {
 }
 
 export function slugify(raw: string): string {
-  if (!raw) return `t-${randomId()}`;
+  if (!raw) {return `t-${randomId()}`;}
   
   const lower = raw.toLowerCase().trim();
   

@@ -20,7 +20,7 @@ export function LineFxSelectorModal({
   onSetTransitionSet,
   onSelectTransition,
 }: LineFxSelectorModalProps) {
-  if (!open) return null;
+  if (!open) {return null;}
 
   const sourceFilter = transitionSet === 'A' ? 'claude' : 'gemini';
   const visibleTrans = Object.entries(TRANSITIONS).filter(([, t]) => t.source === sourceFilter);

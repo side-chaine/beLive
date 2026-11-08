@@ -28,7 +28,7 @@ export function initStemReactiveEvents(): () => void {
   const stemHits: Record<string, number> = {}
   const prevRms: Record<string, number> = {}
   const rmsCache: Record<string, number | undefined> = {}
-  let drumsFreqArray: Uint8Array | null = null
+  let drumsFreqArray: Uint8Array<ArrayBuffer> | null = null
   let drumsKickEnergy = 0
   let prevKickEnergy = 0
   let tickCount = 0
@@ -43,7 +43,7 @@ export function initStemReactiveEvents(): () => void {
       const isRecording = useRecordingStore.getState().isRecording || useTakesStore.getState().isRecording
       if (isRecording) {
         useStemStore.getState().loadedStems.forEach((id: string) => {
-          if (id === 'instrumental') return
+          if (id === 'instrumental') {return}
           stemEnergies[id] = 0; stemHits[id] = 0; prevRms[id] = 0
         })
         drumsKickEnergy = 0; prevKickEnergy = 0
@@ -87,7 +87,7 @@ export function initStemReactiveEvents(): () => void {
 
       // Phase B — budget check + throttled envelope
       const perfBudget = usePerformanceStore.getState().getBudget()?.visualMixer
-      if (perfBudget && perfBudget.enabled === false) return
+      if (perfBudget && perfBudget.enabled === false) {return}
 
       const targetFps = perfBudget?.cardUpdateFps ?? 30
       const throttleMax = Math.max(1, Math.round(60 / targetFps))
@@ -97,7 +97,7 @@ export function initStemReactiveEvents(): () => void {
       const loadedStems = useStemStore.getState().loadedStems
 
       loadedStems.forEach((stemId: string) => {
-        if (stemId === 'instrumental') return
+        if (stemId === 'instrumental') {return}
 
         // RMS
         const rms = (window as any).__belive?.pipeline?.getStemMeterLevel?.(stemId)
@@ -129,7 +129,7 @@ export function initStemReactiveEvents(): () => void {
     write() {
       const loadedStems = useStemStore.getState().loadedStems
       loadedStems.forEach((stemId: string) => {
-        if (stemId === 'instrumental') return
+        if (stemId === 'instrumental') {return}
         queueCssVar(CSS_ENERGY(stemId), (stemEnergies[stemId] ?? 0).toFixed(3))
         queueCssVar(CSS_HIT(stemId), (stemHits[stemId] ?? 0).toFixed(3))
       })

@@ -30,7 +30,7 @@ export class NoteQuantizer {
   }
 
   quantize(rawMidi: number, confidence: number, _timestamp?: number): QuantizedNote | null {
-    if (confidence < 0.5) return null;
+    if (confidence < 0.5) {return null;}
 
     const nearest = Math.round(rawMidi);
 

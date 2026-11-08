@@ -24,7 +24,7 @@ export function CatalogBillyChat() {
 
   const handleSend = async (text?: string) => {
     const userMessage = text || input;
-    if (!userMessage.trim() || isStreaming) return;
+    if (!userMessage.trim() || isStreaming) {return;}
 
     setShowQuickQ(false);
     const newMessages = [...messages, { role: 'user' as const, text: userMessage }];

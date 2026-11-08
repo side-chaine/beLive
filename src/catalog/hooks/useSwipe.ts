@@ -15,7 +15,7 @@ export function useSwipe(
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el) {return;}
 
     const onStart = (e: TouchEvent) => {
       startX.current = e.touches[0].clientX;
@@ -26,7 +26,7 @@ export function useSwipe(
       const dx = e.changedTouches[0].clientX - startX.current;
       const dy = e.changedTouches[0].clientY - startY.current;
       if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
-        if (dx > 0) handlers.onSwipeRight?.(); else handlers.onSwipeLeft?.();
+        if (dx > 0) {handlers.onSwipeRight?.();} else {handlers.onSwipeLeft?.();}
       }
     };
 

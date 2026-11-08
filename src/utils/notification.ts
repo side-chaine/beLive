@@ -50,7 +50,7 @@ export function showToast(message: string, type: 'info' | 'success' | 'error' = 
   _getToastStack().appendChild(div);
   const duration = type === 'error' ? 8000 : 5000;
   setTimeout(() => {
-    if (div.parentNode) div.parentNode.removeChild(div);
+    if (div.parentNode) {div.parentNode.removeChild(div);}
   }, duration);
 }
 

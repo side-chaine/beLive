@@ -1,7 +1,6 @@
 import {
   RESPONSIVENESS,
   POSITION_DEADZONE,
-  CORNER_POS,
   BPM_BASE,
   BPM_SOFT_CAP_THRESHOLD,
   BPM_SOFT_CAP_DECAY,
@@ -73,7 +72,7 @@ export function lerpFir(
   base: number,
   dt: number,
 ): number {
-  if (Math.abs(target - current) < POSITION_DEADZONE) return target;
+  if (Math.abs(target - current) < POSITION_DEADZONE) {return target;}
   const lerpAdj = 1 - Math.pow(1 - base, dt * 60);
   return current + (target - current) * lerpAdj;
 }
@@ -85,16 +84,16 @@ export function resolveMode(
   modeTimer: number,
 ): BillyMode {
   // Transient: check duration first
-  if (currentMode === 'retreat' && modeTimer < RETREAT_DURATION) return 'retreat';
-  if (currentMode === 'jump' && modeTimer < JUMP_DURATION) return 'jump';
+  if (currentMode === 'retreat' && modeTimer < RETREAT_DURATION) {return 'retreat';}
+  if (currentMode === 'jump' && modeTimer < JUMP_DURATION) {return 'jump';}
 
   // Overlay retreat (highest non-transient priority)
-  if (inputs.isOverlayOpen) return 'retreat';
+  if (inputs.isOverlayOpen) {return 'retreat';}
 
   // Core mode resolution (priority: sleep > think > groove > patrol)
-  if (!inputs.hasTrack) return 'sleep';
-  if (inputs.isAiStreaming) return 'think';
-  if (inputs.isPlaying) return 'groove';
+  if (!inputs.hasTrack) {return 'sleep';}
+  if (inputs.isAiStreaming) {return 'think';}
+  if (inputs.isPlaying) {return 'groove';}
   return 'patrol';
 }
 

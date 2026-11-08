@@ -14,7 +14,7 @@ export function CalibrationDrum({ value, onChange, disabled }: { value: number; 
 
   React.useEffect(() => {
     const handlePointerMove = (e: PointerEvent) => {
-      if (!isDraggingRef.current || !drumRef.current) return;
+      if (!isDraggingRef.current || !drumRef.current) {return;}
 
       const deltaX = e.clientX - dragStartXRef.current;
       const rect = drumRef.current.getBoundingClientRect();

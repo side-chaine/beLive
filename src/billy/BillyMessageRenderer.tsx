@@ -24,6 +24,7 @@ export function BillyMessageRenderer({ content, onAction }: BillyMessageRenderer
       ].filter(p => p !== Infinity);
 
       if (positions.length === 0) {
+        // eslint-disable-next-line no-useless-assignment -- key++ yields a unique React key per push; the post-increment value is read by the next iteration
         parts.push(<span key={key++}>{remaining}</span>);
         break;
       }

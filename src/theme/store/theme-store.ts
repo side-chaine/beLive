@@ -6,7 +6,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { AppMode, BeLiveTheme } from '../types'
-import { defaultTheme } from '../themes/default'
+import '../themes/default';
 import { getThemeById } from '../themes/index'
 import { applyTheme, applyMode } from '../engine/css-injector'
 

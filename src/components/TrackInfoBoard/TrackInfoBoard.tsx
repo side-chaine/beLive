@@ -86,7 +86,7 @@ function MetaCard({
 /* ── Sub-components ── */
 function TagsList({ genres, tags }: { genres: string[] | null; tags: string[] | null }) {
   const hasAnything = (genres?.length || 0) + (tags?.length || 0) > 0;
-  if (!hasAnything) return <span className={styles.cardValue}>—</span>;
+  if (!hasAnything) {return <span className={styles.cardValue}>—</span>;}
   return (
     <div className={styles.tagsList}>
       {genres?.map((g, i) => (
@@ -100,7 +100,7 @@ function TagsList({ genres, tags }: { genres: string[] | null; tags: string[] | 
 }
 
 function SimilarTracksList({ tracks }: { tracks: { name: string; artist: string }[] | null }) {
-  if (!tracks || tracks.length === 0) return <span className={styles.cardValue}>—</span>;
+  if (!tracks || tracks.length === 0) {return <span className={styles.cardValue}>—</span>;}
   return (
     <div>
       {tracks.map((t, i) => (
@@ -130,18 +130,18 @@ export function TrackInfoBoard() {
 
   // Load meta on open
   useEffect(() => {
-    if (!isOpen || !trackId) return;
+    if (!isOpen || !trackId) {return;}
     let cancelled = false;
     (async () => {
       // Try cache first
       const cached = await loadCachedTrackMeta(trackId);
-      if (cancelled) return;
+      if (cancelled) {return;}
       if (cached) {
         setMeta(cached);
       }
       // Fetch fresh from API (skip if backfill is already fetching this track)
       setFetchingApi(true);
-      let fresh: null | any = null;
+      let fresh: any;
       if (!_inFlight.has(trackId)) {
         _inFlight.add(trackId);
         fresh = await fetchTrackMeta(trackId, currentTrack?.title || '');
@@ -149,14 +149,14 @@ export function TrackInfoBoard() {
       } else {
         // Backfill is already fetching — wait for it via cache re-read
         fresh = await loadCachedTrackMeta(trackId);
-        if (cancelled) return;
+        if (cancelled) {return;}
         if (fresh) {
           setMeta(fresh);
         }
         setFetchingApi(false);
         return;
       }
-      if (cancelled) return;
+      if (cancelled) {return;}
       if (fresh) {
         setMeta(fresh);
       } else if (!cached) {
@@ -188,7 +188,7 @@ export function TrackInfoBoard() {
 
   // ESC handler
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') close();
+    if (e.key === 'Escape') {close();}
   }, [close]);
 
   useEffect(() => {
@@ -198,13 +198,13 @@ export function TrackInfoBoard() {
     }
   }, [isOpen, handleKeyDown]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {return null;}
 
   const handleRefresh = async () => {
-    if (!trackId) return;
+    if (!trackId) {return;}
     setFetchingApi(true);
     const fresh = await fetchTrackMeta(trackId, currentTrack?.title || '');
-    if (fresh) setMeta(fresh);
+    if (fresh) {setMeta(fresh);}
     setFetchingApi(false);
   };
 
@@ -237,7 +237,7 @@ export function TrackInfoBoard() {
             wide
             loading={isFetchingApi && !meta?.genre && !meta?.tags}
           >
-            <TagsList genres={meta?.genre} tags={meta?.tags} />
+            <TagsList genres={meta?.genre ?? null} tags={meta?.tags ?? null} />
           </MetaCard>
           <MetaCard
             label="Key"
@@ -278,7 +278,7 @@ export function TrackInfoBoard() {
             wide
             loading={isFetchingApi && !meta?.similarTracks}
           >
-            <SimilarTracksList tracks={meta?.similarTracks} />
+            <SimilarTracksList tracks={meta?.similarTracks ?? null} />
           </MetaCard>
         </div>
 
@@ -288,8 +288,8 @@ export function TrackInfoBoard() {
             <button
               className={styles.analyzeButton}
               onClick={async () => {
-                if (!trackId) return;
-                if (isAnalyzing) return;   // GUARD: prevent double-run
+                if (!trackId) {return;}
+                if (isAnalyzing) {return;}   // GUARD: prevent double-run
                 setAnalyzing(true);
                 try {
                   const { analyzeAndPersist } = await import('../../services/audio-analysis.service');

@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "note": "N1b/1d: ВРЕМЕННЫЕ исключения typecheck-гейта — только файлы пакета TrackMap (708). После их мержа: --update (пустеет), гейт строгий.",
+  "members": [
+    {
+      "file": "src/components/CurrentTrackBadge.tsx",
+      "code": "TS6133",
+      "count": 1,
+      "owner": "708",
+      "until": "merge 708/trackmap-loop-drag",
+      "reason": "unused в зоне 708, вылечено в их ветке c328445"
+    },
+    {
+      "file": "src/components/WagonTrain.tsx",
+      "code": "TS6133",
+      "count": 3,
+      "owner": "708",
+      "until": "merge 708/trackmap-loop-drag",
+      "reason": "unused в зоне 708, вылечено в их ветке c328445"
+    },
+    {
+      "file": "src/stores/loop.store.ts",
+      "code": "TS6133",
+      "count": 4,
+      "owner": "708",
+      "until": "merge 708/trackmap-loop-drag",
+      "reason": "unused в зоне 708, вылечено в их ветке c328445"
+    }
+  ]
+}

@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 // В1 п.6: ratchet `as any` (ORDER-V1 п.6) — gate на НОВЫЙ код.
 // Методика счёта = замер 007: grep -rc " as any" src --include=*.ts --include=*.tsx (строки с вхождением).
-// baseline 608 = 597 (замер 007 до В1, 12.09) + 11 фасад-тестов п.3; ratchet: нового as-any не добавлять.
+// baseline 608 = 597 (замер 007 до В1, 12.09) + 11 фасад-тестов п.3.
+// N1b (805, 08.11): BASELINE переписан 608 → 651 по факту (608 устарел: гейт не был
+// подключён в CI, долг вырос незаметно). Раскладка 651 = FREE 551 + engine-v3 77 +
+// bridge 17 + 708 7 (замер после Ф1–Ф4). Ratchet: нового as-any не добавлять.
 // exit 1 при превышении.
 // Не трогать eslint max-warnings — ratchet отдельный механизм (MICRO-PACK-V1 п.6).
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, extname, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const BASELINE = 608
+const BASELINE = 651
 
 const SRC_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'src')
 

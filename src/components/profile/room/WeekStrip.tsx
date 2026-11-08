@@ -14,7 +14,7 @@ const TICKS = 7;
 
 /* MR-4b Q8: humanize-минуты — ≥60 → «X ч Y м», иначе «N м» */
 function humanizeMinutes(n: number): string {
-  if (n >= 60) return `${Math.floor(n / 60)} ч ${n % 60} м`;
+  if (n >= 60) {return `${Math.floor(n / 60)} ч ${n % 60} м`;}
   return `${n} м`;
 }
 

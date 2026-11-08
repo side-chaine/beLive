@@ -25,7 +25,7 @@ export function CameraPreview() {
     }
   }, [mode, stopCamera]);
 
-  if (mode !== 'live') return null;
+  if (mode !== 'live') {return null;}
 
   return (
     <div className={styles.container}>

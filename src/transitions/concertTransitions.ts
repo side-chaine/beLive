@@ -19,7 +19,7 @@ const active = new WeakMap<HTMLElement, Cleanup>()
 
 function stop(el: HTMLElement) {
   const prev = active.get(el)
-  if (prev) prev()
+  if (prev) {prev()}
   active.delete(el)
 }
 
@@ -36,7 +36,7 @@ function animateEl(
   }
   active.set(el, cleanup)
   anim.finished.finally(() => {
-    if (active.get(el) === cleanup) active.delete(el)
+    if (active.get(el) === cleanup) {active.delete(el)}
   })
   return cleanup
 }
@@ -134,7 +134,7 @@ function runLetterStagger(el: HTMLElement, mode: 'letters' | 'words'): Cleanup {
 
   const total = spans.length * per + dur + 50
   const t = window.setTimeout(() => {
-    if (!cancelled) cleanup()
+    if (!cancelled) {cleanup()}
   }, total)
 
   const c = () => {
@@ -150,7 +150,7 @@ function runLetterStagger(el: HTMLElement, mode: 'letters' | 'words'): Cleanup {
 export function runConcertTransition(el: HTMLElement, id: string): void {
   stop(el)
 
-  if (!id || id === 'none') return
+  if (!id || id === 'none') {return}
   const tid = id as TransitionId
 
   switch (tid) {

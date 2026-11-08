@@ -73,14 +73,14 @@ export const useMarkersStore = create<MarkersState>((set, get) => ({
       return;
     }
     const mm = (window as any).markerManager;
-    if (mm?.addMarker) mm.addMarker(marker);
+    if (mm?.addMarker) {mm.addMarker(marker);}
   },
   deleteMarker: (id) => {
     const mm = (window as any).markerManager;
-    if (mm?.deleteMarker) mm.deleteMarker(id);
+    if (mm?.deleteMarker) {mm.deleteMarker(id);}
   },
   updateMarker: (id, updates) => {
     const mm = (window as any).markerManager;
-    if (mm?.updateMarker) mm.updateMarker(id, updates);
+    if (mm?.updateMarker) {mm.updateMarker(id, updates);}
   },
 }));

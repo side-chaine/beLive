@@ -92,18 +92,18 @@ export async function openPostUploadFlow(
   input: PostUploadFlowInput,
   deps: PostUploadFlowDeps,
 ): Promise<'opened' | 'busy' | 'blocked'> {
-  if (_inFlight) return 'busy';
+  if (_inFlight) {return 'busy';}
   _inFlight = true;
 
   try {
     const resolution = resolvePostUploadFlow(input);
-    if (resolution.action === 'none') return 'blocked';
+    if (resolution.action === 'none') {return 'blocked';}
 
     const trackId = input.trackId;
     const tc = (window as any).trackCatalog;
     const tracks: any[] = Array.isArray(tc?.tracks) ? tc.tracks : [];
     const index = tracks.findIndex(t => String(t.id) === String(trackId));
-    if (index < 0) return 'blocked';
+    if (index < 0) {return 'blocked';}
 
     const currentIdx = tc.currentTrackIndex;
     const current = currentIdx >= 0 && currentIdx < tracks.length ? tracks[currentIdx] : null;
@@ -127,7 +127,7 @@ export async function openPostUploadFlow(
       return result === false ? 'blocked' : 'opened';
     }
 
-    if (!deps.openSync) return 'blocked';
+    if (!deps.openSync) {return 'blocked';}
     const result = deps.openSync();
     return result === false ? 'blocked' : 'opened';
   } finally {

@@ -89,8 +89,7 @@ const mockCtx = {
 
 // Mock getContext on HTMLCanvasElement prototype
 if (typeof HTMLCanvasElement !== 'undefined') {
-  const originalGetContext = HTMLCanvasElement.prototype.getContext;
-  HTMLCanvasElement.prototype.getContext = function (contextType: string, ...args: any[]) {
+  HTMLCanvasElement.prototype.getContext = function (contextType: string, ..._args: any[]) {
     if (contextType === '2d') {
       return mockCtx;
     }

@@ -72,14 +72,14 @@ export async function transcodeStem(
 
   // Отправляем в worker (transferable — 0 копий)
   const pcmData = [leftPcm.buffer as ArrayBuffer];
-  if (rightPcm) pcmData.push(rightPcm.buffer as ArrayBuffer);
+  if (rightPcm) {pcmData.push(rightPcm.buffer as ArrayBuffer);}
 
   const worker = getWorker();
 
   return new Promise<TranscodeResult>((resolve, reject) => {
     const onMessage = (e: MessageEvent) => {
       const msg = e.data;
-      if (msg.jobId !== jobId) return;
+      if (msg.jobId !== jobId) {return;}
 
       switch (msg.type) {
         case 'progress':
@@ -175,14 +175,14 @@ export async function encodeDecoded(
 
   // PCM данные для transfer в worker
   const pcmData = [leftPcm.buffer as ArrayBuffer];
-  if (rightPcm) pcmData.push(rightPcm.buffer as ArrayBuffer);
+  if (rightPcm) {pcmData.push(rightPcm.buffer as ArrayBuffer);}
 
   const worker = getWorker();
 
   return new Promise<TranscodeResult>((resolve, reject) => {
     const onMessage = (e: MessageEvent) => {
       const msg = e.data;
-      if (msg.jobId !== jobId) return;
+      if (msg.jobId !== jobId) {return;}
 
       switch (msg.type) {
         case 'progress':

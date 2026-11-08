@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { stepBilly, type BillyInputs, type BillyStepResult, DEFAULT_TARGET_CONTEXT } from '../billy-controller';
-import type { BillyTargetContext } from '../billy-controller';
+import { stepBilly, type BillyInputs } from '../billy-controller';
 import type { BillyMode, BillyZone } from '../billy.constants';
 import type { ZoneBounds } from '../billy-runtime.store';
 
@@ -58,6 +57,10 @@ function makeInputs(overrides: Partial<BillyInputs> = {}): BillyInputs {
     activeLineIndex: -1,
     activeBlockType: null,
     mode: 'rehearsal',
+    controlActive: false,
+    controlDirection: 'none',
+    jumpRequest: null,
+    attackRequest: null,
     ...overrides,
   };
 }
@@ -276,113 +279,64 @@ describe('billy-controller (stepBilly)', () => {
 
 describe('control movement', () => {
   it('control right → targetX increases from current position', () => {
-    const ctx: BillyTargetContext = {
-      ...DEFAULT_TARGET_CONTEXT,
-      controlActive: true,
-      controlDirection: 'right',
-      currentPosX: 0.5,
-    };
     const result = stepBilly(
       makeState({ mode: 'patrol', posX: 0.5 }),
       makeInputs({ controlActive: true, controlDirection: 'right' }),
       DT,
-      ctx,
     );
     expect(result.targetX).toBeGreaterThan(0.5);
   });
 
   it('control left → targetX decreases from current position', () => {
-    const ctx: BillyTargetContext = {
-      ...DEFAULT_TARGET_CONTEXT,
-      controlActive: true,
-      controlDirection: 'left',
-      currentPosX: 0.5,
-    };
     const result = stepBilly(
       makeState({ mode: 'patrol', posX: 0.5 }),
       makeInputs({ controlActive: true, controlDirection: 'left' }),
       DT,
-      ctx,
     );
     expect(result.targetX).toBeLessThan(0.5);
   });
 
   it('control none → stays in place', () => {
-    const ctx: BillyTargetContext = {
-      ...DEFAULT_TARGET_CONTEXT,
-      controlActive: true,
-      controlDirection: 'none',
-      currentPosX: 0.5,
-    };
     const result = stepBilly(
       makeState({ mode: 'patrol', posX: 0.5 }),
       makeInputs({ controlActive: true, controlDirection: 'none' }),
       DT,
-      ctx,
     );
     expect(result.targetX).toBeCloseTo(0.5, 2);
   });
 
   it('control right → facing right', () => {
-    const ctx: BillyTargetContext = {
-      ...DEFAULT_TARGET_CONTEXT,
-      controlActive: true,
-      controlDirection: 'right',
-      currentPosX: 0.5,
-    };
     const result = stepBilly(
       makeState({ mode: 'patrol', posX: 0.5, facing: 'left' }),
       makeInputs({ controlActive: true, controlDirection: 'right' }),
       DT,
-      ctx,
     );
     expect(result.facing).toBe('right');
   });
 
   it('control left → facing left', () => {
-    const ctx: BillyTargetContext = {
-      ...DEFAULT_TARGET_CONTEXT,
-      controlActive: true,
-      controlDirection: 'left',
-      currentPosX: 0.5,
-    };
     const result = stepBilly(
       makeState({ mode: 'patrol', posX: 0.5, facing: 'right' }),
       makeInputs({ controlActive: true, controlDirection: 'left' }),
       DT,
-      ctx,
     );
     expect(result.facing).toBe('left');
   });
 
   it('clamped at ground.left boundary', () => {
-    const ctx: BillyTargetContext = {
-      ...DEFAULT_TARGET_CONTEXT,
-      controlActive: true,
-      controlDirection: 'left',
-      currentPosX: CORNER_ZONES.ground.left,
-    };
     const result = stepBilly(
       makeState({ mode: 'patrol', posX: CORNER_ZONES.ground.left }),
       makeInputs({ controlActive: true, controlDirection: 'left' }),
       DT,
-      ctx,
     );
     expect(result.targetX).toBeGreaterThanOrEqual(CORNER_ZONES.ground.left);
   });
 
   it('clamped at ground.right boundary', () => {
-    const ctx: BillyTargetContext = {
-      ...DEFAULT_TARGET_CONTEXT,
-      controlActive: true,
-      controlDirection: 'right',
-      currentPosX: CORNER_ZONES.ground.right,
-    };
     const result = stepBilly(
       makeState({ mode: 'patrol', posX: CORNER_ZONES.ground.right }),
       makeInputs({ controlActive: true, controlDirection: 'right' }),
       DT,
-      ctx,
     );
     expect(result.targetX).toBeLessThanOrEqual(CORNER_ZONES.ground.right);
   });

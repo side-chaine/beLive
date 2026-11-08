@@ -39,7 +39,7 @@ export function restoreSnapshot(snap: FeatureSnapshot): void {
 // ── Registry functions ──
 
 export function registerFeature(def: FeatureDefinition): void {
-  if (registry.has(def.id)) return; // dedup
+  if (registry.has(def.id)) {return;} // dedup
   registry.set(def.id, def);
 }
 
@@ -68,7 +68,7 @@ registerFeature({
     // Сохранить snapshot для deactivate
     _lastSnapshot = snapshot;
     useDeckStore.getState().setTab('mixer');
-    if (import.meta.env.DEV) console.log('[FeatureRegistry] open-studio-mixer, preset:', preset);
+    if (import.meta.env.DEV) {console.log('[FeatureRegistry] open-studio-mixer, preset:', preset);}
   },
   deactivate: () => {
     if (_lastSnapshot) {

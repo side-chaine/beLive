@@ -55,7 +55,7 @@ export class LiveWaveformAccumulator {
   update(
     analyser: AnalyserNode,
     progress: number,
-    scratch: Float32Array
+    scratch: Float32Array<ArrayBuffer>
   ): void {
     // Get analyser data into scratch buffer
     analyser.getFloatTimeDomainData(scratch);
@@ -66,8 +66,8 @@ export class LiveWaveformAccumulator {
     
     for (let i = 0; i < scratch.length; i++) {
       const sample = scratch[i] || 0;
-      if (sample < frameMin) frameMin = sample;
-      if (sample > frameMax) frameMax = sample;
+      if (sample < frameMin) {frameMin = sample;}
+      if (sample > frameMax) {frameMax = sample;}
     }
 
     // Compute which bar to update based on progress

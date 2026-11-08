@@ -102,7 +102,7 @@ export const useBillyRuntimeStore = create<BillyRuntimeState & BillyRuntimeActio
 
   effectiveZIndex: () => {
     const { zone, mode } = get();
-    if (mode === 'retreat') return ZONE_Z_INDEX.retreat;
+    if (mode === 'retreat') {return ZONE_Z_INDEX.retreat;}
     return ZONE_Z_INDEX[zone] ?? ZONE_Z_INDEX.corner;
   },
   }),

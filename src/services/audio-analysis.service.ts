@@ -47,16 +47,16 @@ const CAMELOT_MAP: Record<string, string> = {
 };
 
 function keyToCamelot(keyName: string): string | null {
-  if (CAMELOT_MAP[keyName]) return CAMELOT_MAP[keyName];
+  if (CAMELOT_MAP[keyName]) {return CAMELOT_MAP[keyName];}
 
   const lower = keyName.toLowerCase();
   for (const [k, v] of Object.entries(CAMELOT_MAP)) {
-    if (k.toLowerCase() === lower) return v;
+    if (k.toLowerCase() === lower) {return v;}
   }
 
   if (!lower.includes('minor') && !lower.includes('major')) {
     const majorKey = `${keyName} major`;
-    if (CAMELOT_MAP[majorKey]) return CAMELOT_MAP[majorKey];
+    if (CAMELOT_MAP[majorKey]) {return CAMELOT_MAP[majorKey];}
   }
 
   return null;
@@ -77,13 +77,13 @@ function computeEnergy(samples: Float32Array): number {
 // ─── Mood Inference ─────────────────────────────────────
 
 function inferMood(keyName: string | null, energy: number | null): string | null {
-  if (!keyName) return null;
+  if (!keyName) {return null;}
   const isMinor = keyName.toLowerCase().includes('minor');
   const isHighEnergy = energy !== null && energy > 0.6;
 
-  if (isMinor && isHighEnergy) return 'aggressive';
-  if (isMinor && !isHighEnergy) return 'melancholic';
-  if (!isMinor && isHighEnergy) return 'energetic';
+  if (isMinor && isHighEnergy) {return 'aggressive';}
+  if (isMinor && !isHighEnergy) {return 'melancholic';}
+  if (!isMinor && isHighEnergy) {return 'energetic';}
   return 'calm';
 }
 
@@ -93,7 +93,7 @@ let _initPromise: Promise<void> | null = null;
 let _analyzeFn: ((samples: Float32Array, sampleRate: number) => any) | null = null;
 
 async function ensureInit(): Promise<void> {
-  if (_initPromise) return _initPromise;
+  if (_initPromise) {return _initPromise;}
 
   _initPromise = (async () => {
     try {
@@ -104,7 +104,7 @@ async function ensureInit(): Promise<void> {
         await libsonare.init();
         _analyzeFn = libsonare.analyze;
         
-        if (import.meta.env.DEV) console.log('[AudioAnalysis] WASM initialized (auto-detect)');
+        if (import.meta.env.DEV) {console.log('[AudioAnalysis] WASM initialized (auto-detect)');}
         return;
       } catch (_) {
         // auto-detect failed, try explicit path
@@ -113,10 +113,10 @@ async function ensureInit(): Promise<void> {
       // Strategy 2: Vite ?url import (package exports: "./wasm" → "./dist/sonare.wasm")
       try {
         const wasmModule = await import('@libraz/libsonare/wasm?url');
-        await libsonare.init({ wasmPath: wasmModule.default });
+        await libsonare.init({ locateFile: () => wasmModule.default });
         _analyzeFn = libsonare.analyze;
         
-        if (import.meta.env.DEV) console.log('[AudioAnalysis] WASM initialized (explicit wasm path)');
+        if (import.meta.env.DEV) {console.log('[AudioAnalysis] WASM initialized (explicit wasm path)');}
         return;
       } catch (e2) {
         _initPromise = null;
@@ -167,7 +167,7 @@ async function decodeAudioFromArrayBuffer(
     mono[i] = (left[i] + right[i]) / 2;
   }
 
-  if (import.meta.env.DEV) console.log(`[AudioAnalysis] Decoded at ${sampleRate}Hz, ${mono.length} samples`);
+  if (import.meta.env.DEV) {console.log(`[AudioAnalysis] Decoded at ${sampleRate}Hz, ${mono.length} samples`);}
   return { samples: mono, sampleRate };
 }
 
@@ -189,7 +189,7 @@ export async function analyzeTrack(
     const t0 = performance.now();
     const result = _analyzeFn(samples, sampleRate);
     const elapsed = performance.now() - t0;
-    if (import.meta.env.DEV) console.log(`[AudioAnalysis] analyze() took ${elapsed.toFixed(0)}ms`);
+    if (import.meta.env.DEV) {console.log(`[AudioAnalysis] analyze() took ${elapsed.toFixed(0)}ms`);}
 
     if (!result) {
       console.warn('[AudioAnalysis] analyze() returned null/undefined');
@@ -246,13 +246,13 @@ export async function analyzeAndPersist(
 
     // 2. Skip if already analyzed (any bpm value present)
     if (track.trackMeta?.bpm != null) {
-      if (import.meta.env.DEV) console.log('[AudioAnalysis] Track', trackId, 'already analyzed (BPM:', track.trackMeta.bpm, ')');
+      if (import.meta.env.DEV) {console.log('[AudioAnalysis] Track', trackId, 'already analyzed (BPM:', track.trackMeta.bpm, ')');}
       return null;
     }
 
     // 3. Analyze
     const result = await analyzeTrack(track.instrumentalData);
-    if (!result) return null;
+    if (!result) {return null;}
 
     // 4. Merge with existing meta and persist
     const existingMeta: TrackMeta = track.trackMeta || {
@@ -276,8 +276,8 @@ export async function analyzeAndPersist(
 
     await updateTrackField(trackId, { trackMeta: mergedMeta });
 
-    if (import.meta.env.DEV) console.log('[AudioAnalysis] Persisted for track', trackId,
-      { bpm: result.bpm, key: result.key, camelot: result.camelot, energy: result.energy });
+    if (import.meta.env.DEV) {console.log('[AudioAnalysis] Persisted for track', trackId,
+      { bpm: result.bpm, key: result.key, camelot: result.camelot, energy: result.energy });}
 
     return result;
   } catch (e) {

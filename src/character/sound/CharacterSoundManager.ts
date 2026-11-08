@@ -62,22 +62,22 @@ export class CharacterSoundManager {
   unlock(): void {
     if (!this.ctx) {
       const AC = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AC) return;
+      if (!AC) {return;}
       this.ctx = new AC();
     }
-    if (this.ctx.state === 'suspended') void this.ctx.resume();
+    if (this.ctx.state === 'suspended') {void this.ctx.resume();}
   }
 
   setEnabled(v: boolean): void { this.enabled = v; }
 
   /** Проигрывает cue. По умолчанию — CUE_DEFAULT (контракт §4). Персонажи подменяют cue. */
   playCue(cue: SoundCue = { kind: 'synth', ...CUE_DEFAULT }): void {
-    if (!this.enabled || !getSoundEnabled() || !this.ctx || this.ctx.state !== 'running') return;
+    if (!this.enabled || !getSoundEnabled() || !this.ctx || this.ctx.state !== 'running') {return;}
     const now = performance.now();
-    if (now - this.lastPlayed < CharacterSoundManager.COOLDOWN_MS) return;
+    if (now - this.lastPlayed < CharacterSoundManager.COOLDOWN_MS) {return;}
     this.lastPlayed = now;
-    if (cue.kind === 'asset') void this.playAsset(cue);
-    else this.blip(cue);
+    if (cue.kind === 'asset') {void this.playAsset(cue);}
+    else {this.blip(cue);}
   }
 
   /** Ассет-ветка (§13.4): декодируем один раз, кэшируем, антиклик-envelope. */
@@ -87,7 +87,7 @@ export class CharacterSoundManager {
       let buf = this.assetCache.get(cue.url);
       if (!buf) {
         const resp = await fetch(cue.url);
-        if (!resp.ok) return;
+        if (!resp.ok) {return;}
         const arr = await resp.arrayBuffer();
         buf = await ctx.decodeAudioData(arr);
         this.assetCache.set(cue.url, buf);

@@ -40,7 +40,7 @@ export const usePitchStore = create<PitchState>((set, get) => ({
 
   startPitch: async () => {
     const s = get();
-    if (s.status === 'running' || s.status === 'starting') return;
+    if (s.status === 'running' || s.status === 'starting') {return;}
 
     const engine = PitchEngine.get();
     set({ status: 'starting', error: null });
@@ -50,7 +50,7 @@ export const usePitchStore = create<PitchState>((set, get) => ({
 
       _unsub = engine.subscribe((msg: WorkletMessage) => {
         const now = performance.now();
-        if (now - _lastUpdate < THROTTLE_MS) return;
+        if (now - _lastUpdate < THROTTLE_MS) {return;}
         _lastUpdate = now;
 
         if (msg.type === 'pitch') {

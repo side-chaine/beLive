@@ -94,6 +94,7 @@ export function StemDegradedBannerView({
   if (!visible) return null
 
   const vocalsDown = degradedStems.some((s) => s.stemId === 'vocals')
+  // eslint-disable-next-line no-useless-assignment -- [FROZEN-REQUEST N1b | Центр_5 2026-11-08 | ok: 707 (и.о. Gate R) | ревью: Соннет постфактум]
   let icon = '⚠️'
   let text: string
   if (vocalsDown) {

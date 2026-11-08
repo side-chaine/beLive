@@ -56,9 +56,9 @@ export function ProfileStats() {
     { value: tracksCount, label: 'Треков' },
   ];
 
-  if (rehearsals > 0) cells.push({ value: rehearsals, label: 'Репетиций' });
-  if (exercisesCompleted > 0) cells.push({ value: exercisesCompleted, label: 'Упражнений' });
-  if (topGenre) cells.push({ value: topGenre, label: 'Жанр' });
+  if (rehearsals > 0) {cells.push({ value: rehearsals, label: 'Репетиций' });}
+  if (exercisesCompleted > 0) {cells.push({ value: exercisesCompleted, label: 'Упражнений' });}
+  if (topGenre) {cells.push({ value: topGenre, label: 'Жанр' });}
 
   // Ensure even grid: pad to even count with hidden cells
   while (cells.length % 2 !== 0) {

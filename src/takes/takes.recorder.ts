@@ -19,7 +19,7 @@ export function detectAudioMime(): string {
   ] as const;
 
   for (const mime of candidates) {
-    if (MediaRecorder.isTypeSupported(mime)) return mime;
+    if (MediaRecorder.isTypeSupported(mime)) {return mime;}
   }
 
   throw new Error('No supported audio recording MIME type found');
@@ -27,9 +27,9 @@ export function detectAudioMime(): string {
 
 /** Get file extension for a MIME type */
 export function mimeToExtension(mime: string): string {
-  if (mime.includes('webm')) return 'webm';
-  if (mime.includes('mp4')) return 'm4a';
-  if (mime.includes('ogg')) return 'ogg';
+  if (mime.includes('webm')) {return 'webm';}
+  if (mime.includes('mp4')) {return 'm4a';}
+  if (mime.includes('ogg')) {return 'ogg';}
   return 'bin';
 }
 
@@ -86,9 +86,9 @@ export class TakesRecorder {
    */
   async start(): Promise<void> {
     const ae = (window as any).audioEngine;
-    if (!ae) throw new Error('AudioEngine not available');
+    if (!ae) {throw new Error('AudioEngine not available');}
     const engineMode = ENGINE_MODE;
-    let stream: MediaStream | null = null;
+    let stream: MediaStream | null;
 
     if (engineMode === 'v3') {
       // F-1 (431): acquisition через MicSourceV3 (мик ВЫШЕ плейбек-pipeline)
@@ -116,7 +116,7 @@ export class TakesRecorder {
       stream = ae.getMicrophoneStream?.('raw') ?? ae.microphone?.getStream?.('raw');
     }
 
-    if (!stream) throw new Error('Raw mic stream not available');
+    if (!stream) {throw new Error('Raw mic stream not available');}
     this._lastError = null;
 
     // Detect format
@@ -139,7 +139,7 @@ export class TakesRecorder {
     this.chunks = [];
     this.recorder = new MediaRecorder(stream, buildRecorderOptions(this._mimeType));
     this.recorder.ondataavailable = (e: BlobEvent) => {
-      if (e.data.size > 0) this.chunks.push(e.data);
+      if (e.data.size > 0) {this.chunks.push(e.data);}
     };
 
     // Start recording (no timeslice)

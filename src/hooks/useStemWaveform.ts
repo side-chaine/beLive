@@ -75,15 +75,15 @@ export function useStemWaveform({ stemId, canvasRef, enabled }: UseStemWaveformO
     }
     
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {return;}
     
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {return;}
     
     // TC-13-11: Read performance budget (imperative — inside rAF context)
     const vmBudget = usePerformanceStore.getState().getBudget()?.visualMixer;
     // Lite tier: waveform disabled entirely
-    if (vmBudget && !vmBudget.allowWaveform) return;
+    if (vmBudget && !vmBudget.allowWaveform) {return;}
 
     const tier = document.documentElement.getAttribute('data-visual-tier') ?? 'balanced';
     const waveConfig = TIER_WAVEFORM[tier] ?? TIER_WAVEFORM.balanced;
@@ -116,7 +116,7 @@ export function useStemWaveform({ stemId, canvasRef, enabled }: UseStemWaveformO
     const draw = (timestamp: number) => {
       rafRef.current = requestAnimationFrame(draw);
 
-      if (timestamp - lastDrawRef.current < frameInterval) return;
+      if (timestamp - lastDrawRef.current < frameInterval) {return;}
       lastDrawRef.current = timestamp;
 
       const analyser = (window as any).__belive?.pipeline?.getStemAnalyser?.(stemId)
@@ -165,14 +165,14 @@ export function useStemWaveform({ stemId, canvasRef, enabled }: UseStemWaveformO
         let sum = 0;
         let count = 0;
         for (let j = start; j < end; j++) {
-          if (dataArray[j] > maxVal) maxVal = dataArray[j];
+          if (dataArray[j] > maxVal) {maxVal = dataArray[j];}
           sum += dataArray[j];
           count++;
         }
         const avgVal = count > 0 ? sum / count : 0;
         const barValue = maxVal * 0.7 + avgVal * 0.3;
         barValues.push(barValue);
-        if (barValue > frameMax) frameMax = barValue;
+        if (barValue > frameMax) {frameMax = barValue;}
       }
 
       // ─── TC-13-13: AGC — Auto-Gain Control ───

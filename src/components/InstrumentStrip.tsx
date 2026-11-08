@@ -14,7 +14,7 @@ export function InstrumentStrip() {
     .sort((a, b) => {
       const orderA = VISUAL_MIXER_DISPLAY_ORDER[a] ?? 99;
       const orderB = VISUAL_MIXER_DISPLAY_ORDER[b] ?? 99;
-      if (orderA !== orderB) return orderA - orderB;
+      if (orderA !== orderB) {return orderA - orderB;}
       return a.localeCompare(b);
     });
   
@@ -41,7 +41,7 @@ export function InstrumentStrip() {
     ae?.setStemVolume?.(stemId, volume);
   };
   
-  if (visibleStems.length === 0) return null;
+  if (visibleStems.length === 0) {return null;}
   
   return (
     <div className={styles.strip}>

@@ -8,7 +8,7 @@ function normalizeLineEndings(rawLyrics: string): string {
 function classifyLine(text: string): LineKind {
   const trimmed = text.trim();
 
-  if (trimmed.length === 0) return 'separator';
+  if (trimmed.length === 0) {return 'separator';}
 
   if (/^\[[^\]]+\]$/.test(trimmed)) {
     return 'bracket';

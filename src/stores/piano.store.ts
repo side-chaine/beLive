@@ -16,7 +16,7 @@ export const usePianoStore = create<PianoState>((set) => ({
 
   togglePiano: () =>
     set((s) => {
-      if (s.open) return { open: false, micActive: false };
+      if (s.open) {return { open: false, micActive: false };}
       return { open: true };
     }),
 

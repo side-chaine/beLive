@@ -21,7 +21,6 @@ import { isBillyControlActive } from './useBillyControl';
 import {
   BILLY_HALF_WIDTH,
   BILLY_HEIGHT,
-  POSITION_DEADZONE,
   PUPIL_OFFSET_MAX_X,
   PUPIL_OFFSET_MAX_Y,
   PUPIL_RADIUS_BASE,
@@ -229,7 +228,7 @@ export function useBillyLocomotion(refs: LocomotionRefs) {
     // Lite tier: dilation OFF
     if (effectiveTier !== 'lite') {
       // Control mode → focus → сужение
-      if (inputs.controlActive) pupilRadius += PUPIL_FOCUS_DELTA;
+      if (inputs.controlActive) {pupilRadius += PUPIL_FOCUS_DELTA;}
       // W7: if (hotState.celebration) pupilRadius += PUPIL_CELEBRATE_DELTA;
       // W11: audio beat → PUPIL_BEAT_DELTA
     }
@@ -275,7 +274,7 @@ export function useBillyLocomotion(refs: LocomotionRefs) {
     }
     _loopRunning = true;
 
-    if (import.meta.env.DEV) console.log('[Billy] rAF loop useEffect starting');
+    if (import.meta.env.DEV) {console.log('[Billy] rAF loop useEffect starting');}
     // W2: собственный rAF. W3: миграция в scheduler — одна строка
     const loop = () => {
       frameCountRef.current++;

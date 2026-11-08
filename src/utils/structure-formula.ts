@@ -29,7 +29,7 @@ const BLOCK_TYPE_LETTER: Record<string, string> = {
 export function getStructureFormula(
   blocks: { type: string }[] | null | undefined,
 ): string {
-  if (!blocks || blocks.length === 0) return '';
+  if (!blocks || blocks.length === 0) {return '';}
   return blocks.map(b => BLOCK_TYPE_LETTER[b.type] || '?').join('→');
 }
 

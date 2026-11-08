@@ -14,7 +14,6 @@ const MODE_COLORS: Record<string, string> = {
 };
 
 export function TransportBar() {
-  const isPlaying = useAudioStore((s) => s.isPlaying);
   const currentTime = useAudioStore((s) => s.currentTime);
   const duration = useAudioStore((s) => s.duration);
   const mode = useModeStore((s) => s.mode);
@@ -33,7 +32,7 @@ export function TransportBar() {
     (e: React.MouseEvent<HTMLDivElement>) => {
       // Interrupt practice first if active, then seek
       interruptPracticeSession(() => {
-        if (!trackRef.current || duration === 0) return;
+        if (!trackRef.current || duration === 0) {return;}
         const rect = trackRef.current.getBoundingClientRect();
         const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         const newTime = ratio * duration;
@@ -58,7 +57,7 @@ export function TransportBar() {
     [duration]
   );
 
-  if (duration === 0) return null;
+  if (duration === 0) {return null;}
 
   return (
     <div

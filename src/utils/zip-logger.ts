@@ -26,22 +26,22 @@ export function logZipEvent(event: ZipEventType, payload: Record<string, any>): 
   const prefix = '[zip-enc]';
   switch (event) {
     case 'export-start':
-      if (import.meta.env.DEV) console.log(prefix, 'START', formatPayload(payload));
+      if (import.meta.env.DEV) {console.log(prefix, 'START', formatPayload(payload));}
       break;
     case 'preflight':
-      if (import.meta.env.DEV) console.log(prefix, 'PREFLIGHT', formatPayload(payload));
+      if (import.meta.env.DEV) {console.log(prefix, 'PREFLIGHT', formatPayload(payload));}
       break;
     case 'fast-path':
-      if (import.meta.env.DEV) console.log(prefix, 'FAST_PATH', formatPayload(payload));
+      if (import.meta.env.DEV) {console.log(prefix, 'FAST_PATH', formatPayload(payload));}
       break;
     case 'stem-decode-start':
-      if (import.meta.env.DEV) console.log(prefix, 'DECODE_START', formatPayload(payload));
+      if (import.meta.env.DEV) {console.log(prefix, 'DECODE_START', formatPayload(payload));}
       break;
     case 'stem-encode-progress':
-      if (import.meta.env.DEV) console.log(prefix, 'ENCODE_PROGRESS', formatPayload(payload));
+      if (import.meta.env.DEV) {console.log(prefix, 'ENCODE_PROGRESS', formatPayload(payload));}
       break;
     case 'stem-ok':
-      if (import.meta.env.DEV) console.log(prefix, 'OK', formatPayload(payload));
+      if (import.meta.env.DEV) {console.log(prefix, 'OK', formatPayload(payload));}
       break;
     case 'stem-skip':
       console.warn(prefix, 'SKIP', formatPayload(payload));
@@ -54,22 +54,22 @@ export function logZipEvent(event: ZipEventType, payload: Record<string, any>): 
       console.error(prefix, 'ABORT', formatPayload(payload));
       break;
     case 'export-done':
-      if (import.meta.env.DEV) console.log(prefix, 'FINAL', formatPayload(payload));
+      if (import.meta.env.DEV) {console.log(prefix, 'FINAL', formatPayload(payload));}
       break;
     case 'budget-met':
-      if (import.meta.env.DEV) console.log(prefix, 'BUDGET_MET', formatPayload(payload));
+      if (import.meta.env.DEV) {console.log(prefix, 'BUDGET_MET', formatPayload(payload));}
       break;
     case 'budget-gate':
-      if (import.meta.env.DEV) console.log(prefix, 'BUDGET_GATE', formatPayload(payload));
+      if (import.meta.env.DEV) {console.log(prefix, 'BUDGET_GATE', formatPayload(payload));}
       break;
     case 'budget-exceeded':
       console.warn(prefix, 'BUDGET_EXCEEDED', formatPayload(payload));
       break;
     case 'tightening-start':
-      if (import.meta.env.DEV) console.log(prefix, 'TIGHTENING_START', formatPayload(payload));
+      if (import.meta.env.DEV) {console.log(prefix, 'TIGHTENING_START', formatPayload(payload));}
       break;
     case 'tightening-done':
-      if (import.meta.env.DEV) console.log(prefix, 'TIGHTENING_DONE', formatPayload(payload));
+      if (import.meta.env.DEV) {console.log(prefix, 'TIGHTENING_DONE', formatPayload(payload));}
       break;
     case 'tightening-failed':
       console.error(prefix, 'TIGHTENING_FAILED', formatPayload(payload));

@@ -36,7 +36,7 @@ function enqueuePending(postId: string, isLiked: boolean): void {
     const queue: LikeRecord[] = raw ? JSON.parse(raw) : [];
     queue.push({ postId, isLiked, timestamp: Date.now() });
     // Keep only last 100 pending items
-    if (queue.length > 100) queue.splice(0, queue.length - 100);
+    if (queue.length > 100) {queue.splice(0, queue.length - 100);}
     localStorage.setItem(PENDING_KEY, JSON.stringify(queue));
   } catch {
     // silent fail

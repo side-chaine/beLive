@@ -26,7 +26,7 @@ interface UseTakesPlaybackReturn {
 }
 
 export function useTakesPlayback({
-  activeBlockId,
+  activeBlockId: _activeBlockId,
   timeRange,
   previewMode,
 }: UseTakesPlaybackOptions): UseTakesPlaybackReturn {
@@ -52,7 +52,7 @@ export function useTakesPlayback({
   }, []);
 
   const restoreVolumes = React.useCallback(() => {
-    if (!soloActiveRef.current && !referenceContextActiveRef.current) return;
+    if (!soloActiveRef.current && !referenceContextActiveRef.current) {return;}
 
     duckHandleRef.current?.restore();
     duckHandleRef.current = null;
@@ -96,12 +96,12 @@ export function useTakesPlayback({
     // Clear forceContext flag
     forceContextRef.current = false;
     
-    if (options?.pauseEngine && isPlaying()) void getTransport()?.pause();
+    if (options?.pauseEngine && isPlaying()) {void getTransport()?.pause();}
   }, [restoreVolumes]);
 
   const handlePlayTake = React.useCallback(async (takeId: string, options?: { pan?: number; forceContext?: boolean }) => {
     const ae = (window as any).audioEngine;
-    if (!ae) return;
+    if (!ae) {return;}
     stopPreview();
     const gen = ++previewGenRef.current;
     __traceGenBump('handlePlayTake-start', gen);
@@ -109,18 +109,18 @@ export function useTakesPlayback({
     let audioBuffer = takeAssets.getAudioBuffer(takeId);
     if (!audioBuffer) {
       const blob = takeAssets.getBlob(takeId);
-      if (!blob) return;
+      if (!blob) {return;}
       try {
         const ab = await blob.arrayBuffer();
-        if (gen !== previewGenRef.current) return;
+        if (gen !== previewGenRef.current) {return;}
         const ctx: AudioContext = getAudioContext();
         audioBuffer = await ctx.decodeAudioData(ab);
-        if (gen !== previewGenRef.current) return;
+        if (gen !== previewGenRef.current) {return;}
         const { generatePeaks } = await import('../../sync/canvas/peaks');
         const ch = audioBuffer.getChannelData(0);
         const peaks = generatePeaks(ch, 0, ch.length, 200);
         const pv = new Float32Array(peaks.length);
-        for (let i = 0; i < peaks.length; i++) pv[i] = peaks[i][1];
+        for (let i = 0; i < peaks.length; i++) {pv[i] = peaks[i][1];}
         takeAssets.cacheDecoded(takeId, audioBuffer, pv);
         useTakesStore.getState().bumpAssetRevision();
       } catch (err) {
@@ -137,7 +137,7 @@ export function useTakesPlayback({
     }
     try {
       const ctx: AudioContext = getAudioContext();
-      if (!ctx) return;
+      if (!ctx) {return;}
       const parts = takeId.split('-');
       const slot = parseInt(parts[parts.length - 1], 10);
       const btBlockId = parts.slice(1, -1).join('-');
@@ -233,7 +233,7 @@ export function useTakesPlayback({
 
   // Live switching during active take preview
   React.useEffect(() => {
-    if (!playingTakeId) return;
+    if (!playingTakeId) {return;}
     if (previewMode === 'solo') {
       applySoloMute();
     } else {

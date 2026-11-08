@@ -91,7 +91,7 @@ describe('runTranscodePipeline', () => {
   it('returns skipped when stem fails to encode', async () => {
     // Override mock для этого теста — пусть 'keys' упадёт
     vi.mocked(transcoder.encodeDecoded).mockImplementation(async (stemId, _audioBuffer, _kbps) => {
-      if (stemId === 'keys') throw new Error('encode failed');
+      if (stemId === 'keys') {throw new Error('encode failed');}
       return { data: new ArrayBuffer(100), type: 'audio/mpeg', stemId };
     });
 

@@ -58,7 +58,7 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
   }, [autoOpenLyrics]);
 
   const handleFile = useCallback((type: keyof UploadFiles, file: File | null) => {
-    if (!file) return;
+    if (!file) {return;}
     setFiles(prev => ({ ...prev, [type]: file }));
     const fakeCell = document.createElement('div');
     fakeCell.classList.add('upload-cell');
@@ -71,11 +71,11 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
     setFiles(prev => ({ ...prev, [type]: null }));
     clearUploadFile(type);
     const ref = refs[type];
-    if (ref.current) ref.current.value = '';
+    if (ref.current) {ref.current.value = '';}
   }, []);
 
   const handleSave = useCallback(async () => {
-    if (!files.instrumental || saving) return;
+    if (!files.instrumental || saving) {return;}
     setSaving(true);
     try {
       await saveTrack();
@@ -100,7 +100,7 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
 
   // Escape key listener for modal
   useEffect(() => {
-    if (!showLyricsPaste) return;
+    if (!showLyricsPaste) {return;}
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setShowLyricsPaste(false);
@@ -114,7 +114,7 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
   // Inject beLive shimmer animation CSS
   useEffect(() => {
     const id = 'belive-shimmer-style';
-    if (document.getElementById(id)) return;
+    if (document.getElementById(id)) {return;}
     const style = document.createElement('style');
     style.id = id;
     style.textContent = `
@@ -482,52 +482,36 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                     
                     // 007-DEBUG: Log pastedText to see raw Genius input
                     if (import.meta.env.DEV) {
-                      if (import.meta.env.DEV) console.log('[007-SCAN] Raw pastedText (first 500 chars):');
-                      if (import.meta.env.DEV) console.log(pastedText.trim().substring(0, 500));
-                      if (import.meta.env.DEV) console.log('[007-SCAN] Looking for [Bridge] and [Chorus] tags...');
+                      if (import.meta.env.DEV) {console.log('[007-SCAN] Raw pastedText (first 500 chars):');}
+                      if (import.meta.env.DEV) {console.log(pastedText.trim().substring(0, 500));}
+                      if (import.meta.env.DEV) {console.log('[007-SCAN] Looking for [Bridge] and [Chorus] tags...');}
                       const bridgeIdx = pastedText.indexOf('[Bridge');
                       const chorusAfterBridge = pastedText.indexOf('[Chorus', bridgeIdx + 1);
                       if (bridgeIdx >= 0) {
-                        if (import.meta.env.DEV) console.log(`  [Bridge] found at index: ${bridgeIdx}`);
-                        if (import.meta.env.DEV) console.log(`  Text after [Bridge] (next 200 chars):`, pastedText.substring(bridgeIdx, bridgeIdx + 200));
+                        if (import.meta.env.DEV) {console.log(`  [Bridge] found at index: ${bridgeIdx}`);}
+                        if (import.meta.env.DEV) {console.log(`  Text after [Bridge] (next 200 chars):`, pastedText.substring(bridgeIdx, bridgeIdx + 200));}
                       }
                       if (chorusAfterBridge >= 0) {
-                        if (import.meta.env.DEV) console.log(`  Next [Chorus] after [Bridge] at index: ${chorusAfterBridge}`);
-                        if (import.meta.env.DEV) console.log(`  Text between Bridge and Chorus:`, pastedText.substring(bridgeIdx, chorusAfterBridge));
+                        if (import.meta.env.DEV) {console.log(`  Next [Chorus] after [Bridge] at index: ${chorusAfterBridge}`);}
+                        if (import.meta.env.DEV) {console.log(`  Text between Bridge and Chorus:`, pastedText.substring(bridgeIdx, chorusAfterBridge));}
                       } else {
-                        if (import.meta.env.DEV) console.log('  [007-CRITICAL] NO [Chorus] tag found after [Bridge]!');
+                        if (import.meta.env.DEV) {console.log('  [007-CRITICAL] NO [Chorus] tag found after [Bridge]!');}
                       }
                     }
                     
                     const tagResult = parseTaggedLyrics(pastedText.trim());
-                    if (import.meta.env.DEV) console.log(`[LyricsPaste] parseTaggedLyrics: ${(performance.now() - _t0).toFixed(1)}ms`);
+                    if (import.meta.env.DEV) {console.log(`[LyricsPaste] parseTaggedLyrics: ${(performance.now() - _t0).toFixed(1)}ms`);}
                     
                     // 007-DEBUG: Log tagResult.blocks structure
                     if (import.meta.env.DEV && tagResult.hasStructure) {
-                      if (import.meta.env.DEV) console.log('[007-SCAN] tagResult.blocks:');
-                      if (import.meta.env.DEV) console.log(`  Total blocks: ${tagResult.blocks.length}`);
+                      if (import.meta.env.DEV) {console.log('[007-SCAN] tagResult.blocks:');}
+                      if (import.meta.env.DEV) {console.log(`  Total blocks: ${tagResult.blocks.length}`);}
                       tagResult.blocks.forEach((b, i) => {
-                        if (import.meta.env.DEV) console.log(`  Block ${i} [${b.type}]: "${b.label}" — ${b.contentLines.length} contentLines`);
+                        if (import.meta.env.DEV) {console.log(`  Block ${i} [${b.type}]: "${b.label}" — ${b.contentLines.length} contentLines`);}
                         if (b.type === 'bridge') {
-                          if (import.meta.env.DEV) console.log(`    [007-CRITICAL] Bridge contentLines:`, b.contentLines);
+                          if (import.meta.env.DEV) {console.log(`    [007-CRITICAL] Bridge contentLines:`, b.contentLines);}
                         }
                       });
-                    }
-                    let cleanLyrics: string;
-                    
-                    if (tagResult.hasStructure && tagResult.blocks.length >= 1) {
-                      // M2: no separator lines — M2 closing marker replaces separator lines
-                      const cleanLines: string[] = [];
-                      for (const b of tagResult.blocks) {
-                        for (const line of b.contentLines) {
-                          const trimmed = line.trim();
-                          if (trimmed) cleanLines.push(trimmed);
-                        }
-                      }
-                      cleanLyrics = cleanLines.join('\n');
-                    } else {
-                      // Теги не найдены — используем сырой текст
-                      cleanLyrics = pastedText.trim();
                     }
 
                     // ── PERF: Do matching FIRST (no IDB needed), then single IDB write ──
@@ -542,7 +526,7 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                       const lrcResult = pendingTrackTitle
                         ? await autoLyrics.waitForCache(pendingTrackTitle, 5000)
                         : null;
-                      if (import.meta.env.DEV) console.log(`[LyricsPaste] waitForCache: ${(performance.now() - _t0).toFixed(1)}ms`);
+                      if (import.meta.env.DEV) {console.log(`[LyricsPaste] waitForCache: ${(performance.now() - _t0).toFixed(1)}ms`);}
 
                       if (!lrcResult && pendingTrackTitle) {
                         w.showNotification?.(
@@ -557,8 +541,8 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                         // Genius blocks = structure overlay
                         matchResult = autoLyrics.blockFirstLineSync(pastedText.trim(), lrcResult);
                         if (import.meta.env.DEV) {
-                          if (import.meta.env.DEV) console.log(`[TC-010] confidence=${(matchResult.confidence * 100).toFixed(1)}%`);
-                          if (import.meta.env.DEV) console.log(`[LyricsPaste] blockFirstLineSync: ${(performance.now() - _t0).toFixed(1)}ms`);
+                          if (import.meta.env.DEV) {console.log(`[TC-010] confidence=${(matchResult.confidence * 100).toFixed(1)}%`);}
+                          if (import.meta.env.DEV) {console.log(`[LyricsPaste] blockFirstLineSync: ${(performance.now() - _t0).toFixed(1)}ms`);}
                         }
 
                         // ═══ TC-096-01: Variant B — retry with next-best LRC if coverage low ═══
@@ -577,10 +561,10 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                             if (better) {
                               matchResult = better.matchResult;
                               if (import.meta.env.DEV) {
-                                if (import.meta.env.DEV) console.log(
+                                if (import.meta.env.DEV) {console.log(
                                   `[TC-096] Version switch → id=${better.version.id} `
                                   + `(${better.version.lineCount} lines, score=${better.version.score})`
-                                );
+                                );}
                               }
                             }
                           }
@@ -611,11 +595,11 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                           bracketLines
                         );
                       }
-                      if (import.meta.env.DEV) console.log(
+                      if (import.meta.env.DEV) {console.log(
                         `[TC-002] Saved lyrics: ${cleanLyricLines.length} lines ` +
                         `(was ${pastedText.split('\n').filter((l: string) => l.trim()).length} with tags)` +
                         `${matchResult && matchResult.confidence >= 0.8 ? ' [auto-sync]' : ' [manual]'}`
-                      );
+                      );}
                     }
 
                     // TC-008: Two-tier confidence threshold
@@ -625,17 +609,17 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                     if (matchResult && matchResult.confidence >= HIGH_CONFIDENCE) {
                       // High confidence — full auto-sync, open Sync Editor
                       idbFields.syncMarkers = matchResult.markers;
-                      if (matchResult.blocks.length > 0) idbFields.blocksData = matchResult.blocks;
+                      if (matchResult.blocks.length > 0) {idbFields.blocksData = matchResult.blocks;}
                     } else if (matchResult && matchResult.confidence >= LOW_CONFIDENCE_ACCEPT) {
                       // Low confidence — apply markers anyway, user will review in Sync Editor
                       idbFields.syncMarkers = matchResult.markers;
-                      if (matchResult.blocks.length > 0) idbFields.blocksData = matchResult.blocks;
+                      if (matchResult.blocks.length > 0) {idbFields.blocksData = matchResult.blocks;}
 
                       if (import.meta.env.DEV) {
-                        if (import.meta.env.DEV) console.log(
+                        if (import.meta.env.DEV) {console.log(
                           `[TC-008] Low confidence auto-sync applied (${(matchResult.confidence * 100).toFixed(1)}%). ` +
                           `Opening Sync Editor for review. Unmatched lines may need manual markers.`
-                        );
+                        );}
                       }
                     } else if (tagResult?.blocks?.length > 0) {
                       // TC-ZIP-03: No LRC match, but tagged lyrics have structure — save blocks as PersistedTextBlock[]
@@ -647,16 +631,16 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                       const paragraphBlocks = buildParagraphBlocks(pastedText, cleanLyricLines);
                       if (paragraphBlocks.length >= 2) {
                         idbFields.blocksData = paragraphBlocks;
-                        if (import.meta.env.DEV) console.log(`[LyricsPaste] D3 auto-blocks from paragraphs: ${paragraphBlocks.length}`);
+                        if (import.meta.env.DEV) {console.log(`[LyricsPaste] D3 auto-blocks from paragraphs: ${paragraphBlocks.length}`);}
                       }
                     }
 
                     await w.idbService?.updateTrackField(pendingTrackId, idbFields);
                     if (import.meta.env.DEV) {
-                      if (import.meta.env.DEV) console.log(`[LyricsPaste] IDB save (single): ${(performance.now() - _t0).toFixed(1)}ms`);
+                      if (import.meta.env.DEV) {console.log(`[LyricsPaste] IDB save (single): ${(performance.now() - _t0).toFixed(1)}ms`);}
                       // ZIP-DIAG: Diagnostic log to verify what was saved to IDB
                       const blocksArr = idbFields.blocksData;
-                      if (import.meta.env.DEV) console.log('[ZIP-DIAG] idbFields saved:', JSON.stringify({
+                      if (import.meta.env.DEV) {console.log('[ZIP-DIAG] idbFields saved:', JSON.stringify({
                         hasBlocks: !!(blocksArr as any[])?.length,
                         blockCount: (blocksArr as any[])?.length ?? 0,
                         firstBlockLines: (blocksArr as any[])?.[0]?.lineIndices?.length ?? -1,
@@ -665,7 +649,7 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                         markerCount: idbFields.syncMarkers?.length ?? 0,
                         hasLyrics: !!idbFields.lyrics,
                         lyricsLength: (idbFields.lyrics as string)?.length ?? 0,
-                      }));
+                      }));}
                     }
 
                     // Patch in-memory tc.tracks entry so orchestrator sees fresh data
@@ -673,7 +657,7 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                     const tc = w.trackCatalog;
                     if (tc?.tracks) {
                       const idx = tc.tracks.findIndex((t: any) => t.id === pendingTrackId);
-                      if (idx >= 0) Object.assign(tc.tracks[idx], idbFields);
+                      if (idx >= 0) {Object.assign(tc.tracks[idx], idbFields);}
                     }
 
                     // TC-008: Apply markers if confidence >= LOW_CONFIDENCE_ACCEPT (0.5)
@@ -752,7 +736,7 @@ export function UploadPanel({ onClose, onSaved, autoOpenLyrics, pendingTrackId, 
                         );
                     }
                     onSaved?.();
-                    if (import.meta.env.DEV) console.log(`[LyricsPaste] TOTAL: ${(performance.now() - _t0).toFixed(1)}ms`);
+                    if (import.meta.env.DEV) {console.log(`[LyricsPaste] TOTAL: ${(performance.now() - _t0).toFixed(1)}ms`);}
                   } else {
                     // Manual upload — standard flow
                     handlePastedLyrics(pastedText.trim());

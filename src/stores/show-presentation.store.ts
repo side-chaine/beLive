@@ -30,7 +30,7 @@ export const useShowPresentationStore = create<ShowPresentationState>()((set, ge
     let dockPos = { x: -1, y: -1 };
     try {
       const saved = localStorage.getItem('rec_studio_dock_pos_v1');
-      if (saved) dockPos = JSON.parse(saved);
+      if (saved) {dockPos = JSON.parse(saved);}
     } catch {}
 
     set({
@@ -42,13 +42,13 @@ export const useShowPresentationStore = create<ShowPresentationState>()((set, ge
 
   stopPresentation: () => {
     const state = get();
-    if (!state.isPresenting) return;
+    if (!state.isPresenting) {return;}
     set({ isPresenting: false, showSlide: false });
   },
 
   toggleSlide: () => {
     const state = get();
-    if (!state.isPresenting) return;
+    if (!state.isPresenting) {return;}
     set({ showSlide: !state.showSlide });
   },
 

@@ -1,7 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import {
   remToPx,
-  getRootFontSize,
   resetRootFontSizeCache,
   computeLineHeight,
   computeSlotY,
@@ -22,10 +21,10 @@ import { computeSlotMatrix } from '../compute-slot-matrix';
 
 vi.mock('../../utils/block-utils', () => ({
   getBlockFontSize: (count: number) => {
-    if (count <= 2) return '3.2rem';
-    if (count <= 4) return '2.6rem';
-    if (count <= 6) return '2.0rem';
-    if (count <= 8) return '1.6rem';
+    if (count <= 2) {return '3.2rem';}
+    if (count <= 4) {return '2.6rem';}
+    if (count <= 6) {return '2.0rem';}
+    if (count <= 8) {return '1.6rem';}
     return '1.3rem';
   },
   createSubBlocks: (indices: number[], max: number) => {
@@ -50,7 +49,7 @@ vi.mock('../../utils/block-utils', () => ({
   getActiveBlock: (activeLine: number, blocks: any[]) => {
     return blocks.find((b: any) => b.lineIndices.includes(activeLine)) ?? null;
   },
-  getActiveSubBlockIndex: (activeLine: number, block: any, max: number) => {
+  getActiveSubBlockIndex: (_activeLine: number, _block: any, _max: number) => {
     return 0;
   },
 }));

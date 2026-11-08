@@ -12,7 +12,7 @@ interface Props {
 export function HeroStack({ items }: Props) {
   const tier = usePerformanceTier();
 
-  if (items.length === 0) return null;
+  if (items.length === 0) {return null;}
 
   return (
     <div className="feed-hero-stack" data-tier={tier}>

@@ -46,7 +46,7 @@ export interface ParsedTrackName {
 
 /** Parse track title into artist + title */
 export function parseTrackName(raw: string): ParsedTrackName {
-  if (!raw || !raw.trim()) return { artist: '', title: raw || '' };
+  if (!raw || !raw.trim()) {return { artist: '', title: raw || '' };}
 
   let s = raw.trim();
 

@@ -44,7 +44,7 @@ export function initLoopEvents(): () => void {
     const ae = (window as any).audioEngine
     const changed = lastApplied.active !== isLooping
       || lastApplied.start !== loopStartTime || lastApplied.end !== loopEndTime
-    if (!changed) return
+    if (!changed) {return}
     lastApplied = { active: isLooping, start: loopStartTime, end: loopEndTime }
 
     // V3 path: native source.loop (sample-accurate, 0 CPU)
@@ -80,7 +80,7 @@ export function initLoopEvents(): () => void {
   // loop-cleared: синхронизация engine→store
   subs.push(eventBus.subscribe(EventBusChannel.Sync, 'loop-cleared', () => {
     const state = useLoopStore.getState()
-    if (!state.isLooping) return
+    if (!state.isLooping) {return}
     useLoopStore.getState().clearLoop()
   }))
 
@@ -90,10 +90,10 @@ export function initLoopEvents(): () => void {
     useLoopStore.getState().clearLoop()
     const t3 = getTransport()
     const v3Active = !!(t3 && ((window as any).__v3Active || (t3.state !== 'idle' && t3.orchestrator.all().length > 0)))
-    if (v3Active) t3!.clearLoop()
+    if (v3Active) {t3!.clearLoop()}
   }))
   subs.push(eventBus.subscribe(EventBusChannel.UI, 'mode-changed', () => {
-    if (lastApplied.active) syncLoopToEngine()
+    if (lastApplied.active) {syncLoopToEngine()}
   }))
 
   return () => {

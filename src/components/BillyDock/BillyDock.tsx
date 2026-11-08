@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
-import { useBillyAnimation, useBillyIsLooping, useBillyIsRecording, useBillyTrackInfoOpen, type BillyAnimation } from '../../hooks/useBillyState';
+import { useBillyIsLooping, useBillyIsRecording, useBillyTrackInfoOpen, type BillyAnimation } from '../../hooks/useBillyState';
 import { useBillyAudioReactive } from '../../hooks/useBillyAudioReactive';
 import { useBillyLocomotion } from '../../hooks/useBillyLocomotion';
 import { useBillyControl } from '../../hooks/useBillyControl';
@@ -55,7 +55,6 @@ interface BillyRefs {
 
 export function BillyDock() {
   useBillyZoneCache();  // ← Zone Bounds — реальная геометрия из CSS vars
-  const animation = useBillyAnimation();
   const isLooping = useBillyIsLooping();
   const isRecording = useBillyIsRecording();
   const trackInfoOpen = useBillyTrackInfoOpen();
@@ -70,7 +69,7 @@ export function BillyDock() {
   useEffect(() => {
     if (currentTrackId && prevTrackIdRef.current && currentTrackId !== prevTrackIdRef.current) {
       setClickJump(true);
-      if (jumpTimerRef.current) clearTimeout(jumpTimerRef.current);
+      if (jumpTimerRef.current) {clearTimeout(jumpTimerRef.current);}
       jumpTimerRef.current = setTimeout(() => setClickJump(false), JUMP_DURATION);
     }
     prevTrackIdRef.current = currentTrackId;
@@ -78,14 +77,14 @@ export function BillyDock() {
 
   useEffect(() => {
     return () => {
-      if (jumpTimerRef.current) clearTimeout(jumpTimerRef.current);
+      if (jumpTimerRef.current) {clearTimeout(jumpTimerRef.current);}
     };
   }, []);
 
   // ── Block color from active block ──
   const activeBlockColor = useBlocksStore(s => {
     const idx = useLyricsStore.getState().activeLineIndex;
-    if (idx < 0 || !s.blocks?.length) return 'transparent';
+    if (idx < 0 || !s.blocks?.length) {return 'transparent';}
     for (const block of s.blocks) {
       if (block.lineIndices?.includes(idx)) {
         return getBlockTypeConfig(block.type).color;
@@ -105,12 +104,12 @@ export function BillyDock() {
   useBillyKeyboard({
     onAttack: () => {
       setMicGrabActive(true);
-      if (micGrabTimerRef.current) clearTimeout(micGrabTimerRef.current);
+      if (micGrabTimerRef.current) {clearTimeout(micGrabTimerRef.current);}
       micGrabTimerRef.current = setTimeout(() => setMicGrabActive(false), 800);
     },
     onJump: (type) => {
       setJumpType(type);
-      if (keyJumpTimerRef.current) clearTimeout(keyJumpTimerRef.current);
+      if (keyJumpTimerRef.current) {clearTimeout(keyJumpTimerRef.current);}
       const duration = type === 'double' ? 900 : 750;
       keyJumpTimerRef.current = setTimeout(() => setJumpType(null), duration);
     },
@@ -125,8 +124,8 @@ export function BillyDock() {
   // Cleanup keyboard timers
   useEffect(() => {
     return () => {
-      if (micGrabTimerRef.current) clearTimeout(micGrabTimerRef.current);
-      if (keyJumpTimerRef.current) clearTimeout(keyJumpTimerRef.current);
+      if (micGrabTimerRef.current) {clearTimeout(micGrabTimerRef.current);}
+      if (keyJumpTimerRef.current) {clearTimeout(keyJumpTimerRef.current);}
     };
   }, []);
 
@@ -147,7 +146,7 @@ export function BillyDock() {
   const handleClick = useCallback(() => {
     // One-shot jump — ALWAYS, even without track (cute, no error)
     setClickJump(true);
-    if (jumpTimerRef.current) clearTimeout(jumpTimerRef.current);
+    if (jumpTimerRef.current) {clearTimeout(jumpTimerRef.current);}
     jumpTimerRef.current = setTimeout(() => setClickJump(false), JUMP_DURATION);
 
     // Клик на Billy → открывает док с billy tab, НЕ overlay
@@ -159,7 +158,7 @@ export function BillyDock() {
     }
     // Открыть billy tab в доке
     deck.setTab('billy');
-    if (!deck.expanded) deck.toggle();
+    if (!deck.expanded) {deck.toggle();}
 
     // Установить vocal-coach как активного эксперта
     const track = useTrackStore.getState().currentTrack;
@@ -248,11 +247,11 @@ export function BillyDock() {
 
   // ── Mood Color (for Mood Dot) — non-reactive via data-attr read, OK for current step ──
   const moodColor = useMemo(() => {
-    if (trackInfoOpen) return '#9b59b6';  // purple — board open
-    if (effectiveAnimation === 'sleep') return '#6366f1';  // indigo
-    if (effectiveAnimation === 'think') return '#3b82f6';  // blue
-    if (effectiveAnimation === 'dance') return '#22c55e';  // green
-    if (controlActive) return '#f97316';                    // orange — focus
+    if (trackInfoOpen) {return '#9b59b6';}  // purple — board open
+    if (effectiveAnimation === 'sleep') {return '#6366f1';}  // indigo
+    if (effectiveAnimation === 'think') {return '#3b82f6';}  // blue
+    if (effectiveAnimation === 'dance') {return '#22c55e';}  // green
+    if (controlActive) {return '#f97316';}                    // orange — focus
     return '#666666';                                        // gray — idle
   }, [effectiveAnimation, trackInfoOpen, controlActive]);
 

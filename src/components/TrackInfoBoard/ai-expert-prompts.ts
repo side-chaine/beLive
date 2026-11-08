@@ -444,7 +444,7 @@ export function buildTrackContext(params: {
     parts.push('Структура: блоки не заданы');
   }
 
-  if (params.genre?.length) parts.push(`Жанр: ${params.genre.join(', ')}`);
+  if (params.genre?.length) {parts.push(`Жанр: ${params.genre.join(', ')}`);}
   if (params.key) {
     parts.push(`Тональность: ${params.key}`);
   } else {

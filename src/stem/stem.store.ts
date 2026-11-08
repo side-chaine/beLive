@@ -17,7 +17,7 @@ import type {
   StemDisplayOrder,
   StemAutomationData,
 } from './stemTypes';
-import { BUILTIN_STEMS, sortStemsForDisplay } from './stemTypes';
+import { sortStemsForDisplay } from './stemTypes';
 
 // ─── State Interface ──────────────────────────────────────
 
@@ -182,7 +182,7 @@ export const useStemStore = create<StemState>((set, get) => ({
 
   addStem: (stemId: string) => {
     const current = get();
-    if (current.loadedStems.includes(stemId)) return;
+    if (current.loadedStems.includes(stemId)) {return;}
 
     set({
       loadedStems: [...current.loadedStems, stemId],
@@ -221,7 +221,7 @@ export const useStemStore = create<StemState>((set, get) => ({
   // ─── Volume ─────────────────────────────────────────────
 
   setStemVolume: (stemId: string, volume: number) => {
-    if (!Number.isFinite(volume)) return; // №18-BUS H2.5: NaN-гард — первая строка
+    if (!Number.isFinite(volume)) {return;} // №18-BUS H2.5: NaN-гард — первая строка
     set((s) => ({
       stemVolumes: { ...s.stemVolumes, [stemId]: Math.max(0, Math.min(1, volume)) },
     }));
@@ -266,7 +266,7 @@ export const useStemStore = create<StemState>((set, get) => ({
   // ─── Bus Volume (№18-BUS H3.1) ──────────────────────────
 
   setBusVolume: (busId: string, v: number) => {
-    if (!Number.isFinite(v)) return; // NaN-гард
+    if (!Number.isFinite(v)) {return;} // NaN-гард
     set((s) => ({
       busVolumes: { ...s.busVolumes, [busId]: Math.max(0, Math.min(1, v)) },
     }));

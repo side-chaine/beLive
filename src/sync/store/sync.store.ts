@@ -56,7 +56,7 @@ export const useSyncStore = create<SyncState>((set) => ({
 
   pushUndo: () => {
     const mm = (window as any).markerManager;
-    if (!mm) return;
+    if (!mm) {return;}
     const snapshot = (mm.getMarkers?.() || []).map((m: any) => ({
       id: m.id, time: m.time, lineIndex: m.lineIndex,
       blockType: m.blockType, color: m.color,
@@ -69,9 +69,9 @@ export const useSyncStore = create<SyncState>((set) => ({
   },
 
   undo: () => set((s) => {
-    if (s.undoStack.length === 0) return s;
+    if (s.undoStack.length === 0) {return s;}
     const mm = (window as any).markerManager;
-    if (!mm) return s;
+    if (!mm) {return s;}
 
     // Save current state to redo
     const current = (mm.getMarkers?.() || []).map((m: any) => ({
@@ -93,9 +93,9 @@ export const useSyncStore = create<SyncState>((set) => ({
   }),
 
   redo: () => set((s) => {
-    if (s.redoStack.length === 0) return s;
+    if (s.redoStack.length === 0) {return s;}
     const mm = (window as any).markerManager;
-    if (!mm) return s;
+    if (!mm) {return s;}
 
     const current = (mm.getMarkers?.() || []).map((m: any) => ({
       id: m.id, time: m.time, lineIndex: m.lineIndex,

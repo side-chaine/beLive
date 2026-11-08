@@ -124,7 +124,7 @@ export const useUserProfileStore = create<UserProfileStoreState>()(
     
     updateProfile: (updates) => {
       const current = get().currentUser;
-      if (!current) return;
+      if (!current) {return;}
       const updated = { ...current, ...updates, lastSeenAt: new Date().toISOString() };
       set({
         currentUser: updated,
@@ -135,7 +135,7 @@ export const useUserProfileStore = create<UserProfileStoreState>()(
     
     updatePreferences: (prefs) => {
       const current = get().currentUser;
-      if (!current) return;
+      if (!current) {return;}
       const updated = {
         ...current,
         preferences: { ...current.preferences, ...prefs },
@@ -171,7 +171,7 @@ export const useUserProfileStore = create<UserProfileStoreState>()(
 
     setMvsepApiKey: (key: string | null) =>
       set((state) => {
-        if (!state.currentUser) return state;
+        if (!state.currentUser) {return state;}
         return {
           currentUser: {
             ...state.currentUser,

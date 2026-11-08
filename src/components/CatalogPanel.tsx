@@ -18,9 +18,9 @@ export function CatalogPanel() {
   const close = useCallback(() => useUIStore.setState({ catalogOpen: false }), []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {return;}
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') useUIStore.setState({ catalogOpen: false });
+      if (e.key === 'Escape') {useUIStore.setState({ catalogOpen: false });}
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -28,7 +28,7 @@ export function CatalogPanel() {
 
   // Force bottom deck collapsed while catalog is open (so it never covers catalog)
   useEffect(() => {
-    if (!open) return;
+    if (!open) {return;}
 
     const prev = useDeckStore.getState();
     // Collapse immediately
@@ -36,7 +36,7 @@ export function CatalogPanel() {
 
     // Guard: if something tries to expand while catalog is open — collapse back
     const unsub = useDeckStore.subscribe((st) => {
-      if (st.expanded) useDeckStore.setState({ expanded: false });
+      if (st.expanded) {useDeckStore.setState({ expanded: false });}
     });
 
     return () => {
@@ -49,7 +49,7 @@ export function CatalogPanel() {
     };
   }, [open]);
 
-  if (!open) return null;
+  if (!open) {return null;}
 
   return (
     <div

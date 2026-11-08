@@ -37,7 +37,7 @@ function GraphicsTierControls({
   customBgUrl,
 }: GraphicsTierControlsProps) {
   const { tier, autoDetect, detectedTier } = usePerformanceTier();
-  const { setTier, setAutoDetect } = usePerformanceStore();
+  const { setTier } = usePerformanceStore();
   const useAutoBg = usePlateStore(s => s.useAutoBg);
   const setUseAutoBg = usePlateStore(s => s.setUseAutoBg);
   const hasBlockScenes = useTrackStore(s => s.hasBlockScenes);
@@ -339,7 +339,7 @@ export function QuickActions() {
 
   // Close menu on click outside
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen) {return;}
 
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -359,7 +359,7 @@ export function QuickActions() {
 
   // Close menu on Escape key
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen) {return;}
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {

@@ -61,14 +61,14 @@ let inflightRefresh: Promise<string | null> | null = null;
 /** Экспортируется для теста на дедупликацию — больше нигде не нужен. */
 export async function ensureFeedToken(force = false): Promise<string | null> {
   const current = useUserProfileStore.getState().currentUser?.authToken;
-  if (!force && current) return current;
-  if (inflightRefresh) return inflightRefresh;
+  if (!force && current) {return current;}
+  if (inflightRefresh) {return inflightRefresh;}
 
   inflightRefresh = (async () => {
     try {
       const { authService } = await import('../../services/auth.service');
       const session = await authService.refreshSession();
-      if (!session) return null;
+      if (!session) {return null;}
       await authService.applySession(session);
       return useUserProfileStore.getState().currentUser?.authToken ?? null;
     } finally {
@@ -82,10 +82,10 @@ export async function ensureFeedToken(force = false): Promise<string | null> {
 }
 
 export function isTransient(err: unknown): boolean {
-  if (!err || typeof err !== 'object') return false;
+  if (!err || typeof err !== 'object') {return false;}
   const e = err as { name?: string; message?: string };
-  if (e.name === 'AbortError') return true;
-  if (e.message && ['server5xx', 'truncated', 'no-reader'].includes(e.message)) return true;
+  if (e.name === 'AbortError') {return true;}
+  if (e.message && ['server5xx', 'truncated', 'no-reader'].includes(e.message)) {return true;}
   return /fetch|network|timeout|stream/i.test(e.message || '');
 }
 
@@ -97,7 +97,7 @@ export async function downloadTgTrack(
   authToken?: string,
 ): Promise<void> {
   const fileId = t.fileIds?.instrumental || t.fileIds?.full;
-  if (!fileId) return;
+  if (!fileId) {return;}
   setSearchQuery('');
   const gid = 'ghost_' + Date.now();
   useGhostStore.getState().addGhost({ id: gid, title: t.title, artist: t.artist, phase: 'download', progress: 0 });
@@ -125,21 +125,21 @@ export async function downloadTgTrack(
         // Без этого в консоли был только код, и отладить было нечем.
         const body = await resp.text().catch(() => '');
         console.error('[TG] download failed:', resp.status, body.slice(0, 300));
-        if (resp.status >= 500) throw new Error('server5xx');
+        if (resp.status >= 500) {throw new Error('server5xx');}
         useGhostStore.getState().updateGhost(gid, { phase: 'error' }); return;
       }
       const reader = resp.body?.getReader();
-      if (!reader) throw new Error('no-reader');
+      if (!reader) {throw new Error('no-reader');}
       const chunks: Uint8Array[] = [];
       let received = 0;
       const contentLength = resp.headers.get('Content-Length');
       const total = contentLength ? parseInt(contentLength, 10) : 0;
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
-        if (value) { chunks.push(value); received += value.length; if (total > 0) useGhostStore.getState().updateGhost(gid, { progress: Math.round((received / total) * 100) }); }
+        if (done) {break;}
+        if (value) { chunks.push(value); received += value.length; if (total > 0) {useGhostStore.getState().updateGhost(gid, { progress: Math.round((received / total) * 100) });} }
       }
-      if (total > 0 && received < total) throw new Error('truncated');
+      if (total > 0 && received < total) {throw new Error('truncated');}
       clearTimeout(to);
       const blob = new Blob(chunks as BlobPart[], { type: resp.headers.get('Content-Type') || 'application/zip' });
       useGhostStore.getState().updateGhost(gid, { phase: 'extract', progress: 0 });
@@ -186,19 +186,19 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
     let cancelled = false;
     (async () => {
       let token = await ensureFeedToken();
-      if (!token) throw new Error('AUTH_REQUIRED');
+      if (!token) {throw new Error('AUTH_REQUIRED');}
       let resp = await fetch(TG_API_URL, { headers: { Authorization: `Bearer ${token}` } });
       if (resp.status === 401) {
         // Токен протух (живёт 15 минут) — продлеваем один раз и повторяем.
         token = await ensureFeedToken(true);
-        if (!token) throw new Error('AUTH_REQUIRED');
+        if (!token) {throw new Error('AUTH_REQUIRED');}
         resp = await fetch(TG_API_URL, { headers: { Authorization: `Bearer ${token}` } });
       }
-      if (!resp.ok) throw new Error(`catalog ${resp.status}`);
+      if (!resp.ok) {throw new Error(`catalog ${resp.status}`);}
       const data = await resp.json();
-      if (!cancelled && data?.tracks) setTgTracks(data.tracks);
+      if (!cancelled && data?.tracks) {setTgTracks(data.tracks);}
     })().catch((err) => {
-      if (!cancelled) setTgError(err?.message === 'AUTH_REQUIRED' ? 'auth' : 'other');
+      if (!cancelled) {setTgError(err?.message === 'AUTH_REQUIRED' ? 'auth' : 'other');}
     });
     return () => { cancelled = true; };
   }, []);
@@ -220,7 +220,7 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
 
   // Publish all ready tracks to Telegram
   const handleBatchPublish = useCallback(() => {
-    if (batchRunning) return;
+    if (batchRunning) {return;}
 
     const readyTracks: TrackPublishMeta[] = [];
     const tgSlugs = new Set(tgTracks.map(t => t.slug));
@@ -228,11 +228,11 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
     tracks.forEach(t => {
       const tc = (window as any).trackCatalog;
       const ft = tc?.tracks?.find((tr: any) => String(tr.id) === String(t.id));
-      if (!ft) return;
+      if (!ft) {return;}
       const hasStems = ft?.stemsData && Object.keys(ft.stemsData).length > 0;
-      if (!hasStems && !ft.vocalsData) return;
+      if (!hasStems && !ft.vocalsData) {return;}
       const slug = slugify(t.title || '');
-      if (tgSlugs.has(slug)) return;
+      if (tgSlugs.has(slug)) {return;}
       const p = parseTrackName(t.title || '');
       readyTracks.push({
         trackId: Number(t.id),
@@ -241,7 +241,7 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
       });
     });
 
-    if (readyTracks.length === 0) return;
+    if (readyTracks.length === 0) {return;}
 
     setBatchRunning(true);
     setBatchDone(0);
@@ -484,9 +484,9 @@ export function CatalogContent({ handleZip, play, del }: CatalogContentProps) {
                   const sc = ft?.stemsData ? Object.keys(ft.stemsData).length : 0;
                   const slug = slugify(t.title || '');
                   const inTg = tgTracks.some(tg => tg.slug === slug);
-                  if (inTg) return <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3, border: '1px solid #A855F766', color: '#A855F7', letterSpacing: '0.05em', flexShrink: 0, marginLeft: 6 }}>☁</span>;
-                  if (sc > 2) return <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3, border: '1px solid #4CAF5066', color: '#4CAF50', letterSpacing: '0.05em', flexShrink: 0, marginLeft: 6 }}>‹ FULL ›</span>;
-                  if (ft?.vocalsData || sc === 2) return <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3, border: '1px solid #FF8C0066', color: '#FF8C00', letterSpacing: '0.05em', flexShrink: 0, marginLeft: 6 }}>‹ DUO ›</span>;
+                  if (inTg) {return <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3, border: '1px solid #A855F766', color: '#A855F7', letterSpacing: '0.05em', flexShrink: 0, marginLeft: 6 }}>☁</span>;}
+                  if (sc > 2) {return <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3, border: '1px solid #4CAF5066', color: '#4CAF50', letterSpacing: '0.05em', flexShrink: 0, marginLeft: 6 }}>‹ FULL ›</span>;}
+                  if (ft?.vocalsData || sc === 2) {return <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 5px', borderRadius: 3, border: '1px solid #FF8C0066', color: '#FF8C00', letterSpacing: '0.05em', flexShrink: 0, marginLeft: 6 }}>‹ DUO ›</span>;}
                   return null;
                 })()}
                 <div className="bl-track-actions">

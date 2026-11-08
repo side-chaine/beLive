@@ -35,7 +35,7 @@ export function UserRoom() {
 
   // Close theme dropdown on outside click
   useEffect(() => {
-    if (!themeDropdownOpen) return;
+    if (!themeDropdownOpen) {return;}
     const handler = (e: MouseEvent) => {
       if (themeDropdownRef.current && !themeDropdownRef.current.contains(e.target as Node)) {
         setThemeDropdownOpen(false);
@@ -48,7 +48,7 @@ export function UserRoom() {
   // Escape closes
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSurface('app');
+      if (e.key === 'Escape') {setSurface('app');}
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -61,7 +61,7 @@ export function UserRoom() {
   };
 
   const handleContinue = () => {
-    if (!last?.scenarioId) return;
+    if (!last?.scenarioId) {return;}
     usePracticeStore.getState().startPractice(
       last.scenarioId,
       undefined,

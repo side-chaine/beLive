@@ -110,7 +110,7 @@ class YinProcessor extends AudioWorkletProcessor {
     cmnd[0] = 1.0;
     var rsum = 0;
 
-    for (var tau = 1; tau <= this._tauMax; tau++) {
+    for (let tau = 1; tau <= this._tauMax; tau++) {
       var diff = 0;
       for (var j = 0; j < half; j++) {
         var d = buf[j] - buf[j + tau];
@@ -122,7 +122,7 @@ class YinProcessor extends AudioWorkletProcessor {
 
     /* Step 3: absolute threshold — first dip below 0.15 */
     var te = -1;
-    for (var tau = this._tauMin; tau < this._tauMax; tau++) {
+    for (let tau = this._tauMin; tau < this._tauMax; tau++) {
       if (cmnd[tau] < this._threshold) {
         while (tau + 1 < this._tauMax && cmnd[tau + 1] < cmnd[tau]) tau++;
         te = tau;

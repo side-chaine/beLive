@@ -39,7 +39,7 @@ export const TakesToolbar: React.FC<TakesToolbarProps> = ({
   activeExercise,
   onInterrupt,
 }) => {
-  if (!activeBlock || !timeRange) return null;
+  if (!activeBlock || !timeRange) {return null;}
 
   return (
     <div
@@ -95,7 +95,7 @@ export const TakesToolbar: React.FC<TakesToolbarProps> = ({
             onClick={(e) => {
               e.stopPropagation();
               onInterrupt(() => {
-                if (exercisePlaybackLocked) return;
+                if (exercisePlaybackLocked) {return;}
                 setRecipesOpen((v) => !v);
               });
             }}
@@ -138,7 +138,7 @@ export const TakesToolbar: React.FC<TakesToolbarProps> = ({
             onClick={(e) => {
               e.stopPropagation();
               onInterrupt(() => {
-                if (exercisePlaybackLocked) return;
+                if (exercisePlaybackLocked) {return;}
                 setCompareMode(compareMode === 'ab' ? 'off' : 'ab');
               });
             }}
@@ -171,7 +171,7 @@ export const TakesToolbar: React.FC<TakesToolbarProps> = ({
             onClick={(e) => {
               e.stopPropagation();
               onInterrupt(() => {
-                if (exercisePlaybackLocked) return;
+                if (exercisePlaybackLocked) {return;}
                 setPreviewMode(previewMode === 'solo' ? 'context' : 'solo');
               });
             }}

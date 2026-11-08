@@ -91,9 +91,9 @@ export function applyMode(theme: BeLiveTheme, mode: AppMode): void {
   const overrides = theme.modes[mode]
   const vars: Record<string, string> = {}
 
-  if (overrides.accent)      vars['--bl-accent']       = overrides.accent
-  if (overrides.accentText)  vars['--bl-accent-text']   = overrides.accentText
-  if (overrides.surfaceBase) vars['--bl-surface-base']  = overrides.surfaceBase
+  if (overrides.accent)      {vars['--bl-accent']       = overrides.accent}
+  if (overrides.accentText)  {vars['--bl-accent-text']   = overrides.accentText}
+  if (overrides.surfaceBase) {vars['--bl-surface-base']  = overrides.surfaceBase}
 
   setVars(vars)
   document.documentElement.setAttribute('data-mode', mode)

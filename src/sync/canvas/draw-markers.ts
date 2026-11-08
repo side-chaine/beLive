@@ -18,13 +18,13 @@ export function drawMarkers(
   canvasWidth: number,
   canvasHeight: number
 ): void {
-  if (!markers || markers.length === 0) return;
+  if (!markers || markers.length === 0) {return;}
 
   const startTime = scrollLeft / zoom;
   const endTime = (scrollLeft + canvasWidth) / zoom;
 
   for (const marker of markers) {
-    if (marker.time < startTime - 1 || marker.time > endTime + 1) continue;
+    if (marker.time < startTime - 1 || marker.time > endTime + 1) {continue;}
 
     const x = Math.round(marker.time * zoom - scrollLeft) + 0.5;
 

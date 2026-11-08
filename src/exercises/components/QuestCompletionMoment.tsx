@@ -9,7 +9,7 @@ export const QuestCompletionMoment: React.FC<QuestCompletionMomentProps> = () =>
   const clearCompletionMoment = useExerciseStore((s) => s.clearCompletionMoment);
   const blocks = useBlocksStore((s) => s.blocks);
 
-  if (!completionMoment) return null;
+  if (!completionMoment) {return null;}
 
   // Find block name for context
   const block = blocks.find((b) => b.id === completionMoment.blockId);

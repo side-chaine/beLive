@@ -19,7 +19,7 @@ export function ShowEditor() {
   // ── ResizeObserver → --bl-deck-height ──
   useEffect(() => {
     const el = panelRef.current;
-    if (!el) return;
+    if (!el) {return;}
     const ro = new ResizeObserver(([entry]) => {
       document.documentElement.style.setProperty(
         '--bl-deck-height', `${entry.contentRect.height}px`
@@ -35,13 +35,13 @@ export function ShowEditor() {
       document.documentElement.getAttribute('data-billy-control') === 'true';
     const isEditingText = () => {
       const el = document.activeElement as HTMLElement;
-      if (!el) return false;
+      if (!el) {return false;}
       return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable === true;
     };
 
     const handler = (e: KeyboardEvent) => {
-      if (isBillyControlActive()) return;
-      if (isEditingText()) return;
+      if (isBillyControlActive()) {return;}
+      if (isEditingText()) {return;}
 
       const store = useShowStore.getState();
       const isRecording = useRecordingStore.getState().isRecording;

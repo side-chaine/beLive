@@ -35,7 +35,7 @@ const PROGRESS_STEP = 0.03;
  */
 let initialized = false;
 export function initTriggerVisualService(): () => void {
-  if (initialized) return () => {};
+  if (initialized) {return () => {};}
   initialized = true;
 
   const engine = new TriggerEngine();
@@ -98,9 +98,9 @@ export function initTriggerVisualService(): () => void {
       let lineActive = 0;
 
       for (const e of frameEvents) {
-        if (e.id === 'word-active') wordActive = 1;
-        if (e.id === 'word-progress') wordProgress = e.value;
-        if (e.id === 'line-active') lineActive = 1;
+        if (e.id === 'word-active') {wordActive = 1;}
+        if (e.id === 'word-progress') {wordProgress = e.value;}
+        if (e.id === 'line-active') {lineActive = 1;}
       }
 
       // Queue CSS vars for batch write (scheduler will flush)
@@ -209,7 +209,7 @@ export function initTriggerVisualService(): () => void {
   document.addEventListener('before-track-change', onTrackChange);
   window.addEventListener('keydown', onKey);
 
-  if (import.meta.env.DEV) console.log('[TriggerVisualService] initialized');
+  if (import.meta.env.DEV) {console.log('[TriggerVisualService] initialized');}
 
   return () => {
     initialized = false; // Reset guard for re-init (StrictMode/surface toggle safety)
@@ -226,6 +226,6 @@ export function initTriggerVisualService(): () => void {
     root.style.removeProperty(CSS_WORD_ACTIVE);
     root.style.removeProperty(CSS_WORD_PROGRESS);
     root.style.removeProperty(CSS_LINE_ACTIVE);
-    if (import.meta.env.DEV) console.log('[TriggerVisualService] disposed');
+    if (import.meta.env.DEV) {console.log('[TriggerVisualService] disposed');}
   };
 }

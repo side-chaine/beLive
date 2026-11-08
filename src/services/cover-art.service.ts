@@ -6,24 +6,19 @@ import { parseTrackName } from '../catalog/types';
 
 // ─── Last.fm API ───
 
-const LASTFM_API_KEY = import.meta.env.VITE_LASTFM_API_KEY || '';
+const LASTFM_API_KEY = import.meta.env.VITE_LASTFM_API_KEY || ''; // secret-ok: публичный клиентский ключ Last.fm — решение Никиты 08.11
 
 interface LastFmImage {
   '#text': string;
   size: string;
 }
 
-interface LastFmTrack {
-  album?: {
-    image?: LastFmImage[];
-  };
-}
 
 export async function fetchCoverArt(artist: string, title: string): Promise<string | null> {
   try {
     const url = `https://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key=${LASTFM_API_KEY}&artist=${encodeURIComponent(artist)}&track=${encodeURIComponent(title)}&format=json`;
     const response = await fetch(url);
-    if (!response.ok) return null;
+    if (!response.ok) {return null;}
     const data = await response.json();
     if (data.track?.album?.image) {
       const images = data.track.album.image as LastFmImage[];
@@ -46,14 +41,14 @@ async function fetchCoverArtFromItunes(
 ): Promise<string | null> {
   try {
     const query = [artist, title].filter(Boolean).join(' ');
-    if (!query.trim() || query.trim().length < 2) return null;
+    if (!query.trim() || query.trim().length < 2) {return null;}
 
     const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=5`;
     const response = await fetch(url);
-    if (!response.ok) return null;
+    if (!response.ok) {return null;}
     const data = await response.json();
 
-    if (!data.results || data.results.length === 0) return null;
+    if (!data.results || data.results.length === 0) {return null;}
 
     // Pick best result by duration match if multiple
     const result = data.results[0];
@@ -74,12 +69,12 @@ async function fetchCoverOnce(
   artist: string,
   title: string,
 ): Promise<string | null> {
-  let coverUrl: string | null = null;
+  let coverUrl: string | null;
 
   // Strategy 1: iTunes Search API (CORS-friendly, works from browser)
   coverUrl = await fetchCoverArtFromItunes(artist, title);
   if (coverUrl) {
-    if (import.meta.env.DEV) console.log(`[CoverArt] Found via iTunes: ${coverUrl}`);
+    if (import.meta.env.DEV) {console.log(`[CoverArt] Found via iTunes: ${coverUrl}`);}
     return coverUrl;
   }
 
@@ -87,7 +82,7 @@ async function fetchCoverOnce(
   if (!artist) {
     coverUrl = await fetchCoverArtFromItunes('', title);
     if (coverUrl) {
-      if (import.meta.env.DEV) console.log(`[CoverArt] Found via iTunes (title-only): ${coverUrl}`);
+      if (import.meta.env.DEV) {console.log(`[CoverArt] Found via iTunes (title-only): ${coverUrl}`);}
       return coverUrl;
     }
   }
@@ -95,7 +90,7 @@ async function fetchCoverOnce(
   // Strategy 3: Last.fm fallback (may work with future proxy)
   coverUrl = await fetchCoverArt(artist || ' ', title);
   if (coverUrl) {
-    if (import.meta.env.DEV) console.log(`[CoverArt] Found via Last.fm: ${coverUrl}`);
+    if (import.meta.env.DEV) {console.log(`[CoverArt] Found via Last.fm: ${coverUrl}`);}
     return coverUrl;
   }
 
@@ -110,7 +105,7 @@ export async function fetchCoverArtAndUpdate(
   const artist = parsed.artist || '';
   const title = parsed.title;
 
-  if (!title.trim() || title.trim().length < 2) return;
+  if (!title.trim() || title.trim().length < 2) {return;}
 
   let coverUrl: string | null = null;
   let lastError: Error | null = null;
@@ -121,22 +116,22 @@ export async function fetchCoverArtAndUpdate(
     try {
       if (attempt > 0) {
         const delay = baseDelay * Math.pow(2, attempt - 1);
-        if (import.meta.env.DEV) console.log(`[CoverArt] Retry ${attempt}/${maxRetries} after ${delay}ms`);
+        if (import.meta.env.DEV) {console.log(`[CoverArt] Retry ${attempt}/${maxRetries} after ${delay}ms`);}
         await new Promise(r => setTimeout(r, delay));
       }
       coverUrl = await fetchCoverOnce(artist, title);
-      if (coverUrl) break;
+      if (coverUrl) {break;}
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
-      if (import.meta.env.DEV) console.warn(`[CoverArt] Attempt ${attempt + 1} failed:`, err);
+      if (import.meta.env.DEV) {console.warn(`[CoverArt] Attempt ${attempt + 1} failed:`, err);}
     }
   }
 
   if (!coverUrl) {
     if (import.meta.env.DEV) {
       const msg = `[CoverArt] No cover found for: "${trackTitle}"`;
-      if (lastError) console.warn(msg, lastError);
-      else if (import.meta.env.DEV) console.log(msg);
+      if (lastError) {console.warn(msg, lastError);}
+      else if (import.meta.env.DEV) {console.log(msg);}
     }
     return;
   }
@@ -170,7 +165,7 @@ export async function fetchCoverArtAndUpdate(
     const theme = await extractDominantColors(coverUrl);
     if (theme) {
       await updateTrackField(trackId, { coverTheme: theme });
-      if (import.meta.env.DEV) console.log(`[CoverArt] Theme extracted: primary=${theme.primary} accent=${theme.accent}`);
+      if (import.meta.env.DEV) {console.log(`[CoverArt] Theme extracted: primary=${theme.primary} accent=${theme.accent}`);}
 
       const currentTrack = useTrackStore.getState().currentTrack;
       if (currentTrack && Number(currentTrack.id) === trackId) {
@@ -248,13 +243,13 @@ function rgbToHsl(r: number, g: number, b: number): HslPixel {
   r /= 255; g /= 255; b /= 255;
   const max = Math.max(r, g, b), min = Math.min(r, g, b);
   const l = (max + min) / 2;
-  if (max === min) return { h: 0, s: 0, l };
+  if (max === min) {return { h: 0, s: 0, l };}
   const d = max - min;
   const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-  let h = 0;
-  if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
-  else if (max === g) h = ((b - r) / d + 2) / 6;
-  else h = ((r - g) / d + 4) / 6;
+  let h: number;
+  if (max === r) {h = ((g - b) / d + (g < b ? 6 : 0)) / 6;}
+  else if (max === g) {h = ((b - r) / d + 2) / 6;}
+  else {h = ((r - g) / d + 4) / 6;}
   return { h: h * 360, s, l };
 }
 
@@ -274,13 +269,13 @@ function hslToHex(h: number, s: number, l: number): string {
 }
 
 function medianCutExtract(imageData: ImageData, coverUrl: string): CoverArtTheme {
-  const { data, width, height } = imageData;
+  const { data } = imageData;
   const pixels: HslPixel[] = [];
   const step = 7; // Sample every 7th pixel
 
   for (let i = 0; i < data.length; i += 4 * step) {
     const a = data[i + 3];
-    if (a < 128) continue;
+    if (a < 128) {continue;}
     const r = data[i], g = data[i + 1], b = data[i + 2];
     pixels.push(rgbToHsl(r, g, b));
   }
@@ -339,7 +334,7 @@ function medianCutExtract(imageData: ImageData, coverUrl: string): CoverArtTheme
       }
     }
   }
-  if (maxChroma === 0) accent = hslToHex(averages[2]?.h ?? averages[1].h, averages[2]?.s ?? averages[1].s, averages[2]?.l ?? averages[1].l);
+  if (maxChroma === 0) {accent = hslToHex(averages[2]?.h ?? averages[1].h, averages[2]?.s ?? averages[1].s, averages[2]?.l ?? averages[1].l);}
 
   // isDark from primary luminance
   const r = parseInt(primary.slice(1, 3), 16) / 255;

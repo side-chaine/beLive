@@ -29,9 +29,9 @@ export class ReplayGuard {
   private epoch: string | null = null;
   private lastSeq = -1;
   accept(envelope: Envelope): boolean {
-    if (envelope.v !== PROTOCOL_VERSION) return false;
+    if (envelope.v !== PROTOCOL_VERSION) {return false;}
     if (envelope.epoch !== this.epoch) { this.epoch = envelope.epoch; this.lastSeq = envelope.seq; return true; }
-    if (envelope.seq <= this.lastSeq) return false;
+    if (envelope.seq <= this.lastSeq) {return false;}
     this.lastSeq = envelope.seq;
     return true;
   }
@@ -47,12 +47,12 @@ export class EnvelopeSender {
 }
 
 export function safeParseEnvelope(raw: unknown): Envelope | null {
-  if (typeof raw !== 'string') return null;
-  if (raw.length > MAX_MESSAGE_BYTES) return null;
+  if (typeof raw !== 'string') {return null;}
+  if (raw.length > MAX_MESSAGE_BYTES) {return null;}
   try {
     const parsed = JSON.parse(raw);
-    if (typeof parsed !== 'object' || parsed === null) return null;
-    if ((parsed as Envelope).v !== PROTOCOL_VERSION) return null;
+    if (typeof parsed !== 'object' || parsed === null) {return null;}
+    if ((parsed as Envelope).v !== PROTOCOL_VERSION) {return null;}
     return parsed as Envelope;
   } catch { return null; }
 }

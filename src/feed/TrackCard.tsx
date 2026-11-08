@@ -43,11 +43,11 @@ export function TrackCard() {
   const tracksMeta = useTrackStore(s => s.tracksMeta);
   const status = useFeedStore(s => s.status);
 
-  if (!activePostId) return null;
-  if (status === 'loading') return <div style={{ ...styles.card, textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>Загрузка...</div>;
+  if (!activePostId) {return null;}
+  if (status === 'loading') {return <div style={{ ...styles.card, textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>Загрузка...</div>;}
 
   const post = posts.find(p => p.id === activePostId);
-  if (!post || !post.trackId) return null;
+  if (!post || !post.trackId) {return null;}
 
   // Use post.title as primary source (works for ALL posts, not just current user)
   const title = post.title || 'Неизвестный трек';

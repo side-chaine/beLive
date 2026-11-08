@@ -55,7 +55,7 @@ export function PostComposer() {
   }, [editingPost]);
 
   const handleSubmit = () => {
-    if (!title.trim()) return;
+    if (!title.trim()) {return;}
     const tagsArr = tags.split(',').map(t => t.trim()).filter(Boolean);
 
     if (editingPost) {

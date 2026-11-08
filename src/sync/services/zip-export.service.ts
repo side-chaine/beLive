@@ -14,7 +14,7 @@ import { logZipEvent } from '../../utils/zip-logger';
 import { STEM_TRANSCODE_CONFIG } from '../../config/stem-transcode.config';
 
 function mimeToExt(mimeType?: string | null): string {
-  if (!mimeType) return 'mp3';
+  if (!mimeType) {return 'mp3';}
   const map: Record<string, string> = {
     'audio/mpeg': 'mp3', 'audio/mp3': 'mp3', 'audio/mp4': 'm4a',
     'audio/x-m4a': 'm4a', 'audio/aac': 'aac', 'audio/ogg': 'ogg',
@@ -43,7 +43,7 @@ export async function generateTrackZip(
     || useTrackStore.getState().currentTrack;
 
   const fullTrack = await getTrack(trackId);
-  if (!fullTrack) throw new Error(`Track ${trackId} not found in IDB`);
+  if (!fullTrack) {throw new Error(`Track ${trackId} not found in IDB`);}
 
   const zip = new JSZip();
   const trackName = meta?.title || 'track';
@@ -63,7 +63,7 @@ export async function generateTrackZip(
       const sceneMetas = await getBlockScenes(trackId);
       for (const scene of sceneMetas) {
         const blob = await getBlockSceneBlob(scene.id);
-        if (blob) scenesBytes += blob.size;
+        if (blob) {scenesBytes += blob.size;}
       }
     } catch { /* scenes optional */ }
 
@@ -83,7 +83,7 @@ export async function generateTrackZip(
       callbacks?.onProgress?.(6);
       const rawStemsData: Record<string, { data: ArrayBuffer; type: string }> = {};
       for (const [stemId, entry] of Object.entries(fullTrack.stemsData)) {
-        if (entry?.data) rawStemsData[stemId] = { data: entry.data.slice(0), type: entry.type };
+        if (entry?.data) {rawStemsData[stemId] = { data: entry.data.slice(0), type: entry.type };}
       }
 
       const result = await runTranscodePipeline({
@@ -100,10 +100,10 @@ export async function generateTrackZip(
         + scenesBytes;
 
       for (const [stemId, entry] of Object.entries(fullTrack.stemsData)) {
-        if (!entry?.data) continue;
+        if (!entry?.data) {continue;}
         const comp = result.compressed[stemId];
-        if (comp) finalBytes += comp.byteLength;
-        else if (!result.skipped.includes(stemId)) finalBytes += entry.data.byteLength;
+        if (comp) {finalBytes += comp.byteLength;}
+        else if (!result.skipped.includes(stemId)) {finalBytes += entry.data.byteLength;}
       }
 
       if (!wouldFitZip(finalBytes)) {
@@ -125,23 +125,23 @@ export async function generateTrackZip(
       }
 
       for (const [stemId, entry] of Object.entries(fullTrack.stemsData)) {
-        if (!entry?.data) continue;
+        if (!entry?.data) {continue;}
         const comp = result.compressed[stemId];
-        if (comp) zip.file(`stems/${stemId}.mp3`, comp, { compression: 'STORE' });
-        else if (!result.skipped.includes(stemId)) zip.file(`stems/${stemId}.${mimeToExt(entry.type)}`, entry.data, { compression: 'STORE' });
+        if (comp) {zip.file(`stems/${stemId}.mp3`, comp, { compression: 'STORE' });}
+        else if (!result.skipped.includes(stemId)) {zip.file(`stems/${stemId}.${mimeToExt(entry.type)}`, entry.data, { compression: 'STORE' });}
       }
       terminateWorker();
-      if (hasZipAudioContext()) closeZipAudioContext();
+      if (hasZipAudioContext()) {closeZipAudioContext();}
     } else {
       for (const [stemId, entry] of Object.entries(fullTrack.stemsData)) {
-        if (entry?.data) zip.file(`stems/${stemId}.${mimeToExt(entry.type)}`, entry.data, { compression: 'STORE' });
+        if (entry?.data) {zip.file(`stems/${stemId}.${mimeToExt(entry.type)}`, entry.data, { compression: 'STORE' });}
       }
     }
   }
 
   callbacks?.onProgress?.(8);
   const lyrics = fullTrack.lyrics || fullTrack.lyricsOriginalContent || '';
-  if (lyrics) zip.file('lyrics.txt', lyrics);
+  if (lyrics) {zip.file('lyrics.txt', lyrics);}
 
   if (fullTrack.coverArtBlob) {
     const ext = fullTrack.coverArtBlob.type?.includes('png') ? 'png' : 'jpg';
@@ -179,7 +179,7 @@ export async function generateTrackZip(
   }
 
   zip.file('export.json', JSON.stringify(exportData, null, 2));
-  if (fullTrack.alignmentData) zip.file('alignment.json', JSON.stringify(fullTrack.alignmentData, null, 2));
+  if (fullTrack.alignmentData) {zip.file('alignment.json', JSON.stringify(fullTrack.alignmentData, null, 2));}
 
   callbacks?.onProgress?.(10);
 

@@ -25,7 +25,7 @@ export function bootAether(): void {
     const transport = getTransport()
     ;(window as any).__belive = (window as any).__belive || {}
     ;(window as any).__belive.transport = transport
-    if (!transport) return // V2 not available
+    if (!transport) {return} // V2 not available
 
     // 1. Publisher — публикация времени в UI
     _aetherPublisher = new V3StatePublisher(transport)
@@ -142,7 +142,7 @@ export function bootAether(): void {
       console.log('[TRACE] 🎯 before-track-change HANDLER FIRED', (event as CustomEvent).detail)
       const payload = (event as CustomEvent).detail
       const trackId = payload?.toTrackId
-      if (!trackId) return
+      if (!trackId) {return}
 
       // M2 (P1-a): глушим звук СРАЗУ — не ждём IDB-фетч, старый трек не должен звучать
       try { getTransport()?.stop?.() } catch {}
@@ -177,7 +177,7 @@ export function bootAether(): void {
             
             // №18-BUS H2.3: блок «gains restored to 1.0» УДАЛЁН — четвёртый отравитель raw-слота.
             // pipeline сам восстанавливает effective gains из RAW (_stemRawVolumes переживают reset).
-            if (monitorEngine) monitorEngine.setBackendMode('v3')
+            if (monitorEngine) {monitorEngine.setBackendMode('v3')}
             console.log('[AETHER] ✅ V3 loaded for track', trackId)
 
             // M1-2 (342, расширение): публикуем trackUrls для V3-фасада.

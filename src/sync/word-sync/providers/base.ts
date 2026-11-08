@@ -30,7 +30,7 @@ export interface AlignmentProvider {
 }
 
 export function isAlignmentProvider(value: unknown): value is AlignmentProvider {
-  if (!value || typeof value !== 'object') return false;
+  if (!value || typeof value !== 'object') {return false;}
 
   const candidate = value as Partial<AlignmentProvider>;
   return (

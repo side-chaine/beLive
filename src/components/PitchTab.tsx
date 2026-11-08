@@ -102,7 +102,7 @@ function useStableVocalData(engine: PitchEngine | null): { note: string | null; 
 
     const unsub = engine.subscribe((msg: WorkletMessage) => {
       const now = performance.now();
-      if (now - lastRef.current < 46) return;
+      if (now - lastRef.current < 46) {return;}
       lastRef.current = now;
 
       if (msg.type === 'pitch') {
@@ -177,7 +177,7 @@ function useStableNote(engine: PitchEngine | null): string | null {
 
     const unsub = engine.subscribe((msg: WorkletMessage) => {
       const now = performance.now();
-      if (now - lastRef.current < 46) return;
+      if (now - lastRef.current < 46) {return;}
       lastRef.current = now;
 
       if (msg.type === 'pitch') {
@@ -217,7 +217,7 @@ export function PitchTab() {
     let destroyed = false;
 
     const tryInit = (): boolean => {
-      if (destroyed) return false;
+      if (destroyed) {return false;}
       // ARC-2e: V3-тап вместо мёртвых facade-полей — фейдеронезависимый pre-fader vocal
       const tap = ((window as any).__belive?.pipeline?.vocalReferenceTap ?? null) as AudioNode | null;
       setHasVocals(tap !== null);
@@ -227,7 +227,7 @@ export function PitchTab() {
       }
       if (vocalEngineRef.current) {
         vocalEngineRef.current.retarget(tap);
-        if (!useAudioStore.getState().isPlaying) vocalEngineRef.current.pause(); // пауза-тиканье
+        if (!useAudioStore.getState().isPlaying) {vocalEngineRef.current.pause();} // пауза-тиканье
         return true;
       }
       const eng = new PitchEngine();
@@ -238,7 +238,7 @@ export function PitchTab() {
           return;
         }
         setVocalEngine(eng);
-        if (!useAudioStore.getState().isPlaying) eng.pause();   // ARC-2e (002 У-3): isPlaying из store
+        if (!useAudioStore.getState().isPlaying) {eng.pause();}   // ARC-2e (002 У-3): isPlaying из store
       }).catch(err => {
         console.warn('[PitchTab] vocal engine failed:', err);
       });
@@ -251,14 +251,14 @@ export function PitchTab() {
     document.addEventListener('track-fully-loaded', onTrackLoaded);
 
     const onVocalStemReady = (e: Event) => {                            // ARC-2e: раньше на сотни ms
-      if ((e as CustomEvent).detail?.stemId === 'vocals') tryInit();
+      if ((e as CustomEvent).detail?.stemId === 'vocals') {tryInit();}
     };
     document.addEventListener('track-stem-ready', onVocalStemReady);
 
     const onPlaybackState = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      if (detail?.isPlaying) vocalEngineRef.current?.resume();
-      else vocalEngineRef.current?.pause();
+      if (detail?.isPlaying) {vocalEngineRef.current?.resume();}
+      else {vocalEngineRef.current?.pause();}
     };
     window.addEventListener('playback-state-changed', onPlaybackState);
 
@@ -280,21 +280,21 @@ export function PitchTab() {
 
   /* ── Mic engine ── */
   useEffect(() => {
-    if (import.meta.env.DEV) console.log('[PitchTab] Mic engine useEffect, micActive:', micActive);
+    if (import.meta.env.DEV) {console.log('[PitchTab] Mic engine useEffect, micActive:', micActive);}
     if (!micActive) {
       if (micEngineRef.current) {
-        if (import.meta.env.DEV) console.log('[PitchTab] Mic engine cleanup (inactive)');
+        if (import.meta.env.DEV) {console.log('[PitchTab] Mic engine cleanup (inactive)');}
         micEngineRef.current.destroy();
         micEngineRef.current = null;
         setMicEngine(null);
       }
       return;
     }
-    if (import.meta.env.DEV) console.log('[PitchTab] Mic engine init...');
+    if (import.meta.env.DEV) {console.log('[PitchTab] Mic engine init...');}
     const eng = new PitchEngine();
     micEngineRef.current = eng;
     eng.initFromMic().then(() => {
-      if (import.meta.env.DEV) console.log('[PitchTab] Mic engine initialized');
+      if (import.meta.env.DEV) {console.log('[PitchTab] Mic engine initialized');}
       setMicEngine(eng);
     }).catch(err => {
       console.warn('[PitchTab] mic engine failed:', err);
@@ -302,7 +302,7 @@ export function PitchTab() {
     });
 
     return () => {
-      if (import.meta.env.DEV) console.log('[PitchTab] Mic engine cleanup');
+      if (import.meta.env.DEV) {console.log('[PitchTab] Mic engine cleanup');}
       eng.destroy();
       micEngineRef.current = null;
       setMicEngine(null);
@@ -312,11 +312,11 @@ export function PitchTab() {
   /* ── Tab visibility — pause/resume engine ── */
   useEffect(() => {
     const el = document.getElementById('belive-react');
-    if (!el) return;
+    if (!el) {return;}
     const obs = new IntersectionObserver((entries) => {
       const visible = entries[0]?.isIntersecting ?? true;
-      if (visible) vocalEngineRef.current?.resume();
-      else vocalEngineRef.current?.pause();
+      if (visible) {vocalEngineRef.current?.resume();}
+      else {vocalEngineRef.current?.pause();}
     }, { threshold: 0 });
     obs.observe(el);
     return () => obs.disconnect();
@@ -327,10 +327,10 @@ export function PitchTab() {
   const micNote = useStableNote(micEngine);
 
   const vocalDisplay = (() => {
-    if (hasVocals === false) return '\u2014\u2014';
-    if (hasVocals === null && !vocalEngine) return '\u2026';
+    if (hasVocals === false) {return '\u2014\u2014';}
+    if (hasVocals === null && !vocalEngine) {return '\u2026';}
     if (!vocal.note && vocalEngine) {
-      if (!isPlaying) return '\u23F8';   // ARC-2e (002 У-3): семантика паузы из store
+      if (!isPlaying) {return '\u23F8';}   // ARC-2e (002 У-3): семантика паузы из store
     }
     return vocal.note ?? '\u2014';
   })();

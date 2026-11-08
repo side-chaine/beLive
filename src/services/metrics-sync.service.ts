@@ -29,22 +29,22 @@ export function scheduleSync(): void {
   pendingDirty = true;
 
   // If already syncing — piggyback (don't start another)
-  if (syncPromise) return;
+  if (syncPromise) {return;}
 
   // Debounce 2s before firing
-  if (debounceTimer) clearTimeout(debounceTimer);
+  if (debounceTimer) {clearTimeout(debounceTimer);}
   debounceTimer = setTimeout(() => {
     debounceTimer = null;
-    if (pendingDirty) executeSync();
+    if (pendingDirty) {executeSync();}
   }, 2000);
 }
 
 async function executeSync(retry = 0): Promise<boolean> {
   const user = useUserProfileStore.getState().currentUser;
   // Guests don't sync to server
-  if (!user?.authToken || user.isGuest) return false;
+  if (!user?.authToken || user.isGuest) {return false;}
 
-  if (syncPromise) return syncPromise;
+  if (syncPromise) {return syncPromise;}
 
   syncPromise = _doSync(retry);
   const result = await syncPromise;
@@ -82,7 +82,7 @@ async function _doSync(retry: number): Promise<boolean> {
     if (res.ok) {
       const data = await res.json();
       // Update server-authoritative fields
-      if (data.elo != null) store.setElo(data.elo);
+      if (data.elo != null) {store.setElo(data.elo);}
       pendingDirty = false;
       return true;
     }
@@ -105,7 +105,7 @@ async function _doSync(retry: number): Promise<boolean> {
     // Retryable (5xx, 408, 429 without header, network error)
     throw new Error(`HTTP ${res.status}`);
   } catch {
-    if (retry >= MAX_RETRIES) return false;
+    if (retry >= MAX_RETRIES) {return false;}
 
     // Exponential backoff with jitter ±50%
     const delay = Math.min(BACKOFF_BASE * Math.pow(2, retry), BACKOFF_CAP);
@@ -122,13 +122,13 @@ function sleep(ms: number): Promise<void> {
 // ─── Online / Offline detection ───
 export function initSyncLifecycle(): () => void {
   const onOnline = () => {
-    if (pendingDirty) scheduleSync();
+    if (pendingDirty) {scheduleSync();}
   };
   window.addEventListener('online', onOnline);
 
   return () => {
     window.removeEventListener('online', onOnline);
-    if (debounceTimer) clearTimeout(debounceTimer);
+    if (debounceTimer) {clearTimeout(debounceTimer);}
     syncPromise = null;
   };
 }

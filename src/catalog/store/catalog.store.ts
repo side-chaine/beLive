@@ -194,7 +194,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
 
   savePlaylist: () => {
     const { isBuilding, buildingName, buildingTracks, playlists } = get();
-    if (!isBuilding || buildingTracks.length === 0) return;
+    if (!isBuilding || buildingTracks.length === 0) {return;}
 
     // Auto-generate name if empty
     let name = buildingName.trim();
@@ -237,7 +237,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
 
   loadPlaylist: (id) => {
     const playlist = get().playlists.find(p => p.id === id);
-    if (!playlist || playlist.tracks.length === 0) return;
+    if (!playlist || playlist.tracks.length === 0) {return;}
 
     // Close catalog first
     document.dispatchEvent(new CustomEvent('catalog-close'));
@@ -255,7 +255,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     const playNext = () => {
       if (index >= playlist.tracks.length) {
         set({ _activePlaylist: null, _activePlaylistIndex: 0 });
-        if (import.meta.env.DEV) console.log('[CatalogStore] Playlist finished:', playlist.name);
+        if (import.meta.env.DEV) {console.log('[CatalogStore] Playlist finished:', playlist.name);}
         return;
       }
 
@@ -275,7 +275,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
 
       const trackIdx = all.indexOf(candidate);
       set({ _activePlaylistIndex: index });
-      if (import.meta.env.DEV) console.log('[CatalogStore] Playlist:', playlist.name, 'track', index + 1, '/', playlist.tracks.length, '-', candidate.title);
+      if (import.meta.env.DEV) {console.log('[CatalogStore] Playlist:', playlist.name, 'track', index + 1, '/', playlist.tracks.length, '-', candidate.title);}
 
       const loadPromise = loadTrack(trackIdx, { autoplay: true, openSyncEditor: false });
 
@@ -302,13 +302,13 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     };
 
     playNext();
-    if (import.meta.env.DEV) console.log('[CatalogStore] Starting playlist:', playlist.name, playlist.tracks.length, 'tracks');
+    if (import.meta.env.DEV) {console.log('[CatalogStore] Starting playlist:', playlist.name, playlist.tracks.length, 'tracks');}
   },
 
   playNextInPlaylist: () => {
     // Sequential playback is now handled by recursive onBothEnded in loadPlaylist.
     // This action is kept for potential manual "skip" feature.
-    if (import.meta.env.DEV) console.log('[CatalogStore] playNextInPlaylist — sequential handled by onBothEnded chain');
+    if (import.meta.env.DEV) {console.log('[CatalogStore] playNextInPlaylist — sequential handled by onBothEnded chain');}
   },
 
   syncPlaylistsFromLegacy: () => {
@@ -346,7 +346,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
 
     for (const trackId of state.myMusicIds) {
       const track = allTracks.find(t => Number(t.id) === trackId);
-      if (!track) continue;
+      if (!track) {continue;}
 
       const fullTitle = track.title || `Track ${trackId}`;
       const parsed = parseTrackName(fullTitle);
@@ -369,8 +369,8 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
 
     // Sort: artists with most tracks first, unknown artist last
     return Object.values(groups).sort((a, b) => {
-      if (!a.artist) return 1;
-      if (!b.artist) return -1;
+      if (!a.artist) {return 1;}
+      if (!b.artist) {return -1;}
       return b.tracks.length - a.tracks.length;
     });
   },

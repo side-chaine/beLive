@@ -13,7 +13,7 @@ const SETTINGS_KEY = 'belive:ai-settings';
 function readSetting<K extends string>(key: K, fallback: string = ''): string {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    if (!raw) return fallback;
+    if (!raw) {return fallback;}
     const parsed = JSON.parse(raw);
     return (parsed?.state?.[key] as string) ?? fallback;
   } catch {
@@ -89,7 +89,7 @@ export class OpenRouterDirectProvider implements AIProvider {
 
   async healthCheck(): Promise<boolean> {
     const key = this.getApiKey();
-    if (!key) return false;
+    if (!key) {return false;}
     try {
       // Lightweight check — /models endpoint is free, no token consumption
       const res = await fetch('https://openrouter.ai/api/v1/models', {
@@ -179,14 +179,14 @@ export class OpenRouterDirectProvider implements AIProvider {
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {break;}
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (!line.trim() || !line.startsWith('data: ')) continue;
+          if (!line.trim() || !line.startsWith('data: ')) {continue;}
 
           const jsonStr = line.slice(6).trim();
           if (jsonStr === '[DONE]') {

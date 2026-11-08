@@ -22,18 +22,18 @@ async function fetchMusicBrainz(
 ): Promise<TrackMetaPartial | null> {
   try {
     const query = [artist, title].filter(Boolean).join(' AND ');
-    if (!query.trim()) return null;
+    if (!query.trim()) {return null;}
 
     // Step 1: Search — get MBID (no `inc` parameter)
     const searchUrl = `https://musicbrainz.org/ws/2/recording?query=${encodeURIComponent(query)}&fmt=json&limit=1`;
     const searchResp = await fetch(searchUrl, {
       headers: { 'User-Agent': MB_USER_AGENT },
     });
-    if (!searchResp.ok) return null;
+    if (!searchResp.ok) {return null;}
 
     const searchData = await searchResp.json();
     const rec = searchData.recordings?.[0];
-    if (!rec) return null;
+    if (!rec) {return null;}
 
     const result: TrackMetaPartial = { mbid: rec.id };
 
@@ -54,7 +54,7 @@ async function fetchMusicBrainz(
         });
         if (lookupResp.ok) {
           const detail = await lookupResp.json();
-          if (detail.isrcs?.length) result.isrc = detail.isrcs[0];
+          if (detail.isrcs?.length) {result.isrc = detail.isrcs[0];}
           if (detail.tags?.length) {
             result.genre = detail.tags.sort((a: any, b: any) => b.count - a.count)
               .slice(0, 5)
@@ -62,7 +62,7 @@ async function fetchMusicBrainz(
           }
           if (detail.releases?.length) {
             const rel = detail.releases[0];
-            if (rel.date) result.releaseDate = rel.date;
+            if (rel.date) {result.releaseDate = rel.date;}
             if (rel['label-info']?.[0]?.label?.name) {
               result.label = rel['label-info'][0].label.name;
             }
@@ -74,7 +74,7 @@ async function fetchMusicBrainz(
     }
 
     // Diagnostic: log lookup results
-    if (import.meta.env.DEV) console.log('[TrackMeta] MusicBrainz lookup:', {
+    if (import.meta.env.DEV) {console.log('[TrackMeta] MusicBrainz lookup:', {
       mbid: rec.id,
       hasGenre: !!result.genre?.length,
       genreCount: result.genre?.length || 0,
@@ -82,7 +82,7 @@ async function fetchMusicBrainz(
       hasLabel: !!result.label,
       releaseDate: result.releaseDate || 'none',
       label: result.label || 'none',
-    });
+    });}
 
     return result;
   } catch {
@@ -91,7 +91,7 @@ async function fetchMusicBrainz(
 }
 
 // ─── Last.fm API ───
-const LASTFM_API_KEY = import.meta.env.VITE_LASTFM_API_KEY || '';
+const LASTFM_API_KEY = import.meta.env.VITE_LASTFM_API_KEY || ''; // secret-ok: публичные клиентские ключи (Last.fm / GetSongBPM) — решение Никиты 08.11
 
 async function fetchLastFm(
   artist: string,
@@ -100,14 +100,14 @@ async function fetchLastFm(
   try {
     const url = `https://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key=${LASTFM_API_KEY}&artist=${encodeURIComponent(artist || ' ')}&track=${encodeURIComponent(title)}&format=json`;
     const resp = await fetch(url);
-    if (!resp.ok) return null;
+    if (!resp.ok) {return null;}
 
     const data = await resp.json();
     const track = data.track;
-    if (!track) return null;
+    if (!track) {return null;}
 
     // Diagnostic: log raw response structure
-    if (import.meta.env.DEV) console.log('[TrackMeta] Last.fm response:', {
+    if (import.meta.env.DEV) {console.log('[TrackMeta] Last.fm response:', {
       artist,
       title,
       httpStatus: resp.status,
@@ -119,16 +119,16 @@ async function fetchLastFm(
       listeners: data.track?.listeners || 'none',
       playcount: data.track?.playcount || 'none',
       similarRaw: data.track?.similar?.track?.slice(0, 2) || 'none',
-    });
-    if (import.meta.env.DEV) console.log('[TrackMeta] Last.fm similar raw:', JSON.stringify(data.track?.similar)?.slice(0, 300));
+    });}
+    if (import.meta.env.DEV) {console.log('[TrackMeta] Last.fm similar raw:', JSON.stringify(data.track?.similar)?.slice(0, 300));}
 
     const result: TrackMetaPartial = {};
 
     if (track.toptags?.tag?.length) {
       result.tags = track.toptags.tag.slice(0, 8).map((t: any) => t.name);
     }
-    if (track.listeners) result.listeners = Number(track.listeners);
-    if (track.playcount) result.playcount = Number(track.playcount);
+    if (track.listeners) {result.listeners = Number(track.listeners);}
+    if (track.playcount) {result.playcount = Number(track.playcount);}
     if (track.similar?.track?.length) {
       result.similarTracks = track.similar.track.slice(0, 5).map((t: any) => ({
         name: t.name,
@@ -158,31 +158,31 @@ function openKeyToCamelot(openKey: string): string | null {
 }
 
 // ─── GetSongBPM API ───
-const GETSONGBPM_KEY = import.meta.env.VITE_GETSONGBPM_KEY || '';
+const GETSONGBPM_KEY = import.meta.env.VITE_GETSONGBPM_KEY || ''; // secret-ok: публичные клиентские ключи (Last.fm / GetSongBPM) — решение Никиты 08.11
 
 async function fetchGetSongBPM(
   artist: string,
   title: string,
 ): Promise<TrackMetaPartial | null> {
-  if (!GETSONGBPM_KEY) return null;
+  if (!GETSONGBPM_KEY) {return null;}
   try {
     const query = [artist, title].filter(Boolean).join(' ');
-    if (!query.trim()) return null;
+    if (!query.trim()) {return null;}
 
     const url = `https://api.getsong.co/search/?api_key=${GETSONGBPM_KEY}&type=both&lookup=song:${encodeURIComponent(title)}+artist:${encodeURIComponent(artist)}`;
     const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
-    if (!resp.ok) return null;
+    if (!resp.ok) {return null;}
 
     const data = await resp.json();
     const track = data.search?.[0];
-    if (!track) return null;
+    if (!track) {return null;}
 
     // DEBUG: log raw track to see API response format
-    if (import.meta.env.DEV) console.log('[TrackMeta] GetSongBPM raw:', JSON.stringify(track));
+    if (import.meta.env.DEV) {console.log('[TrackMeta] GetSongBPM raw:', JSON.stringify(track));}
 
     const result: TrackMetaPartial = {};
-    if (track.tempo) result.bpm = Number(track.tempo);
-    if (track.key_of) result.key = track.key_of;
+    if (track.tempo) {result.bpm = Number(track.tempo);}
+    if (track.key_of) {result.key = track.key_of;}
     // Prefer direct camelot from API if available, else convert open_key
     if (track.camelot) {
       result.camelot = track.camelot;
@@ -190,13 +190,13 @@ async function fetchGetSongBPM(
       result.camelot = openKeyToCamelot(track.open_key);
     }
 
-    if (import.meta.env.DEV) console.log('[TrackMeta] GetSongBPM:', {
+    if (import.meta.env.DEV) {console.log('[TrackMeta] GetSongBPM:', {
       artist,
       title,
       bpm: result.bpm ?? 'none',
       key: result.key ?? 'none',
       camelot: result.camelot ?? 'none',
-    });
+    });}
 
     return result;
   } catch {
@@ -235,7 +235,7 @@ export async function fetchTrackMeta(
   const artist = parsed.artist || '';
   const title = parsed.title;
 
-  if (!title.trim() || title.trim().length < 2) return null;
+  if (!title.trim() || title.trim().length < 2) {return null;}
 
   // Read existing meta from IDB to preserve analysis data (bpm, key, energy etc.)
   const existingTrack = await getTrack(trackId);
@@ -260,7 +260,7 @@ export async function fetchTrackMeta(
   // This preserves existing analysis fields (bpm, key, camelot, energy, etc.)
   const mergeNonNull = (target: TrackMeta, source: TrackMetaPartial) => {
     for (const [k, v] of Object.entries(source)) {
-      if (v != null) (target as any)[k] = v;
+      if (v != null) {(target as any)[k] = v;}
     }
   };
 
@@ -275,7 +275,7 @@ export async function fetchTrackMeta(
   }
 
   // Diagnostic: log merged result
-  if (import.meta.env.DEV) console.log('[TrackMeta] Merged result:', {
+  if (import.meta.env.DEV) {console.log('[TrackMeta] Merged result:', {
     trackId,
     artist,
     title,
@@ -293,7 +293,7 @@ export async function fetchTrackMeta(
     label: merged.label || 'none',
     bpm: merged.bpm ?? 'none',
     key: merged.key ?? 'none',
-  });
+  });}
 
   // Save to IDB (fire and forget)
   updateTrackField(trackId, { trackMeta: merged }).catch(err => {

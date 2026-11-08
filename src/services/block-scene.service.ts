@@ -16,7 +16,6 @@ import {
   getSceneBlob,
   saveScene as idbSaveScene,
   deleteScene as idbDeleteScene,
-  clearScenesForTrack as idbClearScenes,
   getScenesCountForTrack,
 } from './idb.service';
 import type { BlockScene, BlockSceneMeta, SceneMap, SceneEntry } from './idb.service';
@@ -42,9 +41,9 @@ function revokeAllSceneUrls(): void {
  * Used everywhere a raw trackId needs validation.
  */
 function toSafeId(raw: unknown): number | null {
-  if (raw == null) return null;
+  if (raw == null) {return null;}
   const num = Number(raw);
-  if (isNaN(num) || num <= 0 || num > Number.MAX_SAFE_INTEGER) return null;
+  if (isNaN(num) || num <= 0 || num > Number.MAX_SAFE_INTEGER) {return null;}
   return num;
 }
 
@@ -124,7 +123,7 @@ export async function uploadBlockScene(
 
   await idbSaveScene(scene);
 
-  if (import.meta.env.DEV) console.log(`[BlockScene] Saved: trackId=${trackId} block=${blockIndex} id=${id}`);
+  if (import.meta.env.DEV) {console.log(`[BlockScene] Saved: trackId=${trackId} block=${blockIndex} id=${id}`);}
 
   // Return metadata (without blob)
   const { blob: _, ...meta } = scene;
@@ -171,7 +170,7 @@ export async function deleteBlockScene(sceneId: string): Promise<void> {
     useTrackStore.getState().setHasBlockScenes(remaining > 0);
   }
 
-  if (import.meta.env.DEV) console.log(`[BlockScene] Deleted: ${sceneId}`);
+  if (import.meta.env.DEV) {console.log(`[BlockScene] Deleted: ${sceneId}`);}
 }
 
 // ── Preload & Object URLs ────────────────────────────────
@@ -185,14 +184,14 @@ export async function preloadScenesForTrack(trackId: number): Promise<SceneMap> 
   revokeAllSceneUrls();
 
   const scenes = await getScenesForTrack(trackId);
-  if (scenes.length === 0) return { blockScenes: new Map(), lineScenes: new Map() };
+  if (scenes.length === 0) {return { blockScenes: new Map(), lineScenes: new Map() };}
 
   const blockScenes = new Map<number, SceneEntry>();
   const lineScenes = new Map<string, SceneEntry>();
 
   for (const scene of scenes) {
     const blob = await getSceneBlob(scene.id);
-    if (!blob) continue;
+    if (!blob) {continue;}
 
     const url = URL.createObjectURL(blob);
     _sceneObjectUrls.add(url);
@@ -207,7 +206,7 @@ export async function preloadScenesForTrack(trackId: number): Promise<SceneMap> 
     }
   }
 
-  if (import.meta.env.DEV) console.log(`[BlockScene] Preloaded ${blockScenes.size} block + ${lineScenes.size} line scenes for trackId=${trackId}`);
+  if (import.meta.env.DEV) {console.log(`[BlockScene] Preloaded ${blockScenes.size} block + ${lineScenes.size} line scenes for trackId=${trackId}`);}
   return { blockScenes, lineScenes };
 }
 
@@ -237,7 +236,7 @@ export async function softReloadScenesForTrack(
 
   for (const scene of scenes) {
     const blob = await getSceneBlob(scene.id);
-    if (!blob) continue;
+    if (!blob) {continue;}
 
     const url = URL.createObjectURL(blob);
     _sceneObjectUrls.add(url);
@@ -252,7 +251,7 @@ export async function softReloadScenesForTrack(
     }
   }
 
-  if (import.meta.env.DEV) console.log(`[BlockScene] Soft reloaded ${blockScenes.size} block + ${lineScenes.size} line scenes for trackId=${trackId}`);
+  if (import.meta.env.DEV) {console.log(`[BlockScene] Soft reloaded ${blockScenes.size} block + ${lineScenes.size} line scenes for trackId=${trackId}`);}
   return { sceneMap: { blockScenes, lineScenes }, oldUrls };
 }
 
@@ -292,10 +291,10 @@ export function initBlockScenePreload(): () => void {
       numId = toSafeId(useTrackStore.getState().currentTrack?.id);
     }
 
-    if (numId === null) return;
+    if (numId === null) {return;}
 
     // Dedup: already preloaded this track
-    if (_lastPreloadedTrackId === numId) return;
+    if (_lastPreloadedTrackId === numId) {return;}
 
     // Concurrency: queue last-wins if busy
     if (_preloadInProgress) {
@@ -333,7 +332,7 @@ export function initBlockScenePreload(): () => void {
       const idx = tc?.currentTrackIndex;
       if (typeof idx === 'number' && idx >= 0) {
         const safe = toSafeId(tc?.tracks?.[idx]?.id);
-        if (safe !== null) catalogId = safe;
+        if (safe !== null) {catalogId = safe;}
       }
     } catch {}
 

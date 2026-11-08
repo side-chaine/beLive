@@ -37,6 +37,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Дешёвое и страшное — раньше медленного (N1b/8a). Секунды против минут.
+      - name: Secrets gate
+        run: node scripts/check-secrets.mjs
+
+      - name: Deps manifest
+        run: node scripts/check-manifest.mjs
+
+      # Ratchet-гейты (N1b/8b): дешёвое и страшное — раньше медленного.
+      - name: Typecheck (ratchet, 708-allowlist)
+        run: npm run verify:typecheck
+
+      - name: Lint (ratchet, baseline)
+        run: npm run verify:lint-baseline
+
+      - name: As-any ratchet
+        run: npm run verify:asany
+
       - name: Test
         run: npm test -- --run
 

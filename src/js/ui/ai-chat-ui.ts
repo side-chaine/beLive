@@ -1,6 +1,6 @@
 import { aiHub } from '../ai/registry';
 import { VoiceInput } from '../utils/voice-input';
-import { parseTextCommand, stripTextCommands, executeToolCall } from '../../components/TrackInfoBoard/ai-tools';
+import { parseTextCommand, executeToolCall } from '../../components/TrackInfoBoard/ai-tools';
 import { PerformanceMonitor } from '../utils/performance-monitor';
 import { lockScroll, unlockScroll } from '../utils/scroll-lock'; // Импорт scroll-lock
 
@@ -59,7 +59,7 @@ export class AIChatUI {
   // СТРЕЛОЧНАЯ ФУНКЦИЯ ДЛЯ ОБРАБОТКИ ОТПРАВКИ СООБЩЕНИЙ
   private handleSend = async (): Promise<void> => {
     const messageText = this.inputField.value.trim();
-    if (!messageText || this.isStreaming) return;
+    if (!messageText || this.isStreaming) {return;}
 
     const provider = aiHub.getActiveProvider();
     const activeModel = aiHub.getActiveModel();
@@ -103,7 +103,7 @@ export class AIChatUI {
             this.updateMessage(aiMessageEl, currentText, false);
           },
           onDone: (fullText) => {
-            if (this.wasAborted) return;
+            if (this.wasAborted) {return;}
             this.checkForToolCalls(fullText).catch((toolErr) => {
               console.error('[ai-chat-ui] checkForToolCalls failed (non-fatal):', toolErr);
               // Контракт 'avatar.tool-error': window-event без payload; writer только здесь; читатели — аватары.
@@ -111,7 +111,7 @@ export class AIChatUI {
             });
           },
           onError: (err) => {
-            if (this.wasAborted) return;
+            if (this.wasAborted) {return;}
             console.error('AI Chat Error:', err);
             this.updateMessage(aiMessageEl, `❌ Ошибка: ${err.message}`, false);
           },
@@ -206,12 +206,12 @@ export class AIChatUI {
   }
 
   public toggleChat(): void {
-    if (import.meta.env.DEV) console.log('💬 AIChatUI: toggleChat called.');
+    if (import.meta.env.DEV) {console.log('💬 AIChatUI: toggleChat called.');}
     this.isOpen ? this.closeChat() : this.openChat();
   }
 
   public openChat(): void {
-    if (import.meta.env.DEV) console.log('💬 AIChatUI: openChat called.');
+    if (import.meta.env.DEV) {console.log('💬 AIChatUI: openChat called.');}
     PerformanceMonitor.measureChatOpen();
     this.isOpen = true;
     this.chatWindow.classList.add('active');
@@ -235,7 +235,7 @@ export class AIChatUI {
   }
 
   public closeChat(): void {
-    if (import.meta.env.DEV) console.log('💬 AIChatUI: closeChat called.');
+    if (import.meta.env.DEV) {console.log('💬 AIChatUI: closeChat called.');}
     this.isOpen = false;
     this.chatWindow.classList.remove('active');
     this.chatWindow.classList.add('hidden');
@@ -257,7 +257,7 @@ export class AIChatUI {
       }
     }
     const picker = document.getElementById('belive-ai-picker');
-    if (picker) picker.classList.remove('active');
+    if (picker) {picker.classList.remove('active');}
   }
 
   private afterOpenLayoutFix() {

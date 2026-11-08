@@ -37,7 +37,7 @@ export function classifyStemFromFilename(baseName: string): string | null {
 
   // Check backing vocal FIRST — if matched, it's backing stem, not lead vocal
   const isBackingVocal = BACKING_VOCAL_PATTERNS.some(p => lower.includes(p));
-  if (isBackingVocal) return 'backing';
+  if (isBackingVocal) {return 'backing';}
 
   // Check all stem slots (including 'vocals')
   for (const [stemId, keywords] of Object.entries(STEM_CLASSIFICATION_KEYWORDS)) {
@@ -152,7 +152,7 @@ export async function readFileAsArrayBuffer(file: File, onProgress?: (pct: numbe
  * Get base name from path
  */
 export function getBaseNameFromPath(fullPath: string): string {
-  if (!fullPath) return '';
+  if (!fullPath) {return '';}
   const lastSlashIndex = fullPath.lastIndexOf('/');
   return lastSlashIndex !== -1 ? fullPath.substring(lastSlashIndex + 1) : fullPath;
 }
@@ -161,7 +161,7 @@ export function getBaseNameFromPath(fullPath: string): string {
  * Get file name without extension
  */
 export function getFileNameWithoutExtension(fileName: string): string {
-  if (!fileName) return '';
+  if (!fileName) {return '';}
   const baseName = getBaseNameFromPath(fileName);
   const lastDotIndex = baseName.lastIndexOf('.');
   return lastDotIndex !== -1 ? baseName.substring(0, lastDotIndex) : baseName;
@@ -171,7 +171,7 @@ export function getFileNameWithoutExtension(fileName: string): string {
  * Get file extension
  */
 export function getFileExtension(fileName: string): string {
-  if (!fileName) return '';
+  if (!fileName) {return '';}
   const baseName = getBaseNameFromPath(fileName);
   const lastDotIndex = baseName.lastIndexOf('.');
   return lastDotIndex !== -1 ? baseName.substring(lastDotIndex + 1) : '';
@@ -192,7 +192,7 @@ function isAlignmentFile(fileName: string): boolean {
  * Expected: { lines: Array, source: string, version: number }
  */
 function isValidAlignmentArtifact(data: any): data is AlignmentResult {
-  if (!data || typeof data !== 'object') return false;
+  if (!data || typeof data !== 'object') {return false;}
   const hasLines = Array.isArray(data.lines);
   const hasSource = typeof data.source === 'string';
   const hasVersion = typeof data.version === 'number';
@@ -216,7 +216,7 @@ export function showNotification(type: 'info' | 'success' | 'error', message: st
   // LYRICS-JSON-DROP: extract plain lyrics text from export.json (zip-export writes data.lyrics).
   // txt (already in parsedLyricsContent) wins; non-string lyrics ignored.
   export function extractExportJsonLyrics(data: any, current: string | null): string | null {
-    if (data?.lyrics && typeof data.lyrics === 'string' && !current) return data.lyrics;
+    if (data?.lyrics && typeof data.lyrics === 'string' && !current) {return data.lyrics;}
     return current;
   }
 
@@ -268,7 +268,7 @@ export async function handleFileSelect(
     case 'json':
       // Guard: skip alignment files - they are handled separately in ZIP processing
       if (isAlignmentFile(file.name)) {
-        if (import.meta.env.DEV) console.log('UploadService: Skipping alignment file in handleFileSelect:', file.name);
+        if (import.meta.env.DEV) {console.log('UploadService: Skipping alignment file in handleFileSelect:', file.name);}
         break;
       }
       uploadSession.json = file;
@@ -310,7 +310,7 @@ export async function handleFileSelect(
           // Extract lyricsHash for roundtrip word-sync compatibility
           if (data.lyricsHash && typeof data.lyricsHash === 'string') {
             uploadSession.lyricsHash = data.lyricsHash;
-            if (import.meta.env.DEV) console.log('[Upload] lyricsHash extracted from export.json:', data.lyricsHash.slice(0, 16) + '...');
+            if (import.meta.env.DEV) {console.log('[Upload] lyricsHash extracted from export.json:', data.lyricsHash.slice(0, 16) + '...');}
           }
           // TC-COVER-01: Extract cover art from ZIP metadata
           if (data.coverArtUrl && typeof data.coverArtUrl === 'string') {
@@ -381,7 +381,7 @@ export function canSave(): boolean {
  */
 export function getTrackTitle(): string | null {
   const instrumental = uploadSession.instrumental;
-  if (!instrumental) return null;
+  if (!instrumental) {return null;}
   return getFileNameWithoutExtension(instrumental.name);
 }
 
@@ -426,12 +426,10 @@ export async function saveTrack(): Promise<void> {
         || await readFileAsText(session.lyrics);
     }
 
-    // Read json — exact contract parity (vars kept unused as in legacy)
-    let jsonFileName: string | null = null;
-    let jsonContent: string | null = null;
+    // Read json — exact contract parity: the read stays (legacy behaviour),
+    // the values themselves are unused as in legacy.
     if (session.json) {
-      jsonContent = await readFileAsText(session.json);
-      jsonFileName = session.json.name;
+      await readFileAsText(session.json);
     }
 
     // Build trackData — EXACT LEGACY SCHEMA
@@ -472,13 +470,13 @@ export async function saveTrack(): Promise<void> {
         if (!Array.isArray(session.jsonMarkers) || session.jsonMarkers.length === 0) {
           trackData.syncMarkers = lrcMarkers;
           trackData.blocksData = []; // No blocks without Genius text
-          if (import.meta.env.DEV) console.log(
+          if (import.meta.env.DEV) {console.log(
             `[AutoLyrics] LRC parsed locally: ${lyricsLines.length} clean lines, ${lrcMarkers.length} markers`
-          );
+          );}
         } else {
-          if (import.meta.env.DEV) console.log(
+          if (import.meta.env.DEV) {console.log(
             `[AutoLyrics] LRC detected but JSON markers present (${session.jsonMarkers.length}). Keeping JSON markers.`
-          );
+          );}
         }
         // Mark as processed — prevents double-parsing in loadTrack()
         trackData.dataVersion = 2;
@@ -501,7 +499,7 @@ export async function saveTrack(): Promise<void> {
       try {
         const { extractThemeFromBlob } = await import('../services/cover-art.service');
         const theme = await extractThemeFromBlob(session.customBgBlob);
-        if (theme) trackData.customBgTheme = theme;
+        if (theme) {trackData.customBgTheme = theme;}
       } catch (e) {
         console.warn('[Upload] Custom bg theme extraction failed:', e);
       }
@@ -553,7 +551,7 @@ export async function saveTrack(): Promise<void> {
       // Patch the in-memory savedTrack so trackCatalog gets stemsData too
       savedTrack.stemsData = stemsData;
       savedTrack.stemsMode = true;
-      if (import.meta.env.DEV) console.log(`[Upload] W6: saved ${Object.keys(stemsData).length} additional stems to IDB`);
+      if (import.meta.env.DEV) {console.log(`[Upload] W6: saved ${Object.keys(stemsData).length} additional stems to IDB`);}
     }
 
     // Sync to trackCatalog.tracks — dedup guard (TC-004)
@@ -565,7 +563,7 @@ export async function saveTrack(): Promise<void> {
 
     // TC-COVER-01: Skip API if cover art restored from ZIP
     if (session.coverArtBlob || session.coverArtUrl) {
-      if (import.meta.env.DEV) console.log('[CoverArt] Restored from ZIP (skip API)');
+      if (import.meta.env.DEV) {console.log('[CoverArt] Restored from ZIP (skip API)');}
       // Apply theme synchronously
       if (session.coverTheme) {
         useTrackStore.getState().setCurrentCoverTheme?.(session.coverTheme);
@@ -638,7 +636,7 @@ export async function saveTrack(): Promise<void> {
         // Если auto-sync уже применился — ничего не делаем
         if (shouldSkipEditorsForTrack(savedTrack.id)) {
           if (import.meta.env.DEV) {
-            if (import.meta.env.DEV) console.log('[AutoLyrics] Block Editor skipped in saveTrack — auto-sync applied for track', savedTrack.id);
+            if (import.meta.env.DEV) {console.log('[AutoLyrics] Block Editor skipped in saveTrack — auto-sync applied for track', savedTrack.id);}
           }
           return;
         }
@@ -650,14 +648,14 @@ export async function saveTrack(): Promise<void> {
         if (lrcResult) {
           // lrclib нашёл данные — трек уже получит auto-sync через UploadPanel
           if (import.meta.env.DEV) {
-            if (import.meta.env.DEV) console.log('[TC-FLOW] lrclib data cached for', title, '— no editor needed');
+            if (import.meta.env.DEV) {console.log('[TC-FLOW] lrclib data cached for', title, '— no editor needed');}
           }
           return;
         }
 
         // lrclib не нашёл — открываем sync editor
         if (import.meta.env.DEV) {
-          if (import.meta.env.DEV) console.log('[TC-FLOW] lrclib NOT found for', title, '— opening sync editor');
+          if (import.meta.env.DEV) {console.log('[TC-FLOW] lrclib NOT found for', title, '— opening sync editor');}
         }
         const trackIndex = useTrackStore.getState().tracksMeta
           .findIndex(t => String(t.id) === String(savedTrack.id));
@@ -723,9 +721,9 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
     const entries: Array<{ name: string; zipEntry: any }> = [];
 
     zip.forEach((relativePath: string, zipEntry: any) => {
-      if (zipEntry.dir) return;
-      if (relativePath.includes('__MACOSX/')) return;
-      if (relativePath.split('/').pop()?.startsWith('._')) return;
+      if (zipEntry.dir) {return;}
+      if (relativePath.includes('__MACOSX/')) {return;}
+      if (relativePath.split('/').pop()?.startsWith('._')) {return;}
       entries.push({ name: relativePath, zipEntry });
     });
 
@@ -765,7 +763,7 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
             const parsed = JSON.parse(text);
             if (isValidAlignmentArtifact(parsed)) {
               alignmentArtifact = { name: getBaseNameFromPath(name), data: parsed };
-              if (import.meta.env.DEV) console.log('[Upload] alignment artifact found:', name);
+              if (import.meta.env.DEV) {console.log('[Upload] alignment artifact found:', name);}
             } else {
               console.warn('[Upload] alignment file invalid shape:', name);
             }
@@ -794,22 +792,22 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
         // Lead vocal — primary slot
         if (!vocalFile) {
           vocalFile = file;
-          if (import.meta.env.DEV) console.log(`[Upload] W6.2: classified as vocal ← ${file.name}`);
+          if (import.meta.env.DEV) {console.log(`[Upload] W6.2: classified as vocal ← ${file.name}`);}
         } else {
-          if (!uploadSession.additionalStems) uploadSession.additionalStems = {};
+          if (!uploadSession.additionalStems) {uploadSession.additionalStems = {};}
           if (!uploadSession.additionalStems['backing']) {
             uploadSession.additionalStems['backing'] = file;
-            if (import.meta.env.DEV) console.log(`[Upload] W6.2: vocal slot taken → backing ← ${file.name}`);
+            if (import.meta.env.DEV) {console.log(`[Upload] W6.2: vocal slot taken → backing ← ${file.name}`);}
           } else {
             console.warn(`[Upload] W6.2: vocal+backing taken, skipping: ${file.name}`);
           }
         }
       } else if (stemSlot) {
         // Stem slot (drums, bass, keys, guitar, backing)
-        if (!uploadSession.additionalStems) uploadSession.additionalStems = {};
+        if (!uploadSession.additionalStems) {uploadSession.additionalStems = {};}
           if (!uploadSession.additionalStems[stemSlot]) {
             uploadSession.additionalStems[stemSlot] = file;
-            if (import.meta.env.DEV) console.log(`[Upload] W6.2: classified stem: ${stemSlot} ← ${file.name}`);
+            if (import.meta.env.DEV) {console.log(`[Upload] W6.2: classified stem: ${stemSlot} ← ${file.name}`);}
         } else {
           console.warn(`[Upload] W6.2: stem slot '${stemSlot}' already taken, skipping: ${file.name}`);
         }
@@ -823,7 +821,7 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
               .replace(/\.zip$/i, '')
               .replace(/\.(flac|mp3|wav|aac|m4a|ogg)$/i, '')
               .trim());
-            if (import.meta.env.DEV) console.log(`[Upload] W7.2: mvsep instrum detected, title="${uploadSession.overrideTitle}" ← ${file.name}`);
+            if (import.meta.env.DEV) {console.log(`[Upload] W7.2: mvsep instrum detected, title="${uploadSession.overrideTitle}" ← ${file.name}`);}
             // W11: fire-and-forget lrclib prefetch (параллельно с загрузкой аудио)
             // Захватываем title синхронно ДО async импорта — сессия может сброситься раньше
             // Используем prefetch без duration — Audio duration hack удалён
@@ -832,7 +830,7 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
             if (_prefetchTitle) {
               import('./auto-lyrics.service').then(({ prefetch }) => {
                 if (import.meta.env.DEV) {
-                  if (import.meta.env.DEV) console.log('[W11] prefetch called, title:', _prefetchTitle);
+                  if (import.meta.env.DEV) {console.log('[W11] prefetch called, title:', _prefetchTitle);}
                 }
                 prefetch(_prefetchTitle);
               }).catch(() => {});
@@ -841,29 +839,29 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
         } else if (!instrumentalFile) {
           // True instrumental (no stem keyword, no 'instrum' in name)
           instrumentalFile = file;
-          if (import.meta.env.DEV) console.log(`[Upload] W6.2: classified as instrumental (no stem keyword) ← ${file.name}`);
+          if (import.meta.env.DEV) {console.log(`[Upload] W6.2: classified as instrumental (no stem keyword) ← ${file.name}`);}
           // TC-ZIP-06: If instrumental filename has no artist separator, derive title from ZIP name
           if (!uploadSession.overrideTitle) {
             const titleFromFile = getFileNameWithoutExtension(file.name);
             if (titleFromFile && !titleFromFile.includes(' - ') && !titleFromFile.includes(' – ')) {
               uploadSession.overrideTitle = normalizeTitleDashes(zipFileName.replace(/\.zip$/i, '').trim());
-              if (import.meta.env.DEV) console.log(`[Upload] TC-ZIP-06: overrideTitle from ZIP: "${uploadSession.overrideTitle}" ← "${titleFromFile}"`);
+              if (import.meta.env.DEV) {console.log(`[Upload] TC-ZIP-06: overrideTitle from ZIP: "${uploadSession.overrideTitle}" ← "${titleFromFile}"`);}
             }
           }
           // TC-ZIP-05: fire-and-forget lrclib prefetch for 2-stem ZIP (no 'instrum' in name)
           const _pfTitle = uploadSession.overrideTitle || getFileNameWithoutExtension(file.name);
           if (_pfTitle) {
             import('./auto-lyrics.service').then(({ prefetch }) => {
-              if (import.meta.env.DEV) console.log('[W11] prefetch called (2-stem), title:', _pfTitle);
+              if (import.meta.env.DEV) {console.log('[W11] prefetch called (2-stem), title:', _pfTitle);}
               prefetch(_pfTitle);
             }).catch(() => {});
           }
         } else {
           // Second unclassified file → other stem
-          if (!uploadSession.additionalStems) uploadSession.additionalStems = {};
+          if (!uploadSession.additionalStems) {uploadSession.additionalStems = {};}
           if (!uploadSession.additionalStems['other']) {
             uploadSession.additionalStems['other'] = file;
-            if (import.meta.env.DEV) console.log(`[Upload] W6.2: unclassified → other ← ${file.name}`);
+            if (import.meta.env.DEV) {console.log(`[Upload] W6.2: unclassified → other ← ${file.name}`);}
           } else {
             console.warn(`[Upload] W6.2: 'other' slot already taken, skipping: ${file.name}`);
           }
@@ -901,12 +899,12 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
         const _promoteTitle = uploadSession.overrideTitle || getFileNameWithoutExtension(instrumentalFile.name);
         if (_promoteTitle) {
           import('./auto-lyrics.service').then(({ prefetch }) => {
-            if (import.meta.env.DEV) console.log('[W11] prefetch called (2-stem promote), title:', _promoteTitle);
+            if (import.meta.env.DEV) {console.log('[W11] prefetch called (2-stem promote), title:', _promoteTitle);}
             prefetch(_promoteTitle);
           }).catch(() => {});
         }
 
-        if (import.meta.env.DEV) console.log(`[Upload] W9-UX-005: promoted 'other' → instrumental, title="${uploadSession.overrideTitle}"`);
+        if (import.meta.env.DEV) {console.log(`[Upload] W9-UX-005: promoted 'other' → instrumental, title="${uploadSession.overrideTitle}"`);}
       }
     }
 
@@ -927,9 +925,9 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
     await handleFileSelect(instrumentalFile.name.split('.').pop() === 'json'
       ? 'json' : 'instrumental', instrumentalFile, true);
 
-    if (vocalFile) await handleFileSelect('vocal', vocalFile, true);
-    if (lyricsFile) await handleFileSelect('lyrics', lyricsFile, true);
-    if (jsonFile) await handleFileSelect('json', jsonFile, true);
+    if (vocalFile) {await handleFileSelect('vocal', vocalFile, true);}
+    if (lyricsFile) {await handleFileSelect('lyrics', lyricsFile, true);}
+    if (jsonFile) {await handleFileSelect('json', jsonFile, true);}
 
     // Attach alignment artifact if found
     if (alignmentArtifact) {
@@ -942,10 +940,10 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
     const COVER_NAMES = ['cover', 'folder', 'artwork', 'front'];
     const COVER_EXTS = ['.jpg', '.jpeg', '.png'];
     const coverEntry = Object.values(zip.files).find((entry: any) => {
-      if (entry.dir) return false;
+      if (entry.dir) {return false;}
       const name = entry.name.toLowerCase().replace(/.*\//, '');
       const dot = name.lastIndexOf('.');
-      if (dot === -1) return false;
+      if (dot === -1) {return false;}
       const base = name.slice(0, dot);
       const ext = name.slice(dot);
       return COVER_NAMES.some(cn => base === cn) && COVER_EXTS.some(ce => ext === ce);
@@ -957,7 +955,7 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
         const isPng = name.endsWith('.png');
         const coverBlob = new Blob([ab], { type: isPng ? 'image/png' : 'image/jpeg' });
         uploadSession.coverArtBlob = coverBlob;
-        if (import.meta.env.DEV) console.log('[CoverArt] Extracted from ZIP:', coverBlob.type, Math.round(coverBlob.size / 1024) + 'KB');
+        if (import.meta.env.DEV) {console.log('[CoverArt] Extracted from ZIP:', coverBlob.type, Math.round(coverBlob.size / 1024) + 'KB');}
       } catch (e) {
         console.warn('[Upload] Failed to extract cover art from ZIP:', e);
       }
@@ -968,7 +966,7 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
       if (bgFolder) {
         const bgEntries: Array<{ path: string; file: any }> = [];
         bgFolder.forEach((path: string, file: any) => {
-          if (!file.dir) bgEntries.push({ path, file });
+          if (!file.dir) {bgEntries.push({ path, file });}
         });
         if (bgEntries.length > 0) {
           try {
@@ -978,7 +976,7 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
             uploadSession.customBgBlob = new Blob([ab], {
               type: isPng ? 'image/png' : 'image/jpeg',
             });
-            if (import.meta.env.DEV) console.log('[CustomBg] Extracted from ZIP:', Math.round(ab.byteLength / 1024) + 'KB');
+            if (import.meta.env.DEV) {console.log('[CustomBg] Extracted from ZIP:', Math.round(ab.byteLength / 1024) + 'KB');}
           } catch (e) {
             console.warn('[Upload] Failed to extract custom bg:', e);
           }
@@ -1047,7 +1045,7 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
             }
             onProgress?.(85 + Math.round((importedScenes / totalScenes) * 14));
           }
-          if (import.meta.env.DEV) console.log(`[SceneImport] Imported ${importedCount}/${sessionScenes.length} scenes for trackId=${newTrackId}`);
+          if (import.meta.env.DEV) {console.log(`[SceneImport] Imported ${importedCount}/${sessionScenes.length} scenes for trackId=${newTrackId}`);}
 
           // Trigger scene reload — preload ran before import completed
           if (importedCount > 0) {
@@ -1081,7 +1079,7 @@ export async function createMvsepPlaceholder(
 ): Promise<number> {
   const w = window as any;
   const idb = w.idbService;
-  if (!idb) throw new Error('idbService not available');
+  if (!idb) {throw new Error('idbService not available');}
 
   const trackTitle = getFileNameWithoutExtension(fileName);
 
@@ -1125,7 +1123,7 @@ export async function completeMvsepTrack(
 ): Promise<void> {
   const w = window as any;
   const idb = w.idbService;
-  if (!idb) throw new Error('idbService not available');
+  if (!idb) {throw new Error('idbService not available');}
 
   // Read blobs as ArrayBuffers
   const instrumentalBlob = stemsMap.get('instrumental');
@@ -1247,7 +1245,7 @@ export async function completeMvsepTrack(
 export async function cancelMvsepPlaceholder(trackId: number): Promise<void> {
   const w = window as any;
   const idb = w.idbService;
-  if (!idb) return;
+  if (!idb) {return;}
 
   await idb.deleteTrack(trackId);
 

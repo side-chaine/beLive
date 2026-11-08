@@ -14,19 +14,19 @@ export function installDevHooks(): void {
     const sc = new SignalingClient(roomId, role, ticket);
     const pc = new PeerConnectionManager(sc, role);
     sc.onOpen = () => {
-      if (import.meta.env.DEV) console.log('[test] WS open, role=', role);
+      if (import.meta.env.DEV) {console.log('[test] WS open, role=', role);}
       useRehearsalSessionStore.getState().setConnectionState('connected');
     };
     sc.onClose = (code) => {
       useRehearsalSessionStore.getState().setConnectionState(code === 4001 ? 'failed' : 'reconnecting');
     };
     sc.onPeerJoined = (peerRole) => {
-      if (import.meta.env.DEV) console.log('[test] peer joined:', peerRole);
-      if (role === 'teacher') pc.createDataChannels();
+      if (import.meta.env.DEV) {console.log('[test] peer joined:', peerRole);}
+      if (role === 'teacher') {pc.createDataChannels();}
     };
-    pc.onConnectionStateChange = (s) => { if (import.meta.env.DEV) console.log('[test] connectionState:', s); };
+    pc.onConnectionStateChange = (s) => { if (import.meta.env.DEV) {console.log('[test] connectionState:', s);} };
     pc.onClockSynced = (offset, rtt) => {
-      if (import.meta.env.DEV) console.log('[test] clock synced. offset=', offset, 'rtt=', rtt);
+      if (import.meta.env.DEV) {console.log('[test] clock synced. offset=', offset, 'rtt=', rtt);}
       useRehearsalSessionStore.getState().setClockSync(offset, rtt);
     };
     const bridge = new RehearsalTriggerBridge(pc, role);
@@ -47,9 +47,9 @@ export function installDevHooks(): void {
   // URL: https://app.mybelive.com/?phone=1&room=live-xxxxxxxxxx
   (async () => {
     const params = new URLSearchParams(location.search);
-    if (params.get('phone') !== '1') return;
+    if (params.get('phone') !== '1') {return;}
     const roomId = params.get('room');
-    if (!roomId) return;
+    if (!roomId) {return;}
     const secret = 'test-rehearsal-secret-2026';
     try {
       const { signClientTicket } = await import('../Rehearsal/services/deep-link.service');

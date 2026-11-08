@@ -9,9 +9,6 @@ interface MarkerHitResult {
   color: string;
 }
 
-interface LoopHandleDetection {
-  type: 'start' | 'end' | 'body' | null;
-}
 
 /**
  * Find the nearest marker to a click position.
@@ -29,7 +26,7 @@ export function findNearestMarker(
   zoom: number,
   scrollLeft: number
 ): MarkerHitResult | null {
-  if (!markers.length) return null;
+  if (!markers.length) {return null;}
   const clickX = clientX - containerRect.left;
   const threshold = 10; // pixels
 
@@ -66,13 +63,13 @@ export function detectLoopHandle(
   scrollLeft: number,
   loopHandlePx: number = 10
 ): 'start' | 'end' | 'body' | null {
-  if (!loopActive) return null;
+  if (!loopActive) {return null;}
   const clickX = clientX - containerRect.left;
   const startX = loopStartTime * zoom - scrollLeft;
   const endX = loopEndTime * zoom - scrollLeft;
 
-  if (Math.abs(clickX - startX) < loopHandlePx) return 'start';
-  if (Math.abs(clickX - endX) < loopHandlePx) return 'end';
-  if (clickX > startX + loopHandlePx && clickX < endX - loopHandlePx) return 'body';
+  if (Math.abs(clickX - startX) < loopHandlePx) {return 'start';}
+  if (Math.abs(clickX - endX) < loopHandlePx) {return 'end';}
+  if (clickX > startX + loopHandlePx && clickX < endX - loopHandlePx) {return 'body';}
   return null;
 }

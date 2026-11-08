@@ -68,7 +68,7 @@ export const useWordSyncStore = create<WordSyncState>((set, get) => ({
 
   getLineTiming: (rawLineIndex) => {
     const alignmentData = get().alignmentData;
-    if (!alignmentData) return null;
+    if (!alignmentData) {return null;}
     return alignmentData.lines.find((line) => line.rawLineIndex === rawLineIndex) ?? null;
   },
 
@@ -79,16 +79,16 @@ export const useWordSyncStore = create<WordSyncState>((set, get) => ({
 
   hasUsableWordSyncForLine: (rawLineIndex) => {
     const line = get().getLineTiming(rawLineIndex);
-    if (!line) return false;
+    if (!line) {return false;}
     return shouldEnableWordHighlight(line.confidence);
   },
 
   // Cue-style early selector — uses lookahead for responsive highlighting
   getActiveWordForLine: (rawLineIndex, currentTime) => {
     const line = get().getLineTiming(rawLineIndex);
-    if (!line) return null;
-    if (!shouldEnableWordHighlight(line.confidence)) return null;
-    if (!line.words.length) return null;
+    if (!line) {return null;}
+    if (!shouldEnableWordHighlight(line.confidence)) {return null;}
+    if (!line.words.length) {return null;}
 
     const adjustedTime = currentTime + ACTIVE_WORD_TIME_OFFSET;
 
@@ -107,9 +107,9 @@ export const useWordSyncStore = create<WordSyncState>((set, get) => ({
   // Raw selector for progress/fill effects — no lookahead, exact timing
   getFillWordForLine: (rawLineIndex, currentTime) => {
     const line = get().getLineTiming(rawLineIndex);
-    if (!line) return null;
-    if (!shouldEnableWordHighlight(line.confidence)) return null;
-    if (!line.words.length) return null;
+    if (!line) {return null;}
+    if (!shouldEnableWordHighlight(line.confidence)) {return null;}
+    if (!line.words.length) {return null;}
 
     for (const word of line.words) {
       if (currentTime >= word.start && currentTime < word.end) {

@@ -33,7 +33,7 @@ export function queueCssVar(key: string, value: string): void {
  * @param target - Target element for style.setProperty (default: document.documentElement)
  */
 export function flushQueuedCssVars(target?: HTMLElement): void {
-  if (queue.size === 0) return;
+  if (queue.size === 0) {return;}
 
   const el = target ?? document.documentElement;
 
@@ -55,7 +55,7 @@ export function clearQueuedCssVars(namespace?: string): void {
   if (namespace) {
     const prefix = `--bl-${namespace}-`;
     for (const key of queue.keys()) {
-      if (key.startsWith(prefix)) queue.delete(key);
+      if (key.startsWith(prefix)) {queue.delete(key);}
     }
   } else {
     queue.clear();

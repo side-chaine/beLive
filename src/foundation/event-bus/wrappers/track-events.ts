@@ -18,7 +18,7 @@ import { getAllTracks } from '../../../services/idb.service'
 async function syncFromIDB(): Promise<void> {
   try {
     const tracks = await getAllTracks()
-    if (!Array.isArray(tracks) || tracks.length === 0) return
+    if (!Array.isArray(tracks) || tracks.length === 0) {return}
     const tracksMeta = tracks.map((t: any, i: number) => ({
       id: String(t.id ?? ''),
       title: t.title,
@@ -75,7 +75,7 @@ export function initTrackEvents(): () => void {
   subs.push(eventBus.subscribe(EventBusChannel.Audio, 'track-loaded', () => {
     const idx = useTrackStore.getState().currentTrackIndex
     const meta = useTrackStore.getState().tracksMeta[idx]
-    if (meta) useTrackStore.setState({ currentTrack: meta })
+    if (meta) {useTrackStore.setState({ currentTrack: meta })}
   }))
 
   return () => subs.forEach(s => s.unsubscribe())

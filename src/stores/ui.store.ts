@@ -80,9 +80,9 @@ export const useUIStore = create<UIState>()(
         if (state?.feedColWidths && typeof window !== 'undefined') {
           const vw = window.innerWidth;
           if (state.feedColWidths.col0 != null && state.feedColWidths.col0 > vw * 0.5)
-            state.feedColWidths.col0 = null;
+            {state.feedColWidths.col0 = null;}
           if (state.feedColWidths.col2 != null && state.feedColWidths.col2 > vw * 0.5)
-            state.feedColWidths.col2 = null;
+            {state.feedColWidths.col2 = null;}
         }
       },
     }

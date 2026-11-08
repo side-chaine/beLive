@@ -1,6 +1,6 @@
 import React from 'react';
 import { useWordSyncStore } from '../stores/wordSync.store';
-import { useTextStyleStore } from '../stores/textStyle.store';
+import '../stores/textStyle.store';
 import { useTriggerStore } from './trigger.store';
 import { useResolvedTrailDepth } from '../performance/performance.hooks';
 import './word-effects.css';

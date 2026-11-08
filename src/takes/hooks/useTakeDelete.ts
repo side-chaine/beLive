@@ -27,7 +27,7 @@ export function useTakeDelete({
 }: UseTakeDeleteOptions): UseTakeDeleteReturn {
   const handleDeleteSlot = React.useCallback((slot: number) => {
     const take = blockTakes?.takes[slot] ?? null;
-    if (!take) return;
+    if (!take) {return;}
 
     const isDeletingPlayingTake =
       playingTakeId === take.id;

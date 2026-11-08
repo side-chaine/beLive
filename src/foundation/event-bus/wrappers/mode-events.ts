@@ -21,7 +21,7 @@ const VOLUME_STORAGE_KEY = 'bl-rehearsal-volumes'
 function loadRehearsalVolumesFromStorage(): Record<string, number> | null {
   try {
     const raw = localStorage.getItem(VOLUME_STORAGE_KEY)
-    if (!raw) return null
+    if (!raw) {return null}
     const parsed = JSON.parse(raw)
     if (parsed.v === 2 && parsed.stemVolumes) {
       const result: Record<string, number> = {}
@@ -44,7 +44,7 @@ function loadRehearsalVolumesFromStorage(): Record<string, number> | null {
 
 function applyVolumePolicy(mode: string) {
   const policy = MODE_STEM_POLICIES[mode]
-  if (!policy) return
+  if (!policy) {return}
   const st = useStemStore.getState()
 
   if (mode === 'rehearsal') {
@@ -70,10 +70,10 @@ export function initModeEvents(): () => void {
   const syncModeFromBody = () => {
     const body = document.body.className
     let mode: string = 'rehearsal' // default
-    if (body.includes('mode-concert')) mode = 'concert'
-    else if (body.includes('mode-karaoke')) mode = 'karaoke'
-    else if (body.includes('mode-rehearsal')) mode = 'rehearsal'
-    else if (body.includes('mode-live')) mode = 'live'
+    if (body.includes('mode-concert')) {mode = 'concert'}
+    else if (body.includes('mode-karaoke')) {mode = 'karaoke'}
+    else if (body.includes('mode-rehearsal')) {mode = 'rehearsal'}
+    else if (body.includes('mode-live')) {mode = 'live'}
     useModeStore.getState().setMode(mode as any)
     applyVolumePolicy(mode)
   }

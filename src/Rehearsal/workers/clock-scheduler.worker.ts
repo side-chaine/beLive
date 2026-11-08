@@ -6,7 +6,7 @@ const timers = new Map<string, ReturnType<typeof setTimeout>>();
 self.onmessage = (e: MessageEvent<ScheduleMsg | CancelMsg>) => {
   if ('cancel' in e.data) {
     const t = timers.get(e.data.cancel);
-    if (t) clearTimeout(t);
+    if (t) {clearTimeout(t);}
     timers.delete(e.data.cancel);
     return;
   }

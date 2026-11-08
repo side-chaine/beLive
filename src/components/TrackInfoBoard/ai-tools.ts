@@ -130,16 +130,16 @@ export function parseQuickReplies(text: string): { cleanText: string; replies: Q
     const label = match[1].trim();
     const action = match[2].trim();
     let type: QuickReply['type'] = 'query';
-    if (action.startsWith('SEEK:')) type = 'seek';
-    else if (action.startsWith('EXPERT:')) type = 'expert';
-    else if (action.startsWith('SEARCH_AUDIO:')) type = 'search-audio';
-    else if (action.startsWith('SEARCH:')) type = 'search';
-    else if (action.startsWith('BPM:')) type = 'bpm';
-    else if (action.startsWith('LOOP:')) type = 'loop';
-    else if (action.startsWith('VOLUME:')) type = 'volume';
-    else if (action.startsWith('MODE:')) type = 'mode';
-    else if (action.startsWith('VOCALMIX:')) type = 'vocalmix';
-    else if (action.startsWith('SCENARIO:')) type = 'scenario';
+    if (action.startsWith('SEEK:')) {type = 'seek';}
+    else if (action.startsWith('EXPERT:')) {type = 'expert';}
+    else if (action.startsWith('SEARCH_AUDIO:')) {type = 'search-audio';}
+    else if (action.startsWith('SEARCH:')) {type = 'search';}
+    else if (action.startsWith('BPM:')) {type = 'bpm';}
+    else if (action.startsWith('LOOP:')) {type = 'loop';}
+    else if (action.startsWith('VOLUME:')) {type = 'volume';}
+    else if (action.startsWith('MODE:')) {type = 'mode';}
+    else if (action.startsWith('VOCALMIX:')) {type = 'vocalmix';}
+    else if (action.startsWith('SCENARIO:')) {type = 'scenario';}
     replies.push({ label, action, type });
   }
 
@@ -366,16 +366,16 @@ async function executeSearchAudioDB(args: Record<string, unknown>): Promise<Tool
       song = parts.slice(Math.min(2, Math.ceil(parts.length / 2))).join(' ');
     }
 
-    if (import.meta.env.DEV) console.log('[GetSongBPM] Searching:', { artist, song });
+    if (import.meta.env.DEV) {console.log('[GetSongBPM] Searching:', { artist, song });}
 
     // GetSongBPM API
-    const url = `https://api.getsong.co/search/?api_key=${import.meta.env.VITE_GETSONGBPM_KEY}&type=both&lookup=song:${encodeURIComponent(song)}+artist:${encodeURIComponent(artist)}`;
+    const url = `https://api.getsong.co/search/?api_key=${import.meta.env.VITE_GETSONGBPM_KEY}&type=both&lookup=song:${encodeURIComponent(song)}+artist:${encodeURIComponent(artist)}`; // secret-ok: публичный клиентский ключ GetSongBPM (класс Last.fm — решение Никиты 08.11)
 
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
 
     if (!res.ok) {
       // Fallback: try TheAudioDB as backup
-      if (import.meta.env.DEV) console.log('[GetSongBPM] Failed, trying AudioDB fallback');
+      if (import.meta.env.DEV) {console.log('[GetSongBPM] Failed, trying AudioDB fallback');}
       return executeSearchAudioDBFallback(artist, song);
     }
 
@@ -389,12 +389,12 @@ async function executeSearchAudioDB(args: Record<string, unknown>): Promise<Tool
     const track = data.search[0];
     const result: string[] = [];
 
-    if (track.artist?.name) result.push(`Artist: ${track.artist.name}`);
-    if (track.song?.title) result.push(`Track: ${track.song.title}`);
-    if (track.song?.tempo) result.push(`BPM: ${track.song.tempo}`);
-    if (track.song?.key_of) result.push(`Key: ${track.song.key_of}`);
-    if (track.song?.camelot) result.push(`Camelot: ${track.song.camelot}`);
-    if (track.song?.time_sig) result.push(`Time signature: ${track.song.time_sig}`);
+    if (track.artist?.name) {result.push(`Artist: ${track.artist.name}`);}
+    if (track.song?.title) {result.push(`Track: ${track.song.title}`);}
+    if (track.song?.tempo) {result.push(`BPM: ${track.song.tempo}`);}
+    if (track.song?.key_of) {result.push(`Key: ${track.song.key_of}`);}
+    if (track.song?.camelot) {result.push(`Camelot: ${track.song.camelot}`);}
+    if (track.song?.time_sig) {result.push(`Time signature: ${track.song.time_sig}`);}
 
     if (result.length <= 2) {
       // Only got artist + title, no audio features
@@ -426,7 +426,7 @@ async function executeSearchAudioDB(args: Record<string, unknown>): Promise<Tool
 async function executeSearchAudioDBFallback(artist: string, song: string): Promise<ToolCallResult> {
   try {
     const url = `https://www.theaudiodb.com/api/v1/json/2/searchtrack.php?s=${encodeURIComponent(artist)}&t=${encodeURIComponent(song)}`;
-    if (import.meta.env.DEV) console.log('[AudioDB] Fallback search:', { artist, song });
+    if (import.meta.env.DEV) {console.log('[AudioDB] Fallback search:', { artist, song });}
 
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) {
@@ -441,10 +441,10 @@ async function executeSearchAudioDBFallback(artist: string, song: string): Promi
     const track = data.track[0];
     const result: string[] = [];
 
-    if (track.strArtist) result.push(`Artist: ${track.strArtist}`);
-    if (track.strTrack) result.push(`Track: ${track.strTrack}`);
-    if (track.intBPM && track.intBPM !== '0') result.push(`BPM: ${track.intBPM}`);
-    if (track.strGenre) result.push(`Genre: ${track.strGenre}`);
+    if (track.strArtist) {result.push(`Artist: ${track.strArtist}`);}
+    if (track.strTrack) {result.push(`Track: ${track.strTrack}`);}
+    if (track.intBPM && track.intBPM !== '0') {result.push(`BPM: ${track.intBPM}`);}
+    if (track.strGenre) {result.push(`Genre: ${track.strGenre}`);}
 
     if (result.length <= 2) {
       return { tool: 'search_audiodb', success: false, message: `Данные найдены, но BPM/Key отсутствуют` };
@@ -819,18 +819,18 @@ async function executeStemCompare(): Promise<ToolCallResult> {
       if (focusIndex >= 0 && focusIndex < musicStems.length) {
         const focusStem = musicStems[focusIndex];
         musicStems.forEach(id => {
-          if (id !== 'instrumental') expected![id] = id === focusStem ? 1 : 0;
+          if (id !== 'instrumental') {expected![id] = id === focusStem ? 1 : 0;}
         });
         expected['vocals'] = 1;
       } else {
-        loaded.forEach(id => { if (id !== 'instrumental') expected![id] = 1; });
+        loaded.forEach(id => { if (id !== 'instrumental') {expected![id] = 1;} });
       }
     }
 
     // Find mismatches
     const mismatches: string[] = [];
     for (const id of Object.keys(storeVolumes)) {
-      if (id === 'instrumental') continue;
+      if (id === 'instrumental') {continue;}
       const store = storeVolumes[id];
       const engine = engineVolumes[id];
       if (expected && expected[id] !== undefined) {
@@ -863,7 +863,7 @@ const MAX_EVENT_LOG = 50;
 let _eventCaptureActive = false;
 
 function startEventCapture() {
-  if (_eventCaptureActive) return;
+  if (_eventCaptureActive) {return;}
   _eventCaptureActive = true;
 
   const captureEvents = [
@@ -882,13 +882,13 @@ function startEventCapture() {
         type: eventType,
         detail: (e as CustomEvent).detail ?? null,
       });
-      if (_eventLog.length > MAX_EVENT_LOG) _eventLog.shift();
+      if (_eventLog.length > MAX_EVENT_LOG) {_eventLog.shift();}
     }) as EventListener);
   }
 }
 
 // Auto-start capture when module loads
-if (typeof document !== 'undefined') startEventCapture();
+if (typeof document !== 'undefined') {startEventCapture();}
 
 async function executeGetRecentEvents(): Promise<ToolCallResult> {
   const last20 = _eventLog.slice(-20);

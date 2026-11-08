@@ -11,9 +11,9 @@ export function getPlaybackTime(): number {
   if ((window as any).__v3Active) {
     // Свежее время: TransportV3.currentTime (clock, геттер), БЕЗ 50мс-кэша __belive.currentTime
     const fresh = getTransport()?.currentTime;
-    if (fresh !== undefined) return fresh;
+    if (fresh !== undefined) {return fresh;}
     const cached = (window as any).__belive?.currentTime;
-    if (cached !== undefined) return cached;
+    if (cached !== undefined) {return cached;}
     return 0;
   }
   return (window as any).audioEngine?.getCurrentTime?.() ?? 0;

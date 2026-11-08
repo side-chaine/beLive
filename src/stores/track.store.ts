@@ -53,7 +53,7 @@ export const useTrackStore = create<TrackState>((set) => ({
   setHasBlockScenes: (hasBlockScenes) => set({ hasBlockScenes }),
   removeTrack: (id) => set((state) => {
     const removedIndex = state.tracksMeta.findIndex((t) => t.id === id);
-    if (removedIndex === -1) return state;
+    if (removedIndex === -1) {return state;}
 
     const nextTracksMeta = state.tracksMeta.filter((t) => t.id !== id);
     const shouldShiftIndex = removedIndex <= state.currentTrackIndex;

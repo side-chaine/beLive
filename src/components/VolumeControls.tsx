@@ -1,5 +1,5 @@
 import { ENGINE_MODE } from '../engine-mode';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useAudioStore } from '../stores/audio.store';
 import { useStemStore } from '../stem/stem.store';
 import { useModeStore } from '../stores/mode.store';
@@ -74,23 +74,23 @@ export function VolumeControls() {
 
   const setInstVol = useCallback((v: number) => {
     const ae = (window as any).audioEngine;
-    if (ae) ae.setInstrumentalVolume(v);
+    if (ae) {ae.setInstrumentalVolume(v);}
     useStemStore.getState().setStemVolume('instrumental', v);
   }, []);
 
   const setVocVol = useCallback((v: number) => {
     const ae = (window as any).audioEngine;
-    if (ae) ae.setVocalsVolume(v);
+    if (ae) {ae.setVocalsVolume(v);}
     useStemStore.getState().setStemVolume('vocals', v);
   }, []);
 
   const toggleVocalMix = useCallback(() => {
     const ae = (window as any).audioEngine;
-    if (!ae) return;
+    if (!ae) {return;}
     if (vocalMix) {
       // В1 п.3c: симметричный disable-гард — enable/disableVocalMix retired у V3-фасада (кейс-21),
       // TypeError при выключении включённого V-Mix исключён (только setVMix)
-      if (typeof ae.setVMix !== 'function') return;
+      if (typeof ae.setVMix !== 'function') {return;}
       ae.setVMix(false);
     } else {
       const engineMode = ENGINE_MODE;
@@ -98,15 +98,15 @@ export function VolumeControls() {
         // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
         return;
       }
-      if (typeof ae.setVMix === 'function') ae.setVMix(true);
-      else ae.enableVocalMix?.();
+      if (typeof ae.setVMix === 'function') {ae.setVMix(true);}
+      else {ae.enableVocalMix?.();}
     }
   }, [vocalMix]);
 
   const toggleMic = useCallback(() => {
     const ae = (window as any).audioEngine;
-    if (!ae) return;
-    if (mic) ae.disableMicrophone();
+    if (!ae) {return;}
+    if (mic) {ae.disableMicrophone();}
     else {
       const engineMode = ENGINE_MODE;
       if (engineMode === 'v3') {

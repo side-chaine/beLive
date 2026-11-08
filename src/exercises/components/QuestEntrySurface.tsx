@@ -37,7 +37,7 @@ export interface QuestEntrySurfaceProps {
 export const QuestEntrySurface: React.FC<QuestEntrySurfaceProps> = ({
   blockId,
   onClose,
-  visibility = 'stable',
+  visibility: _visibility = 'stable',
 }) => {
   const startRecipe = useExerciseStore((s) => s.startRecipe);
   const blocks = useBlocksStore((s) => s.blocks);
@@ -66,14 +66,14 @@ export const QuestEntrySurface: React.FC<QuestEntrySurfaceProps> = ({
 
   // Determine if a recipe is available (not disabled by missing capabilities)
   const isRecipeAvailable = (recipe: typeof EXERCISE_RECIPES[0]): boolean => {
-    if (!recipe.capabilities) return true;
-    if (recipe.capabilities.requiresVocalStem && !hasVocalStem) return false;
+    if (!recipe.capabilities) {return true;}
+    if (recipe.capabilities.requiresVocalStem && !hasVocalStem) {return false;}
     return true;
   };
 
   // Get reason why a recipe is disabled
   const getDisabledReason = (recipe: typeof EXERCISE_RECIPES[0]): string | null => {
-    if (!recipe.capabilities) return null;
+    if (!recipe.capabilities) {return null;}
     if (recipe.capabilities.requiresVocalStem && !hasVocalStem) {
       return 'Requires vocal stem';
     }
@@ -85,7 +85,7 @@ export const QuestEntrySurface: React.FC<QuestEntrySurfaceProps> = ({
 
   const handleCardClick = (recipeId: string) => {
     const recipe = EXERCISE_RECIPES.find((r) => r.id === recipeId);
-    if (!recipe) return;
+    if (!recipe) {return;}
 
     // For Tempo Ladder, open setup modal instead of launching immediately
     if (recipe.id === 'tempo-ladder') {
@@ -330,14 +330,14 @@ const QuestCard: React.FC<QuestCardProps> = ({ recipe, onClick, isAvailable = tr
         opacity: isDisabled ? 0.6 : 1,
       }}
       onMouseEnter={(e) => {
-        if (isDisabled) return;
+        if (isDisabled) {return;}
         (e.currentTarget as HTMLButtonElement).style.background =
           'rgba(255,255,255,0.14)';
         (e.currentTarget as HTMLButtonElement).style.borderColor =
           'rgba(255,255,255,0.30)';
       }}
       onMouseLeave={(e) => {
-        if (isDisabled) return;
+        if (isDisabled) {return;}
         (e.currentTarget as HTMLButtonElement).style.background =
           'rgba(255,255,255,0.08)';
         (e.currentTarget as HTMLButtonElement).style.borderColor =

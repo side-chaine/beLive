@@ -28,8 +28,8 @@ export function getCurrentExerciseStep(
   exercise: Exercise | null,
   stepIndex: number,
 ): ExerciseStep | null {
-  if (!exercise) return null;
-  if (stepIndex < 0 || stepIndex >= exercise.steps.length) return null;
+  if (!exercise) {return null;}
+  if (stepIndex < 0 || stepIndex >= exercise.steps.length) {return null;}
   return exercise.steps[stepIndex] ?? null;
 }
 
@@ -96,7 +96,7 @@ export function getExerciseProgressDisplay(
   currentRound: number,
   currentStepIndex: number,
 ): ExerciseProgressDisplay | null {
-  if (!exercise) return null;
+  if (!exercise) {return null;}
 
   const step = getCurrentExerciseStep(exercise, currentStepIndex);
   const stepAction = step?.action ?? 'wait';

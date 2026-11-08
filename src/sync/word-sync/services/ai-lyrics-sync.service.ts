@@ -50,14 +50,14 @@ export function prepareWordSyncLayer(
   // PERF DIAG: granular timing to find the 137s bottleneck
   const _t0 = performance.now();
   if (import.meta.env.DEV) {
-    if (import.meta.env.DEV) console.log(`[WordSync] input sizes: displayLyrics=${displayLyrics.length}, hashSource=${hashSourceLyrics.length}`);
+    if (import.meta.env.DEV) {console.log(`[WordSync] input sizes: displayLyrics=${displayLyrics.length}, hashSource=${hashSourceLyrics.length}`);}
   }
 
   const { lineMap } = buildLineMap(displayLyrics);
-  if (import.meta.env.DEV) console.log(`[WordSync] buildLineMap: ${(performance.now() - _t0).toFixed(1)}ms (${lineMap.length} entries)`);
+  if (import.meta.env.DEV) {console.log(`[WordSync] buildLineMap: ${(performance.now() - _t0).toFixed(1)}ms (${lineMap.length} entries)`);}
 
   const lyricsHash = computeLyricsHash(hashSourceLyrics);
-  if (import.meta.env.DEV) console.log(`[WordSync] computeLyricsHash: ${(performance.now() - _t0).toFixed(1)}ms → ${lyricsHash}`);
+  if (import.meta.env.DEV) {console.log(`[WordSync] computeLyricsHash: ${(performance.now() - _t0).toFixed(1)}ms → ${lyricsHash}`);}
 
   const degraded = isDegradedTrustedLyricsSource(hashSourceLyrics);
 
@@ -68,7 +68,7 @@ export function prepareWordSyncLayer(
     audioHash,
     audioSource,
   });
-  if (import.meta.env.DEV) console.log(`[WordSync] getAlignmentCacheVerdict: ${(performance.now() - _t0).toFixed(1)}ms → ok=${verdict.ok} status=${verdict.status}`);
+  if (import.meta.env.DEV) {console.log(`[WordSync] getAlignmentCacheVerdict: ${(performance.now() - _t0).toFixed(1)}ms → ok=${verdict.ok} status=${verdict.status}`);}
 
   if (verdict.ok) {
     useWordSyncStore.setState({
@@ -80,7 +80,7 @@ export function prepareWordSyncLayer(
       error: null,
       degraded: false,
     });
-    if (import.meta.env.DEV) console.log(`[WordSync] setState(ready): ${(performance.now() - _t0).toFixed(1)}ms`);
+    if (import.meta.env.DEV) {console.log(`[WordSync] setState(ready): ${(performance.now() - _t0).toFixed(1)}ms`);}
 
     return {
       status: 'ready',
@@ -100,7 +100,7 @@ export function prepareWordSyncLayer(
     error: null,
     degraded,
   });
-  if (import.meta.env.DEV) console.log(`[WordSync] setState(missing): ${(performance.now() - _t0).toFixed(1)}ms`);
+  if (import.meta.env.DEV) {console.log(`[WordSync] setState(missing): ${(performance.now() - _t0).toFixed(1)}ms`);}
 
   return {
     status: verdict.status,

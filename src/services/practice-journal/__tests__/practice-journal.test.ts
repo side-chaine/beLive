@@ -34,7 +34,7 @@ async function putRaw(records: JournalRecord[]): Promise<void> {
   const db = await idbService.getDB();
   const t = db.transaction(['practice_log'], 'readwrite');
   const store = t.objectStore('practice_log');
-  for (const r of records) store.put(r);
+  for (const r of records) {store.put(r);}
   await new Promise<void>((resolve, reject) => {
     t.oncomplete = () => resolve();
     t.onerror = () => reject(t.error);

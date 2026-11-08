@@ -15,14 +15,14 @@ export function buildStartMessage(
   const loopOk = stepResults.find(r => r.action.tool === 'loop_section' && r.result.success);
   const rateOk = stepResults.find(r => r.action.tool === 'set_playback_rate' && r.result.success);
 
-  if (seekOk) parts.push(`Перемотка к ${blockLabel} ✓`);
-  if (loopOk) parts.push(`${blockLabel} на повторе ✓`);
+  if (seekOk) {parts.push(`Перемотка к ${blockLabel} ✓`);}
+  if (loopOk) {parts.push(`${blockLabel} на повторе ✓`);}
   if (rateOk) {
     const pct = Math.round((rateOk.action.args.rate as number) * 100);
     parts.push(`Темп ${pct}% ✓`);
   }
 
-  if (parts.length === 0) return '⚠️ Не удалось запустить сценарий';
+  if (parts.length === 0) {return '⚠️ Не удалось запустить сценарий';}
 
   // Scenario-specific intro
   if (scenarioId === 'focus-mix') {

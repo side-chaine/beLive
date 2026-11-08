@@ -13,7 +13,7 @@ export class ConcertBackgroundManager {
   }
 
   start(): void {
-    if (!this.imagePaths || this.imagePaths.length === 0) return;
+    if (!this.imagePaths || this.imagePaths.length === 0) {return;}
     this.body.classList.add('concert-active');
     this.isActive = true;
     this._changeBackground();
@@ -40,7 +40,7 @@ export class ConcertBackgroundManager {
     if (!this.isActive || !this.body.classList.contains('mode-concert')) {
       return;
     }
-    if (this.imagePaths.length === 0) return;
+    if (this.imagePaths.length === 0) {return;}
 
     let nextImageIndex: number;
     do {

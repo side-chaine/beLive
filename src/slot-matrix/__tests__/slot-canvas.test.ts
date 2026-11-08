@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { computeSlotCanvas } from '../compute-slot-canvas';
-import type { SlotMatrix, SlotGroup, SubBlockRange } from '../slot-matrix.types';
+import type { SlotMatrix, SlotGroup } from '../slot-matrix.types';
 import type { TextBlock } from '../../stores/blocks.store';
 
 // ═══════════════════════════════════════
@@ -9,9 +9,9 @@ import type { TextBlock } from '../../stores/blocks.store';
 
 vi.mock('../../utils/block-utils', () => ({
   getBlockFontSize: (count: number) => {
-    if (count <= 2) return '3.2rem';
-    if (count <= 4) return '2.6rem';
-    if (count <= 6) return '2.0rem';
+    if (count <= 2) {return '3.2rem';}
+    if (count <= 4) {return '2.6rem';}
+    if (count <= 6) {return '2.0rem';}
     return '1.3rem';
   },
   createSubBlocks: (indices: number[], max: number) => {
@@ -102,6 +102,7 @@ function createMockMatrix(overrides?: Partial<SlotMatrix>): SlotMatrix {
       subBlockIndex: 0,
       startSlotIndex: 0,
       endSlotIndex: 3,
+      lineIndices: [0, 1, 2, 3],
       isFirst: true,
       isLast: true,
     }],
@@ -111,6 +112,7 @@ function createMockMatrix(overrides?: Partial<SlotMatrix>): SlotMatrix {
       subBlockIndex: 0,
       startSlotIndex: 0,
       endSlotIndex: 3,
+      lineIndices: [0, 1, 2, 3],
       isFirst: true,
       isLast: true,
     },
@@ -132,6 +134,7 @@ function createMockSlotGroup(overrides?: Partial<SlotGroup>): SlotGroup {
       subBlockIndex: 0,
       startSlotIndex: 0,
       endSlotIndex: 3,
+      lineIndices: [0, 1, 2, 3],
       isFirst: true,
       isLast: true,
     },

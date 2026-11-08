@@ -23,7 +23,7 @@ export function initAudioReactiveEvents(): () => void {
 
   // AnalyserNode lifecycle
   let analyser: AnalyserNode | null = null
-  let dataArray: Uint8Array | null = null
+  let dataArray: Uint8Array<ArrayBuffer> | null = null
 
   const teardownAnalyser = () => {
     try {
@@ -38,7 +38,7 @@ export function initAudioReactiveEvents(): () => void {
   // старый анализатор после свитча висел бы на мёртвом meter.
   const setupAnalyser = (stemIds?: string[]) => {
     const ae = (window as any).audioEngine
-    if (!ae?.audioContext) return
+    if (!ae?.audioContext) {return}
     teardownAnalyser()
     try {
       const ctx = ae.audioContext as AudioContext
@@ -49,7 +49,7 @@ export function initAudioReactiveEvents(): () => void {
 
       const pipeline = (window as any).__belive?.pipeline
       let candidates = (stemIds ?? []).filter((s: string) => s !== 'vocals')
-      if (candidates.length === 0) candidates = ['instrumental', 'music']
+      if (candidates.length === 0) {candidates = ['instrumental', 'music']}
       let connected = 0
       for (const id of candidates) {
         const node = pipeline?.getStemAnalyser?.(id)
@@ -59,7 +59,7 @@ export function initAudioReactiveEvents(): () => void {
         // Boot-гонка (smoke 04.09): первый play приходит ДО track-loaded — meters пусты,
         // warn шумел. Молчим: track-loaded-подписка через мгновение реконнектит по loadedStems.
         // Warn остаётся только для явного track-loaded-провала (передаётся флагом).
-        if (stemIds) console.warn('[audio-reactive] connect failed after track-loaded: no stem analyser (stems:', candidates.join(','), ')')
+        if (stemIds) {console.warn('[audio-reactive] connect failed after track-loaded: no stem analyser (stems:', candidates.join(','), ')')}
       }
     } catch (e) {
       console.warn('[audio-reactive] connect failed:', e)
@@ -90,7 +90,7 @@ export function initAudioReactiveEvents(): () => void {
   const detector: PlaybackVisualFrameDetector = {
     id: 'audio-reactive-events-detector',
     detect() {
-      if (myInstance !== activeInstance) return
+      if (myInstance !== activeInstance) {return}
       if (!rafSyncActive || !analyser || !dataArray) {
         frameEnergy = 0; frameBass = 0; frameMid = 0; frameHigh = 0; frameBeat = 0
         return
@@ -105,9 +105,9 @@ export function initAudioReactiveEvents(): () => void {
       for (let i = 0; i < len; i++) {
         const v = dataArray[i] / 255
         energy += v
-        if (i < bassEnd) bass += v
-        else if (i < midEnd) mid += v
-        else high += v
+        if (i < bassEnd) {bass += v}
+        else if (i < midEnd) {mid += v}
+        else {high += v}
       }
 
       energy /= len; bass /= bassEnd; mid /= (midEnd - bassEnd); high /= (len - midEnd)
@@ -148,7 +148,7 @@ export function initAudioReactiveEvents(): () => void {
   // ── EventBus подписки ──
   subs.push(eventBus.subscribe(EventBusChannel.Audio, 'playback-state-changed', (p) => {
     rafSyncActive = p?.isPlaying ?? false
-    if (rafSyncActive && !analyser) setupAnalyser()
+    if (rafSyncActive && !analyser) {setupAnalyser()}
     if (!rafSyncActive) {
       frameEnergy = 0; frameBass = 0; frameMid = 0; frameHigh = 0; frameBeat = 0
     }
@@ -157,7 +157,7 @@ export function initAudioReactiveEvents(): () => void {
   // Реконнект на каждый трек: loadedStems = список стемов нового графа (V3DataInterceptor:224)
   const onTrackLoaded = (e: Event) => {
     const loaded = (e as CustomEvent).detail?.loadedStems
-    if (Array.isArray(loaded) && loaded.length > 0) setupAnalyser(loaded)
+    if (Array.isArray(loaded) && loaded.length > 0) {setupAnalyser(loaded)}
   }
   document.addEventListener('track-loaded', onTrackLoaded)
 

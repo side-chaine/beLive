@@ -35,7 +35,7 @@ export function drawWaveform(
     Math.ceil(endTime * sampleRate)
   );
 
-  if (startSample >= endSample) return;
+  if (startSample >= endSample) {return;}
 
   // Generate peaks for visible region
   const peaks = generatePeaks(
@@ -45,7 +45,7 @@ export function drawWaveform(
     canvasWidth
   );
 
-  if (peaks.length === 0) return;
+  if (peaks.length === 0) {return;}
 
   // Draw filled waveform (mirrored: top = max, bottom = min)
   const centerY = canvasHeight / 2;
@@ -60,8 +60,8 @@ export function drawWaveform(
   // Top edge: max values (left to right)
   for (let i = 0; i < peaks.length; i++) {
     const y = centerY - peaks[i][1] * amplitude;
-    if (i === 0) ctx.moveTo(i, y);
-    else ctx.lineTo(i, y);
+    if (i === 0) {ctx.moveTo(i, y);}
+    else {ctx.lineTo(i, y);}
   }
 
   // Bottom edge: min values (right to left)

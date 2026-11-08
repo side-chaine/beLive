@@ -25,7 +25,7 @@ function zoneOf(p) { return PRIVATE_ZONES.find(z => p.startsWith(z)) || null; }
 // Collect every .md on disk in private zones + census-declared visibility records (003's census entries when they land).
 let leaks = [], invisibles = [], ok = 0;
 for (const zone of PRIVATE_ZONES) {
-  let files = [];
+  let files;
   try { files = execSync(`find ${zone} -name '*.md' -type f`, { cwd: root, encoding: 'utf8' }).trim().split('\n').filter(Boolean); } catch { continue; }
   for (const f of files) {
     if (!isIgnored(f)) { leaks.push(`${f} — в приватной зоне, но НЕ под ignore (Д-16: уедет на GitHub при push!)`); }

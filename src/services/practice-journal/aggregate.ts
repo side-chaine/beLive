@@ -72,7 +72,7 @@ export function weekStats(sessions: SessionRecord[], now: number = Date.now()): 
   const oldest = shiftDay(today, -(WINDOW_DAYS - 1));
 
   const index = new Map<string, number>();
-  for (let i = 0; i < WINDOW_DAYS; i++) index.set(shiftDay(oldest, i), i);
+  for (let i = 0; i < WINDOW_DAYS; i++) {index.set(shiftDay(oldest, i), i);}
 
   const spark = new Array<number>(WINDOW_DAYS).fill(0);
   const counted = sessions.filter(isCounted);
@@ -83,7 +83,7 @@ export function weekStats(sessions: SessionRecord[], now: number = Date.now()): 
   for (const s of counted) {
     countedDays.push(s.day); // streak считается по всей истории, не по окну
     const i = index.get(s.day);
-    if (i === undefined) continue;
+    if (i === undefined) {continue;}
     const m = sessionMinutes(s);
     minutes += m;
     runs++;
@@ -123,8 +123,8 @@ export function mastery(rows: TempoRow[]): MasterySummary {
   let done = 0;
   let almost = 0;
   for (const row of rows) {
-    if (row.rate >= 1.0) done++;
-    else if (row.rate >= 0.95 && row.rate < 1.0) almost++;
+    if (row.rate >= 1.0) {done++;}
+    else if (row.rate >= 0.95 && row.rate < 1.0) {almost++;}
   }
   return { done, total: rows.length, almost };
 }
@@ -133,11 +133,11 @@ export function mastery(rows: TempoRow[]): MasterySummary {
 export function lastSession(sessions: SessionRecord[]): ContinueTarget | null {
   let best: SessionRecord | null = null;
   for (const s of sessions) {
-    if (s.status !== 'ended' && s.status !== 'kept') continue;
-    if (!isCounted(s)) continue;
-    if (!best || atOf(s) > atOf(best)) best = s;
+    if (s.status !== 'ended' && s.status !== 'kept') {continue;}
+    if (!isCounted(s)) {continue;}
+    if (!best || atOf(s) > atOf(best)) {best = s;}
   }
-  if (!best) return null;
+  if (!best) {return null;}
   return {
     trackId: best.trackId,
     trackTitle: best.trackTitle,

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { SlotMatrix, SubBlockRange, SlotGroup } from './slot-matrix.types';
 import { computeSlotMatrix } from './compute-slot-matrix';
-import { computeOffsetY } from './slot-matrix.utils';
+import './slot-matrix.utils';
 import { MAX_SUB_BLOCK_LINES } from './slot-matrix.utils';
 import { getActiveBlock, createSubBlocks, getBlockFontSize } from '../utils/block-utils';
 import { getCanonicalBlockColor } from '../structure/block-colors';
@@ -18,9 +18,9 @@ function getNextBlock(
   activeBlock: TextBlock | null,
   blocks: TextBlock[]
 ): TextBlock | undefined {
-  if (!activeBlock || !blocks.length) return undefined;
+  if (!activeBlock || !blocks.length) {return undefined;}
   const idx = blocks.findIndex(b => b.id === activeBlock.id);
-  if (idx < 0 || idx >= blocks.length - 1) return undefined;
+  if (idx < 0 || idx >= blocks.length - 1) {return undefined;}
   return blocks[idx + 1];
 }
 
@@ -58,10 +58,10 @@ export function useSlotMatrix(): {
 
   // Активный подблок — зависит от activeLineIndex
   const activeSubBlockIndex = useMemo(() => {
-    if (!displayBlock) return 0;
+    if (!displayBlock) {return 0;}
     const subs = createSubBlocks(displayBlock.lineIndices, MAX_SUB_BLOCK_LINES, lines);
     for (let i = 0; i < subs.length; i++) {
-      if (subs[i].lineIndices.includes(activeLineIndex)) return i;
+      if (subs[i].lineIndices.includes(activeLineIndex)) {return i;}
     }
     return 0;
   }, [displayBlock, activeLineIndex]);
@@ -73,7 +73,7 @@ export function useSlotMatrix(): {
 
   // Матрица — НЕ зависит от activeLineIndex напрямую
   const matrix = useMemo(() => {
-    if (!displayBlock || lines.length === 0) return null;
+    if (!displayBlock || lines.length === 0) {return null;}
     return computeSlotMatrix({
       displayBlock,
       activeLineIndex,
@@ -93,7 +93,7 @@ export function useSlotMatrix(): {
 
   /** CSS Grid template rows — minmax() для роста при переносе текста */
   const gridTemplateRows = useMemo(() => {
-    if (!matrix) return undefined;
+    if (!matrix) {return undefined;}
     return matrix.slots
       .filter(s => !s.isEmpty)
       .map(s => `minmax(${s.height}px, auto)`)
@@ -104,7 +104,7 @@ export function useSlotMatrix(): {
 
   /** Видимые lineIndex из matrix (единственный источник) */
   const visibleLineIndices = useMemo(() => {
-    if (!matrix) return [];
+    if (!matrix) {return [];}
     return matrix.slots
       .filter(s => !s.isPreview && !s.isEmpty)
       .map(s => s.lineIndex);
@@ -112,9 +112,9 @@ export function useSlotMatrix(): {
 
   /** Последняя строка в подблоке? (из matrix, не из локального SubBlock) */
   const isLastLineInSubBlock = useMemo(() => {
-    if (!matrix || activeLineIndex < 0) return false;
+    if (!matrix || activeLineIndex < 0) {return false;}
     const contentSlots = matrix.slots.filter(s => !s.isPreview && !s.isEmpty);
-    if (contentSlots.length === 0) return false;
+    if (contentSlots.length === 0) {return false;}
     const lastSlot = contentSlots[contentSlots.length - 1];
     return lastSlot.lineIndex === activeLineIndex;
   }, [matrix, activeLineIndex]);
@@ -127,7 +127,7 @@ export function useSlotMatrix(): {
    *  Fix #3: gridTemplateRows вычисляется из slots + previewSlot,
    *    не из замыкания (которое включает ПС в matrix.slots). */
   const activeSlotGroup = useMemo(() => {
-    if (!matrix || !displayBlock) return null;
+    if (!matrix || !displayBlock) {return null;}
 
     // Все контент-слоты (включая empty — для правильного fontSize)
     const allContentSlots = matrix.slots.filter(s => !s.isPreview);
@@ -139,7 +139,7 @@ export function useSlotMatrix(): {
       : null;
     const activeSubBlock = matrix.activeSubBlock;
 
-    if (!activeSubBlock) return null;
+    if (!activeSubBlock) {return null;}
 
     // FIX #1: fontSize от ВСЕХ контент-слотов (включая empty)
     const fontSize = getBlockFontSize(allContentSlots.length);

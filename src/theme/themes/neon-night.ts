@@ -3,7 +3,7 @@
 // Bright neon colors for a vibrant experience
 
 import type { BeLiveTheme } from '../types';
-import { defaultTheme } from './default';
+import './default';
 import { resolveTheme } from '../engine/resolver';
 
 export const neonNightTheme: BeLiveTheme = resolveTheme({

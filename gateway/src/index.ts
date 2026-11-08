@@ -626,7 +626,7 @@ export default {
         return jsonResponse({ error: 'Unauthorized' }, 401, origin, allowedOrigins);
       }
       const postId = url.pathname.split('/').pop()!;
-      let body: any = null;
+      let body: any;
       try { body = await request.json(); } catch { body = null; }
       return handleDeleteFeedPost(env, auth, postId, feedHeaders, body);
     }

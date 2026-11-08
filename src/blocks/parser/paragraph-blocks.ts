@@ -22,8 +22,8 @@ export interface ParagraphBlock {
  */
 function collectParagraphs(sourceText: string): string[][] | null {
   const text = String(sourceText ?? '').replace(/\r\n|\r/g, '\n');
-  if (!text.trim()) return null;
-  if (LRC_TIMESTAMP_RE.test(text)) return null;
+  if (!text.trim()) {return null;}
+  if (LRC_TIMESTAMP_RE.test(text)) {return null;}
 
   const paragraphs: string[][] = [];
 
@@ -31,9 +31,9 @@ function collectParagraphs(sourceText: string): string[][] | null {
     const lines: string[] = [];
     for (const rawLine of rawParagraph.split('\n')) {
       const line = rawLine.replace(BRACKET_PREFIX_RE, '').trim();
-      if (line) lines.push(line);
+      if (line) {lines.push(line);}
     }
-    if (lines.length > 0) paragraphs.push(lines);
+    if (lines.length > 0) {paragraphs.push(lines);}
   }
 
   return paragraphs;
@@ -45,7 +45,7 @@ function collectParagraphs(sourceText: string): string[][] | null {
  */
 export function buildParagraphEditorText(sourceText: string): string | null {
   const paragraphs = collectParagraphs(sourceText);
-  if (!paragraphs || paragraphs.length < 2) return null;
+  if (!paragraphs || paragraphs.length < 2) {return null;}
 
   return paragraphs.map(lines => lines.join('\n')).join('\n\n');
 }
@@ -68,13 +68,13 @@ function paragraphFingerprint(lines: string[]): string {
  */
 export function buildParagraphBlocks(sourceText: string, lineSpace: string[]): ParagraphBlock[] {
   const paragraphs = collectParagraphs(sourceText);
-  if (!paragraphs || paragraphs.length < 2) return [];
+  if (!paragraphs || paragraphs.length < 2) {return [];}
 
   const space = Array.isArray(lineSpace) ? lineSpace : [];
   const fingerprints = paragraphs.map(paragraphFingerprint);
   const freq = new Map<string, number>();
   for (const fp of fingerprints) {
-    if (!fp) continue;
+    if (!fp) {continue;}
     freq.set(fp, (freq.get(fp) ?? 0) + 1);
   }
 

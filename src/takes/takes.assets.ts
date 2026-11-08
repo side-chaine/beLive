@@ -46,7 +46,7 @@ class TakeAssetRegistry {
     peaks: Float32Array,
   ): void {
     const existing = this.assets.get(takeId);
-    if (!existing) return;
+    if (!existing) {return;}
     existing.audioBuffer = audioBuffer;
     existing.peaks = peaks;
   }
@@ -64,7 +64,7 @@ class TakeAssetRegistry {
   /** Get or create object URL for playback */
   getObjectUrl(takeId: string): string | null {
     const asset = this.assets.get(takeId);
-    if (!asset) return null;
+    if (!asset) {return null;}
     if (!asset.objectUrl) {
       asset.objectUrl = URL.createObjectURL(asset.blob);
     }
@@ -74,7 +74,7 @@ class TakeAssetRegistry {
   /** Delete a single take's assets */
   delete(takeId: string): void {
     const asset = this.assets.get(takeId);
-    if (!asset) return;
+    if (!asset) {return;}
     if (asset.objectUrl) {
       URL.revokeObjectURL(asset.objectUrl);
     }

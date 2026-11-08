@@ -10,7 +10,7 @@ const FEED_API = import.meta.env.VITE_GATEWAY_URL || 'https://belive-gateway.nik
 // ─── Auth headers helper (TC-107-04) ───
 function getAuthHeaders(): Record<string, string> {
   const token = useUserProfileStore.getState().currentUser?.authToken;
-  if (!token) throw new Error('AUTH_REQUIRED');
+  if (!token) {throw new Error('AUTH_REQUIRED');}
   return {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`,
@@ -108,13 +108,13 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
   lastEvent: null,
 
   fetchFeed: async () => {
-    if (get().status === 'loading') return;
+    if (get().status === 'loading') {return;}
     set({ status: 'loading' });
     try {
       const res = await fetch(`${FEED_API}/api/feed/posts`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
       const data = await res.json();
-      const posts = data.posts.map(mapPost);
+      const posts: FeedPost[] = data.posts.map(mapPost);
       const savedLikes = loadLikes();
       const withLikes = posts.map(p => ({
         ...p,
@@ -166,7 +166,7 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
         }),
       });
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
       const created = await res.json();
 
       // Заменить temp пост на реальный с server ID
@@ -192,7 +192,7 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
 
   toggleLike: async (postId) => {
     const post = get().posts.find(p => p.id === postId);
-    if (!post) return;
+    if (!post) {return;}
 
     // Legacy guard (002 N4): без authToken — не отправляем
     const token = useUserProfileStore.getState().currentUser?.authToken;
@@ -228,11 +228,11 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
           lastEvent: { type: newLiked ? 'like' : 'neutral', postId, timestamp: Date.now() },
         }));
       } else {
-        set(s => ({ lastEvent: { type: 'neutral', postId, timestamp: Date.now() } }));
+        set(() => ({ lastEvent: { type: 'neutral', postId, timestamp: Date.now() } }));
       }
     } catch (err) {
       console.error('[feed.store] toggleLike error:', err);
-      set(s => ({ lastEvent: { type: 'neutral', postId, timestamp: Date.now() } }));
+      set(() => ({ lastEvent: { type: 'neutral', postId, timestamp: Date.now() } }));
     }
   },
 
@@ -247,7 +247,7 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
     // VERDICT 009 R2: сохранить deletedPost ДО optimistic removal
     // Нужно для partial-merge rollback (не затирает concurrent fetchFeed)
     const deletedPost = get().posts.find(p => p.id === postId);
-    if (!deletedPost) return;
+    if (!deletedPost) {return;}
 
     // Optimistic removal
     set(s => ({ posts: s.posts.filter(p => p.id !== postId) }));
@@ -258,7 +258,7 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
         headers: getAuthHeaders(),
       });
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
 
       // Success — пост уже удалён из state, ничего не делаем
     } catch (err) {
@@ -267,7 +267,7 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
       // VERDICT 009 R2: partial-merge rollback — НЕ затираем concurrent fetchFeed
       set(s => {
         const exists = s.posts.some(p => p.id === postId);
-        if (exists) return s; // fetchFeed уже обновил — не затираем свежие данные
+        if (exists) {return s;} // fetchFeed уже обновил — не затираем свежие данные
         return { posts: [deletedPost, ...s.posts] };
       });
     }
@@ -311,13 +311,13 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
   // ─── TC-108-04: Comments actions ───
 
   fetchComments: async (postId) => {
-    if (get().commentsStatus[postId] === 'loading') return;
+    if (get().commentsStatus[postId] === 'loading') {return;}
     set(s => ({ commentsStatus: { ...s.commentsStatus, [postId]: 'loading' } }));
     try {
       const res = await fetch(`${FEED_API}/api/feed/posts/${postId}/comments`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
       const data = await res.json();
-      const comments = (data.comments || []).slice().reverse();
+      const comments: FeedComment[] = (data.comments || []).slice().reverse();
       set(s => ({
         comments: { ...s.comments, [postId]: comments },
         commentsStatus: { ...s.commentsStatus, [postId]: 'ready' },
@@ -336,14 +336,14 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
   },
 
   fetchCommentsWithReplies: async (postId) => {
-    if (get().commentsStatus[postId] === 'loading') return;
+    if (get().commentsStatus[postId] === 'loading') {return;}
     set(s => ({ commentsStatus: { ...s.commentsStatus, [postId]: 'loading' } }));
     try {
       // 1. Fetch top-level comments
       const res = await fetch(`${FEED_API}/api/feed/posts/${postId}/comments`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
       const data = await res.json();
-      const comments = (data.comments || []).slice().reverse();
+      const comments: FeedComment[] = (data.comments || []).slice().reverse();
 
       // 2. Fetch replies for each top-level comment in parallel
       const replyPromises = comments.map(c =>
@@ -375,7 +375,7 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
   fetchReplies: async (postId, commentId) => {
     try {
       const res = await fetch(`${FEED_API}/api/feed/posts/${postId}/comments/${commentId}/replies`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
       const data = await res.json();
 
       // Merge replies into existing comments (replace old ones if any)
@@ -432,7 +432,7 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
         headers: getAuthHeaders(),
         body: JSON.stringify({ text, parentId: parentId || undefined }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
       const created = await res.json();
       set(s => ({
         comments: {
@@ -465,7 +465,7 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
     }
 
     const deletedComment = get().comments[postId]?.find(c => c.id === commentId);
-    if (!deletedComment) return;
+    if (!deletedComment) {return;}
 
     set(s => ({
       comments: {
@@ -482,7 +482,7 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
     } catch (err) {
       console.error('[feed.store] deleteComment error:', err);
       set(s => ({
@@ -506,7 +506,7 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
         headers['Authorization'] = `Bearer ${token}`;
       }
       const res = await fetch(`${FEED_API}/api/feed/reactions?target_type=post&target_ids=${postId}`, { headers });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
       const data = await res.json();
       const postReactionsData = data.reactions?.[postId] || {};
 
@@ -528,7 +528,7 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
 
   toggleReaction: async (postId, emoji) => {
     const token = useUserProfileStore.getState().currentUser?.authToken;
-    if (!token) return;
+    if (!token) {return;}
 
     // Optimistic: one reaction per user. Only selected emoji active.
     const prevReactions = get().postReactions[postId] || {};
@@ -550,11 +550,11 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
         },
         body: JSON.stringify({ targetType: 'post', targetId: postId, emoji }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
 
       // Refresh counts from server (one reaction per user logic)
       get().fetchReactions(postId);
-      set(s => ({ lastEvent: { type: 'react', postId, timestamp: Date.now() } }));
+      set(() => ({ lastEvent: { type: 'react', postId, timestamp: Date.now() } }));
     } catch (err) {
       // Rollback to previous state
       set(s => ({
@@ -585,7 +585,7 @@ export const useFeedDataStore = create<FeedState>((set, get) => ({
         headers: getAuthHeaders(),
         body: JSON.stringify(patch),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
 
       // Заменить optimistic на ответ сервера
       const updated = await res.json();

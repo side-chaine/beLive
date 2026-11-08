@@ -23,7 +23,7 @@ export function getBlockTimeRange(
   markers: Marker[],
   trackDuration?: number,
 ): BlockTimeRange | null {
-  if (!block.lineIndices.length || !markers.length) return null;
+  if (!block.lineIndices.length || !markers.length) {return null;}
 
   const firstLine = Math.min(...block.lineIndices);
   const lastLine  = Math.max(...block.lineIndices);
@@ -32,7 +32,7 @@ export function getBlockTimeRange(
   const startMarker = markers.find(
     m => m.markerType !== 'M2' && m.lineIndex === firstLine
   );
-  if (!startMarker) return null;
+  if (!startMarker) {return null;}
 
   let endTime: number | undefined;
 
@@ -60,7 +60,7 @@ export function getBlockTimeRange(
     const nextM1 = markers.find(
       m => m.markerType !== 'M2' && m.lineIndex > lastLine
     );
-    if (nextM1) endTime = nextM1.time;
+    if (nextM1) {endTime = nextM1.time;}
   }
 
   // Приоритет 3: Fallback
@@ -86,12 +86,12 @@ export function getMergedBlockTimeRange(
 
   for (const block of blocks) {
     const range = getBlockTimeRange(block, markers, trackDuration);
-    if (!range) continue;
-    if (range.startTime < minStart) minStart = range.startTime;
-    if (range.endTime > maxEnd) maxEnd = range.endTime;
+    if (!range) {continue;}
+    if (range.startTime < minStart) {minStart = range.startTime;}
+    if (range.endTime > maxEnd) {maxEnd = range.endTime;}
   }
 
-  if (minStart === Infinity) return null;
+  if (minStart === Infinity) {return null;}
   return { startTime: minStart, endTime: maxEnd };
 }
 
@@ -111,8 +111,8 @@ export function isBlockTakesReady(
   trackDuration?: number,
 ): boolean {
   const range = getBlockTimeRange(block, markers, trackDuration);
-  if (!range) return false;
-  if (range.endTime <= range.startTime) return false;
-  if (range.endTime - range.startTime < 1) return false;
+  if (!range) {return false;}
+  if (range.endTime <= range.startTime) {return false;}
+  if (range.endTime - range.startTime < 1) {return false;}
   return true;
 }

@@ -232,6 +232,7 @@ export class RehearsalTriggerBridge {
     }
   }
 
+  // @ts-expect-error [FROZEN-REQUEST N1b | Центр_5 2026-11-08 | ok: 707 (и.о. Gate R) | ревью: Соннет постфактум] TS6133 unused с Wave-эпохи — удаление только при разморозке (N7)
   private scheduleApply(merged: { mediaTime?: number; isPlaying?: boolean }, wallClockTime: number) {
     const localTarget = wallClockTime - this.pc.getClockOffset(); // FM-1: вычитаем offset (он = remote - local)
     const id = crypto.randomUUID();

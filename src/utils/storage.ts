@@ -35,7 +35,7 @@ export function set(key: string, value: string): boolean {
 export function getJSON<T>(key: string): T | null {
   try {
     const raw = localStorage.getItem(key);
-    if (raw === null) return null;
+    if (raw === null) {return null;}
     return JSON.parse(raw) as T;
   } catch (_) {
     return null;

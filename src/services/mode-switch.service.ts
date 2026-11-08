@@ -24,12 +24,12 @@ function setBodyMode(mode: string): void {
 
 function setTransportOpen(open: boolean): void {
   const el = document.getElementById('transport-controls');
-  if (el) el.classList.toggle('is-open', open);
+  if (el) {el.classList.toggle('is-open', open);}
 }
 
 function emitModeChanged(from: string, to: string): void {
   const a = getApp();
-  if (a) a.currentMode = to;
+  if (a) {a.currentMode = to;}
   window.dispatchEvent(new CustomEvent('mode-changed', { detail: { from, to } }));
 }
 
@@ -45,7 +45,7 @@ function getRolePolicyVolume(role: StemRole, policy: ModeStemPolicy): number {
 
 function updateDomSlider(stemId: string, volume: number): void {
   const slider = document.getElementById(`${stemId}-volume`) as HTMLInputElement | null;
-  if (slider) slider.value = String(Math.round(volume * 100));
+  if (slider) {slider.value = String(Math.round(volume * 100));}
 }
 
 const VOLUME_STORAGE_KEY = 'bl-rehearsal-volumes';
@@ -64,7 +64,7 @@ function saveRehearsalVolumesToStorage(): void {
 function loadRehearsalVolumesFromStorage(): Record<string, number> | null {
   try {
     const raw = localStorage.getItem(VOLUME_STORAGE_KEY);
-    if (!raw) return null;
+    if (!raw) {return null;}
     const parsed = JSON.parse(raw);
     if (parsed.v === 2 && parsed.stemVolumes) {
       const result: Record<string, number> = {};
@@ -88,21 +88,12 @@ let currentMode: AppMode | undefined;
 let previousMode: AppMode | undefined;
 
 function getCurrentMode(): AppMode | undefined {
-  if (currentMode) return currentMode;
+  if (currentMode) {return currentMode;}
   const body = document.body.className;
-  if (body.includes('mode-concert')) return 'concert';
-  if (body.includes('mode-karaoke')) return 'karaoke';
-  if (body.includes('mode-live')) return 'live';
+  if (body.includes('mode-concert')) {return 'concert';}
+  if (body.includes('mode-karaoke')) {return 'karaoke';}
+  if (body.includes('mode-live')) {return 'live';}
   return 'rehearsal';
-}
-
-function detectBodyMode(): AppMode | undefined {
-  const body = document.body.className;
-  if (body.includes('mode-concert')) return 'concert';
-  if (body.includes('mode-karaoke')) return 'karaoke';
-  if (body.includes('mode-rehearsal')) return 'rehearsal';
-  if (body.includes('mode-live')) return 'live';
-  return undefined;
 }
 
 function saveCurrentMode(mode: AppMode): void {
@@ -119,9 +110,9 @@ function saveCurrentMode(mode: AppMode): void {
 
 function applyModeVolumePreset(mode: string): void {
   const ae = (window as any).audioEngine;
-  if (!ae) return;
+  if (!ae) {return;}
   const policy = MODE_STEM_POLICIES[mode];
-  if (!policy) return;
+  if (!policy) {return;}
   const st = useStemStore.getState();
 
   if (mode === 'rehearsal') {
@@ -146,7 +137,7 @@ function applyModeVolumePreset(mode: string): void {
 
 function setLyricsContainerStyle(mode: string): void {
   const container = document.getElementById('lyrics-container');
-  if (!container) return;
+  if (!container) {return;}
   container.className = container.className.replace(/style-\w+/g, '').trim() + ` style-${mode}`;
 }
 
@@ -180,7 +171,7 @@ function activateRehearsal(): void {
 
   // Async gating: ждём lyrics + markers готовности
   const ld = (window as any).lyricsDisplay;
-  if (ld && Array.isArray(ld.textBlocks) && ld.textBlocks.length > 0) return;
+  if (ld && Array.isArray(ld.textBlocks) && ld.textBlocks.length > 0) {return;}
   let attempts = 0;
   const poll = setInterval(() => {
     const ld2 = (window as any).lyricsDisplay;
@@ -215,8 +206,8 @@ function enableResidualLiveOverlay(): void {
 
 export function switchMode(mode: AppMode): void {
   const a = getApp();
-  if (!a) return;
-  if (a.currentMode === mode) return;
+  if (!a) {return;}
+  if (a.currentMode === mode) {return;}
 
   const prev = getCurrentMode();
   if (prev === 'rehearsal' && mode !== 'rehearsal') {

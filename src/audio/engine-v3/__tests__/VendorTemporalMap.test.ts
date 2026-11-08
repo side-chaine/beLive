@@ -194,6 +194,7 @@ describe('Vendor temporal map — schedule() algorithm', () => {
   it('7) rate change does NOT retroactively shift input position', () => {
     const map = freshTimeMap(CTX)
 
+    // @ts-expect-error [FROZEN-REQUEST N1b | Центр_5 2026-11-08 | ok: 707 (и.о. Gate R) | ревью: Соннет постфактум] TS6133 тест-фикстура — удаление при разморозке
     const seg1 = scheduleSegment(map, { input: 10, rate: 1, active: true }, CTX, LAT)
     const t1 = CTX + 1
     const seg2 = scheduleSegment(map, { rate: 0.85, active: true }, t1, LAT)

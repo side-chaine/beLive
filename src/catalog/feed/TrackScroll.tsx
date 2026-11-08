@@ -15,10 +15,10 @@ export function TrackScroll({ section, items, tracks, play }: Props) {
   const tier = usePerformanceTier();
   const [optimisticPlayingId, setOptimisticPlayingId] = useState<string | null>(null);
 
-  if (items.length === 0) return null;
+  if (items.length === 0) {return null;}
 
   const handleClick = (item: FeedItem, trackIndex?: number) => {
-    if (trackIndex === undefined) return;
+    if (trackIndex === undefined) {return;}
     // Optimistic UI: vinyl spins NOW
     setOptimisticPlayingId(item.id);
     play(trackIndex);

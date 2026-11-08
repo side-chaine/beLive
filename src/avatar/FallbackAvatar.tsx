@@ -32,9 +32,9 @@ export const FallbackAvatar = memo(function FallbackAvatar({ mode, className }: 
   useEffect(() => {
     const el = ref.current;
     const unsub = useFeedStore.subscribe((state) => {
-      if (!el) return;
+      if (!el) {return;}
       const event = state.lastEvent;
-      let mood: AvatarStateId = 'idle';
+      let mood: AvatarStateId;
       if (!event) {
         mood = 'idle';
       } else {
@@ -68,7 +68,7 @@ export const FallbackAvatar = memo(function FallbackAvatar({ mode, className }: 
   useEffect(() => {
     const el = ref.current;
     const unsub = useAiStore.subscribe((state) => {
-      if (!el) return;
+      if (!el) {return;}
       const mood: AvatarStateId = state.isStreaming ? 'listening' : 'idle';
       el.setAttribute('data-state', mood);
       setState(mood);
@@ -80,7 +80,7 @@ export const FallbackAvatar = memo(function FallbackAvatar({ mode, className }: 
   useEffect(() => {
     const el = ref.current;
     const onCompleted = () => {
-      if (!el) return;
+      if (!el) {return;}
       const apply = () => { el.setAttribute('data-state', 'happy'); setState('happy'); };
       apply();
       el.classList.add('is-celebrating'); // M2 G1-guard
@@ -101,9 +101,9 @@ export const FallbackAvatar = memo(function FallbackAvatar({ mode, className }: 
   useEffect(() => {
     const el = ref.current;
     const onToolError = () => {
-      if (!el) return;
-      if (el.classList.contains('is-celebrating')) return; // G1: happy wins
-      if (useAiStore.getState().isStreaming) return; // не бьём по текущему стриму
+      if (!el) {return;}
+      if (el.classList.contains('is-celebrating')) {return;} // G1: happy wins
+      if (useAiStore.getState().isStreaming) {return;} // не бьём по текущему стриму
       el.setAttribute('data-state', 'error');
       setState('error');
       setTimeout(() => {

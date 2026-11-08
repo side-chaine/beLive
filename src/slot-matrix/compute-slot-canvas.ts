@@ -50,7 +50,6 @@ export interface ComputeSlotCanvasParams {
  *  Phase 3.5+: вызывается из useSlotCanvas() хука. */
 export function computeSlotCanvas(params: ComputeSlotCanvasParams): SlotCanvas {
   const {
-    matrix,
     activeSlotGroup,
     nextBlock,
     lines,
@@ -149,7 +148,6 @@ function computePreviewGroup(params: ComputePreviewGroupParams): SlotGroup | nul
     shouldGrowPreview,
     interBlockGap,
     maxSubBlockLines,
-    gapPx,
   } = params;
 
   const psLineIndex = nextBlock.lineIndices[0];
@@ -184,6 +182,7 @@ function computePreviewGroup(params: ComputePreviewGroupParams): SlotGroup | nul
     endSlotIndex: 0,
     isFirst: true,
     isLast: true,
+    lineIndices: nextBlock.lineIndices,
   };
 
   const scaledLineHeight = psLineHeight * zoom;

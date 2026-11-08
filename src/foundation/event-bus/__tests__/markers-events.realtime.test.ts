@@ -79,7 +79,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers()
-  if (cleanup) cleanup()
+  if (cleanup) {cleanup()}
   cleanup = null
   delete (window as any).markerManager
   delete (window as any).audioEngine

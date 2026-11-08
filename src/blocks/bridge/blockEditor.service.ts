@@ -21,7 +21,7 @@ export interface OpenBlockEditorOptions {
 }
 
 function nonEmptyLines(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
+  if (!Array.isArray(value)) {return [];}
   return value.map(l => String(l ?? '').trim()).filter(l => l.length > 0);
 }
 
@@ -42,11 +42,11 @@ export function openBlockEditor(opts: OpenBlockEditorOptions = {}): boolean {
 
   const tracks: any[] = Array.isArray(tc.tracks) ? tc.tracks : [];
   let track: any = null;
-  let idx: number = -1;
+  let idx: number;
 
   if (opts.trackId !== undefined && opts.trackId !== null) {
     idx = tracks.findIndex((t: any) => String(t.id) === String(opts.trackId));
-    if (idx >= 0) track = tracks[idx];
+    if (idx >= 0) {track = tracks[idx];}
   }
   if (!track) {
     idx = typeof opts.trackIndex === 'number' ? opts.trackIndex : tc.currentTrackIndex;

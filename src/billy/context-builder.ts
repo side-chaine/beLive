@@ -24,9 +24,9 @@ export function buildBillyContext(): BillyContext {
 }
 
 export function resolveZone(ctx: BillyContext): BillyZone {
-  if (ctx.currentMode === 'live') return 'live';
-  if (ctx.currentMode === 'karaoke' || ctx.currentMode === 'concert') return 'karaoke';
-  if (ctx.currentMode === 'rehearsal' && ctx.currentTrackTitle) return 'rehearsal';
-  if (ctx.tracksCount > 0) return 'catalog-ready';
+  if (ctx.currentMode === 'live') {return 'live';}
+  if (ctx.currentMode === 'karaoke' || ctx.currentMode === 'concert') {return 'karaoke';}
+  if (ctx.currentMode === 'rehearsal' && ctx.currentTrackTitle) {return 'rehearsal';}
+  if (ctx.tracksCount > 0) {return 'catalog-ready';}
   return 'catalog-empty';
 }

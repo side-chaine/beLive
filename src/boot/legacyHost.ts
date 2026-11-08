@@ -15,7 +15,7 @@ import { AIChatUI } from '../js/ui/ai-chat-ui';
  * classic (non-module) scripts in index.html still expect.
  */
 export async function installLegacyHost(): Promise<void> {
-  if ((window as any).__BELIVE_BOOTED__) return; // Legacy guard для MM-патчей
+  if ((window as any).__BELIVE_BOOTED__) {return;} // Legacy guard для MM-патчей
   (window as any).__BELIVE_BOOTED__ = true;
 
   // --- App host stub (replaces legacy app.js) ---
@@ -32,7 +32,7 @@ export async function installLegacyHost(): Promise<void> {
       rehearsalBackgroundManager: null,
       showNotification: (...args: any[]) => {
         const fn = (window as any).showAppNotification;
-        if (fn) fn(...args);
+        if (fn) {fn(...args);}
       },
       _showWelcomeIfNoTracks: () => {},
     };
@@ -65,19 +65,19 @@ export async function installLegacyHost(): Promise<void> {
       return;
     };
     mm.updateMarkerColors = () => {
-      if (!mm.markers || mm.markers.length === 0) return;
+      if (!mm.markers || mm.markers.length === 0) {return;}
       let updated = false;
       const ld = mm.lyricsDisplay || (window as any).lyricsDisplay;
       const hasBlocks = !!(ld && Array.isArray(ld.textBlocks) && ld.textBlocks.length > 0);
       mm.markers.forEach((marker: any) => {
         // M2 markers keep their color (#1a1a1a) — never overwrite
-        if (marker.markerType === 'M2') return;
+        if (marker.markerType === 'M2') {return;}
         const newBlockType = mm._getBlockTypeForLine(marker.lineIndex);
-        if (!hasBlocks || newBlockType === 'unknown') return;
+        if (!hasBlocks || newBlockType === 'unknown') {return;}
         const newColor = mm._getColorForBlockType(newBlockType);
         if (marker.blockType !== newBlockType || marker.color !== newColor) { marker.blockType = newBlockType; marker.color = newColor; updated = true; }
       });
-      if (updated) mm._notifySubscribers?.('markersReset', mm.markers);
+      if (updated) {mm._notifySubscribers?.('markersReset', mm.markers);}
     };
     mm.setMarkers = (markers: any[]) => {
       if (!Array.isArray(markers)) { console.error('Invalid markers array'); return; }
@@ -87,11 +87,11 @@ export async function installLegacyHost(): Promise<void> {
       markers.forEach((marker: any) => {
         if (marker && typeof marker.lineIndex === 'number' && marker.lineIndex >= 0 && marker.lineIndex < totalLyricLines && !usedLineIndexes.has(marker.lineIndex)) {
           usedLineIndexes.add(marker.lineIndex); const updatedMarker = { ...marker };
-          if (!updatedMarker.blockType) updatedMarker.blockType = mm._getBlockTypeForLine(marker.lineIndex);
+          if (!updatedMarker.blockType) {updatedMarker.blockType = mm._getBlockTypeForLine(marker.lineIndex);}
           // M2 markers keep their color (#1a1a1a) — never overwrite with block color
           if (marker.markerType === 'M2') {
-            if (!updatedMarker.blockType) updatedMarker.blockType = 'closing';
-            if (!updatedMarker.color) updatedMarker.color = '#1a1a1a';
+            if (!updatedMarker.blockType) {updatedMarker.blockType = 'closing';}
+            if (!updatedMarker.color) {updatedMarker.color = '#1a1a1a';}
           } else if (!updatedMarker.color) { const typeForColor = updatedMarker.blockType && updatedMarker.blockType !== 'unknown' ? updatedMarker.blockType : mm._getBlockTypeForLine(marker.lineIndex); updatedMarker.color = mm._getColorForBlockType(typeForColor); }
           validMarkers.push(updatedMarker);
         }
@@ -101,7 +101,7 @@ export async function installLegacyHost(): Promise<void> {
       try {
         const hasExistingBlocks = !!(ld && Array.isArray(ld.textBlocks) && ld.textBlocks.length > 0);
         const hasTypedMarkers = mm.markers.some((m: any) => m.blockType && m.blockType !== 'unknown');
-        if (!hasExistingBlocks && ld && hasTypedMarkers) { const synthesized = mm._buildBlocksFromMarkers(mm.markers); if (synthesized.length > 0) { ld.textBlocks = synthesized; ld.currentActiveBlock = null; if (typeof ld?.updateDefinedBlocksDisplay === 'function') ld.updateDefinedBlocksDisplay(); } }
+        if (!hasExistingBlocks && ld && hasTypedMarkers) { const synthesized = mm._buildBlocksFromMarkers(mm.markers); if (synthesized.length > 0) { ld.textBlocks = synthesized; ld.currentActiveBlock = null; if (typeof ld?.updateDefinedBlocksDisplay === 'function') {ld.updateDefinedBlocksDisplay();} } }
       } catch (e) {
         console.warn('MarkerManager: Error synthesizing blocks from markers:', e);
       }
@@ -115,7 +115,7 @@ export async function installLegacyHost(): Promise<void> {
         return null;
       }
       let t = time;
-      if (t === undefined || t === null) t = ae.getCurrentTime();
+      if (t === undefined || t === null) {t = ae.getCurrentTime();}
       const blockType = mm._getBlockTypeForLine(lineIndex);
       const markerColor = blockType && blockType !== 'unknown' ? mm._getColorForBlockType(blockType) : undefined;
       const marker = {
@@ -311,7 +311,7 @@ export async function installLegacyHost(): Promise<void> {
             );
             if (hasM1) {
               afterBlockId = block.id;
-              if (import.meta.env.DEV) console.log('[M2] Active line', activeLineIndex, '→ block', block.id, '(has M1 markers)');
+              if (import.meta.env.DEV) {console.log('[M2] Active line', activeLineIndex, '→ block', block.id, '(has M1 markers)');}
             } else {
               // Active line's block has no M1 yet — find previous block that has markers
               const blockIdx = blocks.indexOf(block);
@@ -322,7 +322,7 @@ export async function installLegacyHost(): Promise<void> {
                 );
                 if (hasPrevM1) {
                   afterBlockId = prevBlock.id;
-                  if (import.meta.env.DEV) console.log('[M2] Active line block has no M1 → using previous block', prevBlock.id);
+                  if (import.meta.env.DEV) {console.log('[M2] Active line block has no M1 → using previous block', prevBlock.id);}
                   break;
                 }
               }
@@ -339,7 +339,7 @@ export async function installLegacyHost(): Promise<void> {
         .sort((a: any, b: any) => b.time - a.time)[0];
       if (lastM1) {
         const block = blocks.find((b: any) => b.lineIndices?.includes(lastM1.lineIndex));
-        if (block) afterBlockId = block.id;
+        if (block) {afterBlockId = block.id;}
       }
     }
 
@@ -356,7 +356,7 @@ export async function installLegacyHost(): Promise<void> {
         time: currentTime,
         isSuggested: false,
       });
-      if (import.meta.env.DEV) console.log('[M2] Updated M2 for block', afterBlockId, 'time:', currentTime.toFixed(2) + 's');
+      if (import.meta.env.DEV) {console.log('[M2] Updated M2 for block', afterBlockId, 'time:', currentTime.toFixed(2) + 's');}
     } else {
       // Create new M2 marker — NOT attached to any line, purely a time boundary
       const m2Marker = {
@@ -373,7 +373,7 @@ export async function installLegacyHost(): Promise<void> {
       mm.markers.push(m2Marker);
       mm.markers.sort((a: any, b: any) => a.time - b.time);
       mm._notifySubscribers?.('markerAdded', m2Marker);
-      if (import.meta.env.DEV) console.log('[M2] Placed M2 closing marker after block', afterBlockId, 'time:', currentTime.toFixed(2) + 's');
+      if (import.meta.env.DEV) {console.log('[M2] Placed M2 closing marker after block', afterBlockId, 'time:', currentTime.toFixed(2) + 's');}
     }
   };
 
@@ -396,8 +396,8 @@ export async function installLegacyHost(): Promise<void> {
   // F42: RTF service — uses TS rtfToText (ported SimpleRtf)
   (window as any).rtfService = {
     parseRtf: async (rtfText: string) => {
-      if (typeof rtfText !== 'string') return '';
-      if (!rtfText.trim().startsWith('{\\rtf')) return rtfText;
+      if (typeof rtfText !== 'string') {return '';}
+      if (!rtfText.trim().startsWith('{\\rtf')) {return rtfText;}
       const { rtfToText } = await import('../services/parsing.service');
       return rtfToText(rtfText);
     },
@@ -428,12 +428,12 @@ export async function installLegacyHost(): Promise<void> {
     const settings = useAiSettingsStore.getState();
     if (!aiHub.getActiveModel() && settings.openRouterApiKey && settings.modelId) {
       aiHub.setActiveModel(settings.modelId);
-      if (import.meta.env.DEV) console.log('[AI] Hydrated: set model:', settings.modelId);
+      if (import.meta.env.DEV) {console.log('[AI] Hydrated: set model:', settings.modelId);}
     } else if (!aiHub.getActiveModel() && settings.openRouterApiKey) {
       const defaultModel = 'deepseek/deepseek-chat-v3-0324';
       aiHub.setActiveModel(defaultModel);
       useAiSettingsStore.getState().setModelId(defaultModel);
-      if (import.meta.env.DEV) console.log('[AI] Hydrated: set default model:', defaultModel);
+      if (import.meta.env.DEV) {console.log('[AI] Hydrated: set default model:', defaultModel);}
     }
   });
 
@@ -441,12 +441,12 @@ export async function installLegacyHost(): Promise<void> {
   const currentSettings = useAiSettingsStore.getState();
   if (!aiHub.getActiveModel() && currentSettings.openRouterApiKey && currentSettings.modelId) {
     aiHub.setActiveModel(currentSettings.modelId);
-    if (import.meta.env.DEV) console.log('[AI] Fallback: set model:', currentSettings.modelId);
+    if (import.meta.env.DEV) {console.log('[AI] Fallback: set model:', currentSettings.modelId);}
   } else if (!aiHub.getActiveModel() && currentSettings.openRouterApiKey) {
     const defaultModel = 'deepseek/deepseek-chat-v3-0324';
     aiHub.setActiveModel(defaultModel);
     useAiSettingsStore.getState().setModelId(defaultModel);
-    if (import.meta.env.DEV) console.log('[AI] Fallback: set default model:', defaultModel);
+    if (import.meta.env.DEV) {console.log('[AI] Fallback: set default model:', defaultModel);}
   }
 
   new AIChatUI(); // Инициализация AIChatUI

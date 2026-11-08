@@ -49,7 +49,7 @@ export function batchPublishTracks(
 
   (async () => {
     for (let i = 0; i < filtered.length; i++) {
-      if (aborted) break;
+      if (aborted) {break;}
 
       const track = filtered[i];
       const progress: BatchTrackProgress = {
@@ -71,7 +71,7 @@ export function batchPublishTracks(
           }},
         );
 
-        if (aborted) break;
+        if (aborted) {break;}
 
         progress.phase = 'uploading';
         progress.percent = 0;
@@ -84,7 +84,7 @@ export function batchPublishTracks(
           },
         });
 
-        if (aborted) break;
+        if (aborted) {break;}
 
         doneCount++;
         progress.phase = 'done';

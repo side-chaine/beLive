@@ -56,16 +56,16 @@ export function useJournal(ownerId: string): JournalData {
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
     const handler = () => {
-      if (timer !== null) clearTimeout(timer);
+      if (timer !== null) {clearTimeout(timer);}
       timer = setTimeout(() => {
         timer = null;
         void load();
       }, 0);
     };
-    for (const event of EVENTS) document.addEventListener(event, handler);
+    for (const event of EVENTS) {document.addEventListener(event, handler);}
     return () => {
-      for (const event of EVENTS) document.removeEventListener(event, handler);
-      if (timer !== null) clearTimeout(timer);
+      for (const event of EVENTS) {document.removeEventListener(event, handler);}
+      if (timer !== null) {clearTimeout(timer);}
     };
   }, [load]);
 

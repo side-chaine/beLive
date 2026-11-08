@@ -10,7 +10,7 @@ const MAX_LOG = 12;
  * Falls back to 0 if CSS var not set
  */
 function getWordProgressFromCSS(): number {
-  if (typeof document === 'undefined') return 0;
+  if (typeof document === 'undefined') {return 0;}
   const value = getComputedStyle(document.documentElement)
     .getPropertyValue('--bl-word-progress')
     .trim();
@@ -36,13 +36,13 @@ export const TriggerDebugOverlay: React.FC = () => {
 
   // Subscribe to bus for event log and progress updates
   useEffect(() => {
-    if (!visible) return;
+    if (!visible) {return;}
 
     // Initial progress read
     setProgress(getWordProgressFromCSS());
 
     const unsub = triggerBus.onAny((event: TriggerEvent) => {
-      if (event.id === 'word-active' || event.id === 'line-active') return;
+      if (event.id === 'word-active' || event.id === 'line-active') {return;}
 
       // Update progress from CSS var on each progress event
       if (event.id === 'word-progress') {
@@ -61,7 +61,7 @@ export const TriggerDebugOverlay: React.FC = () => {
     return unsub;
   }, [visible]);
 
-  if (!visible) return null;
+  if (!visible) {return null;}
 
   const bar = progress;
 

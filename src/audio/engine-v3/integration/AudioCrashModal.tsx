@@ -25,7 +25,7 @@ export function AudioCrashModal({ visible, onReload }: AudioCrashModalProps) {
         <p style={{ margin: 0, marginBottom: 16, opacity: 0.8, fontSize: 14 }}>
           Аудио-движок не смог восстановиться после сворачивания вкладки.
         </p>
-        {/* eslint-disable-next-line jsx-a11y/no-autofocus -- deliberate: this is a full-screen blocking dialog */}
+        {/* deliberate: full-screen blocking dialog — авто-фокус тут нужен; правило jsx-a11y/no-autofocus не подключено (N1b: мёртвая директива снята, поведение то же) */}
         <button autoFocus onClick={handleReload} style={buttonStyle}>
           Перезагрузить
         </button>

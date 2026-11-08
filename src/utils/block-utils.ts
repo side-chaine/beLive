@@ -5,9 +5,9 @@ export function getActiveBlock(
   lineIndex: number,
   blocks: TextBlock[]
 ): TextBlock | null {
-  if (lineIndex < 0 || !blocks.length) return null;
+  if (lineIndex < 0 || !blocks.length) {return null;}
   const exact = blocks.find(b => b.lineIndices.includes(lineIndex));
-  if (exact) return exact;
+  if (exact) {return exact;}
   let best: TextBlock | null = null;
   let bestMax = -Infinity;
   for (const b of blocks) {
@@ -25,17 +25,17 @@ export function getNextBlock(
   current: TextBlock | null,
   blocks: TextBlock[]
 ): TextBlock | null {
-  if (!current || !blocks.length) return null;
+  if (!current || !blocks.length) {return null;}
   const idx = blocks.findIndex(b => b.id === current.id);
   return idx >= 0 && idx < blocks.length - 1 ? blocks[idx + 1] : null;
 }
 
 /** Dynamic font size based on line count in block */
 export function getBlockFontSize(lineCount: number): string {
-  if (lineCount <= 2) return '3.2rem';
-  if (lineCount <= 4) return '2.6rem';
-  if (lineCount <= 6) return '2.0rem';
-  if (lineCount <= 8) return '1.6rem';
+  if (lineCount <= 2) {return '3.2rem';}
+  if (lineCount <= 4) {return '2.6rem';}
+  if (lineCount <= 6) {return '2.0rem';}
+  if (lineCount <= 8) {return '1.6rem';}
   return '1.3rem';
 }
 
@@ -119,7 +119,7 @@ export function computeLocalStopWords(
   const threshold = totalLines * FREQ_THRESHOLD;
 
   for (const [word, count] of Object.entries(wordCounts)) {
-    if (count >= threshold) stopWords.add(word);
+    if (count >= threshold) {stopWords.add(word);}
   }
 
   return stopWords;
@@ -141,7 +141,7 @@ export function extractFingerprint(
   for (const word of words) {
     if (word.length >= MIN_WORD_LENGTH && !localStopWords.has(word)) {
       significant.push(word);
-      if (significant.length >= 2) break;
+      if (significant.length >= 2) {break;}
     }
   }
 
@@ -171,10 +171,10 @@ function getBaseBreakIndex(totalLines: number): number {
  * Числовое значение font size (для сравнения прыжков)
  */
 function getBlockFontSizeNumeric(lineCount: number): number {
-  if (lineCount <= 2) return 3.2;
-  if (lineCount <= 4) return 2.6;
-  if (lineCount <= 6) return 2.0;
-  if (lineCount <= 8) return 1.6;
+  if (lineCount <= 2) {return 3.2;}
+  if (lineCount <= 4) {return 2.6;}
+  if (lineCount <= 6) {return 2.0;}
+  if (lineCount <= 8) {return 1.6;}
   return 1.3;
 }
 
@@ -225,7 +225,7 @@ export function detectEchoBreakPoint(
   const n = lineIndices.length;
 
   // Echo имеет смысл только для делимых блоков (6-15 строк)
-  if (n < 6 || n > 15) return null;
+  if (n < 6 || n > 15) {return null;}
 
   // Предрасчёт: локальный стоп-лист
   const localStopWords = computeLocalStopWords(lineIndices, lines);
@@ -248,38 +248,38 @@ export function detectEchoBreakPoint(
   const zoneEnd = Math.min(ECHO_ZONE_END, n - MIN_SUBBLOCK_LINES);
   for (let j = ECHO_ZONE_START; j <= zoneEnd; j++) {
     const fpJ = fingerprints[j];
-    if (fpJ.length < MIN_SIGNIFICANT_WORDS_MATCH) continue;
+    if (fpJ.length < MIN_SIGNIFICANT_WORDS_MATCH) {continue;}
 
     for (let i = 0; i < j; i++) {
       const fpI = fingerprints[i];
-      if (fpI.length < MIN_SIGNIFICANT_WORDS_MATCH) continue;
+      if (fpI.length < MIN_SIGNIFICANT_WORDS_MATCH) {continue;}
 
       // Проверка gap (строк МЕЖДУ i и j)
       const gap = j - i - 1;
-      if (gap < MIN_PATTERN_GAP) continue; // Хук, не паттерн
+      if (gap < MIN_PATTERN_GAP) {continue;} // Хук, не паттерн
 
       // КРИТИЧЕСКАЯ ПРОВЕРКА: идентичные строки
       // Если строки полностью идентичны → повтор хука, НЕ паттерн
-      if (normalizedTexts[i] === normalizedTexts[j]) continue;
+      if (normalizedTexts[i] === normalizedTexts[j]) {continue;}
 
       // Проверка совпадения fingerprint (2 слова подряд с начала)
       let matchCount = 0;
       const limit = Math.min(fpI.length, fpJ.length);
       for (let k = 0; k < limit; k++) {
-        if (fpI[k] === fpJ[k]) matchCount++;
-        else break; // Совпадения должны идти подряд с начала
+        if (fpI[k] === fpJ[k]) {matchCount++;}
+        else {break;} // Совпадения должны идти подряд с начала
       }
-      if (matchCount < MIN_SIGNIFICANT_WORDS_MATCH) continue;
+      if (matchCount < MIN_SIGNIFICANT_WORDS_MATCH) {continue;}
 
       // ECHO НАЙДЕН! Проверяем ограничения
       // 1. Максимальный сдвиг от базового квадрата
-      if (Math.abs(j - baseBreak) > MAX_SHIFT_FROM_BASE) continue;
+      if (Math.abs(j - baseBreak) > MAX_SHIFT_FROM_BASE) {continue;}
 
       // 2. Минимальный размер подблоков
-      if (j < MIN_SUBBLOCK_LINES || n - j < MIN_SUBBLOCK_LINES) continue;
+      if (j < MIN_SUBBLOCK_LINES || n - j < MIN_SUBBLOCK_LINES) {continue;}
 
       // 3. Font size прыжок
-      if (!isFontJumpAcceptable(j, n, baseBreak)) continue;
+      if (!isFontJumpAcceptable(j, n, baseBreak)) {continue;}
 
       // Возвращаем ЛОКАЛЬНЫЙ индекс
       return j;
@@ -311,7 +311,7 @@ export function detectEchoBreakPoint(
  */
 function computeBalancedSplit(totalLines: number): number[] {
   // 1-5: один подблок, не делим
-  if (totalLines <= 5) return [totalLines];
+  if (totalLines <= 5) {return [totalLines];}
 
   // 6-10: два подблока (квадратный первый + развитие)
   if (totalLines <= 10) {
@@ -342,8 +342,8 @@ function computeBalancedSplit(totalLines: number): number[] {
   // 16+: три подблока, равномерно (макс 6)
   const base = Math.floor(totalLines / 3);
   const remainder = totalLines - base * 3;
-  if (remainder === 0) return [base, base, base];
-  if (remainder === 1) return [base, base, base + 1];
+  if (remainder === 0) {return [base, base, base];}
+  if (remainder === 1) {return [base, base, base + 1];}
   return [base, base + 1, base + 1]; // remainder === 2
 }
 
@@ -369,11 +369,10 @@ function computeBalancedSplit(totalLines: number): number[] {
  */
 export function createSubBlocks(
   lineIndices: number[],
-  maxLines: number = 6,
+  _maxLines: number = 6,
   lines?: string[]
 ): SubBlock[] {
-  if (maxLines < 1) maxLines = 1;
-  if (lineIndices.length === 0) return [];
+  if (lineIndices.length === 0) {return [];}
 
   // 1. Базовое деление по принципу дополненного квадрата
   let split = computeBalancedSplit(lineIndices.length);
@@ -415,7 +414,7 @@ export function getActiveSubBlockIndex(
   maxLines: number = 6,
   lines?: string[]
 ): number {
-  if (activeLineIndex < 0 || !block.lineIndices.length) return 0;
+  if (activeLineIndex < 0 || !block.lineIndices.length) {return 0;}
   const subBlocks = createSubBlocks(block.lineIndices, maxLines, lines);
 
   for (let i = 0; i < subBlocks.length; i++) {

@@ -93,7 +93,7 @@ export function parseTitleToArtistTrack(
 ): { artist: string; track: string } {
   // Убираем суффиксы: (Remastered), (Live), feat., ft.
   const cleaned = title
-    .replace(/\s*[\(\[](remastered|live|acoustic|demo|edit|remix|feat\.?.*|ft\.?.*)[\)\]]/gi, '')
+    .replace(/\s*[([](remastered|live|acoustic|demo|edit|remix|feat\.?.*|ft\.?.*)[)\]]/gi, '')
     .trim();
 
   // Разделители: " - " / " – " / " — "
@@ -122,7 +122,7 @@ export function parseTitleToArtistTrack(
 export function prefetch(title: string): void {
   _lastPrefetchedTitle = title;
   const { artist, track } = parseTitleToArtistTrack(title);
-  if (!artist || !track) return;
+  if (!artist || !track) {return;}
 
   // Fire-and-forget
   _fetchLrclib(artist, track, undefined).catch(() => {});
@@ -132,20 +132,20 @@ export function prefetch(title: string): void {
 export function prefetchWithDuration(title: string, duration: number): void {
   _lastPrefetchedTitle = title;
   const { artist, track } = parseTitleToArtistTrack(title);
-  if (!artist || !track) return;
+  if (!artist || !track) {return;}
 
   // Fire-and-forget WITH duration — lrclib returns exact match
   _fetchLrclib(artist, track, Math.round(duration)).catch(() => {});
 }
 
 export async function refetchWithDuration(duration: number): Promise<void> {
-  if (!_lastPrefetchedTitle) return;
+  if (!_lastPrefetchedTitle) {return;}
   const { artist, track } = parseTitleToArtistTrack(_lastPrefetchedTitle);
-  if (!artist || !track) return;
+  if (!artist || !track) {return;}
 
   const cached = _cache.get(_cacheKey(_lastPrefetchedTitle));
   // Рефетч только если первый результат слабый или отсутствует
-  if (cached && (cached.confidence ?? 1) >= 0.6) return;
+  if (cached && (cached.confidence ?? 1) >= 0.6) {return;}
 
   await _fetchLrclib(artist, track, Math.round(duration)).catch(() => {});
 }
@@ -160,7 +160,7 @@ export async function waitForCache(
 ): Promise<LrcResult | null> {
   // Сначала проверяем сразу
   const cached = getCached(title);
-  if (cached) return cached;
+  if (cached) {return cached;}
 
   // Ждём с polling каждые 200ms
   const startTime = Date.now();
@@ -213,7 +213,7 @@ export function lrcToMarkers(lrcResult: LrcResult): {
   for (let i = 0; i < lrcResult.lines.length; i++) {
     const lrcLine = lrcResult.lines[i];
     // Skip empty lines — they should not appear in display
-    if (!lrcLine.text.trim()) continue;
+    if (!lrcLine.text.trim()) {continue;}
 
     const displayIdx = displayLines.length;
     displayLines.push(lrcLine.text);
@@ -253,13 +253,13 @@ export function blockFirstLineSync(
   
   // 007-DEBUG: Log parseTaggedLyrics output to diagnose Bridge truncation
   if (import.meta.env.DEV) {
-    if (import.meta.env.DEV) console.log('[007-SCAN] parseTaggedLyrics output:');
-    if (import.meta.env.DEV) console.log(`  Total blocks: ${tagResult.blocks.length}`);
-    if (import.meta.env.DEV) console.log(`  hasStructure: ${tagResult.hasStructure}`);
+    if (import.meta.env.DEV) {console.log('[007-SCAN] parseTaggedLyrics output:');}
+    if (import.meta.env.DEV) {console.log(`  Total blocks: ${tagResult.blocks.length}`);}
+    if (import.meta.env.DEV) {console.log(`  hasStructure: ${tagResult.hasStructure}`);}
     tagResult.blocks.forEach((b, i) => {
-      if (import.meta.env.DEV) console.log(`  Block ${i} [${b.type}]: "${b.label}" — ${b.contentLines.length} contentLines`);
+      if (import.meta.env.DEV) {console.log(`  Block ${i} [${b.type}]: "${b.label}" — ${b.contentLines.length} contentLines`);}
       if (b.type === 'bridge') {
-        if (import.meta.env.DEV) console.log(`    [007-CRITICAL] Bridge contentLines:`, b.contentLines);
+        if (import.meta.env.DEV) {console.log(`    [007-CRITICAL] Bridge contentLines:`, b.contentLines);}
       }
     });
   }
@@ -273,7 +273,7 @@ export function blockFirstLineSync(
   
   for (let i = 0; i < lrcResult.lines.length; i++) {
     const lrcLine = lrcResult.lines[i];
-    if (!lrcLine.text.trim()) continue;
+    if (!lrcLine.text.trim()) {continue;}
     
     const displayIdx = displayLines.length;
     displayLines.push(lrcLine.text);
@@ -300,14 +300,14 @@ export function blockFirstLineSync(
   // Фильтруем строки-заглушки ("♪", "...", "~") чтобы они не
   // раздували M и не искажали gap/ratio в DP.
   // ═══════════════════════════════════════════════════════════════
-  const FILLER_REGEX = /[♪~…\.\s]/g;
+  const FILLER_REGEX = /[♪~….\s]/g;
   function isFillerLine(text: string): boolean {
     return text.replace(FILLER_REGEX, '').length === 0;
   }
   
   const validIndices: number[] = [];
   for (let i = 0; i < displayLines.length; i++) {
-    if (!isFillerLine(displayLines[i])) validIndices.push(i);
+    if (!isFillerLine(displayLines[i])) {validIndices.push(i);}
   }
   const M = validIndices.length;
   
@@ -341,21 +341,21 @@ export function blockFirstLineSync(
     let taken = 0;
     for (const line of lines) {
       const trimmed = line.trim();
-      if (!trimmed) continue;
+      if (!trimmed) {continue;}
       const norm = _normalizeText(trimmed);
       for (const w of norm.split(/\s+/)) {
-        if (w.length > 2 && !stopWords.has(w)) words.add(w);
+        if (w.length > 2 && !stopWords.has(w)) {words.add(w);}
       }
       taken++;
-      if (taken >= maxLines) break;
+      if (taken >= maxLines) {break;}
     }
     return words;
   }
   
   function jaccardOverlap(a: Set<string>, b: Set<string>): number {
-    if (a.size === 0 || b.size === 0) return 0;
+    if (a.size === 0 || b.size === 0) {return 0;}
     let intersection = 0;
-    for (const w of a) if (b.has(w)) intersection++;
+    for (const w of a) {if (b.has(w)) {intersection++;}}
     const union = a.size + b.size - intersection;
     return union > 0 ? intersection / union : 0;
   }
@@ -416,7 +416,7 @@ export function blockFirstLineSync(
   const SIGMA = Math.max(0.08, Math.min(cfg.SIGMA_CAP, 1.5 / Math.max(1, N)));
   
   function calcSpatialPenalty(gR: number, validRank: number): number {
-    if (M === 0) return MIN_SPATIAL_FLOOR;
+    if (M === 0) {return MIN_SPATIAL_FLOOR;}
     const lR = validRank / M;
     const raw = Math.exp(-Math.pow(gR - lR, 2) / (2 * SIGMA * SIGMA));
     return Math.max(raw, MIN_SPATIAL_FLOOR);
@@ -500,9 +500,9 @@ export function blockFirstLineSync(
       for (let prevBi = 0; prevBi < bi; prevBi++) {
         for (let pk = 0; pk < allCandidates[prevBi].length; pk++) {
           const prevCand = allCandidates[prevBi][pk];
-          if (!dp[prevBi][pk].resolved) continue;
+          if (!dp[prevBi][pk].resolved) {continue;}
           // Строгая монотонность в исходном index-пространстве
-          if (prevCand.lrcIdx >= cand.lrcIdx) continue;
+          if (prevCand.lrcIdx >= cand.lrcIdx) {continue;}
           
           // Gap-штраф в valid rank пространстве (без filler-строк)
           const actualGap = cand.validRank - prevCand.validRank;
@@ -567,7 +567,7 @@ export function blockFirstLineSync(
       _chosenMatchScore[curBi] = allCandidates[curBi][curK].rawScore;
       
       const cell = dp[curBi][curK];
-      if (cell.prevBlockIdx < 0) break;
+      if (cell.prevBlockIdx < 0) {break;}
       curBi = cell.prevBlockIdx;
       curK = cell.prevK;
     }
@@ -590,18 +590,18 @@ export function blockFirstLineSync(
     const lNorm = _normalizeText(lrcLine);
     const gWords = gNorm.split(/\s+/).filter(w => w.length > 2);
     const lWords = new Set(lNorm.split(/\s+/).filter(w => w.length > 2));
-    if (gWords.length === 0) return 1;
+    if (gWords.length === 0) {return 1;}
     let match = 0;
-    for (const w of gWords) if (lWords.has(w)) match++;
+    for (const w of gWords) {if (lWords.has(w)) {match++;}}
     return match / gWords.length;
   }
 
-  if (import.meta.env.DEV) console.log('╔═══ CGP ═══');
+  if (import.meta.env.DEV) {console.log('╔═══ CGP ═══');}
   for (let bi = 0; bi < N; bi++) {
     const currentIdx = _lrcStartIdx[bi];
     const currentScore = _chosenMatchScore[bi];
     if (currentIdx == null || currentIdx < 0) {
-      if (import.meta.env.DEV) console.log(`  Block ${bi} [${tagResult.blocks[bi]?.type ?? '?'}]: NOT MAPPED (skip)`);
+      if (import.meta.env.DEV) {console.log(`  Block ${bi} [${tagResult.blocks[bi]?.type ?? '?'}]: NOT MAPPED (skip)`);}
       continue;
     }
 
@@ -610,13 +610,13 @@ export function blockFirstLineSync(
     // §7 CANDIDATE: порог 0.9 не откалиброван — выведен из зазора между Outro (1.0) и MJ Intro (0.667).
     // Требует grid search (27 комбинаций) вместе с MIN_CANDIDATE_SCORE, SIGMA, UNIQUENESS_POWER.
     if (currentScore != null && currentScore < 0.9) {
-      if (import.meta.env.DEV) console.log(`  Block ${bi} [${tagResult.blocks[bi]?.type ?? '?'}] "${tagResult.blocks[bi]?.label ?? ''}": low confidence (skip)`);
+      if (import.meta.env.DEV) {console.log(`  Block ${bi} [${tagResult.blocks[bi]?.type ?? '?'}] "${tagResult.blocks[bi]?.label ?? ''}": low confidence (skip)`);}
       continue;
     }
 
     const geniusFirst = _GENIUS_FIRST_LINES[bi];
     if (!geniusFirst) {
-      if (import.meta.env.DEV) console.log(`  Block ${bi} [${tagResult.blocks[bi]?.type ?? '?'}]: empty Genius (skip)`);
+      if (import.meta.env.DEV) {console.log(`  Block ${bi} [${tagResult.blocks[bi]?.type ?? '?'}]: empty Genius (skip)`);}
       continue;
     }
 
@@ -642,7 +642,7 @@ export function blockFirstLineSync(
     let bestForwardRawScore = 0;
     for (let idx = currentIdx + 1; idx < maxSearchIdx; idx++) {
       const candLrcLine = displayLines[idx];
-      if (!candLrcLine?.trim()) continue;
+      if (!candLrcLine?.trim()) {continue;}
       const candContain = _containmentScore(geniusFirst, candLrcLine);
       if (candContain >= 0.8) {
         // First adequate match — stop immediately (FLCG spec: "break on first containment ≥ 0.8")
@@ -667,17 +667,17 @@ export function blockFirstLineSync(
     }
 
     if (import.meta.env.DEV) {
-      if (import.meta.env.DEV) console.log(
+      if (import.meta.env.DEV) {console.log(
         `  Block ${bi} [${tagResult.blocks[bi]?.type ?? '?'}] "${tagResult.blocks[bi]?.label ?? ''}":\n` +
         `    Genius first line: "${geniusFirst.substring(0, 60)}"\n` +
         `    Current LRC[${currentIdx}]="${currentLrcLine.substring(0, 60)}"\n` +
         `    currentScore=${currentScore != null ? currentScore.toFixed(3) : 'N/A'}  containment=${contain.toFixed(3)}\n` +
         `    forward search: ${bestForwardIdx >= 0 ? `LRC[${bestForwardIdx}]="${displayLines[bestForwardIdx].substring(0, 60)}" contain=${bestForwardContain.toFixed(3)} rawScore=${bestForwardRawScore.toFixed(3)}` : 'no candidate'}\n` +
         `    → ${wouldCorrect ? '🟡 CORRECTED: LRC[' + currentIdx + ']→LRC[' + bestForwardIdx + ']' : '✅ no-op'}`
-      );
+      );}
     }
   }
-  if (import.meta.env.DEV) console.log('╚═══ END CGP ═══');
+  if (import.meta.env.DEV) {console.log('╚═══ END CGP ═══');}
   
   // ── Применяем _lrcStartIdx / _matchScore к blocks[] ──
   for (let bi = 0; bi < N; bi++) {
@@ -697,7 +697,7 @@ export function blockFirstLineSync(
   const occupied = new Set<number>();
   for (let i = 0; i < blocks.length; i++) {
     const startIdx = (blocks[i] as any)._lrcStartIdx;
-    if (startIdx == null || startIdx < 0) continue;
+    if (startIdx == null || startIdx < 0) {continue;}
     
     // DIAG-CHRONO: log chrono violations
     if (import.meta.env.DEV && startIdx < _prevChronoEnd) {
@@ -735,7 +735,7 @@ export function blockFirstLineSync(
       ? Math.min(endIdx, startIdx + expectedLines + elasticity)
       : endIdx;
     for (let k = startIdx; k < cappedEnd; k++) {
-      if (occupied.has(k)) continue;  // TC-130: skip already taken
+      if (occupied.has(k)) {continue;}  // TC-130: skip already taken
       blocks[i].lineIndices.push(k);
       occupied.add(k);                // TC-130: mark as taken
     }
@@ -755,7 +755,7 @@ export function blockFirstLineSync(
   // If a block got significantly more LRC lines than expected, mark it for diagnostics.
   for (let i = 0; i < blocks.length; i++) {
     const cl = blocks[i].contentLines;
-    if (!cl || cl.length === 0) continue;
+    if (!cl || cl.length === 0) {continue;}
     if (blocks[i].lineIndices.length > Math.ceil(cl.length * 1.5)) {
       (blocks[i] as any)._oversized = true;
     }
@@ -767,12 +767,12 @@ export function blockFirstLineSync(
   for (let i = 0; i < blocks.length; i++) {
     const startIdx = (blocks[i] as any)._lrcStartIdx;
     // Пропустить уже замапленные блоки (есть startIdx И lineIndices реально заполнены)
-    if (startIdx != null && startIdx >= 0 && blocks[i].lineIndices.length > 0) continue;
+    if (startIdx != null && startIdx >= 0 && blocks[i].lineIndices.length > 0) {continue;}
     const blockContent = blocks[i].contentLines;
     // TC-6C: Don't skip Solo/Instrumental with empty content — they can take gap lines
     const isEmptySolo = blocks[i].type === 'solo' || blocks[i].type === 'instrumental';
     if (!blockContent || blockContent.length === 0) {
-      if (!isEmptySolo) continue;
+      if (!isEmptySolo) {continue;}
     }
 
     let neededLines: number;
@@ -854,10 +854,10 @@ export function blockFirstLineSync(
     for (let di = 0; di < blocks.length; di++) {
       const b = blocks[di];
       const hasStart = (b as any)._lrcStartIdx;
-      if (import.meta.env.DEV) console.log(
+      if (import.meta.env.DEV) {console.log(
         `[Pass2-DIAG] Block ${di} [${b.type}] "${b.name}": ` +
         `startIdx=${hasStart ?? 'null'}, lineIndices=${JSON.stringify(b.lineIndices)}`
-      );
+      );}
     }
   }
 
@@ -867,11 +867,11 @@ export function blockFirstLineSync(
     const total = blocks.length;
     const linesWithBlocks = blocks.reduce((s, b) => s + b.lineIndices.length, 0);
     
-    if (import.meta.env.DEV) console.log(`[TC-010] Block-first sync:`);
-    if (import.meta.env.DEV) console.log(`  Display lines: ${displayLines.length} (from LRC)`);
-    if (import.meta.env.DEV) console.log(`  Markers: ${markers.length} (exact LRC timestamps)`);
-    if (import.meta.env.DEV) console.log(`  Blocks: ${found}/${total} mapped (${(found/total*100).toFixed(0)}%)`);
-    if (import.meta.env.DEV) console.log(`  Lines covered by blocks: ${linesWithBlocks}/${displayLines.length}`);
+    if (import.meta.env.DEV) {console.log(`[TC-010] Block-first sync:`);}
+    if (import.meta.env.DEV) {console.log(`  Display lines: ${displayLines.length} (from LRC)`);}
+    if (import.meta.env.DEV) {console.log(`  Markers: ${markers.length} (exact LRC timestamps)`);}
+    if (import.meta.env.DEV) {console.log(`  Blocks: ${found}/${total} mapped (${(found/total*100).toFixed(0)}%)`);}
+    if (import.meta.env.DEV) {console.log(`  Lines covered by blocks: ${linesWithBlocks}/${displayLines.length}`);}
     
     for (let di = 0; di < blocks.length; di++) {
       const block = blocks[di];
@@ -883,20 +883,20 @@ export function blockFirstLineSync(
         const last = block.lineIndices[block.lineIndices.length - 1];
         const linesText = block.lineIndices.map((li: number) => `    LRC[${li}]="${displayLines[li]}"`).join('\n');
         const isGapAssign = (block as any)._instrumentalGap;
-        if (import.meta.env.DEV) console.log(
+        if (import.meta.env.DEV) {console.log(
           `  ── Block ${di} [${block.type}] "${block.name}" ${isGapAssign ? '(gap-assigned)' : ''}──\n` +
           `  startIdx=${startIdx ?? 'null'} matchScore=${matchScore ? (matchScore*100).toFixed(0)+'%' : 'N/A'}\n` +
           `  range=${first}-${last} (${block.lineIndices.length} lines) time=${markers[first]?.time?.toFixed(1)}s-${markers[last]?.time?.toFixed(1)}s\n` +
           `  contentLines (Genius): ${((block as any).contentLines ?? []).slice(0, 3).join(' | ')}\n` +
           `  lineIndices (LRC text):\n${linesText.slice(0, 800)}`
-        );
+        );}
       } else {
         const geniusLines = ((block as any).contentLines ?? []).slice(0, 3);
-        if (import.meta.env.DEV) console.log(
+        if (import.meta.env.DEV) {console.log(
           `  ── Block ${di} [${block.type}] "${block.name}" ──\n` +
           `  startIdx=${startIdx ?? 'null'} matchScore=${matchScore ? (matchScore*100).toFixed(0)+'%' : 'N/A'}\n` +
           `  NOT MAPPED — Genius lines: ${geniusLines.join(' | ')}`
-        );
+        );}
       }
     }
   }
@@ -948,8 +948,8 @@ export function blockFirstLineSync(
     let loBi = 0;
     let hiBi = blocks.length - 1;
     for (const m of mappedSnapshot) {
-      if (m.maxIdx < i && m.bi > loBi) loBi = m.bi;
-      if (m.minIdx > i && m.bi < hiBi) hiBi = m.bi;
+      if (m.maxIdx < i && m.bi > loBi) {loBi = m.bi;}
+      if (m.minIdx > i && m.bi < hiBi) {hiBi = m.bi;}
     }
     if (loBi > hiBi) {
       if (import.meta.env.DEV) {
@@ -967,12 +967,12 @@ export function blockFirstLineSync(
   const blockWordSets: Map<number, Set<string>> = new Map();
   for (let b = 0; b < blocks.length; b++) {
     const contentLines = (tagResult.blocks[b]?.contentLines ?? []).filter((l: string) => l.trim());
-    if (contentLines.length === 0) continue;
+    if (contentLines.length === 0) {continue;}
     const fpWords = new Set<string>();
     for (const cl of contentLines) {
       const norm = _normalizeText(cl);
       for (const w of norm.split(/\s+/)) {
-        if (w.length > 2) fpWords.add(w);
+        if (w.length > 2) {fpWords.add(w);}
       }
     }
     blockWordSets.set(b, fpWords);
@@ -993,9 +993,9 @@ export function blockFirstLineSync(
       let bestBlock = lastValidBlockIdx;  // fallback: предыдущий
       let bestOverlap = 0;
       for (const [b, blockWords] of blockWordSets) {
-        if (b < loBi || b > hiBi) continue;             // ← TC-150: новая строка (guard)
+        if (b < loBi || b > hiBi) {continue;}             // ← TC-150: новая строка (guard)
         let overlap = 0;
-        for (const w of orphanWords) if (blockWords.has(w)) overlap++;
+        for (const w of orphanWords) {if (blockWords.has(w)) {overlap++;}}
         if (overlap > bestOverlap) {
           bestOverlap = overlap;
           bestBlock = b;
@@ -1009,18 +1009,18 @@ export function blockFirstLineSync(
       if (bestBlock >= 0) {
         // ═══ TC-150-RT: Orphan routing trace ═══
         if (import.meta.env.DEV && bestBlock !== lastValidBlockIdx) {
-          if (import.meta.env.DEV) console.log(
+          if (import.meta.env.DEV) {console.log(
             `[TC-150-RT] Orphan LRC[${i}]="${displayLines[i].substring(0, 50)}" ` +
             `window=[${loBi}..${hiBi}] ` +
             `contentMatch→bi=${bestBlock} ["${blocks[bestBlock].type}" "${blocks[bestBlock].name}"] ` +
             `overlap=${bestOverlap} ` +
             `\tfallback=${lastValidBlockIdx} ["${lastValidBlockIdx >= 0 ? blocks[lastValidBlockIdx].type + ' ' + blocks[lastValidBlockIdx].name : 'none'}"]`
-          );
+          );}
         } else if (import.meta.env.DEV) {
-          if (import.meta.env.DEV) console.log(
+          if (import.meta.env.DEV) {console.log(
             `[TC-150-RT] Orphan LRC[${i}]="${displayLines[i].substring(0, 50)}" ` +
             `→ bi=${bestBlock} (${bestBlock === lastValidBlockIdx ? 'fallback' : 'content'}) overlap=${bestOverlap}`
-          );
+          );}
         }
         blocks[bestBlock].lineIndices.push(i);
         indexToBlockMap.set(i, bestBlock);
@@ -1029,19 +1029,19 @@ export function blockFirstLineSync(
 
       // DEV: Log orphan with content words but no match
       if (import.meta.env.DEV) {
-        if (import.meta.env.DEV) console.log(
+        if (import.meta.env.DEV) {console.log(
           `[TC-150-RT] Orphan LRC[${i}]="${displayLines[i].substring(0, 50)}" ` +
           `window=[${loBi}..${hiBi}] → NO_CONTENT_MATCH (lastValidBlockIdx=${lastValidBlockIdx})`
-        );
+        );}
       }
     }
 
     // DEV: Log filler orphan (no words → fallback to previous)
     if (import.meta.env.DEV) {
-      if (import.meta.env.DEV) console.log(
+      if (import.meta.env.DEV) {console.log(
         `[TC-150-RT] Orphan LRC[${i}]="${displayLines[i].substring(0, 50)}" ` +
         `→ FILTER (no content words) lastValidBlockIdx=${lastValidBlockIdx}`
-      );
+      );}
     }
 
     // Fallback: attach to previous mapped block
@@ -1106,14 +1106,14 @@ function adjustMarkerTime(
   const rawWords = rawNorm.split(/\s+/).filter(w => w);
   const lrcWords = lrcNorm.split(/\s+/).filter(w => w);
   
-  if (rawWords.length === 0 || lrcWords.length === 0) return matchedLrcTime;
+  if (rawWords.length === 0 || lrcWords.length === 0) {return matchedLrcTime;}
   
   // Find position of first Genius word in LRC
   const firstWord = rawWords[0];
   const positionInLrc = lrcWords.indexOf(firstWord);
   
   // Not found or starts at beginning → no adjustment
-  if (positionInLrc <= 0) return matchedLrcTime;
+  if (positionInLrc <= 0) {return matchedLrcTime;}
   
   // Interpolate time
   const fraction = positionInLrc / lrcWords.length;
@@ -1121,11 +1121,11 @@ function adjustMarkerTime(
   const adjustedTime = matchedLrcTime + fraction * duration;
   
   if (import.meta.env.DEV) {
-    if (import.meta.env.DEV) console.log(
+    if (import.meta.env.DEV) {console.log(
       `[TC-009] Word-pos ${positionInLrc}/${lrcWords.length}: ` +
       `${matchedLrcTime.toFixed(2)}s → ${adjustedTime.toFixed(2)}s ` +
       `(+${(adjustedTime - matchedLrcTime).toFixed(2)}s) "${rawText.substring(0, 40)}"`
-    );
+    );}
   }
   
   return adjustedTime;
@@ -1135,7 +1135,6 @@ export function matchGeniusToLrc(
   geniusText: string,
   lrcResult: LrcResult,
 ): MatchResult {
-  const geniusLines = geniusText.split('\n');
 
   // Парсим блоки из Genius тегов (parseTaggedLyrics — pure TS, без React/DOM)
   const tagResult = parseTaggedLyrics(geniusText);
@@ -1150,7 +1149,7 @@ export function matchGeniusToLrc(
         const lineIndices: number[] = [];
         for (const contentLine of b.contentLines) {
           const trimmed = contentLine.trim();
-          if (!trimmed) continue;
+          if (!trimmed) {continue;}
           lineIndices.push(rawLyricsArray.length);
           rawLyricsArray.push(trimmed);
         }
@@ -1196,9 +1195,8 @@ export function matchGeniusToLrc(
 
   for (let li = 0; li < lrcResult.lines.length; li++) {
     const lrcLine = lrcResult.lines[li];
-    if (!lrcLine.text.trim()) continue;
+    if (!lrcLine.text.trim()) {continue;}
 
-    let bestScore = 0;
     let bestRawIdx = -1;
     let bestEffective = 0;
     let mergedNorm = normalizedLrc[li];
@@ -1210,19 +1208,17 @@ export function matchGeniusToLrc(
 
     // Try matching: first as single line, then merged with next line(s)
     for (let attempt = 0; attempt < 3; attempt++) {  // TC-008: Allow 3-line merge
-      bestScore = 0;
       bestRawIdx = -1;
       bestEffective = 0;
 
       // Pass 1: Forward-first search — take FIRST match with effectiveScore >= 0.75
       for (let i = searchStart; i < normalizedRaw.length; i++) {
-        if (rawLyricsArray[i] === '') continue;
-        if (matchedRawIndices.has(i)) continue;
+        if (rawLyricsArray[i] === '') {continue;}
+        if (matchedRawIndices.has(i)) {continue;}
         const score = _similarityNormalized(mergedNorm, normalizedRaw[i]);
         const timePenalty = (Math.abs(i - expectedIdx) / totalRaw) * TIME_PENALTY_FACTOR;
         const effective = score - timePenalty;
         if (effective >= 0.75) {
-          bestScore = score;
           bestRawIdx = i;
           bestEffective = effective;
           break;
@@ -1232,20 +1228,19 @@ export function matchGeniusToLrc(
       // Pass 2: Global fallback (best-effective) — only if forward found nothing >= 0.75
       if (bestEffective < 0.75) {
         for (let i = 0; i < searchStart; i++) {
-          if (rawLyricsArray[i] === '') continue;
-          if (matchedRawIndices.has(i)) continue;
+          if (rawLyricsArray[i] === '') {continue;}
+          if (matchedRawIndices.has(i)) {continue;}
           const score = _similarityNormalized(mergedNorm, normalizedRaw[i]);
           const timePenalty = (Math.abs(i - expectedIdx) / totalRaw) * TIME_PENALTY_FACTOR;
           const effective = score - timePenalty;
           if (effective > bestEffective) {
-            bestScore = score;
             bestRawIdx = i;
             bestEffective = effective;
           }
         }
       }
 
-      if (bestEffective >= 0.75) break; // matched!
+      if (bestEffective >= 0.75) {break;} // matched!
 
       // Not matched — try merging with next LRC line (max 3 lines)
       if (attempt < 2 && li + 1 + attempt < lrcResult.lines.length) {
@@ -1282,13 +1277,13 @@ export function matchGeniusToLrc(
       });
 
       // Skip consumed LRC lines (if merged)
-      if (mergedCount > 1) li += mergedCount - 1;
+      if (mergedCount > 1) {li += mergedCount - 1;}
     }
   }
 
   if (import.meta.env.DEV) {
     const elapsed = (performance.now() - t0).toFixed(1);
-    if (import.meta.env.DEV) console.log(`[AutoLyrics] matching took ${elapsed}ms`);
+    if (import.meta.env.DEV) {console.log(`[AutoLyrics] matching took ${elapsed}ms`);}
   }
 
   // ── RESCUE PASS: time-constrained match for remaining unmatched raw lines ──
@@ -1314,7 +1309,7 @@ export function matchGeniusToLrc(
       let timeBefore = 0;
       let timeAfter = lastLrcTime;
       for (const m of byLine) {
-        if (m.lineIndex < rawIdx) timeBefore = m.time;
+        if (m.lineIndex < rawIdx) {timeBefore = m.time;}
         if (m.lineIndex > rawIdx) { timeAfter = m.time; break; }
       }
       const expectedTime = (timeBefore + timeAfter) / 2;
@@ -1323,11 +1318,11 @@ export function matchGeniusToLrc(
       let bestTime = -1;
       for (let li = 0; li < lrcResult.lines.length; li++) {
         const lrcLine = lrcResult.lines[li];
-        if (!lrcLine.text.trim()) continue;
+        if (!lrcLine.text.trim()) {continue;}
         // Time constraint: only search within window of expected time
-        if (Math.abs(lrcLine.time - expectedTime) > RESCUE_WINDOW_SEC) continue;
+        if (Math.abs(lrcLine.time - expectedTime) > RESCUE_WINDOW_SEC) {continue;}
         // TC-004: Skip LRC times already used by other markers
-        if (usedLrcTimes.has(lrcLine.time)) continue;
+        if (usedLrcTimes.has(lrcLine.time)) {continue;}
         const score = _similarityNormalized(normalizedRaw[rawIdx], normalizedLrc[li]);
         // TC-004: Prefer closest time when scores are equal (not just first match)
         if (score > bestScore ||
@@ -1360,7 +1355,7 @@ export function matchGeniusToLrc(
           text: rawText,
         });
         if (import.meta.env.DEV) {
-          if (import.meta.env.DEV) console.log(`[AutoLyrics] rescued [${rawIdx}] score=${(bestScore * 100).toFixed(1)}% expected=${expectedTime.toFixed(1)}s → "${rawText}"`);
+          if (import.meta.env.DEV) {console.log(`[AutoLyrics] rescued [${rawIdx}] score=${(bestScore * 100).toFixed(1)}% expected=${expectedTime.toFixed(1)}s → "${rawText}"`);}
         }
       }
     }
@@ -1387,7 +1382,7 @@ export function matchGeniusToLrc(
       let timeBefore = 0;
       let timeAfter = lastLrcTime;
       for (const m of byLine) {
-        if (m.lineIndex < rawIdx) timeBefore = m.time;
+        if (m.lineIndex < rawIdx) {timeBefore = m.time;}
         if (m.lineIndex > rawIdx) { timeAfter = m.time; break; }
       }
       const expectedTime = (timeBefore + timeAfter) / 2;
@@ -1412,7 +1407,7 @@ export function matchGeniusToLrc(
           const lrcWords = normalizedLrc[end].split(/\s+/).filter(w => w);
           lrcWords.forEach(w => {
             allLrcWords.add(w);
-            if (geniusWords.has(w)) coveredWords.add(w);
+            if (geniusWords.has(w)) {coveredWords.add(w);}
           });
 
           const coverage = geniusWords.size > 0 ? coveredWords.size / geniusWords.size : 0;
@@ -1427,7 +1422,7 @@ export function matchGeniusToLrc(
           }
 
           // Stop if coverage is complete
-          if (coverage >= 0.9) break;
+          if (coverage >= 0.9) {break;}
         }
       }
 
@@ -1454,7 +1449,7 @@ export function matchGeniusToLrc(
           text: rawText,
         });
         if (import.meta.env.DEV) {
-          if (import.meta.env.DEV) console.log(`[AutoLyrics] word-coverage [${rawIdx}] score=${(bestCoverage * 100).toFixed(1)}% expected=${expectedTime.toFixed(1)}s → "${rawText}"`);
+          if (import.meta.env.DEV) {console.log(`[AutoLyrics] word-coverage [${rawIdx}] score=${(bestCoverage * 100).toFixed(1)}% expected=${expectedTime.toFixed(1)}s → "${rawText}"`);}
         }
       }
     }
@@ -1495,43 +1490,42 @@ export function matchGeniusToLrc(
   if (import.meta.env.DEV) {
     const block6 = blocks.find(b => b.id === 'auto-block-6');
     if (block6) {
-      if (import.meta.env.DEV) console.log(`[AutoM2-DIAG] Block 6 lines: ${block6.lineIndices.join(',')}`);
+      if (import.meta.env.DEV) {console.log(`[AutoM2-DIAG] Block 6 lines: ${block6.lineIndices.join(',')}`);}
       for (const li of block6.lineIndices) {
         const marker = markers.find(m => m.markerType !== 'M2' && m.lineIndex === li);
         const text = rawLyricsArray[li] || 'N/A';
-        if (import.meta.env.DEV) console.log(`[AutoM2-DIAG]   Line ${li}: ${marker ? `MARKED at ${marker.time.toFixed(2)}s` : 'NO MARKER ← BUG!'} → "${text}"`);
+        if (import.meta.env.DEV) {console.log(`[AutoM2-DIAG]   Line ${li}: ${marker ? `MARKED at ${marker.time.toFixed(2)}s` : 'NO MARKER ← BUG!'} → "${text}"`);}
       }
     }
     // Also show what lrclib has for "And I'm about to break"
     const lrclibBreak = lrcResult.lines.filter(l => l.text.includes('about to break'));
-    if (import.meta.env.DEV) console.log(`[AutoM2-DIAG] lrclib "about to break" lines:`, lrclibBreak.map(l => ({time: l.time, text: l.text})));
+    if (import.meta.env.DEV) {console.log(`[AutoM2-DIAG] lrclib "about to break" lines:`, lrclibBreak.map(l => ({time: l.time, text: l.text})));}
   }
 
   // DEV: Dump block 7 diagnostics (contains line 37)
   if (import.meta.env.DEV) {
     const block7 = blocks.find(b => b.id === 'auto-block-7');
     if (block7) {
-      if (import.meta.env.DEV) console.log(`[AutoM2-DIAG] Block 7 lines: ${block7.lineIndices.join(',')}`);
+      if (import.meta.env.DEV) {console.log(`[AutoM2-DIAG] Block 7 lines: ${block7.lineIndices.join(',')}`);}
       for (const li of block7.lineIndices) {
         const marker = markers.find(m => m.markerType !== 'M2' && m.lineIndex === li);
         const text = rawLyricsArray[li] || 'N/A';
-        if (import.meta.env.DEV) console.log(`[AutoM2-DIAG]   Line ${li}: ${marker ? `MARKED at ${marker.time.toFixed(2)}s` : 'NO MARKER'} → "${text}"`);
+        if (import.meta.env.DEV) {console.log(`[AutoM2-DIAG]   Line ${li}: ${marker ? `MARKED at ${marker.time.toFixed(2)}s` : 'NO MARKER'} → "${text}"`);}
       }
     }
   }
 
-  const autoM2Count = 0;
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i];
     const nextBlock = blocks[i + 1] ?? null;
 
-    if (!block.lineIndices.length) continue;
+    if (!block.lineIndices.length) {continue;}
 
     const lastLine = Math.max(...block.lineIndices);
     const lastMarker = markers.find(
       m => m.markerType !== 'M2' && m.lineIndex === lastLine
     );
-    if (!lastMarker) continue;
+    if (!lastMarker) {continue;}
 
     // Calculate avgGap within this block
     const blockMarkers = block.lineIndices
@@ -1563,10 +1557,10 @@ export function matchGeniusToLrc(
     }
 
     if (import.meta.env.DEV) {
-      if (import.meta.env.DEV) console.log(`[AutoM2] Block ${block.id} (lines ${block.lineIndices.join(',')}): avgGap=${avgGap.toFixed(1)}s, gapToNext=${gapToNext.toFixed(1)}s, shouldCreate=${shouldCreateM2}`);
+      if (import.meta.env.DEV) {console.log(`[AutoM2] Block ${block.id} (lines ${block.lineIndices.join(',')}): avgGap=${avgGap.toFixed(1)}s, gapToNext=${gapToNext.toFixed(1)}s, shouldCreate=${shouldCreateM2}`);}
     }
 
-    if (!shouldCreateM2) continue;
+    if (!shouldCreateM2) {continue;}
 
     // M2 time = after last vocal + buffer
     const m2Time = lastMarker.time + avgGap * 1.2;
@@ -1585,7 +1579,7 @@ export function matchGeniusToLrc(
     });
 
     if (import.meta.env.DEV) {
-      if (import.meta.env.DEV) console.log(`[AutoM2] Created M2 for block ${block.id} at ${m2Time.toFixed(2)}s`);
+      if (import.meta.env.DEV) {console.log(`[AutoM2] Created M2 for block ${block.id} at ${m2Time.toFixed(2)}s`);}
     }
   }
 
@@ -1616,7 +1610,7 @@ export function extractCleanLyrics(geniusText: string): string[] {
     for (const block of tagResult.blocks) {
       for (const contentLine of block.contentLines) {
         const trimmed = contentLine.trim();
-        if (trimmed) lines.push(trimmed);
+        if (trimmed) {lines.push(trimmed);}
       }
     }
     return lines;
@@ -1673,7 +1667,7 @@ export function detectedBlocksToPersistedBlocks(
 
   // ZIP-DIAG: Log first 2 blocks for diagnostic verification
   if (import.meta.env.DEV) {
-    if (import.meta.env.DEV) console.log('[ZIP-DIAG] detectedBlocksToPersistedBlocks:', {
+    if (import.meta.env.DEV) {console.log('[ZIP-DIAG] detectedBlocksToPersistedBlocks:', {
       inputBlocks: detectedBlocks.length,
       cleanLines: cleanLyricLines.length,
       outputBlocks: result.length,
@@ -1688,7 +1682,7 @@ export function detectedBlocksToPersistedBlocks(
         type: result[1].type,
       } : null,
       mismatches: result.filter(b => b.lineIndices.length === 0).length,
-    });
+    });}
   }
 
   return result;
@@ -1785,12 +1779,12 @@ async function _fetchLrclib(
     });
 
     if (import.meta.env.DEV) {
-      if (import.meta.env.DEV) console.log(
+      if (import.meta.env.DEV) {console.log(
         `[AutoLyrics] Selected LRC: id=${best.id} duration=${best.duration}s ` +
         `(requested=${duration ?? '?'}s, ` +
         `diff=${Math.abs((best.duration || 0) - (duration || 0)).toFixed(1)}s, ` +
         `${synced.length} synced versions available)`
-      );
+      );}
     }
   } catch (e) {
     if (import.meta.env.DEV) {
@@ -1819,7 +1813,7 @@ export async function fetchLrcVersions(
     }
     const results = await res.json();
 
-    if (!Array.isArray(results)) return [];
+    if (!Array.isArray(results)) {return [];}
 
     // Filter: must have syncedLyrics, duration within ±5s
     const synced = results.filter((r: any) =>
@@ -1855,10 +1849,10 @@ export async function fetchLrcVersions(
     // Sort: best score first
     versions.sort((a, b) => b.score - a.score);
 
-    if (import.meta.env.DEV) console.log(
+    if (import.meta.env.DEV) {console.log(
       `[LRC-Picker] Found ${versions.length} versions ` +
       `for "${artist} — ${title}" (${trackDurationSec}s)`
-    );
+    );}
 
     return versions;
   } catch (e) {
@@ -1883,7 +1877,7 @@ export function parseLrcVersion(
   // Build cache key from text only (not timestamps)
   const cacheKey = `${geniusText ?? ''}||${version.lrcText}`;
   const cached = _parseLrcCache.get(cacheKey);
-  if (cached) return cached;
+  if (cached) {return cached;}
 
   const lrcResult = parseLrcString(version.lrcText);
 
@@ -1910,7 +1904,7 @@ export function computeCoverage(
   blocks: { lineIndices: number[] }[],
   checkBlocks: number = 3,
 ): number {
-  if (!blocks || blocks.length === 0) return 0;
+  if (!blocks || blocks.length === 0) {return 0;}
   const head = blocks.slice(0, checkBlocks);
   const mapped = head.filter(b => b.lineIndices && b.lineIndices.length > 0).length;
   return mapped / checkBlocks;
@@ -1940,10 +1934,10 @@ export async function tryBetterLrcVersion(
   const MIN_CONFIDENCE = 0.5;
 
   // 1. Если coverage уже хороший — retry не нужен
-  if (computeCoverage(currentMatchResult.blocks, CHECK_BLOCKS) >= COVERAGE_THRESHOLD) return null;
+  if (computeCoverage(currentMatchResult.blocks, CHECK_BLOCKS) >= COVERAGE_THRESHOLD) {return null;}
 
   // 2. Guard: низкий confidence = плохой Genius, не LRC проблема
-  if (currentMatchResult.confidence < MIN_CONFIDENCE) return null;
+  if (currentMatchResult.confidence < MIN_CONFIDENCE) {return null;}
 
   // 3. Реальная длительность: track duration → version's API duration → LRC timestamp → 0
   //    priority: currentLrc.duration (real track) → currentLrc.versionDuration (version's API duration)
@@ -1952,7 +1946,7 @@ export async function tryBetterLrcVersion(
     ?? currentLrc.versionDuration
     ?? (currentLrc.lines.length > 0 ? currentLrc.lines[currentLrc.lines.length - 1].time : 0);
   const allVersions = await fetchLrcVersions(artist, track, trackDuration);
-  if (allVersions.length <= 1) return null;
+  if (allVersions.length <= 1) {return null;}
 
   // 4. Исключаем текущую версию по sourceId (не по сырому тексту)
   // Оба пути (_fetchLrclib и _fetchLrclibFallback) теперь сохраняют sourceId.
@@ -1968,7 +1962,7 @@ export async function tryBetterLrcVersion(
     return null;
   }
   const nextBest = allVersions.find(v => v.id !== currentLrc.sourceId);
-  if (!nextBest) return null;
+  if (!nextBest) {return null;}
 
   // 5. Пробуем следующую
   const newResult = parseLrcVersion(nextBest, geniusText);
@@ -1976,13 +1970,13 @@ export async function tryBetterLrcVersion(
   const currentCoverage = computeCoverage(currentMatchResult.blocks, CHECK_BLOCKS);
 
   // 6. Только если coverage реально улучшился
-  if (newCoverage <= currentCoverage) return null;
+  if (newCoverage <= currentCoverage) {return null;}
 
   if (import.meta.env.DEV) {
-    if (import.meta.env.DEV) console.log(
+    if (import.meta.env.DEV) {console.log(
       `[TC-096] Switched LRC: version #${currentLrc.sourceId} → #${nextBest.id} ` +
       `(coverage: ${(currentCoverage * 100).toFixed(0)}% → ${(newCoverage * 100).toFixed(0)}%)`
-    );
+    );}
   }
 
   return { version: nextBest, matchResult: newResult };
@@ -2005,9 +1999,9 @@ async function _fetchLrclibFallback(
       `https://lrclib.net/api/get?${params.toString()}`,
       { headers: { 'User-Agent': 'beLive/1.0' }, signal: AbortSignal.timeout(30000) }
     );
-    if (!res.ok) return;
+    if (!res.ok) {return;}
     const data = await res.json();
-    if (!data.syncedLyrics) return;
+    if (!data.syncedLyrics) {return;}
     const lines = _parseLrc(data.syncedLyrics);
     _cache.set(key, {
       lines,
@@ -2018,10 +2012,10 @@ async function _fetchLrclibFallback(
       versionDuration: data.duration || undefined,
     });
     if (import.meta.env.DEV) {
-      if (import.meta.env.DEV) console.log(
+      if (import.meta.env.DEV) {console.log(
         `[AutoLyrics] Fallback LRC: id=${data.id} duration=${data.duration}s ` +
         `(requested=${duration ?? '?'}s, ${lines.length} lines)`
-      );
+      );}
     }
   } catch (e) {
     if (import.meta.env.DEV) {
@@ -2037,18 +2031,18 @@ function _parseLrc(syncedLyrics: string): LrcLine[] {
   // Парсим [offset:N] тег (миллисекунды → секунды)
   let offsetMs = 0;
   const offsetMatch = syncedLyrics.match(/\[offset:\s*(-?\d+)\]/);
-  if (offsetMatch) offsetMs = parseInt(offsetMatch[1], 10);
+  if (offsetMatch) {offsetMs = parseInt(offsetMatch[1], 10);}
   const offsetSec = offsetMs / 1000;
 
   for (const line of lines) {
-    if (!line.trim()) continue;
-    if (/^\[offset:/i.test(line)) continue;
+    if (!line.trim()) {continue;}
+    if (/^\[offset:/i.test(line)) {continue;}
 
     // FIX (Центр): создаём НОВЫЙ RegExp для каждой строки
     // чтобы избежать проблемы с lastIndex у флага /g
     const timePatternClean = /\[\d{2}:\d{2}\.\d{2,3}\]/g;
     const text = line.replace(timePatternClean, '').trim();
-    if (!text) continue;
+    if (!text) {continue;}
 
     // Разворачиваем мультитаймкоды [00:12.00][01:24.00]text
     const times: number[] = [];
@@ -2104,12 +2098,12 @@ export const _CYR_TO_LAT: Record<string, string> = {
 
 function _levenshtein(a: string, b: string): number {
   // Fast length-difference reject for long strings
-  if (a.length > 100 || b.length > 100) return Math.abs(a.length - b.length);
+  if (a.length > 100 || b.length > 100) {return Math.abs(a.length - b.length);}
   // Optimized: single-row DP instead of full 2D matrix (3-5x faster, less GC)
   const n = a.length, m = b.length;
   let prev = new Uint16Array(m + 1);
   let curr = new Uint16Array(m + 1);
-  for (let j = 0; j <= m; j++) prev[j] = j;
+  for (let j = 0; j <= m; j++) {prev[j] = j;}
   for (let i = 1; i <= n; i++) {
     curr[0] = i;
     for (let j = 1; j <= m; j++) {
@@ -2124,7 +2118,7 @@ function _levenshtein(a: string, b: string): number {
 
 /** Compare already-normalized strings (no re-normalization) — used in hot matching loop */
 function _similarityNormalized(na: string, nb: string): number {
-  if (!na || !nb) return 0;
+  if (!na || !nb) {return 0;}
 
   // Substring match — penalty by length ratio
   // Prevents sub-lines from matching full lines (LRC split-lines vs Genius whole lines)
@@ -2138,7 +2132,7 @@ function _similarityNormalized(na: string, nb: string): number {
 
   // Levenshtein для коротких строк
   const maxLen = Math.max(na.length, nb.length);
-  if (maxLen === 0) return 1;
+  if (maxLen === 0) {return 1;}
   const dist = _levenshtein(na, nb);
   const levenshteinScore = 1 - dist / maxLen;
 

@@ -53,7 +53,7 @@ export function initLyricsEvents(): () => void {
 
       for (const m of markers) {
         // Skip ALL M2 markers (parity с bridge.ts:106)
-        if (m.markerType === 'M2') continue
+        if (m.markerType === 'M2') {continue}
         // Skip out-of-bounds
         if (m.lineIndex < 0 || m.lineIndex >= lines.length) {
           invalidCount++
@@ -118,7 +118,7 @@ export function initLyricsEvents(): () => void {
   // ── Initial sync с 1000ms retry ──
   const syncLyricsFromLegacy = () => {
     const ld = (window as any).lyricsDisplay
-    if (!ld || !Array.isArray(ld.lyrics)) return
+    if (!ld || !Array.isArray(ld.lyrics)) {return}
     useLyricsStore.setState({ lines: [...ld.lyrics] })
   }
   syncLyricsFromLegacy()
@@ -131,7 +131,7 @@ export function initLyricsEvents(): () => void {
     if (!rafSyncActive) {
       useLyricsStore.setState({ activeLineIndex: payload.lineIndex })
     }
-    if (useLyricsStore.getState().lines.length === 0) syncLyricsFromLegacy()
+    if (useLyricsStore.getState().lines.length === 0) {syncLyricsFromLegacy()}
   }))
 
   // lyrics-rendered

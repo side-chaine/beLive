@@ -13,6 +13,7 @@ vi.mock('../trigger.bus', () => ({
 }));
 
 import { TriggerEngine } from '../trigger.engine';
+import type { TriggerEvent } from '../trigger.types';
 
 describe('TriggerEngine', () => {
   let engine: TriggerEngine;
@@ -35,7 +36,7 @@ describe('TriggerEngine', () => {
   });
 
   it('tick возвращает события от детектора', () => {
-    const mockEvent = { id: 'word-1', type: 'rising', source: 'word-line', value: 1, time: 50, metadata: {} };
+    const mockEvent: TriggerEvent = { id: 'word-start', type: 'discrete', source: 'word-sync', value: 1, time: 50, metadata: {} };
     const detector = { id: 'test', tick: vi.fn(() => [mockEvent]), reset: vi.fn() };
     engine.addDetector(detector);
 

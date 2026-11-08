@@ -35,7 +35,7 @@ export interface TgFileInfo {
 
 export async function getFile(token: string, fileId: string): Promise<TgFileInfo> {
   const res = await fetch(`${TG_API}${token}/getFile?file_id=${encodeURIComponent(fileId)}`);
-  let data: any = null;
+  let data: any;
   try {
     data = await res.json();
   } catch {

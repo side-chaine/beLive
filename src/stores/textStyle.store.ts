@@ -42,7 +42,7 @@ interface PersistedState {
 function loadPersisted(): Partial<PersistedState> {
   try {
     const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return {};
+    if (!raw) {return {};}
     return JSON.parse(raw) as Partial<PersistedState>;
   } catch {
     return {};
@@ -170,6 +170,7 @@ export const useTextStyleStore = create<TextStyleState>((set, get) => ({
       lineActiveLevel: s.lineActiveLevel,
       lineNextLevel: s.lineNextLevel,
       lineOthersLevel: s.lineOthersLevel,
+      lineOthersSource: s.lineOthersSource,
     });
   },
 
@@ -270,6 +271,7 @@ export const useTextStyleStore = create<TextStyleState>((set, get) => ({
       lineActiveLevel: s.lineActiveLevel,
       lineNextLevel: s.lineNextLevel,
       lineOthersLevel: s.lineOthersLevel,
+      lineOthersSource: s.lineOthersSource,
     });
   },
 
