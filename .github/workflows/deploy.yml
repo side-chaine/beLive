@@ -26,6 +26,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # N1b/8a — временный дубль до N5.4 (снос GH Pages): гейты остаются в pr-gate.
+      - name: Secrets gate
+        run: node scripts/check-secrets.mjs
+
+      - name: Deps manifest
+        run: node scripts/check-manifest.mjs
+
       - name: Test
         run: npm test -- --run
 
