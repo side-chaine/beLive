@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useWaveformData } from '../useWaveformData';
 
+/** Окно с фасадом audioEngine — типизированный доступ, без any-каста (ratchet В1 п.6). */
+type EngineWindow = Window & { audioEngine?: unknown };
+const engineWindow = window as unknown as EngineWindow;
+
 /** Фейковый AudioBuffer: волне нужны только duration/sampleRate/getChannelData. */
 function makeBuffer(duration: number, sampleRate = 44100, fill = 0.25): AudioBuffer {
   const data = new Float32Array(8).fill(fill);
@@ -22,7 +26,7 @@ function installEngine(opts: {
 }) {
   const decodeAudioData = opts.decodeAudioData ?? vi.fn(async () => makeBuffer(1));
   const audioContext = { decodeAudioData } as unknown as AudioContext;
-  (window as any).audioEngine = {
+  engineWindow.audioEngine = {
     hybridEngine: {
       instrumentalUrl: opts.instrumentalUrl ?? null,
       vocalsUrl: opts.vocalsUrl ?? null,
@@ -34,13 +38,13 @@ function installEngine(opts: {
 }
 
 beforeEach(() => {
-  delete (window as any).audioEngine;
+  delete engineWindow.audioEngine;
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
-  delete (window as any).audioEngine;
+  delete engineWindow.audioEngine;
 });
 
 describe('useWaveformData (702-F0": волна не декодирует второй раз)', () => {
