@@ -1,0 +1,19 @@
+---
+/**
+ * Emits one JSON-LD block per schema object. `</script>` and `<!--` are escaped
+ * so page content can never break out of the script element.
+ */
+interface Props {
+  schemas: Array<Record<string, unknown>>;
+}
+
+const { schemas = [] } = Astro.props;
+
+const serialize = (data: Record<string, unknown>): string =>
+  JSON.stringify(data)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
+---
+
+{schemas.map((schema) => <script type="application/ld+json" set:html={serialize(schema)} />)}

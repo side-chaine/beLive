@@ -1,0 +1,7 @@
+# beLive marketing site — https://mybelive.com/
+# The application lives on app.mybelive.com and has its own robots.txt.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://mybelive.com/sitemap-index.xml

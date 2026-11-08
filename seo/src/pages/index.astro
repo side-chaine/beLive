@@ -1,0 +1,67 @@
+---
+/**
+ * Phase 0 placeholder. Wave 1 replaces this with the full home page; for now it
+ * exists so the build, sitemap and canonical pipeline can be verified end to end.
+ */
+import Base from '../layouts/Base.astro';
+import Cta from '../components/Cta.astro';
+import { softwareApplication, howTo, webSite, organization } from '../lib/schema.mjs';
+
+const title = 'beLive — студия в браузере: минусовки, репетиции, караоке';
+const description =
+  'Репетируйте и выступайте прямо в браузере: минусовки, разделение на дорожки, смена тональности и темпа. Без установки.';
+
+const schemas = [
+  organization(),
+  webSite(),
+  softwareApplication({
+    description:
+      'Веб-студия для репетиций и выступлений: минусовки, стемы, смена тональности и темпа, караоке.',
+  }),
+  howTo({
+    name: 'Как начать репетировать в beLive',
+    description: 'Три шага от открытия сайта до первой репетиции.',
+    steps: [
+      { name: 'Откройте студию', text: 'Перейдите на app.mybelive.com — регистрация не нужна для старта.' },
+      { name: 'Загрузите трек', text: 'Добавьте свою запись или выберите трек из каталога.' },
+      { name: 'Настройте под себя', text: 'Смените тональность и темп, включите нужные дорожки и репетируйте.' },
+    ],
+  }),
+];
+---
+
+<Base {title} {description} canonicalPath="/" {schemas}>
+  <div class="wrap">
+    <section class="hero">
+      <p class="eyebrow">Студия, которая живёт в браузере</p>
+      <h1>Репетируйте и выступайте — без студии и установки</h1>
+      <p class="lede">
+        beLive — это рабочее место музыканта в браузере: минусовки, разделение на дорожки,
+        смена тональности и темпа, караоке. Открывается по ссылке, работает на ноутбуке и телефоне.
+      </p>
+      <Cta />
+    </section>
+
+    <section id="how">
+      <h2>Как это работает</h2>
+      <ol class="steps">
+        <li>
+          <h3>Откройте студию</h3>
+          <p>Одна ссылка — и вы внутри. Ничего не нужно скачивать и настраивать.</p>
+        </li>
+        <li>
+          <h3>Загрузите трек</h3>
+          <p>Свой файл или трек из каталога — дальше студия подстроится под вас.</p>
+        </li>
+        <li>
+          <h3>Настройте и репетируйте</h3>
+          <p>Тональность, темп, отдельные дорожки — всё меняется на ходу.</p>
+        </li>
+      </ol>
+      <p class="note">
+        Это стартовая страница нового сайта beLive. Разделы с подробными инструкциями появятся
+        в ближайшее время.
+      </p>
+    </section>
+  </div>
+</Base>

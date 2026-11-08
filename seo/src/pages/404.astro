@@ -1,0 +1,27 @@
+---
+import Base from '../layouts/Base.astro';
+import Cta from '../components/Cta.astro';
+---
+
+<Base
+  title="Страница не найдена — beLive"
+  description="Такой страницы нет. Вернитесь на главную или откройте студию beLive."
+  canonicalPath="/404"
+  noindex={true}
+>
+  <div class="wrap">
+    <section class="hero">
+      <p class="eyebrow">404</p>
+      <h1>Такой страницы нет</h1>
+      <p class="lede">
+        Возможно, ссылка устарела. Начните с главной — или сразу откройте студию.
+      </p>
+      <div class="actions">
+        <a class="btn btn-ghost" href="/">На главную</a>
+      </div>
+      <div style="margin-top: 24px;">
+        <Cta />
+      </div>
+    </section>
+  </div>
+</Base>

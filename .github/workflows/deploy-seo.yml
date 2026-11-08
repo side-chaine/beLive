@@ -1,0 +1,125 @@
+name: Deploy SEO site
+
+# Marketing site on mybelive.com — completely separate from the app deploy.
+# Only seo/** triggers it, it never touches GitHub Pages, and it cannot affect
+# the app build. App stays on app.mybelive.com.
+#
+# Required repository secrets (set by Nikita, never in code):
+#   CLOUDFLARE_API_TOKEN   — scoped to "Cloudflare Pages: Edit"
+#   CLOUDFLARE_ACCOUNT_ID
+# Optional verification tokens, injected at build time:
+#   SEO_GOOGLE_SITE_VERIFICATION, SEO_YANDEX_VERIFICATION, SEO_BING_VERIFICATION
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'seo/**'
+      - '.github/workflows/deploy-seo.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'seo/**'
+      - '.github/workflows/deploy-seo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-seo-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: seo
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: seo/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          SEO_GOOGLE_SITE_VERIFICATION: ${{ secrets.SEO_GOOGLE_SITE_VERIFICATION }}
+          SEO_YANDEX_VERIFICATION: ${{ secrets.SEO_YANDEX_VERIFICATION }}
+          SEO_BING_VERIFICATION: ${{ secrets.SEO_BING_VERIFICATION }}
+
+      # Acceptance for phase 0 lives here, not in a report: a green build with a
+      # missing or host-less sitemap is exactly the defect we shipped last time.
+      - name: Verify sitemap and canonical
+        run: |
+          set -euo pipefail
+          test -s dist/sitemap-index.xml
+          test -s dist/sitemap-0.xml
+          test -s dist/index.html
+          grep -q '<loc>https://mybelive.com/sitemap-0.xml</loc>' dist/sitemap-index.xml
+          grep -q '<loc>https://mybelive.com/</loc>' dist/sitemap-0.xml
+          grep -q '<link rel="canonical" href="https://mybelive.com/"' dist/index.html
+          if grep -q 'localhost' dist/sitemap-0.xml; then
+            echo "::error::sitemap contains a localhost URL"
+            exit 1
+          fi
+          if grep -q '<loc>https://mybelive.com/404' dist/sitemap-0.xml; then
+            echo "::error::404 page must not be in the sitemap"
+            exit 1
+          fi
+          echo "sitemap urls: $(grep -o '<loc>' dist/sitemap-0.xml | wc -l)"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-dist
+          path: seo/dist
+          retention-days: 7
+
+  deploy:
+    name: deploy
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: production-seo
+      url: https://mybelive.com
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: seo-dist
+          path: seo/dist
+
+      # A silent skip is worse than a red run: nobody notices the site is stale.
+      - name: Check Cloudflare credentials
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CF_TOKEN" ] || [ -z "$CF_ACCOUNT" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID are not set. Deploy needs them (Nikita's hands)."
+            exit 1
+          fi
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy seo/dist --project-name=belive-seo --branch=main

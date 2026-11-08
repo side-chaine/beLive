@@ -1,0 +1,82 @@
+---
+/**
+ * Head meta for every page. Hard-fails the build when title/description break
+ * the limits from rules/ROLE-711.md — a silent 74-character title is a real SEO
+ * defect that is invisible in review, so it must not reach production.
+ */
+import { SITE, BRAND, LOCALE, OG_DEFAULT, canonicalUrl } from '../lib/site.mjs';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Path form, e.g. `/minus-bez-gitary`. Defaults to the current URL. */
+  canonicalPath?: string;
+  ogImage?: string;
+  ogType?: 'website' | 'article';
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description,
+  canonicalPath,
+  ogImage = OG_DEFAULT,
+  ogType = 'website',
+  noindex = false,
+} = Astro.props;
+
+const LIMITS = { title: 60, description: 160 };
+const problems: string[] = [];
+if (title.length > LIMITS.title) {
+  problems.push(`title is ${title.length} chars (max ${LIMITS.title}): "${title}"`);
+}
+if (description.length > LIMITS.description) {
+  problems.push(`description is ${description.length} chars (max ${LIMITS.description})`);
+}
+if (!title.trim() || !description.trim()) {
+  problems.push('title and description must not be empty');
+}
+if (problems.length > 0) {
+  throw new Error(`[seo] ${Astro.url.pathname} — ${problems.join('; ')}`);
+}
+
+const rawPath = canonicalPath ?? Astro.url.pathname;
+const canonical = canonicalUrl(rawPath);
+const ogImageUrl = new URL(ogImage, SITE).href;
+
+// Verification tokens come from CI secrets at build time. Never hardcode them.
+const env = (key: string): string =>
+  (typeof process !== 'undefined' && process.env?.[key]) ||
+  (import.meta.env?.[key] as string | undefined) ||
+  '';
+const googleVerification = env('SEO_GOOGLE_SITE_VERIFICATION');
+const yandexVerification = env('SEO_YANDEX_VERIFICATION');
+const bingVerification = env('SEO_BING_VERIFICATION');
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+
+{noindex && <meta name="robots" content="noindex, follow" />}
+{!noindex && <meta name="robots" content="index, follow, max-image-preview:large" />}
+
+<meta property="og:type" content={ogType} />
+<meta property="og:site_name" content={BRAND} />
+<meta property="og:locale" content={LOCALE} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogImageUrl} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:type" content="image/png" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImageUrl} />
+
+{googleVerification && <meta name="google-site-verification" content={googleVerification} />}
+{yandexVerification && <meta name="yandex-verification" content={yandexVerification} />}
+{bingVerification && <meta name="msvalidate.01" content={bingVerification} />}

@@ -96,6 +96,9 @@ export default [
       ".opencode/**",
       "team-m/**",
       "docs/**",
+      // 711 (seo): отдельный Astro-проект со своим package.json/lock и своими
+      // гейтами (deploy-seo.yml). Корневой eslint его не линтует.
+      "seo/**",
       // 805 (N1a): скомпилированные бандлы воркера — сгенерированы, не линтуем.
       "gateway/dist-*/",
       // 805 (N1a): vendored WASM-глue в FROZEN engine-v3 — не наш lintable-исходник.

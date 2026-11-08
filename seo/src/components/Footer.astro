@@ -1,0 +1,15 @@
+---
+import { APP_URL, BRAND } from '../lib/site.mjs';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>{BRAND} — студия в браузере</span>
+    <a href={APP_URL} rel="noopener">app.mybelive.com</a>
+    <a href={`${APP_URL}/privacy.html`} rel="noopener">Конфиденциальность</a>
+    <a href={`${APP_URL}/terms.html`} rel="noopener">Условия</a>
+    <span class="copyright">© {year} {BRAND}</span>
+  </div>
+</footer>
