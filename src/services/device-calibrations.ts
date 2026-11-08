@@ -26,10 +26,10 @@ type CalibrationsMap = Record<string, DeviceCalibration>;
 function getAllCalibrations(): CalibrationsMap {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return {};
+    if (!raw) {return {};}
     
     const parsed = JSON.parse(raw);
-    if (typeof parsed !== 'object' || parsed === null) return {};
+    if (typeof parsed !== 'object' || parsed === null) {return {};}
     
     return parsed as CalibrationsMap;
   } catch (e) {

@@ -22,7 +22,7 @@ export function AIChatPanel() {
 
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || isStreaming) return;
+    if (!text || isStreaming) {return;}
     setInput('');
     addUserMessage(text);
 

@@ -63,7 +63,7 @@ const [packProgress, setPackProgress] = useState<{ current: number; total: numbe
   const lineSceneMap = useMemo(() => {
     const map = new Map<string, BlockSceneMeta>();
     scenes.forEach(s => {
-      if (s.lineIndex != null) map.set(`${s.blockIndex}_${s.lineIndex}`, s);
+      if (s.lineIndex != null) {map.set(`${s.blockIndex}_${s.lineIndex}`, s);}
     });
     return map;
   }, [scenes]);
@@ -71,7 +71,7 @@ const [packProgress, setPackProgress] = useState<{ current: number; total: numbe
   const blockSceneMap = useMemo(() => {
     const map = new Map<number, BlockSceneMeta>();
     scenes.forEach(s => {
-      if (s.lineIndex == null) map.set(s.blockIndex, s);
+      if (s.lineIndex == null) {map.set(s.blockIndex, s);}
     });
     return map;
   }, [scenes]);
@@ -85,7 +85,7 @@ const [packProgress, setPackProgress] = useState<{ current: number; total: numbe
   }, []);
 
   const loadScenes = useCallback(async () => {
-    if (!trackId) return;
+    if (!trackId) {return;}
     try {
       const sceneList = await getBlockScenes(trackId);
       setScenes(sceneList);
@@ -123,7 +123,7 @@ const [packProgress, setPackProgress] = useState<{ current: number; total: numbe
     };
   }, []);
 
-  if (!isOpen) return null;
+  if (!isOpen) {return null;}
 
   const getBlockColor = (type: string): string => {
     const colors: Record<string, string> = {
@@ -157,7 +157,7 @@ const [packProgress, setPackProgress] = useState<{ current: number; total: numbe
 
   const handleSceneUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !trackId || selectedBlockIndex === null) return;
+    if (!file || !trackId || selectedBlockIndex === null) {return;}
     e.target.value = '';
     try {
       const block = blocks[selectedBlockIndex];
@@ -172,7 +172,7 @@ const [packProgress, setPackProgress] = useState<{ current: number; total: numbe
   // === LINE-LEVEL UPLOAD ===
   const handleLineUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !trackId || selectedBlockIndex === null || selectedLineIndex === null) return;
+    if (!file || !trackId || selectedBlockIndex === null || selectedLineIndex === null) {return;}
     e.target.value = '';
     try {
       const block = blocks[selectedBlockIndex];
@@ -185,7 +185,7 @@ const [packProgress, setPackProgress] = useState<{ current: number; total: numbe
   };
 
   const handleRemoveBlockScenes = async (blockIndex: number) => {
-    if (!trackId) return;
+    if (!trackId) {return;}
     try {
       const blockScenesToRemove = scenes.filter(s => s.blockIndex === blockIndex);
       for (const scene of blockScenesToRemove) {
@@ -203,10 +203,10 @@ const [packProgress, setPackProgress] = useState<{ current: number; total: numbe
 
   const handleInlineLineRemove = async (blockIndex: number, localLineIndex: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!trackId) return;
+    if (!trackId) {return;}
     const lineKey = `${blockIndex}_${localLineIndex}`;
     const scene = lineSceneMap.get(lineKey);
-    if (!scene) return;
+    if (!scene) {return;}
     try {
       await deleteBlockScene(scene.id);
       await loadScenes();
@@ -221,7 +221,7 @@ const [packProgress, setPackProgress] = useState<{ current: number; total: numbe
 
   const handleCustomUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !trackId) return;
+    if (!file || !trackId) {return;}
     e.target.value = '';
     try {
       const resized = await resizeImage(file);
@@ -236,7 +236,7 @@ const [packProgress, setPackProgress] = useState<{ current: number; total: numbe
   };
 
   const handleCustomRemove = async () => {
-    if (!trackId) return;
+    if (!trackId) {return;}
     try {
       await updateTrackField(trackId, { customBgBlob: null, customBgTheme: null });
       setCustomPreview(null);
@@ -248,7 +248,7 @@ const [packProgress, setPackProgress] = useState<{ current: number; total: numbe
 
   const handlePackUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (!files.length || !trackId) return;
+    if (!files.length || !trackId) {return;}
     e.target.value = '';
 
     // Natural sort: 1, 2, ... 10, 11 (НЕ 1, 10, 11, 2)
@@ -282,7 +282,7 @@ const [packProgress, setPackProgress] = useState<{ current: number; total: numbe
       console.warn(`[PackUpload] ${toUpload}/${files.length} will fit (empty cells: ${emptyCells.length}, quota: ${availableSlots})`);
     }
 
-    if (toUpload === 0) return;
+    if (toUpload === 0) {return;}
 
     // Загрузка с прогрессом
     let uploaded = 0;
@@ -304,7 +304,7 @@ const [packProgress, setPackProgress] = useState<{ current: number; total: numbe
     document.dispatchEvent(new CustomEvent('tracks-changed', { detail: { source: 'scene-crud' } }));
     setPackProgress(null);
 
-    if (import.meta.env.DEV) console.log(`[PackUpload] Done: ${uploaded}/${toUpload} uploaded`);
+    if (import.meta.env.DEV) {console.log(`[PackUpload] Done: ${uploaded}/${toUpload} uploaded`);}
   };
 
   return (

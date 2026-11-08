@@ -58,7 +58,7 @@ export function InstrumentCard({ stemId, onMuteToggle, onSoloToggle, onVolumeCha
   
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     // Only drag on the card body, not on buttons
-    if ((e.target as HTMLElement).closest('button')) return;
+    if ((e.target as HTMLElement).closest('button')) {return;}
     isDraggingRef.current = true;
     dragStartYRef.current = e.clientY;
     dragStartVolRef.current = volume;
@@ -66,7 +66,7 @@ export function InstrumentCard({ stemId, onMuteToggle, onSoloToggle, onVolumeCha
   
   useEffect(() => {
     const handlePointerMove = (e: PointerEvent) => {
-      if (!isDraggingRef.current) return;
+      if (!isDraggingRef.current) {return;}
       // Drag UP = increase volume, DOWN = decrease
       const deltaY = dragStartYRef.current - e.clientY;
       const cardHeight = 96;
@@ -85,7 +85,7 @@ export function InstrumentCard({ stemId, onMuteToggle, onSoloToggle, onVolumeCha
     };
   }, [stemId, onVolumeChange]);
   
-  if (!stem) return null;
+  if (!stem) {return null;}
   
   const state = isMuted ? 'muted' : isSolo ? 'solo' : 'active';
   

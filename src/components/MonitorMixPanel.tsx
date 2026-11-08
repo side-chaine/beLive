@@ -46,7 +46,7 @@ export function MonitorMixPanel() {
   // Auto-apply known device calibration on panel mount / device change
   React.useEffect(() => {
     // Wait for devices to be loaded
-    if (!st.devices || st.devices.length === 0) return;
+    if (!st.devices || st.devices.length === 0) {return;}
     
     const selectedDeviceId = st.outputDeviceId || '';
     
@@ -96,7 +96,7 @@ export function MonitorMixPanel() {
   // Keyboard handler for TAP input during test mode only (key '5')
   React.useEffect(() => {
     // Only activate when test is in progress
-    if (!st.testInProgress) return;
+    if (!st.testInProgress) {return;}
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore events from form elements
@@ -230,7 +230,7 @@ export function MonitorMixPanel() {
   const handleNudge = (delta: number) => () => {
     const liveDelay = useMonitorStore.getState().delayMs;
     const newMs = Math.max(0, Math.min(1000, liveDelay + delta));
-    if (newMs === liveDelay) return;
+    if (newMs === liveDelay) {return;}
     useMonitorStore.getState().nudgePush(liveDelay);
     useMonitorStore.getState().setDelayMs(newMs);
     useMonitorStore.getState().setLineUpDelayMs(newMs);
@@ -242,12 +242,12 @@ export function MonitorMixPanel() {
     st.setBackVocalMasterLevel(newValue);
 
     // Apply delta to all active BV blocks, preserving relative differences
-    if (st.backVocalIntroOn)     st.setBackVocalIntroLevel(clamp(st.backVocalIntroLevel + delta));
-    if (st.backVocalVerseOn)     st.setBackVocalVerseLevel(clamp(st.backVocalVerseLevel + delta));
-    if (st.backVocalPreChorusOn) st.setBackVocalPreChorusLevel(clamp(st.backVocalPreChorusLevel + delta));
-    if (st.backVocalChorusOn)    st.setBackVocalChorusLevel(clamp(st.backVocalChorusLevel + delta));
-    if (st.backVocalBridgeOn)    st.setBackVocalBridgeLevel(clamp(st.backVocalBridgeLevel + delta));
-    if (st.backVocalOutroOn)     st.setBackVocalOutroLevel(clamp(st.backVocalOutroLevel + delta));
+    if (st.backVocalIntroOn)     {st.setBackVocalIntroLevel(clamp(st.backVocalIntroLevel + delta));}
+    if (st.backVocalVerseOn)     {st.setBackVocalVerseLevel(clamp(st.backVocalVerseLevel + delta));}
+    if (st.backVocalPreChorusOn) {st.setBackVocalPreChorusLevel(clamp(st.backVocalPreChorusLevel + delta));}
+    if (st.backVocalChorusOn)    {st.setBackVocalChorusLevel(clamp(st.backVocalChorusLevel + delta));}
+    if (st.backVocalBridgeOn)    {st.setBackVocalBridgeLevel(clamp(st.backVocalBridgeLevel + delta));}
+    if (st.backVocalOutroOn)     {st.setBackVocalOutroLevel(clamp(st.backVocalOutroLevel + delta));}
   };
 
 

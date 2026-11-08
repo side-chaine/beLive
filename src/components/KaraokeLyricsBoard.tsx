@@ -45,9 +45,9 @@ export function KaraokeLyricsBoard() {
     : undefined
 
   useEffect(() => {
-    if (!isConcert) return
+    if (!isConcert) {return}
     const el = activeRef.current
-    if (!el) return
+    if (!el) {return}
 
     try {
       runConcertTransition(el, transitionId)

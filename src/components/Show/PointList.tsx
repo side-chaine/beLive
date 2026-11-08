@@ -39,7 +39,7 @@ export function PointList({ styles: s }: PointListProps) {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') { e.preventDefault(); commitEdit(); }
-    if (e.key === 'Escape') setEditingId(null);
+    if (e.key === 'Escape') {setEditingId(null);}
   };
 
   return (

@@ -24,8 +24,8 @@ let _rootFontSizeCache: number | null = null;
 
 /** Получить текущий root font size (кэшированный) */
 export function getRootFontSize(): number {
-  if (_rootFontSizeCache !== null) return _rootFontSizeCache;
-  if (typeof document === 'undefined') return 16;
+  if (_rootFontSizeCache !== null) {return _rootFontSizeCache;}
+  if (typeof document === 'undefined') {return 16;}
   _rootFontSizeCache = parseFloat(
     getComputedStyle(document.documentElement).fontSize
   ) || 16;
@@ -70,7 +70,7 @@ export function computeTotalHeight(
   lineHeight: number,
   gapPx: number
 ): number {
-  if (slotCount <= 0) return 0;
+  if (slotCount <= 0) {return 0;}
   return (slotCount - 1) * (lineHeight + gapPx) + lineHeight;
 }
 
@@ -105,7 +105,7 @@ export function parseBracketedParts(
   text: string,
   slotIdPrefix: string
 ): SlotPart[] {
-  if (!text || !text.trim()) return [];
+  if (!text || !text.trim()) {return [];}
 
   const parts: SlotPart[] = [];
   let match: RegExpExecArray | null;

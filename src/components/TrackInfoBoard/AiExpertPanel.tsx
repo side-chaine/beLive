@@ -44,7 +44,7 @@ function renderMd(text: string): React.ReactNode[] {
   const { cleanText: afterActions } = parseQuickReplies(text);
   // Strip other commands ([SEEK], [SEARCH], [SEARCH_AUDIO], etc.)
   const displayText = stripTextCommands(afterActions);
-  if (!displayText) return [];
+  if (!displayText) {return [];}
 
   const parts: React.ReactNode[] = [];
   const regex = /(\*\*[^*]+\*\*|`[^`]+`)/g;
@@ -74,7 +74,7 @@ function renderMd(text: string): React.ReactNode[] {
 
 /** Extract QuickReply buttons from AI message text */
 function extractReplies(text: string): QuickReply[] {
-  if (!text) return [];
+  if (!text) {return [];}
   const { replies } = parseQuickReplies(text);
   return replies;
 }
@@ -114,15 +114,15 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
   // Proactive greeting on track load — React state driven, not DOM event
   useEffect(() => {
     const trackId = currentTrack?.id || currentTrack?.title;
-    if (!trackId) return; // no track yet
+    if (!trackId) {return;} // no track yet
     
     // Already greeted for this track
-    if (lastGreetedTrackId.current === trackId) return;
+    if (lastGreetedTrackId.current === trackId) {return;}
     lastGreetedTrackId.current = trackId;
 
     // Don't greet if practice is active
     const practiceState = usePracticeStore.getState();
-    if (practiceState.isActive) return;
+    if (practiceState.isActive) {return;}
 
     const parsed = parseTrackName(currentTrack?.title || '');
     const currentBlocks = useBlocksStore.getState().blocks || [];
@@ -237,7 +237,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
     if (loopState.isLooping && loopState.loopBlockIds?.length) {
       const allBlocks = useBlocksStore.getState().blocks;
       const loopBlock = allBlocks?.find(b => loopState.loopBlockIds.includes(b.id));
-      if (loopBlock) loopBlockType = loopBlock.type;
+      if (loopBlock) {loopBlockType = loopBlock.type;}
     }
 
     return buildTrackContext({
@@ -266,7 +266,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
     const audioMatch = fullText.match(/\[SEARCH_AUDIO:\s*([^\]]+)\]/i);
     const wikiMatch = fullText.match(/\[SEARCH:\s*([^\]]+)\]/i);
     const searchMatch = audioMatch || wikiMatch;
-    if (!searchMatch) return;
+    if (!searchMatch) {return;}
 
     const toolName = audioMatch ? 'search_audiodb' : 'search_wikipedia';
     const searchQuery = searchMatch[1].trim();
@@ -409,7 +409,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
 
   // Expert tab click
   const handleExpertClick = useCallback(async (expert: AiExpert) => {
-    if (activeExpert === expert) return;
+    if (activeExpert === expert) {return;}
     // НЕ очищаем сообщения при смене эксперта — пользователь хочет контекст
     setActiveExpert(expert);
 
@@ -425,7 +425,7 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
 
   // Quick Reply click handler
   const handleQuickReply = useCallback(async (reply: QuickReply) => {
-    if (!activeExpert) return;
+    if (!activeExpert) {return;}
 
     switch (reply.type) {
       case 'seek': {
@@ -660,10 +660,10 @@ export function AiExpertPanel({ compact = false }: AiExpertPanelProps = {}) {
   // User sends message
   const handleSend = useCallback(async () => {
     const t = inputValue.trim();
-    if (!t || isAiStreaming || !activeExpert) return;
+    if (!t || isAiStreaming || !activeExpert) {return;}
     addAiMessage({ role: 'user', content: t });
     setInputValue('');
-    if (textareaRef.current) textareaRef.current.style.height = 'auto';
+    if (textareaRef.current) {textareaRef.current.style.height = 'auto';}
     await sendToAi(t, activeExpert, aiMessages);
   }, [inputValue, isAiStreaming, activeExpert, aiMessages, addAiMessage, sendToAi]);
 

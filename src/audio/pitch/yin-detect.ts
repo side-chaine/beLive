@@ -62,7 +62,7 @@ export class YinDetector {
 
     /* Step 0: noise gate */
     let ssq = 0;
-    for (let i = 0; i < N; i++) ssq += buffer[i] * buffer[i];
+    for (let i = 0; i < N; i++) {ssq += buffer[i] * buffer[i];}
     const rms = Math.sqrt(ssq / N);
     if (rms < this._gate) {
       this._prevFreq = 0;
@@ -95,7 +95,7 @@ export class YinDetector {
       }
 
       if (te === -1 && v < this._threshold) {
-        while (tau + 1 < tauMax && cmnd[tau + 1] < cmnd[tau]) tau++;
+        while (tau + 1 < tauMax && cmnd[tau + 1] < cmnd[tau]) {tau++;}
         te = tau;
         break;
       }
@@ -111,7 +111,7 @@ export class YinDetector {
     if (te > 0 && te < tauMax) {
       const s0 = cmnd[te - 1], s1 = cmnd[te], s2 = cmnd[te + 1];
       const dn = 2 * s1 - s2 - s0;
-      if (dn !== 0) bt = te + (s2 - s0) / (2 * dn);
+      if (dn !== 0) {bt = te + (s2 - s0) / (2 * dn);}
     }
 
     let freq = sampleRate / bt;
@@ -146,7 +146,7 @@ export class YinDetector {
     /* Auto-calibrate */
     if (!this._calDone && conf > 0.7) {
       this._calBuf.push(freq);
-      if (this._calBuf.length >= 50) this._autoCal();
+      if (this._calBuf.length >= 50) {this._autoCal();}
     }
 
     const midi = 12 * Math.log2(freq / 440) + 69;
@@ -163,29 +163,29 @@ export class YinDetector {
   private _octLock(f: number, c: number): number {
     if (this._prevFreq > 0 && c < 0.85) {
       const r = f / this._prevFreq;
-      if (r > 1.8 && r < 2.2) f /= 2;
-      else if (r > 0.45 && r < 0.55) f *= 2;
-      else if (r > 1.4 && r < 1.6 && c < 0.80) f /= 1.5;
+      if (r > 1.8 && r < 2.2) {f /= 2;}
+      else if (r > 0.45 && r < 0.55) {f *= 2;}
+      else if (r > 1.4 && r < 1.6 && c < 0.80) {f /= 1.5;}
     }
     this._prevFreq = f;
     return f;
   }
 
   private _rangeClamp(f: number): number {
-    while (f > 0 && f < this._lo) f *= 2;
-    while (f > this._hi) f /= 2;
+    while (f > 0 && f < this._lo) {f *= 2;}
+    while (f > this._hi) {f /= 2;}
     return f;
   }
 
   private _median(f: number): number {
     this._medBuf[this._medIdx] = f;
     this._medIdx = (this._medIdx + 1) % this._medW;
-    if (this._medN < this._medW) this._medN++;
+    if (this._medN < this._medW) {this._medN++;}
     const a: number[] = [];
     for (let i = 0; i < this._medN; i++) {
-      if (this._medBuf[i] > 0) a.push(this._medBuf[i]);
+      if (this._medBuf[i] > 0) {a.push(this._medBuf[i]);}
     }
-    if (a.length === 0) return f;
+    if (a.length === 0) {return f;}
     a.sort((x, y) => x - y);
     return a[a.length >>> 1];
   }

@@ -33,7 +33,7 @@ export function initMonitorEvents(): () => void {
 
   const syncMonitorFromLegacy = () => {
     const mm = (window as any).monitorMix
-    if (!mm) return
+    if (!mm) {return}
     useMonitorStore.setState(mapLegacyMonitorState(mm))
   }
 

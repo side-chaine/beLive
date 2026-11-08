@@ -7,7 +7,7 @@
 self.onmessage = async (e: MessageEvent) => {
   const msg = e.data;
   if (msg.type === 'abort') { (self as any).__aborted = true; return; }
-  if (msg.type !== 'encode') return;
+  if (msg.type !== 'encode') {return;}
 
   // FM-6: reset sticky __aborted — belt + suspenders с terminateWorker в pipeline
   (self as any).__aborted = false;
@@ -41,7 +41,7 @@ self.onmessage = async (e: MessageEvent) => {
 
       // Обнуляем только использованные элементы (GC-friendly)
       left.fill(0, chunkSize);
-      if (right) right.fill(0, chunkSize);
+      if (right) {right.fill(0, chunkSize);}
 
       // Float32 → Int16 конвертация с clamp
       for (let i = 0; i < chunkSize; i++) {
@@ -57,7 +57,7 @@ self.onmessage = async (e: MessageEvent) => {
         ? encoder.encodeBuffer(left, right!)
         : encoder.encodeBuffer(left);
 
-      if (mp3Buf.length > 0) mp3Chunks.push(mp3Buf);
+      if (mp3Buf.length > 0) {mp3Chunks.push(mp3Buf);}
 
       // TC-PERF-003: Progress update только при смене процента (throttle)
       const currentProgress = Math.round((offset / totalSamples) * 100);
@@ -74,7 +74,7 @@ self.onmessage = async (e: MessageEvent) => {
 
     // Flush остатка
     const flushBuf = encoder.flush();
-    if (flushBuf.length > 0) mp3Chunks.push(flushBuf);
+    if (flushBuf.length > 0) {mp3Chunks.push(flushBuf);}
 
     // Конкатенация всех чанков
     const totalLen = mp3Chunks.reduce((acc, c) => acc + c.length, 0);

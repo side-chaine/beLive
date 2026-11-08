@@ -339,7 +339,7 @@ export function QuickActions() {
 
   // Close menu on click outside
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen) {return;}
 
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -359,7 +359,7 @@ export function QuickActions() {
 
   // Close menu on Escape key
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen) {return;}
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {

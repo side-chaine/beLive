@@ -32,11 +32,11 @@ export function useWaveformViewport({
 }: UseWaveformViewportOptions): void {
   // ─── Auto-fit zoom on first open ───────
   React.useEffect(() => {
-    if (fittedRef.current || duration <= 0) return;
+    if (fittedRef.current || duration <= 0) {return;}
 
     const tryFit = (): boolean => {
       const w = sizeRef.current.w;
-      if (w <= 0) return false;
+      if (w <= 0) {return false;}
       const fitZoom = (w * 0.95) / duration;
       useSyncStore.getState().setZoom(
         Math.max(10, Math.min(500, fitZoom))
@@ -48,9 +48,9 @@ export function useWaveformViewport({
     };
 
     // Try immediately; if canvas not sized yet, poll until ready
-    if (tryFit()) return;
+    if (tryFit()) {return;}
     const id = setInterval(() => {
-      if (tryFit()) clearInterval(id);
+      if (tryFit()) {clearInterval(id);}
     }, 50);
     return () => clearInterval(id);
   }, [duration, draw, sizeRef, scrollLeftRef, fittedRef]);
@@ -58,7 +58,7 @@ export function useWaveformViewport({
   // ─── Playhead rAF (center-lock follow) ──────────
   React.useEffect(() => {
     const el = playheadRef.current;
-    if (!el) return;
+    if (!el) {return;}
 
     let rafId: number;
 

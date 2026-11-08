@@ -26,7 +26,7 @@ function resolveLineByTime(t: number): number {
   let bestLine = -1
   let bestTime = -Infinity
   for (const m of markers) {
-    if (m.markerType === 'M2') continue
+    if (m.markerType === 'M2') {continue}
     if (m.time <= t && m.time > bestTime) {
       bestTime = m.time
       bestLine = m.lineIndex
@@ -44,7 +44,7 @@ export function initPositionSync(): () => void {
     // V3DataInterceptor грузит стемы до авто-старта V3, state остаётся 'idle'.
     // Без state-проверки V2 polling сломается для всех V2-пользователей.
     const t3 = getTransport()
-    if (t3 && ((window as any).__v3Active || (t3.state !== 'idle' && t3.orchestrator.all().length > 0))) return
+    if (t3 && ((window as any).__v3Active || (t3.state !== 'idle' && t3.orchestrator.all().length > 0))) {return}
     const t = getTransport()?.currentTime ?? -1
     if (t >= 0) {
       useAudioStore.setState({ currentTime: t })
@@ -81,6 +81,6 @@ export function initPositionSync(): () => void {
   return () => {
     sub.unsubscribe()
     seekSub.unsubscribe()
-    if (intervalId) clearInterval(intervalId)
+    if (intervalId) {clearInterval(intervalId)}
   }
 }

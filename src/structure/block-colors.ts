@@ -36,7 +36,7 @@ export const BLOCK_COLORS = {
  * Falls back to unknown for unrecognized types
  */
 export function getCanonicalBlockColor(blockType?: string): string {
-  if (!blockType) return BLOCK_COLORS.unknown;
+  if (!blockType) {return BLOCK_COLORS.unknown;}
 
   const normalized = blockType.toLowerCase().replace(/[\s-]+/g, '');
 

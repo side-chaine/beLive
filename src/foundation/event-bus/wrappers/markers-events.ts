@@ -52,11 +52,11 @@ export function initMarkersEvents(): () => void {
   }
 
   const bindRealtime = () => {
-    if (bound) return
+    if (bound) {return}
     const mm = (window as any).markerManager
-    if (typeof mm?.subscribe !== 'function') return
-    if (!MM_EVENTS.every((ev) => Array.isArray(mm.subscribers?.[ev]))) return
-    for (const ev of MM_EVENTS) mmUnsubs.push(mm.subscribe(ev, syncMarkers))
+    if (typeof mm?.subscribe !== 'function') {return}
+    if (!MM_EVENTS.every((ev) => Array.isArray(mm.subscribers?.[ev]))) {return}
+    for (const ev of MM_EVENTS) {mmUnsubs.push(mm.subscribe(ev, syncMarkers))}
     bound = true
     stopRetry()
     syncMarkers()
@@ -87,7 +87,7 @@ export function initMarkersEvents(): () => void {
 
   retryTimer = setInterval(bindRealtime, 100)
   retryDeadline = setTimeout(() => {
-    if (bound) return
+    if (bound) {return}
     console.error('[MARKERS] B08 realtime bind timeout (5000ms): mm.subscribe unavailable — live markers disabled')
     stopRetry()
   }, 5000)

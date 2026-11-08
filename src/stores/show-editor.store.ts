@@ -52,9 +52,9 @@ function findStepLocation(
 /** Ленивая миграция: legacy content-шаг → subSlides */
 function migrateStepToSubSlides(step: ShowStep): ShowStep {
   // Идемпотентность: undefined = не мигрирован, [] = мигрирован (пустой шаг)
-  if (step.subSlides !== undefined) return step;
+  if (step.subSlides !== undefined) {return step;}
   // Только content-шаги
-  if (step.type !== 'content') return step;
+  if (step.type !== 'content') {return step;}
 
   const subSlides: ShowSubSlide[] = [];
 
@@ -100,7 +100,7 @@ function migrateScenarioSteps(scenario: ShowScenario): {
   const points = scenario.points.map(point => {
     const steps = point.steps.map(step => {
       const migratedStep = migrateStepToSubSlides(step);
-      if (migratedStep !== step) migrated = true;
+      if (migratedStep !== step) {migrated = true;}
       return migratedStep;
     });
     return { ...point, steps };
@@ -243,11 +243,11 @@ export const useShowEditorStore = create<ShowState>()((set, get) => ({
   closeScenario: () => {
     const state = get();
     // Guard 1: feature active — нельзя закрывать
-    if (state.featureActive) return;
+    if (state.featureActive) {return;}
     // Guard 2: recording active — нельзя закрывать
-    if (useRecordingStore.getState().isRecording) return;
+    if (useRecordingStore.getState().isRecording) {return;}
     // Guard 3: presenting — сначала остановить
-    if (state.isPresenting) return;
+    if (state.isPresenting) {return;}
     set({ activeMode: 'entry' });
   },
 
@@ -369,7 +369,7 @@ export const useShowEditorStore = create<ShowState>()((set, get) => ({
       scenario: {
         ...s.scenario,
         points: s.scenario.points.map(p => {
-          if (p.id !== pointId) return p;
+          if (p.id !== pointId) {return p;}
           const steps = [...p.steps];
           const [moved] = steps.splice(fromIndex, 1);
           steps.splice(toIndex, 0, moved);
@@ -384,7 +384,7 @@ export const useShowEditorStore = create<ShowState>()((set, get) => ({
   nextStep: () => {
     const { scenario, activePointIndex, activeStepIndex } = get();
     const point = scenario.points[activePointIndex];
-    if (!point) return;
+    if (!point) {return;}
 
     if (activeStepIndex < point.steps.length - 1) {
       set({
@@ -587,16 +587,16 @@ export const useShowEditorStore = create<ShowState>()((set, get) => ({
   activateFeature: () => {
     const state = get();
     // Guard: только из scenario
-    if (state.activeMode !== 'scenario') return;
+    if (state.activeMode !== 'scenario') {return;}
     // Guard: уже в feature
-    if (state.featureActive) return;
+    if (state.featureActive) {return;}
 
     const point = state.scenario.points[state.activePointIndex];
     const step = point?.steps[state.activeStepIndex];
-    if (!step || step.type !== 'feature' || !step.action) return;
+    if (!step || step.type !== 'feature' || !step.action) {return;}
 
     const feature = getFeature(step.action.type);
-    if (!feature) return;
+    if (!feature) {return;}
 
     // Capture snapshot ДО execute — реальные данные из deck.store
     const snapshot = captureSnapshot();
@@ -661,15 +661,15 @@ export const useShowEditorStore = create<ShowState>()((set, get) => ({
   // ── Presentation ──
   startPresentation: () => {
     const state = get();
-    if (state.activeMode !== 'scenario') return;
-    if (state.featureActive) return;
-    if (state.isPresenting) return;
+    if (state.activeMode !== 'scenario') {return;}
+    if (state.featureActive) {return;}
+    if (state.isPresenting) {return;}
 
     // Load saved dock position
     let dockPos = { x: -1, y: -1 };
     try {
       const saved = localStorage.getItem('rec_studio_dock_pos_v1');
-      if (saved) dockPos = JSON.parse(saved);
+      if (saved) {dockPos = JSON.parse(saved);}
     } catch {}
 
     set({
@@ -684,13 +684,13 @@ export const useShowEditorStore = create<ShowState>()((set, get) => ({
 
   stopPresentation: () => {
     const state = get();
-    if (!state.isPresenting) return;
+    if (!state.isPresenting) {return;}
     set({ isPresenting: false, showSlide: false, scenarioComplete: false });
   },
 
   toggleSlide: () => {
     const state = get();
-    if (!state.isPresenting) return;
+    if (!state.isPresenting) {return;}
     set({ showSlide: !state.showSlide });
   },
 
@@ -740,7 +740,7 @@ export const useShowEditorStore = create<ShowState>()((set, get) => ({
 let _saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 function scheduleAutoSave(): void {
-  if (_saveTimer) clearTimeout(_saveTimer);
+  if (_saveTimer) {clearTimeout(_saveTimer);}
   _saveTimer = setTimeout(() => {
     useShowEditorStore.getState().save();
   }, 2000);

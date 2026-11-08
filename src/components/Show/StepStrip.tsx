@@ -25,7 +25,7 @@ export function StepStrip({ styles: s }: StepStripProps) {
   const [pickerPos, setPickerPos] = useState<{ left: number; top: number } | null>(null);
 
   const currentPoint = scenario.points[activePointIndex];
-  if (!currentPoint) return null;
+  if (!currentPoint) {return null;}
 
   const steps = currentPoint.steps;
 
@@ -39,7 +39,7 @@ export function StepStrip({ styles: s }: StepStripProps) {
   // Effect 1: Scroll listener — mount only
   useEffect(() => {
     const strip = stripRef.current;
-    if (!strip) return;
+    if (!strip) {return;}
     const onScroll = () => { scrollLeftRef.current = strip.scrollLeft; };
     strip.addEventListener('scroll', onScroll, { passive: true });
     return () => strip.removeEventListener('scroll', onScroll);
@@ -71,7 +71,7 @@ export function StepStrip({ styles: s }: StepStripProps) {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') { e.preventDefault(); commitEdit(); }
-    if (e.key === 'Escape') setEditingId(null);
+    if (e.key === 'Escape') {setEditingId(null);}
   };
 
   const handleAddStep = (type: StepType) => {

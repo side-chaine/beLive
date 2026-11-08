@@ -61,7 +61,7 @@ let active: ActiveSession | null = null;
 
 function newId(): string {
   const c = globalThis.crypto as Crypto | undefined;
-  if (c?.randomUUID) return c.randomUUID();
+  if (c?.randomUUID) {return c.randomUUID();}
   return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
@@ -178,7 +178,7 @@ async function _appendPass(input: {
   label: string | null;
 }): Promise<void> {
   try {
-    if (!active) return;
+    if (!active) {return;}
     const now = Date.now();
     const record = passRecord(input, active, now);
 
@@ -209,7 +209,7 @@ async function _appendPassAndPatch(
   patch: Partial<Omit<SessionRecord, 'id' | 'kind'>>,
 ): Promise<void> {
   try {
-    if (!active) return;
+    if (!active) {return;}
     const cache = active;
     const now = Date.now();
     const record = passRecord(pass, cache, now);
@@ -222,7 +222,7 @@ async function _appendPassAndPatch(
     const get = store.get(cache.sessionId);
     get.onsuccess = () => {
       const current = get.result as SessionRecord | undefined;
-      if (!current) return;
+      if (!current) {return;}
       store.put({ ...current, ...patch } as SessionRecord);
     };
 
@@ -230,8 +230,8 @@ async function _appendPassAndPatch(
 
     cache.passes = pass.passIndex;
     cache.rateEnd = pass.rate;
-    if (patch.passes != null) cache.passes = patch.passes;
-    if (patch.rateEnd != null) cache.rateEnd = patch.rateEnd;
+    if (patch.passes != null) {cache.passes = patch.passes;}
+    if (patch.rateEnd != null) {cache.rateEnd = patch.rateEnd;}
   } catch {
     // best-effort
   }
@@ -248,14 +248,14 @@ async function _patchSession(
   patch: Partial<Omit<SessionRecord, 'id' | 'kind'>>,
 ): Promise<void> {
   try {
-    if (!active) return;
+    if (!active) {return;}
     const sessionId = active.sessionId;
     const db = await getDB();
     const current = await req<SessionRecord | undefined>(tx(db, STORE).get(sessionId));
-    if (!current) return;
+    if (!current) {return;}
     await req(tx(db, STORE, 'readwrite').put({ ...current, ...patch } as SessionRecord));
-    if (patch.passes != null) active.passes = patch.passes;
-    if (patch.rateEnd != null) active.rateEnd = patch.rateEnd;
+    if (patch.passes != null) {active.passes = patch.passes;}
+    if (patch.rateEnd != null) {active.rateEnd = patch.rateEnd;}
   } catch {
     // best-effort
   }
@@ -270,19 +270,19 @@ export function patchSession(
 /** Тоже в очереди (Q1: мутации — только через неё); внутри — нерекурсивный патч. */
 export function heartbeat(): Promise<void> {
   return enqueueWrite(async () => {
-    if (!active) return;
+    if (!active) {return;}
     await _patchSession({ lastSeenAt: Date.now() });
   });
 }
 
 /** Пауза: отметка в кэше (pausedMs копится, в запись уходит на close). */
 export function markPaused(now: number = Date.now()): void {
-  if (!active || active.pausedStartedAt != null) return;
+  if (!active || active.pausedStartedAt != null) {return;}
   active.pausedStartedAt = now;
 }
 
 export function markResumed(now: number = Date.now()): void {
-  if (!active || active.pausedStartedAt == null) return;
+  if (!active || active.pausedStartedAt == null) {return;}
   active.pausedMs += Math.max(0, now - active.pausedStartedAt);
   active.pausedStartedAt = null;
 }
@@ -295,7 +295,7 @@ async function _closeSession(
   status: Exclude<SessionRecord['status'], 'open'>,
 ): Promise<void> {
   try {
-    if (!active) return;
+    if (!active) {return;}
     const cache = active;
     const db = await getDB();
     const current = await req<SessionRecord | undefined>(tx(db, STORE).get(cache.sessionId));
@@ -348,8 +348,8 @@ async function _prune(now: number): Promise<void> {
       const drop = new Set<string>();
       let overflow = keep.length - MAX_RECORDS;
       for (const r of [...keep].sort((a, b) => a.at - b.at)) {
-        if (overflow <= 0) break;
-        if (r.day === today) continue;
+        if (overflow <= 0) {break;}
+        if (r.day === today) {continue;}
         drop.add(r.id);
         overflow--;
       }
@@ -358,11 +358,11 @@ async function _prune(now: number): Promise<void> {
 
     const keepIds = new Set(keep.map((r) => r.id));
     const toDelete = all.filter((r) => !keepIds.has(r.id)).map((r) => r.id);
-    if (toDelete.length === 0) return;
+    if (toDelete.length === 0) {return;}
 
     const t = db.transaction([STORE], 'readwrite');
     const store = t.objectStore(STORE);
-    for (const id of toDelete) store.delete(id);
+    for (const id of toDelete) {store.delete(id);}
     await awaitTx(t);
   } catch {
     // best-effort
@@ -378,7 +378,7 @@ export function prune(now: number = Date.now()): Promise<void> {
 /** MR-4a Q4: guard («у аккаунта уже есть записи?») — ВНУТРИ миграционной tx. */
 async function _migrateGuest(accountId: string): Promise<number> {
   try {
-    if (!accountId || accountId === GUEST) return 0;
+    if (!accountId || accountId === GUEST) {return 0;}
     const db = await getDB();
 
     // ОДНА readwrite-транзакция: count-гвард и read-modify-write в ней же.
@@ -432,7 +432,7 @@ async function _closeStale(now: number): Promise<number> {
     const db = await getDB();
     const sessions = await req<SessionRecord[]>(tx(db, STORE).index('kind').getAll('session'));
     const stale = sessions.filter((s) => s.status === 'open' && now - s.lastSeenAt > STALE_MS);
-    if (stale.length === 0) return 0;
+    if (stale.length === 0) {return 0;}
 
     const t = db.transaction([STORE], 'readwrite');
     const store = t.objectStore(STORE);
@@ -447,7 +447,7 @@ async function _closeStale(now: number): Promise<number> {
     await awaitTx(t);
 
     const activeId = active?.sessionId ?? null;
-    if (activeId && stale.some((s) => s.id === activeId)) active = null;
+    if (activeId && stale.some((s) => s.id === activeId)) {active = null;}
     return stale.length;
   } catch {
     return 0;

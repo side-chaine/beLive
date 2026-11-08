@@ -26,6 +26,6 @@ export function togglePlayback(): void {
   }
 
   // V2 / no stems loaded — original fallback, unchanged.
-  if (transport?.state === 'playing') transport.pause();
-  else transport?.play();
+  if (transport?.state === 'playing') {transport.pause();}
+  else {transport?.play();}
 }

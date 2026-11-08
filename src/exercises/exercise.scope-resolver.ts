@@ -13,19 +13,19 @@ export function resolveExerciseScope(
   trackDuration?: number,
 ): { startTime: number; endTime: number } | null {
   const block = blocks.find((b) => b.id === scope.blockId);
-  if (!block) return null;
+  if (!block) {return null;}
 
   const blockRange = getBlockTimeRange(block, markers as any, trackDuration);
-  if (!blockRange) return null;
+  if (!blockRange) {return null;}
 
-  if (!scope.lineRange) return blockRange;
+  if (!scope.lineRange) {return blockRange;}
 
   const [startOffset, endOffset] = scope.lineRange;
   const lineIndices = block.lineIndices ?? [];
   const startLineGlobal = lineIndices[startOffset];
   const endLineGlobal = lineIndices[endOffset];
 
-  if (startLineGlobal === undefined) return blockRange;
+  if (startLineGlobal === undefined) {return blockRange;}
 
   const startMarker = markers.find((m) => m.lineIndex === startLineGlobal);
   const endMarker =

@@ -33,7 +33,7 @@ function hasOverlappingIndices(blocks: { lineIndices: number[] }[]): boolean {
   const allUsed = new Set<number>();
   for (const b of blocks) {
     for (const idx of b.lineIndices) {
-      if (allUsed.has(idx)) return true;
+      if (allUsed.has(idx)) {return true;}
       allUsed.add(idx);
     }
   }
@@ -518,9 +518,9 @@ function evaluateCombo(tuning: Partial<SyncTuning>, label: string): GridResult {
     const { pass, score, reasons } = scoreFixture(f);
     totalScore += score;
     allReasons.push(...reasons);
-    if (f.name === 'MJ Real' && !pass) mjPass = false;
-    if (f.name === 'Runaway' && !pass) runawayPass = false;
-    if (f.name.startsWith('A') && !pass) arenaPass = false;
+    if (f.name === 'MJ Real' && !pass) {mjPass = false;}
+    if (f.name === 'Runaway' && !pass) {runawayPass = false;}
+    if (f.name.startsWith('A') && !pass) {arenaPass = false;}
   }
 
   // Normalize score to 0-100
@@ -575,9 +575,9 @@ describe('§7 Calibration Grid Search', () => {
 
     // Sort by score descending, then MJ pass, then Runaway pass
     results.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      if (b.mjPass !== a.mjPass) return b.mjPass ? 1 : -1;
-      if (b.runawayPass !== a.runawayPass) return b.runawayPass ? 1 : -1;
+      if (b.score !== a.score) {return b.score - a.score;}
+      if (b.mjPass !== a.mjPass) {return b.mjPass ? 1 : -1;}
+      if (b.runawayPass !== a.runawayPass) {return b.runawayPass ? 1 : -1;}
       return 0;
     });
 

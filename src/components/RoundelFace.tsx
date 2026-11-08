@@ -55,7 +55,7 @@ export function RoundelFace({ playing, decorative = false, onClick }: RoundelFac
             aria-hidden="true"
             onAnimationEnd={(e: AnimationEvent<HTMLSpanElement>) => {
               // ignore the nested sweep's own animationend
-              if (e.target === e.currentTarget) endPulse();
+              if (e.target === e.currentTarget) {endPulse();}
             }}
           >
             <span className={styles.pulseLit} />

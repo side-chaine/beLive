@@ -20,10 +20,10 @@ export function initTextStyleEvents(): () => void {
   const startObserver = () => {
     _observer?.disconnect()
     const container = document.getElementById('lyrics-container')
-    if (!container) return
+    if (!container) {return}
     _observer = new MutationObserver(() => {
       const txtStyle = (window as any).__TEXT_STYLE_PRESETS
-      if (!txtStyle) return
+      if (!txtStyle) {return}
       const root = document.documentElement
       root.style.setProperty('--bl-lyrics-font-family', txtStyle.fontFamily || 'inherit')
       root.style.setProperty('--bl-lyrics-font-size', txtStyle.fontSize || 'inherit')

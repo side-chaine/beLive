@@ -235,7 +235,7 @@ export function MixerPanel() {
 
     const readMeterV3 = (stemId: string): number => {
       const pipeline = (window as any).__belive?.pipeline;
-      if (!pipeline?.getStemMeterLevel) return 0;
+      if (!pipeline?.getStemMeterLevel) {return 0;}
       return pipeline.getStemMeterLevel(stemId) ?? 0;
     };
 
@@ -243,7 +243,7 @@ export function MixerPanel() {
     let lastTs = 0;
     const tick = (ts: number) => {
       rafId = requestAnimationFrame(tick);
-      if (ts - lastTs < interval) return;
+      if (ts - lastTs < interval) {return;}
       lastTs = ts;
 
       const isV3 = !!(window as any).__belive?.pipeline;
@@ -254,7 +254,7 @@ export function MixerPanel() {
         }
       } else {
         const ae = (window as any).audioEngine;
-        if (!ae?.getStemMeterLevel) return;
+        if (!ae?.getStemMeterLevel) {return;}
         for (const stemId of orderedStems) {
           levels[stemId] = ae.getStemMeterLevel(stemId) ?? 0;
         }
@@ -312,7 +312,7 @@ export function MixerPanel() {
                 return;
               }
               const ae = (window as any).audioEngine;
-              if (!ae?.microphone?.setDeviceId) return;
+              if (!ae?.microphone?.setDeviceId) {return;}
               try { await ae.microphone.setDeviceId(e.target.value); }
               catch (err) { console.warn('[MicSelect] failed:', err); }
             }}
@@ -335,7 +335,7 @@ export function MixerPanel() {
             // TC-10.7: Show faders only when stemsMode=true
             const isAlwaysVisible = stemId === 'instrumental' || stemId === 'vocals';
             const isVisible = isAlwaysVisible || stemsMode;
-            if (!isVisible) return null;
+            if (!isVisible) {return null;}
 
             return (
               <div

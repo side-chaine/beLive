@@ -81,7 +81,7 @@ export function ControlDeck() {
   // TC-PITCH-03: Removed pianoOpenRef + pianoOpen checks (pitch = tab now)
   useEffect(() => {
     const el = rootRef.current;
-    if (!el) return;
+    if (!el) {return;}
     const ro = new ResizeObserver(([entry]) => {
       document.documentElement.style.setProperty(
         '--bl-deck-height', `${entry.contentRect.height}px`
@@ -98,7 +98,7 @@ export function ControlDeck() {
   
   useEffect(() => {
     const el = rootRef.current;
-    if (!el) return;
+    if (!el) {return;}
     document.documentElement.style.setProperty(
       '--bl-deck-height', `${el.getBoundingClientRect().height}px`
     );
@@ -225,11 +225,11 @@ export function ControlDeck() {
               } else {
                 if (!__v3) { // 📌DC3: гард от DEV-warn спама обёрткой H4.1 (009 LOW#2)
                   const ae = (window as any).audioEngine;
-                  if (ae) ae.setInstrumentalVolume(v);
+                  if (ae) {ae.setInstrumentalVolume(v);}
                 }
                 useStemStore.getState().setStemVolume('instrumental', v); // зеркало всегда (дисплей/синк)
               }
-              if (activeExercise) setInstrumentalOverride(v);
+              if (activeExercise) {setInstrumentalOverride(v);}
             }}
             onMouseDown={(e) => {
               e.preventDefault();
@@ -246,11 +246,11 @@ export function ControlDeck() {
                 } else {
                   if (!__v3) { // 📌DC3: гард от DEV-warn спама обёрткой H4.1 (009 LOW#2)
                     const ae = (window as any).audioEngine;
-                    if (ae) ae.setInstrumentalVolume(v);
+                    if (ae) {ae.setInstrumentalVolume(v);}
                   }
                   useStemStore.getState().setStemVolume('instrumental', v); // зеркало всегда (дисплей/синк)
                 }
-                if (activeExercise) setInstrumentalOverride(v);
+                if (activeExercise) {setInstrumentalOverride(v);}
               };
               const onUp = () => {
                 document.removeEventListener('mousemove', onMove);
@@ -324,9 +324,9 @@ export function ControlDeck() {
                 const x = e.clientX - rect.left;
                 const v = Math.max(0, Math.min(1, x / rect.width));
                 const ae = (window as any).audioEngine;
-                if (ae) ae.setVocalsVolume(v);
+                if (ae) {ae.setVocalsVolume(v);}
                 useStemStore.getState().setStemVolume('vocals', v);
-                if (activeExercise) setVocalOverride(v);
+                if (activeExercise) {setVocalOverride(v);}
               }}
               onMouseDown={(e) => {
                 e.preventDefault();
@@ -336,9 +336,9 @@ export function ControlDeck() {
                   const x = ev.clientX - rect.left;
                   const v = Math.max(0, Math.min(1, x / rect.width));
                   const ae = (window as any).audioEngine;
-                  if (ae) ae.setVocalsVolume(v);
+                  if (ae) {ae.setVocalsVolume(v);}
                   useStemStore.getState().setStemVolume('vocals', v);
-                  if (activeExercise) setVocalOverride(v);
+                  if (activeExercise) {setVocalOverride(v);}
                 };
                 const onUp = () => {
                   document.removeEventListener('mousemove', onMove);
@@ -423,14 +423,14 @@ export function ControlDeck() {
                   // E17 (SURFACE): store updated via vocalmix-state-changed event → audio-events
                   return;
                 }
-                if (!ae) return;
+                if (!ae) {return;}
                 const engineMode = ENGINE_MODE;
                 if (engineMode === 'v3') {
                   // UI: явное «недоступно в V3-режиме» (тост/бейдж), НЕ бросать, НЕ вызывать
                   return;
                 }
-                if (vocalMixEnabled) router?.setVMix(false);
-                else router?.setVMix(true);
+                if (vocalMixEnabled) {router?.setVMix(false);}
+                else {router?.setVMix(true);}
               }}
               style={{
                 background: vocalMixEnabled ? 'rgba(255, 140, 0, 0.25)' : 'transparent',
@@ -452,7 +452,7 @@ export function ControlDeck() {
               onClick={async () => {
                 const belive = (window as any).__belive;
                 const src = belive?.micSource;
-                if (!src) return;
+                if (!src) {return;}
                 if (micEnabled) {
                   try { (belive.__micMonitorNode as MediaStreamAudioSourceNode)?.disconnect(); } catch {}
                   belive.__micMonitorNode = null;
@@ -577,8 +577,8 @@ export function ControlDeck() {
             // Interrupt practice first if active, then continue requested action
             interruptPracticeSession(() => {
               useDeckStore.getState().setTab('');
-              if (syncOpen) useSyncStore.getState().closeSync();
-              else useSyncStore.getState().openSync();
+              if (syncOpen) {useSyncStore.getState().closeSync();}
+              else {useSyncStore.getState().openSync();}
             });
           }}
           title='Sync'

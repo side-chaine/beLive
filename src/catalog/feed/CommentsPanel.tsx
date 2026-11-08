@@ -15,11 +15,11 @@ interface Props {
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const sec = Math.floor(diff / 1000);
-  if (sec < 60) return 'только что';
+  if (sec < 60) {return 'только что';}
   const min = Math.floor(sec / 60);
-  if (min < 60) return `${min} мин назад`;
+  if (min < 60) {return `${min} мин назад`;}
   const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr} ч назад`;
+  if (hr < 24) {return `${hr} ч назад`;}
   const days = Math.floor(hr / 24);
   return `${days} дн назад`;
 }
@@ -63,7 +63,7 @@ export function CommentsPanel({ onClose }: Props) {
   const status = activePostId ? commentsStatus[activePostId] || 'idle' : 'idle';
   // Guard: if no post found (not loaded yet or stale id), show minimal fallback
   if (activePostId && !post) {
-    if (status === 'loading') return <div className="cp"><div className="cp-loading">Загрузка…</div></div>;
+    if (status === 'loading') {return <div className="cp"><div className="cp-loading">Загрузка…</div></div>;}
     return null;
   }
 
@@ -71,7 +71,7 @@ export function CommentsPanel({ onClose }: Props) {
   const topLevelComments = postComments.filter(c => !c.parentId);
   const repliesByParent = postComments.reduce<Record<string, typeof postComments>>((acc, c) => {
     if (c.parentId) {
-      if (!acc[c.parentId]) acc[c.parentId] = [];
+      if (!acc[c.parentId]) {acc[c.parentId] = [];}
       acc[c.parentId].push(c);
     }
     return acc;
@@ -97,7 +97,7 @@ export function CommentsPanel({ onClose }: Props) {
   };
 
   const handleSend = async () => {
-    if (!inputText.trim() || !activePostId || sending) return;
+    if (!inputText.trim() || !activePostId || sending) {return;}
     setSending(true);
     const text = inputText.trim();
     setInputText('');
@@ -110,7 +110,7 @@ export function CommentsPanel({ onClose }: Props) {
   };
 
   const handleReplySend = async () => {
-    if (!inputText.trim() || !activePostId || !replyTo || sending) return;
+    if (!inputText.trim() || !activePostId || !replyTo || sending) {return;}
     setSending(true);
     const text = inputText.trim();
     setInputText('');
@@ -125,18 +125,18 @@ export function CommentsPanel({ onClose }: Props) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (replyTo) handleReplySend();
-      else handleSend();
+      if (replyTo) {handleReplySend();}
+      else {handleSend();}
     }
   };
 
   const handleDelete = async (commentId: string) => {
-    if (!activePostId) return;
+    if (!activePostId) {return;}
     await deleteComment(activePostId, commentId);
   };
 
   const handleReaction = async (emoji: string) => {
-    if (!activePostId) return;
+    if (!activePostId) {return;}
     await toggleReaction(activePostId, emoji);
   };
 

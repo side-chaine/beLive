@@ -49,14 +49,14 @@ export class PeerConnectionManager {
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
 
     pc.addEventListener('icecandidate', (e) => {
-      if (e.candidate) this.signaling.sendICE(e.candidate.toJSON());
+      if (e.candidate) {this.signaling.sendICE(e.candidate.toJSON());}
     });
 
-    pc.addEventListener('track', (e) => { if (e.streams[0]) this.onRemoteStream?.(e.streams[0]); });
+    pc.addEventListener('track', (e) => { if (e.streams[0]) {this.onRemoteStream?.(e.streams[0]);} });
 
     pc.addEventListener('connectionstatechange', () => {
       this.onConnectionStateChange?.(pc.connectionState);
-      if (pc.connectionState === 'failed') void this.recover();
+      if (pc.connectionState === 'failed') {void this.recover();}
     });
 
     pc.addEventListener('negotiationneeded', async () => {
@@ -79,7 +79,7 @@ export class PeerConnectionManager {
     this.signaling.onSDP = async (sdp) => {
       const offerCollision = sdp.type === 'offer' && (this.makingOffer || this.pc.signalingState !== 'stable');
       this.ignoreOffer = !this.polite && offerCollision;
-      if (this.ignoreOffer) return;
+      if (this.ignoreOffer) {return;}
 
       await this.pc.setRemoteDescription(sdp);
       if (sdp.type === 'offer') {
@@ -89,7 +89,7 @@ export class PeerConnectionManager {
     };
     this.signaling.onICE = async (candidate) => {
       try { await this.pc.addIceCandidate(candidate); }
-      catch (err) { if (!this.ignoreOffer) console.warn('[Rehearsal] ICE candidate error', err); }
+      catch (err) { if (!this.ignoreOffer) {console.warn('[Rehearsal] ICE candidate error', err);} }
     };
   }
 
@@ -115,7 +115,7 @@ export class PeerConnectionManager {
   }
 
   private handleTriggerMessage(raw: unknown) {
-    if (typeof raw !== 'string') return;
+    if (typeof raw !== 'string') {return;}
     let msg: any;
     try { msg = JSON.parse(raw); } catch { return; }
 
@@ -127,7 +127,7 @@ export class PeerConnectionManager {
       const t4 = Date.now();
       const t1 = this.pendingPings.get(msg.seq);
       this.pendingPings.delete(msg.seq);
-      if (t1 == null) return;
+      if (t1 == null) {return;}
       const rtt = t4 - t1;
       this.recordClockSample(msg.t2 - t1 - rtt / 2, rtt);
       return;
@@ -147,7 +147,7 @@ export class PeerConnectionManager {
     }, 300);
 
     this.heartbeatInterval = setInterval(() => {
-      if (this.triggerChannel?.readyState === 'open') this.sendClockPing();
+      if (this.triggerChannel?.readyState === 'open') {this.sendClockPing();}
     }, 4000);
   }
 
@@ -161,7 +161,7 @@ export class PeerConnectionManager {
     this.lastPongAt = Date.now();
     this.samples.push({ offset, rtt });
     // Bounded: храним не более 32 последних сэмплов (rolling window ~128с)
-    if (this.samples.length > 32) this.samples.shift();
+    if (this.samples.length > 32) {this.samples.shift();}
     const best = [...this.samples].sort((a, b) => a.rtt - b.rtt).slice(0, 3);
     this.clockOffset = best.reduce((s, x) => s + x.offset, 0) / best.length;
     this.rtt = best.reduce((s, x) => s + x.rtt, 0) / best.length;
@@ -169,7 +169,7 @@ export class PeerConnectionManager {
     // Periodic sweep: очищаем pendingPings старше 10с
     const now = Date.now();
     for (const [seq, t1] of this.pendingPings) {
-      if (now - t1 > 10000) this.pendingPings.delete(seq);
+      if (now - t1 > 10000) {this.pendingPings.delete(seq);}
     }
   }
 
@@ -177,7 +177,7 @@ export class PeerConnectionManager {
   getRtt() { return this.rtt; }
 
   private async recover() {
-    if (this.recovering || this.destroyed) return;
+    if (this.recovering || this.destroyed) {return;}
     this.recovering = true;
 
     try {

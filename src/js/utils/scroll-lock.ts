@@ -2,7 +2,7 @@ let locked = false;
 let scrollY = 0;
 
 export function lockScroll() {
-  if (locked) return;
+  if (locked) {return;}
   locked = true;
   scrollY = window.scrollY || window.pageYOffset;
 
@@ -18,7 +18,7 @@ export function lockScroll() {
 }
 
 export function unlockScroll() {
-  if (!locked) return;
+  if (!locked) {return;}
   locked = false;
 
   document.body.style.position = "";

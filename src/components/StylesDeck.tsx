@@ -132,7 +132,7 @@ function pickWeightedRandom<T>(items: T[], weights: number[]): T {
   let random = Math.random() * total;
   for (let i = 0; i < items.length; i++) {
     random -= weights[i];
-    if (random <= 0) return items[i];
+    if (random <= 0) {return items[i];}
   }
   return items[items.length - 1];
 }
@@ -143,9 +143,9 @@ function pickRandom<T>(items: T[]): T {
 
 function buildPreviewTitle(input?: string): string {
   const raw = (input || '').trim();
-  if (!raw) return 'Sample Preview';
+  if (!raw) {return 'Sample Preview';}
   const words = raw.split(/\s+/);
-  if (words.length <= 4) return raw;
+  if (words.length <= 4) {return raw;}
   return `${words.slice(0, 4).join(' ')}…`;
 }
 
@@ -284,7 +284,7 @@ export function StylesDeck() {
   // Derive active Rehearsal recipe id from live store values.
   // Returns recipe id if store exactly matches a recipe, null otherwise.
   const activeRehearsalRecipeId = useMemo(() => {
-    if (mode !== 'rehearsal') return null;
+    if (mode !== 'rehearsal') {return null;}
     const match = REHEARSAL_STYLE_RECIPES.find(
       r =>
         r.wordFocusLevel === wordFocusLevel &&
@@ -306,7 +306,7 @@ export function StylesDeck() {
 
   function applyRehearsalRecipe(recipeId: string) {
     const recipe = REHEARSAL_STYLE_RECIPES.find(r => r.id === recipeId);
-    if (!recipe) return;
+    if (!recipe) {return;}
     setWordFocusLevel(recipe.wordFocusLevel);
     setWordFxMode(recipe.wordFxMode);
     setLineActiveLevel(recipe.lineActiveLevel);

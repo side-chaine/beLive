@@ -42,7 +42,7 @@ interface PersistedState {
 function loadPersisted(): Partial<PersistedState> {
   try {
     const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return {};
+    if (!raw) {return {};}
     return JSON.parse(raw) as Partial<PersistedState>;
   } catch {
     return {};

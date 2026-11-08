@@ -66,7 +66,7 @@ export class RehearsalBackgroundManager {
 
 
   start(): void {
-    if (!this.imagePaths || this.imagePaths.length === 0) return;
+    if (!this.imagePaths || this.imagePaths.length === 0) {return;}
     this.body.classList.add('rehearsal-active');
     document.body.appendChild(this._sceneLayerA);
     document.body.appendChild(this._sceneLayerB);
@@ -120,8 +120,8 @@ export class RehearsalBackgroundManager {
   }
 
   private _setBackground(forcedIndex: number | null = null): void {
-    if (!this.isActive) return;
-    if (this._customBgUrl) return;
+    if (!this.isActive) {return;}
+    if (this._customBgUrl) {return;}
     let nextIndex = forcedIndex;
     if (typeof nextIndex !== 'number' || nextIndex < 0) {
       do {
@@ -143,7 +143,7 @@ export class RehearsalBackgroundManager {
       this._cache.set(imagePath, img);
     }
     const apply = (): void => {
-      if (!this.isActive) return;
+      if (!this.isActive) {return;}
       if (this._coverArtActive) {
         const dimAlpha = this._customBgActive
           ? 0.80                              // stronger dim under custom bg
@@ -325,10 +325,10 @@ export class RehearsalBackgroundManager {
    * Crossfade to a block scene URL (or null = hide scene layer)
    */
   setBlockScene(url: string | null): void {
-    if (!this.isActive) return;
+    if (!this.isActive) {return;}
 
     // Dedup guard — skip если уже показываем этот URL
-    if (url === this._lastAppliedSceneUrl) return;
+    if (url === this._lastAppliedSceneUrl) {return;}
 
     if (url === null) {
       // Cleanup pending crossfade timer
@@ -361,7 +361,7 @@ export class RehearsalBackgroundManager {
     let started = false;
 
     const doCrossfade = () => {
-      if (started) return;
+      if (started) {return;}
       started = true;
 
       if (this._pendingTransitionEnd) {
@@ -379,7 +379,7 @@ export class RehearsalBackgroundManager {
       nextLayer.style.opacity = '1';
       currentLayer.style.opacity = '0';
 
-      if (this._crossfadeTimer) clearTimeout(this._crossfadeTimer);
+      if (this._crossfadeTimer) {clearTimeout(this._crossfadeTimer);}
       this._crossfadeTimer = setTimeout(() => this._swapLayers(), 700);
 
       const onEnd = () => {
@@ -398,12 +398,12 @@ export class RehearsalBackgroundManager {
 
     // Pre-render on hidden (inactive, opacity 0) layer — zero visual impact
     const handleLoad = () => {
-      if (started) return;
+      if (started) {return;}
       nextLayer.style.backgroundImage = `url('${url}')`;
       doCrossfade();
     };
     const handleError = () => {
-      if (started) return;
+      if (started) {return;}
       console.warn('[RehearsalBg] Scene image failed to load:', url);
       doCrossfade();
     };
@@ -412,7 +412,7 @@ export class RehearsalBackgroundManager {
     img.onerror = handleError;
     img.src = url;
     // Fallback for synchronously cached images where onload may not fire
-    if (img.complete && img.naturalWidth > 0) handleLoad();
+    if (img.complete && img.naturalWidth > 0) {handleLoad();}
   }
 
   private _swapLayers(): void {
@@ -446,7 +446,7 @@ export class RehearsalBackgroundManager {
   setCoverArtState(active: boolean, isDark?: boolean, hasCustomBg?: boolean): void {
     const wasActive = this._coverArtActive;
     const prevCustomBg = this._customBgActive;
-    if (this._coverArtActive === active && this._coverIsDark === !!isDark && this._customBgActive === !!hasCustomBg) return;
+    if (this._coverArtActive === active && this._coverIsDark === !!isDark && this._customBgActive === !!hasCustomBg) {return;}
     this._coverArtActive = active;
     this._coverIsDark = !!isDark;
     this._customBgActive = !!hasCustomBg;
@@ -461,10 +461,10 @@ export class RehearsalBackgroundManager {
     blockLoopControl: any,
     _audioEngine: any
   ): void {
-    if (this._boundHandler) return;
+    if (this._boundHandler) {return;}
     this._boundHandler = (e: Event) => {
       try {
-        if (!this.isActive) return;
+        if (!this.isActive) {return;}
         const ld = (window as any).lyricsDisplay || lyricsDisplay;
         if (!ld || !Array.isArray(ld.textBlocks) || ld.textBlocks.length === 0) {
           return;
@@ -474,12 +474,12 @@ export class RehearsalBackgroundManager {
           return;
         }
         const lineIndex = (e as CustomEvent).detail?.lineIndex;
-        if (typeof lineIndex !== 'number') return;
+        if (typeof lineIndex !== 'number') {return;}
         const processedBlocks = (typeof ld._splitLargeBlocks === 'function')
           ? ld._splitLargeBlocks(ld.textBlocks || [])
           : (ld.textBlocks || []);
         const newBlockIndex = this._getBlockIndexByLine(processedBlocks, lineIndex);
-        if (newBlockIndex === null) return;
+        if (newBlockIndex === null) {return;}
         if (this._currentBlockIndex === null) {
           this._currentBlockIndex = newBlockIndex;
           return;
@@ -534,17 +534,17 @@ export class RehearsalBackgroundManager {
   private _getBlockIndexByLine(blocks: any[], lineIndex: number): number | null {
     for (let i = 0; i < blocks.length; i++) {
       const blk = blocks[i];
-      if (!blk || !Array.isArray(blk.lineIndices)) continue;
+      if (!blk || !Array.isArray(blk.lineIndices)) {continue;}
       const min = Math.min(...blk.lineIndices);
       const max = Math.max(...blk.lineIndices);
-      if (lineIndex >= min && lineIndex <= max) return i;
+      if (lineIndex >= min && lineIndex <= max) {return i;}
     }
     return null;
   }
 
   private _getLineIndexInBlock(blocks: any[], blockIndex: number, globalLineIndex: number): number {
     const block = blocks[blockIndex];
-    if (!block?.lineIndices) return -1;
+    if (!block?.lineIndices) {return -1;}
     return block.lineIndices.indexOf(globalLineIndex);
   }
 
@@ -553,7 +553,7 @@ export class RehearsalBackgroundManager {
     if (lineIdxInBlock >= 0) {
       const lineKey = `${blockIndex}_${lineIdxInBlock}`;
       const lineEntry = this._sceneMap.lineScenes.get(lineKey);
-      if (lineEntry) return lineEntry;
+      if (lineEntry) {return lineEntry;}
     }
     // 2. Block-level (fallback)
     return this._sceneMap.blockScenes.get(blockIndex) || null;
@@ -561,9 +561,9 @@ export class RehearsalBackgroundManager {
 
   private _prefetchNextLine(blockIndex: number, currentLineIdx: number, blocks: any[]): void {
     const block = blocks[blockIndex];
-    if (!block?.lineIndices) return;
+    if (!block?.lineIndices) {return;}
     const nextIdx = currentLineIdx + 1;
-    if (nextIdx >= block.lineIndices.length) return;
+    if (nextIdx >= block.lineIndices.length) {return;}
     const entry = this._resolveSceneUrl(blockIndex, nextIdx);
     if (entry) {
       const img = new Image();

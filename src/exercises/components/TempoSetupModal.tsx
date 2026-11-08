@@ -26,7 +26,7 @@ export const TempoSetupModal: React.FC<TempoSetupModalProps> = ({ onConfirm, onC
         pointerEvents: 'auto',
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onCancel();
+        if (e.target === e.currentTarget) {onCancel();}
       }}
     >
       <div

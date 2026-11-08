@@ -301,8 +301,8 @@ function findOnsetInRange(
   for (let i = startIdx; i < endIdx && i < envelope.length; i++) {
     if (envelope[i] > threshold) {
       consecutive++;
-      if (consecutive === 1) onsetIdx = i;
-      if (consecutive >= minConsecutive) return onsetIdx;
+      if (consecutive === 1) {onsetIdx = i;}
+      if (consecutive >= minConsecutive) {return onsetIdx;}
     } else {
       consecutive = 0;
       onsetIdx = -1;
@@ -351,10 +351,10 @@ export function detectMultiAnchorOffsets(
 
   // >>> VOC LOGGING (DEV only) <<<
   if (import.meta.env.DEV) {
-    if (import.meta.env.DEV) console.log(
+    if (import.meta.env.DEV) {console.log(
       `[VOC] Track: ${audioBuffer.duration.toFixed(1)}s, ` +
       `${m1Markers.length} markers, ${blocks.length} blocks`
-    );
+    );}
   }
 
   // 4. For each block, find anchor point
@@ -436,9 +436,9 @@ export function detectMultiAnchorOffsets(
   const foundAnchors = anchors.filter(a => a.found);
   if (foundAnchors.length < 2) {
     if (import.meta.env.DEV) {
-      if (import.meta.env.DEV) console.log(
+      if (import.meta.env.DEV) {console.log(
         `[VOC] L2 APPLIED: linear offset (only ${foundAnchors.length}/${anchors.length} anchors found, need ≥2)`
-      );
+      );}
     }
     return { anchors, applied: false, reason: `Only ${foundAnchors.length} anchor(s) found, need ≥2` };
   }
@@ -452,9 +452,9 @@ export function detectMultiAnchorOffsets(
   if (offsetRange < ANCHOR_CONFIG.minOffsetRange) {
     // All anchors agree — linear offset (L2) is sufficient
     if (import.meta.env.DEV) {
-      if (import.meta.env.DEV) console.log(
+      if (import.meta.env.DEV) {console.log(
         `[VOC] L2 APPLIED: linear offset (range=${offsetRange.toFixed(2)}s < ${ANCHOR_CONFIG.minOffsetRange}s)`
-      );
+      );}
     }
     return {
       anchors,
@@ -464,10 +464,10 @@ export function detectMultiAnchorOffsets(
   }
 
   if (import.meta.env.DEV) {
-    if (import.meta.env.DEV) console.log(
+    if (import.meta.env.DEV) {console.log(
       `[VOC] L3 APPLIED: ${foundAnchors.length}/${anchors.length} anchors, ` +
       `non-linear correction (range=${offsetRange.toFixed(3)}s)`
-    );
+    );}
   }
 
   return { anchors, applied: true };
@@ -484,7 +484,7 @@ export function applyMultiAnchorCorrection(
   markers: PersistedSyncMarker[],
   anchors: AnchorPoint[],
 ): PersistedSyncMarker[] {
-  if (anchors.length === 0) return markers;
+  if (anchors.length === 0) {return markers;}
 
   // Sort anchors by expected time
   const sorted = [...anchors].sort((a, b) => a.expectedTime - b.expectedTime);
@@ -502,8 +502,8 @@ function interpolateOffset(
   time: number,
   sortedAnchors: AnchorPoint[],
 ): number {
-  if (sortedAnchors.length === 0) return 0;
-  if (sortedAnchors.length === 1) return sortedAnchors[0].offset;
+  if (sortedAnchors.length === 0) {return 0;}
+  if (sortedAnchors.length === 1) {return sortedAnchors[0].offset;}
 
   // Before first anchor
   if (time <= sortedAnchors[0].expectedTime) {
@@ -522,7 +522,7 @@ function interpolateOffset(
 
     if (time >= a1.expectedTime && time <= a2.expectedTime) {
       const span = a2.expectedTime - a1.expectedTime;
-      if (span === 0) return a1.offset;
+      if (span === 0) {return a1.offset;}
       const t = (time - a1.expectedTime) / span;
       return a1.offset + t * (a2.offset - a1.offset);
     }

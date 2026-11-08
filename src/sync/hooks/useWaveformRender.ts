@@ -60,9 +60,9 @@ export function useWaveformRender({
 }: UseWaveformRenderOptions): (() => void) {
   const draw = React.useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {return;}
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {return;}
 
     const dpr = window.devicePixelRatio || 1;
     const w = sizeRef.current.w;
@@ -72,7 +72,7 @@ export function useWaveformRender({
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
 
-    if (!duration) return;
+    if (!duration) {return;}
 
     // Grid
     drawGrid(ctx, w, h, zoom, scroll, duration);

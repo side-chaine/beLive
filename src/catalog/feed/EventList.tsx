@@ -12,7 +12,7 @@ interface Props {
 export function EventList({ section, items }: Props) {
   const tier = usePerformanceTier();
 
-  if (items.length === 0) return null;
+  if (items.length === 0) {return null;}
 
   return (
     <div className="feed-event-list" data-tier={tier}>

@@ -54,7 +54,7 @@ export async function processAndSaveImage(
 /** Загрузить изображение из IDB → вернуть objectURL */
 export async function loadStepImageUrl(imageId: string): Promise<string | null> {
   const blob = await getStepImage(imageId);
-  if (!blob) return null;
+  if (!blob) {return null;}
   return createStepObjectUrl(blob);
 }
 

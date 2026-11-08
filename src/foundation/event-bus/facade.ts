@@ -99,7 +99,7 @@ export class BridgeFacade {
   // init() — monkey-patch EventTarget.prototype
   // -----------------------------------------------------------------------
   init(): void {
-    if (this._initialized) return
+    if (this._initialized) {return}
     this._initialized = true
 
     const proto = EventTarget.prototype
@@ -162,7 +162,7 @@ export class BridgeFacade {
   // destroy() — полная деактивация Facade
   // -----------------------------------------------------------------------
   destroy(): void {
-    if (!this._initialized) return
+    if (!this._initialized) {return}
     this._initialized = false
 
     // Phase A: drain — очищаем все подписки
@@ -170,9 +170,9 @@ export class BridgeFacade {
 
     // Восстанавливаем оригинальные методы prototype
     const proto = EventTarget.prototype
-    if (this._origAdd) proto.addEventListener = this._origAdd
-    if (this._origRemove) proto.removeEventListener = this._origRemove
-    if (this._origDispatch) proto.dispatchEvent = this._origDispatch
+    if (this._origAdd) {proto.addEventListener = this._origAdd}
+    if (this._origRemove) {proto.removeEventListener = this._origRemove}
+    if (this._origDispatch) {proto.dispatchEvent = this._origDispatch}
 
     this._origAdd = null
     this._origRemove = null
@@ -188,7 +188,7 @@ export class BridgeFacade {
     listener: EventListenerOrEventListenerObject,
     options?: AddEventListenerOptions | boolean,
   ): void {
-    if (!LEGACY_EVENT_MAP[type]) return // не наше событие — пропускаем
+    if (!LEGACY_EVENT_MAP[type]) {return} // не наше событие — пропускаем
 
     let typeMap = this._subs.get(listener)
     if (!typeMap) {
@@ -220,7 +220,7 @@ export class BridgeFacade {
   // -----------------------------------------------------------------------
   #unroute(listener: EventListenerOrEventListenerObject, legacyType?: string): void {
     const typeMap = this._subs.get(listener)
-    if (!typeMap) return
+    if (!typeMap) {return}
 
     if (legacyType) {
       // Phase B: удаляем только по type

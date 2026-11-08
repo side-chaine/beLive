@@ -201,7 +201,7 @@ const SCENARIOS: Partial<Record<PracticeScenarioId, PracticeScenario>> = {
     startActions: (_ctx) => {
       const blocks = useBlocksStore.getState().blocks || [];
       const firstBlock = blocks[0];
-      if (!firstBlock) return [];
+      if (!firstBlock) {return [];}
       return [
         { tool: 'seek_to_section', args: { sectionType: firstBlock.type, occurrence: 1 } },
         { tool: 'loop_section', args: { sectionType: firstBlock.type, enabled: true } },
@@ -211,7 +211,7 @@ const SCENARIOS: Partial<Record<PracticeScenarioId, PracticeScenario>> = {
       const blocks = useBlocksStore.getState().blocks || [];
       const nextIndex = progress.totalPasses;
       const nextBlock = blocks[nextIndex];
-      if (!nextBlock) return [];
+      if (!nextBlock) {return [];}
       return [
         { tool: 'seek_to_section', args: { sectionType: nextBlock.type } },
         { tool: 'loop_section', args: { sectionType: nextBlock.type, enabled: true } },
@@ -278,30 +278,30 @@ export function resolveTargetBlock(
   ctx: PracticeContext
 ): { blockId: string; blockType: string } | null {
   const blocks = useBlocksStore.getState().blocks;
-  if (!blocks?.length) return null;
+  if (!blocks?.length) {return null;}
 
   // 1. Explicit blockId
   if (ctx.requestedBlockId) {
     const found = blocks.find(b => b.id === ctx.requestedBlockId);
-    if (found) return { blockId: found.id, blockType: found.type };
+    if (found) {return { blockId: found.id, blockType: found.type };}
   }
 
   // 2. Current active block
   if (ctx.currentBlockId) {
     const found = blocks.find(b => b.id === ctx.currentBlockId);
-    if (found) return { blockId: found.id, blockType: found.type };
+    if (found) {return { blockId: found.id, blockType: found.type };}
   }
 
   // 3. First matching type
   const targetType = ctx.requestedBlockType || ctx.currentBlockType;
   if (targetType) {
     const found = blocks.find(b => b.type === targetType);
-    if (found) return { blockId: found.id, blockType: found.type };
+    if (found) {return { blockId: found.id, blockType: found.type };}
   }
 
   // 4. First chorus
   const chorus = blocks.find(b => b.type === 'chorus');
-  if (chorus) return { blockId: chorus.id, blockType: chorus.type };
+  if (chorus) {return { blockId: chorus.id, blockType: chorus.type };}
 
   // 5. Any block
   const first = blocks[0];

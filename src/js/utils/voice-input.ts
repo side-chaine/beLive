@@ -51,7 +51,7 @@ export class VoiceInput {
   }
 
   startRecording(): boolean { // Больше не принимает колбэк здесь
-    if (!this.recognition) return false;
+    if (!this.recognition) {return false;}
 
     // this.onResultCallback = onResult; // Удаляем
     this.isRecording = true;

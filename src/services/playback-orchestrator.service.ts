@@ -27,7 +27,7 @@ function getScheduler() {
  */
 export function acquire(client: SchedulerClientId): void {
   if (held.has(client)) {
-    if (import.meta.env.DEV) console.log(`[PVO] acquire(${client}) — déjà détenu, ignoré`)
+    if (import.meta.env.DEV) {console.log(`[PVO] acquire(${client}) — déjà détenu, ignoré`)}
     return
   }
   const wasEmpty = held.size === 0
@@ -35,7 +35,7 @@ export function acquire(client: SchedulerClientId): void {
   if (wasEmpty) {
     getScheduler().start()
   }
-  if (import.meta.env.DEV) console.log(`[PVO] acquire(${client}) — déteneurs=${held.size}`)
+  if (import.meta.env.DEV) {console.log(`[PVO] acquire(${client}) — déteneurs=${held.size}`)}
 }
 
 /**
@@ -44,14 +44,14 @@ export function acquire(client: SchedulerClientId): void {
  */
 export function release(client: SchedulerClientId): void {
   if (!held.has(client)) {
-    if (import.meta.env.DEV) console.warn(`[PVO] release(${client}) — pas détenu, ignoré`)
+    if (import.meta.env.DEV) {console.warn(`[PVO] release(${client}) — pas détenu, ignoré`)}
     return
   }
   held.delete(client)
   if (held.size === 0) {
     getScheduler().stop()
   }
-  if (import.meta.env.DEV) console.log(`[PVO] release(${client}) — déteneurs=${held.size}`)
+  if (import.meta.env.DEV) {console.log(`[PVO] release(${client}) — déteneurs=${held.size}`)}
 }
 
 /** Для диагностики: список активных клиентов */

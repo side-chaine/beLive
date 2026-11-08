@@ -12,7 +12,7 @@ export function getColorForBlockType(blockType?: string): string {
 }
 
 export function getActiveLineAtTime(markers: Marker[], time: number): number {
-  if (!markers || markers.length === 0) return -1;
+  if (!markers || markers.length === 0) {return -1;}
   if (time < markers[0].time) {
     return (markers[0].time - time < 2.0) ? markers[0].lineIndex : -1;
   }
@@ -20,14 +20,14 @@ export function getActiveLineAtTime(markers: Marker[], time: number): number {
   for (let i = 0; i < markers.length; i++) {
     if (time >= markers[i].time) { activeIdx = i; } else { break; }
   }
-  if (activeIdx >= 0) return markers[activeIdx].lineIndex;
-  if (time > markers[markers.length - 1].time) return markers[markers.length - 1].lineIndex;
+  if (activeIdx >= 0) {return markers[activeIdx].lineIndex;}
+  if (time > markers[markers.length - 1].time) {return markers[markers.length - 1].lineIndex;}
   return -1;
 }
 
 export function computeSections(markers: Marker[], trackDuration: number = 0): Section[] {
   const res: Section[] = [];
-  if (!markers || !markers.length) return res;
+  if (!markers || !markers.length) {return res;}
   const sorted = [...markers].sort((a, b) => a.time - b.time);
   const idxByType: Record<string, number> = {};
   const prefixMap: Record<string, string> = {
@@ -59,7 +59,7 @@ export function computeSections(markers: Marker[], trackDuration: number = 0): S
 export function buildBlocksFromMarkers(markers: Marker[]): Array<{
   id: string; name: string; type: string; lineIndices: number[];
 }> {
-  if (!Array.isArray(markers) || markers.length === 0) return [];
+  if (!Array.isArray(markers) || markers.length === 0) {return [];}
   const sorted = [...markers].sort((a, b) => a.lineIndex - b.lineIndex);
   const blocks: Array<{ id: string; name: string; type: string; lineIndices: number[] }> = [];
   const counters: Record<string, number> = {};
@@ -87,11 +87,11 @@ export function getBlockTypeForLine(
   lineIndex: number,
   textBlocks: Array<{ lineIndices?: number[]; type?: string }>
 ): string {
-  if (!textBlocks || textBlocks.length === 0) return 'unknown';
+  if (!textBlocks || textBlocks.length === 0) {return 'unknown';}
   const allowed = new Set(['verse','chorus','bridge','prechorus','postchorus','interlude','intro','outro','blank','hook','solo','instrumental','build','drop','breakdown','spoken','rap']);
   for (const block of textBlocks) {
     if (block.lineIndices && block.lineIndices.includes(lineIndex)) {
-      if (block.type && allowed.has(block.type)) return block.type;
+      if (block.type && allowed.has(block.type)) {return block.type;}
       return 'unknown';
     }
   }

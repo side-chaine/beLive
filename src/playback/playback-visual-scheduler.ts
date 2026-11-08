@@ -34,7 +34,7 @@ export class PlaybackVisualScheduler {
   /** Register a reader for the 'read' phase */
   registerReader(reader: PlaybackVisualFrameReader): void {
     if (this._readers.some(r => r.id === reader.id)) {
-      if (import.meta.env.DEV) console.warn(`[PVS] reader "${reader.id}" already registered — skip`);
+      if (import.meta.env.DEV) {console.warn(`[PVS] reader "${reader.id}" already registered — skip`);}
       return;
     }
     this._readers.push(reader);
@@ -43,7 +43,7 @@ export class PlaybackVisualScheduler {
   /** Register a detector for the 'detect' phase */
   registerDetector(detector: PlaybackVisualFrameDetector): void {
     if (this._detectors.some(d => d.id === detector.id)) {
-      if (import.meta.env.DEV) console.warn(`[PVS] detector "${detector.id}" already registered — skip`);
+      if (import.meta.env.DEV) {console.warn(`[PVS] detector "${detector.id}" already registered — skip`);}
       return;
     }
     this._detectors.push(detector);
@@ -52,7 +52,7 @@ export class PlaybackVisualScheduler {
   /** Register a writer for the 'write' phase */
   registerWriter(writer: PlaybackVisualFrameWriter): void {
     if (this._writers.some(w => w.id === writer.id)) {
-      if (import.meta.env.DEV) console.warn(`[PVS] writer "${writer.id}" already registered — skip`);
+      if (import.meta.env.DEV) {console.warn(`[PVS] writer "${writer.id}" already registered — skip`);}
       return;
     }
     this._writers.push(writer);
@@ -61,21 +61,21 @@ export class PlaybackVisualScheduler {
   /** Unregister any reader, detector, or writer by id */
   unregister(id: string): void {
     const rIdx = this._readers.findIndex((r) => r.id === id);
-    if (rIdx !== -1) this._readers.splice(rIdx, 1);
+    if (rIdx !== -1) {this._readers.splice(rIdx, 1);}
     const dIdx = this._detectors.findIndex((d) => d.id === id);
-    if (dIdx !== -1) this._detectors.splice(dIdx, 1);
+    if (dIdx !== -1) {this._detectors.splice(dIdx, 1);}
     const wIdx = this._writers.findIndex((w) => w.id === id);
-    if (wIdx !== -1) this._writers.splice(wIdx, 1);
+    if (wIdx !== -1) {this._writers.splice(wIdx, 1);}
   }
 
   /** Start the scheduler loop */
   start(): void {
-    if (this._running) return;
+    if (this._running) {return;}
     this._running = true;
     this._scheduleTick();
     if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
-      if (import.meta.env.DEV) console.log('[PlaybackVisualScheduler] started');
+       
+      if (import.meta.env.DEV) {console.log('[PlaybackVisualScheduler] started');}
     }
   }
 
@@ -87,8 +87,8 @@ export class PlaybackVisualScheduler {
     }
     this._running = false;
     if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
-      if (import.meta.env.DEV) console.log('[PlaybackVisualScheduler] stopped');
+       
+      if (import.meta.env.DEV) {console.log('[PlaybackVisualScheduler] stopped');}
     }
   }
 
@@ -117,7 +117,7 @@ export class PlaybackVisualScheduler {
 
   /** Internal tick — runs read → detect → write pipeline */
   private _tick = (): void => {
-    if (!this._running) return;
+    if (!this._running) {return;}
 
     const startMs = performance.now();
 

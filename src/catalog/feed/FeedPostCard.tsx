@@ -49,7 +49,7 @@ export function FeedPostCard({ post }: Props) {
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen) {return;}
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
@@ -60,7 +60,7 @@ export function FeedPostCard({ post }: Props) {
   }, [menuOpen]);
 
   useEffect(() => {
-    if (!shareOpen) return;
+    if (!shareOpen) {return;}
     const handler = (e: MouseEvent) => {
       if (shareRef.current && !shareRef.current.contains(e.target as Node)) {
         setShareOpen(false);
@@ -313,10 +313,10 @@ export function FeedPostCard({ post }: Props) {
 function fmtTimeAgo(ts: number): string {
   const d = Date.now() - ts;
   const m = Math.floor(d / 60000);
-  if (m < 1) return 'сейчас';
-  if (m < 60) return `${m} мин`;
+  if (m < 1) {return 'сейчас';}
+  if (m < 60) {return `${m} мин`;}
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h} ч`;
+  if (h < 24) {return `${h} ч`;}
   return `${Math.floor(h / 24)} д`;
 }
 

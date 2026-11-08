@@ -19,21 +19,21 @@ function uid(): string {
 function detectType(content: string): BlockType {
   // Используем resolveBlockAlias из SSOT вместо substring matching
   const alias = resolveBlockAlias(content);
-  if (alias) return alias.type;
+  if (alias) {return alias.type;}
   // Fallback: поиск по ключевым словам для untagged текста
   const l = content.toLowerCase();
-  if (l.includes('припев') || l.includes('refrain')) return 'chorus';
-  if (l.includes('предприпев')) return 'prechorus';
-  if (l.includes('бридж')) return 'bridge';
-  if (l.includes('интро')) return 'intro';
-  if (l.includes('аутро')) return 'outro';
+  if (l.includes('припев') || l.includes('refrain')) {return 'chorus';}
+  if (l.includes('предприпев')) {return 'prechorus';}
+  if (l.includes('бридж')) {return 'bridge';}
+  if (l.includes('интро')) {return 'intro';}
+  if (l.includes('аутро')) {return 'outro';}
   return 'verse';
 }
 
 /** Parse raw lyrics text into EditingBlock[] with tracked lineIndices */
 function parseText(text: string): { blocks: EditingBlock[]; lyricsLines: string[] } {
   const lyricsLines = (text || '').split('\n').map(l => l.trim()).filter(l => l.length > 0);
-  if (!text || !text.trim()) return { blocks: [], lyricsLines };
+  if (!text || !text.trim()) {return { blocks: [], lyricsLines };}
 
   const normalized = text.replace(/\r\n|\r/g, '\n');
   const chunks = normalized.split(/\n{2,}/).filter(c => c.trim());
@@ -81,7 +81,7 @@ function parseTextWithTagDetection(text: string): {
       const lineIndices: number[] = [];
       for (const line of b.contentLines) {
         const trimmedLine = line.trim();
-        if (!trimmedLine) continue;
+        if (!trimmedLine) {continue;}
         const idx = cleanLyricsLines.length;
         cleanLyricsLines.push(trimmedLine);
         lineIndices.push(idx);
@@ -126,13 +126,13 @@ function buildSeededBlocks(seedBlocks: any[], lyricsLines: string[]): EditingBlo
 /** Tag overlay without seed: types/indices are mapped onto the line-space, tags stay out of lines */
 function buildTagOverlay(tagText: string, lyricsLines: string[]): EditingBlock[] {
   const tagResult = parseTaggedLyrics(tagText);
-  if (!tagResult.hasStructure || tagResult.blocks.length === 0) return [];
+  if (!tagResult.hasStructure || tagResult.blocks.length === 0) {return [];}
 
   const blocks: EditingBlock[] = [];
   let cursor = 0;
   for (const b of tagResult.blocks) {
     const contentLines = b.contentLines.map(l => l.trim()).filter(Boolean);
-    if (contentLines.length === 0) continue;
+    if (contentLines.length === 0) {continue;}
 
     const lineIndices: number[] = [];
     for (const line of contentLines) {
@@ -142,7 +142,7 @@ function buildTagOverlay(tagText: string, lyricsLines: string[]): EditingBlock[]
         cursor = idx + 1;
       }
     }
-    if (lineIndices.length === 0) continue;
+    if (lineIndices.length === 0) {continue;}
 
     blocks.push({
       id: uid(),
@@ -221,7 +221,7 @@ interface BlockEditorState {
 function pushSnapshot(get: () => BlockEditorState, set: (p: Partial<BlockEditorState>) => void) {
   const snap = serialize(get().blocks);
   const stack = get().undoStack;
-  if (stack.length > 0 && stack[stack.length - 1] === snap) return;
+  if (stack.length > 0 && stack[stack.length - 1] === snap) {return;}
   set({ undoStack: [...stack, snap], redoStack: [] });
 }
 
@@ -258,7 +258,7 @@ export const useBlockEditorStore = create<BlockEditorState>((set, get) => ({
       blocks = buildSeededBlocks(extras.seedBlocks, lyricsLines);
     } else if (extras?.tagText) {
       const overlay = buildTagOverlay(extras.tagText, lyricsLines);
-      if (overlay.length > 0) blocks = overlay;
+      if (overlay.length > 0) {blocks = overlay;}
     }
 
     if (wasTagDetected) {
@@ -321,11 +321,11 @@ export const useBlockEditorStore = create<BlockEditorState>((set, get) => ({
   },
 
   mergeBlocks: (sourceId, targetId) => {
-    if (sourceId === targetId) return;
+    if (sourceId === targetId) {return;}
     const { blocks } = get();
     const src = blocks.find(b => b.id === sourceId);
     const tgt = blocks.find(b => b.id === targetId);
-    if (!src || !tgt) return;
+    if (!src || !tgt) {return;}
 
     pushSnapshot(get, set);
 
@@ -360,7 +360,7 @@ export const useBlockEditorStore = create<BlockEditorState>((set, get) => ({
 
   undo: () => {
     const { undoStack, blocks } = get();
-    if (undoStack.length === 0) return;
+    if (undoStack.length === 0) {return;}
 
     const currentSnap = serialize(blocks);
     const newUndo = [...undoStack];
@@ -377,7 +377,7 @@ export const useBlockEditorStore = create<BlockEditorState>((set, get) => ({
 
   redo: () => {
     const { redoStack, blocks } = get();
-    if (redoStack.length === 0) return;
+    if (redoStack.length === 0) {return;}
 
     const currentSnap = serialize(blocks);
     const newRedo = [...redoStack];
@@ -396,8 +396,8 @@ export const useBlockEditorStore = create<BlockEditorState>((set, get) => ({
 
   save: async () => {
     const state = get();
-    if (state.isSaving) return;
-    if (state.lyricsLines.length === 0) return;
+    if (state.isSaving) {return;}
+    if (state.lyricsLines.length === 0) {return;}
     set({ isSaving: true });
 
     try {
@@ -429,7 +429,7 @@ export const useBlockEditorStore = create<BlockEditorState>((set, get) => ({
 
       if (state._onSave) {
         const result = await state._onSave(savedBlocks, lyricsText, state.trackInfo);
-        if (result === false) throw new Error('Block save rejected');
+        if (result === false) {throw new Error('Block save rejected');}
       }
 
       const onSaved = state._onSaved;

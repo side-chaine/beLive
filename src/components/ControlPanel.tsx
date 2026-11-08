@@ -30,7 +30,7 @@ export function ControlPanel() {
     openBlockEditor();
   }, []);
 
-  if (mode === 'live') return null;
+  if (mode === 'live') {return null;}
 
   const btnStyle = (active = false): React.CSSProperties => ({
     padding: '6px 14px',

@@ -43,10 +43,10 @@ export const useLyricsStore = create<LyricsState>((set) => ({
 // Релиз: blocks>0 (подписка) ИЛИ flush-сиблинг ИЛИ watchdog 4000мс (raw-деградация).
 let _structWatchdog: ReturnType<typeof setTimeout> | null = null;
 const clearStructWatchdog = () => { if (_structWatchdog) { clearTimeout(_structWatchdog); _structWatchdog = null; } };
-const releaseStruct = () => { clearStructWatchdog(); if (useLyricsStore.getState().structurePending) useLyricsStore.setState({ structurePending: false }); };
+const releaseStruct = () => { clearStructWatchdog(); if (useLyricsStore.getState().structurePending) {useLyricsStore.setState({ structurePending: false });} };
 const onBeforeTrackChangeArm = (e: Event) => {
   const detail = (e as CustomEvent).detail as { toTrackId?: string } | undefined;
-  if (!detail?.toTrackId) return;              // bare Event (delete/clearAll) — арма нет
+  if (!detail?.toTrackId) {return;}              // bare Event (delete/clearAll) — арма нет
   clearStructWatchdog();
   const tc = (window as any).trackCatalog;     // свежий при каждом событии, без кэша
   const track = tc?.tracks?.find((t: any) => t.id === detail.toTrackId);
@@ -67,7 +67,7 @@ if (typeof document !== 'undefined') {
     if (_watchdog) { clearTimeout(_watchdog); _watchdog = null; }
   };
   const armWatchdog = () => {
-    if (_watchdog) return;
+    if (_watchdog) {return;}
     _watchdog = setTimeout(() => {
       _watchdog = null;
       // Safety net: if the late `track-loaded` never arrived (V2-only fallback
@@ -113,5 +113,5 @@ if (typeof document !== 'undefined') {
 
   // D-CASE 7: аддитив-listener'ы — арм на before-track-change, релиз по blocks>0.
   document.addEventListener('before-track-change', onBeforeTrackChangeArm);
-  useBlocksStore.subscribe((state) => { if (state.blocks.length > 0) releaseStruct(); });
+  useBlocksStore.subscribe((state) => { if (state.blocks.length > 0) {releaseStruct();} });
 }

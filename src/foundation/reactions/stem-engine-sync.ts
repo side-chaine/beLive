@@ -35,7 +35,7 @@ const MUSIC_STEMS = new Set(['drums', 'bass', 'keys', 'guitar', 'backing', 'othe
 // E11-E13 (SURFACE): pan not supported by any engine (FR-007) — warn once per session
 let _panWarned = false
 function warnPanUnsupported(): void {
-  if (_panWarned) return
+  if (_panWarned) {return}
   _panWarned = true
   console.warn('[StemEngineSync] stem pan not supported by any engine (FR-007) — fader is inert')
 }
@@ -77,7 +77,7 @@ export function initStemEngineSync(): () => void {
   })
 
   const unsubRate = useAudioStore.subscribe((state, prev) => {
-    if (state.playbackRate === prev.playbackRate) return
+    if (state.playbackRate === prev.playbackRate) {return}
     const t3 = getTransport()
     if (t3 && isV3Master()) {
       t3.setPlaybackRate(state.playbackRate)
@@ -98,7 +98,7 @@ export function initStemEngineSync(): () => void {
   return () => {
     unsub()
     unsubRate()
-    if (pollTimer) clearInterval(pollTimer)
+    if (pollTimer) {clearInterval(pollTimer)}
   }
 }
 
@@ -133,10 +133,10 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
         // Ранее блокировалось `if (stem)` из t3.orchestrator.get(id) — orchestrator
         // пуст в V3-режиме (MP-23), поэтому setStemVolume не доходил до pipeline.
         const pipeline = (window as any).__belive?.pipeline
-        if (pipeline?.setStemVolume) pipeline.setStemVolume(id, current.stemVolumes[id])
+        if (pipeline?.setStemVolume) {pipeline.setStemVolume(id, current.stemVolumes[id])}
         const stem = t3.orchestrator.get(id)
         // ⚠️ fallback-путь: no-op в V3 (orchestrator пуст, MP-23). Защита гейна — в pipeline single-writer (пак A).
-        if (stem) stem.volume = current.stemVolumes[id]
+        if (stem) {stem.volume = current.stemVolumes[id]}
       }
     }
   }
@@ -146,7 +146,7 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
     if (current.busVolumes[busId] !== prev.busVolumes[busId]) {
       if (t3) {
         const pipeline = (window as any).__belive?.pipeline
-        if (pipeline?.setBusVolume) pipeline.setBusVolume(busId, current.busVolumes[busId])
+        if (pipeline?.setBusVolume) {pipeline.setBusVolume(busId, current.busVolumes[busId])}
       }
     }
   }
@@ -157,7 +157,7 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
       if (t3) {
         // V3: mute через pipeline.muteStem() (359: ветка была пустой — mute не доходил)
         const pipeline = (window as any).__belive?.pipeline
-        if (pipeline?.muteStem) pipeline.muteStem(id, current.stemMutes[id])
+        if (pipeline?.muteStem) {pipeline.muteStem(id, current.stemMutes[id])}
       }
     }
   }
@@ -169,7 +169,7 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
       for (const id of Object.keys(current.stemSolos)) {
         if (current.stemSolos[id] !== prev.stemSolos[id]) {
           const pipeline = (window as any).__belive?.pipeline
-          if (pipeline?.soloStem) pipeline.soloStem(id, current.stemSolos[id])
+          if (pipeline?.soloStem) {pipeline.soloStem(id, current.stemSolos[id])}
         }
       }
       // Solo-маска применяется в pipeline (single-writer effectiveGain, пак A) — re-apply не нужен
@@ -191,7 +191,7 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
       const pipeline = (window as any).__belive?.pipeline
       if (pipeline?.setStemMuted) {
         for (const id of Object.keys(current.stemMutes)) {
-          if (MUSIC_STEMS.has(id)) pipeline.setStemMuted(id, !current.stemsEnabled)
+          if (MUSIC_STEMS.has(id)) {pipeline.setStemMuted(id, !current.stemsEnabled)}
         }
       }
     }
@@ -201,9 +201,9 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
 /** Проверить, изменилось ли solo состояние (требует пересчёта всех каналов) */
 function hasSoloChange(current: EngineStateSnapshot, prev: EngineStateSnapshot): boolean {
   const keys = Object.keys(current.stemSolos)
-  if (keys.length !== Object.keys(prev.stemSolos).length) return true
+  if (keys.length !== Object.keys(prev.stemSolos).length) {return true}
   for (const id of keys) {
-    if (current.stemSolos[id] !== prev.stemSolos[id]) return true
+    if (current.stemSolos[id] !== prev.stemSolos[id]) {return true}
   }
   return false
 }
@@ -218,15 +218,15 @@ function applyAll(state: EngineStateSnapshot): void {
     // 🧹 Fix 389: cold-start тоже применяет к pipeline напрямую (MP-23)
     const pipeline = (window as any).__belive?.pipeline
     for (const id of Object.keys(state.stemVolumes)) {
-      if (pipeline?.setStemVolume) pipeline.setStemVolume(id, state.stemVolumes[id])
+      if (pipeline?.setStemVolume) {pipeline.setStemVolume(id, state.stemVolumes[id])}
       const stem = t3.orchestrator.get(id)
-      if (stem) stem.volume = state.stemVolumes[id]
+      if (stem) {stem.volume = state.stemVolumes[id]}
     }
     // №18-BUS H3.3b (📌DC3 INFO-страховка): cold-load применяет текущий stemsEnabled сразу —
     // иначе V3 cold-load при stemsEnabled=false оставит music слышимыми до первого переключения.
     if (pipeline?.setStemMuted) {
       for (const id of Object.keys(state.stemMutes)) {
-        if (MUSIC_STEMS.has(id)) pipeline.setStemMuted(id, !state.stemsEnabled)
+        if (MUSIC_STEMS.has(id)) {pipeline.setStemMuted(id, !state.stemsEnabled)}
       }
     }
   }

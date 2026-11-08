@@ -42,7 +42,7 @@ export async function processAndSaveHtml(file: File, htmlId: string): Promise<st
 /** Загрузить HTML из IDB → вернуть objectURL */
 export async function loadStepHtmlUrl(htmlId: string): Promise<string | null> {
   const blob = await getStepHtml(htmlId);
-  if (!blob) return null;
+  if (!blob) {return null;}
   return createHtmlObjectUrl(blob);
 }
 

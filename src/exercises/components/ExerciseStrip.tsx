@@ -40,7 +40,7 @@ export const ExerciseStrip: React.FC = () => {
     return step?.tempoRate && step.tempoRate !== 1.0 ? step.tempoRate : null;
   }, [getCurrentStep, currentStepIndex]);
 
-  if (!activeExercise || !progress) return null;
+  if (!activeExercise || !progress) {return null;}
 
   const phaseIcon: Record<string, string> = {
     idle: '',

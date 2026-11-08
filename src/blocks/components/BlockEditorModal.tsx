@@ -20,7 +20,7 @@ export default function BlockEditorModal() {
 
   // ── Keyboard shortcuts ──
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {return;}
 
     const handleKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
@@ -37,7 +37,7 @@ export default function BlockEditorModal() {
     return () => document.removeEventListener('keydown', handleKey);
   }, [isOpen, undo, redo]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {return null;}
 
   const selectedBlock = blocks.find(b => b.id === selectedBlockId);
 
@@ -70,7 +70,7 @@ export default function BlockEditorModal() {
                 isSelected={selectedBlockId === block.id}
                 isEditMode={isEditMode}
                 onSelect={() => {
-                  if (!isEditMode) selectBlock(block.id);
+                  if (!isEditMode) {selectBlock(block.id);}
                 }}
                 onTextChange={(text) => updateBlockText(block.id, text)}
               />

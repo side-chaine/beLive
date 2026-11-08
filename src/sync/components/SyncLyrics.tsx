@@ -52,7 +52,7 @@ export function SyncLyrics() {
   const markedLines = useMemo(() => {
     const set = new Set<number>();
     for (const m of markers) {
-      if (m.lineIndex != null && m.lineIndex >= 0) set.add(m.lineIndex);
+      if (m.lineIndex != null && m.lineIndex >= 0) {set.add(m.lineIndex);}
     }
     return set;
   }, [markers]);
@@ -92,7 +92,7 @@ export function SyncLyrics() {
     }
   }, [activeLineIndex]);
 
-  if (!lines || lines.length === 0) return null;
+  if (!lines || lines.length === 0) {return null;}
 
   return (
     <div

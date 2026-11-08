@@ -42,7 +42,7 @@ export interface OnboardingProgress {
 }
 
 export function isUserProfile(obj: unknown): obj is UserProfile {
-  if (!obj || typeof obj !== 'object') return false;
+  if (!obj || typeof obj !== 'object') {return false;}
   const o = obj as Record<string, unknown>;
   return (
     typeof o.id === 'string' &&

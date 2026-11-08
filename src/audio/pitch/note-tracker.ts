@@ -142,7 +142,7 @@ export class NoteTracker {
     } else if (last) {
       /* Too short — remove */
       const idx = this.activeNotes.indexOf(last);
-      if (idx >= 0) this.activeNotes.splice(idx, 1);
+      if (idx >= 0) {this.activeNotes.splice(idx, 1);}
       this._phase = 'silence';
     } else {
       this._phase = 'silence';
@@ -152,7 +152,7 @@ export class NoteTracker {
 
   private _findLastSustain(): ActiveNote | undefined {
     for (let i = this.activeNotes.length - 1; i >= 0; i--) {
-      if (this.activeNotes[i].phase === 'sustain') return this.activeNotes[i];
+      if (this.activeNotes[i].phase === 'sustain') {return this.activeNotes[i];}
     }
     return undefined;
   }

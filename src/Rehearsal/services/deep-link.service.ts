@@ -57,7 +57,7 @@ export async function handleRehearsalDeepLink(): Promise<RehearsalLinkParams | n
     }
   }
 
-  if (!link) return null;
+  if (!link) {return null;}
 
   const isAuthed = await authService.checkExistingAuth();
   if (isAuthed) {
@@ -83,7 +83,7 @@ export function connectRehearsalSession(link: RehearsalLinkParams): void {
     useRehearsalSessionStore.getState().setConnectionState(code === 4001 ? 'failed' : 'reconnecting');
   };
   sc.onPeerJoined = () => {
-    if (role === 'teacher') pc.createDataChannels();
+    if (role === 'teacher') {pc.createDataChannels();}
   };
   pc.onClockSynced = (offset, rtt) => {
     useRehearsalSessionStore.getState().setClockSync(offset, rtt);

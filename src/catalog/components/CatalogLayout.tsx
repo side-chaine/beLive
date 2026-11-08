@@ -59,8 +59,8 @@ export function CatalogLayout({ color, onClose }: Props) {
 
   useEffect(() => {
     const el = gridRef.current;
-    if (!el) return;
-    const onScroll = () => { const idx = Math.round(el.scrollLeft / el.clientWidth); if (idx !== activeFeedColumn) setActiveFeedColumn(idx); };
+    if (!el) {return;}
+    const onScroll = () => { const idx = Math.round(el.scrollLeft / el.clientWidth); if (idx !== activeFeedColumn) {setActiveFeedColumn(idx);} };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
   }, [activeFeedColumn, setActiveFeedColumn]);
@@ -71,7 +71,7 @@ export function CatalogLayout({ color, onClose }: Props) {
   });
 
   useEffect(() => {
-    if (activeFeedColumn === 0 || !window.history) return;
+    if (activeFeedColumn === 0 || !window.history) {return;}
     window.history.replaceState({ catalog: true, column: activeFeedColumn }, '');
     const onPop = () => {
       setActiveFeedColumn(0);
@@ -82,7 +82,7 @@ export function CatalogLayout({ color, onClose }: Props) {
   }, [activeFeedColumn, setActiveFeedColumn]);
 
   useEffect(() => {
-    const dh = (e: Event) => { const d = (e as CustomEvent).detail; if (d?.tab) useDeckStore.setState({ activeTabId: d.tab, expanded: d.expanded ?? true }); };
+    const dh = (e: Event) => { const d = (e as CustomEvent).detail; if (d?.tab) {useDeckStore.setState({ activeTabId: d.tab, expanded: d.expanded ?? true });} };
     const ch = () => onClose();
     document.addEventListener('deck-set-tab', dh);
     document.addEventListener('catalog-close', ch);
@@ -114,18 +114,18 @@ export function CatalogLayout({ color, onClose }: Props) {
     (window as any).beLiveSwitchMode?.('rehearsal');
     useSyncStore.getState().closeSync();
     useDeckStore.setState({ expanded: true, activeTabId: 'mix' });
-    const tr = tracks[index]; if (tr?.id) addRecentTrack(Number(tr.id));
+    const tr = tracks[index]; if (tr?.id) {addRecentTrack(Number(tr.id));}
     onClose();
   }, [onClose, addRecentTrack, tracks]);
 
   const del = useCallback((id: string | number, l: string) => {
-    if (!confirm(`Delete "${l}"?`)) return;
+    if (!confirm(`Delete "${l}"?`)) {return;}
     deleteTrack(Number(id));
     useTrackStore.getState().removeTrack(String(id));
   }, []);
 
   const handleZip = useCallback(async (file: File, onProgress?: (pct: number) => void) => {
-    if (zipBusyRef.current) return;
+    if (zipBusyRef.current) {return;}
     zipBusyRef.current = true;
     // Guard: skip if already processing (dropzone blocks via zipBusy check separately)
     setZipBusy(true);
@@ -149,7 +149,7 @@ export function CatalogLayout({ color, onClose }: Props) {
       clearTimeout(safetyTimer);
       alert('ZIP failed.');
     } finally {
-      if (import.meta.env.DEV) console.log('[ZIP] finally called, timedOut=', safetyTimedOut.current);
+      if (import.meta.env.DEV) {console.log('[ZIP] finally called, timedOut=', safetyTimedOut.current);}
       zipBusyRef.current = false;
       clearTimeout(safetyTimer);
       if (!safetyTimedOut.current) {
@@ -217,7 +217,7 @@ export function CatalogLayout({ color, onClose }: Props) {
                     <div key={t.id} onMouseEnter={()=>setHovId(t.id)} onMouseLeave={()=>setHovId(null)} onClick={()=>play(t.index)} style={{ display:'flex', alignItems:'center', marginLeft:18, padding:'5px 10px', borderRadius:4, background:a?T.greenD:'transparent', cursor:'pointer', marginTop:2 }}>
                       <CoverArt url={t.coverArtUrl} title={t.title} size={28} borderRadius={5} />
                       <span style={{ flex:1, fontSize:12, color:a?T.green:T.text, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginLeft:8 }}>{a&&'▶ '}{t.title}</span>
-                      {(()=>{const tc=(window as any).trackCatalog;const ft=tc?.tracks?.find((tr:any)=>String(tr.id)===String(t.id));const sc=ft?.stemsData?Object.keys(ft.stemsData).length:0;if(sc>2)return<span style={{fontSize:9,fontWeight:700,padding:'2px 5px',borderRadius:3,border:'1px solid #4CAF5066',color:'#4CAF50',letterSpacing:'0.05em',flexShrink:0,marginLeft:6}}>‹ FULL ›</span>;if(ft?.vocalsData||sc===2)return<span style={{fontSize:9,fontWeight:700,padding:'2px 5px',borderRadius:3,border:'1px solid #FF8C0066',color:'#FF8C00',letterSpacing:'0.05em',flexShrink:0,marginLeft:6}}>‹ DUO ›</span>;return null;})()}
+                      {(()=>{const tc=(window as any).trackCatalog;const ft=tc?.tracks?.find((tr:any)=>String(tr.id)===String(t.id));const sc=ft?.stemsData?Object.keys(ft.stemsData).length:0;if(sc>2){return<span style={{fontSize:9,fontWeight:700,padding:'2px 5px',borderRadius:3,border:'1px solid #4CAF5066',color:'#4CAF50',letterSpacing:'0.05em',flexShrink:0,marginLeft:6}}>‹ FULL ›</span>;}if(ft?.vocalsData||sc===2){return<span style={{fontSize:9,fontWeight:700,padding:'2px 5px',borderRadius:3,border:'1px solid #FF8C0066',color:'#FF8C00',letterSpacing:'0.05em',flexShrink:0,marginLeft:6}}>‹ DUO ›</span>;}return null;})()}
                       {isBuilding&&<IB c={T.purple} onClick={e=>{e.stopPropagation();addToBuildingPlaylist({trackId:t.id,title:t.fullTitle,addedAt:new Date().toISOString()});}}>+</IB>}
                       <IB c={T.red} o={hovId===t.id?1:0} onClick={e=>{e.stopPropagation();removeFromMyMusic(t.id);}}>✕</IB>
                     </div>);})}
@@ -239,16 +239,16 @@ export function CatalogLayout({ color, onClose }: Props) {
               </div>)}
               <div style={{ height:1, background:T.border2, margin:'14px 0' }} />
               <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
-                <NB onClick={()=>{if(!tracks.length)return;const prev=(currentIdx??0)-1;loadTrack(prev<0?tracks.length-1:prev,{autoplay:true});(window as any).beLiveSwitchMode?.('rehearsal');useSyncStore.getState().closeSync();useDeckStore.setState({expanded:true,activeTabId:'mix'});}}>Prev</NB>
-                <NB onClick={()=>{if(!tracks.length)return;const next=(currentIdx??0)+1;loadTrack(next>=tracks.length?0:next,{autoplay:true});(window as any).beLiveSwitchMode?.('rehearsal');useSyncStore.getState().closeSync();useDeckStore.setState({expanded:true,activeTabId:'mix'});}}>Next</NB>
+                <NB onClick={()=>{if(!tracks.length){return;}const prev=(currentIdx??0)-1;loadTrack(prev<0?tracks.length-1:prev,{autoplay:true});(window as any).beLiveSwitchMode?.('rehearsal');useSyncStore.getState().closeSync();useDeckStore.setState({expanded:true,activeTabId:'mix'});}}>Prev</NB>
+                <NB onClick={()=>{if(!tracks.length){return;}const next=(currentIdx??0)+1;loadTrack(next>=tracks.length?0:next,{autoplay:true});(window as any).beLiveSwitchMode?.('rehearsal');useSyncStore.getState().closeSync();useDeckStore.setState({expanded:true,activeTabId:'mix'});}}>Next</NB>
               </div>
             </div>
           </div>
           {/* ── Upload tab: PORT + Manual upload ── */}
           <div style={{ display:catalogTab==='upload'?'flex':'none', flexDirection:'column', flex:1, minHeight:0, overflow:'auto', gap:8 }}>
             {/* PORT dropzone */}
-            <div onClick={()=>{if(zipBusy)return;const input=document.getElementById('bl-smart-file-input') as HTMLInputElement;input?.click();}} onMouseEnter={()=>setZipHover(true)} onMouseLeave={()=>setZipHover(false)} onDragOver={e=>{e.preventDefault();e.stopPropagation();setZipOver(true);}} onDragLeave={()=>setZipOver(false)} onDrop={e=>{e.preventDefault();setZipOver(false);const files=e.dataTransfer?.files;if(files&&files.length>0)handleZip(files[0]);}} style={{ border:zipOver?`2px dashed ${T.orange}`:`1.5px dashed ${zipHover?T.orange:T.border2}`, borderRadius:T.rL, padding:'20px 16px', textAlign:'center', cursor:zipBusy?'default':'pointer', background:zipOver?'rgba(255,140,0,0.07)':zipHover?'rgba(255,140,0,0.03)':'transparent', transition:'all 0.2s', overflow:'hidden', minHeight:88, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:6 }}>
-              <input id="bl-smart-file-input" type="file" accept=".zip" style={{ display:'none' }} onChange={e=>{const file=e.target.files?.[0];if(file)handleZip(file);e.target.value='';}} />
+            <div onClick={()=>{if(zipBusy){return;}const input=document.getElementById('bl-smart-file-input') as HTMLInputElement;input?.click();}} onMouseEnter={()=>setZipHover(true)} onMouseLeave={()=>setZipHover(false)} onDragOver={e=>{e.preventDefault();e.stopPropagation();setZipOver(true);}} onDragLeave={()=>setZipOver(false)} onDrop={e=>{e.preventDefault();setZipOver(false);const files=e.dataTransfer?.files;if(files&&files.length>0){handleZip(files[0]);}}} style={{ border:zipOver?`2px dashed ${T.orange}`:`1.5px dashed ${zipHover?T.orange:T.border2}`, borderRadius:T.rL, padding:'20px 16px', textAlign:'center', cursor:zipBusy?'default':'pointer', background:zipOver?'rgba(255,140,0,0.07)':zipHover?'rgba(255,140,0,0.03)':'transparent', transition:'all 0.2s', overflow:'hidden', minHeight:88, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:6 }}>
+              <input id="bl-smart-file-input" type="file" accept=".zip" style={{ display:'none' }} onChange={e=>{const file=e.target.files?.[0];if(file){handleZip(file);}e.target.value='';}} />
               {!zipBusy?(<>
                 {zipOver&&<div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(255,140,0,0.10)', borderRadius:T.rL, fontSize:13, fontWeight:600, color:T.orange, zIndex:2, pointerEvents:'none' }}>📦 Отпустите ZIP</div>}
                 <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6 }}>

@@ -9,11 +9,11 @@ export function LiveControls() {
   const stopCamera = useCameraStore((s) => s.stopCamera);
   const flipCamera = useCameraStore((s) => s.flipCamera);
 
-  if (mode !== 'live') return null;
+  if (mode !== 'live') {return null;}
 
   const handleToggle = () => {
-    if (cameraOn) stopCamera();
-    else startCamera();
+    if (cameraOn) {stopCamera();}
+    else {startCamera();}
   };
 
   return (

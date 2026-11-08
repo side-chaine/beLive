@@ -12,7 +12,7 @@ export class KaraokeBackgroundManager {
   }
 
   start(): void {
-    if (!this.imagePaths || this.imagePaths.length === 0) return;
+    if (!this.imagePaths || this.imagePaths.length === 0) {return;}
     this.body.classList.add('karaoke-active');
     this.isActive = true;
     this._changeBackground();

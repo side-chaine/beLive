@@ -138,10 +138,10 @@ export function initAudioEvents(): () => void {
       const newPans = { ...st.stemPans }
 
       for (const id of payload.loadedStems) {
-        if (!(id in newVolumes)) newVolumes[id] = 1
-        if (!(id in newMutes)) newMutes[id] = false
-        if (!(id in newSolos)) newSolos[id] = false
-        if (!(id in newPans)) newPans[id] = 0
+        if (!(id in newVolumes)) {newVolumes[id] = 1}
+        if (!(id in newMutes)) {newMutes[id] = false}
+        if (!(id in newSolos)) {newSolos[id] = false}
+        if (!(id in newPans)) {newPans[id] = 0}
       }
 
       useStemStore.setState({

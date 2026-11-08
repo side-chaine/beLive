@@ -26,7 +26,7 @@ export class PitchEngine {
    */
   private static _instance: PitchEngine | null = null;
   static get(): PitchEngine {
-    if (!PitchEngine._instance) PitchEngine._instance = new PitchEngine();
+    if (!PitchEngine._instance) {PitchEngine._instance = new PitchEngine();}
     return PitchEngine._instance;
   }
   readonly ring = new PitchRingBuffer(300);
@@ -59,7 +59,7 @@ export class PitchEngine {
   private _getContext(): AudioContext {
     const ae = (window as any).audioEngine;
     const ctx = (ae?.audioContext as AudioContext) ?? null;
-    if (!ctx) throw new Error('audioEngine.audioContext not found');
+    if (!ctx) {throw new Error('audioEngine.audioContext not found');}
     this._ctx = ctx;
     return ctx;
   }
@@ -67,13 +67,13 @@ export class PitchEngine {
   /* ── Mode A: Microphone (AudioWorklet — audio thread) ── */
 
   async initFromMic(): Promise<void> {
-    if (this._status === 'running' || this._status === 'starting') return;
+    if (this._status === 'running' || this._status === 'starting') {return;}
     this._status = 'starting';
     const myGen = ++this._initGen;
 
     try {
       const ctx = this._getContext();
-      if (ctx.state === 'suspended') await ctx.resume();
+      if (ctx.state === 'suspended') {await ctx.resume();}
 
       /* ARC-2e: дедуп с takes-REC через MicSourceV3 (инвариант 82e1c76).
          main.tsx публикует __belive.micSource; класс НЕ экспортирует singleton —
@@ -142,12 +142,12 @@ export class PitchEngine {
   /* ── Mode B: AudioNode source (AnalyserNode — main thread) ── */
 
   async initFromNode(sourceNode: AudioNode): Promise<void> {
-    if (this._status === 'running' || this._status === 'starting') return;
+    if (this._status === 'running' || this._status === 'starting') {return;}
     this._status = 'starting';
 
     try {
       const ctx = this._getContext();
-      if (ctx.state === 'suspended') await ctx.resume();
+      if (ctx.state === 'suspended') {await ctx.resume();}
 
       this._source = sourceNode;
 
@@ -193,14 +193,14 @@ export class PitchEngine {
       linSum += safe;
       n++;
     }
-    if (n === 0 || linSum < 1e-10) return 0;
+    if (n === 0 || linSum < 1e-10) {return 0;}
     const sfm = Math.exp(logSum / n) / (linSum / n);
     const baseline = 0.20;
     return Math.max(0, Math.min(1, (sfm - baseline) / (1 - baseline)));
   }
 
   private _passiveTick(ctx: AudioContext): void {
-    if (!this._analyser || !this._yinBuf || !this._detector) return;
+    if (!this._analyser || !this._yinBuf || !this._detector) {return;}
 
     this._analyser.getFloatTimeDomainData(this._yinBuf as any);
     this._analyser!.getFloatFrequencyData(this._freqBuf! as any);
@@ -222,7 +222,7 @@ export class PitchEngine {
     } else {
       // Check RMS from time domain to distinguish real silence from scream-no-pitch
       let rmsCheck = 0;
-      for (let i = 0; i < this._yinBuf!.length; i++) rmsCheck += this._yinBuf![i] * this._yinBuf![i];
+      for (let i = 0; i < this._yinBuf!.length; i++) {rmsCheck += this._yinBuf![i] * this._yinBuf![i];}
       rmsCheck = Math.sqrt(rmsCheck / this._yinBuf!.length);
       if (rmsCheck > 0.003) {
         this._onMsg({ type: 'no_pitch', rms: rmsCheck, noiseScore: noiseFromSFM });
@@ -281,7 +281,7 @@ export class PitchEngine {
   /* ── Retarget: hot-swap source node ── */
 
   async retarget(newSource: AudioNode): Promise<void> {
-    if (this._status !== 'running') return;
+    if (this._status !== 'running') {return;}
     if (this._timer !== null) {
       clearInterval(this._timer);
       this._timer = null;

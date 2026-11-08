@@ -23,7 +23,7 @@ export class WordLineDetector implements TriggerDetector {
     const ws = useWordSyncStore.getState();
 
     // ⚡ TC-AUDIO-P3: Skip processing when both current and previous line are cleared (track switch)
-    if (lineIndex < 0 && this._prevLineIndex < 0) return events;
+    if (lineIndex < 0 && this._prevLineIndex < 0) {return events;}
 
     // --- Line triggers ---
     if (lineIndex !== this._prevLineIndex) {

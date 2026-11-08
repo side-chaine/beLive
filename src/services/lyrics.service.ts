@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 import { migratePersistedBlock } from '../utils/block-migration';
 
@@ -87,8 +87,8 @@ export class LyricsService {
     this.autoScrollEnabled = true;
     this._usingLinkinParkMap = false;
     this.currentlyFocusedBlockId = null;
-    if (this.lyricsContainer) this.lyricsContainer.innerHTML = '';
-    if (this.containerElement) this.containerElement.scrollTop = 0;
+    if (this.lyricsContainer) {this.lyricsContainer.innerHTML = '';}
+    if (this.containerElement) {this.containerElement.scrollTop = 0;}
     if (!text || !this.lyricsContainer) {
       if (shouldRender) {
         this.lyricsContainer!.innerHTML =
@@ -99,7 +99,7 @@ export class LyricsService {
     const w = window as any;
     text = w.parsingService ? w.parsingService.sanitizeLyricsText(text) : text;
     this._processLyrics(text);
-    if (shouldRender) this._renderLyrics();
+    if (shouldRender) {this._renderLyrics();}
   }
 
   reloadLyrics(text: string, duration: number, shouldRender = true): void {
@@ -109,7 +109,7 @@ export class LyricsService {
   }
 
   setStyle(style: any): void {
-    if (!style || !style.id) return;
+    if (!style || !style.id) {return;}
     if (this.currentStyle?.id === 'rehearsal' && style.id !== 'rehearsal') {
       this.deactivateRehearsalDisplay();
     }
@@ -138,7 +138,7 @@ export class LyricsService {
   }
 
   setActiveLine(index: number, force = false): void {
-    if (this.currentLine === index && !force) return;
+    if (this.currentLine === index && !force) {return;}
     this.currentLine = index;
     try {
       document.dispatchEvent(
@@ -197,7 +197,7 @@ export class LyricsService {
 
   fullReset(): void {
     const container = document.getElementById('lyrics-container-main');
-    if (container) container.innerHTML = '';
+    if (container) {container.innerHTML = '';}
     this.lyricsLines = [];
     this.activeLineIndex = -1;
     this._originalLineTexts = null;
@@ -280,7 +280,7 @@ export class LyricsService {
       if (!blocksData || !Array.isArray(blocksData)) {
         console.warn('LyricsDisplay: Invalid or empty blocksData provided to loadImportedBlocks.');
         this.textBlocks = [];
-        if (shouldRender) this._renderLyrics();
+        if (shouldRender) {this._renderLyrics();}
         if (typeof this.updateDefinedBlocksDisplay === 'function') {
           this.updateDefinedBlocksDisplay([]);
         }
@@ -304,7 +304,7 @@ export class LyricsService {
       } catch (e) {
         console.warn('LyricsDisplay: Error during block sanitization:', e);
       }
-      if (shouldRender) this._renderLyrics();
+      if (shouldRender) {this._renderLyrics();}
       if (typeof this.updateDefinedBlocksDisplay === 'function') {
         this.updateDefinedBlocksDisplay(this.textBlocks);
       }
@@ -320,7 +320,7 @@ export function registerLyricsService(): void {
 
 export function patchLyricsDisplaySlimMethods(): void {
   const ld = (window as any).lyricsDisplay;
-  if (!ld) return;
+  if (!ld) {return;}
   const proto = LyricsService.prototype as any;
   ld.setStyle = proto.setStyle;
   ld.clearAllTextBlocks = proto.clearAllTextBlocks;

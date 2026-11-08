@@ -35,8 +35,8 @@ interface KeyDef {
 }
 
 function keyOpacity(octave: number, noteIdx: number): number {
-  if (octave === 2) return 0.15 + (noteIdx / 11) * 0.85;
-  if (octave >= 3 && octave <= 5) return 1;
+  if (octave === 2) {return 0.15 + (noteIdx / 11) * 0.85;}
+  if (octave >= 3 && octave <= 5) {return 1;}
   return 0.5; // C6
 }
 
@@ -50,7 +50,7 @@ function buildKeys(): { whites: KeyDef[]; blacks: KeyDef[] } {
 
   for (let oct = 2; oct <= 6; oct++) {
     for (let n = 0; n < 12; n++) {
-      if (oct === 6 && n > 0) break; // stop after C6
+      if (oct === 6 && n > 0) {break;} // stop after C6
 
       const note = NOTES[n];
       const id = `${note}${oct}`;
@@ -112,12 +112,12 @@ function findPhase(
 ): NotePhase | null {
   if (notes && notes.length > 0) {
     for (let i = notes.length - 1; i >= 0; i--) {
-      if (notes[i].noteName === keyId) return notes[i].phase;
+      if (notes[i].noteName === keyId) {return notes[i].phase;}
     }
     return null;
   }
   /* Backwards compat: legacy single note = sustain */
-  if (legacyNote && legacyNote === keyId) return 'sustain';
+  if (legacyNote && legacyNote === keyId) {return 'sustain';}
   return null;
 }
 

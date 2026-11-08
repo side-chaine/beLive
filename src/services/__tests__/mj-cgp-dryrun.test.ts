@@ -238,7 +238,7 @@ function hasOverlappingIndices(blocks: { lineIndices: number[] }[]): boolean {
   const allUsed = new Set<number>();
   for (const b of blocks) {
     for (const idx of b.lineIndices) {
-      if (allUsed.has(idx)) return true;
+      if (allUsed.has(idx)) {return true;}
       allUsed.add(idx);
     }
   }

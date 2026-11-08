@@ -43,8 +43,8 @@ export function uploadBlobToTelegram(
     formData.append('artist', artist);
     formData.append('title', title);
     formData.append('type', stemType || 'full');
-    if (contentHash) formData.append('contentHash', contentHash);
-    if (stemType) formData.append('stemType', stemType);
+    if (contentHash) {formData.append('contentHash', contentHash);}
+    if (stemType) {formData.append('stemType', stemType);}
 
     const xhr = new XMLHttpRequest();
 
@@ -52,7 +52,7 @@ export function uploadBlobToTelegram(
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && callbacks?.onProgress) {
         const now = Date.now();
-        if (now - lastProgressUpdate < 100) return; // throttle: max 10 updates/sec
+        if (now - lastProgressUpdate < 100) {return;} // throttle: max 10 updates/sec
         lastProgressUpdate = now;
         callbacks.onProgress(Math.round((e.loaded / e.total) * 100));
       }

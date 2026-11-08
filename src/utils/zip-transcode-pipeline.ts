@@ -75,7 +75,7 @@ export async function runTranscodePipeline(
     }
 
     const entry = stemsData[stemId];
-    if (!entry?.data) continue;
+    if (!entry?.data) {continue;}
 
     logZipEvent('stem-decode-start', { stemId, srcSize: entry.data.byteLength });
 

@@ -67,7 +67,7 @@ export function RehearsalLyrics() {
 
   // Performance guard: lite tier → only smooth preset
   const effectivePreset = useMemo(() => {
-    if (tier === 'lite') return DEFAULT_PRESET;
+    if (tier === 'lite') {return DEFAULT_PRESET;}
     return activePreset;
   }, [activePreset, tier]);
 
@@ -189,11 +189,11 @@ export function RehearsalLyrics() {
   // Block Cue: sync horizontal position with plate center
   useEffect(() => {
     const el = activeBlockRef.current;
-    if (!el) return;
+    if (!el) {return;}
 
     const updateCue = () => {
       const rect = el.getBoundingClientRect();
-      if (rect.width <= 0) return; // Guard: skip transition state
+      if (rect.width <= 0) {return;} // Guard: skip transition state
       const centerX = rect.left + rect.width / 2;
       setCueLeft(`${centerX}px`);
       setCoverCenterX(`${centerX}px`);
@@ -216,12 +216,12 @@ export function RehearsalLyrics() {
   useEffect(() => {
     const root = rootRef.current;
     const block = activeBlockRef.current;
-    if (!root || !block) return;
+    if (!root || !block) {return;}
 
     const updateCueTop = () => {
       const rootRect = root.getBoundingClientRect();
       const lineElements = block.querySelectorAll('[data-line-index]:not([data-is-preview="true"])');
-      if (!lineElements.length) return;
+      if (!lineElements.length) {return;}
       const lastLine = lineElements[lineElements.length - 1];
       const lastRect = lastLine.getBoundingClientRect();
       const top = lastRect.bottom - rootRect.top + 4;
@@ -281,7 +281,7 @@ export function RehearsalLyrics() {
   );
 
   const nextBlockFirstMarkerTime = useMemo(() => {
-    if (!nextBlock || nextBlock.lineIndices.length === 0) return Infinity;
+    if (!nextBlock || nextBlock.lineIndices.length === 0) {return Infinity;}
     const firstLineIdx = nextBlock.lineIndices[0];
     const marker = markers.find(m => m.lineIndex === firstLineIdx);
     return marker?.time ?? Infinity;
@@ -290,11 +290,11 @@ export function RehearsalLyrics() {
   // ── Next SubBlock First Marker Time (Level 1 trigger) ──
   const nextSubBlockFirstMarkerTime = useMemo(() => {
     const activeSubBlock = slotMatrix?.activeSubBlock;
-    if (!activeSubBlock || activeSubBlock.isLast) return Infinity;
+    if (!activeSubBlock || activeSubBlock.isLast) {return Infinity;}
 
     const nextSubBlockIndex = activeSubBlock.subBlockIndex + 1;
     const nextSubBlock = slotMatrix?.subBlocks?.[nextSubBlockIndex];
-    if (!nextSubBlock || nextSubBlock.lineIndices.length === 0) return Infinity;
+    if (!nextSubBlock || nextSubBlock.lineIndices.length === 0) {return Infinity;}
 
     const firstLineIdx = nextSubBlock.lineIndices[0];
     const marker = markers.find(m => m.lineIndex === firstLineIdx);
@@ -302,7 +302,7 @@ export function RehearsalLyrics() {
   }, [slotMatrix, markers]);
 
   const bcFontSize = useMemo(() => {
-    if (!nextBlock || nextBlock.lineIndices.length === 0) return undefined;
+    if (!nextBlock || nextBlock.lineIndices.length === 0) {return undefined;}
     const effectiveLines = Math.min(MAX_SUB_BLOCK_LINES, nextBlock.lineIndices.length);
     return getBlockFontSize(effectiveLines);
   }, [nextBlock]);
@@ -310,7 +310,7 @@ export function RehearsalLyrics() {
   // Slot Matrix: shouldGrowPreview + psFontSize
   // ПС подавляется если следующий target за пределами лупа
   const nextTargetIsInLoop = useMemo(() => {
-    if (!isLooping || loopStartLine === null || loopEndLine === null) return true;
+    if (!isLooping || loopStartLine === null || loopEndLine === null) {return true;}
     const isLastSub = activeSlotGroup?.subBlock?.isLast ?? true;
     let nextTargetLine: number | null = null;
     if (!isLastSub && slotMatrix?.subBlocks) {
@@ -322,7 +322,7 @@ export function RehearsalLyrics() {
     } else if (nextBlock && nextBlock.lineIndices.length > 0) {
       nextTargetLine = nextBlock.lineIndices[0];
     }
-    if (nextTargetLine === null) return true;
+    if (nextTargetLine === null) {return true;}
     return nextTargetLine >= loopStartLine && nextTargetLine <= loopEndLine;
   }, [isLooping, loopStartLine, loopEndLine, activeSlotGroup, slotMatrix, nextBlock]);
 
@@ -335,7 +335,7 @@ export function RehearsalLyrics() {
   // под последней строкой (viewport coords).
   // Когда false → overlay исчезает (ПС = grid row).
   useEffect(() => {
-    if (!USE_SLOT_CANVAS) return;
+    if (!USE_SLOT_CANVAS) {return;}
 
     if (!shouldGrowPreview) {
       setPsOverlayTop(null);
@@ -343,14 +343,14 @@ export function RehearsalLyrics() {
     }
 
     const block = activeBlockRef.current;
-    if (!block) return;
+    if (!block) {return;}
 
     const lineElements = block.querySelectorAll('[data-line-index]:not([data-is-preview="true"])');
-    if (!lineElements.length) return;
+    if (!lineElements.length) {return;}
     const lastLine = lineElements[lineElements.length - 1];
     const lastLineRect = lastLine.getBoundingClientRect();
 
-    if (lastLineRect.bottom < 0) return; // guard: stale
+    if (lastLineRect.bottom < 0) {return;} // guard: stale
 
     // Idle позиция = viewport coords: под последней строкой + idleGap
     setPsOverlayTop(lastLineRect.bottom + effectivePreset.timing.idleGap);
@@ -419,7 +419,7 @@ export function RehearsalLyrics() {
           return Math.min(rootWidth * 0.8, 900) - 80;
         })();
 
-    if (containerWidth <= 0) return;
+    if (containerWidth <= 0) {return;}
 
     // Создать виртуальный TextBlock с lineIndices целевого подблока
     const virtualBlock: TextBlock = {
@@ -521,7 +521,7 @@ export function RehearsalLyrics() {
             && measurement.containerHeight > 0
             && measurement.nextBlockId === expectedId;
 
-          if (import.meta.env.DEV) console.log(`[PS Travel] Trigger fired tt=${Number(triggerTime).toFixed(2)} ct=${Number(ct).toFixed(2)} v2clock=${((ae as any)?.getCurrentTime?.() ?? -1).toFixed(2)} nbFMT=${Number(nextBlockFirstMarkerTime).toFixed(2)} nsFMT=${Number(nextSubBlockFirstMarkerTime).toFixed(2)} isLastSub=${isLastSub} nb=${nextBlock?.id}`, {
+          if (import.meta.env.DEV) {console.log(`[PS Travel] Trigger fired tt=${Number(triggerTime).toFixed(2)} ct=${Number(ct).toFixed(2)} v2clock=${((ae as any)?.getCurrentTime?.() ?? -1).toFixed(2)} nbFMT=${Number(nextBlockFirstMarkerTime).toFixed(2)} nsFMT=${Number(nextSubBlockFirstMarkerTime).toFixed(2)} isLastSub=${isLastSub} nb=${nextBlock?.id}`, {
             nextBlockId: nextBlock?.id,
             isLastSub,
             expectedMeasureId: expectedId,
@@ -531,13 +531,13 @@ export function RehearsalLyrics() {
             containerHeight: measurement?.containerHeight,
             triggerTime,
             ct,
-          });
+          });}
 
           if (measurementValid && blockRect && blockRect.height > 0) {
             // ═══ ТОЧНЫЙ TRAVEL TARGET ═══
             const getPaddings = (): { top: number; bottom: number } => {
               const block = activeBlockRef.current;
-              if (!block) return { top: 24, bottom: 24 };
+              if (!block) {return { top: 24, bottom: 24 };}
               const style = getComputedStyle(block);
               return {
                 top: parseFloat(style.paddingTop) || 24,
@@ -552,7 +552,7 @@ export function RehearsalLyrics() {
             const minTop = blockRect.top + PADDING_TOP;
             const getLineHeight = (): number => {
               const block = activeBlockRef.current;
-              if (!block) return 52;
+              if (!block) {return 52;}
               const fontSize = parseFloat(getComputedStyle(block).fontSize) || 41.6;
               return fontSize * 1.25;
             };
@@ -562,14 +562,14 @@ export function RehearsalLyrics() {
 
             setPsOverlayTop(clampedTarget);
 
-            if (import.meta.env.DEV) console.log('[PS Travel] Unified L2', {
+            if (import.meta.env.DEV) {console.log('[PS Travel] Unified L2', {
               transitionType: isLastSub ? 'block→block' : 'subblock→subblock',
               containerHeight: measurement.containerHeight,
               contentHeight: measurement.contentHeight,
               firstLineOffset: measurement.firstLineOffset,
               targetTop: clampedTarget,
               blockRect: { top: blockRect.top, height: blockRect.height },
-            });
+            });}
           } else {
             // Fallback
             const lineH = 52;
@@ -580,7 +580,7 @@ export function RehearsalLyrics() {
                 ? rootRect.top + rootRect.height / 2 - lineH / 2
                 : window.innerHeight / 2 - lineH / 2
             );
-            if (import.meta.env.DEV) console.log('[PS Travel] Fallback — no valid measurement');
+            if (import.meta.env.DEV) {console.log('[PS Travel] Fallback — no valid measurement');}
           }
         }
       }
@@ -621,7 +621,7 @@ export function RehearsalLyrics() {
 
   // Enter: cleanup after duration + buffer
   useEffect(() => {
-    if (!isEntering) return;
+    if (!isEntering) {return;}
     const ms = effectivePreset.enter.duration * 1000 + 100;
     const timer = setTimeout(() => {
       setIsEntering(false);
@@ -664,7 +664,7 @@ export function RehearsalLyrics() {
   useEffect(() => {
     // 706-loop: во время лупы скроллом владеет fitLoopIntoView — не конфликтуем
     // с ним (именно этот конфликт давал "то правильно то не правильно").
-    if (isLooping) return;
+    if (isLooping) {return;}
     if (!displayBlock && activeRef.current) {
       activeRef.current.scrollIntoView({
         behavior: 'smooth',
@@ -681,12 +681,12 @@ export function RehearsalLyrics() {
   const fitLoopIntoView = useCallback((smooth = true) => {
     const block = activeBlockRef.current;
     const loop = useLoopStore.getState();
-    if (!block || !loop.isLooping) return;
+    if (!block || !loop.isLooping) {return;}
     const { loopStartLine: s, loopEndLine: e } = loop;
-    if (s === null || e === null) return;
+    if (s === null || e === null) {return;}
     const startEl = block.querySelector<HTMLElement>(`[data-line-index="${s}"]`);
     const endEl = block.querySelector<HTMLElement>(`[data-line-index="${e}"]`);
-    if (!startEl || !endEl) return; // границы в разных суб-блоках — стрелки покажут
+    if (!startEl || !endEl) {return;} // границы в разных суб-блоках — стрелки покажут
 
     const blockRect = block.getBoundingClientRect();
     const startRect = startEl.getBoundingClientRect();
@@ -696,7 +696,7 @@ export function RehearsalLyrics() {
 
     const startVisible = startRect.top >= viewTop - 1 && startRect.top <= viewBottom;
     const endVisible = endRect.bottom >= viewTop && endRect.bottom <= viewBottom + 1;
-    if (startVisible && endVisible) return; // уже в кадре — не дёргаем
+    if (startVisible && endVisible) {return;} // уже в кадре — не дёргаем
 
     const regionTop = startRect.top - blockRect.top + block.scrollTop;
     const regionBottom = endRect.bottom - blockRect.top + block.scrollTop;
@@ -714,7 +714,7 @@ export function RehearsalLyrics() {
   // Двойной rAF: ждём коммита новых строк + оседания лейаута, иначе замер
   // позиций гонит (это и давало "то правильно то не правильно").
   useEffect(() => {
-    if (!isLooping) return;
+    if (!isLooping) {return;}
     let raf1 = 0, raf2 = 0;
     raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => fitLoopIntoView(true));
@@ -728,7 +728,7 @@ export function RehearsalLyrics() {
   // smooth-скроллы во время CSS-перехода дока.
   useEffect(() => {
     const el = activeBlockRef.current;
-    if (!el) return;
+    if (!el) {return;}
     let raf = 0;
     const ro = new ResizeObserver(() => {
       cancelAnimationFrame(raf);
@@ -739,10 +739,10 @@ export function RehearsalLyrics() {
   }, [fitLoopIntoView]);
 
   const handleBoundaryDrag = useCallback((type: 'start' | 'end', e: React.PointerEvent) => {
-    if (!displayBlock || loopStartLine === null || loopEndLine === null) return;
+    if (!displayBlock || loopStartLine === null || loopEndLine === null) {return;}
     e.preventDefault();
     const container = (e.currentTarget.closest('[data-slot-container="true"]') as HTMLElement | null) ?? e.currentTarget.parentElement;
-    if (!container) return;
+    if (!container) {return;}
     const lines = container.querySelectorAll('[data-line-index]');
     const lineEls = Array.from(lines) as HTMLElement[];
 
@@ -758,13 +758,13 @@ export function RehearsalLyrics() {
           closest = Number(el.dataset.lineIndex);
         }
       });
-      if (closest < 0) return;
+      if (closest < 0) {return;}
       if (type === 'start') {
         const newStart = Math.min(closest, loopEndLine!);
-        if (newStart !== loopStartLine) setBoundaryLines(newStart, loopEndLine!);
+        if (newStart !== loopStartLine) {setBoundaryLines(newStart, loopEndLine!);}
       } else {
         const newEnd = Math.max(closest, loopStartLine!);
-        if (newEnd !== loopEndLine) setBoundaryLines(loopStartLine!, newEnd);
+        if (newEnd !== loopEndLine) {setBoundaryLines(loopStartLine!, newEnd);}
       }
     };
 
@@ -777,7 +777,7 @@ export function RehearsalLyrics() {
   }, [displayBlock, loopStartLine, loopEndLine, setBoundaryLines]);
 
   const loopLineRange = useMemo(() => {
-    if (!isLooping || loopStartLine === null || loopEndLine === null) return null;
+    if (!isLooping || loopStartLine === null || loopEndLine === null) {return null;}
     return { min: loopStartLine, max: loopEndLine };
   }, [isLooping, loopStartLine, loopEndLine]);
 
@@ -830,10 +830,10 @@ export function RehearsalLyrics() {
 
   // BAC-001 (VMO-035): hide until the late load signal flips lyricsReady true,
   // so the early raw lyrics mirror from the frozen orchestrator never flashes.
-  if (!lyricsReady || lines.length === 0) return null;
+  if (!lyricsReady || lines.length === 0) {return null;}
 
   // D-CASE 7: blocks-зеркало строится — сырой центр не показываем (FOUC-гейт)
-  if (structurePending) return null;
+  if (structurePending) {return null;}
 
   if (displayBlock) {
     const fontSize = getBlockFontSize(visibleLineIndices.length);
@@ -1064,9 +1064,9 @@ export function RehearsalLyrics() {
           const isSubBlockLevel = currentActiveSubBlock && !currentActiveSubBlock.isLast;
 
           if (isSubBlockLevel) {
-            if (previewSlot.blockId !== displayBlock?.id) return null;
+            if (previewSlot.blockId !== displayBlock?.id) {return null;}
           } else {
-            if (!nextBlock || previewSlot.blockId !== nextBlock.id) return null;
+            if (!nextBlock || previewSlot.blockId !== nextBlock.id) {return null;}
           }
 
           const block = activeBlockRef.current;

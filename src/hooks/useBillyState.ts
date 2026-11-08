@@ -43,9 +43,9 @@ export function useBillyAnimation(): BillyAnimation {
   const hasTrack = useTrackStore(s => !!s.currentTrack);
 
   return useMemo<BillyAnimation>(() => {
-    if (isAiStreaming) return 'think';
-    if (isPlaying) return 'dance';
-    if (!hasTrack) return 'sleep';
+    if (isAiStreaming) {return 'think';}
+    if (isPlaying) {return 'dance';}
+    if (!hasTrack) {return 'sleep';}
     return 'idle';
   }, [isAiStreaming, isPlaying, hasTrack]);
 }

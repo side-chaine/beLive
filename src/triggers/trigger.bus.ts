@@ -21,7 +21,7 @@ class TriggerBus {
 
   emit(event: TriggerEvent): void {
     const idSet = this._idListeners.get(event.id);
-    if (idSet) idSet.forEach(cb => cb(event));
+    if (idSet) {idSet.forEach(cb => cb(event));}
     this._anyListeners.forEach(cb => cb(event));
   }
 

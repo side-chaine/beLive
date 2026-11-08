@@ -42,7 +42,7 @@ const PREFIX_RE = new RegExp(
 
 function detectBracketTag(line: string) {
   const m = line.match(BRACKET_RE);
-  if (!m) return null;
+  if (!m) {return null;}
 
   const content = m[1];
   let tagPart: string;
@@ -67,7 +67,7 @@ function detectBracketTag(line: string) {
 
 function detectPrefixTag(line: string) {
   const m = line.match(PREFIX_RE);
-  if (!m) return null;
+  if (!m) {return null;}
   return extractTagInfo(m[1].trim(), line.trim(), 0.9);
 }
 
@@ -96,7 +96,7 @@ function extractTagInfo(
   }
 
   const alias = resolveBlockAlias(tag);
-  if (!alias) return null;
+  if (!alias) {return null;}
 
   return {
     type: alias.type,
@@ -164,12 +164,12 @@ function filterGeniusNoise(text: string): string {
 
     // Individual line filters (existing patterns)
     if (!trimmed) { filtered.push(line); continue; } // keep empty lines
-    if (lower.startsWith('see ') && lower.endsWith(' live')) continue;
-    if (lower.includes('get tickets as low as')) continue;
-    if (lower.includes('genius romanizations')) continue;
-    if (lower.includes('genius translations')) continue;
-    if (/^\$\d+/.test(trimmed)) continue;
-    if (/^\d+embed$/i.test(lower.replace(/\s/g, ''))) continue;
+    if (lower.startsWith('see ') && lower.endsWith(' live')) {continue;}
+    if (lower.includes('get tickets as low as')) {continue;}
+    if (lower.includes('genius romanizations')) {continue;}
+    if (lower.includes('genius translations')) {continue;}
+    if (/^\$\d+/.test(trimmed)) {continue;}
+    if (/^\d+embed$/i.test(lower.replace(/\s/g, ''))) {continue;}
 
     filtered.push(line);
   }
@@ -223,7 +223,7 @@ export function parseTaggedLyrics(text: string): ParseResult {
       };
     } else if (BRACKET_RE.test(line)) {
       const content = line.match(BRACKET_RE)?.[1];
-      if (content) unmatchedTags.push(content);
+      if (content) {unmatchedTags.push(content);}
       if (current) {
         blocks.push(finalizeBlock(current, i - 1));
         current = null;
@@ -283,8 +283,8 @@ export function parseTaggedLyrics(text: string): ParseResult {
 
   const typeOccurrences: Record<string, number> = {};
   const processedBlocks = compositeBlocks.map(block => {
-    if (!typesToNumber.has(block.type)) return block;
-    if (typeCounts[block.type] <= 1) return block;
+    if (!typesToNumber.has(block.type)) {return block;}
+    if (typeCounts[block.type] <= 1) {return block;}
 
     typeOccurrences[block.type] = (typeOccurrences[block.type] || 0) + 1;
 
@@ -306,7 +306,7 @@ export function parseTaggedLyrics(text: string): ParseResult {
         };
       }
 
-    if (block.number !== undefined) return block; // respect explicit author number
+    if (block.number !== undefined) {return block;} // respect explicit author number
 
     return {
       ...block,
@@ -342,9 +342,9 @@ function finalizeBlock(
   lastLineIndex: number,
 ): DetectedBlock {
   const content = [...current.contentLines];
-  while (content.length > 0 && !content[content.length - 1].trim()) content.pop();
+  while (content.length > 0 && !content[content.length - 1].trim()) {content.pop();}
   let startOffset = 0;
-  while (startOffset < content.length && !content[startOffset].trim()) startOffset++;
+  while (startOffset < content.length && !content[startOffset].trim()) {startOffset++;}
   const trimmed = content.slice(startOffset);
 
   return {

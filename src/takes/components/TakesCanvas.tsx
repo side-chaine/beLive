@@ -33,31 +33,31 @@ export function TakesCanvas({
 
   // Compute peaks once per block/buffer change
   const instrumentalPeaks = useMemo(() => {
-    if (!instrumentalBuffer) return null;
+    if (!instrumentalBuffer) {return null;}
     const sr = instrumentalBuffer.sampleRate;
     const ch = instrumentalBuffer.getChannelData(0);
     const s0 = Math.max(0, Math.floor(blockStart * sr));
     const s1 = Math.min(ch.length, Math.ceil(blockEnd * sr));
-    if (s1 <= s0) return null;
+    if (s1 <= s0) {return null;}
     return generatePeaks(ch.subarray(s0, s1), 0, s1 - s0, 500);
   }, [instrumentalBuffer, blockStart, blockEnd]);
 
   const vocalPeaks = useMemo(() => {
-    if (!vocalBuffer) return null;
+    if (!vocalBuffer) {return null;}
     const sr = vocalBuffer.sampleRate;
     const ch = vocalBuffer.getChannelData(0);
     const s0 = Math.max(0, Math.floor(blockStart * sr));
     const s1 = Math.min(ch.length, Math.ceil(blockEnd * sr));
-    if (s1 <= s0) return null;
+    if (s1 <= s0) {return null;}
     return generatePeaks(ch.subarray(s0, s1), 0, s1 - s0, 500);
   }, [vocalBuffer, blockStart, blockEnd]);
 
   // Draw function
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {return;}
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {return;}
 
     const dpr = window.devicePixelRatio || 1;
     const w = widthRef.current;
@@ -100,9 +100,9 @@ export function TakesCanvas({
       drawPeakBars(ctx, vocalPeaks, w, h, 'rgba(79,139,255,0.55)');
     } else if (viewMode === 'mix') {
       if (instrumentalPeaks)
-        drawPeakBars(ctx, instrumentalPeaks, w, h, 'rgba(210,85,85,0.35)');
+        {drawPeakBars(ctx, instrumentalPeaks, w, h, 'rgba(210,85,85,0.35)');}
       if (vocalPeaks)
-        drawPeakBars(ctx, vocalPeaks, w, h, 'rgba(79,139,255,0.45)');
+        {drawPeakBars(ctx, vocalPeaks, w, h, 'rgba(79,139,255,0.45)');}
     }
     
     // Layer 2: Reference peaks (guide-green; bright green remains reserved for future match zones)
@@ -129,7 +129,7 @@ export function TakesCanvas({
   // Resize observer
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container) {return;}
 
     const observer = new ResizeObserver(([entry]) => {
       widthRef.current = entry.contentRect.width;
@@ -169,7 +169,7 @@ function drawPeakBars(
   height: number,
   color: string,
 ) {
-  if (peaks.length === 0) return;
+  if (peaks.length === 0) {return;}
   const mid = height / 2;
   const barW = width / peaks.length;
 
@@ -192,7 +192,7 @@ function drawContourBars(
   color: string,
   fillRatio: number = 0.3,
 ) {
-  if (peaks.length === 0) return;
+  if (peaks.length === 0) {return;}
   const mid = height / 2;
   const barW = width / peaks.length;
   const narrowBarW = barW * fillRatio; // Narrower than normal bars

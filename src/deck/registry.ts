@@ -9,7 +9,7 @@ const lazyCache = new Map<string, LazyExoticComponent<ComponentType>>();
 
 /** Register a deck module. Duplicate ids silently ignored. */
 export function registerModule(mod: DeckModule): void {
-  if (modules.some(m => m.id === mod.id)) return;
+  if (modules.some(m => m.id === mod.id)) {return;}
   modules.push(mod);
   modules.sort((a, b) => a.order - b.order);
 }
@@ -40,7 +40,7 @@ export function getLazyComponent(
   id: string
 ): LazyExoticComponent<ComponentType> | null {
   const mod = modules.find(m => m.id === id);
-  if (!mod) return null;
+  if (!mod) {return null;}
   let cached = lazyCache.get(id);
   if (!cached) {
     cached = lazy(mod.load);

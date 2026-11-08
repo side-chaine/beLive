@@ -87,7 +87,7 @@ export const TakesPanel: React.FC = () => {
   // Record abort message state (M2) — auto-clear after 3.5s
   const [recordAbortMsg, setRecordAbortMsg] = React.useState<string | null>(null);
   React.useEffect(() => {
-    if (!recordAbortMsg) return;
+    if (!recordAbortMsg) {return;}
     const t = window.setTimeout(() => setRecordAbortMsg(null), 3500);
     return () => window.clearTimeout(t);
   }, [recordAbortMsg]);
@@ -208,10 +208,10 @@ export const TakesPanel: React.FC = () => {
   
   // Auto-focus first ready take on quest completion
   React.useEffect(() => {
-    if (!completionMoment) return;
+    if (!completionMoment) {return;}
     
     const bt = blockTakesMap[completionMoment.blockId];
-    if (!bt) return;
+    if (!bt) {return;}
     
     // Find first ready take (lowest index)
     const firstReadyIndex = bt.takes.findIndex(
@@ -226,15 +226,15 @@ export const TakesPanel: React.FC = () => {
   
   // Reference take target for Compare A-B (selected take)
   const referenceTakeTarget = React.useMemo(() => {
-    if (!activeBlockId) return null;
+    if (!activeBlockId) {return null;}
     const bt = blockTakesMap[activeBlockId];
-    if (!bt) return null;
+    if (!bt) {return null;}
     
     // Hide overlays during countdown or recording
-    if (isRecording || countdownOverlay !== null) return null;
+    if (isRecording || countdownOverlay !== null) {return null;}
     
     // Only show reference layer in A-B mode with selected take
-    if (compareMode !== 'ab') return null;
+    if (compareMode !== 'ab') {return null;}
     
     if (
       bt.selectedSlot !== null &&
@@ -248,9 +248,9 @@ export const TakesPanel: React.FC = () => {
   
   // Compare take target for Compare A-B (active compare slot or fallback)
   const compareTakeTarget = React.useMemo(() => {
-    if (!activeBlockId) return null;
+    if (!activeBlockId) {return null;}
     const bt = blockTakesMap[activeBlockId];
-    if (!bt) return null;
+    if (!bt) {return null;}
     const takes = bt.takes;
     
     // Hide committed take during pure reference listen (not previous-take preview)
@@ -263,7 +263,7 @@ export const TakesPanel: React.FC = () => {
     }
     
     // Hide overlays during countdown or recording
-    if (isRecording || countdownOverlay !== null) return null;
+    if (isRecording || countdownOverlay !== null) {return null;}
     
     if (compareMode === 'ab') {
       // In A-B mode: show active compare slot if different from selected
@@ -307,7 +307,7 @@ export const TakesPanel: React.FC = () => {
         (t): t is NonNullable<typeof t> => t?.status === 'ready'
       );
       
-      if (readyTakes.length === 0) return null;
+      if (readyTakes.length === 0) {return null;}
       
       readyTakes.sort((a, b) => b.recordedAt - a.recordedAt);
       const chosen = readyTakes[0];
@@ -320,9 +320,9 @@ export const TakesPanel: React.FC = () => {
   
   // Derive whether current block has enough ready takes for meaningful compare
   const canCompare = React.useMemo(() => {
-    if (!activeBlockId) return false;
+    if (!activeBlockId) {return false;}
     const bt = blockTakesMap[activeBlockId];
-    if (!bt) return false;
+    if (!bt) {return false;}
     
     const readyTakesCount = bt.takes.filter(
       (t): t is NonNullable<typeof t> => t?.status === 'ready'
@@ -373,7 +373,7 @@ export const TakesPanel: React.FC = () => {
   // Width cache through ResizeObserver (NOT in rAF)
   React.useEffect(() => {
     const el = canvasZoneRef.current;
-    if (!el) return;
+    if (!el) {return;}
     const ro = new ResizeObserver(([entry]) => {
       // Quantize to integer to prevent fractional resize storms
       const nextWidth = Math.round(entry.contentRect.width);
@@ -406,13 +406,13 @@ export const TakesPanel: React.FC = () => {
   
   // Find active block
   const activeBlock = React.useMemo(() => {
-    if (!activeBlockId) return null;
+    if (!activeBlockId) {return null;}
     return blocks.find((b) => b.id === activeBlockId) || null;
   }, [activeBlockId, blocks]);
 
   // Compute time range for active block
   const timeRange = React.useMemo(() => {
-    if (!activeBlock) return null;
+    if (!activeBlock) {return null;}
     return getBlockTimeRange(activeBlock, markers);
   }, [activeBlock, markers]);
   
@@ -504,24 +504,24 @@ export const TakesPanel: React.FC = () => {
       if (pipeline && stems && stems.size > 0) {
         const instBufs: AudioBuffer[] = [];
         stems.forEach((st: any, id: string) => {
-          if (id === 'vocals') return;
+          if (id === 'vocals') {return;}
           const b = st.getBuffer?.();
-          if (b) instBufs.push(b);
+          if (b) {instBufs.push(b);}
         });
         if (instBufs.length > 0) {
           const ref = instBufs[0];
           let len = 0;
-          for (const b of instBufs) len = Math.max(len, b.length);
+          for (const b of instBufs) {len = Math.max(len, b.length);}
           const mixed = pipeline.ctx.createBuffer(ref.numberOfChannels, len, ref.sampleRate);
           for (let ch = 0; ch < ref.numberOfChannels; ch++) {
             const out = mixed.getChannelData(ch);
             for (const b of instBufs) {
               const src = b.getChannelData(Math.min(ch, b.numberOfChannels - 1));
               const n = Math.min(src.length, out.length);
-              for (let i = 0; i < n; i++) out[i] += src[i];
+              for (let i = 0; i < n; i++) {out[i] += src[i];}
             }
           }
-          if (!cancelled) setInstrumentalBuffer(mixed);
+          if (!cancelled) {setInstrumentalBuffer(mixed);}
           return;
         }
       }
@@ -554,7 +554,7 @@ export const TakesPanel: React.FC = () => {
     if (engineModeV === 'v3') {
       const stems = (window as any).__belive?.pipeline?.chainA?.stems;
       const vb = stems?.get?.('vocals')?.getBuffer?.() ?? null;
-      if (vb) { if (!cancelled) setVocalBuffer(vb); }
+      if (vb) { if (!cancelled) {setVocalBuffer(vb);} }
       return;
     }
     // Try sync first (buffer may already be decoded)
@@ -565,16 +565,16 @@ export const TakesPanel: React.FC = () => {
     }
     // Lazy decode from blob URL (skipDecode optimization)
     ae?.ensureVocalsBuffer?.()?.then((buf: AudioBuffer | null) => {
-      if (!cancelled && buf) setVocalBuffer(buf);
+      if (!cancelled && buf) {setVocalBuffer(buf);}
     }).catch(() => {});
     return () => { cancelled = true; };
   }, [duration]);
   
   // Compute reference peaks for Compare A-B (gold layer)
   const referencePeaks = React.useMemo(() => {
-    if (!referenceTakeTarget || !timeRange) return null;
+    if (!referenceTakeTarget || !timeRange) {return null;}
     const buffer = takeAssets.getAudioBuffer(referenceTakeTarget.id);
-    if (!buffer) return null;
+    if (!buffer) {return null;}
     
     const sr = buffer.sampleRate;
     const ch = buffer.getChannelData(0);
@@ -586,17 +586,17 @@ export const TakesPanel: React.FC = () => {
       ch.length, 
       Math.ceil((trimStart + blockDuration) * sr)
     );
-    if (s1 <= s0) return null;
+    if (s1 <= s0) {return null;}
     
     return generatePeaks(ch.subarray(s0, s1), 0, s1 - s0, 500);
   }, [referenceTakeTarget, timeRange, assetRevision]);
   
   // Compute compare peaks (orange layer)
   const comparePeaks = React.useMemo(() => {
-    if (!compareTakeTarget || !timeRange) return null;
+    if (!compareTakeTarget || !timeRange) {return null;}
     const buffer = takeAssets.getAudioBuffer(compareTakeTarget.id);
     if (!buffer) {
-      if (import.meta.env.DEV) console.log('[PEAKS-MISS]', { takeId: compareTakeTarget.id, slot: compareTakeTarget.slot, reason: 'audioBuffer-null' });
+      if (import.meta.env.DEV) {console.log('[PEAKS-MISS]', { takeId: compareTakeTarget.id, slot: compareTakeTarget.slot, reason: 'audioBuffer-null' });}
       return null;
     }
     
@@ -610,7 +610,7 @@ export const TakesPanel: React.FC = () => {
       ch.length, 
       Math.ceil((trimStart + blockDuration) * sr)
     );
-    if (s1 <= s0) return null;
+    if (s1 <= s0) {return null;}
     
     const peaks = generatePeaks(ch.subarray(s0, s1), 0, s1 - s0, 500);
     return peaks;
@@ -618,11 +618,11 @@ export const TakesPanel: React.FC = () => {
   
   // Memoized block time ranges for auto-follow
   const blockRanges = React.useMemo(() => {
-    if (!blocks.length || !markers.length) return [];
+    if (!blocks.length || !markers.length) {return [];}
     
     return blocks.map(block => {
       const range = getBlockTimeRange(block, markers, duration);
-      if (!range) return null;
+      if (!range) {return null;}
       return { blockId: block.id, startTime: range.startTime, endTime: range.endTime };
     }).filter(Boolean) as Array<{ blockId: string; startTime: number; endTime: number }>;
   }, [blocks, markers, duration]);
@@ -638,7 +638,7 @@ export const TakesPanel: React.FC = () => {
   // (track switched / block deleted / ID mutated). The UI must NOT depend
   // on the store always resetting activeBlockId on track change.
   React.useEffect(() => {
-    if (blockRanges.length === 0) return;
+    if (blockRanges.length === 0) {return;}
     if (!activeBlockId || !blocks.some((b) => b.id === activeBlockId)) {
       setActiveBlock(blockRanges[0].blockId);
     }
@@ -647,11 +647,11 @@ export const TakesPanel: React.FC = () => {
   // One-time confirmation log for buffer availability
   React.useEffect(() => {
     if (instrumentalBuffer) {
-      if (import.meta.env.DEV) console.log('[TakesCanvas] Instrumental buffer ready:', {
+      if (import.meta.env.DEV) {console.log('[TakesCanvas] Instrumental buffer ready:', {
         duration: instrumentalBuffer.duration,
         sampleRate: instrumentalBuffer.sampleRate,
         length: instrumentalBuffer.length,
-      });
+      });}
     }
   }, [instrumentalBuffer]);
   
@@ -661,7 +661,7 @@ export const TakesPanel: React.FC = () => {
   // Playhead rAF loop (direct engine read, NO store subscription)
   React.useEffect(() => {
     const el = playheadRef.current;
-    if (!el) return;
+    if (!el) {return;}
     let rafId: number;
     let followCount = 0;
     
@@ -759,7 +759,7 @@ export const TakesPanel: React.FC = () => {
     }
 
     const ae = (window as any).audioEngine;
-    if (!ae) return;
+    if (!ae) {return;}
 
     // Save volumes on first entry
     if (!savedVolumes) {
@@ -772,7 +772,7 @@ export const TakesPanel: React.FC = () => {
 
     // Resolve backing: step-level overrides exercise-level
     const backing = currentExerciseStep.backing ?? activeExercise.defaultBacking;
-    if (!backing) return;
+    if (!backing) {return;}
 
     // Compute backing volumes
     const volumes = resolveBackingVolumes(backing);
@@ -810,7 +810,7 @@ export const TakesPanel: React.FC = () => {
     }
 
     const ae = (window as any).audioEngine;
-    if (!ae) return;
+    if (!ae) {return;}
 
     // Save playbackRate on first entry
     if (!savedPlaybackRate) {
@@ -839,7 +839,7 @@ export const TakesPanel: React.FC = () => {
     }
 
     const ae = (window as any).audioEngine;
-    if (!ae) return;
+    if (!ae) {return;}
 
     // Determine if previous step in current scenario sequence was 'listen'
     const previousStepIndex = currentStepIndex - 1;
@@ -891,7 +891,7 @@ export const TakesPanel: React.FC = () => {
     }
   
     const ae = (window as any).audioEngine;
-    if (!ae) return;
+    if (!ae) {return;}
   
     // Determine if previous step in current scenario sequence was 'listen'
     const previousStepIndex = currentStepIndex - 1;
@@ -939,7 +939,7 @@ export const TakesPanel: React.FC = () => {
     }
 
     const ae = (window as any).audioEngine;
-    if (!ae) return;
+    if (!ae) {return;}
 
     // Restore engine volumes from saved values
     ae.setInstrumentalVolume?.(savedVolumes.instrumental);
@@ -961,7 +961,7 @@ export const TakesPanel: React.FC = () => {
     }
 
     const ae = (window as any).audioEngine;
-    if (!ae) return;
+    if (!ae) {return;}
 
     // Restore engine playbackRate from saved value
     ae.setPlaybackRate?.(savedPlaybackRate);
@@ -1001,7 +1001,7 @@ export const TakesPanel: React.FC = () => {
     }
 
     const ae = (window as any).audioEngine;
-    if (!ae) return;
+    if (!ae) {return;}
     const router = (window as any).__belive?.monitorRouter;
 
     // Apply V-Mix based on listenSource
@@ -1024,7 +1024,7 @@ export const TakesPanel: React.FC = () => {
     }
 
     const ae = (window as any).audioEngine;
-    if (!ae) return;
+    if (!ae) {return;}
     const router = (window as any).__belive?.monitorRouter;
 
     // Restore engine V-Mix from saved value
@@ -1044,23 +1044,23 @@ export const TakesPanel: React.FC = () => {
   // ========== EXERCISE LISTEN EXECUTOR (hidden) ==========
   React.useEffect(() => {
     // Guard: require valid key
-    if (!listenExecKey) return;
+    if (!listenExecKey) {return;}
     
     // Guard: skip if recording (standard guard)
-    if (isRecording) return;
+    if (isRecording) {return;}
     
     // One-shot guard: only run once per unique key
-    if (lastListenExecKeyRef.current === listenExecKey) return;
+    if (lastListenExecKeyRef.current === listenExecKey) {return;}
     
     // Mark as executed
     lastListenExecKeyRef.current = listenExecKey;
     
     const ae = (window as any).audioEngine;
-    if (!ae) return;
+    if (!ae) {return;}
   
     // Get range from ref (guaranteed non-null by key guard)
     const range = listenExecRangeRef.current;
-    if (!range) return; // Safety guard
+    if (!range) {return;} // Safety guard
   
     // Stale-run guard with runId
     const runId = ++listenRunIdRef.current;
@@ -1078,8 +1078,8 @@ export const TakesPanel: React.FC = () => {
       
       const pollForReadyTake = () => {
         // Stale-run guard
-        if (cancelled) return;
-        if (listenRunIdRef.current !== runId) return;
+        if (cancelled) {return;}
+        if (listenRunIdRef.current !== runId) {return;}
         
         // Get fresh state from store (not stale closure)
         const takesState = useTakesStore.getState();
@@ -1112,8 +1112,8 @@ export const TakesPanel: React.FC = () => {
             const takeDurationMs = (lastReadyTake.duration ?? 0) * 1000;
             const advanceDelayMs = Math.max(1000, takeDurationMs + 300);
             timeoutId = window.setTimeout(() => {
-              if (cancelled) return;
-              if (listenRunIdRef.current !== runId) return;
+              if (cancelled) {return;}
+              if (listenRunIdRef.current !== runId) {return;}
               advanceRef.current();
             }, advanceDelayMs);
             return; // Success - exit polling
@@ -1128,8 +1128,8 @@ export const TakesPanel: React.FC = () => {
         } else {
           // Max retries exceeded - graceful auto-advance
           timeoutId = window.setTimeout(() => {
-            if (cancelled) return;
-            if (listenRunIdRef.current !== runId) return;
+            if (cancelled) {return;}
+            if (listenRunIdRef.current !== runId) {return;}
             advanceRef.current();
           }, 1500);
         }
@@ -1159,7 +1159,7 @@ export const TakesPanel: React.FC = () => {
     // REFERENCE LISTEN PATH: Standard playback for 'reference' or undefined listenSource
     // Seek to start and play (guard: only play if not already playing)
     try { seekTo(range.startTime) } catch {}
-    if (!ae?.isPlaying) getTransport().play();
+    if (!ae?.isPlaying) {getTransport().play();}
     
     // Determine if next step requires continuous handoff (Call & Response)
     const currentExercise = activeExercise;
@@ -1202,8 +1202,8 @@ export const TakesPanel: React.FC = () => {
     // rAF loop to monitor playback progress
     const tick = () => {
       // Stale-run guard
-      if (cancelled) return;
-      if (listenRunIdRef.current !== runId) return;
+      if (cancelled) {return;}
+      if (listenRunIdRef.current !== runId) {return;}
   
       // Check if audio engine is actually playing
       if (!ae?.isPlaying) {
@@ -1260,8 +1260,8 @@ export const TakesPanel: React.FC = () => {
     const adjustedDurationSec = tempoRate ? blockDurationSec / tempoRate : blockDurationSec;
     const fallbackMs = Math.max(0, (adjustedDurationSec + 2) * 1000);
     timeoutId = window.setTimeout(() => {
-      if (cancelled) return;
-      if (listenRunIdRef.current !== runId) return;
+      if (cancelled) {return;}
+      if (listenRunIdRef.current !== runId) {return;}
         
       // Clear cue on timeout
       setResponseCue(null);
@@ -1301,17 +1301,17 @@ export const TakesPanel: React.FC = () => {
   // ========== EXERCISE WAIT EXECUTOR (hidden) ==========
   React.useEffect(() => {
     // Guard: require valid key
-    if (!waitExecKey) return;
+    if (!waitExecKey) {return;}
     
     // One-shot guard: only run once per unique key
-    if (lastWaitExecKeyRef.current === waitExecKey) return;
+    if (lastWaitExecKeyRef.current === waitExecKey) {return;}
     
     // Mark as executed
     lastWaitExecKeyRef.current = waitExecKey;
     
     // Capture step reference (guaranteed non-null by key guard)
     const step = currentExerciseStep;
-    if (!step) return; // Safety guard
+    if (!step) {return;} // Safety guard
 
     // Stale-run guard with runId
     const runId = ++waitRunIdRef.current;
@@ -1412,7 +1412,7 @@ export const TakesPanel: React.FC = () => {
           }}
           onClick={(e) => {
             // Future-proof seek guard for all interactive overlays
-            if ((e.target as HTMLElement).closest('[data-no-seek]')) return;
+            if ((e.target as HTMLElement).closest('[data-no-seek]')) {return;}
             
             // Interrupt practice first if active, then seek
             interruptPracticeSession(() => {

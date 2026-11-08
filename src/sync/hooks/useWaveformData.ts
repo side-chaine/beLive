@@ -78,7 +78,7 @@ export function useWaveformData(): WaveformData {
           vUrl ? fetchAndDecode(vUrl, ctx) : null,
         ]);
 
-        if (cancelled) return;
+        if (cancelled) {return;}
 
         const refBuffer = iBuf || vBuf;
 
@@ -91,11 +91,11 @@ export function useWaveformData(): WaveformData {
           error: null,
         });
 
-        if (import.meta.env.DEV) console.log(
+        if (import.meta.env.DEV) {console.log(
           '[SyncWaveform] loaded:',
           'I=' + (iBuf ? `${iBuf.duration.toFixed(1)}s` : 'none'),
           'V=' + (vBuf ? `${vBuf.duration.toFixed(1)}s` : 'none')
-        );
+        );}
       } catch (e) {
         if (!cancelled) {
           console.error('[SyncWaveform] load error:', e);
@@ -111,7 +111,7 @@ export function useWaveformData(): WaveformData {
     load();
     return () => {
       cancelled = true;
-      if (pollTimer !== undefined) clearTimeout(pollTimer);
+      if (pollTimer !== undefined) {clearTimeout(pollTimer);}
     };
   }, []);
 

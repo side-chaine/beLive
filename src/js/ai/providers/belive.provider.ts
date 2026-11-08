@@ -25,7 +25,7 @@ export class BeliveProvider implements AIProvider {
   private currentAbortController: AbortController | null = null;
 
   async healthCheck(): Promise<boolean> {
-    if (!AI_WORKER_URL) return false;
+    if (!AI_WORKER_URL) {return false;}
     try {
       const res = await fetch(AI_WORKER_URL, {
         method: 'POST',
@@ -99,8 +99,8 @@ export class BeliveProvider implements AIProvider {
 
       if (!res.ok) {
         let msg = 'Ошибка сервера';
-        if (res.status === 401) msg = 'Сессия истекла. Войдите снова.';
-        if (res.status === 429) msg = 'Лимит 20 запросов в день исчерпан.';
+        if (res.status === 401) {msg = 'Сессия истекла. Войдите снова.';}
+        if (res.status === 429) {msg = 'Лимит 20 запросов в день исчерпан.';}
         const errorText = await res.text();
         console.error('[BeliveAI] Error:', res.status, errorText.slice(0, 200));
         callbacks.onError?.(new AIError(
@@ -121,14 +121,14 @@ export class BeliveProvider implements AIProvider {
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {break;}
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (!line.trim() || !line.startsWith('data: ')) continue;
+          if (!line.trim() || !line.startsWith('data: ')) {continue;}
 
           const jsonStr = line.slice(6).trim();
           if (jsonStr === '[DONE]') {
@@ -151,7 +151,7 @@ export class BeliveProvider implements AIProvider {
 
       callbacks.onDone?.(fullText);
     } catch (e: any) {
-      if (e.name === 'AbortError') return;
+      if (e.name === 'AbortError') {return;}
       console.error('[BeliveAI] Stream error:', e.message);
       callbacks.onError?.(new AIError(
         'STREAM_ERROR',

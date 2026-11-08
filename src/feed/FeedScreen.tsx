@@ -22,7 +22,7 @@ export function FeedScreen() {
 
   // Cleanup activePostId when col0 is hidden (prevents stale TrackCard)
   useEffect(() => {
-    if (!col0Visible) setActivePost(null);
+    if (!col0Visible) {setActivePost(null);}
   }, [col0Visible, setActivePost]);
 
   const gridRef = useRef<HTMLDivElement>(null);

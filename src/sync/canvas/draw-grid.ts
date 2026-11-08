@@ -12,12 +12,12 @@ export function drawGrid(
 ): void {
   // Choose interval based on zoom (pixelsPerSecond)
   let interval: number;
-  if (zoom < 15) interval = 30;
-  else if (zoom < 30) interval = 10;
-  else if (zoom < 60) interval = 5;
-  else if (zoom < 150) interval = 2;
-  else if (zoom < 300) interval = 1;
-  else interval = 0.5;
+  if (zoom < 15) {interval = 30;}
+  else if (zoom < 30) {interval = 10;}
+  else if (zoom < 60) {interval = 5;}
+  else if (zoom < 150) {interval = 2;}
+  else if (zoom < 300) {interval = 1;}
+  else {interval = 0.5;}
 
   const startTime = scrollLeft / zoom;
   const endTime = Math.min((scrollLeft + width) / zoom, duration);
@@ -26,7 +26,7 @@ export function drawGrid(
   ctx.lineWidth = 1;
 
   for (let t = firstMark; t <= endTime + interval; t += interval) {
-    if (t < 0 || t > duration) continue;
+    if (t < 0 || t > duration) {continue;}
     const x = Math.round(t * zoom - scrollLeft) + 0.5;
 
     // Grid line

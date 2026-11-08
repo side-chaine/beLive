@@ -43,7 +43,7 @@ export async function deleteTrack(id: number): Promise<void> {
   const w = window as any;
   const idb = w.idbService;
   const tc = w.trackCatalog;
-  if (!idb || id === undefined) return;
+  if (!idb || id === undefined) {return;}
 
   try {
     await idb.deleteTrack(id);
@@ -55,15 +55,15 @@ export async function deleteTrack(id: number): Promise<void> {
 
         if (deletedIndex === tc.currentTrackIndex) {
           document.dispatchEvent(new Event('before-track-change'));
-          if (w.audioEngine) w.audioEngine.stop();
+          if (w.audioEngine) {w.audioEngine.stop();}
           tc.currentTrackIndex = -1;
-          if (w.lyricsDisplay?.clearAllTextBlocks) w.lyricsDisplay.clearAllTextBlocks();
-          if (w.lyricsDisplay?.fullReset) w.lyricsDisplay.fullReset();
+          if (w.lyricsDisplay?.clearAllTextBlocks) {w.lyricsDisplay.clearAllTextBlocks();}
+          if (w.lyricsDisplay?.fullReset) {w.lyricsDisplay.fullReset();}
           if (w.lyricsDisplay) {
             w.lyricsDisplay.lyrics = [];
             w.lyricsDisplay.fullText = '';
           }
-          if (w.markerManager?.resetMarkers) w.markerManager.resetMarkers();
+          if (w.markerManager?.resetMarkers) {w.markerManager.resetMarkers();}
         } else if (deletedIndex < tc.currentTrackIndex) {
           tc.currentTrackIndex--;
         }
@@ -100,14 +100,14 @@ export async function saveLyricsBlocks(
   const w = window as any;
   const tc = w.trackCatalog;
   const idb = w.idbService;
-  if (!tc) return false;
+  if (!tc) {return false;}
 
   const track = tc.tracks?.find((t: any) => String(t.id) === String(trackId));
   if (!track) {
     w.showAppNotification?.('Track not found for saving blocks and lyrics.', 'error');
     return false;
   }
-  if (!idb?.saveTrack) return false;
+  if (!idb?.saveTrack) {return false;}
 
   // Build the next snapshot first — IDB failure must not leave partial mutations.
   const nextTrack: any = { ...track };
@@ -138,9 +138,9 @@ export async function saveLyricsBlocks(
   const target = tc.tracks?.find((t: any) => String(t.id) === String(trackId));
   if (target) {
     target.blocksData = nextTrack.blocksData;
-    if (nextTrack.lyrics !== undefined) target.lyrics = nextTrack.lyrics;
+    if (nextTrack.lyrics !== undefined) {target.lyrics = nextTrack.lyrics;}
     target.lastModified = nextTrack.lastModified;
-    if (nextTrack.syncMarkers !== undefined) target.syncMarkers = nextTrack.syncMarkers;
+    if (nextTrack.syncMarkers !== undefined) {target.syncMarkers = nextTrack.syncMarkers;}
   }
 
   w.showAppNotification?.(`Lyric blocks for "${track.title}" saved.`, 'success');
@@ -150,12 +150,12 @@ export async function saveLyricsBlocks(
 export function initTrackEventListeners(): void {
   document.addEventListener('save-track-markers', ((event: Event) => {
     const detail = (event as CustomEvent).detail;
-    if (!detail?.trackId || !detail?.markers) return;
+    if (!detail?.trackId || !detail?.markers) {return;}
 
     const w = window as any;
     const tc = w.trackCatalog;
     const idb = w.idbService;
-    if (!tc) return;
+    if (!tc) {return;}
 
     const track = tc.tracks.find((t: any) => t.id === detail.trackId);
     if (!track) {
@@ -174,7 +174,7 @@ export function initTrackEventListeners(): void {
 export async function clearAllTracks(): Promise<boolean> {
   const w = window as any;
   const idb = w.idbService;
-  if (!idb) return false;
+  if (!idb) {return false;}
 
   if (!confirm('Вы уверены, что хотите удалить ВСЕ треки из каталога? Это действие невозможно отменить!')) {
     return false;
@@ -184,7 +184,7 @@ export async function clearAllTracks(): Promise<boolean> {
     document.dispatchEvent(new Event('before-track-change'));
     await idb.clearAllTracks();
 
-    if (w.audioEngine) w.audioEngine.stop();
+    if (w.audioEngine) {w.audioEngine.stop();}
 
     const tc = w.trackCatalog;
     if (tc) {
@@ -193,13 +193,13 @@ export async function clearAllTracks(): Promise<boolean> {
     }
 
     if (w.lyricsDisplay) {
-      if (w.lyricsDisplay.clearAllTextBlocks) w.lyricsDisplay.clearAllTextBlocks();
-      if (w.lyricsDisplay.fullReset) w.lyricsDisplay.fullReset();
+      if (w.lyricsDisplay.clearAllTextBlocks) {w.lyricsDisplay.clearAllTextBlocks();}
+      if (w.lyricsDisplay.fullReset) {w.lyricsDisplay.fullReset();}
       w.lyricsDisplay.lyrics = [];
       w.lyricsDisplay.fullText = '';
     }
 
-    if (w.markerManager?.resetMarkers) w.markerManager.resetMarkers();
+    if (w.markerManager?.resetMarkers) {w.markerManager.resetMarkers();}
 
     document.dispatchEvent(new CustomEvent('catalog-cleared'));
     return true;
@@ -212,7 +212,7 @@ export async function clearAllTracks(): Promise<boolean> {
 export async function importMarkersFromFile(file: File): Promise<void> {
   const w = window as any;
   try {
-    if (!w.markerManager) return;
+    if (!w.markerManager) {return;}
 
     const text = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();

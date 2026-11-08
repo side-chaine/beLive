@@ -59,7 +59,7 @@ export function duckProgram(opts?: {
   // v2 / no pipeline
   if ((window as any).__v3Active === false) {
     const ae = (window as any).audioEngine;
-    if (!ae) return null;
+    if (!ae) {return null;}
     // snapshot current V2 stem volumes
     const snapInst = typeof ae.getStemVolume === 'function' ? ae.getStemVolume('instrumental') : 1;
     const snapVoc = typeof ae.getStemVolume === 'function' ? ae.getStemVolume('vocals') : 1;

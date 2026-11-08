@@ -211,6 +211,6 @@ export const BLOCK_TYPE_NAMES: Record<string, string> = {
 export function getRussianStructureFormula(
   blocks: { type: string }[] | null,
 ): string {
-  if (!blocks || blocks.length === 0) return '';
+  if (!blocks || blocks.length === 0) {return '';}
   return blocks.map(b => BLOCK_TYPE_NAMES[b.type] || b.type).join(' → ');
 }

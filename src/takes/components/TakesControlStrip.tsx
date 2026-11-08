@@ -138,11 +138,11 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
   }, []);
 
   const handleRecord = React.useCallback(async (targetSlot?: number) => {
-    if (isRecording || countdown !== null) return;
+    if (isRecording || countdown !== null) {return;}
     
     // Determine target slot: explicit parameter or fallback to next empty slot
     const slot = targetSlot ?? nextSlot;
-    if (slot === null) return;
+    if (slot === null) {return;}
     
     // Detect tempo-aware training recording from current exercise step
     const currentStep = getCurrentStep();
@@ -155,7 +155,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
     const existingTake = blockTakes?.takes[slot];
     const isTrainingOverwrite = existingTake && takeKind === 'training' && existingTake.takeKind === 'training';
     const isTempoTaggedOverwrite = existingTake && tempoRate && existingTake.tempoRate && (takeKind === 'training' || takeKind === 'final');
-    if (existingTake && !isRecording && !isTrainingOverwrite && !isTempoTaggedOverwrite) return; // Block retake for now
+    if (existingTake && !isRecording && !isTrainingOverwrite && !isTempoTaggedOverwrite) {return;} // Block retake for now
     
     // Determine effective time range: exercise resolvedTimeRange takes precedence during pre-recording
     const effectiveTimeRange =
@@ -163,17 +163,17 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
         ? exerciseResolvedTimeRange
         : timeRange;
     
-    if (!effectiveTimeRange) return;
+    if (!effectiveTimeRange) {return;}
     
     const ae = (window as any).audioEngine;
-    if (!ae) return;
+    if (!ae) {return;}
     
     try {
       // Rate: единый роутинг V3/V2 (М3) — tempoRate через TransportV3 при V3-фоне
       setRate(tempoRate ?? 1);
       if (ae.microphone && !ae.microphone.enabled) {
         const engineMode = ENGINE_MODE;
-        if (engineMode !== 'v3') await ae.enableMicrophone(); // v3: acquisition внутри TakesRecorder.start() (F-1 431)
+        if (engineMode !== 'v3') {await ae.enableMicrophone();} // v3: acquisition внутри TakesRecorder.start() (F-1 431)
       }
       
       // Detect line-scoped record stage: reduce pre-roll to 0 for line-range-scoped transactions
@@ -261,7 +261,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
               if ((window as any).__v3Active) {
                 // v3: fade vocal-bus via pipeline
                 const h = duckProgram({ buses: ['vocal-bus'], rampMs: Math.max(50, left * 1000) });
-                if (h) vocalFadeDuckRef.current = h;
+                if (h) {vocalFadeDuckRef.current = h;}
               } else {
                 // v2: legacy gainNode ramp
                 try {
@@ -307,7 +307,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       const wasClippedBefore = oldTrim !== (wallDeltaSec - rawDeltaSec);
       const fixDeltaMs = (computedTrim - oldTrim) * 1000;
       
-      if (import.meta.env.DEV) console.log('[TRIM-BASIS]', {
+      if (import.meta.env.DEV) {console.log('[TRIM-BASIS]', {
         blockId: activeBlockId,
         slot,
         blockStart: effectiveTimeRange.startTime,
@@ -324,7 +324,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
         v3Active: (window as any).__v3Active,
         recorderInitMs,
         seekMs,
-      });
+      });}
       
       (recorderRef.current as any).__trimStartSec = computedTrim;
       (recorderRef.current as any).__tempoRate = tempoRate;
@@ -334,8 +334,8 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       const lateStartOffsetSec = engineNow - effectiveTimeRange.startTime; // unclipped
       (recorderRef.current as any).__lateStartOffsetSec = lateStartOffsetSec;
       
-      if (import.meta.env.DEV) console.log('[Takes] Recorder armed early, visible REC started at engine time:', 
-        getPlaybackTime().toFixed(3));
+      if (import.meta.env.DEV) {console.log('[Takes] Recorder armed early, visible REC started at engine time:', 
+        getPlaybackTime().toFixed(3));}
       const _ac = getAudioContext();
       console.log('[REC-SYNC·ARM]', {
         engineNow: +(getPlaybackTime?.() ?? 0).toFixed(1),
@@ -351,14 +351,14 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       const blockEnd = effectiveTimeRange.endTime;
       timeCheckRef.current = window.setInterval(() => {
         const ct = getPlaybackTime();
-        if (ct >= blockEnd) handleStopRef.current();
+        if (ct >= blockEnd) {handleStopRef.current();}
       }, 100);
       // Adjust safety timeout for tempo-aware training record: slower tempo needs more wall-time
       const blockDurationSec = effectiveTimeRange.endTime - effectiveTimeRange.startTime;
       const adjustedDurationSec = tempoRate ? blockDurationSec / tempoRate : blockDurationSec;
       const safetyMs = (adjustedDurationSec + 5) * 1000;
       stopTimerRef.current = window.setTimeout(() => {
-        if (recorderRef.current?.isRecording) handleStopRef.current();
+        if (recorderRef.current?.isRecording) {handleStopRef.current();}
       }, safetyMs);
     } catch (err) {
       console.error('[Takes] Recording failed:', err);
@@ -440,11 +440,11 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
 
       const trimStartSec = (recorder as any).__trimStartSec ?? 0;
       const lateStartOffsetSec = (recorder as any).__lateStartOffsetSec ?? 0;
-      if (import.meta.env.DEV) console.log('[SYNC]', { 
+      if (import.meta.env.DEV) {console.log('[SYNC]', { 
         trim: trimStartSec.toFixed(4), 
         late: lateStartOffsetSec.toFixed(4),
         slot: currentSlot 
-      });
+      });}
       const meta: TakeMeta = {
         id: takeId,
         blockId: activeBlockId,
@@ -469,7 +469,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
           const ch = audioBuffer.getChannelData(0);
           const peaks = generatePeaks(ch, 0, ch.length, 200);
           const pv = new Float32Array(peaks.length);
-          for (let i = 0; i < peaks.length; i++) pv[i] = peaks[i][1];
+          for (let i = 0; i < peaks.length; i++) {pv[i] = peaks[i][1];}
           takeAssets.cacheDecoded(takeId, audioBuffer, pv);
 
           const s = useTakesStore.getState();
@@ -513,10 +513,10 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
   // Standard path is corrected first; in-flight alignment is evaluated separately.
   const handleInFlightRecord = React.useCallback(async (targetSlot?: number) => {
     const slot = targetSlot ?? nextSlot;
-    if (slot === null) return;
+    if (slot === null) {return;}
 
     const ae = (window as any).audioEngine;
-    if (!ae || !exerciseResolvedTimeRange) return;
+    if (!ae || !exerciseResolvedTimeRange) {return;}
 
     const currentStep = getCurrentStep();
 
@@ -570,7 +570,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
       // 1. Enable microphone if needed (hidden, no UI state yet)
       if (ae.microphone && !ae.microphone.enabled) {
         const engineMode = ENGINE_MODE;
-        if (engineMode !== 'v3') await ae.enableMicrophone(); // v3: acquisition внутри TakesRecorder.start() (F-1 431)
+        if (engineMode !== 'v3') {await ae.enableMicrophone();} // v3: acquisition внутри TakesRecorder.start() (F-1 431)
       }
 
       // 2. Create and start recorder (armed but hidden - no UI state yet)
@@ -679,7 +679,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
     const recorder = recorderRef.current;
     // P1#6: транспорт-агностичная пауза; getTransport() может вернуть null (engine-v3/index.ts:36-41)
     const transport = getTransport();
-    if (transport) void transport.pause();
+    if (transport) {void transport.pause();}
     if (!recorder || !recorder.isRecording) {
       useTakesStore.getState().cancelRecording();
       return;
@@ -718,14 +718,14 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
         const ch = audioBuffer.getChannelData(0);
         const peaks = generatePeaks(ch, 0, ch.length, 200);
         const pv = new Float32Array(peaks.length);
-        for (let i = 0; i < peaks.length; i++) pv[i] = peaks[i][1];
+        for (let i = 0; i < peaks.length; i++) {pv[i] = peaks[i][1];}
         takeAssets.cacheDecoded(takeId, audioBuffer, pv);
         useTakesStore.getState().bumpAssetRevision();
         const s = useTakesStore.getState();
         const bt2 = s.getBlockTakes(activeBlockId);
         const em = bt2.takes[currentSlot];
-        if (!em) return;
-        if (em.id !== takeId) return;
+        if (!em) {return;}
+        if (em.id !== takeId) {return;}
         s.finishRecording({ ...em, duration: audioBuffer.duration - trimStartSec, status: 'ready', peaksReady: true });
       }).catch(err => {
         console.error('[Takes] Decode failed:', err);
@@ -803,7 +803,7 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
           const ch = audioBuffer.getChannelData(0);
           const peaks = generatePeaks(ch, 0, ch.length, 200);
           const pv = new Float32Array(peaks.length);
-          for (let i = 0; i < peaks.length; i++) pv[i] = peaks[i][1];
+          for (let i = 0; i < peaks.length; i++) {pv[i] = peaks[i][1];}
           takeAssets.cacheDecoded(takeId, audioBuffer, pv);
 
           const s = useTakesStore.getState();
@@ -835,12 +835,12 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
 
   // Hidden exercise record trigger orchestration
   React.useEffect(() => {
-    if (!shouldTriggerRecord) return;
-    if (countdown !== null) return;
+    if (!shouldTriggerRecord) {return;}
+    if (countdown !== null) {return;}
     
     // REMOVED: continuationAllowed for multi-window ownership
     // Recovery path: each window triggers independently
-    if (isRecording) return;  // Standard guard
+    if (isRecording) {return;}  // Standard guard
 
     clearRecordTrigger();
     
@@ -871,11 +871,11 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
 
   React.useEffect(() => {
     return () => {
-      if (timeCheckRef.current) clearInterval(timeCheckRef.current);
-      if (stopTimerRef.current) clearTimeout(stopTimerRef.current);
-      if (countdownRef.current) cancelAnimationFrame(countdownRef.current);
-      if (deleteReRecordTimeoutRef.current) clearTimeout(deleteReRecordTimeoutRef.current);
-      if (recorderRef.current?.isRecording) recorderRef.current.cancel();
+      if (timeCheckRef.current) {clearInterval(timeCheckRef.current);}
+      if (stopTimerRef.current) {clearTimeout(stopTimerRef.current);}
+      if (countdownRef.current) {cancelAnimationFrame(countdownRef.current);}
+      if (deleteReRecordTimeoutRef.current) {clearTimeout(deleteReRecordTimeoutRef.current);}
+      if (recorderRef.current?.isRecording) {recorderRef.current.cancel();}
       vocalFadeDuckRef.current?.restore();
       vocalFadeDuckRef.current = null;
       
@@ -939,14 +939,14 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
               countdown={countdown}
               onRecord={(s) => {
                 interruptPracticeSession(() => {
-                  if (exercisePlaybackLocked) return;
+                  if (exercisePlaybackLocked) {return;}
                   onActiveCompareSlotChange?.(s);
                   handleRecord(s);
                 });
               }}
               onPlay={(takeId) => {
                 interruptPracticeSession(() => {
-                  if (exercisePlaybackLocked) return;
+                  if (exercisePlaybackLocked) {return;}
                   onActiveCompareSlotChange?.(slot);
                   handlePlayTake(takeId);
                 });
@@ -954,8 +954,8 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
               onSelectCompare={(slot) => onActiveCompareSlotChange?.(slot)}
               onRetake={() => {
                 interruptPracticeSession(() => {
-                  if (exercisePlaybackLocked) return;
-                  if (activeCompareSlot === slot) onActiveCompareSlotChange?.(null);
+                  if (exercisePlaybackLocked) {return;}
+                  if (activeCompareSlot === slot) {onActiveCompareSlotChange?.(null);}
                   handleDeleteSlot(slot);
                   onActiveCompareSlotChange?.(slot);
                   deleteReRecordTimeoutRef.current = window.setTimeout(() => handleRecord(slot), 150);
@@ -963,14 +963,14 @@ export const TakesControlStrip: React.FC<TakesControlStripProps> = ({
               }}
               onStar={() => {
                 interruptPracticeSession(() => {
-                  if (exercisePlaybackLocked) return;
+                  if (exercisePlaybackLocked) {return;}
                   const current = blockTakes?.selectedSlot;
                   selectTake(activeBlockId, current === slot ? null : slot);
                 });
               }}
               onDelete={() => {
                 interruptPracticeSession(() => {
-                  if (exercisePlaybackLocked) return;
+                  if (exercisePlaybackLocked) {return;}
                   handleDeleteSlot(slot);
                 });
               }}

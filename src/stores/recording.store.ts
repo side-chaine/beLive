@@ -81,7 +81,7 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
       chunks = [];
 
       mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
+        if (e.data.size > 0) {chunks.push(e.data);}
       };
 
       mediaRecorder.onstop = () => {
@@ -103,7 +103,7 @@ export const useRecordingStore = create<RecordingState>((set, get) => ({
       };
 
       displayStream.getVideoTracks()[0].onended = () => {
-        if (get().isRecording) get().stopRecording();
+        if (get().isRecording) {get().stopRecording();}
       };
 
       mediaRecorder.start();

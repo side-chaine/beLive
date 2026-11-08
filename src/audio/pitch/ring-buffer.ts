@@ -18,7 +18,7 @@ export class PitchRingBuffer {
   push(s: PitchSample): void {
     this._buf[this._head] = s;
     this._head = (this._head + 1) % this._cap;
-    if (this._len < this._cap) this._len++;
+    if (this._len < this._cap) {this._len++;}
   }
 
   /** Samples within time window [fromTime, toTime] in chronological order */
@@ -27,7 +27,7 @@ export class PitchRingBuffer {
     for (let i = 0; i < this._len; i++) {
       const idx = (this._head - this._len + i + this._cap) % this._cap;
       const s = this._buf[idx];
-      if (s.timestamp >= fromTime && s.timestamp <= toTime) out.push(s);
+      if (s.timestamp >= fromTime && s.timestamp <= toTime) {out.push(s);}
     }
     return out;
   }

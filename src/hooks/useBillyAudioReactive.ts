@@ -82,11 +82,11 @@ function readAudioData(): AudioData {
 
 function resetTransforms(refs: React.RefObject<BillyRefs>) {
   const r = refs.current;
-  if (!r) return;
-  if (r.bodyInner) r.bodyInner.style.transform = '';
-  if (r.armLInner) r.armLInner.style.transform = '';
-  if (r.armRInner) r.armRInner.style.transform = '';
-  if (r.headInner) r.headInner.style.transform = '';
+  if (!r) {return;}
+  if (r.bodyInner) {r.bodyInner.style.transform = '';}
+  if (r.armLInner) {r.armLInner.style.transform = '';}
+  if (r.armRInner) {r.armRInner.style.transform = '';}
+  if (r.headInner) {r.headInner.style.transform = '';}
 }
 
 /**
@@ -104,10 +104,10 @@ export function useBillyAudioReactive(
   const audioBudget = usePerformanceStore(s => s.getBudget()?.audioReactive);
 
   const tick = useCallback(() => {
-    if (animation !== 'dance') return;
+    if (animation !== 'dance') {return;}
 
     const r = refs.current;
-    if (!r) return;
+    if (!r) {return;}
 
     frameCountRef.current++;
 
@@ -118,7 +118,7 @@ export function useBillyAudioReactive(
                     : maxBands <= 6  ? 30
                     : 60;
     const skipN = Math.round(60 / targetFps) - 1;
-    if (skipN > 0 && frameCountRef.current % (skipN + 1) !== 0) return;
+    if (skipN > 0 && frameCountRef.current % (skipN + 1) !== 0) {return;}
 
     // Tier-dependent feature flags (maxBands already declared above)
     const applyBeat = maxBands >= 3;

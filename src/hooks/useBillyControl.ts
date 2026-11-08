@@ -29,7 +29,7 @@ export function setBillyControlActive(v: boolean): void {
  */
 export function toggleBillyControl(): boolean {
   const hasTrack = !!useTrackStore.getState().currentTrack;
-  if (!hasTrack) return false;
+  if (!hasTrack) {return false;}
 
   const next = !isBillyControlActive();
   setBillyControlActive(next);

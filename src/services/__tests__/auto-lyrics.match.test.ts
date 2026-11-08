@@ -36,7 +36,7 @@ function hasOverlappingIndices(blocks: { lineIndices: number[] }[]): boolean {
   const allUsed = new Set<number>();
   for (const b of blocks) {
     for (const idx of b.lineIndices) {
-      if (allUsed.has(idx)) return true;
+      if (allUsed.has(idx)) {return true;}
       allUsed.add(idx);
     }
   }
@@ -1025,7 +1025,7 @@ const TS_DRIFT_GENIUS_FULL = [
 // 20 filler lines to test gap assignment through large drift
 const TS_DRIFT_LRC_FULL = (() => {
   const lines: string[] = ['Alpha bravo charlie delta'];
-  for (let i = 0; i < 20; i++) lines.push(`Filler line number ${i}`);
+  for (let i = 0; i < 20; i++) {lines.push(`Filler line number ${i}`);}
   lines.push('Unique bridge text here');
   return lines;
 })();

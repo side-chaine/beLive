@@ -43,7 +43,7 @@ function ColorPicker({ value, onChange }: {
 // ── Auto-resize for dynamic textareas ──
 
 function autoResize(el: HTMLTextAreaElement | null) {
-  if (!el) return;
+  if (!el) {return;}
   el.style.height = 'auto';
   el.style.height = `${el.scrollHeight}px`;
 }
@@ -92,7 +92,7 @@ export function StepWorkspace() {
     // Sub-slide imageIds
     if (step.subSlides?.length) {
       step.subSlides.forEach(ss => {
-        if (ss.imageId) allImageIds.push(ss.imageId);
+        if (ss.imageId) {allImageIds.push(ss.imageId);}
       });
     }
 
@@ -107,10 +107,10 @@ export function StepWorkspace() {
     Promise.all(
       allImageIds.map(async (imageId) => {
         const url = await loadStepImageUrl(imageId);
-        if (url) urls[imageId] = url;
+        if (url) {urls[imageId] = url;}
       })
     ).then(() => {
-      if (!cancelled) setImageUrls(urls);
+      if (!cancelled) {setImageUrls(urls);}
     });
 
     return () => { cancelled = true; };
@@ -125,7 +125,7 @@ export function StepWorkspace() {
     }
     let cancelled = false;
     loadStepHtmlUrl(step.htmlId).then(url => {
-      if (!cancelled) setHtmlUrl(url);
+      if (!cancelled) {setHtmlUrl(url);}
     });
     return () => { cancelled = true; };
   }, [activePointIndex, activeStepIndex]);
@@ -139,7 +139,7 @@ export function StepWorkspace() {
   }, []);
 
   const handleAddImages = async (files: File[]) => {
-    if (!currentStep) return;
+    if (!currentStep) {return;}
     const newImageIds: string[] = [];
     const newUrls: Record<string, string> = {};
 
@@ -162,7 +162,7 @@ export function StepWorkspace() {
   };
 
   const handleRemoveImage = async (imageId: string) => {
-    if (!currentStep) return;
+    if (!currentStep) {return;}
     const url = imageUrls[imageId];
     const newImageIds = (currentStep.imageIds || []).filter(id => id !== imageId);
     updateStep(currentStep.id, { imageIds: newImageIds });
@@ -171,7 +171,7 @@ export function StepWorkspace() {
       delete next[imageId];
       return next;
     });
-    if (url) revokeStepUrl(url);
+    if (url) {revokeStepUrl(url);}
     try { await removeStepImage(imageId); } catch (_) {}
   };
 
@@ -199,7 +199,7 @@ export function StepWorkspace() {
 
   const handleHtmlFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !currentStep) return;
+    if (!file || !currentStep) {return;}
     const htmlId = Math.random().toString(36).substring(2, 9);
     try {
       const url = await processAndSaveHtml(file, htmlId);
@@ -215,7 +215,7 @@ export function StepWorkspace() {
     e.preventDefault();
     e.stopPropagation();
     const file = e.dataTransfer.files[0];
-    if (!file || !currentStep) return;
+    if (!file || !currentStep) {return;}
     if (file.name.endsWith('.html') || file.name.endsWith('.htm')) {
       const htmlId = Math.random().toString(36).substring(2, 9);
       processAndSaveHtml(file, htmlId).then(url => {
@@ -228,18 +228,18 @@ export function StepWorkspace() {
   // ── Sub-slide helpers ──
 
   const updateSubSlide = (index: number, data: Partial<ShowSubSlide>) => {
-    if (!currentStep) return;
+    if (!currentStep) {return;}
     const newSubSlides = [...(currentStep.subSlides || [])];
-    if (!newSubSlides[index]) return;
+    if (!newSubSlides[index]) {return;}
     newSubSlides[index] = { ...newSubSlides[index], ...data };
     updateStep(currentStep.id, { subSlides: newSubSlides });
   };
 
   const updateSubSlideBullet = (ssIndex: number, bIndex: number, data: Partial<SubSlideBullet>) => {
-    if (!currentStep) return;
+    if (!currentStep) {return;}
     const newSubSlides = [...(currentStep.subSlides || [])];
     const ss = newSubSlides[ssIndex];
-    if (!ss) return;
+    if (!ss) {return;}
     const newBullets = [...(ss.bullets || [])];
     newBullets[bIndex] = { ...newBullets[bIndex], ...data };
     newSubSlides[ssIndex] = { ...ss, bullets: newBullets };
@@ -251,7 +251,7 @@ export function StepWorkspace() {
   const handleSubSlideImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     const ssIdx = targetSubSlideIndexRef.current;
-    if (!file || !currentStep || ssIdx < 0) return;
+    if (!file || !currentStep || ssIdx < 0) {return;}
     const imageId = Math.random().toString(36).substring(2, 9);
     try {
       const url = await processAndSaveImage(file, imageId);
@@ -266,7 +266,7 @@ export function StepWorkspace() {
 
   const handleNewSubSlideImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files || files.length === 0 || !currentStep) return;
+    if (!files || files.length === 0 || !currentStep) {return;}
     const newSubSlides: ShowSubSlide[] = [];
     const newUrls: Record<string, string> = {};
 
@@ -291,9 +291,9 @@ export function StepWorkspace() {
   };
 
   const handleRemoveSubSlideImage = async (ssIndex: number) => {
-    if (!currentStep) return;
+    if (!currentStep) {return;}
     const ss = currentStep.subSlides?.[ssIndex];
-    if (!ss?.imageId) return;
+    if (!ss?.imageId) {return;}
     const url = imageUrls[ss.imageId];
     updateSubSlide(ssIndex, { imageId: undefined });
     setImageUrls(prev => {
@@ -301,7 +301,7 @@ export function StepWorkspace() {
       delete next[ss.imageId!];
       return next;
     });
-    if (url) revokeStepUrl(url);
+    if (url) {revokeStepUrl(url);}
     try { await removeStepImage(ss.imageId); } catch (_) {}
   };
 
@@ -309,7 +309,7 @@ export function StepWorkspace() {
     e.preventDefault();
     e.stopPropagation();
     const file = e.dataTransfer.files[0];
-    if (!file || !file.type.startsWith('image/') || !currentStep) return;
+    if (!file || !file.type.startsWith('image/') || !currentStep) {return;}
     const imageId = Math.random().toString(36).substring(2, 9);
     processAndSaveImage(file, imageId).then(url => {
       updateSubSlide(ssIdx, { imageId });
@@ -321,9 +321,9 @@ export function StepWorkspace() {
     e.preventDefault();
     e.stopPropagation();
     setIsBatchDragOver(false);
-    if (!currentStep) return;
+    if (!currentStep) {return;}
     const imageFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-    if (imageFiles.length === 0) return;
+    if (imageFiles.length === 0) {return;}
 
     const newSubSlides: ShowSubSlide[] = [];
     const newUrls: Record<string, string> = {};
@@ -363,18 +363,18 @@ export function StepWorkspace() {
   // ── Sub-slide CRUD ──
 
   const handleAddTextSubSlide = () => {
-    if (!currentStep) return;
+    if (!currentStep) {return;}
     updateStep(currentStep.id, {
       subSlides: [...(currentStep.subSlides || []), {}],
     });
   };
 
   const handleRemoveSubSlide = (ssIndex: number) => {
-    if (!currentStep) return;
+    if (!currentStep) {return;}
     const ss = currentStep.subSlides?.[ssIndex];
     if (ss?.imageId) {
       const url = imageUrls[ss.imageId];
-      if (url) revokeStepUrl(url);
+      if (url) {revokeStepUrl(url);}
       removeStepImage(ss.imageId).catch(() => {});
     }
     const newSubSlides = (currentStep.subSlides || []).filter((_, i) => i !== ssIndex);
@@ -382,10 +382,10 @@ export function StepWorkspace() {
   };
 
   const handleMoveSubSlide = (ssIndex: number, direction: 'up' | 'down') => {
-    if (!currentStep) return;
+    if (!currentStep) {return;}
     const subSlides = [...(currentStep.subSlides || [])];
     const targetIndex = direction === 'up' ? ssIndex - 1 : ssIndex + 1;
-    if (targetIndex < 0 || targetIndex >= subSlides.length) return;
+    if (targetIndex < 0 || targetIndex >= subSlides.length) {return;}
     [subSlides[ssIndex], subSlides[targetIndex]] = [subSlides[targetIndex], subSlides[ssIndex]];
     updateStep(currentStep.id, { subSlides });
   };
@@ -393,17 +393,17 @@ export function StepWorkspace() {
   // ── Sub-slide bullet CRUD ──
 
   const handleAddSubSlideBullet = (ssIndex: number) => {
-    if (!currentStep) return;
+    if (!currentStep) {return;}
     const ss = currentStep.subSlides?.[ssIndex];
-    if (!ss) return;
+    if (!ss) {return;}
     const newBullets = [...(ss.bullets || []), { text: '' }];
     updateSubSlide(ssIndex, { bullets: newBullets });
   };
 
   const handleRemoveSubSlideBullet = (ssIndex: number, bIndex: number) => {
-    if (!currentStep) return;
+    if (!currentStep) {return;}
     const ss = currentStep.subSlides?.[ssIndex];
-    if (!ss) return;
+    if (!ss) {return;}
     const newBullets = (ss.bullets || []).filter((_, i) => i !== bIndex);
     updateSubSlide(ssIndex, { bullets: newBullets });
   };
@@ -838,7 +838,7 @@ export function StepWorkspace() {
                         value={currentStep.imageCaptions?.[idx] || ''}
                         onChange={e => {
                           const newCaptions = [...(currentStep.imageCaptions || [])];
-                          while (newCaptions.length < (currentStep.imageIds || []).length) newCaptions.push('');
+                          while (newCaptions.length < (currentStep.imageIds || []).length) {newCaptions.push('');}
                           newCaptions[idx] = e.target.value;
                           updateStep(currentStep.id, { imageCaptions: newCaptions });
                         }}

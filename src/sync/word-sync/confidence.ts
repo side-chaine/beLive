@@ -4,8 +4,8 @@ export const HIGH_CONFIDENCE = 0.8;
 export type ConfidenceBand = 'low' | 'medium' | 'high';
 
 export function getConfidenceBand(value?: number | null): ConfidenceBand {
-  if (value == null || value < LOW_CONFIDENCE) return 'low';
-  if (value >= HIGH_CONFIDENCE) return 'high';
+  if (value == null || value < LOW_CONFIDENCE) {return 'low';}
+  if (value >= HIGH_CONFIDENCE) {return 'high';}
   return 'medium';
 }
 

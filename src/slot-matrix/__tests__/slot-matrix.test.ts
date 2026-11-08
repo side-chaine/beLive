@@ -22,10 +22,10 @@ import { computeSlotMatrix } from '../compute-slot-matrix';
 
 vi.mock('../../utils/block-utils', () => ({
   getBlockFontSize: (count: number) => {
-    if (count <= 2) return '3.2rem';
-    if (count <= 4) return '2.6rem';
-    if (count <= 6) return '2.0rem';
-    if (count <= 8) return '1.6rem';
+    if (count <= 2) {return '3.2rem';}
+    if (count <= 4) {return '2.6rem';}
+    if (count <= 6) {return '2.0rem';}
+    if (count <= 8) {return '1.6rem';}
     return '1.3rem';
   },
   createSubBlocks: (indices: number[], max: number) => {

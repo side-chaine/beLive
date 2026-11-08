@@ -55,7 +55,7 @@ export const useAudioStore = create<AudioState>((set) => ({
   // ADDITIVE: piano actions (migrated from pianoStore)
   togglePiano: () =>
     set((s) => {
-      if (s.pianoOpen) return { pianoOpen: false, micActive: false };
+      if (s.pianoOpen) {return { pianoOpen: false, micActive: false };}
       return { pianoOpen: true };
     }),
   setMicActive: (v) => set({ micActive: v }),

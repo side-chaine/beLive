@@ -33,14 +33,14 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
     _autoplayTimer = null;
   }
   const tc = (window as any).trackCatalog;
-  if (!tc?.tracks || index < 0 || index >= tc.tracks.length) return;
+  if (!tc?.tracks || index < 0 || index >= tc.tracks.length) {return;}
 
   // ── Timing instrumentation ──
   const _t0 = performance.now();
   let _ts = _t0;
   const _mark = (label: string) => {
     const now = performance.now();
-    if (import.meta.env.DEV) console.log(`[OrchTiming] ${label}: ${(now - _ts).toFixed(1)}ms (total: ${(now - _t0).toFixed(1)}ms)`);
+    if (import.meta.env.DEV) {console.log(`[OrchTiming] ${label}: ${(now - _ts).toFixed(1)}ms (total: ${(now - _t0).toFixed(1)}ms)`);}
     _ts = now;
   };
 
@@ -81,7 +81,7 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
 
   // Step 5: loading overlay show
   const ov = document.getElementById('loading-overlay');
-  if (ov) ov.classList.remove('hidden');
+  if (ov) {ov.classList.remove('hidden');}
 
   try {
     // Step 7: RTF parsing via rtfService
@@ -90,7 +90,7 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
     if (raw && typeof raw === 'string' && raw.startsWith('{\\rtf')) {
       try {
         const p = await (window as any).rtfService?.parseRtf(raw);
-        if (p) lyrics = p;
+        if (p) {lyrics = p;}
       } catch (_) {}
     }
     _mark('Steps 6-7: RTF parse');
@@ -195,11 +195,11 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
           const { updateTrackField } = await import('./idb.service');
           await updateTrackField(track.id, { lyrics: cleanLines.join('\n') });
 
-          if (import.meta.env.DEV) console.log(
+          if (import.meta.env.DEV) {console.log(
             `[TC-006] MIGRATED "${track.title}": ` +
             `${ld.lyrics.length} → ${cleanLines.length} lines ` +
             `(removed bracket tags)`
-          );
+          );}
         } else {
           console.warn(
             `[TC-006] Cannot migrate "${track.title}": no lyricsOriginalContent`
@@ -256,7 +256,7 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
       if (track.stemsData) {
         for (const [stemId, entry] of Object.entries(track.stemsData) as [string, StemDataEntry][]) {
           // ★1 Duplicate vocals guard — vocals handled via track.vocalsData above
-          if (stemId === 'vocals') continue;
+          if (stemId === 'vocals') {continue;}
 
           const stemDef = BUILTIN_STEMS[stemId];
           additionalStems[stemId] = {
@@ -294,7 +294,7 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
       if (stemsEnabled && track.stemsData) {
         for (const [stemId, entry] of Object.entries(track.stemsData) as [string, StemDataEntry][]) {
           // ★1 Duplicate vocals guard
-          if (stemId === 'vocals') continue;
+          if (stemId === 'vocals') {continue;}
 
           const blobUrl = URL.createObjectURL(
             new Blob([entry.data], { type: entry.type }));
@@ -419,7 +419,7 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
             }
           }
 
-          if (import.meta.env.DEV) console.log(`[VOC] Async complete (playback=${playbackPosition.toFixed(1)}s, runtimeUpdate=${runtimeUpdate})`);
+          if (import.meta.env.DEV) {console.log(`[VOC] Async complete (playback=${playbackPosition.toFixed(1)}s, runtimeUpdate=${runtimeUpdate})`);}
         } catch (e) {
           console.warn('[VOC] Async vocal onset detection failed:', e);
         }
@@ -458,7 +458,7 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
     // Step 12: delayed block sanitization
     setTimeout(() => {
       try {
-        if (ld?.textBlocks) ld.textBlocks = ld._sanitizeBlocks(ld.textBlocks);
+        if (ld?.textBlocks) {ld.textBlocks = ld._sanitizeBlocks(ld.textBlocks);}
       } catch (_) {}
     }, 100);
 
@@ -472,36 +472,36 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
         // 'state: playing' → стемы загружены, но не запущены → тишина.
         // В V3 autoplay канонизирует V3DataInterceptor (loadTrack → transport.play).
         // В V2 (ENGINE_MODE='v2') этот путь остаётся единственным — не трогаем.
-        if (ENGINE_MODE === 'v3') return;
+        if (ENGINE_MODE === 'v3') {return;}
         try { await ae.play(); } catch (_) {}
       }, 200);
     }
 
     _mark('Steps 12-14: Autoplay + SyncEditor');
   } catch (e: unknown) {
-    if ((e as { name?: string })?.name === 'AbortError') return;
+    if ((e as { name?: string })?.name === 'AbortError') {return;}
     console.error('Error loading track:', e);
     // TC-COVER-05: Fallback event for critical load errors
     document.dispatchEvent(new CustomEvent('track-load-failed', { detail: { error: (e as Error)?.message || 'Unknown error' } }));
   } finally {
-    if (ov) ov.classList.add('hidden');
+    if (ov) {ov.classList.add('hidden');}
   }
 }
 
 export async function loadStemsOnDemand(): Promise<void> {
   const tc = (window as any).trackCatalog;
   const ae = (window as any).audioEngine;
-  if (!tc?.tracks || !ae?.loadAdditionalStems) return;
+  if (!tc?.tracks || !ae?.loadAdditionalStems) {return;}
 
   const track = tc.tracks[tc.currentTrackIndex];
-  if (!track) return;
+  if (!track) {return;}
 
   // Read fresh stemsData from IDB
   let stemsData = track.stemsData;
   if (!stemsData || Object.keys(stemsData).length === 0) {
     try {
       const freshTrack = await getTrackFromIDB(track.id);
-      if (freshTrack?.stemsData) stemsData = freshTrack.stemsData;
+      if (freshTrack?.stemsData) {stemsData = freshTrack.stemsData;}
     } catch (_) {}
   }
 
@@ -522,8 +522,8 @@ export async function loadStemsOnDemand(): Promise<void> {
   }
 
   for (const [stemId, entry] of Object.entries(stemsData) as [string, any][]) {
-    if (stemId === 'vocals') continue;
-    if (ae.stems?.has?.(stemId)) continue;
+    if (stemId === 'vocals') {continue;}
+    if (ae.stems?.has?.(stemId)) {continue;}
 
     const stemDef = BUILTIN_STEMS[stemId];
     additionalStems[stemId] = {
@@ -534,11 +534,11 @@ export async function loadStemsOnDemand(): Promise<void> {
   }
 
   if (Object.keys(additionalStems).length === 0) {
-    if (import.meta.env.DEV) console.log('[loadStemsOnDemand] All stems already loaded');
+    if (import.meta.env.DEV) {console.log('[loadStemsOnDemand] All stems already loaded');}
     return;
   }
 
-  if (import.meta.env.DEV) console.log(`[loadStemsOnDemand] Loading ${Object.keys(additionalStems).length} stems on-demand`);
+  if (import.meta.env.DEV) {console.log(`[loadStemsOnDemand] Loading ${Object.keys(additionalStems).length} stems on-demand`);}
 
   await ae.loadAdditionalStems(additionalStems);
 
@@ -564,10 +564,10 @@ export function queueTrackJump(delta: number): void {
     const jump = _pendingJump.direction;
     _pendingJump.direction = 0;
     _pendingJump.timer = null;
-    if (jump === 0) return;
+    if (jump === 0) {return;}
 
     const tc = (window as any).trackCatalog;
-    if (!tc?.tracks?.length) return;
+    if (!tc?.tracks?.length) {return;}
 
     let target = tc.currentTrackIndex + jump;
     target = Math.max(0, Math.min(target, tc.tracks.length - 1));

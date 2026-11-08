@@ -8,7 +8,7 @@ export function LiveSubtitle() {
   const lines = useLyricsStore(s => s.lines);
   const activeLineIndex = useLyricsStore(s => s.activeLineIndex);
   
-  if (mode !== 'live') return null;
+  if (mode !== 'live') {return null;}
   
   const text = activeLineIndex >= 0 && activeLineIndex < lines.length
     ? lines[activeLineIndex]

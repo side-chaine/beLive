@@ -33,26 +33,26 @@ function numOf(v: unknown): number | null {
 }
 
 export function init(): () => void {
-  if (typeof document === 'undefined') return () => {};
+  if (typeof document === 'undefined') {return () => {};}
 
   let heartbeatId: ReturnType<typeof setInterval> | null = null;
   let pauseTimer: ReturnType<typeof setTimeout> | null = null;
 
   const startHeartbeat = (): void => {
-    if (heartbeatId !== null) return;
+    if (heartbeatId !== null) {return;}
     heartbeatId = setInterval(() => {
       void heartbeat();
     }, HEARTBEAT_MS);
   };
 
   const stopHeartbeat = (): void => {
-    if (heartbeatId === null) return;
+    if (heartbeatId === null) {return;}
     clearInterval(heartbeatId);
     heartbeatId = null;
   };
 
   const clearPauseTimer = (): void => {
-    if (pauseTimer === null) return;
+    if (pauseTimer === null) {return;}
     clearTimeout(pauseTimer);
     pauseTimer = null;
   };
@@ -148,14 +148,14 @@ export function init(): () => void {
     ['practice:resumed', onResumed],
   ];
 
-  for (const [type, handler] of handlers) document.addEventListener(type, handler);
+  for (const [type, handler] of handlers) {document.addEventListener(type, handler);}
 
   // Boot: ретеншен + закрытие «живых» open старше 2ч
   void prune();
   void closeStale();
 
   return () => {
-    for (const [type, handler] of handlers) document.removeEventListener(type, handler);
+    for (const [type, handler] of handlers) {document.removeEventListener(type, handler);}
     clearPauseTimer();
     stopHeartbeat();
   };

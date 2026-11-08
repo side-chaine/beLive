@@ -23,7 +23,7 @@ export class EventBus {
     // Notify global listeners
     const globalSnapshot = Array.from(this._globalListeners)
     for (const fn of globalSnapshot) {
-      if (this._globalListeners.has(fn)) fn(channel, event, payload)
+      if (this._globalListeners.has(fn)) {fn(channel, event, payload)}
     }
 
     // Notify channel-wide listeners (subscribeChannel)
@@ -31,21 +31,21 @@ export class EventBus {
     if (channelWideListeners) {
       const channelSnapshot = Array.from(channelWideListeners)
       for (const cb of channelSnapshot) {
-        if (channelWideListeners.includes(cb)) cb(payload)
+        if (channelWideListeners.includes(cb)) {cb(payload)}
       }
     }
 
     // Notify event-specific listeners
     const channelListeners = this._listeners.get(channel)
-    if (!channelListeners) return
+    if (!channelListeners) {return}
 
     const eventListeners = channelListeners.get(event)
-    if (!eventListeners) return
+    if (!eventListeners) {return}
 
     // Snapshot before iteration — защита от recursion
     const snapshot = Array.from(eventListeners)
     for (const callback of snapshot) {
-      if (eventListeners.includes(callback)) callback(payload)
+      if (eventListeners.includes(callback)) {callback(payload)}
     }
   }
 
@@ -69,11 +69,11 @@ export class EventBus {
     return {
       unsubscribe: (): void => {
         const ch = this._listeners.get(channel)
-        if (!ch) return
+        if (!ch) {return}
         const ev = ch.get(event)
-        if (!ev) return
+        if (!ev) {return}
         const idx = ev.indexOf(callback as (payload: unknown) => void)
-        if (idx !== -1) ev.splice(idx, 1)
+        if (idx !== -1) {ev.splice(idx, 1)}
         if (ev.length === 0) {
           ch.delete(event)
         }
@@ -97,9 +97,9 @@ export class EventBus {
     return {
       unsubscribe: (): void => {
         const ch = this._channelListeners.get(channel)
-        if (!ch) return
+        if (!ch) {return}
         const idx = ch.indexOf(callback as (payload: unknown) => void)
-        if (idx !== -1) ch.splice(idx, 1)
+        if (idx !== -1) {ch.splice(idx, 1)}
         if (ch.length === 0) {
           this._channelListeners.delete(channel)
         }

@@ -74,7 +74,7 @@ export const useTakesStore = create<TakesState>()(
         const __st = new Error().stack?.split('\n').slice(1, 7).join(' << ');
         console.log(`[SET-BLOCK] -> ${blockId} | ${__st}`);
       }
-      if (opts?.fromUser) set({ pinnedBlockId: null });
+      if (opts?.fromUser) {set({ pinnedBlockId: null });}
       set({ activeBlockId: blockId });
     },
 
@@ -110,7 +110,7 @@ export const useTakesStore = create<TakesState>()(
       const state = get();
       const bt = state.getBlockTakes(blockId);
       const take = bt.takes[slot];
-      if (!take) return;
+      if (!take) {return;}
 
       // Clean up assets
       takeAssets.delete(take.id);
@@ -157,7 +157,7 @@ export const useTakesStore = create<TakesState>()(
     getNextEmptySlot: (blockId) => {
       const bt = get().getBlockTakes(blockId);
       for (let i = 0; i < 3; i++) {
-        if (bt.takes[i] === null) return i;
+        if (bt.takes[i] === null) {return i;}
       }
       return null;
     },

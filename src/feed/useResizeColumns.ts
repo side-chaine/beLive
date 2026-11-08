@@ -16,8 +16,8 @@ const WIDE_COL2 = 420;
 const KEYBOARD_STEP = 10;
 
 function getViewportDefaults(vw: number): { col0: number; col2: number } {
-  if (vw < 1200) return { col0: TABLET_COL0, col2: TABLET_COL2 };
-  if (vw >= 1600) return { col0: WIDE_COL0, col2: WIDE_COL2 };
+  if (vw < 1200) {return { col0: TABLET_COL0, col2: TABLET_COL2 };}
+  if (vw >= 1600) {return { col0: WIDE_COL0, col2: WIDE_COL2 };}
   return { col0: DEFAULT_COL0, col2: DEFAULT_COL2 };
 }
 
@@ -52,7 +52,7 @@ export function useResizeColumns(gridRef: React.RefObject<HTMLDivElement | null>
   // ResizeObserver for viewport
   useEffect(() => {
     const el = gridRef.current;
-    if (!el) return;
+    if (!el) {return;}
 
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -76,7 +76,7 @@ export function useResizeColumns(gridRef: React.RefObject<HTMLDivElement | null>
   // Clamp display widths
   const resolvedWidths: { col0: number; col2: number } = liveWidths ?? (() => {
     const defaults = getViewportDefaults(viewport);
-    if (feedColWidths.col0 == null && feedColWidths.col2 == null) return defaults;
+    if (feedColWidths.col0 == null && feedColWidths.col2 == null) {return defaults;}
 
     // Respect viewport — clamp custom widths
     const available = viewport - MIN_COL1 - 12; // 12px for handles padding
@@ -91,7 +91,7 @@ export function useResizeColumns(gridRef: React.RefObject<HTMLDivElement | null>
   })();
 
   const onPointerDown = useCallback((e: React.PointerEvent, side: 'col0' | 'col2') => {
-    if (isMobile) return;
+    if (isMobile) {return;}
     const target = e.currentTarget as HTMLElement;
     target.setPointerCapture(e.pointerId);
 
@@ -106,11 +106,11 @@ export function useResizeColumns(gridRef: React.RefObject<HTMLDivElement | null>
 
   // Global pointermove + pointerup (during drag)
   useEffect(() => {
-    if (!isDragging) return;
+    if (!isDragging) {return;}
 
     const onMove = (e: PointerEvent) => {
       const d = dragRef.current;
-      if (!d) return;
+      if (!d) {return;}
       const delta = e.clientX - d.startX;
 
       let newCol0 = d.startCol0;
@@ -177,7 +177,7 @@ export function useResizeColumns(gridRef: React.RefObject<HTMLDivElement | null>
   }, [resetFeedColWidths]);
 
   const onKeyDown = useCallback((e: React.KeyboardEvent, side: 'col0' | 'col2') => {
-    if (isMobile) return;
+    if (isMobile) {return;}
     if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
       e.preventDefault();
       const delta = e.key === 'ArrowLeft' ? -KEYBOARD_STEP : KEYBOARD_STEP;

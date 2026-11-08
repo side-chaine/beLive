@@ -81,7 +81,7 @@ export class GatewayProvider implements AIProvider {
   constructor(private gatewayUrl: string = GATEWAY_URL) {}
 
   private resolveUrl(): string {
-    if (this.gatewayUrl) return this.gatewayUrl;
+    if (this.gatewayUrl) {return this.gatewayUrl;}
     if (import.meta.env.DEV) {
       console.warn('[BAC-108] VITE_GATEWAY_URL не задан — Gateway недоступен в dev.');
       return '';
@@ -186,17 +186,17 @@ export class GatewayProvider implements AIProvider {
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {break;}
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || ''; // Keep incomplete line in buffer
 
         for (const line of lines) {
-          if (!line.trim() || !line.startsWith('data: ')) continue;
+          if (!line.trim() || !line.startsWith('data: ')) {continue;}
 
           const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') continue; // Handled by backend logic, but good to have fallback
+          if (jsonStr === '[DONE]') {continue;} // Handled by backend logic, but good to have fallback
 
           try {
             const event: StreamEvent = JSON.parse(jsonStr);
@@ -223,7 +223,7 @@ export class GatewayProvider implements AIProvider {
       callbacks.onDone?.(fullText);
     } catch (e: any) {
       if (e.name === 'AbortError') {
-        if (import.meta.env.DEV) console.log('Stream aborted.');
+        if (import.meta.env.DEV) {console.log('Stream aborted.');}
         return; // Stream was intentionally stopped
       }
       callbacks.onError?.(new AIError('STREAM_FETCH_ERROR', e.message || 'Failed to fetch stream', this.id));

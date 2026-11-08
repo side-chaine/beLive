@@ -282,126 +282,126 @@ export const useMonitorStore = create<MonitorState & MonitorActions>(
     /* --- actions → legacy --- */
     enable: async (opts?: { skipMic?: boolean }) => {
       const { isEnabling } = get();
-      if (isEnabling) return;
+      if (isEnabling) {return;}
       set({ isEnabling: true, enabled: true });
       try {
         const mix = getMix();
-        if (mix) await mix.enable(opts);
+        if (mix) {await mix.enable(opts);}
       } finally {
         set({ isEnabling: false });
       }
     },
     disable: () => {
       const { isEnabling } = get();
-      if (isEnabling) return;
+      if (isEnabling) {return;}
       set({ enabled: false });
       const mix = getMix();
-      if (mix) mix.disable();
+      if (mix) {mix.disable();}
     },
     setOutputDevice: async (id) => {
       set({ outputDeviceId: id });
       const mix = getMix();
-      if (mix) await mix.setOutputDevice(id);
+      if (mix) {await mix.setOutputDevice(id);}
     },
     setMainOutputDevice: async (id) => {
       set({ mainDeviceId: id });
       const mix = getMix();
-      if (mix) await mix.setMainOutputDevice(id);
+      if (mix) {await mix.setMainOutputDevice(id);}
     },
     setRouteMain: async (on) => {
       set({ routeMainEnabled: on });
       const mix = getMix();
-      if (mix) await mix.setRouteMain(on);
+      if (mix) {await mix.setRouteMain(on);}
     },
     setDelayMs: (ms) => {
       set({ delayMs: ms });
       const mix = getMix();
-      if (mix) mix.setDelayMs(ms);
+      if (mix) {mix.setDelayMs(ms);}
     },
     setCompensateTarget: (t) => {
       set({ compensateOn: t });
       const mix = getMix();
-      if (mix) mix.setCompensateTarget(t);
+      if (mix) {mix.setCompensateTarget(t);}
     },
     setIncludeMusic: (on) => {
       set({ includeMusic: on });
       const mix = getMix();
-      if (mix) mix.setIncludeMusic(on);
+      if (mix) {mix.setIncludeMusic(on);}
     },
     setMusicLevel: (v) => {
       set({ musicLevel: v });
       const mix = getMix();
-      if (mix) mix.setMusicLevel(v);
+      if (mix) {mix.setMusicLevel(v);}
     },
     setVocalToMain: (on) => {
       set({ vocalToMain: on });
       const mix = getMix();
-      if (mix) mix.setVocalToMain(on);
+      if (mix) {mix.setVocalToMain(on);}
     },
     setVocalHallLevel: (v) => {
       set({ vocalHallLevel: v });
       const mix = getMix();
-      if (mix) mix.setVocalHallLevel(v);
+      if (mix) {mix.setVocalHallLevel(v);}
     },
     setAutoVerse: (on) => {
       set({ autoVerseOn: on });
       const mix = getMix();
-      if (mix) mix.setAutoVerse(on);
+      if (mix) {mix.setAutoVerse(on);}
     },
     setAutoVerseLevel: (v) => {
       set({ autoVerseLevel: v });
       const mix = getMix();
-      if (mix) mix.setAutoVerseLevel(v);
+      if (mix) {mix.setAutoVerseLevel(v);}
     },
     setAutoChorus: (on) => {
       set({ autoChorusOn: on });
       const mix = getMix();
-      if (mix) mix.setAutoChorus(on);
+      if (mix) {mix.setAutoChorus(on);}
     },
     setAutoChorusLevel: (v) => {
       set({ autoChorusLevel: v });
       const mix = getMix();
-      if (mix) mix.setAutoChorusLevel(v);
+      if (mix) {mix.setAutoChorusLevel(v);}
     },
     setAutoBridge: (on) => {
       set({ autoBridgeOn: on });
       const mix = getMix();
-      if (mix) mix.setAutoBridge(on);
+      if (mix) {mix.setAutoBridge(on);}
     },
     setAutoBridgeLevel: (v) => {
       set({ autoBridgeLevel: v });
       const mix = getMix();
-      if (mix) mix.setAutoBridgeLevel(v);
+      if (mix) {mix.setAutoBridgeLevel(v);}
     },
     setAutoIntro: (on) => {
       set({ autoIntroOn: on });
       const mix = getMix();
-      if (mix) mix.setAutoIntro(on);
+      if (mix) {mix.setAutoIntro(on);}
     },
     setAutoIntroLevel: (v) => {
       set({ autoIntroLevel: v });
       const mix = getMix();
-      if (mix) mix.setAutoIntroLevel(v);
+      if (mix) {mix.setAutoIntroLevel(v);}
     },
     setAutoPreChorus: (on) => {
       set({ autoPreChorusOn: on });
       const mix = getMix();
-      if (mix) mix.setAutoPreChorus(on);
+      if (mix) {mix.setAutoPreChorus(on);}
     },
     setAutoPreChorusLevel: (v) => {
       set({ autoPreChorusLevel: v });
       const mix = getMix();
-      if (mix) mix.setAutoPreChorusLevel(v);
+      if (mix) {mix.setAutoPreChorusLevel(v);}
     },
     setAutoOutro: (on) => {
       set({ autoOutroOn: on });
       const mix = getMix();
-      if (mix) mix.setAutoOutro(on);
+      if (mix) {mix.setAutoOutro(on);}
     },
     setAutoOutroLevel: (v) => {
       set({ autoOutroLevel: v });
       const mix = getMix();
-      if (mix) mix.setAutoOutroLevel(v);
+      if (mix) {mix.setAutoOutroLevel(v);}
     },
 
     /* --- back vocal actions (UI-only, no engine integration) --- */
@@ -450,7 +450,7 @@ export const useMonitorStore = create<MonitorState & MonitorActions>(
     setLineUpSource: (source) => {
       set({ lineUpSource: source });
       const mix = getMix();
-      if (mix?.setLineUpSource) mix.setLineUpSource(source);
+      if (mix?.setLineUpSource) {mix.setLineUpSource(source);}
     },
 
     /* --- nudge undo/redo --- */
@@ -461,23 +461,23 @@ export const useMonitorStore = create<MonitorState & MonitorActions>(
     },
     nudgeUndo: () => {
       const { nudgeUndoStack, nudgeRedoStack, delayMs } = get();
-      if (!nudgeUndoStack.length) return;
+      if (!nudgeUndoStack.length) {return;}
       const prevDelay = nudgeUndoStack[nudgeUndoStack.length - 1];
       const newUndo = nudgeUndoStack.slice(0, -1);
       const newRedo = [...nudgeRedoStack, delayMs].slice(-10);
       set({ nudgeUndoStack: newUndo, nudgeRedoStack: newRedo, delayMs: prevDelay, lineUpDelayMs: prevDelay });
       const mix = getMix();
-      if (mix?.setDelayMs) mix.setDelayMs(prevDelay);
+      if (mix?.setDelayMs) {mix.setDelayMs(prevDelay);}
     },
     nudgeRedo: () => {
       const { nudgeUndoStack, nudgeRedoStack } = get();
-      if (!nudgeRedoStack.length) return;
+      if (!nudgeRedoStack.length) {return;}
       const nextDelay = nudgeRedoStack[nudgeRedoStack.length - 1];
       const newRedo = nudgeRedoStack.slice(0, -1);
       const newUndo = [...nudgeUndoStack, nextDelay].slice(-10);
       set({ nudgeUndoStack: newUndo, nudgeRedoStack: newRedo, delayMs: nextDelay, lineUpDelayMs: nextDelay });
       const mix = getMix();
-      if (mix?.setDelayMs) mix.setDelayMs(nextDelay);
+      if (mix?.setDelayMs) {mix.setDelayMs(nextDelay);}
     },
 
     /* --- tap session actions (UI-only assist layer) --- */
@@ -498,36 +498,36 @@ export const useMonitorStore = create<MonitorState & MonitorActions>(
     setHallVolume: (v) => {
       set({ hallVolume: v });
       const mix = getMix();
-      if (mix?.setHallVolume) mix.setHallVolume(v);
+      if (mix?.setHallVolume) {mix.setHallVolume(v);}
     },
     setMonitorVolume: (v) => {
       set({ monitorVolume: v });
       const mix = getMix();
-      if (mix?.setMonitorVolume) mix.setMonitorVolume(v);
+      if (mix?.setMonitorVolume) {mix.setMonitorVolume(v);}
     },
     previewDelayMs: (ms) => {
       const mix = getMix();
-      if (mix?.previewDelayMs) mix.previewDelayMs(ms);
+      if (mix?.previewDelayMs) {mix.previewDelayMs(ms);}
     },
     beginPulseCalibration: (delayMs, intervalMs) => {
       const mix = getMix();
-      if (mix?.beginPulseCalibration) mix.beginPulseCalibration(delayMs, intervalMs);
+      if (mix?.beginPulseCalibration) {mix.beginPulseCalibration(delayMs, intervalMs);}
     },
     endPulseCalibration: () => {
       const mix = getMix();
-      if (mix?.endPulseCalibration) mix.endPulseCalibration();
+      if (mix?.endPulseCalibration) {mix.endPulseCalibration();}
     },
     stopSyncSequence: () => {
       const mix = getMix();
-      if (mix?.stopSyncSequence) mix.stopSyncSequence();
+      if (mix?.stopSyncSequence) {mix.stopSyncSequence();}
     },
     testPulse: async () => {
       const mix = getMix();
-      if (mix) await mix.testPulse();
+      if (mix) {await mix.testPulse();}
     },
     refreshDevices: async () => {
       const mix = getMix();
-      if (!mix) return;
+      if (!mix) {return;}
       try {
         let outs: MediaDeviceInfo[] = await mix.listOutputs();
         const noLabels = !outs?.length || outs.every((d: MediaDeviceInfo) => !d.label);

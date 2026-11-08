@@ -59,7 +59,7 @@ export function PracticeSessionCard() {
     return () => clearInterval(interval);
   }, [isActive, practiceStatus]);
 
-  if (!isActive) return null;
+  if (!isActive) {return null;}
 
   const pct = Math.round(currentRate * 100);
   const isBpmRamp = label?.includes('Разгон') || label?.includes('bpm-ramp');

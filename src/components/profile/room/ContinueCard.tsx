@@ -7,9 +7,9 @@ import type { ContinueTarget } from '../../../services/practice-journal/aggregat
 /* MR-4b Q8: rel-time — сколько назад была сессия */
 function relTime(at: number): string {
   const min = Math.max(1, Math.round((Date.now() - at) / 60_000));
-  if (min < 60) return `${min} мин назад`;
+  if (min < 60) {return `${min} мин назад`;}
   const h = Math.round(min / 60);
-  if (h < 24) return `${h} ч назад`;
+  if (h < 24) {return `${h} ч назад`;}
   return `${Math.round(h / 24)} дн назад`;
 }
 
@@ -20,7 +20,7 @@ interface Props {
 }
 
 export function ContinueCard({ target, currentTrackId, onContinue }: Props) {
-  if (!target) return null;
+  if (!target) {return null;}
 
   const sameTrack = currentTrackId === target.trackId;
 

@@ -18,7 +18,7 @@ export class GatewayAlignProvider implements AlignmentProvider {
   private options: GatewayAlignProviderOptions;
   private _endpoint: string | null = null;
   private get endpoint(): string {
-    if (this._endpoint === null) this._endpoint = this.options.endpoint ?? `${getGatewayUrl()}/v1/align`;
+    if (this._endpoint === null) {this._endpoint = this.options.endpoint ?? `${getGatewayUrl()}/v1/align`;}
     return this._endpoint;
   }
 

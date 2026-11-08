@@ -186,12 +186,12 @@ function practiceDetail(extra: Record<string, unknown> = {}): Record<string, unk
 let autoPassListener: ((e: Event) => void) | null = null;
 
 function startAutoPassDetection() {
-  if (autoPassListener) return;
+  if (autoPassListener) {return;}
   
   autoPassListener = ((e: Event) => {
     const state = usePracticeStore.getState();
-    if (!state.isActive || state.practiceStatus !== 'running' || !state.isAutoAdvance) return;
-    if (state.isPassInProgress) return;
+    if (!state.isActive || state.practiceStatus !== 'running' || !state.isAutoAdvance) {return;}
+    if (state.isPassInProgress) {return;}
     
     // Loop completed one cycle → auto +5%
     state.nextPass();
@@ -289,7 +289,7 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
 
   completeAndKeep: () => {
     stopAutoPassDetection();
-    if (!get().isActive) return;
+    if (!get().isActive) {return;}
     const loopState = useLoopStore.getState();
     if (loopState.isLooping) {
       loopState.clearLoop();
@@ -339,8 +339,8 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
 
   nextPass: async () => {
     const s = get();
-    if (!s.isActive || s.practiceStatus !== 'running') return;
-    if (s.isPassInProgress) return; // ★ GUARD ★
+    if (!s.isActive || s.practiceStatus !== 'running') {return;}
+    if (s.isPassInProgress) {return;} // ★ GUARD ★
     
     set({ isPassInProgress: true });
     
@@ -348,7 +348,7 @@ export const usePracticeStore = create<PracticeSessionState>((set, get) => ({
       const { getScenario } = await import('../practice/practice-scenarios');
       const { runPracticeActions } = await import('../practice/billy-action-runner');
       const scenario = getScenario(s.scenarioId as PracticeScenarioId);
-      if (!scenario) return;
+      if (!scenario) {return;}
 
       const newPasses = s.passesCount + 1;
       const newRate = Math.min(1.0, s.currentRate + 0.05);
@@ -486,10 +486,10 @@ if (typeof document !== 'undefined') {
 if (typeof document !== 'undefined') {
   document.addEventListener('playback-rate-changed', ((e: Event) => {
     // ★ IGNORE if rate change came from practice system ★
-    if (_isPracticeRateChange) return;
+    if (_isPracticeRateChange) {return;}
     
     const state = usePracticeStore.getState();
-    if (!state.isActive) return;
+    if (!state.isActive) {return;}
 
     const newRate = (e as CustomEvent).detail?.rate;
     if (newRate != null && Math.abs(newRate - state.currentRate) > 0.001) {

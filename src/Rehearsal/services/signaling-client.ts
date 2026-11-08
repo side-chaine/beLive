@@ -19,7 +19,7 @@ export class SignalingClient {
 
   constructor(roomId: string, role: 'teacher' | 'student', ticket: string) {
     const base = import.meta.env.VITE_REHEARSAL_SIGNALING_URL as string | undefined;
-    if (!base) throw new Error('VITE_REHEARSAL_SIGNALING_URL is not set');
+    if (!base) {throw new Error('VITE_REHEARSAL_SIGNALING_URL is not set');}
     this.url = `${base}?room=${encodeURIComponent(roomId)}&role=${role}&ticket=${encodeURIComponent(ticket)}`;
   }
 
@@ -30,15 +30,15 @@ export class SignalingClient {
     this.ws.addEventListener('message', (event) => {
       let msg: SignalingMessage;
       try { msg = JSON.parse(event.data); } catch { return; }
-      if (msg.type === 'sdp') this.onSDP?.(msg.sdp);
-      else if (msg.type === 'ice') this.onICE?.(msg.candidate);
-      else if (msg.type === 'peer-joined') this.onPeerJoined?.(msg.role);
-      else if (msg.type === 'peer-left') this.onPeerLeft?.(msg.role);
+      if (msg.type === 'sdp') {this.onSDP?.(msg.sdp);}
+      else if (msg.type === 'ice') {this.onICE?.(msg.candidate);}
+      else if (msg.type === 'peer-joined') {this.onPeerJoined?.(msg.role);}
+      else if (msg.type === 'peer-left') {this.onPeerLeft?.(msg.role);}
     });
     this.ws.addEventListener('close', (event) => {
-      if (this.closedByUser) return;
+      if (this.closedByUser) {return;}
       this.onClose?.(event.code);
-      if (event.code === 4001) return;
+      if (event.code === 4001) {return;}
       this.scheduleReconnect();
     });
   }
@@ -46,7 +46,7 @@ export class SignalingClient {
   private scheduleReconnect() {
     this.reconnectAttempt++;
     const delay = Math.min(1000 * 2 ** this.reconnectAttempt, 15000);
-    setTimeout(() => { if (!this.closedByUser) this.connect(); }, delay);
+    setTimeout(() => { if (!this.closedByUser) {this.connect();} }, delay);
   }
 
   sendSDP(sdp: RTCSessionDescriptionInit) { this.ws?.send(JSON.stringify({ type: 'sdp', sdp })); }

@@ -296,7 +296,7 @@ export function sortStemsForDisplay(stemIds: string[]): string[] {
     const defB = BUILTIN_STEMS[b];
     const orderA = defA ? DEFAULT_ROLE_ORDER[defA.role] : 999;
     const orderB = defB ? DEFAULT_ROLE_ORDER[defB.role] : 999;
-    if (orderA !== orderB) return orderA - orderB;
+    if (orderA !== orderB) {return orderA - orderB;}
     return a.localeCompare(b);
   });
 }

@@ -9,7 +9,7 @@ export function generatePeaks(
   numBins: number
 ): [number, number][] {
   const length = endSample - startSample;
-  if (length <= 0 || numBins <= 0) return [];
+  if (length <= 0 || numBins <= 0) {return [];}
 
   const samplesPerBin = Math.max(1, Math.floor(length / numBins));
   const peaks: [number, number][] = [];
@@ -22,8 +22,8 @@ export function generatePeaks(
 
     for (let j = binStart; j < binEnd; j++) {
       const s = data[j];
-      if (s < min) min = s;
-      if (s > max) max = s;
+      if (s < min) {min = s;}
+      if (s > max) {max = s;}
     }
 
     peaks.push([min, max]);

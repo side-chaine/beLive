@@ -57,7 +57,7 @@ export function PresenterDock() {
   const notifTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showNotif = (text: string, duration = 3000) => {
-    if (notifTimerRef.current) clearTimeout(notifTimerRef.current);
+    if (notifTimerRef.current) {clearTimeout(notifTimerRef.current);}
     setNotification(text);
     notifTimerRef.current = setTimeout(() => setNotification(null), duration);
   };
@@ -83,7 +83,7 @@ export function PresenterDock() {
     // Sub-slide imageIds
     if (step.subSlides?.length) {
       step.subSlides.forEach(ss => {
-        if (ss.imageId) allImageIds.push(ss.imageId);
+        if (ss.imageId) {allImageIds.push(ss.imageId);}
       });
     }
 
@@ -97,10 +97,10 @@ export function PresenterDock() {
     Promise.all(
       allImageIds.map(async (imageId) => {
         const url = await loadStepImageUrl(imageId);
-        if (url) urls[imageId] = url;
+        if (url) {urls[imageId] = url;}
       })
     ).then(() => {
-      if (!cancelled) setImageUrls(urls);
+      if (!cancelled) {setImageUrls(urls);}
     });
     return () => { cancelled = true; };
   }, [activePointIndex, activeStepIndex]);
@@ -123,14 +123,14 @@ export function PresenterDock() {
     let cancelled = false;
     setHtmlSlideLoaded(false);
     loadStepHtmlUrl(step.htmlId).then(url => {
-      if (!cancelled) setHtmlSlideUrl(url);
+      if (!cancelled) {setHtmlSlideUrl(url);}
     });
     return () => { cancelled = true; };
   }, [activePointIndex, activeStepIndex]);
 
   // ── Lightbox Escape handler (capture phase, приоритет над глобальным) ──
   useEffect(() => {
-    if (!lightboxUrl) return;
+    if (!lightboxUrl) {return;}
     const handler = (e: KeyboardEvent) => {
       if (e.code === 'Escape') {
         e.preventDefault();
@@ -148,7 +148,7 @@ export function PresenterDock() {
   const handleDragStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     const dock = dockRef.current;
-    if (!dock) return;
+    if (!dock) {return;}
     const rect = dock.getBoundingClientRect();
     dragRef.current = {
       startX: e.clientX,
@@ -158,7 +158,7 @@ export function PresenterDock() {
     };
 
     const onMove = (ev: MouseEvent) => {
-      if (!dragRef.current) return;
+      if (!dragRef.current) {return;}
       const dx = ev.clientX - dragRef.current.startX;
       const dy = ev.clientY - dragRef.current.startY;
       let newX = dragRef.current.origX + dx;
@@ -206,7 +206,7 @@ export function PresenterDock() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const el = document.activeElement as HTMLElement;
-      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) {return;}
 
       const store = useShowStore.getState();
 
@@ -301,7 +301,7 @@ export function PresenterDock() {
   }, []);
 
   const handleStop = () => {
-    if (isRecording) stopRecording();
+    if (isRecording) {stopRecording();}
     stopPresentation();
   };
 
@@ -330,7 +330,7 @@ export function PresenterDock() {
 
   // (удалено — thumbnail убран из compact dock)
 
-  if (!currentStep) return null;
+  if (!currentStep) {return null;}
 
   return (
     <>
@@ -518,7 +518,7 @@ export function PresenterDock() {
                   {/* After migration, all content steps have subSlides. This path is a safety net. */}
                 {currentStep.type !== 'html' && currentStep.imageIds && currentStep.imageIds.length > 0 && (() => {
                   const visibleIds = currentStep.imageIds.filter(id => imageUrls[id]);
-                  if (visibleIds.length === 0) return null;
+                  if (visibleIds.length === 0) {return null;}
                   const safeIndex = Math.min(activeImageIndex, visibleIds.length - 1);
                   const url = imageUrls[visibleIds[safeIndex]];
                   const caption = currentStep.imageCaptions?.[currentStep.imageIds.indexOf(visibleIds[safeIndex])];

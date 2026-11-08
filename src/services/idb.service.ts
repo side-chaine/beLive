@@ -147,18 +147,18 @@ function _openOnce(): Promise<IDBDatabase> {
     }, OPEN_TIMEOUT_MS);
 
     req.onupgradeneeded = (e) => {
-      if (import.meta.env.DEV) console.log(`[IDB] Upgrade: v${e.oldVersion} → v${e.newVersion}`);
+      if (import.meta.env.DEV) {console.log(`[IDB] Upgrade: v${e.oldVersion} → v${e.newVersion}`);}
       const db = (e.target as IDBOpenDBRequest).result;
       if (!db.objectStoreNames.contains('tracks')) {
         const s = db.createObjectStore('tracks', { keyPath: 'id' });
         s.createIndex('title', 'title', { unique: false });
       }
       if (!db.objectStoreNames.contains('app_state'))
-        db.createObjectStore('app_state', { keyPath: 'key' });
+        {db.createObjectStore('app_state', { keyPath: 'key' });}
       if (!db.objectStoreNames.contains('temp_audio_files'))
-        db.createObjectStore('temp_audio_files', { keyPath: 'id' });
+        {db.createObjectStore('temp_audio_files', { keyPath: 'id' });}
       if (!db.objectStoreNames.contains('my_music'))
-        db.createObjectStore('my_music', { keyPath: 'trackId' });
+        {db.createObjectStore('my_music', { keyPath: 'trackId' });}
 
       // TC-AUTH-003: users store
       if (!db.objectStoreNames.contains('users')) {
@@ -177,7 +177,7 @@ function _openOnce(): Promise<IDBDatabase> {
         trackStore.createIndex('userId', 'userId', { unique: false });
       }
 
-      if (import.meta.env.DEV) console.log('[IDB] Upgrade complete, stores:', [...db.objectStoreNames]);
+      if (import.meta.env.DEV) {console.log('[IDB] Upgrade complete, stores:', [...db.objectStoreNames]);}
     };
 
     req.onsuccess = () => {
@@ -204,7 +204,7 @@ function _closeConn(): void {
 }
 
 function _getDB(): Promise<IDBDatabase> {
-  if (_db) return Promise.resolve(_db);
+  if (_db) {return Promise.resolve(_db);}
   if (!_dbPromise) {
     // open БЕЗ ПИНА — всегда: этот путь не может быть заблокирован и не
     // становится в очередь за апгрейдами. Каталог, загрузки и MVSEP работают
@@ -215,7 +215,7 @@ function _getDB(): Promise<IDBDatabase> {
     p.catch(() => {});
     _dbPromise = p;
     p.finally(() => {
-      if (_dbPromise === p) _dbPromise = null; // следующий вызов стартует свежий цикл
+      if (_dbPromise === p) {_dbPromise = null;} // следующий вызов стартует свежий цикл
     });
   }
   return _dbPromise;
@@ -254,7 +254,7 @@ let _journalDb: IDBDatabase | null = null;
 let _journalDbPromise: Promise<IDBDatabase> | null = null;
 
 function _getJournalDB(): Promise<IDBDatabase> {
-  if (_journalDb) return Promise.resolve(_journalDb);
+  if (_journalDb) {return Promise.resolve(_journalDb);}
 
   // open БЕЗ версии: new база создаётся на v1 со схемой ниже; заблокировать невозможно
   const p = new Promise<IDBDatabase>((resolve, reject) => {
@@ -354,7 +354,7 @@ export async function updateTrackField(
 ): Promise<void> {
   const db = await _getDB();
   const track = await _req<TrackRecord | undefined>(_tx(db, 'tracks').get(id));
-  if (!track) return;
+  if (!track) {return;}
   const updated = { ...track, ...updates, lastModified: new Date().toISOString() };
   await _req(_tx(db, 'tracks', 'readwrite').put(updated));
 }
@@ -466,19 +466,19 @@ const SCENES_DB_VERSION = 1;
 let _scenesDb: IDBDatabase | null = null;
 
 function _getScenesDB(): Promise<IDBDatabase> {
-  if (_scenesDb) return Promise.resolve(_scenesDb);
+  if (_scenesDb) {return Promise.resolve(_scenesDb);}
 
   return new Promise<IDBDatabase>((resolve, reject) => {
     const req = indexedDB.open(SCENES_DB_NAME, SCENES_DB_VERSION);
 
     req.onupgradeneeded = (e) => {
-      if (import.meta.env.DEV) console.log(`[ScenesDB] Upgrade: v${e.oldVersion} → v${e.newVersion}`);
+      if (import.meta.env.DEV) {console.log(`[ScenesDB] Upgrade: v${e.oldVersion} → v${e.newVersion}`);}
       const db = (e.target as IDBOpenDBRequest).result;
       if (!db.objectStoreNames.contains('custom_backgrounds')) {
         const store = db.createObjectStore('custom_backgrounds', { keyPath: 'id' });
         store.createIndex('trackId', 'trackId', { unique: false });
       }
-      if (import.meta.env.DEV) console.log('[ScenesDB] Stores:', [...db.objectStoreNames]);
+      if (import.meta.env.DEV) {console.log('[ScenesDB] Stores:', [...db.objectStoreNames]);}
     };
 
     req.onsuccess = () => {
@@ -555,7 +555,7 @@ export async function getScenesCountForTrack(trackId: number): Promise<number> {
 export async function loadPlaylists(): Promise<Playlist[]> {
   const db = await _getDB();
   const row = await _req<any>(_tx(db, 'app_state').get('playlists_v1'));
-  if (row?.value && Array.isArray(row.value)) return row.value;
+  if (row?.value && Array.isArray(row.value)) {return row.value;}
   // fallback: localStorage
   try {
     const ls = localStorage.getItem('playlists_v1');
@@ -622,7 +622,7 @@ interface ShowScenarioPersisted {
 
 export async function loadShowScenario(): Promise<import('../types/show.types').ShowScenario | null> {
   const raw = await loadFromAppState<ShowScenarioPersisted>(REC_SCENARIO_KEY);
-  if (!raw) return null;
+  if (!raw) {return null;}
   return raw.scenario;
 }
 

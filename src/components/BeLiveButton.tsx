@@ -12,7 +12,7 @@ export function BeLiveButton() {
 
   useEffect(() => {
     const el = borderRef.current;
-    if (!el) return;
+    if (!el) {return;}
     el.classList.remove(styles['bl-spin-open'], styles['bl-spin-close']);
     void el.offsetWidth;
     el.classList.add(isOpen ? styles['bl-spin-open'] : styles['bl-spin-close']);
@@ -24,9 +24,9 @@ export function BeLiveButton() {
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== 'Enter' && e.code !== 'Space') return;
+    if (e.key !== 'Enter' && e.code !== 'Space') {return;}
     e.preventDefault();                       // global Space shortcut is guarded
-    if (!e.repeat) activate();
+    if (!e.repeat) {activate();}
   };
 
   return (
@@ -49,7 +49,7 @@ export function BeLiveButton() {
           aria-hidden="true"
           onAnimationEnd={(e: AnimationEvent<HTMLSpanElement>) => {
             // ignore the nested sweep's own animationend
-            if (e.target === e.currentTarget) endPulse();
+            if (e.target === e.currentTarget) {endPulse();}
           }}
         >
           <span className={styles['bl-pulse-lit']} />

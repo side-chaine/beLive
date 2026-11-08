@@ -29,8 +29,8 @@ describe('isTransient', () => {
 });
 describe('downloadTgTrack retry', () => {
   it('retries once on network then succeeds', async () => {
-    const okResp:any = { ok:true, status:200, headers:{ get:(h:string)=> h==='Content-Length'?'10': h==='Content-Type'?'application/zip':null }, body:{ getReader:()=>{ let n=0; return { async read(){ if(n++===0) return {done:false,value:new Uint8Array(10)}; return {done:true,value:undefined}; } }; } } };
-    let calls=0; const fetcher:any = async () => { calls++; if(calls===1) throw new Error('fetch failed network'); return okResp; };
+    const okResp:any = { ok:true, status:200, headers:{ get:(h:string)=> h==='Content-Length'?'10': h==='Content-Type'?'application/zip':null }, body:{ getReader:()=>{ let n=0; return { async read(){ if(n++===0) {return {done:false,value:new Uint8Array(10)};} return {done:true,value:undefined}; } }; } } };
+    let calls=0; const fetcher:any = async () => { calls++; if(calls===1) {throw new Error('fetch failed network');} return okResp; };
     const handleZip = vi.fn(async () => {});
     await downloadTgTrack({ id:'x', title:'T', artist:'A', slug:'t', type:'duo', fileIds:{instrumental:'F'}, fileSize:10, fileName:'t.zip' }, handleZip, vi.fn(), fetcher);
     expect(calls).toBe(2); expect(handleZip).toHaveBeenCalledTimes(1);

@@ -20,7 +20,7 @@ import {
 } from './exercise.runtime';
 
 function resolveRecordSlot(step: ExerciseStep): number | null {
-  if (typeof step.slot === 'number') return step.slot;
+  if (typeof step.slot === 'number') {return step.slot;}
   return null; // null means "next"
 }
 
@@ -148,7 +148,7 @@ export const useExerciseStore = create<ExerciseState>((set, get) => ({
 
   startRecipe: (recipeId, blockId, params) => {
     const recipe = EXERCISE_RECIPES.find((r) => r.id === recipeId);
-    if (!recipe) return;
+    if (!recipe) {return;}
     get().startExercise(recipe.generate(blockId, params));
   },
 
@@ -209,7 +209,7 @@ export const useExerciseStore = create<ExerciseState>((set, get) => ({
       const __st = new Error().stack?.split('\n').slice(1, 6).join(' << ');
       console.log(`[STEP-ADVANCE] stepIndex=${get().currentStepIndex} | ${__st}`);
     }
-    if (!exercise) return;
+    if (!exercise) {return;}
 
     const result = advanceExerciseCursor(
       exercise,
@@ -379,25 +379,25 @@ export const useExerciseStore = create<ExerciseState>((set, get) => ({
 
   setRoundCaptureLockedSlot: (slot) => {
     const state = get();
-    if (!state.roundCapture) return;
+    if (!state.roundCapture) {return;}
     set({ roundCapture: { ...state.roundCapture, lockedSlot: slot } });
   },
 
   setRoundCaptureRecorderArmed: (armed) => {
     const state = get();
-    if (!state.roundCapture) return;
+    if (!state.roundCapture) {return;}
     set({ roundCapture: { ...state.roundCapture, recorderArmed: armed } });
   },
 
   setRoundCaptureResponseActive: (active) => {
     const state = get();
-    if (!state.roundCapture) return;
+    if (!state.roundCapture) {return;}
     set({ roundCapture: { ...state.roundCapture, responseActive: active } });
   },
 
   setRoundCaptureWindowIndex: (index) => {
     const state = get();
-    if (!state.roundCapture) return;
+    if (!state.roundCapture) {return;}
     set({ roundCapture: { ...state.roundCapture, currentWindowIndex: index } });
   },
 

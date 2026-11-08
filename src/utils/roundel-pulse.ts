@@ -38,6 +38,6 @@ export function onRoundelPulse(listener: (origin: RoundelOrigin) => void): () =>
  * Returns the pulse seq, or null when there is nothing fresh to deliver.
  */
 export function claimRecentPulse(ttlMs = 3000): number | null {
-  if (lastAt === 0 || performance.now() - lastAt > ttlMs) return null;
+  if (lastAt === 0 || performance.now() - lastAt > ttlMs) {return null;}
   return seq;
 }

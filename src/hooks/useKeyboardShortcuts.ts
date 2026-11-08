@@ -13,11 +13,11 @@ export function useKeyboardShortcuts() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {return;}
 
       if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
         // Focus Mode → plain arrows не seek-ают, Shift+Arrow (смена трека) работает
-        if (!e.shiftKey && document.documentElement.getAttribute('data-billy-control') === 'true') return;
+        if (!e.shiftKey && document.documentElement.getAttribute('data-billy-control') === 'true') {return;}
         // ── Show scenario guard ──
         const showState = useShowStore.getState();
         if (showState.activeMode === 'scenario') {
@@ -59,7 +59,7 @@ export function useKeyboardShortcuts() {
               const transport = getTransport();
               const ct = transport?.currentTime ?? 0;
               const d = transport?.duration ?? 0;
-              if (d > 0) transport?.seek(Math.max(0, Math.min(d, ct + delta * 2)));
+              if (d > 0) {transport?.seek(Math.max(0, Math.min(d, ct + delta * 2)));}
             }
           });
         }
@@ -67,15 +67,15 @@ export function useKeyboardShortcuts() {
       }
 
       if (e.code === 'Space') {
-        if (e.repeat) return;
+        if (e.repeat) {return;}
         // Both roundels handle their own Space/Enter activation (the deck one
         // natively, the top bL via onKeyDown). Skip the global shortcut here or
         // playback would toggle twice / bL would start music by accident.
-        if ((e.target as HTMLElement)?.closest?.('[data-bl-playpause], [data-bl-roundel]')) return;
+        if ((e.target as HTMLElement)?.closest?.('[data-bl-playpause], [data-bl-roundel]')) {return;}
         console.log('[KEYBOARD] Space pressed', { isTrusted: e.isTrusted, target: (e.target as HTMLElement)?.tagName, time: performance.now().toFixed(0) });
         // Show scenario guard: в презентации при showSlide=true — PresenterDock обрабатывает сам
         const showState = useShowStore.getState();
-        if (showState.activeMode === 'scenario' && showState.isPresenting && showState.showSlide) return;
+        if (showState.activeMode === 'scenario' && showState.isPresenting && showState.showSlide) {return;}
         e.preventDefault();
         // Same code path as the roundel — see src/audio/transport-control.ts.
         togglePlayback();

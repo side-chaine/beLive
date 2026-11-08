@@ -53,10 +53,10 @@ export interface EloEntry {
 }
 
 export function eloToRank(elo: number): EloEntry['rank'] {
-  if (elo >= 2400) return 'diamond';
-  if (elo >= 2000) return 'platinum';
-  if (elo >= 1600) return 'gold';
-  if (elo >= 1200) return 'silver';
+  if (elo >= 2400) {return 'diamond';}
+  if (elo >= 2000) {return 'platinum';}
+  if (elo >= 1600) {return 'gold';}
+  if (elo >= 1200) {return 'silver';}
   return 'bronze';
 }
 
@@ -114,7 +114,7 @@ export interface FeedComment {
 
 // ─── Helpers ───
 export function getFeedCoverUrl(r2Key?: string | null): string | undefined {
-  if (!r2Key) return undefined;
+  if (!r2Key) {return undefined;}
   return `https://app.mybelive.com/cdn-cgi/image/width=400,format=webp/${r2Key}`;
 }
 

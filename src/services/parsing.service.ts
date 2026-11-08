@@ -4,7 +4,7 @@
 import type { BlockType } from '../blocks/parser/block-taxonomy';
 
 export function basicTextCleanup(text: string): string {
-  if (!text) return '';
+  if (!text) {return '';}
   let cleaned = text.replace(/[^\x20-\x7E\nа-яА-ЯёЁ]/g, '');
   cleaned = cleaned.replace(/\\{1,}/g, '\n');
   cleaned = cleaned.replace(/\s{2,}/g, ' ');
@@ -14,7 +14,7 @@ export function basicTextCleanup(text: string): string {
 
 /** @deprecated LRC-парсинг: смотрите auto-lyrics.service (parseLrcString) — снос-30 06.09: lrc-parser.service.ts снесён (0 импортёров) */
 export function parseLrcFile(lrcText: string): string {
-  if (!lrcText) return '';
+  if (!lrcText) {return '';}
   const lines = lrcText.split(/\r?\n/);
   const result: string[] = [];
   const timeTagRegex = /\[\d+:\d+(\.\d+)?\]/g;
@@ -29,7 +29,7 @@ export function parseLrcFile(lrcText: string): string {
 }
 
 export function detectLanguage(text: string): string {
-  if (!text) return 'unknown';
+  if (!text) {return 'unknown';}
   const cyrillicChars = (text.match(/[а-яА-ЯёЁ]/g) || []).length;
   const latinChars = (text.match(/[a-zA-Z]/g) || []).length;
   const russianKeywords = ['и', 'в', 'на', 'с', 'за', 'к', 'по', 'от', 'из', 'у'];
@@ -37,16 +37,16 @@ export function detectLanguage(text: string): string {
   let russianKw = 0, englishKw = 0;
   const words = text.toLowerCase().match(/\b[а-яёa-z]+\b/g) || [];
   words.forEach(w => {
-    if (russianKeywords.includes(w)) russianKw++;
-    if (englishKeywords.includes(w)) englishKw++;
+    if (russianKeywords.includes(w)) {russianKw++;}
+    if (englishKeywords.includes(w)) {englishKw++;}
   });
-  if (cyrillicChars > latinChars * 0.5 || russianKw > englishKw) return 'russian';
-  if (latinChars > 0) return 'english';
+  if (cyrillicChars > latinChars * 0.5 || russianKw > englishKw) {return 'russian';}
+  if (latinChars > 0) {return 'english';}
   return 'mixed';
 }
 
 export function extractLinesDirectlyFromRtf(rtfText: string): string[] {
-  if (!rtfText) return [];
+  if (!rtfText) {return [];}
   const lines: string[] = [];
   const rtfLines = rtfText.split(/\\par\s?|\n/);
   for (let line of rtfLines) {
@@ -57,13 +57,13 @@ export function extractLinesDirectlyFromRtf(rtfText: string): string[] {
     line = line.replace(/\\'([0-9a-fA-F]{2})/g, (_m, hex) =>
       String.fromCharCode(parseInt(hex, 16)));
     line = line.replace(/[\x00-\x1F]/g, '');
-    if (line.trim().length > 0) lines.push(line.trim());
+    if (line.trim().length > 0) {lines.push(line.trim());}
   }
   return lines;
 }
 
 export function detectTextLanguage(text: string): string {
-  if (!text || text.length < 10) return 'unknown';
+  if (!text || text.length < 10) {return 'unknown';}
   let clean = text;
   if (text.includes('\\rtf')) {
     clean = text.replace(/\\[a-z]+\d*\s?/g, '');
@@ -78,10 +78,10 @@ export function detectTextLanguage(text: string): string {
   let ruKwC = 0, enKwC = 0;
   const words = clean.toLowerCase().split(/\s+/);
   for (const w of words) {
-    if (ruKw.includes(w)) ruKwC++;
-    if (enKw.includes(w)) enKwC++;
+    if (ruKw.includes(w)) {ruKwC++;}
+    if (enKw.includes(w)) {enKwC++;}
   }
-  if (ruCount > enCount || ruKwC > enKwC) return 'russian';
+  if (ruCount > enCount || ruKwC > enKwC) {return 'russian';}
   return 'english';
 }
 
@@ -89,8 +89,8 @@ export function improveRussianLines(lines: string[]): string[] {
   const result: string[] = [];
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    if (line.length === 0) continue;
-    if (/^\s*[;:,.\\/#!$%^&*;:{}=\-_`~()]+\s*$/.test(line)) continue;
+    if (line.length === 0) {continue;}
+    if (/^\s*[;:,.\\/#!$%^&*;:{}=\-_`~()]+\s*$/.test(line)) {continue;}
     if (line.length <= 2 && ['и','в','с','а','о','у','к'].includes(line)) {
       if (i < lines.length - 1) {
         lines[i + 1] = line + ' ' + lines[i + 1];
@@ -106,8 +106,8 @@ export function improveEnglishLines(lines: string[]): string[] {
   const result: string[] = [];
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    if (line.length === 0) continue;
-    if (/^\s*[;:,.\\/#!$%^&*;:{}=\-_`~()]+\s*$/.test(line)) continue;
+    if (line.length === 0) {continue;}
+    if (/^\s*[;:,.\\/#!$%^&*;:{}=\-_`~()]+\s*$/.test(line)) {continue;}
     if (line.length <= 2 && ['a','A','I','i'].includes(line)) {
       if (i < lines.length - 1) {
         lines[i + 1] = line + ' ' + lines[i + 1];
@@ -131,7 +131,7 @@ export function improveEnglishLines(lines: string[]): string[] {
 }
 
 export function improveRussianText(text: string): string {
-  if (!text) return '';
+  if (!text) {return '';}
   let improved = text.replace(/([.!?])\s*(?=[А-ЯЁ])/g, '$1\n');
   improved = improved.replace(/([а-яёА-ЯЁ])([А-ЯЁ])/g, '$1 $2');
   improved = improved.replace(/([,.!?:;])([а-яёА-ЯЁ])/g, '$1 $2');
@@ -141,7 +141,7 @@ export function improveRussianText(text: string): string {
 }
 
 export function improveEnglishText(text: string): string {
-  if (!text) return '';
+  if (!text) {return '';}
   let improved = text.replace(/([.!?])\s*(?=[A-Z])/g, '$1\n');
   improved = improved.replace(/([a-zA-Z])([A-Z])/g, '$1 $2');
   improved = improved.replace(/(Yeah|Oh|Yeah,|Oh,)(?=[A-Z])/g, '$1\n');
@@ -159,7 +159,7 @@ export function improveEnglishText(text: string): string {
 }
 
 export function cleanText(text: string): string {
-  if (!text) return '';
+  if (!text) {return '';}
   // F39 Bug #18: fake RTF from TextEdit (Markdown with .rtf extension)
   // If text has ** (bold) but no {\rtf header → strip Markdown, treat as plain
   if (text.includes('**') && !text.trimStart().startsWith('{\\rtf')) {
@@ -172,23 +172,23 @@ export function cleanText(text: string): string {
   const isRtf = text.includes('\\rtf') || text.includes('{\\');
   const isBOM = text.charCodeAt(0) === 0xFEFF;
   let cleaned = text;
-  if (isBOM) cleaned = cleaned.slice(1);
+  if (isBOM) {cleaned = cleaned.slice(1);}
   if (!isRtf) {
     cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '');
     cleaned = cleaned.replace(/\r(?!\n)/g, ' ');
     cleaned = cleaned.replace(/\r\n/g, '\n');
     cleaned = cleaned.replace(/[ \t]+/g, ' ');
     cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
-    if (cleaned.includes('\\')) cleaned = cleaned.replace(/\\+/g, '\n');
+    if (cleaned.includes('\\')) {cleaned = cleaned.replace(/\\+/g, '\n');}
   }
   return cleaned;
 }
 
 export function intelligentLineSplitting(text: string): string[] {
-  if (!text) return [];
+  if (!text) {return [];}
   if (text.includes('. ') && text.split('. ').length > 3) {
     const ls = text.split('. ').map(l => l.trim()).filter(l => l.length > 0);
-    if (ls.length >= 3) return ls.map(l => l.endsWith('.') ? l : l + '.');
+    if (ls.length >= 3) {return ls.map(l => l.endsWith('.') ? l : l + '.');}
   }
   let processed = text;
   processed = processed.replace(/([.!?])\s+([A-ZА-ЯЁ])/g, '$1\n$2');
@@ -209,7 +209,7 @@ export function intelligentLineSplitting(text: string): string[] {
           for (const bp of bps) {
             if (bp - si > 30) { parts.push(line.substring(si, bp).trim()); si = bp + 1; }
           }
-          if (si < line.length) parts.push(line.substring(si).trim());
+          if (si < line.length) {parts.push(line.substring(si).trim());}
           newLines.push(...(parts.length > 0 ? parts : [line]));
         } else { newLines.push(line); }
       });
@@ -220,7 +220,7 @@ export function intelligentLineSplitting(text: string): string[] {
 }
 
 export function parseRtfUniversal(rtfText: string): string {
-  if (!rtfText) return '';
+  if (!rtfText) {return '';}
   try {
     let text = rtfText;
     text = text.replace(/\\par\s?/g, '\n');
@@ -250,19 +250,19 @@ export function parseRtfUniversal(rtfText: string): string {
 }
 
 export function extractUnicodeFromRtf(rtfText: string): string {
-  if (!rtfText) return '';
+  if (!rtfText) {return '';}
   const unicodeRegex = /\\u(\d+)\s?/g;
   let extracted = '';
   let match: RegExpExecArray | null;
   while ((match = unicodeRegex.exec(rtfText)) !== null) {
     const c = parseInt(match[1], 10);
-    if (c > 0) extracted += String.fromCharCode(c < 0 ? c + 65536 : c);
+    if (c > 0) {extracted += String.fromCharCode(c < 0 ? c + 65536 : c);}
   }
   return extracted.length > 0 ? improveRussianText(extracted) : extracted;
 }
 
 export function convertUnicodeCodesToChars(text: string): string {
-  if (!text) return '';
+  if (!text) {return '';}
   let r = text;
   r = r.replace(/\\u([0-9a-fA-F]{4})/g, (_m, code) => {
     try { return String.fromCharCode(parseInt(code, 16)); } catch { return _m; }
@@ -276,9 +276,9 @@ export function convertUnicodeCodesToChars(text: string): string {
   r = r.replace(/\\'([0-9a-fA-F]{2})/g, (_m, hex) => {
     try {
       const cc = parseInt(hex, 16);
-      if (cc >= 0xC0 && cc <= 0xFF) return String.fromCharCode(cc + 0x350);
-      if (cc === 0xA8) return 'Ё';
-      if (cc === 0xB8) return 'ё';
+      if (cc >= 0xC0 && cc <= 0xFF) {return String.fromCharCode(cc + 0x350);}
+      if (cc === 0xA8) {return 'Ё';}
+      if (cc === 0xB8) {return 'ё';}
       return String.fromCharCode(cc);
     } catch { return _m; }
   });
@@ -286,7 +286,7 @@ export function convertUnicodeCodesToChars(text: string): string {
 }
 
 export function extractStructuredContentFromRtf(rtfText: string): string | null {
-  if (!rtfText || rtfText.length < 10) return null;
+  if (!rtfText || rtfText.length < 10) {return null;}
   try {
     let text = rtfText;
     text = text.replace(/^\{\\rtf1[^{}]*/, '');
@@ -330,14 +330,14 @@ export function extractStructuredContentFromRtf(rtfText: string): string | null 
 }
 
 export function sanitizeRussianText(text: string, isRtfContent: boolean): string {
-  if (!text) return '';
+  if (!text) {return '';}
   let s = text;
   if (isRtfContent) {
     const structured = extractStructuredContentFromRtf(text);
     if (structured && structured.trim().length >= 20) { s = structured; }
     else {
       const unicode = extractUnicodeFromRtf(text);
-      if (unicode) s = unicode;
+      if (unicode) {s = unicode;}
     }
   }
   s = s.replace(/\\rtf1/g, '').replace(/\\ansi/g, '');
@@ -352,11 +352,11 @@ export function sanitizeRussianText(text: string, isRtfContent: boolean): string
 }
 
 export function sanitizeEnglishText(text: string, isRtfContent: boolean): string {
-  if (!text) return '';
+  if (!text) {return '';}
   let s = text;
   if (isRtfContent) {
     const structured = extractStructuredContentFromRtf(text);
-    if (structured) s = structured;
+    if (structured) {s = structured;}
   }
   s = s.replace(/\\rtf1/g, '').replace(/\\ansi/g, '');
   s = s.replace(/\\ansicpg\d+/g, '').replace(/\\deff\d+/g, '');
@@ -369,18 +369,18 @@ export function sanitizeEnglishText(text: string, isRtfContent: boolean): string
 }
 
 export function sanitizeLyricsText(text: string): string {
-  if (!text) return '';
+  if (!text) {return '';}
   const isRtf = text.includes('\\rtf') || text.includes('\\f') ||
     text.includes('\\pard') || text.includes('\\ansi') ||
     text.includes('cocoartf') || text.includes('ansicpg');
   const language = detectTextLanguage(text);
   if (language === 'russian' && isRtf) {
     const u = extractUnicodeFromRtf(text);
-    if (u && u.length > 20) return u;
+    if (u && u.length > 20) {return u;}
   }
   if (isRtf) {
     const e = extractStructuredContentFromRtf(text);
-    if (e && e.length > 20) return e;
+    if (e && e.length > 20) {return e;}
   }
   const sanitized = language === 'english'
     ? sanitizeEnglishText(text, isRtf)
@@ -388,7 +388,7 @@ export function sanitizeLyricsText(text: string): string {
   if (!sanitized || sanitized.trim().length < 20) {
     if (isRtf) {
       const lines = extractLinesDirectlyFromRtf(text);
-      if (lines && lines.length > 3) return lines.join('\n');
+      if (lines && lines.length > 3) {return lines.join('\n');}
     }
     return text;
   }
@@ -416,13 +416,13 @@ export function sanitizeBlocks(blocks: unknown[], lyricsLength: number): ParsedB
   const ALL_BLOCK_TYPES: BlockType[] = ['intro','verse','prechorus','chorus','postchorus','bridge','interlude','outro','hook','solo','instrumental','build','drop','breakdown','spoken','rap'];
   const allowed = new Set<string>(ALL_BLOCK_TYPES);
   (blocks || []).forEach((blk: any, idx: number) => {
-    if (!blk || !Array.isArray(blk.lineIndices) || !blk.lineIndices.length) return;
+    if (!blk || !Array.isArray(blk.lineIndices) || !blk.lineIndices.length) {return;}
     const sorted = [...blk.lineIndices].sort((a: number, b: number) => a - b)
       .filter((v: number, i: number, arr: number[]) =>
         (i === 0 || v !== arr[i-1]) && v >= 0 && v < lyricsLength);
-    if (!sorted.length) return;
+    if (!sorted.length) {return;}
     const key = `${sorted[0]}-${sorted[sorted.length-1]}`;
-    if (seen.has(key)) return;
+    if (seen.has(key)) {return;}
     seen.add(key);
     const raw = typeof blk.type === 'string' ? blk.type.toLowerCase() : undefined;
     const type = raw && allowed.has(raw) ? raw : undefined;
@@ -440,7 +440,7 @@ export function sanitizeBlocks(blocks: unknown[], lyricsLength: number): ParsedB
     if (filtered > 0) {
       console.warn(`[ZIP-DIAG] sanitizeBlocks: ${filtered}/${total} blocks filtered. ${result.length} remain. lyricsLength=${lyricsLength}`);
       result.slice(0, 2).forEach((b, i) => {
-        if (import.meta.env.DEV) console.log(`[ZIP-DIAG] sanitized block[${i}]:`, JSON.stringify({ id: b.id, name: b.name, lines: b.lineIndices.length, type: b.type }));
+        if (import.meta.env.DEV) {console.log(`[ZIP-DIAG] sanitized block[${i}]:`, JSON.stringify({ id: b.id, name: b.name, lines: b.lineIndices.length, type: b.type }));}
       });
     }
   }
@@ -448,7 +448,7 @@ export function sanitizeBlocks(blocks: unknown[], lyricsLength: number): ParsedB
 }
 
 export function rtfToText(rtfContent: string): string {
-  if (typeof rtfContent !== 'string') return '';
+  if (typeof rtfContent !== 'string') {return '';}
   let t = rtfContent;
   t = t.replace(/^\{\\rtf1[^{}]*\}/, '');
   t = t.replace(/\{\\.*?\}/g, '');
@@ -461,7 +461,7 @@ export function rtfToText(rtfContent: string): string {
   t = t.replace(/\\line\b/g, '\n');
   t = t.replace(/\\u(-?\d+)\??/g, (_, c) => {
     let n = parseInt(c, 10);
-    if (n < 0) n = 65536 + n;
+    if (n < 0) {n = 65536 + n;}
     return String.fromCharCode(n);
   });
   try {

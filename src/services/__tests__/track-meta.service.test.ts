@@ -8,8 +8,8 @@ vi.mock('../idb.service', () => ({
 
 vi.mock('../../catalog/types', () => ({
   parseTrackName: vi.fn((title: string) => {
-    if (title === 'Artist - Song') return { artist: 'Artist', title: 'Song' };
-    if (title === 'Unknown - Test') return { artist: '', title: 'Test' };
+    if (title === 'Artist - Song') {return { artist: 'Artist', title: 'Song' };}
+    if (title === 'Unknown - Test') {return { artist: '', title: 'Test' };}
     return { artist: title, title };
   }),
 }));

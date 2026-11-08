@@ -26,8 +26,8 @@ let _lastSpaceAt = 0;
 
 function shouldIntercept(e: KeyboardEvent): boolean {
   const tag = (e.target as HTMLElement)?.tagName;
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return false;
-  if ((e.target as HTMLElement)?.isContentEditable) return false;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {return false;}
+  if ((e.target as HTMLElement)?.isContentEditable) {return false;}
   return true;
 }
 
@@ -43,7 +43,7 @@ export function useBillyKeyboard(callbacks: KeyboardCallbacks = {}) {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!shouldIntercept(e)) return;
+      if (!shouldIntercept(e)) {return;}
 
       // ── Show scenario guard ──
       const showState = useShowStore.getState();
@@ -97,7 +97,7 @@ export function useBillyKeyboard(callbacks: KeyboardCallbacks = {}) {
         return;
       }
 
-      if (!isBillyControlActive()) return;
+      if (!isBillyControlActive()) {return;}
 
       if (e.code === KEY_ATTACK && !e.shiftKey) {
         e.preventDefault();

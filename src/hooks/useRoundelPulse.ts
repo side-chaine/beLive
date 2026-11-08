@@ -21,7 +21,7 @@ export function useRoundelPulse(origin: RoundelOrigin, enabled = true) {
   const timers = useRef<number[]>([]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {return;}
     const pending = timers.current;
     const start = () => {
       setPulseKey((k) => k + 1);
@@ -29,7 +29,7 @@ export function useRoundelPulse(origin: RoundelOrigin, enabled = true) {
     };
 
     // Deliver a pulse that arrived while this twin was unmounted (feed mode).
-    if (claimRecentPulse() !== null) start();
+    if (claimRecentPulse() !== null) {start();}
 
     const off = onRoundelPulse((from) => {
       // Own click answers immediately, the far twin echoes 90 ms later.
@@ -44,7 +44,7 @@ export function useRoundelPulse(origin: RoundelOrigin, enabled = true) {
   }, [enabled, origin]);
 
   const fire = useCallback(() => {
-    if (enabled) emitRoundelPulse(origin);
+    if (enabled) {emitRoundelPulse(origin);}
   }, [enabled, origin]);
 
   const endPulse = useCallback(() => setPulseActive(false), []);

@@ -134,7 +134,7 @@ export function getActiveLineSlot(): LineSlot | null {
 }
 
 export function updateLineSlotCache(lineIndex: number): void {
-  if (lineIndex === _cachedLineIndex && _activeLineSlot) return; // cache hit
+  if (lineIndex === _cachedLineIndex && _activeLineSlot) {return;} // cache hit
   if (lineIndex < 0) {
     _activeLineSlot = null;
     _cachedLineIndex = lineIndex;

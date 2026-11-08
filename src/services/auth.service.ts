@@ -50,7 +50,7 @@ export const authService = {
 
   /** Вход через VK ID — основной путь для РФ, где Google OAuth недоступен. */
   async initiateVKOAuth(): Promise<void> {
-    if (!AUTH_URL) throw new Error('Auth not configured');
+    if (!AUTH_URL) {throw new Error('Auth not configured');}
     window.location.href = `${AUTH_URL}/auth/vk`;
   },
 
@@ -72,7 +72,7 @@ export const authService = {
         credentials: 'include',
         signal: controller.signal,
       });
-      if (!res.ok) return null;
+      if (!res.ok) {return null;}
       const data = (await res.json()) as RefreshResponse;
       return data?.jwt ? data : null;
     } catch (e) {
@@ -99,9 +99,9 @@ export const authService = {
       return true;
     }
 
-    if (!store.currentUser) return false;
+    if (!store.currentUser) {return false;}
     // Гость — токена нет по определению
-    if (store.currentUser.isGuest) return true;
+    if (store.currentUser.isGuest) {return true;}
     // Legacy: старый токен мог остаться в localStorage до миграции
     return this._isTokenValid(store.currentUser.authToken || '');
   },
@@ -132,13 +132,13 @@ export const authService = {
    */
   startSessionKeepAlive(intervalMs = 12 * 60 * 1000): () => void {
     const tick = async () => {
-      if (document.visibilityState === 'hidden') return;
+      if (document.visibilityState === 'hidden') {return;}
       const session = await this.refreshSession();
-      if (session) await this.applySession(session);
+      if (session) {await this.applySession(session);}
     };
     const timer = window.setInterval(() => { void tick(); }, intervalMs);
     const onVisible = () => {
-      if (document.visibilityState === 'visible') void tick();
+      if (document.visibilityState === 'visible') {void tick();}
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => {
@@ -160,11 +160,11 @@ export const authService = {
   async handleCallback(params: URLSearchParams): Promise<AuthCallbackData | null> {
     const token = params.get('auth');
 
-    if (!token) return null;
+    if (!token) {return null;}
 
     const valid = this._isTokenValid(token);
 
-    if (!valid) return null;
+    if (!valid) {return null;}
 
     try {
       const payloadStr = this._decodeBase64Url(token.split('.')[1]);
@@ -186,17 +186,17 @@ export const authService = {
 
   _decodeBase64Url(str: string): string {
     let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-    while (base64.length % 4) base64 += '=';
+    while (base64.length % 4) {base64 += '=';}
     const binary = atob(base64);
     const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    for (let i = 0; i < binary.length; i++) {bytes[i] = binary.charCodeAt(i);}
     return new TextDecoder().decode(bytes);
   },
 
   _isTokenValid(token: string): boolean {
     try {
       const parts = token.split('.');
-      if (parts.length !== 3) return false;
+      if (parts.length !== 3) {return false;}
       const payload = JSON.parse(this._decodeBase64Url(parts[1]));
       return payload.exp > Date.now() / 1000;
     } catch {

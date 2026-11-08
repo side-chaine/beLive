@@ -9,9 +9,9 @@ import type { TextBlock } from '../../stores/blocks.store';
 
 vi.mock('../../utils/block-utils', () => ({
   getBlockFontSize: (count: number) => {
-    if (count <= 2) return '3.2rem';
-    if (count <= 4) return '2.6rem';
-    if (count <= 6) return '2.0rem';
+    if (count <= 2) {return '3.2rem';}
+    if (count <= 4) {return '2.6rem';}
+    if (count <= 6) {return '2.0rem';}
     return '1.3rem';
   },
   createSubBlocks: (indices: number[], max: number) => {

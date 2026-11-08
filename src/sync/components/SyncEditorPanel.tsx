@@ -89,7 +89,7 @@ export default function SyncEditorPanel() {
   // Publish --bl-deck-height
   useEffect(() => {
     const el = panelRef.current;
-    if (!el) return;
+    if (!el) {return;}
     const ro = new ResizeObserver(([entry]) => {
       document.documentElement.style.setProperty(
         '--bl-deck-height', `${entry.contentRect.height}px`
@@ -114,7 +114,7 @@ export default function SyncEditorPanel() {
 
       // 1. Save to IndexedDB via legacy
       const success = mm.saveMarkersToTrack?.();
-      if (import.meta.env.DEV) console.log('[Sync] save to track:', success);
+      if (import.meta.env.DEV) {console.log('[Sync] save to track:', success);}
 
       // 2. JSON file download — get full track from IDB
       const meta = useTrackStore.getState().currentTrack;
@@ -158,7 +158,7 @@ export default function SyncEditorPanel() {
           URL.revokeObjectURL(url);
         }, 100);
 
-        if (import.meta.env.DEV) console.log('[Sync] JSON downloaded:', fileName);
+        if (import.meta.env.DEV) {console.log('[Sync] JSON downloaded:', fileName);}
       }
     } catch (e) {
       console.error('[Sync] save error:', e);
@@ -169,7 +169,7 @@ export default function SyncEditorPanel() {
   }, [closeSync, markClean]);
 
   const handleExportZip = useCallback(async () => {
-    if (isExporting || exportInFlightRef.current) return;
+    if (isExporting || exportInFlightRef.current) {return;}
     exportInFlightRef.current = true;
     setIsExporting(true);
     setExportProgress(0);
@@ -214,7 +214,7 @@ export default function SyncEditorPanel() {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        if (import.meta.env.DEV) console.log('[Sync] ZIP exported:', `${safeName}.zip`);
+        if (import.meta.env.DEV) {console.log('[Sync] ZIP exported:', `${safeName}.zip`);}
       }
 
       setExportProgress(100);
@@ -304,7 +304,7 @@ export default function SyncEditorPanel() {
 
   const uploadToTelegram = useCallback(async () => {
     const blob = exportBlobRef.current;
-    if (!blob || isUploading) return;
+    if (!blob || isUploading) {return;}
 
     // Stale blob guard: если трек был изменён после генерации ZIP
     const syncStore = useSyncStore.getState();
@@ -314,7 +314,7 @@ export default function SyncEditorPanel() {
     }
 
     const meta = useTrackStore.getState().currentTrack;
-    if (!meta) return;
+    if (!meta) {return;}
     const artist = meta.artist || 'Unknown Artist';
     const title = meta.title || 'Unknown Track';
 
@@ -326,7 +326,7 @@ export default function SyncEditorPanel() {
       {
         onProgress: (pct) => setUploadProgress(pct),
         onDone: () => {
-          if (import.meta.env.DEV) console.log('[Sync] ZIP uploaded to TG');
+          if (import.meta.env.DEV) {console.log('[Sync] ZIP uploaded to TG');}
           document.dispatchEvent(new CustomEvent('tg-upload-complete', {
             detail: { title, artist }
           }));
@@ -346,9 +346,9 @@ export default function SyncEditorPanel() {
   }, [isUploading]);
 
   const handlePublishToBeLive = useCallback(() => {
-    if (isExporting || publishInFlightRef.current) return;
+    if (isExporting || publishInFlightRef.current) {return;}
     const meta = useTrackStore.getState().currentTrack;
-    if (!meta) return;
+    if (!meta) {return;}
     publishInFlightRef.current = true;
     publishTokenRef.current = Symbol('publish');
     publishTrackIdRef.current = Number(meta.id);
@@ -375,7 +375,7 @@ export default function SyncEditorPanel() {
   // ─── Place marker on key "1" (React handler) ──────
   const placeMarker = useCallback(() => {
     const ae = (window as any).audioEngine;
-    if (!ae) return;
+    if (!ae) {return;}
 
     const currentTime = ae.getCurrentTime?.() ?? 0;
     const { markers: allMarkers, addMarker } = useMarkersStore.getState();
@@ -389,7 +389,7 @@ export default function SyncEditorPanel() {
     // Find marked line indices
     const markedSet = new Set<number>();
     for (const m of allMarkers) {
-      if (m.lineIndex != null) markedSet.add(m.lineIndex);
+      if (m.lineIndex != null) {markedSet.add(m.lineIndex);}
     }
 
     // Find next unmarked line (start from 0, find first gap)
@@ -402,7 +402,7 @@ export default function SyncEditorPanel() {
     }
 
     if (targetLine === -1) {
-      if (import.meta.env.DEV) console.log('[Sync] all lines already have markers');
+      if (import.meta.env.DEV) {console.log('[Sync] all lines already have markers');}
       return;
     }
 
@@ -414,7 +414,7 @@ export default function SyncEditorPanel() {
     // аргумента. Позиционный вызов молча терял currentTime: в легаси-MM уходило
     // число вместо объекта, marker.lineIndex/time становились undefined.
     addMarker({ lineIndex: targetLine, time: currentTime });
-    if (import.meta.env.DEV) console.log('[Sync] marker placed: line', targetLine, 'at', currentTime.toFixed(2) + 's');
+    if (import.meta.env.DEV) {console.log('[Sync] marker placed: line', targetLine, 'at', currentTime.toFixed(2) + 's');}
   }, []);
 
   const placeM2Marker = useCallback(() => {
@@ -428,9 +428,9 @@ export default function SyncEditorPanel() {
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       // Skip if typing in input
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {return;}
       // Skip if not in sync editor
-      if (!useSyncStore.getState().open) return;
+      if (!useSyncStore.getState().open) {return;}
 
       if (e.key === '1') {
         e.preventDefault();
@@ -541,11 +541,11 @@ export default function SyncEditorPanel() {
             lineMap: useWordSyncStore.getState().lineMap,
           });
 
-          if (import.meta.env.DEV) console.log('Word-sync persistence saved', {
+          if (import.meta.env.DEV) {console.log('Word-sync persistence saved', {
             trackId: currentTrackId,
             hasAlignmentData: !!response.result,
             lineMapSize: useWordSyncStore.getState().lineMap.length,
-          });
+          });}
         } catch (persistError) {
           console.warn('Word-sync persistence failed:', persistError);
         }
@@ -578,7 +578,7 @@ export default function SyncEditorPanel() {
 
     // Calculate position BEFORE opening dropdown
     const calculatePosition = () => {
-      if (!lrcPickerRef.current) return { top: 0, right: 0 };
+      if (!lrcPickerRef.current) {return { top: 0, right: 0 };}
       const rect = lrcPickerRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
 
@@ -641,7 +641,7 @@ export default function SyncEditorPanel() {
         const ts = useTrackStore.getState();
         const current = ts.currentTrack;
         if (current) {
-          if (!artistName) artistName = current.artist || '';
+          if (!artistName) {artistName = current.artist || '';}
           if (!trackName) {
             trackName = current.title || '';
             // Same "Artist - Title" split
@@ -660,10 +660,10 @@ export default function SyncEditorPanel() {
         return;
       }
 
-      if (import.meta.env.DEV) console.log(
+      if (import.meta.env.DEV) {console.log(
         `[LRC-Picker] Searching: artist="${artistName}" ` +
         `title="${trackName}" duration=${Math.round(duration)}s`
-      );
+      );}
 
       const versions = await fetchLrcVersions(
         artistName,
@@ -681,7 +681,7 @@ export default function SyncEditorPanel() {
       setLrcPickerPos(calculatePosition());
       setLrcPickerOpen(true);
 
-      if (import.meta.env.DEV) console.log(`[LRC-Picker] ${versions.length} versions loaded`);
+      if (import.meta.env.DEV) {console.log(`[LRC-Picker] ${versions.length} versions loaded`);}
     } catch (e) {
       console.warn('[LRC-Picker] Failed:', e);
     } finally {
@@ -705,14 +705,14 @@ export default function SyncEditorPanel() {
       }
 
       const geniusText = legacyTrack.lyricsOriginalContent || undefined;
-      if (import.meta.env.DEV) console.log(`[LRC-Picker] geniusText: ${geniusText ? `${geniusText.length} chars` : 'NONE'}`);
+      if (import.meta.env.DEV) {console.log(`[LRC-Picker] geniusText: ${geniusText ? `${geniusText.length} chars` : 'NONE'}`);}
 
       const result = parseLrcVersion(version, geniusText);
 
-      if (import.meta.env.DEV) console.log(
+      if (import.meta.env.DEV) {console.log(
         `[LRC-Picker] Applying version #${version.id}: ` +
         `${result.markers.length} markers, ${result.lyricsLines.length} lines, ${result.blocks.length} blocks`
-      );
+      );}
 
       // ─── STEP 1: Load blocks + lyrics DIRECTLY ───
       // loadImportedBlocks sets ld.lyrics synchronously, bypasses _processLyrics
@@ -724,7 +724,7 @@ export default function SyncEditorPanel() {
         : (ld.textBlocks || []);
       
       if (result.blocks.length === 0 && (ld.textBlocks || []).length > 0) {
-        if (import.meta.env.DEV) console.log(`[LRC-Picker] Preserving ${ld.textBlocks.length} existing blocks (LRC returned none)`);
+        if (import.meta.env.DEV) {console.log(`[LRC-Picker] Preserving ${ld.textBlocks.length} existing blocks (LRC returned none)`);}
       }
       
       ld.loadImportedBlocks(
@@ -757,7 +757,7 @@ export default function SyncEditorPanel() {
         });
       }
 
-      if (import.meta.env.DEV) console.log(`[LRC-Picker] Version #${version.id} applied ✅`);
+      if (import.meta.env.DEV) {console.log(`[LRC-Picker] Version #${version.id} applied ✅`);}
     } catch (e) {
       console.warn('[LRC-Picker] Apply failed:', e);
     }
@@ -765,16 +765,16 @@ export default function SyncEditorPanel() {
 
   // TC-LRCPICKER-11: Navigation handlers
   const handleLrcPrev = useCallback(() => {
-    if (lrcHasPrev) handleLrcVersionSelect(lrcVersions[lrcSelectedIndex - 1]);
+    if (lrcHasPrev) {handleLrcVersionSelect(lrcVersions[lrcSelectedIndex - 1]);}
   }, [lrcHasPrev, lrcSelectedIndex, lrcVersions, handleLrcVersionSelect]);
 
   const handleLrcNext = useCallback(() => {
-    if (lrcHasNext) handleLrcVersionSelect(lrcVersions[lrcSelectedIndex + 1]);
+    if (lrcHasNext) {handleLrcVersionSelect(lrcVersions[lrcSelectedIndex + 1]);}
   }, [lrcHasNext, lrcSelectedIndex, lrcVersions, handleLrcVersionSelect]);
 
   // TC-LRCPICKER-02: Close dropdown on outside click
   useEffect(() => {
-    if (!lrcPickerOpen) return;
+    if (!lrcPickerOpen) {return;}
     const handleClickOutside = (e: MouseEvent) => {
       if (lrcPickerRef.current && !lrcPickerRef.current.contains(e.target as Node)) {
         setLrcPickerOpen(false);
@@ -963,7 +963,7 @@ export default function SyncEditorPanel() {
         {/* Delete marker */}
         <button onClick={() => {
           const fn = (window as any).__syncDeleteMarker;
-          if (fn) fn();
+          if (fn) {fn();}
         }} style={{
           ...btn, height: '28px', padding: '4px 8px',
           fontSize: '11px',
