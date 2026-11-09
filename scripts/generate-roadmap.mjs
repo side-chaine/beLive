@@ -28,8 +28,6 @@ const resolveDir = (v) => (isAbsolute(v) ? v : join(ROOT, v));
 const BOARD  = resolveDir(process.env.ROADMAP_DIR || 'board');   // canonical location
 const MIRROR = process.env.MIRROR_DIR ? resolveDir(process.env.MIRROR_DIR) : null;
 const DATA = join(BOARD, 'roadmap-data.json');
-const MD   = join(BOARD, 'ROADMAP.md');
-const HTML = join(BOARD, 'ROADMAP-GRAPH.html');
 
 const G_START = '<!-- GRAPH:START -->';
 const G_END   = '<!-- GRAPH:END -->';
@@ -51,24 +49,24 @@ try {
 const CLS = new Set(['done', 'active', 'queued', 'risk']);
 const errors = [];
 const req = (o, fields, where) => fields.forEach(f => {
-  if (o[f] === undefined || o[f] === null || o[f] === '') errors.push(`${where}: missing "${f}"`);
+  if (o[f] === undefined || o[f] === null || o[f] === '') {errors.push(`${where}: missing "${f}"`);}
 });
 
-if (d.schema !== 'belive.roadmap.v1') errors.push('schema: expected belive.roadmap.v1');
+if (d.schema !== 'belive.roadmap.v1') {errors.push('schema: expected belive.roadmap.v1');}
 req(d, ['generated', 'main', 'command', 'drift'], 'root');
-if (!Array.isArray(d.kpi) || !d.kpi.every(k => Array.isArray(k) && k.length === 2)) errors.push('kpi: expected array of [value,label]');
-if (!Array.isArray(d.nodes) || d.nodes.length === 0) errors.push('nodes: expected non-empty array');
-if (!Array.isArray(d.cards)) errors.push('cards: expected array');
-if (!Array.isArray(d.open)) errors.push('open: expected array');
+if (!Array.isArray(d.kpi) || !d.kpi.every(k => Array.isArray(k) && k.length === 2)) {errors.push('kpi: expected array of [value,label]');}
+if (!Array.isArray(d.nodes) || d.nodes.length === 0) {errors.push('nodes: expected non-empty array');}
+if (!Array.isArray(d.cards)) {errors.push('cards: expected array');}
+if (!Array.isArray(d.open)) {errors.push('open: expected array');}
 
 const seen = new Set();
 (d.nodes || []).forEach((n, i) => {
   const w = `nodes[${i}] (${n?.id ?? '?'})`;
   if (typeof n !== 'object') { errors.push(`${w}: not an object`); return; }
   req(n, ['id', 'nm', 'st', 'cls', 'd', 'who', 'next', 'block'], w);
-  if (!CLS.has(n.cls)) errors.push(`${w}: cls "${n.cls}" not in done|active|queued|risk (typo?)`);
-  if (typeof n.p !== 'number' || n.p < 0 || n.p > 100) errors.push(`${w}: p must be 0..100`);
-  if (seen.has(n.id)) errors.push(`${w}: duplicate id`);
+  if (!CLS.has(n.cls)) {errors.push(`${w}: cls "${n.cls}" not in done|active|queued|risk (typo?)`);}
+  if (typeof n.p !== 'number' || n.p < 0 || n.p > 100) {errors.push(`${w}: p must be 0..100`);}
+  if (seen.has(n.id)) {errors.push(`${w}: duplicate id`);}
   seen.add(n.id);
 });
 (d.cards || []).forEach((c, i) => {
@@ -76,7 +74,7 @@ const seen = new Set();
   req(c, ['t', 'd', 'p', 'who', 'next'], `cards[${i}]`);
 });
 (d.open || []).forEach((o, i) => {
-  if (!Array.isArray(o) || o.length !== 2) errors.push(`open[${i}]: expected [title, description]`);
+  if (!Array.isArray(o) || o.length !== 2) {errors.push(`open[${i}]: expected [title, description]`);}
 });
 
 if (errors.length) {
@@ -90,7 +88,7 @@ const key = (n) => n.id.replace(/[^A-Za-z0-9]/g, '');
 const mmd = ['```mermaid', 'flowchart LR',
   '  subgraph MOD["🔧 МОДЕРНИЗАЦИЯ · канон NODES.md / NODE-IDS.md"]', '    direction LR'];
 d.nodes.forEach(n => mmd.push(`    ${key(n)}["${n.id} ${n.nm}<br/>${esc(n.st)}"]`));
-for (let i = 1; i < d.nodes.length; i++) mmd.push(`    ${key(d.nodes[i - 1])} --> ${key(d.nodes[i])}`);
+for (let i = 1; i < d.nodes.length; i++) {mmd.push(`    ${key(d.nodes[i - 1])} --> ${key(d.nodes[i])}`);}
 mmd.push('  end', '', '  subgraph PROD["🚀 ПРОДУКТ · уже в main"]', '    direction TB');
 d.cards.forEach((c, i) => mmd.push(`    P${i + 1}["${esc(c.t)}<br/>${esc(c.p)}"]`));
 mmd.push('  end', '', '  subgraph OPEN["⏳ ЖДЁТ РЕШЕНИЯ НИКИТЫ"]', '    direction TB');
@@ -111,7 +109,7 @@ mmd.push('  end', '',
   '  classDef gate fill:#1c2c46,stroke:#6aa9ff,color:#e8f1ff;', '');
 for (const cls of CLS) {
   const ids = d.nodes.filter(n => n.cls === cls).map(key);
-  if (ids.length) mmd.push(`  class ${ids.join(',')} ${cls};`);
+  if (ids.length) {mmd.push(`  class ${ids.join(',')} ${cls};`);}
 }
 mmd.push('  class GATES,MAIN gate;', '```');
 const graphBlock = mmd.join('\n');
@@ -123,7 +121,7 @@ const dataBlock = `const DATA = ${JSON.stringify(d, null, 2)};`;
 // --- 3. splice --------------------------------------------------------------
 function splice(text, start, end, body) {
   const a = text.indexOf(start), b = text.indexOf(end);
-  if (a < 0 || b < 0 || b < a) throw new Error(`markers not found: ${start} / ${end}`);
+  if (a < 0 || b < 0 || b < a) {throw new Error(`markers not found: ${start} / ${end}`);}
   return text.slice(0, a + start.length) + '\n' + body + '\n' + text.slice(b);
 }
 
@@ -175,7 +173,7 @@ if (args.has('--check')) {
     if (t.mdNext !== t.mdText)   { console.error(`✗ STALE · ${tag} — run: node scripts/generate-roadmap.mjs --write`); stale = true; }
     if (t.htmlNext !== t.htmlText) { console.error(`✗ STALE · ${t.htmlPath} — run: node scripts/generate-roadmap.mjs --write`); stale = true; }
   });
-  if (stale) process.exit(1);
+  if (stale) {process.exit(1);}
   console.log(`✓ roadmap graph in sync · main ${d.main} · ${d.nodes.length} nodes · ${d.cards.length} lines · ${items.length} location(s)`);
   process.exit(0);
 }
