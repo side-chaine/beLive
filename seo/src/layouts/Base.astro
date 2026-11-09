@@ -4,6 +4,7 @@ import Schema from '../components/Schema.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { canonicalUrl } from '../lib/site.mjs';
+import { isIndexablePath } from '../lib/doors.mjs';
 import '../styles/global.css';
 
 interface Props {
@@ -17,6 +18,12 @@ interface Props {
 }
 
 const { schemas = [], ...seo } = Astro.props;
+
+// Indexing follows the door registry unless a page overrides it explicitly.
+// A page whose feature has not shipped yet is built, reachable and noindex —
+// no page can be published by simply forgetting to pass a flag.
+const pagePath = seo.canonicalPath ?? Astro.url.pathname;
+const noindex = seo.noindex ?? !isIndexablePath(pagePath);
 ---
 
 <!doctype html>
@@ -27,8 +34,8 @@ const { schemas = [], ...seo } = Astro.props;
     <meta name="theme-color" content="#6366f1" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0b0b12" media="(prefers-color-scheme: dark)" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="alternate" hreflang="ru" href={canonicalUrl(seo.canonicalPath ?? Astro.url.pathname)} />
-    <Seo {...seo} />
+    <link rel="alternate" hreflang="ru" href={canonicalUrl(pagePath)} />
+    <Seo {...seo} noindex={noindex} />
     <Schema schemas={schemas} />
   </head>
   <body>

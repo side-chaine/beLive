@@ -1,0 +1,52 @@
+---
+/**
+ * Honest "not shipped yet" note. Shown on doors whose feature is still being
+ * finished. No fake email capture: a promise we cannot back is worse than a
+ * plain statement of fact.
+ */
+interface Props {
+  title?: string;
+  children?: unknown;
+}
+
+const {
+  title = 'Скоро в студии',
+} = Astro.props;
+---
+
+<aside class="soon">
+  <p class="soon-title">{title}</p>
+  <div class="soon-body">
+    <slot />
+  </div>
+</aside>
+
+<style>
+  .soon {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+    padding: 20px 24px;
+    margin: 32px 0;
+  }
+
+  .soon-title {
+    margin: 0 0 8px;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .soon-body :global(p) {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 16px;
+  }
+
+  .soon-body :global(p + p) {
+    margin-top: 10px;
+  }
+</style>
