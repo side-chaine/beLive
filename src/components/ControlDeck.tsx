@@ -113,7 +113,7 @@ export function ControlDeck() {
   }, []);
 
   return (
-    <div ref={rootRef} className={styles.root} data-reactive="true">
+    <div ref={rootRef} className={styles.root} data-reactive="true" data-bl-deck>
       <div className={styles.tabs} style={{ position: 'relative' }}>
         {/* W12: Cover Art 32x32 — absolute in .tabs, NOT in .tabsInner (overflow-y:hidden) */}
         {hasTrack && (
