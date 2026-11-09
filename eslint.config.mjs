@@ -1,3 +1,4 @@
+// guard-test: проверка красного сценария (файл защищённый, метки нет).
 import js from "@eslint/js";
 import tsParser from "@typescript-eslint/parser";
 import tseslint from "@typescript-eslint/eslint-plugin";
