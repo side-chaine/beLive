@@ -42,9 +42,10 @@ export function handleZipFileSelect(file: File, onProgress?: (pct: number) => vo
 
 export async function createMvsepPlaceholder(
   fileName: string,
-  hash: string
+  hash: string,
+  keySource?: 'user' | 'beLive' | 'none'
 ): Promise<number> {
-  return createMvsepPlaceholderSvc(fileName, hash);
+  return createMvsepPlaceholderSvc(fileName, hash, keySource);
 }
 
 export async function completeMvsepTrack(

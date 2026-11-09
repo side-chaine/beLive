@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { authService } from '../../services/auth.service';
 import { useAppStore } from '../../stores/app.store';
 import { useUserProfileStore } from '../../stores/user-profile.store';
+import { useMvsepKeyStore } from '../../stores/mvsep-key.store';
 import { useCurrentTrackId } from '../../stores/track.store';
 import { usePracticeStore } from '../../stores/practice-session.store';
 import { useThemeStore } from '../../theme/store/theme-store';
@@ -25,7 +26,7 @@ export function UserRoom() {
   const [mvsepKeyInput, setMvsepKeyInput] = useState('');
   const [showMvsepKey, setShowMvsepKey] = useState(false);
   const [mvsepOpen, setMvsepOpen] = useState(false);
-  const mvsepKeyValue = useUserProfileStore(s => s.currentUser?.mvsepApiKey) || '';
+  const mvsepKeyValue = useMvsepKeyStore(s => s.apiKey) || '';
 
   // Theme selector state
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
@@ -97,7 +98,7 @@ export function UserRoom() {
       <div className="bl-userroom__mvsep-ok">✅ Свой ключ — без лимита beLive</div>
       <button
         className="bl-userroom__mvsep-delete"
-        onClick={() => useUserProfileStore.getState().setMvsepApiKey(null)}
+        onClick={() => useMvsepKeyStore.getState().clearApiKey()}
       >
         🗑️ Удалить ключ
       </button>
@@ -116,7 +117,7 @@ export function UserRoom() {
         onClick={() => {
           const key = mvsepKeyInput.trim();
           if (key) {
-            useUserProfileStore.getState().setMvsepApiKey(key);
+            useMvsepKeyStore.getState().setApiKey(key);
             setMvsepKeyInput('');
           }
         }}
