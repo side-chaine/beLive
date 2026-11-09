@@ -47,7 +47,7 @@ interface MvsepState {
 }
 
 interface MvsepActions {
-  addJob: (hash: string, trackId: number, fileName: string, keySource: MvsepKeySource) => void;
+  addJob: (hash: string, trackId: number, fileName: string, keySource: MvsepKeySource, submittedAt?: number) => void;
   updateJobStatus: (hash: string, status: MvsepInternalStatus, error?: string) => void;
   updateDownloadProgress: (hash: string, downloaded: number, total: number) => void;
   removeJob: (hash: string) => void;
@@ -100,7 +100,7 @@ export const useMvsepStore = create<MvsepState & MvsepActions>((set, get) => ({
   activeJobs: new Map(),
   dailyUsage: { count: 0, date: getTodayString() },
 
-  addJob: (hash, trackId, fileName, keySource) => {
+  addJob: (hash, trackId, fileName, keySource, submittedAt) => {
     set((state) => {
       const newJobs = new Map(state.activeJobs);
       newJobs.set(hash, {
@@ -109,7 +109,7 @@ export const useMvsepStore = create<MvsepState & MvsepActions>((set, get) => ({
         fileName,
         status: 'uploading',
         keySource,
-        submittedAt: Date.now(),
+        submittedAt: submittedAt ?? Date.now(),
         lastPolledAt: Date.now(),
         downloadProgress: { downloaded: 0, total: 0 },
       });

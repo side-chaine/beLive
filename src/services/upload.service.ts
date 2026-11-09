@@ -1075,7 +1075,8 @@ export async function handleZipFileSelect(file: File, onProgress?: (pct: number)
  */
 export async function createMvsepPlaceholder(
   fileName: string,
-  hash: string
+  hash: string,
+  keySource?: 'user' | 'beLive' | 'none'
 ): Promise<number> {
   const w = window as any;
   const idb = w.idbService;
@@ -1096,6 +1097,7 @@ export async function createMvsepPlaceholder(
     mvsepStatus: 'processing' as const,
     mvsepHash: hash,
     mvsepSubmittedAt: new Date().toISOString(),
+    mvsepKeySource: keySource ?? null,
     lyrics: '',
     blocksData: [],
     syncMarkers: [],
@@ -1169,6 +1171,7 @@ export async function completeMvsepTrack(
     vocalsData,
     vocalsType: vocalsData ? 'audio/mpeg' : null,
     mvsepStatus: 'done' as const,
+    mvsepErrorCode: null,
     lastModified: new Date().toISOString(),
   };
 

@@ -67,6 +67,12 @@ export interface TrackRecord {
   mvsepStatus?: 'processing' | 'done' | 'failed' | 'timeout' | null;
   mvsepHash?: string | null;
   mvsepSubmittedAt?: string | null;
+  /** R5: чей ключ платил за джобу. Нужен resume после перезагрузки (стор не персистится). */
+  mvsepKeySource?: 'user' | 'beLive' | 'none' | null;
+  /** Код последней ошибки (MvsepError.code / внутренний), для экрана «что пошло не так». */
+  mvsepErrorCode?: string | null;
+  /** Сколько раз пытались скачать/импортировать результат. */
+  mvsepAttempts?: number | null;
 }
 
 export interface UserRecord {
@@ -309,6 +315,18 @@ export async function getMvsepProcessingTracks(): Promise<TrackRecord[]> {
   const all = await getAllTracks();
   return all.filter(
     (t) => t.mvsepStatus === 'processing'
+  );
+}
+
+/**
+ * R4: треки, которые resume имеет смысл подобрать: `processing` и `timeout`
+ * (таймаут — это «перестали ждать», а не «MVSEP отказал»; результат мог доехать).
+ * Окно давности решает вызывающий.
+ */
+export async function getMvsepResumableTracks(): Promise<TrackRecord[]> {
+  const all = await getAllTracks();
+  return all.filter(
+    (t) => t.mvsepStatus === 'processing' || t.mvsepStatus === 'timeout'
   );
 }
 
