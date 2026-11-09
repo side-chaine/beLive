@@ -275,6 +275,83 @@ h3 {
   margin: 32px 0 0;
 }
 
+/* ── prose ──────────────────────────────────────────────────────────────── */
+
+section p {
+  max-width: 68ch;
+}
+
+section p + p {
+  margin-top: 16px;
+}
+
+section ul {
+  max-width: 68ch;
+  margin: 0;
+  padding-left: 22px;
+}
+
+section li {
+  margin-bottom: 10px;
+  color: var(--text-dim);
+}
+
+section li strong {
+  color: var(--text);
+}
+
+section a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+}
+
+section a:hover {
+  color: var(--accent-strong);
+}
+
+/* FAQ — native details, no JS */
+details {
+  border-bottom: 1px solid var(--border);
+  padding: 16px 0;
+  max-width: 72ch;
+}
+
+details:first-of-type {
+  border-top: 1px solid var(--border);
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 17px;
+  list-style: none;
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+summary::before {
+  content: "+";
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 19px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+details[open] summary::before {
+  content: "−";
+}
+
+details p {
+  margin: 12px 0 0 26px;
+  color: var(--text-dim);
+}
+
 /* ── footer ─────────────────────────────────────────────────────────────── */
 
 .site-footer {

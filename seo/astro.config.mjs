@@ -2,6 +2,7 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 
 import { SITE } from './src/lib/site.mjs';
+import { isSitemapPath } from './src/lib/doors.mjs';
 
 export default defineConfig({
   site: SITE,
@@ -15,8 +16,10 @@ export default defineConfig({
   },
   integrations: [
     sitemap({
-      // 404 is a utility page, not a landing page.
-      filter: (page) => !page.includes('/404'),
+      // Publication is decided by the door registry, not by the build:
+      // 404 is a utility page, and 'soon' doors stay out until their feature
+      // actually ships.
+      filter: (page) => isSitemapPath(new URL(page).pathname),
     }),
   ],
 });
