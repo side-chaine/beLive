@@ -110,10 +110,26 @@ export function parseTextCommand(text: string): ToolCall | null {
   return null;
 }
 
+/**
+ * Parse [FOCUS: слово] — слово в лирике, к которому относится совет.
+ * Кавычки модель ставит по настроению, поэтому снимаем их по краям.
+ */
+export function parseFocusWord(text: string): string | null {
+  const match = text.match(/\[FOCUS:\s*([^\]]+)\]/i);
+  if (!match) {return null;}
+
+  const word = match[1]
+    .trim()
+    .replace(/^["'«»„“]+|["'«»„“]+$/g, '')
+    .trim();
+
+  return word || null;
+}
+
 /** Strip all text commands from display text */
 export function stripTextCommands(text: string): string {
   return text
-    .replace(/\[(?:SEEK|STRUCTURE|CATALOG|SEARCH|SEARCH_AUDIO|SNAPSHOT|STEM_COMPARE|EVENTS|PERF)(?::[^\]]+)?\]/gi, '')
+    .replace(/\[(?:SEEK|STRUCTURE|CATALOG|SEARCH|SEARCH_AUDIO|SNAPSHOT|STEM_COMPARE|EVENTS|PERF|FOCUS)(?::[^\]]+)?\]/gi, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
