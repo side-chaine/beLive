@@ -17,6 +17,11 @@ export interface TrackRecord {
 
 export const MAX_MUSIC_STEMS = 6; // drums, bass, keys, guitar, backing, other
 export const MASTER_CLOCK_STEM_ID = 'instrumental';
+/**
+ * B (FROZEN-REQUEST A+B): сколько стемов декодируется одновременно.
+ * 2 × 70.3 МиБ ≈ 141 МиБ пик вместо 492 МиБ при Promise.all по всем 7.
+ */
+export const DECODE_BATCH = 2;
 
 export interface LoadResult {
   loadedStemIds: string[];
@@ -86,38 +91,65 @@ export class V3DataInterceptor {
         const other = allEntries.find(([id]) => id === 'other')!;
         chosen = [...chosen.slice(0, MAX_MUSIC_STEMS - 1), other];
       }
-      for (const [id, stem] of chosen) jobs.push({ id, data: stem.data, type: stem.type });
+      for (const [id, stem] of chosen) {jobs.push({ id, data: stem.data, type: stem.type });}
     }
 
     try { performance.mark('belive:load:04-decode') } catch {}
 
     // 3. 🔄 ATOMIC: decode ВСЕ сначала (до pipeline.reset)
+    // B (FROZEN-REQUEST A+B): батчами, не все разом — пик декода ограничен
+    // DECODE_BATCH × размер стема, а не суммой всех стемов трека.
     type JobResult = { id: string; ok: true; buffer: AudioBuffer } | { id: string; ok: false; error: unknown };
 
-    const results: JobResult[] = await Promise.all(
-      jobs.map(async (job): Promise<JobResult> => {
+    const decodeOne = async (job: { id: string; data: ArrayBuffer; type: string }): Promise<JobResult> => {
+      try {
+        const copy = job.data.slice(0);
+        const buffer = await this.ctx.decodeAudioData(copy);
+        return { id: job.id, ok: true, buffer };
+      } catch (error) {
+        // BAC-002 (VMO-005/036): 1 retry with small backoff before giving up.
+        // Transient decode failures (e.g. the «other» 5/6 stem) get a second
+        // chance so the fader still renders; only a final failure is excluded.
         try {
-          const copy = job.data.slice(0);
-          const buffer = await this.ctx.decodeAudioData(copy);
+          await new Promise<void>((r) => setTimeout(r, 120));
+          const retryCopy = job.data.slice(0);
+          const buffer = await this.ctx.decodeAudioData(retryCopy);
           return { id: job.id, ok: true, buffer };
-        } catch (error) {
-          // BAC-002 (VMO-005/036): 1 retry with small backoff before giving up.
-          // Transient decode failures (e.g. the «other» 5/6 stem) get a second
-          // chance so the fader still renders; only a final failure is excluded.
-          try {
-            await new Promise<void>((r) => setTimeout(r, 120));
-            const retryCopy = job.data.slice(0);
-            const buffer = await this.ctx.decodeAudioData(retryCopy);
-            return { id: job.id, ok: true, buffer };
-          } catch {
-            return { id: job.id, ok: false, error };
-          }
+        } catch {
+          return { id: job.id, ok: false, error };
         }
-      }),
-    );
+      }
+    };
+
+    const results: JobResult[] = [];
+    for (let i = 0; i < jobs.length; i += DECODE_BATCH) {
+      const batch = jobs.slice(i, i + DECODE_BATCH);
+      results.push(...(await Promise.all(batch.map(decodeOne))));
+      // generation-гард между батчами: смена трека во время загрузки не тратит декоды
+      if (myGeneration !== this._loadGeneration) {
+        return { loadedStemIds: [], failedStemIds: jobs.map((j) => j.id) };
+      }
+    }
 
     // 4. Проверка generation — если устарел, abort
     if (myGeneration !== this._loadGeneration) {
+      return { loadedStemIds: [], failedStemIds: jobs.map((j) => j.id) };
+    }
+
+    // 4a. A (FROZEN-REQUEST A+B): ни один стем не декодировался → НЕ трогаем старый трек.
+    // pipeline.reset() ниже не выполнится, поэтому прошлый трек остаётся живым.
+    const okCount = results.filter((r) => r.ok).length;
+    if (jobs.length > 0 && okCount === 0) {
+      // Флаг V3 вернуть только если в пайплайне реально есть живые стемы прошлого трека.
+      if (this._pipeline && this._pipeline.liveStems.length > 0) {
+        try { (window as any).__setV3Active?.(true) } catch {}
+      }
+      console.error('[V3DataInterceptor] ❌ 0/N decoded — old track preserved (A)');
+      try {
+        window.dispatchEvent(new CustomEvent('belive:track-load-failed', {
+          detail: { failedStemIds: jobs.map((j) => j.id) },
+        }));
+      } catch {}
       return { loadedStemIds: [], failedStemIds: jobs.map((j) => j.id) };
     }
 
@@ -193,7 +225,7 @@ export class V3DataInterceptor {
         )
         await Promise.race([this.transport.play(offset), timeoutPromise])
         // P1: тихий возврат play() без 'playing' (TransportV3.ts:135-155) = фейл → catch :177 → rollback
-        if (this.transport.state !== 'playing') throw new Error('V3 play() resolved without playing state')
+        if (this.transport.state !== 'playing') {throw new Error('V3 play() resolved without playing state')}
         console.log('[V3DataInterceptor] 🎯 Auto-play V3 at', offset.toFixed(1) + 's')
       } catch (error) {
         // R1: generation-check — stale rollback не гасит флаг/пайплайн нового трека

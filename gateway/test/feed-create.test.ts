@@ -11,7 +11,7 @@ function makeDb(insertedSqls: string[], selectResult: unknown) {
   const first = vi.fn().mockResolvedValue(selectResult);
   return {
     prepare: vi.fn((sql: string) => {
-      if (/^[\s]*INSERT/i.test(sql)) insertedSqls.push(sql);
+      if (/^[\s]*INSERT/i.test(sql)) {insertedSqls.push(sql);}
       return { bind: () => ({ run, first }) };
     }),
     batch: vi.fn(),

@@ -91,10 +91,10 @@ const ALL_SAME_CHAR = /^(.)\1*$/;
 
 // Enough entropy to be a real credential rather than prose.
 function looksLikeSecret(v) {
-  if (NOT_A_SECRET.test(v)) return false;
-  if (ALL_SAME_CHAR.test(v)) return false;
-  if (v.length < 16) return false;
-  if (/^(?:true|false|undefined|string|number|boolean|function|object)$/i.test(v)) return false;
+  if (NOT_A_SECRET.test(v)) {return false;}
+  if (ALL_SAME_CHAR.test(v)) {return false;}
+  if (v.length < 16) {return false;}
+  if (/^(?:true|false|undefined|string|number|boolean|function|object)$/i.test(v)) {return false;}
   // Real keys are a mix of letters and digits; prose and identifiers are not.
   return /[A-Za-z]/.test(v) && /\d/.test(v);
 }
@@ -155,7 +155,7 @@ function scanText(text, { isCodeOrConfig }) {
 
   lines.forEach((line, i) => {
     if (suppressed === i) { suppressed = -1; return; }
-    if (SUPPRESS.test(line)) return;
+    if (SUPPRESS.test(line)) {return;}
     if (SUPPRESS_NEXT.test(line)) { suppressed = i + 1; return; }
 
     if (isCodeOrConfig) {
@@ -187,21 +187,21 @@ function scanText(text, { isCodeOrConfig }) {
 
 // Never echo a full secret into CI logs — that is how a leak propagates.
 function mask(s) {
-  if (s.length <= 8) return '****';
+  if (s.length <= 8) {return '****';}
   return `${s.slice(0, 4)}…${s.slice(-2)} (${s.length} chars)`;
 }
 
 // ─── Entrypoint ───────────────────────────────────────────────────────────
 
 function main() {
-  if (args.has('--install-hook')) return installHook();
+  if (args.has('--install-hook')) {return installHook();}
 
   const files = listFiles().filter((f) => !SKIP_DIR.test(f) && !SKIP_FILE.test(f));
   const report = [];
 
   for (const file of files) {
     const rel = relative(ROOT, resolve(ROOT, file)).replace(/\\/g, '/');
-    if (EXPLAINING.has(rel)) continue;
+    if (EXPLAINING.has(rel)) {continue;}
 
     let text;
     try {
@@ -209,10 +209,10 @@ function main() {
     } catch {
       continue; // binary, or removed mid-scan
     }
-    if (text.includes('\u0000')) continue;
+    if (text.includes('\u0000')) {continue;}
 
     const hits = scanText(text, { isCodeOrConfig: CODE_OR_CONFIG.test(rel) });
-    if (hits.length) report.push({ file: rel, hits });
+    if (hits.length) {report.push({ file: rel, hits });}
   }
 
   if (report.length) {
@@ -223,7 +223,7 @@ function main() {
         console.error(`   ${h.rule}  L${h.line}: ${h.match}`);
         console.error(`   └─ ${h.why}`);
       }
-      if (hits.length > 8) console.error(`   … and ${hits.length - 8} more`);
+      if (hits.length > 8) {console.error(`   … and ${hits.length - 8} more`);}
     }
     console.error(`\nGATE FAILED — ${report.length} file(s) with blocked patterns.\n`);
     return 1;

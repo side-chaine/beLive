@@ -23,7 +23,7 @@ interface CmdCtx {
 
 // --- /cancel — сброс стейт-машины (Замок 2) ---
 export async function cmdCancel(ctx: CmdCtx): Promise<boolean> {
-  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) return false;
+  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) {return false;}
   await clearDraft(ctx.env.EPHEMERAL_KV, ctx.userId);
   await sendMessage(ctx.token, ctx.chatId, '❌ Создание отменено. Черновик удалён.');
   return true;
@@ -31,7 +31,7 @@ export async function cmdCancel(ctx: CmdCtx): Promise<boolean> {
 
 // --- /new_event — запуск стейт-машины ---
 export async function cmdNewEvent(ctx: CmdCtx): Promise<boolean> {
-  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) return false;
+  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) {return false;}
   await setDraft(ctx.env.EPHEMERAL_KV, ctx.userId, newDraft('event'));
   await sendMessage(ctx.token, ctx.chatId,
     '📅 Создание нового события.\n\nПришли название события:',
@@ -42,7 +42,7 @@ export async function cmdNewEvent(ctx: CmdCtx): Promise<boolean> {
 
 // --- /new_poll — умный парсинг (Замок 3) ---
 export async function cmdNewPoll(ctx: CmdCtx): Promise<boolean> {
-  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) return false;
+  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) {return false;}
 
   const lines = ctx.text.split('\n').map(s => s.trim()).filter(Boolean);
   // Первая строка после команды — title
@@ -84,7 +84,7 @@ export async function cmdNewPoll(ctx: CmdCtx): Promise<boolean> {
 
 // --- /publish — публикация черновика ---
 export async function cmdPublish(ctx: CmdCtx): Promise<boolean> {
-  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) return false;
+  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) {return false;}
 
   const parts = ctx.text.split(' ');
   const itemId = parts[1];
@@ -105,7 +105,7 @@ export async function cmdPublish(ctx: CmdCtx): Promise<boolean> {
 
 // --- /archive — Soft Delete ---
 export async function cmdArchive(ctx: CmdCtx): Promise<boolean> {
-  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) return false;
+  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) {return false;}
 
   const parts = ctx.text.split(' ');
   const itemId = parts[1];
@@ -126,7 +126,7 @@ export async function cmdArchive(ctx: CmdCtx): Promise<boolean> {
 
 // --- /start — приветствие ---
 export async function cmdStart(ctx: CmdCtx): Promise<boolean> {
-  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) return false;
+  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) {return false;}
   await sendMessage(ctx.token, ctx.chatId,
     '🎤 <b>beLive Feed Bot</b>\n\n' +
     'Команды:\n' +
@@ -141,7 +141,7 @@ export async function cmdStart(ctx: CmdCtx): Promise<boolean> {
 
 // --- Обработчик шагов стейт-машины ---
 export async function handleDraftStep(ctx: CmdCtx, draft: DraftState): Promise<boolean> {
-  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) return false;
+  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) {return false;}
 
   switch (draft.step) {
     case 'awaiting_title': {
@@ -199,10 +199,10 @@ export function parseFilename(filename: string): { artist: string; title: string
 
 // ── Загрузка ZIP от админа ──
 export async function cmdUploadDoc(ctx: CmdCtx): Promise<boolean> {
-  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) return false;
+  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) {return false;}
 
   const doc = ctx.msg.document;
-  if (!doc) return false;
+  if (!doc) {return false;}
 
   const fileName = doc.file_name || '';
   if (!fileName.endsWith('.zip')) {
@@ -250,7 +250,7 @@ export async function cmdUploadDoc(ctx: CmdCtx): Promise<boolean> {
 
 // ── Выбор типа 2-STEM/FULL после загрузки ──
 export async function cmdUploadType(ctx: CmdCtx): Promise<boolean> {
-  if (!isAllowedUser({ from: { id: ctx.userId } }, ctx.env.ALLOWED_TG_IDS)) return false;
+  if (!isAllowedUser({ from: { id: ctx.userId } }, ctx.env.ALLOWED_TG_IDS)) {return false;}
 
   const trackType = ctx.text; // '2stem' | 'full' | 'cancel'
 
@@ -260,7 +260,7 @@ export async function cmdUploadType(ctx: CmdCtx): Promise<boolean> {
     return true;
   }
 
-  if (trackType !== '2stem' && trackType !== 'full') return false;
+  if (trackType !== '2stem' && trackType !== 'full') {return false;}
 
   // Читаем draft
   const draft: any = await ctx.env.EPHEMERAL_KV.get(`track_draft:${ctx.userId}`, { type: 'json' });
@@ -301,7 +301,7 @@ export async function cmdUploadType(ctx: CmdCtx): Promise<boolean> {
 
 // --- /catalog — список треков ---
 export async function cmdCatalog(ctx: CmdCtx): Promise<boolean> {
-  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) return false;
+  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) {return false;}
 
   const parts = ctx.text.split(' ');
   const page = Math.max(1, parseInt(parts[1]) || 1);
@@ -338,7 +338,7 @@ export async function cmdCatalog(ctx: CmdCtx): Promise<boolean> {
 
 // --- /track — поиск трека ---
 export async function cmdTrack(ctx: CmdCtx): Promise<boolean> {
-  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) return false;
+  if (!isAllowedUser(ctx.msg, ctx.env.ALLOWED_TG_IDS)) {return false;}
 
   const parts = ctx.text.split(' ');
   const query = parts.slice(1).join(' ').trim();

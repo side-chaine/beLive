@@ -97,18 +97,18 @@ async function issueEphemeral(env: Env, ip: string) {
 }
 
 async function validateEphemeral(env: Env, authHeader: string | null, ip: string) {
-  if (!authHeader?.startsWith('Bearer ')) return { ok: false, error: 'NO_BEARER' as const };
+  if (!authHeader?.startsWith('Bearer ')) {return { ok: false, error: 'NO_BEARER' as const };}
   const raw = authHeader.slice(7).trim();
   const [id, secret] = raw.split('.');
-  if (!id || !secret) return { ok: false, error: 'BAD_FORMAT' as const };
+  if (!id || !secret) {return { ok: false, error: 'BAD_FORMAT' as const };}
   const key = `e:${id}`;
   const data = await env.EPHEMERAL_KV.get(key, 'json') as EphemeralToken | null;
-  if (!data) return { ok: false, error: 'NOT_FOUND' as const };
-  if (Date.now() > data.exp) return { ok: false, error: 'EXPIRED' as const };
+  if (!data) {return { ok: false, error: 'NOT_FOUND' as const };}
+  if (Date.now() > data.exp) {return { ok: false, error: 'EXPIRED' as const };}
   const hash = await sha256(secret);
-  if (hash !== data.secretHash) return { ok: false, error: 'INVALID' as const };
-  if (data.ip && data.ip !== ip) return { ok: false, error: 'IP_MISMATCH' as const };
-  if (data.uses >= data.maxUses) return { ok: false, error: 'USES_EXCEEDED' as const };
+  if (hash !== data.secretHash) {return { ok: false, error: 'INVALID' as const };}
+  if (data.ip && data.ip !== ip) {return { ok: false, error: 'IP_MISMATCH' as const };}
+  if (data.uses >= data.maxUses) {return { ok: false, error: 'USES_EXCEEDED' as const };}
   // инкремент и сохранить (оставляем до истечения TTL)
   data.uses += 1;
   // @SEC(007-audit): KV PUT с TTL<60s → 400 → воркер 1101 живьём (поймано
@@ -125,7 +125,7 @@ async function checkRateLimit(kv: KVNamespace, ip: string, limit = 20): Promise<
   const key = `rate:${ip}:${minute}`;
   const current = await kv.get(key);
   const count = current ? parseInt(current) : 0;
-  if (count >= limit) return false;
+  if (count >= limit) {return false;}
   await kv.put(key, String(count + 1), { expirationTtl: 60 });
   return true;
 }
@@ -142,9 +142,9 @@ async function getOperatorPrompt(kv: KVNamespace): Promise<string | null> {
 }
 
 async function maybeInjectOperatorPrompt(env: Env, body: any) {
-  if (!body?.injectOperator) return body;
+  if (!body?.injectOperator) {return body;}
   const prompt = await getOperatorPrompt(env.OPERATOR_PROMPT_KV);
-  if (!prompt) return body;
+  if (!prompt) {return body;}
 
   const first = body.messages?.[0];
   // Если первый системный промпт уже содержит нашу подпись, не дублируем
@@ -285,21 +285,21 @@ export default {
           const reader = upstream.body!.getReader();
           while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {break;}
 
             buffer += dec.decode(value, { stream: true });
             const lines = buffer.split('\n');
             buffer = lines.pop() || '';
 
             for (const line of lines) {
-              if (!line.startsWith('data: ')) continue;
+              if (!line.startsWith('data: ')) {continue;}
               const payload = line.slice(6).trim();
-              if (payload === '[DONE]') continue;
+              if (payload === '[DONE]') {continue;}
 
               try {
                 const parsed = JSON.parse(payload);
                 // NEW: Если usage прилетел в потоке (иногда мета), сохраняем его, но done пока не шлём
-                if (parsed.usage) usage = parsed.usage;
+                if (parsed.usage) {usage = parsed.usage;}
 
                 const token = parsed.choices?.[0]?.delta?.content ?? '';
                 if (token) {

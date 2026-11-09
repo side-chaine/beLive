@@ -64,7 +64,7 @@ async function makeJwt(sub, overrides = {}) {
 
 function req(path, { method = 'GET', token } = {}) {
   const headers = {};
-  if (token) headers.Authorization = `Bearer ${token}`;
+  if (token) {headers.Authorization = `Bearer ${token}`;}
   return new Request(`https://mvsep.test${path}`, { method, headers });
 }
 

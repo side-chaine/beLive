@@ -49,16 +49,16 @@ const PREVIEW_RE = /^https:\/\/[a-z0-9-]+\.belive-dul\.pages\.dev$/;
  *               для телефона есть превью-домены.
  */
 export function isAllowedOrigin(origin: string, extra: string[] = []): boolean {
-  if (!origin) return false;
-  if (origin === PROD_ORIGIN) return true;
-  if (DEV_ORIGINS.has(origin)) return true;
-  if (PREVIEW_RE.test(origin)) return true;
+  if (!origin) {return false;}
+  if (origin === PROD_ORIGIN) {return true;}
+  if (DEV_ORIGINS.has(origin)) {return true;}
+  if (PREVIEW_RE.test(origin)) {return true;}
   return extra.includes(origin);
 }
 
 /** Список из `ALLOWED_ORIGINS` (через запятую). Пустая строка → пусто. */
 export function parseAllowedOrigins(raw: string | undefined): string[] {
-  if (!raw) return [];
+  if (!raw) {return [];}
   return raw.split(',').map((s) => s.trim()).filter(Boolean);
 }
 

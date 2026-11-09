@@ -16,7 +16,7 @@ function b64urlToBytes(input: string): Uint8Array {
   const pad = b64.length % 4 === 0 ? '' : '='.repeat(4 - (b64.length % 4));
   const bin = atob(b64 + pad);
   const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  for (let i = 0; i < bin.length; i++) {out[i] = bin.charCodeAt(i);}
   return out;
 }
 
@@ -31,10 +31,10 @@ function b64urlToJson(input: string): any {
 export async function verifyJwt(token: string, secret: string): Promise<JwtPayload | null> {
   try {
     const parts = token.split('.');
-    if (parts.length !== 3) return null;
+    if (parts.length !== 3) {return null;}
 
     const header = b64urlToJson(parts[0]);
-    if (header?.alg !== 'HS256') return null;
+    if (header?.alg !== 'HS256') {return null;}
 
     const encoder = new TextEncoder();
     const key = await crypto.subtle.importKey(
@@ -53,7 +53,7 @@ export async function verifyJwt(token: string, secret: string): Promise<JwtPaylo
       b64urlToBytes(parts[2]),
       encoder.encode(`${parts[0]}.${parts[1]}`),
     );
-    if (!valid) return null;
+    if (!valid) {return null;}
 
     const payload = b64urlToJson(parts[1]);
     // exp обязателен, а не «если есть».
@@ -63,9 +63,9 @@ export async function verifyJwt(token: string, secret: string): Promise<JwtPaylo
     // минтер (belive-auth) всегда ставит TTL 15 минут, поэтому токен без exp
     // не может быть нашим: это либо самоделка, либо сломанный минтер. В обоих
     // случаях правильный ответ — отказ, а не «живём дальше».
-    if (typeof payload?.exp !== 'number') return null;
-    if (payload.exp < Date.now() / 1000) return null;
-    if (!payload?.sub) return null;
+    if (typeof payload?.exp !== 'number') {return null;}
+    if (payload.exp < Date.now() / 1000) {return null;}
+    if (!payload?.sub) {return null;}
 
     return { sub: String(payload.sub), exp: payload.exp };
   } catch {

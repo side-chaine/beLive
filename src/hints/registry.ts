@@ -55,7 +55,7 @@ export function checkHintPools(): string[] {
         problems.push(`${id}/${locale}: empty line or poke`);
       }
     }
-    if (!HINT_ORDER.includes(spec.id)) problems.push(`${id}: id is not in HINT_ORDER`);
+    if (!HINT_ORDER.includes(spec.id)) {problems.push(`${id}: id is not in HINT_ORDER`);}
   }
   return problems;
 }

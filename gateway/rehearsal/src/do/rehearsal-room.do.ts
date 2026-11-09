@@ -19,7 +19,7 @@ export class RehearsalRoomDO {
     const roomId = url.searchParams.get('room');
     const role = url.searchParams.get('role') as 'teacher' | 'student' | null;
     const ticket = url.searchParams.get('ticket');
-    if (!roomId || !role || !ticket) return new Response('Missing params', { status: 400 });
+    if (!roomId || !role || !ticket) {return new Response('Missing params', { status: 400 });}
 
     const claims = await verifyTicket(ticket, this.env.REHEARSAL_TICKET_SECRET);
     if (!claims || claims.roomId !== roomId || claims.role !== role) {
@@ -30,7 +30,7 @@ export class RehearsalRoomDO {
       this.peers.get(role)!.ws.close(4001, 'replaced-by-new-connection');
       this.peers.delete(role);
     }
-    if (this.peers.size >= 2) return new Response('Room full', { status: 429 });
+    if (this.peers.size >= 2) {return new Response('Room full', { status: 429 });}
 
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
@@ -40,7 +40,7 @@ export class RehearsalRoomDO {
 
     server.addEventListener('message', (event) => {
       const raw = event.data;
-      if (typeof raw !== 'string' || raw.length > 16384) return;
+      if (typeof raw !== 'string' || raw.length > 16384) {return;}
       this.relay(role, raw);
     });
     const cleanup = () => {
@@ -54,9 +54,9 @@ export class RehearsalRoomDO {
   }
 
   private relay(fromRole: string, raw: string) {
-    for (const [role, peer] of this.peers) if (role !== fromRole) peer.ws.send(raw);
+    for (const [role, peer] of this.peers) {if (role !== fromRole) {peer.ws.send(raw);}}
   }
   private broadcast(excludeRole: string, raw: string) {
-    for (const [role, peer] of this.peers) if (role !== excludeRole) peer.ws.send(raw);
+    for (const [role, peer] of this.peers) {if (role !== excludeRole) {peer.ws.send(raw);}}
   }
 }

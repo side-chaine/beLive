@@ -66,8 +66,8 @@ function getTodayString(): string {
  * Not precise — based on elapsed time for processing, real for downloading.
  */
 export function getEstimatedProgress(job: MvsepJobState): number {
-  if (job.status === 'uploading') return 5;
-  if (job.status === 'queued') return 10;
+  if (job.status === 'uploading') {return 5;}
+  if (job.status === 'queued') {return 10;}
   if (job.status === 'processing') {
     const elapsed = Date.now() - job.submittedAt;
     const estimatedTotal = 3 * 60 * 1000; // 3 min average
@@ -76,11 +76,11 @@ export function getEstimatedProgress(job: MvsepJobState): number {
   }
   if (job.status === 'downloading') {
     const { downloaded, total } = job.downloadProgress;
-    if (total === 0) return 92;
+    if (total === 0) {return 92;}
     return 90 + Math.round((downloaded / total) * 8);
   }
-  if (job.status === 'importing') return 98;
-  if (job.status === 'done') return 100;
+  if (job.status === 'importing') {return 98;}
+  if (job.status === 'done') {return 100;}
   return 0;
 }
 

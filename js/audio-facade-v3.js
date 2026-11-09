@@ -16,7 +16,7 @@
       try {
         const t = window.__belive && window.__belive.transport;
         const tc = t && typeof t.currentTime === 'number' && Number.isFinite(t.currentTime) ? t.currentTime : null;
-        if (tc !== null) return tc;
+        if (tc !== null) {return tc;}
         const c = window.__belive && window.__belive.currentTime;
         return (typeof c === 'number' && Number.isFinite(c)) ? c : 0;
       } catch { return 0; }
@@ -65,7 +65,7 @@
     stop() {
       try {
         const t = window.__belive && window.__belive.transport;
-        if (t) t.stop();
+        if (t) {t.stop();}
       } catch {}
     },
     // BRG-2b (201, 31.08): transport.seek — async; раньше void → unhandled rejection
@@ -110,7 +110,7 @@
     setVMix(on) {
       try {
         const r = window.__belive && window.__belive.monitorRouter;
-        if (r && typeof r.setVMix === 'function') r.setVMix(on === true);
+        if (r && typeof r.setVMix === 'function') {r.setVMix(on === true);}
       } catch {}
     },
     // В1 п.3e: on-demand догрузка стемов (QuickActions:214 / MixerPanel:179 → track.loader:543).
@@ -130,13 +130,13 @@
             var id = ids[i];
             var entry = stemMap[id];
             var data = entry && (entry.data || entry.buffer);
-            if (!data) continue;
-            if (liveBefore.indexOf(id) !== -1) continue;   // дедуп: уже жив — двойной буфер не нужен
-            if (_additionalInFlight[id]) continue;         // дедуп: уже в полёте
+            if (!data) {continue;}
+            if (liveBefore.indexOf(id) !== -1) {continue;}   // дедуп: уже жив — двойной буфер не нужен
+            if (_additionalInFlight[id]) {continue;}         // дедуп: уже в полёте
             _additionalInFlight[id] = true;
             try {
               var buf = await ctx.decodeAudioData(data.slice(0));
-              if (gen !== _additionalGen) break;           // generation-гард: stale-ответ старой генерации
+              if (gen !== _additionalGen) {break;}           // generation-гард: stale-ответ старой генерации
               await p.loadStem(id, buf);
               loaded.push(id);
             } catch (e) {
@@ -182,7 +182,7 @@
     getStemAudioBuffer(stemId) {
       try {
         const p = window.__belive && window.__belive.pipeline;
-        if (!p) return null;
+        if (!p) {return null;}
         const stem = p.chainA && p.chainA.stems && p.chainA.stems.get && p.chainA.stems.get(stemId);
         return stem && typeof stem.getBuffer === 'function' ? stem.getBuffer() : null;
       } catch { return null; }
@@ -212,7 +212,7 @@
     get liveStems() {
       try {
         const p = window.__belive && window.__belive.pipeline;
-        if (!p) return [];
+        if (!p) {return [];}
         const ls = p.liveStems;
         return Array.isArray(ls) ? ls : [];
       } catch { return []; }
@@ -225,7 +225,7 @@
     setPlaybackRate(r) {
       try {
         const t = window.__belive && window.__belive.transport;
-        if (t && typeof r === 'number' && Number.isFinite(r) && r > 0) t.setPlaybackRate(r);
+        if (t && typeof r === 'number' && Number.isFinite(r) && r > 0) {t.setPlaybackRate(r);}
       } catch {}
     },
     getPlaybackRate() {
@@ -252,7 +252,7 @@
     detachProgramSource(node) {
       try {
         const r = window.__belive && window.__belive.monitorRouter;
-        if (r && typeof r.detachProgramSource === 'function') r.detachProgramSource(node);
+        if (r && typeof r.detachProgramSource === 'function') {r.detachProgramSource(node);}
       } catch {}
     },
     // P1 (program-capture): вернуть program-capture bus из MonitorRouter (FR-008).
@@ -268,7 +268,7 @@
     setLoop(s, e) {
       try {
         const t = window.__belive && window.__belive.transport;
-        if (!t) return false;
+        if (!t) {return false;}
         t.setLoop(s, e);
         return true;
       } catch { return false; }
@@ -276,7 +276,7 @@
     clearLoop() {
       try {
         const t = window.__belive && window.__belive.transport;
-        if (!t) return false;
+        if (!t) {return false;}
         t.clearLoop();
         return true;
       } catch { return false; }
@@ -290,5 +290,5 @@
     },
   };
   // v1-stub-эпоха закрыта (де-фриз Волна A, 01.09)
-  if (!window.audioEngine) window.audioEngine = facade;
+  if (!window.audioEngine) {window.audioEngine = facade;}
 })();

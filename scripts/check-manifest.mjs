@@ -46,24 +46,24 @@ const configFiles = ['vite.config.ts', 'vitest.config.ts', 'eslint.config.mjs', 
 const files = [];
 
 function walk(dir) {
-  if (!fs.existsSync(dir)) return;
+  if (!fs.existsSync(dir)) {return;}
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (['node_modules', '.git', 'dist', 'dev-dist', 'coverage'].includes(e.name)) continue;
+    if (['node_modules', '.git', 'dist', 'dev-dist', 'coverage'].includes(e.name)) {continue;}
     const p = path.join(dir, e.name);
-    if (e.isDirectory()) walk(p);
-    else if (/\.(ts|tsx|js|jsx|mjs|cjs|json|html|yml|yaml)$/.test(e.name)) files.push(p);
+    if (e.isDirectory()) {walk(p);}
+    else if (/\.(ts|tsx|js|jsx|mjs|cjs|json|html|yml|yaml)$/.test(e.name)) {files.push(p);}
   }
 }
 roots.forEach(walk);
 // package.json НЕ включаем: он самореферентен (содержит все имена зависимостей).
-configFiles.forEach((f) => { if (fs.existsSync(path.join(ROOT, f))) files.push(path.join(ROOT, f)); });
+configFiles.forEach((f) => { if (fs.existsSync(path.join(ROOT, f))) {files.push(path.join(ROOT, f));} });
 
 const corpus = files
   .map((f) => { try { return fs.readFileSync(f, 'utf8'); } catch { return ''; } })
   .join('\n');
 
 function isReferenced(dep) {
-  if (ALLOWLIST.has(dep)) return true;
+  if (ALLOWLIST.has(dep)) {return true;}
   const esc = dep.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const re = new RegExp(
     // from 'x' | require('x') | import('x') | import 'x' (side-effect) | "x" как ключ/строка
@@ -87,6 +87,6 @@ if (unreferenced.length === 0) {
 }
 
 console.log('\n❌ Прямые зависимости, нигде не импортируемые (кандидаты на удаление):');
-for (const d of unreferenced) console.log(`   ${d}`);
+for (const d of unreferenced) {console.log(`   ${d}`);}
 console.log('\nЕсли пакет нужен — добавь его в ALLOWLIST в scripts/check-manifest.mjs.');
 process.exit(1);

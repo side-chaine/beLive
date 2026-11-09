@@ -25,12 +25,12 @@ const DYN_RE = /import\(\s*['"]([^'"]+)['"]\s*\)/g
 const REQ_RE = /require\(\s*['"]([^'"]+)['"]\s*\)/g
 
 const resolve = (from, spec) => {
-  if (!spec.startsWith('.')) return null // внешний пакет — не наш город
+  if (!spec.startsWith('.')) {return null} // внешний пакет — не наш город
   const base = from.split('/').slice(0, -1)
   const parts = (base.join('/') + '/' + spec).split('/')
   const out = []
   for (const p of parts) {
-    if (p === '' || p === '.') continue
+    if (p === '' || p === '.') {continue}
     if (p === '..') { out.pop(); continue }
     out.push(p)
   }
@@ -52,12 +52,12 @@ for (const f of files) {
     let m
     while ((m = re.exec(src))) {
       const r = resolve(f, m[1])
-      if (r && r !== f) deps.add(r)
+      if (r && r !== f) {deps.add(r)}
     }
   }
   for (const d of deps) {
     edges.get(f).add(d)
-    if (!rev.has(d)) rev.set(d, new Set())
+    if (!rev.has(d)) {rev.set(d, new Set())}
     rev.get(d).add(f)
   }
 }
@@ -86,12 +86,12 @@ const dfs = (n) => {
       const i = stack.indexOf(d)
       const c = stack.slice(i).concat(d)
       const key = [...c].sort().join('|')
-      if (!cycles.some((x) => x.key === key)) cycles.push({ key, path: c })
-    } else if (!seen.has(d)) dfs(d)
+      if (!cycles.some((x) => x.key === key)) {cycles.push({ key, path: c })}
+    } else if (!seen.has(d)) {dfs(d)}
   }
   stack.pop(); onStack.delete(n)
 }
-for (const f of files) if (!seen.has(f)) dfs(f)
+for (const f of files) {if (!seen.has(f)) {dfs(f)}}
 
 const byModule = {}
 for (const f of files) {
@@ -110,10 +110,10 @@ if (process.argv.includes('--json')) {
   console.log('\n--- ORPHANS (никто не импортирует, не entry point) ---')
   console.log(orphans.sort().join('\n') || '(none)')
   console.log('\n--- HUBS (на них держится город) ---')
-  for (const h of hubs.slice(0, 20)) console.log(String(h.n).padStart(3), h.f)
+  for (const h of hubs.slice(0, 20)) {console.log(String(h.n).padStart(3), h.f)}
   console.log('\n--- CYCLES ---')
-  for (const c of cycles.slice(0, 15)) console.log(c.path.join(' -> '))
-  if (!cycles.length) console.log('(none)')
+  for (const c of cycles.slice(0, 15)) {console.log(c.path.join(' -> '))}
+  if (!cycles.length) {console.log('(none)')}
   console.log('\n--- MODULES (районы) ---')
   console.log(Object.entries(byModule).sort((a, b) => b[1] - a[1])
     .map(([k, v]) => `${k}:${v}`).join('  '))

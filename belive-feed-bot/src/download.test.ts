@@ -46,7 +46,7 @@ async function makeJwt(sub: string, expOffsetSec = 3600) {
 
 function downloadReq(fileId = FILE_ID, token: string | null = TOKEN) {
   const headers: Record<string, string> = { Origin: 'https://app.mybelive.com' };
-  if (token) headers.Authorization = `Bearer ${token}`;
+  if (token) {headers.Authorization = `Bearer ${token}`;}
   return new Request(`https://feed-bot.test/download/${fileId}`, {
     method: 'GET',
     headers,

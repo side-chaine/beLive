@@ -17,7 +17,7 @@ export function TelegramLoginButton({ botName, authUrl }: Props) {
 
   useEffect(() => {
     const host = ref.current;
-    if (!host || !botName) return;
+    if (!host || !botName) {return;}
     host.innerHTML = '';
 
     const script = document.createElement('script');

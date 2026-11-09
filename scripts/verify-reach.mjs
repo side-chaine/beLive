@@ -25,14 +25,14 @@ try {
     const raw = m[1];
     if (raw.startsWith('/src/') || raw.startsWith('src/')) {
       const abs = join(root, raw.replace(/^\//, ''));
-      if (existsSync(abs)) roots.push(abs);
+      if (existsSync(abs)) {roots.push(abs);}
     }
   }
 } catch {}
 
 // Always include src/main.tsx as root
 const mainTsx = join(srcDir, 'main.tsx');
-if (existsSync(mainTsx) && !roots.includes(mainTsx)) roots.push(mainTsx);
+if (existsSync(mainTsx) && !roots.includes(mainTsx)) {roots.push(mainTsx);}
 
 // ── 2. Resolve imports (relative + aliased) ──
 function resolveImport(fromFile, spec) {
@@ -40,12 +40,12 @@ function resolveImport(fromFile, spec) {
     const base = spec.startsWith('/') ? root : dirname(fromFile);
     const abs = resolve(base, spec);
     // Try exact, then with extensions, then /index
-    if (existsSync(abs) && RE_EXT.test(abs)) return abs;
+    if (existsSync(abs) && RE_EXT.test(abs)) {return abs;}
     for (const ext of ['.ts', '.tsx', '.js', '.mjs']) {
-      if (existsSync(abs + ext)) return abs + ext;
+      if (existsSync(abs + ext)) {return abs + ext;}
     }
     for (const ext of ['.ts', '.tsx', '.js', '.mjs']) {
-      if (existsSync(join(abs, 'index' + ext))) return join(abs, 'index' + ext);
+      if (existsSync(join(abs, 'index' + ext))) {return join(abs, 'index' + ext);}
     }
   }
   return null;
@@ -64,7 +64,7 @@ const RE_URL_WORKER = /new\s+URL\(\s*['"]([^'"]+)['"]\s*,\s*import\.meta\.url\s*
 
 const visited = new Set();
 const queue = [...roots];
-for (const r of queue) visited.add(r);
+for (const r of queue) {visited.add(r);}
 
 while (queue.length > 0) {
   const file = queue.shift();
@@ -73,28 +73,28 @@ while (queue.length > 0) {
 
   const lines = content.split('\n');
   for (const line of lines) {
-    if (RE_COMMENT_LINE.test(line)) continue; // skip full-line comments
+    if (RE_COMMENT_LINE.test(line)) {continue;} // skip full-line comments
 
     let spec = null;
     // (a) import X from 'spec'
     let m = RE_IMPORT_FROM.exec(line);
     if (m) { spec = m[1]; }
     // (b) import 'spec'  (side-effect)
-    if (!spec) { m = RE_IMPORT_SIDE.exec(line); if (m) spec = m[1]; }
+    if (!spec) { m = RE_IMPORT_SIDE.exec(line); if (m) {spec = m[1];} }
     // (c) export ... from 'spec'
-    if (!spec) { m = RE_EXPORT_FROM.exec(line); if (m) spec = m[1]; }
+    if (!spec) { m = RE_EXPORT_FROM.exec(line); if (m) {spec = m[1];} }
     // (d) dynamic import('spec') — strip trailing comment first
     if (!spec) {
       const stripped = line.replace(RE_DYNAMIC_SKIP, '');
       m = RE_DYNAMIC.exec(stripped);
-      if (m) spec = m[1];
+      if (m) {spec = m[1];}
     }
     // (c2) многострочная закрывашка: `} from 'spec'` (CEO_1: 57 шт в 42 файлах)
-    if (!spec) { m = RE_FROM_ANY.exec(line); if (m) spec = m[1]; }
+    if (!spec) { m = RE_FROM_ANY.exec(line); if (m) {spec = m[1];} }
     // (e) ребро воркера/ассета: new URL('spec', import.meta.url)
-    if (!spec) { m = RE_URL_WORKER.exec(line); if (m) spec = m[1]; }
+    if (!spec) { m = RE_URL_WORKER.exec(line); if (m) {spec = m[1];} }
 
-    if (!spec) continue;
+    if (!spec) {continue;}
     const resolved = resolveImport(file, spec);
     if (resolved && !visited.has(resolved)) {
       visited.add(resolved);
@@ -106,10 +106,10 @@ while (queue.length > 0) {
 // ── 4. Collect all src/ files, report unreachable ──
 function walkSrc(dir, out = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name === 'node_modules') continue;
+    if (entry.name === 'node_modules') {continue;}
     const abs = join(dir, entry.name);
-    if (entry.isDirectory()) walkSrc(abs, out);
-    else if (RE_EXT.test(entry.name) && !/\.d\.ts$/.test(entry.name)) out.push(abs);
+    if (entry.isDirectory()) {walkSrc(abs, out);}
+    else if (RE_EXT.test(entry.name) && !/\.d\.ts$/.test(entry.name)) {out.push(abs);}
   }
   return out;
 }
@@ -150,11 +150,11 @@ const stale = members.filter((m) => !reducedPosix.has(m));
 const zoneArg = process.argv.find((a) => a.startsWith('--zone='));   // Block 6: зонный срез
 if (!zoneArg) {
   const classCount = new Map();
-  for (const rec of holdList.members) classCount.set(rec.class, (classCount.get(rec.class) ?? 0) + 1);
+  for (const rec of holdList.members) {classCount.set(rec.class, (classCount.get(rec.class) ?? 0) + 1);}
   const agg = [...classCount.entries()].map(([c, n]) => `${n} ${c}`).join(' · ');
   console.log(`verify-reach: ${violations.length} violations · hold: ${hold.length} (${agg}) · excluded (H-1 tests): ${excludedCount} · stale: ${stale.length}`);
-  for (const f of violations.sort()) console.log(`  ${toPosix(f)}`);
-  for (const f of hold.sort()) console.log(`  ${toPosix(f)}`);
+  for (const f of violations.sort()) {console.log(`  ${toPosix(f)}`);}
+  for (const f of hold.sort()) {console.log(`  ${toPosix(f)}`);}
 }
 
 // ── Block 6 · --zone=<id> (ПУЛЬС-каркас, GO CEO_1 10:44 п.③ 06.09) ──
@@ -170,16 +170,16 @@ function parseZonesYaml(file) {
   for (const raw of text.split('\n')) {
     const line = raw.trim();
     if (!inZones) {
-      if (line === 'zones:') inZones = true;
+      if (line === 'zones:') {inZones = true;}
       continue;
     }
     const idMatch = line.match(/^- id:\s*(\S+)/);
     if (idMatch) {
-      if (cur) zones.push(cur);
+      if (cur) {zones.push(cur);}
       cur = { id: idMatch[1], name: '', paths: [] };
       continue;
     }
-    if (!cur) continue;
+    if (!cur) {continue;}
     const nameMatch = line.match(/^name:\s*(.*)$/);
     if (nameMatch) { cur.name = nameMatch[1]; continue; }
     const pathsMatch = line.match(/^paths:\s*\[(.*)\]\s*$/);
@@ -187,9 +187,9 @@ function parseZonesYaml(file) {
       cur.paths = pathsMatch[1].split(',').map((s) => s.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
       continue;
     }
-    if (/^[a-z-]+:$/.test(line)) break; // вышли из zones-секции (напр. sandbox:)
+    if (/^[a-z-]+:$/.test(line)) {break;} // вышли из zones-секции (напр. sandbox:)
   }
-  if (cur) zones.push(cur);
+  if (cur) {zones.push(cur);}
   return zones;
 }
 
@@ -212,8 +212,8 @@ if (zoneArg) {
     console.log(`zone ${zone.id} «${zone.name}»: violations 0 · hold 0 — зона чиста (из общих ${violations.length} viol / ${hold.length} hold)`);
   } else {
     console.log(`zone ${zone.id} «${zone.name}»: violations ${zViolations.length} · hold ${zHold.length} (из общих ${violations.length} viol / ${hold.length} hold)`);
-    for (const f of zViolations.sort()) console.log(`  ${toPosix(f)}`);
-    for (const f of zHold.sort()) console.log(`  ${toPosix(f)}`);
+    for (const f of zViolations.sort()) {console.log(`  ${toPosix(f)}`);}
+    for (const f of zHold.sort()) {console.log(`  ${toPosix(f)}`);}
   }
   console.log('PULSE · 6 gates = repo heartbeat');
   process.exit(zViolations.length > 0 ? 1 : 0); // тот же принцип, что глобально

@@ -24,7 +24,7 @@ export const SPLASH_POSTER_URL = `${import.meta.env.BASE_URL}splash-poster.jpg`;
  */
 export function dismissBootSplash(): void {
   const el = document.getElementById(BOOT_SPLASH_ID);
-  if (!el || el.dataset.hiding) return;
+  if (!el || el.dataset.hiding) {return;}
   el.dataset.hiding = '1';
   el.classList.add(BOOT_SPLASH_HIDE_CLASS);
   window.setTimeout(() => el.remove(), 600);

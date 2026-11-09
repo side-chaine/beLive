@@ -42,12 +42,12 @@ for (const file of files) {
     const attrs = m[1];
 
     const srcMatch = /\bsrc\s*=\s*["']([^"']+)["']/i.exec(attrs);
-    if (!srcMatch) continue; // инлайн-скрипт — не наша проверка (см. ADR-0008 про CSP)
+    if (!srcMatch) {continue;} // инлайн-скрипт — не наша проверка (см. ADR-0008 про CSP)
 
     const src = srcMatch[1];
-    if (!/^https?:\/\//i.test(src)) continue; // локальный файл
+    if (!/^https?:\/\//i.test(src)) {continue;} // локальный файл
 
-    if (ALLOWLIST.some((h) => src.includes(h))) continue;
+    if (ALLOWLIST.some((h) => src.includes(h))) {continue;}
 
     checked++;
 
@@ -57,9 +57,9 @@ for (const file of files) {
     const hasPin = /@\d+\.\d+\.\d+/.test(src);
 
     const problems = [];
-    if (!hasIntegrity) problems.push('нет integrity');
-    if (!hasPin) problems.push('нет закреплённой версии');
-    if (!hasCrossorigin) problems.push('нет crossorigin (SRI без него не работает)');
+    if (!hasIntegrity) {problems.push('нет integrity');}
+    if (!hasPin) {problems.push('нет закреплённой версии');}
+    if (!hasCrossorigin) {problems.push('нет crossorigin (SRI без него не работает)');}
 
     if (problems.length) {
       violations++;

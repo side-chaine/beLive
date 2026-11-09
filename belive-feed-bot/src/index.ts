@@ -94,19 +94,19 @@ export default {
         const titleCore = (t: any) => {
           let s = (t.title || '').toLowerCase().trim();
           const art = (t.artist || '').toLowerCase().trim();
-          const strip = (a: string) => { if (a && s.startsWith(a)) s = s.slice(a.length).replace(/^[\s\-–—:]+/, ''); };
-          if (art) strip(art);
-          else for (const ka of knownArtists) { const before = s; strip(ka); if (s !== before) break; }
+          const strip = (a: string) => { if (a && s.startsWith(a)) {s = s.slice(a.length).replace(/^[\s\-–—:]+/, '');} };
+          if (art) {strip(art);}
+          else {for (const ka of knownArtists) { const before = s; strip(ka); if (s !== before) {break;} }}
           return s.replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
         };
         const bySlug = new Map<string, any>();
         const byTitle = new Map<string, any>();
         for (const t of hardTracks) { const ks = normSlug(t.slug), kt = titleCore(t); bySlug.set(ks, t); byTitle.set(kt, t); }
         for (const t of kvTracks) {
-          if (!t || typeof t !== 'object') continue;
+          if (!t || typeof t !== 'object') {continue;}
           const ks = normSlug(t.slug), kt = titleCore(t);
           const hit = bySlug.get(ks) || byTitle.get(kt);
-          if (hit) { hit.fileIds = { ...(hit.fileIds || {}), ...(t.fileIds || {}) }; if (t.type) hit.type = t.type; if (t.fileName) hit.fileName = t.fileName; }
+          if (hit) { hit.fileIds = { ...(hit.fileIds || {}), ...(t.fileIds || {}) }; if (t.type) {hit.type = t.type;} if (t.fileName) {hit.fileName = t.fileName;} }
           else { bySlug.set(ks, t); byTitle.set(kt, t); }
         }
         const catalog = Array.from(bySlug.values()).sort((a: any, b: any) => (a.title || '').localeCompare(b.title || ''));
@@ -117,7 +117,7 @@ export default {
 
       if (url.pathname.startsWith("/download/")) {
         const fileId = url.pathname.replace("/download/", "");
-        if (!fileId) return new Response("Missing file_id", { status: 400, headers: corsHdr });
+        if (!fileId) {return new Response("Missing file_id", { status: 400, headers: corsHdr });}
         const tgFile = await getFile(env.BOT_TOKEN, fileId);
         if (!tgFile.file_path) {
           // Раньше здесь был голый 404 "File not found" на ЛЮБУЮ ошибку
@@ -144,7 +144,7 @@ export default {
           });
         }
         const fileRes = await fetch(fileUrl(env.BOT_TOKEN, tgFile.file_path));
-        if (!fileRes.ok) return new Response("Download failed", { status: 502, headers: corsHdr });
+        if (!fileRes.ok) {return new Response("Download failed", { status: 502, headers: corsHdr });}
         return new Response(fileRes.body, {
           headers: {
             "Content-Disposition": "attachment",
@@ -428,7 +428,7 @@ export default {
       }
 
       const msg = update.message;
-      if (!msg) return new Response('OK');
+      if (!msg) {return new Response('OK');}
 
       const chatId = msg.chat.id;
       const userId = getUserId(msg);

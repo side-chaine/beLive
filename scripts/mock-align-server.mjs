@@ -17,7 +17,7 @@ function sendJson(res, status, data, origin = '*') {
 function buildMockWords(line, lineStart, lineEnd) {
   const text = typeof line?.text === 'string' ? line.text : '';
   const parts = text.trim() ? text.trim().split(/\s+/) : [];
-  if (!parts.length) return [];
+  if (!parts.length) {return [];}
 
   const total = lineEnd - lineStart;
   const step = total / parts.length;
@@ -53,7 +53,7 @@ const REAL_ARTIFACTS = [
 function tryLoadRealArtifact(body) {
   for (const rel of REAL_ARTIFACTS) {
     const artifactPath = path.resolve(process.cwd(), rel);
-    if (!fs.existsSync(artifactPath)) continue;
+    if (!fs.existsSync(artifactPath)) {continue;}
     try {
       const raw = fs.readFileSync(artifactPath, 'utf-8');
       const artifact = JSON.parse(raw);
