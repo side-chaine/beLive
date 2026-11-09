@@ -1,0 +1,391 @@
+/**
+ * Настройки комнаты: каркас + две панели (ИИ, Графика).
+ * Стили живут отдельно от UserRoom.css, чтобы не раздувать bento-сетку.
+ * Токены (--bl-room-*) объявлены на .bl-userroom-screen — наследуются.
+ */
+
+.bl-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  color: #fff;
+}
+
+.bl-settings__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--bl-room-muted);
+}
+
+.bl-settings__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* Подсказки: плашка по контенту, не растягиваем (hints.css задаёт fit-content).
+   Фон и рамку даём здесь: раньше их приносил .bl-userroom__card, которого
+   у плашки в комнате больше нет. */
+.bl-settings__hints {
+  align-self: flex-start;
+  background: var(--bl-room-surface-2);
+  border: 1px solid var(--bl-room-border);
+}
+
+/* ── Панель ─────────────────────────────── */
+.bl-settings__panel {
+  background: var(--bl-room-surface-2);
+  border: 1px solid var(--bl-room-border);
+  border-radius: var(--bl-room-radius);
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.bl-settings__panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.bl-settings__panel-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.bl-settings__badge {
+  font-size: 10px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--bl-room-border);
+  color: var(--bl-room-muted);
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+
+.bl-settings__badge.is-ok {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.35);
+}
+
+/* ── Поля ───────────────────────────────── */
+.bl-settings__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.bl-settings__label {
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--bl-room-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bl-settings__input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--bl-room-border);
+  border-radius: var(--bl-room-radius-btn);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 10px;
+  min-width: 0;
+}
+
+.bl-settings__input:focus-visible,
+.bl-settings__cta:focus-visible,
+.bl-settings__disclosure:focus-visible,
+.bl-graphics__tier:focus-visible,
+.bl-settings__switch:focus-visible,
+.bl-settings__icon-btn:focus-visible {
+  outline: 2px solid var(--bl-room-accent);
+  outline-offset: 2px;
+}
+
+.bl-settings__input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bl-settings__keyrow {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.bl-settings__keyrow .bl-settings__input {
+  flex: 1;
+  min-width: 0;
+}
+
+.bl-settings__icon-btn {
+  flex: 0 0 auto;
+  width: 36px;
+  border: 1px solid var(--bl-room-border);
+  border-radius: var(--bl-room-radius-btn);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.bl-settings__icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Раскрывашка «свой AI» ──────────────── */
+.bl-settings__disclosure {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--bl-room-muted);
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.bl-settings__disclosure:hover {
+  color: #fff;
+}
+
+.bl-settings__caret {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.bl-settings__caret.is-open {
+  transform: rotate(90deg);
+}
+
+.bl-settings__advanced {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 2px;
+}
+
+/* ── Ряд «label + switch» ───────────────── */
+.bl-settings__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.bl-settings__row-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  min-width: 0;
+}
+
+.bl-settings__row-hint {
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--bl-room-muted);
+}
+
+/* ── Switch ─────────────────────────────── */
+.bl-settings__switch {
+  flex: 0 0 auto;
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  border: 0;
+  padding: 0;
+  background: #444;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.bl-settings__switch.is-on {
+  background: var(--bl-room-accent);
+}
+
+.bl-settings__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: left 0.2s ease;
+}
+
+.bl-settings__switch.is-on .bl-settings__knob {
+  left: 18px;
+}
+
+/* ── Тиры графики ───────────────────────── */
+.bl-graphics__tiers {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.bl-graphics__tier {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: var(--bl-room-radius-btn);
+  border: 1px solid var(--bl-room-border);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.7);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.bl-graphics__tier:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.bl-graphics__tier.is-active {
+  color: #fff;
+  border-color: var(--bl-room-accent);
+  background: color-mix(in srgb, var(--bl-room-accent) 18%, transparent);
+}
+
+.bl-graphics__tier.is-manual {
+  font-weight: 600;
+}
+
+.bl-graphics__check {
+  font-size: 10px;
+  color: var(--bl-room-accent);
+}
+
+/* ── Кнопки/статусы ─────────────────────── */
+.bl-settings__cta {
+  align-self: flex-start;
+  padding: 8px 14px;
+  border-radius: var(--bl-room-radius-btn);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.bl-settings__cta:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.bl-settings__cta:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.bl-settings__cta.is-ghost {
+  background: none;
+}
+
+.bl-settings__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bl-settings__status {
+  font-size: 11px;
+}
+
+.bl-settings__status.is-ok {
+  color: #4ade80;
+}
+
+.bl-settings__status.is-fail {
+  color: #f87171;
+}
+
+.bl-settings__note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--bl-room-muted);
+}
+
+.bl-settings__link {
+  color: var(--bl-room-accent);
+  text-decoration: none;
+}
+
+.bl-settings__link:hover {
+  text-decoration: underline;
+}
+
+/* ── Ползунок ───────────────────────────── */
+.bl-settings__range {
+  width: 100%;
+  accent-color: var(--bl-room-accent);
+}
+
+.bl-settings__range-ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--bl-room-muted);
+}
+
+/* ── Мобильный / узкий ──────────────────── */
+@media (max-width: 768px) {
+  .bl-settings__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bl-graphics__tiers {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bl-settings__switch,
+  .bl-settings__knob,
+  .bl-settings__caret,
+  .bl-graphics__tier {
+    transition: none;
+  }
+}
