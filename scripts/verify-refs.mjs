@@ -20,10 +20,10 @@ let hits = 0;
 
 function walkJson(dir) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name === 'node_modules' || entry.name === '.git') continue;
+    if (entry.name === 'node_modules' || entry.name === '.git') {continue;}
     const abs = join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (entry.name === 'scripts' || entry.name === '.github') continue;
+      if (entry.name === 'scripts' || entry.name === '.github') {continue;}
       walkJson(abs);
     } else if (entry.name.endsWith('.json')) {
       check(abs);
@@ -44,7 +44,7 @@ function check(file) {
 
 // Search scripts/ (all files)
 for (const entry of readdirSync(join(root, 'scripts'), { withFileTypes: true })) {
-  if (entry.isFile()) check(join(root, 'scripts', entry.name));
+  if (entry.isFile()) {check(join(root, 'scripts', entry.name));}
 }
 
 // Search .github/ if exists
@@ -54,8 +54,8 @@ try {
     function walkGH(dir) {
       for (const e of readdirSync(dir, { withFileTypes: true })) {
         const abs = join(dir, e.name);
-        if (e.isDirectory()) walkGH(abs);
-        else check(abs);
+        if (e.isDirectory()) {walkGH(abs);}
+        else {check(abs);}
       }
     }
     walkGH(gh);

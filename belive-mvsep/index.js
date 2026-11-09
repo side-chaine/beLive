@@ -19,9 +19,9 @@ function corsHeaders(origin, env) {
 async function verifyJWT(token, secret) {
   try {
     const parts = token.split('.');
-    if (parts.length !== 3) return null;
+    if (parts.length !== 3) {return null;}
     const header = JSON.parse(atob(parts[0]));
-    if (header.alg !== 'HS256') return null;
+    if (header.alg !== 'HS256') {return null;}
     const encoder = new TextEncoder();
     const key = await crypto.subtle.importKey(
       'raw', encoder.encode(secret),
@@ -30,16 +30,16 @@ async function verifyJWT(token, secret) {
     const data = encoder.encode(parts[0] + '.' + parts[1]);
     const sig = Uint8Array.from(atob(parts[2].replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0));
     const valid = await crypto.subtle.verify('HMAC', key, sig, data);
-    if (!valid) return null;
+    if (!valid) {return null;}
     const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
     // exp обязателен, как и в belive-feed-bot/src/jwt.ts.
     //
     // Было `if (payload.exp && ...)` — токен без exp считался вечным.
     // Плюс не проверялся sub: без него лимиты считались бы на "undefined",
     // то есть все анонимные запросы делили бы один дневной счётчик.
-    if (typeof payload.exp !== 'number') return null;
-    if (payload.exp < Date.now() / 1000) return null;
-    if (!payload.sub) return null;
+    if (typeof payload.exp !== 'number') {return null;}
+    if (payload.exp < Date.now() / 1000) {return null;}
+    if (!payload.sub) {return null;}
     return { sub: String(payload.sub) };
   } catch { return null; }
 }
@@ -69,7 +69,7 @@ const CONCURRENT_LOCK_KEY = 'mvsep:shared:active';
 
 async function acquireConcurrentLock(kv, userId) {
   const active = await kv.get(CONCURRENT_LOCK_KEY);
-  if (active) return false; // already locked
+  if (active) {return false;} // already locked
   await kv.put(CONCURRENT_LOCK_KEY, JSON.stringify({ userId, startedAt: Date.now() }), { expirationTtl: 600 });
   return true;
 }
@@ -88,10 +88,10 @@ async function releaseConcurrentLock(kv) {
  */
 async function releaseConcurrentLockIfOwner(kv, userId) {
   const raw = await kv.get(CONCURRENT_LOCK_KEY);
-  if (!raw) return false;
+  if (!raw) {return false;}
   try {
     const lock = JSON.parse(raw);
-    if (lock.userId !== userId) return false;
+    if (lock.userId !== userId) {return false;}
   } catch {
     // Битый лок восстановить нельзя, но и снимать его «на всякий» нельзя:
     // это мог быть чужой лок. Оставляем до истечения expirationTtl.
@@ -134,7 +134,7 @@ async function handleSubmit(request, env, userId, cors) {
   try {
     mvsepResp = await fetch(`${MVSEP_API_URL}/create`, { method: 'POST', body: formData });
   } catch (err) {
-    if (!userApiKey) await releaseConcurrentLock(env.MVSEP_RATES);
+    if (!userApiKey) {await releaseConcurrentLock(env.MVSEP_RATES);}
     return new Response(JSON.stringify({ status: 'error', errors: ['MVSEP unreachable'] }), {
       status: 502, headers: { ...cors, 'Content-Type': 'application/json' }
     });
@@ -151,7 +151,7 @@ async function handleSubmit(request, env, userId, cors) {
     }
   } else {
     // MVSEP error — release lock
-    if (!userApiKey) await releaseConcurrentLock(env.MVSEP_RATES);
+    if (!userApiKey) {await releaseConcurrentLock(env.MVSEP_RATES);}
   }
 
   return new Response(JSON.stringify(data), {

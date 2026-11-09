@@ -20,8 +20,8 @@ function walk(dir) {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry)
     const st = statSync(full)
-    if (st.isDirectory()) out = out.concat(walk(full))
-    else if (extname(full) === '.ts' || extname(full) === '.tsx') out.push(full)
+    if (st.isDirectory()) {out = out.concat(walk(full))}
+    else if (extname(full) === '.ts' || extname(full) === '.tsx') {out.push(full)}
   }
   return out
 }

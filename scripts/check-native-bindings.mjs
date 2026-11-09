@@ -48,7 +48,7 @@ const foreign = [];   // установлен, но для другой ОС
 
 for (const [name, meta] of Object.entries(packages)) {
   const hasPlatformConstraint = meta.os || meta.cpu;
-  if (!hasPlatformConstraint) continue;
+  if (!hasPlatformConstraint) {continue;}
 
   // Ключи в lockfile уже вида "node_modules/@scope/pkg" — joinим напрямую от корня.
   const installed = fs.existsSync(path.join(ROOT, name));
@@ -72,14 +72,14 @@ let bad = 0;
 if (missing.length) {
   bad = 1;
   console.log('\n❌ НУЖЕН для этой платформы, но не установлен (сборка/тесты упадут):');
-  for (const m of missing) console.log(`   ${m}`);
+  for (const m of missing) {console.log(`   ${m}`);}
   console.log('\n   Лечение: rm -rf node_modules && npm ci');
 }
 
 if (foreign.length) {
   bad = 1;
   console.log('\n❌ Установлены бинари ЧУЖОЙ ОС — node_modules привезён, а не установлен:');
-  for (const f of foreign) console.log(`   ${f}`);
+  for (const f of foreign) {console.log(`   ${f}`);}
   console.log('\n   Лечение: rm -rf node_modules && npm ci');
   console.log('   Причина: копирование node_modules между машинами или синк через облако.');
 }

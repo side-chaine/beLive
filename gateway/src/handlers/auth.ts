@@ -22,7 +22,7 @@ export async function getAuthCtx(
   env: Env
 ): Promise<AuthCtx | null> {
   const authHeader = request.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) return null;
+  if (!authHeader?.startsWith('Bearer ')) {return null;}
 
   const token = authHeader.slice(7).trim();
   return verifyJWT(token, env.JWT_SECRET);
@@ -32,7 +32,7 @@ export async function getAuthCtx(
 export async function verifyJWT(token: string, secret: string): Promise<AuthCtx | null> {
   try {
     const parts = token.split('.');
-    if (parts.length !== 3) return null;
+    if (parts.length !== 3) {return null;}
 
     const [headerB64, payloadB64, signatureB64] = parts;
 
@@ -49,7 +49,7 @@ export async function verifyJWT(token: string, secret: string): Promise<AuthCtx 
     const sigBuf = base64UrlDecode(signatureB64);
 
     const valid = await crypto.subtle.verify('HMAC', key, sigBuf, data);
-    if (!valid) return null;
+    if (!valid) {return null;}
 
     // 2. Parse payload
     const payloadStr = new TextDecoder().decode(base64UrlDecode(payloadB64));
@@ -62,15 +62,15 @@ export async function verifyJWT(token: string, secret: string): Promise<AuthCtx 
     // закрыт в belive-feed-bot/src/jwt.ts и belive-mvsep/index.js.
     // Минтер один — belive-auth — и он всегда ставит TTL, поэтому токен
     // без exp не наш.
-    if (typeof payload.exp !== 'number') return null;
-    if (Date.now() / 1000 > payload.exp) return null;
+    if (typeof payload.exp !== 'number') {return null;}
+    if (Date.now() / 1000 > payload.exp) {return null;}
 
     // 4. Check issuer (must be our auth worker)
-    if (payload.iss !== 'belive-auth') return null;
+    if (payload.iss !== 'belive-auth') {return null;}
 
     // 5. sub обязателен: без него authCtx.sub = undefined, а на нём держится
     //    вся авторизация записи (author_id === auth.sub в feed.ts).
-    if (!payload.sub) return null;
+    if (!payload.sub) {return null;}
 
     // 6. Resolve role hint (⚠️ NOT FOR AUTHORIZATION — use getUserRole for authz)
     const roleHint = payload.role || 'user';

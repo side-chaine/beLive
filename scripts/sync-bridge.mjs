@@ -34,13 +34,13 @@ for (const m of MAP) {
   if (!existsSync(srcDir)) { console.log('skip (no dir):', m.from); continue }
 
   for (const name of readdirSync(srcDir)) {
-    if (!m.exts.some((e) => name.endsWith(e))) continue
+    if (!m.exts.some((e) => name.endsWith(e))) {continue}
     const src = join(srcDir, name)
-    if (!statSync(src).isFile()) continue
+    if (!statSync(src).isFile()) {continue}
 
     const dst = m.to === '.' ? join(BRIDGE, name) : join(BRIDGE, m.to, name)
     const dstDir = dirname(dst)
-    if (!existsSync(dstDir)) mkdirSync(dstDir, { recursive: true })
+    if (!existsSync(dstDir)) {mkdirSync(dstDir, { recursive: true })}
 
     if (!existsSync(dst)) {
       if (!CHECK) { copyFileSync(src, dst); copied++ }
@@ -52,7 +52,7 @@ for (const m of MAP) {
 
     stale++
     if (!CHECK) { copyFileSync(src, dst); copied++ }
-    else console.log('STALE:  ', name)
+    else {console.log('STALE:  ', name)}
   }
 }
 

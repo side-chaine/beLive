@@ -67,7 +67,7 @@ export function useBackgroundManagers(): void {
 
     const bind = (): boolean => {
       const app = (window as any).app;
-      if (!app) return false;
+      if (!app) {return false;}
       app.concertBackgroundManager = managers.concert;
       app.karaokeBackgroundManager = managers.karaoke;
       app.rehearsalBackgroundManager = managers.rehearsal;
@@ -77,19 +77,19 @@ export function useBackgroundManagers(): void {
     let retryId: ReturnType<typeof setInterval> | undefined;
     if (!bind()) {
       retryId = setInterval(() => {
-        if (bind()) clearInterval(retryId!);
+        if (bind()) {clearInterval(retryId!);}
       }, 200);
     }
 
     return () => {
-      if (retryId) clearInterval(retryId);
+      if (retryId) {clearInterval(retryId);}
       stopAll(managers);
       managersRef.current = null;
     };
   }, []);
 
   useEffect(() => {
-    if (!managersRef.current || !mode) return;
+    if (!managersRef.current || !mode) {return;}
     if (mode !== 'rehearsal') {
       applyCoverTheme(null);
     } else {
@@ -100,7 +100,7 @@ export function useBackgroundManagers(): void {
 
   // TC-BG-08: Cover art background only when user enabled it
   useEffect(() => {
-    if (!managersRef.current?.rehearsal) return;
+    if (!managersRef.current?.rehearsal) {return;}
     const hasCustomBg = !!customBgUrl;
     // Block scenes override cover art dimming
     const coverArtActive = hasBlockScenes ? false : (!!coverTheme && useAutoBg);
@@ -113,7 +113,7 @@ export function useBackgroundManagers(): void {
 
   // Custom background on body (Layer 1) — full screen
   useEffect(() => {
-    if (!managersRef.current?.rehearsal) return;
+    if (!managersRef.current?.rehearsal) {return;}
     managersRef.current.rehearsal.setCustomBg(customBgUrl || null);
   }, [customBgUrl]);
 
@@ -153,20 +153,20 @@ export function useBackgroundManagers(): void {
         const idx = tc?.currentTrackIndex;
         if (typeof idx === 'number' && idx >= 0 && tc?.tracks?.[idx]) {
           const rawId = tc.tracks[idx].id;
-          if (rawId != null) currentId = String(rawId);
+          if (rawId != null) {currentId = String(rawId);}
         }
       } catch {}
 
       // Источник 2: fallback на store (debounced, но лучше чем ничего)
       if (currentId === null) {
         const storeId = useTrackStore.getState().currentTrack?.id;
-        if (storeId != null) currentId = String(storeId);
+        if (storeId != null) {currentId = String(storeId);}
       }
 
-      if (!currentId || String(trackId) !== currentId) return;
+      if (!currentId || String(trackId) !== currentId) {return;}
 
       // Stale event guard: late doPreload может прийти после softReload с меньшим sceneCount
-      if (sceneCount < lastAppliedSceneCountRef.current) return;
+      if (sceneCount < lastAppliedSceneCountRef.current) {return;}
 
       lastAppliedSceneCountRef.current = sceneCount;
       useTrackStore.getState().setHasBlockScenes(sceneCount > 0);
@@ -199,14 +199,14 @@ export function useBackgroundManagers(): void {
       }
       // scene-crud или без source (backward compat) → softReload
 
-      if (timerId) clearTimeout(timerId);
+      if (timerId) {clearTimeout(timerId);}
 
       const capturedTrackId = useTrackStore.getState().currentTrack?.id;
-      if (!capturedTrackId) return;
+      if (!capturedTrackId) {return;}
 
       timerId = setTimeout(async () => {
         const currentNow = useTrackStore.getState().currentTrack?.id;
-        if (String(capturedTrackId) !== String(currentNow)) return;
+        if (String(capturedTrackId) !== String(currentNow)) {return;}
 
         const numId = Number(capturedTrackId);
         try {
@@ -248,7 +248,7 @@ export function useBackgroundManagers(): void {
           // Cancel previous pending revoke — old URLs from prior reload
           // are already off-screen after crossfade completed (~1000ms total).
           // 2000ms provides safe buffer even with slow image decode.
-          if (revokeTimerId) clearTimeout(revokeTimerId);
+          if (revokeTimerId) {clearTimeout(revokeTimerId);}
           revokeTimerId = setTimeout(() => {
             revokeTimerId = null;
             oldUrls.forEach(url => { try { URL.revokeObjectURL(url); } catch {} });
@@ -262,8 +262,8 @@ export function useBackgroundManagers(): void {
     document.addEventListener('tracks-changed', onTracksChanged);
     return () => {
       document.removeEventListener('tracks-changed', onTracksChanged);
-      if (timerId) clearTimeout(timerId);
-      if (revokeTimerId) clearTimeout(revokeTimerId);
+      if (timerId) {clearTimeout(timerId);}
+      if (revokeTimerId) {clearTimeout(revokeTimerId);}
     };
   }, []);
 }

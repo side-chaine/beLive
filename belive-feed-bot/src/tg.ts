@@ -56,7 +56,7 @@ export function fileUrl(token: string, path: string): string {
 
 export async function answerCallbackQuery(token: string, callbackQueryId: string, text?: string) {
   const body: any = { callback_query_id: callbackQueryId };
-  if (text) body.text = text;
+  if (text) {body.text = text;}
   const res = await fetch(`${TG_API}${token}/answerCallbackQuery`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

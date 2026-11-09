@@ -16,10 +16,10 @@ import type { HintLocale } from './types';
 type Provider = () => HintLocale | null;
 
 function normalise(value: string | null | undefined): HintLocale | null {
-  if (!value) return null;
+  if (!value) {return null;}
   const v = value.toLowerCase().trim();
-  if (/^en([-_]|$)/.test(v)) return 'en';
-  if (/^(ru|uk|be|kk)([-_]|$)/.test(v)) return 'ru';
+  if (/^en([-_]|$)/.test(v)) {return 'en';}
+  if (/^(ru|uk|be|kk)([-_]|$)/.test(v)) {return 'ru';}
   return null;
 }
 
@@ -34,15 +34,15 @@ const fromUrl: Provider = () => {
 const fromEntrySource: Provider = () => {
   const q = new URLSearchParams(window.location.search);
   const src = (q.get('src') || q.get('ref') || q.get('utm_source') || '').toLowerCase().trim();
-  if (EN_SOURCES.test(src)) return 'en';
-  if (RU_SOURCES.test(src)) return 'ru';
+  if (EN_SOURCES.test(src)) {return 'en';}
+  if (RU_SOURCES.test(src)) {return 'ru';}
 
   // Only unambiguous host signals. A generic `.com` referrer (google.com,
   // auth.mybelive.com) is NOT a language signal — do not guess from it.
   try {
     const host = new URL(document.referrer).hostname.toLowerCase();
-    if (/^en\./.test(host)) return 'en';
-    if (/\.ru$/.test(host)) return 'ru';
+    if (/^en\./.test(host)) {return 'en';}
+    if (/\.ru$/.test(host)) {return 'ru';}
   } catch {
     /* no referrer — normal for a direct PWA launch */
   }
@@ -54,7 +54,7 @@ const fromNavigator: Provider = () => {
   const list = nav.languages?.length ? nav.languages : [nav.language];
   for (const l of list) {
     const resolved = normalise(l);
-    if (resolved) return resolved;
+    if (resolved) {return resolved;}
   }
   return null;
 };
@@ -62,11 +62,11 @@ const fromNavigator: Provider = () => {
 const PROVIDERS: Provider[] = [fromUrl, fromEntrySource, fromNavigator];
 
 export function resolveHintLocale(override?: HintLocale | null): HintLocale {
-  if (override === 'ru' || override === 'en') return override;
+  if (override === 'ru' || override === 'en') {return override;}
   for (const provider of PROVIDERS) {
     try {
       const resolved = provider();
-      if (resolved) return resolved;
+      if (resolved) {return resolved;}
     } catch {
       /* a provider must never be able to break the tour */
     }

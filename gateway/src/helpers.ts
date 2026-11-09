@@ -17,7 +17,7 @@ export function getCommentVersionKey(postId: string): string {
 
 // Bump comment version in KV. Gracefully degrades if KV not available.
 export async function bumpCommentVersion(env: Env, postId: string): Promise<void> {
-  if (!env.FEED_KV) return;
+  if (!env.FEED_KV) {return;}
   try {
     const version = Date.now().toString();
     await env.FEED_KV.put(getCommentVersionKey(postId), version, { expirationTtl: 86400 });
@@ -28,7 +28,7 @@ export async function bumpCommentVersion(env: Env, postId: string): Promise<void
 
 // Get comment version from KV. Returns null if not set or KV unavailable.
 export async function getCommentVersion(env: Env, postId: string): Promise<string | null> {
-  if (!env.FEED_KV) return null;
+  if (!env.FEED_KV) {return null;}
   try {
     return await env.FEED_KV.get(getCommentVersionKey(postId));
   } catch {
@@ -46,6 +46,6 @@ export function generateCommentETag(postId: string, version: string): string {
 export function parseCommentETag(etag: string): { postId: string; version: string } | null {
   // Format: "cm:<postId>:<version>"
   const match = etag.match(/^"cm:([^:]+):(.+)"$/);
-  if (!match) return null;
+  if (!match) {return null;}
   return { postId: match[1], version: match[2] };
 }

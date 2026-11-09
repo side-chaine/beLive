@@ -158,7 +158,7 @@ async function main() {
   let hard = 0;
   for (const r of results) {
     const mark = r.ok ? 'OK  ' : 'FAIL';
-    if (!r.ok) hard++;
+    if (!r.ok) {hard++;}
     console.log(`  ${mark}  ${r.name}  (${r.detail})`);
   }
   console.log('');
@@ -175,7 +175,7 @@ async function main() {
 function decodePayload(token) {
   try {
     const part = token.split('.')[1];
-    if (!part) return null;
+    if (!part) {return null;}
     const b64 = part.replace(/-/g, '+').replace(/_/g, '/');
     const pad = b64.length % 4 === 0 ? '' : '='.repeat(4 - (b64.length % 4));
     return JSON.parse(Buffer.from(b64 + pad, 'base64').toString('utf8'));

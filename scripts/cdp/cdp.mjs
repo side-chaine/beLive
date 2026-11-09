@@ -56,7 +56,7 @@ async function getTabs(match = 'localhost') {
   const r = await fetch(`${CDP_BASE}/json/list`);
   const tabs = await r.json();
   const tab = tabs.find(t => t.type === 'page' && t.url.includes(match)) || tabs.find(t => t.type === 'page');
-  if (!tab) throw new Error('Нет вкладки page');
+  if (!tab) {throw new Error('Нет вкладки page');}
   return { tabs, tab };
 }
 
@@ -67,7 +67,7 @@ async function main() {
 
   switch (cmd) {
     case 'list': {
-      for (const t of tabs) console.log(`[${t.type}] ${t.title} | ${t.url}`);
+      for (const t of tabs) {console.log(`[${t.type}] ${t.title} | ${t.url}`);}
       break;
     }
     case 'eval': {
@@ -80,7 +80,7 @@ async function main() {
     }
     case 'shot': {
       const out = args[0];
-      if (!out) throw new Error('Укажи выходной файл');
+      if (!out) {throw new Error('Укажи выходной файл');}
       const ws = await connect(tab.webSocketDebuggerUrl);
       const res = await send(ws, 'Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });
       ws.close();
@@ -112,12 +112,12 @@ async function main() {
     }
     case 'upload': {
       const [file, selector] = args;
-      if (!file || !selector) throw new Error('Использование: upload <file> <selector>');
+      if (!file || !selector) {throw new Error('Использование: upload <file> <selector>');}
       const abs = rp(file);
       const ws = await connect(tab.webSocketDebuggerUrl);
       const doc = await send(ws, 'DOM.getDocument', { depth: -1, pierce: true });
       const q = await send(ws, 'DOM.querySelector', { nodeId: doc.root.nodeId, selector });
-      if (!q.nodeId) throw new Error(`Инпут не найден: ${selector}`);
+      if (!q.nodeId) {throw new Error(`Инпут не найден: ${selector}`);}
       await send(ws, 'DOM.setFileInputFiles', { nodeId: q.nodeId, files: [abs] });
       ws.close();
       console.log(`UPLOADED: ${abs} -> ${selector}`);
@@ -125,7 +125,7 @@ async function main() {
     }
     case 'nav': {
       const url = args[0];
-      if (!url) throw new Error('Укажи URL');
+      if (!url) {throw new Error('Укажи URL');}
       const ws = await connect(tab.webSocketDebuggerUrl);
       await send(ws, 'Page.navigate', { url });
       ws.close();

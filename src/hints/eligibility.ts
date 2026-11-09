@@ -59,7 +59,7 @@ export interface Mastery {
  */
 export function uploadMastery(c: HintContext): Mastery {
   const id: HintId = 'catalog.upload';
-  if (c.completed.includes(id)) return { mastered: true, reason: 'completed' };
+  if (c.completed.includes(id)) {return { mastered: true, reason: 'completed' };}
   if (count(c.stats.facts['track-saved']) > 0) {
     return { mastered: true, reason: 'track-saved' };
   }
@@ -80,23 +80,23 @@ export function uploadMastery(c: HintContext): Mastery {
 
 /** Pure: may this exact step be on screen right now? */
 export function isStepEligible(spec: HintSpec, c: HintContext): boolean {
-  if (!c.enabled || c.surface !== 'app') return false;
-  if (c.sessionDone.includes(spec.id)) return false;
-  if (!spec.repeatOnLoad && c.completed.includes(spec.id)) return false;
+  if (!c.enabled || c.surface !== 'app') {return false;}
+  if (c.sessionDone.includes(spec.id)) {return false;}
+  if (!spec.repeatOnLoad && c.completed.includes(spec.id)) {return false;}
 
   switch (spec.gate) {
     case 'start':
       // Pointing at the Catalog button while the catalog is already open is
       // noise, not help.
-      if (c.catalogOpen) return false;
+      if (c.catalogOpen) {return false;}
       break;
     case 'catalog':
-      if (!c.catalogOpen) return false;
+      if (!c.catalogOpen) {return false;}
       // Already standing on ЗАГРУЗКА — the hint has done its job.
-      if (c.catalogTab === 'upload') return false;
+      if (c.catalogTab === 'upload') {return false;}
       break;
   }
 
-  if (spec.policy === 'upload-mastery' && uploadMastery(c).mastered) return false;
+  if (spec.policy === 'upload-mastery' && uploadMastery(c).mastered) {return false;}
   return true;
 }

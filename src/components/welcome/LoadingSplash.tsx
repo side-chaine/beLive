@@ -142,7 +142,7 @@ export function LoadingSplash({ authReady, onComplete }: LoadingSplashProps) {
   // Force muted + start playback (autoplay requires muted).
   useEffect(() => {
     const v = videoRef.current;
-    if (!v) return;
+    if (!v) {return;}
     v.muted = true;
     const p = v.play();
     if (p && typeof p.catch === 'function') {
@@ -161,7 +161,7 @@ export function LoadingSplash({ authReady, onComplete }: LoadingSplashProps) {
 
   // Once the wings are gone, the boot poster is stale by definition.
   useEffect(() => {
-    if (phase !== 'video') dismissBootSplash();
+    if (phase !== 'video') {dismissBootSplash();}
   }, [phase]);
 
   // When the intro finishes, the wings are gone → reveal the faders.
@@ -183,7 +183,7 @@ export function LoadingSplash({ authReady, onComplete }: LoadingSplashProps) {
   // was a hang risk — a slow or failed auth check left the splash stuck on the
   // faders forever.
   useEffect(() => {
-    if (phase !== 'faders') return;
+    if (phase !== 'faders') {return;}
     const t = setTimeout(() => setPhase('exit'), 1300);
     return () => clearTimeout(t);
   }, [phase]);
@@ -200,7 +200,7 @@ export function LoadingSplash({ authReady, onComplete }: LoadingSplashProps) {
   // Safety: never hang behind the splash. If we're still on the faders once auth
   // is ready, force the exit (covers late auth / any race).
   useEffect(() => {
-    if (!authReady) return;
+    if (!authReady) {return;}
     const t = setTimeout(() => {
       setPhase((p) => (p === 'faders' ? 'exit' : p));
     }, 13000);
@@ -213,7 +213,7 @@ export function LoadingSplash({ authReady, onComplete }: LoadingSplashProps) {
   // mounted forever. 850ms transition + margin → force completion.
   // Calling onComplete twice is harmless (setSplashGone(true) is idempotent).
   useEffect(() => {
-    if (phase !== 'exit') return;
+    if (phase !== 'exit') {return;}
     const t = setTimeout(() => onCompleteRef.current(), 1200);
     return () => clearTimeout(t);
   }, [phase]);

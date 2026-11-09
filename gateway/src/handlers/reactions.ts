@@ -132,7 +132,7 @@ export async function handleGetReactions(
     // Group by target_id
     const grouped: Record<string, Record<string, number>> = {};
     for (const row of (results || []) as any[]) {
-      if (!grouped[row.target_id]) grouped[row.target_id] = {};
+      if (!grouped[row.target_id]) {grouped[row.target_id] = {};}
       grouped[row.target_id][row.emoji] = row.count;
     }
 
@@ -150,7 +150,7 @@ export async function handleGetReactions(
         ) as any).bind(targetType, ...targetIds, auth.sub).all();
 
         for (const row of (userRows || []) as any[]) {
-          if (!userReactions[row.target_id]) userReactions[row.target_id] = [];
+          if (!userReactions[row.target_id]) {userReactions[row.target_id] = [];}
           userReactions[row.target_id].push(row.emoji);
         }
       }

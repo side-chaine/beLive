@@ -14,8 +14,8 @@ let cur = null;
 for (const line of census.split('\n')) {
   const p = line.match(/^\s*- path: "(.+)"$/);
   if (p) { cur = { path: p[1] }; records.push(cur); continue; }
-  const st = line.match(/^\s*state: (\w+)/); if (st && cur) cur.state = st[1];
-  const vi = line.match(/^\s*visibility: (\w+)/); if (vi && cur) cur.visibility = vi[1];
+  const st = line.match(/^\s*state: (\w+)/); if (st && cur) {cur.state = st[1];}
+  const vi = line.match(/^\s*visibility: (\w+)/); if (vi && cur) {cur.visibility = vi[1];}
 }
 
 const LIVING = records.filter(r => r.state === 'LIVING' && r.visibility === 'public');

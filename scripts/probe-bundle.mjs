@@ -30,7 +30,7 @@ let maps = 0;
 (function walk(d) {
   for (const e of readdirSync(d, { withFileTypes: true })) {
     const p = join(d, e.name);
-    if (e.isDirectory()) walk(p);
+    if (e.isDirectory()) {walk(p);}
     else if (e.name.endsWith('.map')) {
       maps++;
       try {
@@ -38,7 +38,7 @@ let maps = 0;
         for (const s of (j.sources || [])) {
           // sources: "../../src/foo.ts" или "../src/foo.ts" — нормализуем к src/...
           const m = String(s).match(/(?:^|\/)((?:src|js)\/[^\s]+)$/);
-          if (m) bundled.add(m[1]);
+          if (m) {bundled.add(m[1]);}
         }
       } catch {}
     }
@@ -52,6 +52,6 @@ const tests = flagged.filter(f => /\.(test|spec)\.tsx?$/.test(f) || /__tests__|_
 const src = flagged.filter(f => !tests.includes(f));
 console.log(`probe:bundle(v2-sourcemap): flagged=${flagged.length} (src=${src.length}, tests=${tests.length}), map-файлов=${maps}, бандл-модулей=${bundled.size}`);
 console.log(`probe:bundle: ЛОЖНЫХ (flagged реально в бандле): ${falseFlags.length}`);
-for (const f of falseFlags) console.log(`  🔴 FALSE-FLAG: ${f}`);
-if (falseFlags.length === 0) console.log('  ✅ гейт честен в обе стороны: ни один flagged-файл не в прод-бандле');
+for (const f of falseFlags) {console.log(`  🔴 FALSE-FLAG: ${f}`);}
+if (falseFlags.length === 0) {console.log('  ✅ гейт честен в обе стороны: ни один flagged-файл не в прод-бандле');}
 process.exit(falseFlags.length > 0 ? 2 : 0);
