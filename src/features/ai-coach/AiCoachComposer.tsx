@@ -13,9 +13,9 @@ export function AiCoachComposer({ inputRef, isStreaming, onSend }: AiCoachCompos
 
   const submit = () => {
     const text = value.trim();
-    if (!text || isStreaming) return;
+    if (!text || isStreaming) {return;}
     setValue('');
-    if (inputRef.current) inputRef.current.style.height = 'auto';
+    if (inputRef.current) {inputRef.current.style.height = 'auto';}
     onSend(text);
   };
 

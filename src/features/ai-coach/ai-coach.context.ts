@@ -30,7 +30,7 @@ const formatCents = (cents: number): string =>
 /** Секция, в которой сейчас находится плейхед. */
 function activeSectionLabel(time: number): string | null {
   const sections = useMarkersStore.getState().sections;
-  if (!sections.length) return null;
+  if (!sections.length) {return null;}
 
   const section = sections.find(
     (s) => time >= s.start && (s.end === null || time < s.end),
@@ -65,7 +65,7 @@ export function buildTrackContext(): string {
   }
 
   const section = activeSectionLabel(audio.currentTime);
-  if (section) lines.push(`Секция: ${section}`);
+  if (section) {lines.push(`Секция: ${section}`);}
 
   const lineText = lyrics.lines[lyrics.activeLineIndex];
   if (lineText) {
@@ -91,7 +91,7 @@ export function buildTrackContext(): string {
   }
 
   const formula = getStructureFormula(blocks);
-  if (formula) lines.push(`Структура: ${formula}`);
+  if (formula) {lines.push(`Структура: ${formula}`);}
 
   if (stems.loadedStems.length) {
     const muted = Object.entries(stems.stemMutes)
@@ -102,8 +102,8 @@ export function buildTrackContext(): string {
       .map(([id]) => id);
 
     let stemLine = `Стемы: ${stems.loadedStems.join(', ')}`;
-    if (muted.length) stemLine += ` · приглушены: ${muted.join(', ')}`;
-    if (soloed.length) stemLine += ` · соло: ${soloed.join(', ')}`;
+    if (muted.length) {stemLine += ` · приглушены: ${muted.join(', ')}`;}
+    if (soloed.length) {stemLine += ` · соло: ${soloed.join(', ')}`;}
     lines.push(stemLine);
   }
 

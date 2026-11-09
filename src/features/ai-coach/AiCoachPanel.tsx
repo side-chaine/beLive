@@ -12,7 +12,7 @@ function useDockOffset(): number {
 
   useEffect(() => {
     const dock = document.querySelector<HTMLElement>('[data-bl-deck]');
-    if (!dock) return;
+    if (!dock) {return;}
 
     const apply = () => setOffset(dock.offsetHeight + 12);
     apply();
@@ -46,12 +46,12 @@ export function AiCoachPanel() {
 
   // Фокус в поле ввода при открытии/развороте.
   useEffect(() => {
-    if (open && !collapsed) inputRef.current?.focus();
+    if (open && !collapsed) {inputRef.current?.focus();}
   }, [open, collapsed]);
 
   // Esc сворачивает панель, не теряя переписку.
   useEffect(() => {
-    if (!open || collapsed) return;
+    if (!open || collapsed) {return;}
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
@@ -62,10 +62,10 @@ export function AiCoachPanel() {
     return () => document.removeEventListener('keydown', onKey);
   }, [open, collapsed, setCollapsed]);
 
-  if (!open) return null;
+  if (!open) {return null;}
 
   const handleSend = (text: string) => {
-    if (isStreaming) return;
+    if (isStreaming) {return;}
 
     // История — строго ДО текущего вопроса: иначе он попадёт в промпт дважды.
     const history = useAiCoachStore.getState().messages;

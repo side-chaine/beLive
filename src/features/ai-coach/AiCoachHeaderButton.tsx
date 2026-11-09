@@ -30,12 +30,12 @@ export function AiCoachHeaderButton() {
         transition: 'all 0.2s ease',
       }}
       onMouseEnter={(e) => {
-        if (open) return;
+        if (open) {return;}
         e.currentTarget.style.borderColor = ACCENT;
         e.currentTarget.style.color = '#fff';
       }}
       onMouseLeave={(e) => {
-        if (open) return;
+        if (open) {return;}
         e.currentTarget.style.borderColor = '#444';
         e.currentTarget.style.color = '#aaa';
       }}

@@ -37,7 +37,7 @@ const AI_SETTINGS_KEY = 'belive:ai-settings';
 function hasOpenRouterKey(): boolean {
   try {
     const raw = localStorage.getItem(AI_SETTINGS_KEY);
-    if (!raw) return false;
+    if (!raw) {return false;}
     return Boolean(JSON.parse(raw)?.state?.openRouterApiKey);
   } catch {
     return false;
@@ -65,7 +65,7 @@ export class AiCoachService {
     text: string,
     handlers: CoachStreamHandlers = {},
   ): Promise<void> {
-    if (this.running) this.stop();
+    if (this.running) {this.stop();}
 
     const generation = ++this.generation;
     const candidates = this.candidates();
@@ -83,7 +83,7 @@ export class AiCoachService {
     try {
       for (const candidate of candidates) {
         const result = await this.attempt(candidate, history, text, handlers);
-        if (result === 'ok' || result === 'aborted') return;
+        if (result === 'ok' || result === 'aborted') {return;}
         lastError = result;
       }
 
@@ -142,10 +142,10 @@ export class AiCoachService {
       let abortFn: (() => void) | null = null;
 
       const finish = (result: AttemptResult) => {
-        if (settled) return;
+        if (settled) {return;}
         settled = true;
         // Не затираем abort нового запроса, если старый завершился позже.
-        if (this.pendingAbort === abortFn) this.pendingAbort = null;
+        if (this.pendingAbort === abortFn) {this.pendingAbort = null;}
         resolve(result);
       };
 

@@ -61,7 +61,7 @@ export const useAiCoachStore = create<AiCoachState>((set) => ({
   appendToken: (id, token) =>
     set((s) => {
       const idx = s.messages.findIndex((m) => m.id === id);
-      if (idx === -1) return s;
+      if (idx === -1) {return s;}
       const messages = [...s.messages];
       messages[idx] = { ...messages[idx], content: messages[idx].content + token };
       return { messages };
@@ -70,7 +70,7 @@ export const useAiCoachStore = create<AiCoachState>((set) => ({
   setMessageContent: (id, content) =>
     set((s) => {
       const idx = s.messages.findIndex((m) => m.id === id);
-      if (idx === -1) return s;
+      if (idx === -1) {return s;}
       const messages = [...s.messages];
       messages[idx] = { ...messages[idx], content };
       return { messages };
