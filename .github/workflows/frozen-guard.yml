@@ -4,15 +4,47 @@ name: Frozen Guard
 # Ratchet-гейты (verify:asany, verify:lint-baseline, verify:typecheck) и сами
 # workflow живут в репозитории. Шаг внутри pr-gate.yml исполняется из ветки PR —
 # значит тот же коммит, который правит гейт или его baseline, может сделать гейт
-# зелёным. Этот workflow берётся из main (pull_request_target), поэтому код PR на
-# него не влияет.
+# зелёным. Этот workflow запускается после завершения PR Gate и берёт файл
+# workflow из main, поэтому код PR на него не влияет.
 #
-# Почему pull_request_target здесь безопасен:
-#   * НЕТ checkout кода PR — ни actions/checkout с ref, ни run: скриптов из PR;
-#   * читается только список изменённых файлов через REST и содержимое
-#     package.json как ДАННЫЕ (никогда не исполняется);
-#   * permissions сужены до contents: read + pull-requests: read;
+# Почему workflow_run, а не pull_request_target (t34).
+# GitHub вводит политику, блокирующую pull_request_target в публичных репо:
+# сегодня гейт ещё работает, но 2 декабря 2026 политика включается
+# принудительно и frozen-guard.yml перестал бы запускаться вообще.
+# workflow_run не исполняет код PR и не требует pull_request_target.
+#
+# Что осталось тем же:
+#   * НЕТ checkout кода PR — ни actions/checkout, ни run: скриптов из PR;
+#   * читаются только данные через REST: список файлов, package.json, PR;
+#   * permissions сужены до contents: read + pull-requests: read + actions: read;
 #   * GITHUB_TOKEN не передаётся ни в один шаг, который может выполнить код PR.
+#
+# Что изменилось (только источник данных):
+#   * триггер — завершение workflow «PR Gate»;
+#   * номер PR — github.event.workflow_run.pull_requests[0].number;
+#   * head.sha — github.event.workflow_run.head_sha;
+#   * base.sha, метки и тело PR — одним GET /repos/{repo}/pulls/{n}
+#     (в событии workflow_run их нет);
+#   * пустой pull_requests: push -> пропуск, PR -> поиск PR по head-коммиту
+#     (GET /repos/{repo}/commits/{sha}/pulls) и красный, если PR не найден.
+#
+# Что уже закрыто, что процедура и что принято как ограничение:
+#   1. ПРОЦЕДУРА (G1): смена метки и правка тела PR сами PR Gate не запускают,
+#      поэтому вердикт перепроверяется кнопкой «Re-run all jobs» на самом
+#      frozen-guard — прогон заново читает метки и тело через GET /pulls.
+#      Порядок для владельца: сначала секция «## frozen-ok reason» в теле PR,
+#      потом метка frozen-ok, потом Re-run all jobs. Перезапускать PR Gate
+#      для этого не нужно: он стоит те же минуты, которых мы избегаем.
+#   2. ЗАКРЫТО (G3): пустой pull_requests больше не даёт зелёный без проверки.
+#      Для event=pull_request гейт ищет PR по head-коммиту и при ненайденном
+#      краснеет. Для push — пропуск, судить нечего.
+#   3. ПРИНЯТО (G2): покрыты только PR в main — у pr-gate.yml branches: [main].
+#      PR в другие ветки и раньше по существу не проверялись: required checks
+#      и мержи туда не идут. Расширять branches — жечь минуты без выгоды.
+#   4. Прогон, чей head_sha уже не равен голове PR, судит устаревший коммит:
+#      он завершается «устарел», вердикт даёт прогон на свежем head.
+#   5. Чек на голове PR не проверен эмпирически: гейт действует только после
+#      мержа в main, до этого живого PR нет. Проверка — первый PR после мержа.
 #
 # Зависимости: только curl и python3 — оба предустановлены на ubuntu-latest.
 # jq намеренно не используется: гейт не должен падать на «jq: command not found»
@@ -21,33 +53,43 @@ name: Frozen Guard
 # Почему без paths-фильтра: required check, который не запустился, висит
 # в «Expected» и блокирует мерж любого PR. Проверка обязана стартовать всегда.
 #
-# Защищаемый список (RULES-CORE §6 + то, что держит сами гейты):
+# Защищаемый список (RULES-CORE §6 + всё, что держит сами гейты):
 #   src/audio/engine-v3/**, src/Rehearsal/bridge/**, src/audio/compat/patchV1.ts,
 #   src/bridges/**, src/services/track.orchestrator.ts, vendor/**,
-#   .github/**, scripts/check-*.mjs, scripts/verify-*.mjs,
-#   scripts/lint-baseline.json, eslint.config.*, package.json (только scripts).
+#   .github/**, scripts/check-*.mjs, scripts/check-*.sh, scripts/verify-*.mjs,
+#   scripts/lint-baseline.json, scripts/ts-allowlist.json, scripts/reach-holdlist.json,
+#   inert-allowlist.json, bridge-manifest.json, eslint.config.*, vitest.config.*,
+#   tsconfig*.json, package.json (только блок scripts).
+#
+# Baseline verify:asany отдельным файлом не существует — это константа BASELINE
+# внутри scripts/verify-asany.mjs, то есть покрыт маской scripts/verify-*.mjs.
 #
 # Красный = защищаемый путь затронут, а метки frozen-ok на PR нет.
-# Зелёный = защищаемых путей нет ИЛИ метка frozen-ok стоит.
+# Зелёный = защищаемых путей нет ИЛИ есть метка frozen-ok И секция
+# «## frozen-ok reason» в теле PR с заполненными полями. Метка без обоснования
+# не проходит: метка должна быть событием, а не фоном.
 #
-# Все ветки отказа закрыты в сторону «красный»: не смогли прочитать список файлов,
-# не смогли сравнить scripts в package.json, не разобрали метки — это красный,
+# Все ветки отказа закрыты в сторону «красный»: не смогли прочитать PR, список
+# файлов, сравнить scripts в package.json, не разобрали метки — это красный,
 # а не зелёный.
 #
 # Ограничение: файл начинает действовать только после того, как попадёт в main.
 # На PR, который его вводит, он ещё не запускается.
 
 on:
-  pull_request_target:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+  workflow_run:
+    workflows: ["PR Gate"]
+    types: [completed]
 
 permissions:
   contents: read
   pull-requests: read
+  actions: read
 
-# Новый пуш или смена метки отменяет предыдущий прогон того же PR.
+# Новый прогон PR Gate для той же ветки отменяет предыдущий прогон гейта.
+# Группа по репозиторию-источнику и ветке: номера PR в этом событии может не быть.
 concurrency:
-  group: frozen-guard-${{ github.event.pull_request.number }}
+  group: frozen-guard-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
   cancel-in-progress: true
 
 jobs:
@@ -60,17 +102,17 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           API_URL: ${{ github.api_url }}
           REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          RUN_PRS: ${{ toJson(github.event.workflow_run.pull_requests) }}
+          EVENT: ${{ github.event.workflow_run.event }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           # Для PR из форка head-коммита в базовом репозитории нет — контент
           # package.json берём из репозитория-источника.
-          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
-          LABELS_JSON: ${{ toJson(github.event.pull_request.labels.*.name) }}
+          HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name || github.repository }}
         run: |
           set -euo pipefail
 
-          PROTECTED='^(src/audio/engine-v3/|src/Rehearsal/bridge/|src/audio/compat/patchV1\.ts$|src/bridges/|src/services/track\.orchestrator\.ts$|vendor/|\.github/|scripts/check-[^/]+\.mjs$|scripts/verify-[^/]+\.mjs$|scripts/lint-baseline\.json$|eslint\.config\.[^/]+$|package\.json$)'
+          PROTECTED='^(src/audio/engine-v3/|src/Rehearsal/bridge/|src/audio/compat/patchV1\.ts$|src/bridges/|src/services/track\.orchestrator\.ts$|vendor/|\.github/|scripts/check-[^/]+\.(mjs|sh)$|scripts/verify-[^/]+\.mjs$|scripts/lint-baseline\.json$|scripts/ts-allowlist\.json$|scripts/reach-holdlist\.json$|inert-allowlist\.json$|bridge-manifest\.json$|eslint\.config\.[^/]+$|vitest\.config\.[^/]+$|tsconfig[^/]*\.json$|package\.json$)'
 
           # --fail-with-body: 4xx/5xx = ненулевой код возврата, тело всё равно
           # печатается. Без него 404 отдаёт {"message":"Not Found"}, json его
@@ -84,14 +126,67 @@ jobs:
               "${API_URL}${1}"
           }
 
-          # --- 1. Список изменённых файлов, постранично -------------------------
+          # --- 0. Только PR-прогоны -------------------------------------------
+          # workflow_run срабатывает и на push в main, где pull_requests пуст:
+          # судить нечего. Но пустой список бывает и у PR-прогона (форк), и
+          # тогда «пропуск» был бы зелёным без проверки — то есть дырой.
+          # Поэтому push и PR различаются по event, а не по пустоте списка.
+          pr_number=$(printf '%s' "$RUN_PRS" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0]["number"] if isinstance(d,list) and d else "")' 2>/dev/null || true)
+
+          if [ -z "$pr_number" ]; then
+            if [ "${EVENT:-}" != "pull_request" ]; then
+              echo "Прогон не связан с PR (${EVENT:-событие неизвестно}) — пропуск."
+              exit 0
+            fi
+            echo "pull_requests пуст при event=pull_request — ищем PR по коммиту ${HEAD_SHA}"
+            # Поиск по коммиту надёжнее, чем ?head=owner:branch: не зависит от
+            # того, как GitHub нормализует имя форка.
+            pr_number=$(api "/repos/${REPO}/commits/${HEAD_SHA}/pulls" | python3 -c 'import json,os,sys; d=json.load(sys.stdin); assert isinstance(d,list); db=os.environ.get("DEFAULT_BRANCH") or "main"; c=[p["number"] for p in d if p.get("state")=="open" and ((p.get("base") or {}).get("ref")==db)]; print(c[0] if c else "")' 2>/dev/null || true)
+            if [ -z "$pr_number" ]; then
+              echo "::error::PR-прогон, но открытый PR для коммита ${HEAD_SHA} в ${DEFAULT_BRANCH:-main} не найден — закрыто в сторону красного."
+              exit 1
+            fi
+          fi
+          echo "PR #${pr_number}, head ${HEAD_SHA}"
+
+          # --- 1. Данные PR: base.sha, метки, тело -----------------------------
+          # В событии workflow_run этих полей нет — читаем PR целиком.
+          pr_json=$(mktemp)
+          if ! api "/repos/${REPO}/pulls/${pr_number}" > "$pr_json"; then
+            echo "::error::Не удалось прочитать PR #${pr_number} через REST — закрыто в сторону красного."
+            exit 1
+          fi
+
+          base_sha=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["base"]["sha"])' < "$pr_json" 2>/dev/null || true)
+          pr_head=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["head"]["sha"])' < "$pr_json" 2>/dev/null || true)
+          if [ -z "$base_sha" ] || [ -z "$pr_head" ]; then
+            echo "::error::Ответ API по PR #${pr_number} не разобран — закрыто в сторону красного."
+            exit 1
+          fi
+
+          # Прогон PR Gate завершился, а PR уже ушёл вперёд: список файлов из
+          # /pulls отражает новый head, а не тот, что проверял PR Gate.
+          # Судить чужой срез нельзя — вердикт даст прогон на свежем head.
+          if [ "$pr_head" != "$HEAD_SHA" ]; then
+            echo "::warning::PR ушёл вперёд (${pr_head} != ${HEAD_SHA}) — прогон устарел, вердикт даст следующий."
+            exit 0
+          fi
+
+          labels_json=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(json.dumps([l.get("name") for l in (d.get("labels") or [])]))' < "$pr_json" 2>/dev/null || true)
+          pr_body_file=$(mktemp)
+          if ! python3 -c 'import json,sys; sys.stdout.write(json.load(sys.stdin).get("body") or "")' < "$pr_json" > "$pr_body_file" 2>/dev/null; then
+            echo "::error::Тело PR #${pr_number} не разобрано — закрыто в сторону красного."
+            exit 1
+          fi
+
+          # --- 2. Список изменённых файлов, постранично -------------------------
           # Пустой список — нормальный случай (PR без файлов): цикл выходит
           # на первой же странице, скрипт не падает.
           files=$(mktemp)
           page_tmp=$(mktemp)
           page=1
           while true; do
-            body=$(api "/repos/${REPO}/pulls/${PR_NUMBER}/files?per_page=100&page=${page}")
+            body=$(api "/repos/${REPO}/pulls/${pr_number}/files?per_page=100&page=${page}")
             printf '%s' "$body" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert isinstance(d,list), "неожиданный ответ API"; sys.stdout.write("".join(x["filename"] + "\n" for x in d))' > "$page_tmp"
             count=$(wc -l < "$page_tmp" | tr -d ' ')
             cat "$page_tmp" >> "$files"
@@ -107,7 +202,7 @@ jobs:
 
           echo "Файлов в PR: $(wc -l < "$files" | tr -d ' ')"
 
-          # --- 2. package.json: защищаем блок scripts, а не файл целиком --------
+          # --- 3. package.json: защищаем блок scripts, а не файл целиком --------
           # Иначе каждый bump зависимости требовал бы метку, и метка перестала бы
           # что-то значить (тот же довод, что «вечно красный lint»).
           scripts_of() {
@@ -124,7 +219,7 @@ jobs:
             [ -n "$f" ] || continue
             if [[ "$f" =~ $PROTECTED ]]; then
               if [ "$f" = "package.json" ]; then
-                base_scripts=$(scripts_of "$REPO" "$BASE_SHA")
+                base_scripts=$(scripts_of "$REPO" "$base_sha")
                 head_scripts=$(scripts_of "$HEAD_REPO" "$HEAD_SHA")
                 case "${base_scripts}|${head_scripts}" in
                   *FETCH_FAILED*|*PARSE_FAILED*)
@@ -142,7 +237,7 @@ jobs:
             fi
           done < "$files"
 
-          # --- 3. Вердикт ------------------------------------------------------
+          # --- 4. Вердикт ------------------------------------------------------
           if [ ! -s "$hits" ]; then
             echo "✅ Защищаемые пути не тронуты."
             exit 0
@@ -152,12 +247,22 @@ jobs:
           sed 's/^/    /' "$hits"
 
           # Метки не разобрали — считаем, что метки нет (закрыто в сторону красного).
-          has_label=$(printf '%s' "$LABELS_JSON" | python3 -c 'import json,sys; l=json.load(sys.stdin); print("yes" if isinstance(l,list) and "frozen-ok" in l else "no")' 2>/dev/null || echo no)
+          has_label=$(printf '%s' "$labels_json" | python3 -c 'import json,sys; l=json.load(sys.stdin); print("yes" if isinstance(l,list) and "frozen-ok" in l else "no")' 2>/dev/null || echo no)
 
-          if [ "$has_label" = "yes" ]; then
-            echo "✅ Метка frozen-ok стоит — проход разрешён."
-            exit 0
+          if [ "$has_label" != "yes" ]; then
+            echo "::error::Затронуты защищаемые пути без метки frozen-ok. Нужна метка frozen-ok от владельца."
+            exit 1
           fi
 
-          echo "::error::Затронуты защищаемые пути без метки frozen-ok. Нужна метка frozen-ok от владельца."
-          exit 1
+          # Метка без обоснования не проходит: иначе метка превращается в фон.
+          # Требуется секция «## frozen-ok reason» с четырьмя непустыми полями.
+          # Тело PR — данные, не код: только разбор регуляркой, без исполнения.
+          has_reason=$(python3 -c 'import re,sys; b=open(sys.argv[1],encoding="utf-8",errors="replace").read(); h=re.search(r"(?mi)^##[ \t]*frozen-ok reason[ \t]*$", b); sec=b[h.end():] if h else ""; n=re.search(r"(?m)^##[ \t]", sec); sec=sec[:n.start()] if n else sec; keys=("Зона","Что изменено","Почему безопасно","Ссылка"); ok=bool(h) and all(re.search(r"(?mi)^[ \t]*-[ \t]*"+k+r"[ \t]*:[ \t]*\S", sec) for k in keys); print("yes" if ok else "no")' "$pr_body_file" 2>/dev/null || echo no)
+
+          if [ "$has_reason" != "yes" ]; then
+            echo "::error::Метка frozen-ok есть, но в теле PR нет секции «## frozen-ok reason» с заполненными полями: Зона, Что изменено, Почему безопасно, Ссылка."
+            exit 1
+          fi
+
+          echo "✅ Метка frozen-ok + обоснование на месте — проход разрешён."
+          exit 0
