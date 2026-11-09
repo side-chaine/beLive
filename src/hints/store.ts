@@ -106,9 +106,9 @@ export const useHintsStore = create<HintsState>()(
  * Pure so it can be unit-tested without a DOM.
  */
 export function pickVariantIndex(count: number, last?: number): number {
-  if (count <= 1) return 0;
+  if (count <= 1) {return 0;}
   const i = Math.floor(Math.random() * count);
-  if (last === undefined || i !== last) return i;
+  if (last === undefined || i !== last) {return i;}
   // Pick uniformly from the remaining `count - 1` indexes.
   return (i + 1 + Math.floor(Math.random() * (count - 1))) % count;
 }

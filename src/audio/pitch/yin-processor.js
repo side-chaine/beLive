@@ -51,10 +51,10 @@ class YinProcessor extends AudioWorkletProcessor {
 
   _onMsg(m) {
     if (m.type === 'config') {
-      if (m.threshold != null) this._threshold = m.threshold;
-      if (m.noiseGate != null) this._gate = m.noiseGate;
-      if (m.rangeLow != null)  this._lo = m.rangeLow;
-      if (m.rangeHigh != null) this._hi = m.rangeHigh;
+      if (m.threshold != null) {this._threshold = m.threshold;}
+      if (m.noiseGate != null) {this._gate = m.noiseGate;}
+      if (m.rangeLow != null)  {this._lo = m.rangeLow;}
+      if (m.rangeHigh != null) {this._hi = m.rangeHigh;}
       if (m.medianWindow != null) {
         this._medW = m.medianWindow;
         this._medBuf = new Float32Array(this._medW);
@@ -75,7 +75,7 @@ class YinProcessor extends AudioWorkletProcessor {
 
   process(inputs) {
     var ch = inputs[0] && inputs[0][0];
-    if (!ch) return true;
+    if (!ch) {return true;}
 
     for (var i = 0; i < ch.length; i++) {
       this._buf[this._pos++] = ch[i];
@@ -97,7 +97,7 @@ class YinProcessor extends AudioWorkletProcessor {
 
     /* Step 0: noise gate */
     var ssq = 0;
-    for (var i = 0; i < N; i++) ssq += buf[i] * buf[i];
+    for (var i = 0; i < N; i++) {ssq += buf[i] * buf[i];}
     var rms = Math.sqrt(ssq / N);
     if (rms < this._gate) {
       this.port.postMessage({ type: 'silence', rms: rms });
@@ -124,7 +124,7 @@ class YinProcessor extends AudioWorkletProcessor {
     var te = -1;
     for (let tau = this._tauMin; tau < this._tauMax; tau++) {
       if (cmnd[tau] < this._threshold) {
-        while (tau + 1 < this._tauMax && cmnd[tau + 1] < cmnd[tau]) tau++;
+        while (tau + 1 < this._tauMax && cmnd[tau + 1] < cmnd[tau]) {tau++;}
         te = tau;
         break;
       }
@@ -139,7 +139,7 @@ class YinProcessor extends AudioWorkletProcessor {
     if (te > 0 && te < this._tauMax) {
       var s0 = cmnd[te - 1], s1 = cmnd[te], s2 = cmnd[te + 1];
       var dn = 2 * s1 - s2 - s0;
-      if (dn !== 0) bt = te + (s2 - s0) / (2 * dn);
+      if (dn !== 0) {bt = te + (s2 - s0) / (2 * dn);}
     }
 
     /* Step 5: frequency + confidence */
@@ -158,7 +158,7 @@ class YinProcessor extends AudioWorkletProcessor {
     /* Auto-calibrate after 50 confident detections */
     if (!this._calDone && conf > 0.7) {
       this._calBuf.push(freq);
-      if (this._calBuf.length >= 50) this._autoCal();
+      if (this._calBuf.length >= 50) {this._autoCal();}
     }
 
     this.port.postMessage({
@@ -176,9 +176,9 @@ class YinProcessor extends AudioWorkletProcessor {
   _octLock(f, c) {
     if (this._prevFreq > 0 && c < 0.85) {
       var r = f / this._prevFreq;
-      if      (r > 1.8 && r < 2.2)               f /= 2;
-      else if (r > 0.45 && r < 0.55)             f *= 2;
-      else if (r > 1.4 && r < 1.6 && c < 0.80)   f /= 1.5;
+      if      (r > 1.8 && r < 2.2)               {f /= 2;}
+      else if (r > 0.45 && r < 0.55)             {f *= 2;}
+      else if (r > 1.4 && r < 1.6 && c < 0.80)   {f /= 1.5;}
     }
     this._prevFreq = f;
     return f;
@@ -187,8 +187,8 @@ class YinProcessor extends AudioWorkletProcessor {
   /* ── Range clamp (Level 3) ─────────────────────── */
 
   _rangeClamp(f) {
-    while (f > 0 && f < this._lo) f *= 2;
-    while (f > this._hi)          f /= 2;
+    while (f > 0 && f < this._lo) {f *= 2;}
+    while (f > this._hi)          {f /= 2;}
     return f;
   }
 
@@ -197,13 +197,13 @@ class YinProcessor extends AudioWorkletProcessor {
   _median(f) {
     this._medBuf[this._medIdx] = f;
     this._medIdx = (this._medIdx + 1) % this._medW;
-    if (this._medN < this._medW) this._medN++;
+    if (this._medN < this._medW) {this._medN++;}
 
     var a = [];
     for (var i = 0; i < this._medN; i++) {
-      if (this._medBuf[i] > 0) a.push(this._medBuf[i]);
+      if (this._medBuf[i] > 0) {a.push(this._medBuf[i]);}
     }
-    if (a.length === 0) return f;
+    if (a.length === 0) {return f;}
     a.sort(function(x, y) { return x - y; });
     return a[a.length >>> 1];
   }

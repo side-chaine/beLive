@@ -249,7 +249,7 @@ class TrackCatalog {
             const st = tx.objectStore('app_state');
             const req = st.get('catalog_cleared_v1');
             await new Promise((res, rej) => { req.onsuccess = res; req.onerror = rej; });
-            if (req.result && req.result.value === true) return;
+            if (req.result && req.result.value === true) {return;}
         } catch (_) {}
         const current = (window.__DB_NAME || 'TextAppDB');
         const candidates = ['TextAppDB', 'TextAppDB_DEV'].filter(n => n !== current);

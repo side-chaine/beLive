@@ -137,7 +137,7 @@ function checkA(
   // Collect all covered channel.event pairs from all wrappers
   const allCoveredPairs = new Set<string>()
   for (const w of wrappers) {
-    for (const ce of w.coveredChannelEvents) allCoveredPairs.add(ce)
+    for (const ce of w.coveredChannelEvents) {allCoveredPairs.add(ce)}
   }
 
   let covered = 0

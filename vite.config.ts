@@ -114,7 +114,7 @@ function copySignalsmithWorklet(): Plugin {
  */
 function resolveBuildSha(): string {
   const fromEnv = process.env.CF_PAGES_COMMIT_SHA
-  if (fromEnv && fromEnv.trim()) return fromEnv.trim().slice(0, 9)
+  if (fromEnv && fromEnv.trim()) {return fromEnv.trim().slice(0, 9)}
   try {
     return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
       .toString()

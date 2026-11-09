@@ -35,7 +35,9 @@ export default [
         { args: "none", varsIgnorePattern: "^_" },
       ],
       "no-console": "off",
-      "eqeqeq": "warn",
+      // N1c.2: 92/92 eqeqeq — это сравнения с null (`x == null` ловит
+      // undefined и null одновременно, замена на === меняет поведение).
+      "eqeqeq": ["warn", "always", { null: "ignore" }],
       "curly": "warn",
       "no-empty": "warn",
       "no-async-promise-executor": "warn",
@@ -54,7 +56,9 @@ export default [
     rules: {
       "no-unused-vars": ["warn", { args: "none", varsIgnorePattern: "^_" }],
       "no-console": "off",
-      "eqeqeq": "warn",
+      // N1c.2: 92/92 eqeqeq — это сравнения с null (`x == null` ловит
+      // undefined и null одновременно, замена на === меняет поведение).
+      "eqeqeq": ["warn", "always", { null: "ignore" }],
       "curly": "warn",
       "no-empty": "warn",
       "no-async-promise-executor": "warn",

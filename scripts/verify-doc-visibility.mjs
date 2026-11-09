@@ -29,7 +29,7 @@ for (const zone of PRIVATE_ZONES) {
   try { files = execSync(`find ${zone} -name '*.md' -type f`, { cwd: root, encoding: 'utf8' }).trim().split('\n').filter(Boolean); } catch { continue; }
   for (const f of files) {
     if (!isIgnored(f)) { leaks.push(`${f} — в приватной зоне, но НЕ под ignore (Д-16: уедет на GitHub при push!)`); }
-    else ok++;
+    else {ok++;}
   }
 }
 // Public docs must not be inside ignored zones (invisible class)
@@ -37,12 +37,12 @@ let pub = [];
 try { pub = execSync("git ls-files 'docs/**/*.md' 'docs/*.md'", { cwd: root, encoding: 'utf8' }).trim().split('\n').filter(Boolean); } catch {}
 for (const f of pub) {
   const z = zoneOf(f);
-  if (z) invisibles.push(`${f} — tracked, но внутри ignore-зоны ${z} (невидимка)`);
+  if (z) {invisibles.push(`${f} — tracked, но внутри ignore-зоны ${z} (невидимка)`);}
 }
 
 console.log(`verify-doc-visibility (G-3b): private-zone files=${ok} ignored ✓, УТЕЧЕК=${leaks.length}, невидимок=${invisibles.length}`);
-for (const l of leaks) console.log(`  🔴 LEAK: ${l}`);
-for (const i of invisibles) console.log(`  🟡 INVISIBLE: ${i}`);
-if (leaks.length === 0 && invisibles.length === 0) console.log('  ✅ граница публичности держится машиной');
+for (const l of leaks) {console.log(`  🔴 LEAK: ${l}`);}
+for (const i of invisibles) {console.log(`  🟡 INVISIBLE: ${i}`);}
+if (leaks.length === 0 && invisibles.length === 0) {console.log('  ✅ граница публичности держится машиной');}
 // Warn mode: leak would exit 2 in fail-mode (D-4 flip), for now warn
 process.exit(0);

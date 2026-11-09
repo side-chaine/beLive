@@ -89,7 +89,7 @@ export default function App() {
   const appMode = useUIStore(s => s.appMode);
 
   useEffect(() => {
-    if (surface !== 'app') return;
+    if (surface !== 'app') {return;}
     initTrackEventListeners();
     // const cleanupAudio = initAudioBridge();  // retired → audio-events in main.tsx
     // const cleanupLyrics = initLyricsBridge();  // retired → lyrics-events in main.tsx
@@ -151,7 +151,7 @@ export default function App() {
       useAppStore.getState().setSurface(isValid ? 'app' : 'welcome');
       useAppStore.getState().setAuthChecked(true);
       // JWT живёт 15 минут — продлеваем заранее, чтобы API не падал с 401
-      if (isValid && !disposed) stopKeepAlive = authService.startSessionKeepAlive();
+      if (isValid && !disposed) {stopKeepAlive = authService.startSessionKeepAlive();}
     };
 
     if (params.has('auth')) {
@@ -212,7 +212,7 @@ export default function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const postId = params.get('post');
-    if (!postId || surface !== 'app') return;
+    if (!postId || surface !== 'app') {return;}
 
     const timer = setTimeout(() => {
       const { posts, fetchFeed } = useFeedStore.getState();

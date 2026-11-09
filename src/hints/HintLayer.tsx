@@ -137,16 +137,16 @@ export function HintLayer() {
 
   /** Record the impression when the chalk leaves, exactly once per document. */
   const deliver = useCallback((id: HintId, refused: boolean) => {
-    if (deliveredThisDocument.has(id)) return;
+    if (deliveredThisDocument.has(id)) {return;}
     deliveredThisDocument.add(id);
     const s = useHintsStore.getState();
     s.noteShow(id);
-    if (refused) s.noteDismiss(id);
+    if (refused) {s.noteDismiss(id);}
   }, []);
 
   /** End a step for THIS visit. Deliberately never writes `completed[]`. */
   const finishStep = useCallback((id: HintId) => {
-    if (visibleRef.current) deliver(id, false);
+    if (visibleRef.current) {deliver(id, false);}
     setSessionDone((prev) => (prev.includes(id) ? prev : [...prev, id]));
   }, [deliver]);
 
@@ -156,7 +156,7 @@ export function HintLayer() {
     window.setTimeout(() => {
       // Evidence is written AFTER the fade: noteDismiss retires a learn-once
       // step immediately, and writing it earlier would cut the animation.
-      if (wasVisible) deliver(id, refused);
+      if (wasVisible) {deliver(id, refused);}
       setVisible(false);
       setLeaving(false);
       if (refused) {
@@ -177,7 +177,7 @@ export function HintLayer() {
 
   useEffect(() => {
     const problems = checkHintPools();
-    if (problems.length) console.warn('[hints] registry:', problems.join('; '));
+    if (problems.length) {console.warn('[hints] registry:', problems.join('; '));}
   }, []);
 
   /**
@@ -212,10 +212,10 @@ export function HintLayer() {
   useEffect(() => {
     for (const id of HINT_ORDER) {
       const s = HINT_REGISTRY[id];
-      if (!s?.completeOn || sessionDone.includes(id)) continue;
-      if (!seenThisVisit(s.completeOn)) continue;
+      if (!s?.completeOn || sessionDone.includes(id)) {continue;}
+      if (!seenThisVisit(s.completeOn)) {continue;}
       finishStep(id);
-      if (!s.repeatOnLoad && !completed.includes(id)) complete(id);
+      if (!s.repeatOnLoad && !completed.includes(id)) {complete(id);}
     }
   }, [seenThisVisit, sessionDone, completed, finishStep, complete]);
 
@@ -228,7 +228,7 @@ export function HintLayer() {
 
   // One random variant per load, never repeating the previous load's one.
   useEffect(() => {
-    if (!active || !spec) return;
+    if (!active || !spec) {return;}
     const key = `${spec.id}:${locale}`;
     let chosen = rolledThisDocument.get(key);
     if (!chosen) {
@@ -256,11 +256,11 @@ export function HintLayer() {
     let timer = 0;
     let tries = 0;
 
-    const measure = () => { if (el) setRect(toRect(el)); };
+    const measure = () => { if (el) {setRect(toRect(el));} };
     const seek = () => {
       el = document.querySelector<HTMLElement>(`[${HINT_ANCHOR_ATTR}="${spec.target}"]`);
       if (!el || el.getBoundingClientRect().width === 0) {
-        if (tries++ < 40) timer = window.setTimeout(seek, 50);
+        if (tries++ < 40) {timer = window.setTimeout(seek, 50);}
         return;
       }
       measure();
@@ -283,7 +283,7 @@ export function HintLayer() {
   // Enter on a short delay so the splash → deck handoff is visually settled,
   // then fade out on its own. No click required, ever.
   useEffect(() => {
-    if (!active || !rect || !variant || !spec) return;
+    if (!active || !rect || !variant || !spec) {return;}
     const inTimer = window.setTimeout(() => setVisible(true), HINT_IN_DELAY_MS);
     const ttlTimer = window.setTimeout(
       () => dismiss(spec.id, false),
@@ -298,8 +298,8 @@ export function HintLayer() {
   // Escape / direct click on the anchor also end the step quietly. A click is
   // NOT mastery: one curious tap must never retire a learn-once step.
   useEffect(() => {
-    if (!active || !spec || !visible) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') dismiss(spec.id, false); };
+    if (!active || !spec || !visible) {return;}
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') {dismiss(spec.id, false);} };
     const anchor = document.querySelector<HTMLElement>(`[${HINT_ANCHOR_ATTR}="${spec.target}"]`);
     const onAnchor = () => { finishStep(spec.id); dismiss(spec.id, false); };
     window.addEventListener('keydown', onKey);
@@ -310,7 +310,7 @@ export function HintLayer() {
     };
   }, [active, spec, visible, dismiss, finishStep]);
 
-  if (!active || !spec || !rect || !variant || (!visible && !leaving)) return null;
+  if (!active || !spec || !rect || !variant || (!visible && !leaving)) {return null;}
 
   const p = place(spec, rect);
   // Observable for the CDP witnesses: which pool index is on screen right now.

@@ -1013,7 +1013,7 @@ async function extractMentions(
   while ((match = MENTION_RE.exec(text)) !== null && handles.size < MAX_MENTIONS) {
     handles.add(match[1].toLowerCase());
   }
-  if (handles.size === 0) return;
+  if (handles.size === 0) {return;}
 
   const handleList = [...handles];
   const placeholders = handleList.map(() => '?').join(',');
@@ -1022,7 +1022,7 @@ async function extractMentions(
   ) as any).bind(...handleList, auth.sub).all();
 
   const mentionedUsers = (users.results || []) as Array<{ user_id: string }>;
-  if (mentionedUsers.length === 0) return;
+  if (mentionedUsers.length === 0) {return;}
 
   const inserts: any[] = [];
   const now = new Date().toISOString();

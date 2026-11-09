@@ -68,7 +68,7 @@ function parseFilename(filename: string): { artist: string; title: string } {
   const withoutNumber = cleaned.replace(/^\d{1,3}\s*[–-]\s*/, '');
   // Парсим "Artist - Title"
   const match = withoutNumber.match(/^(.+?)\s*[–-]\s*(.+)$/);
-  if (!match) return { artist: 'Linkin Park', title: withoutNumber };
+  if (!match) {return { artist: 'Linkin Park', title: withoutNumber };}
   return { artist: match[1].trim(), title: match[2].trim() };
 }
 
@@ -77,7 +77,7 @@ function extractAlbumFromPath(filePath: string): { album: string; year: number }
   const parts = filePath.split('/');
   for (const part of parts) {
     const match = part.match(/^(\d{4})\s*[–-]\s*(.+)$/);
-    if (match) return { album: match[2].trim(), year: parseInt(match[1]) };
+    if (match) {return { album: match[2].trim(), year: parseInt(match[1]) };}
   }
   return { album: 'Unknown', year: 0 };
 }
@@ -115,7 +115,7 @@ async function sendToTelegram(filePath: string, fileName: string): Promise<{ ok:
 
   const data: any = await res.json();
   const fileId = data?.result?.document?.file_id;
-  if (!fileId) return { ok: false, error: 'No file_id in response' };
+  if (!fileId) {return { ok: false, error: 'No file_id in response' };}
 
   return { ok: true, fileId };
 }
