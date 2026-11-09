@@ -1,0 +1,47 @@
+name: Roadmap graph freshness
+
+# Checks that the generated Mermaid + interactive graph are in sync with
+# docs/roadmap/roadmap-data.json. Deliberately READ-ONLY: main is protected
+# (Require PR + status checks), so an Action must never auto-commit to it.
+#
+# Runs on EVERY pull request, not only on docs/roadmap/** changes: a PR that
+# changes a task status without regenerating the graph is exactly the drift
+# this gate exists to catch. Zero dependencies => ~1 s, no npm install.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: roadmap-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: roadmap in sync
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify graph freshness
+        env:
+          ROADMAP_DIR: docs/roadmap
+          # Informational only. A push to main always advances HEAD, so the
+          # snapshot SHA in the JSON is expected to lag by one merge.
+          EXPECTED_MAIN: ${{ github.event_name == 'push' && github.sha || '' }}
+        run: node scripts/generate-roadmap.mjs --check
+
+      # Exit codes: 1 = STALE (forgot --write), 3 = INVALID DATA (schema/typo).
+      # A stale graph is a real defect: someone changed the source of truth
+      # without regenerating, so the three heads see different pictures.
