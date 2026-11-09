@@ -4,6 +4,7 @@ import { QuickActions } from './QuickActions';
 import { useModeStore } from '../stores/mode.store';
 import { useUIStore } from '../stores/ui.store';
 import { CurrentTrackBadge } from './CurrentTrackBadge';
+import { AiCoachHeaderButton } from '../features/ai-coach';
 
 
 /** Neutral header accent while no mode has been actively chosen. */
@@ -82,6 +83,7 @@ export function Header() {
 
       {/* RIGHT: QuickActions */}
       <div style={{ flex: '0 1 420px', minWidth: 0, display: 'flex', justifyContent: 'flex-end', gap: 8, alignItems: 'center' }}>
+        <AiCoachHeaderButton />
         <QuickActions />
       </div>
     </div>

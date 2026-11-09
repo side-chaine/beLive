@@ -2,12 +2,14 @@
  * MVSEP Service — Stem Separation API Integration
  * TC-MVSEP-001: Core service for MVSEP API communication
  *
- * Разделение идёт через CF Worker proxy (JWT auth). Прямого вызова MVSEP с
+ * Разделение идёт ТОЛЬКО через CF Worker proxy (JWT auth). Прямого вызова MVSEP с
  * ключом из бандла нет: MVSEP_API_KEY живёт только в воркере (`wrangler secret`).
  */
 
 import { useUserProfileStore } from '../stores/user-profile.store';
+import { useMvsepKeyStore } from '../stores/mvsep-key.store';
 import { useMvsepStore } from '../stores/mvsep.store';
+import { authService } from './auth.service';
 import {
   classifyStemFromFilename,
   getFileNameWithoutExtension,
@@ -50,10 +52,33 @@ export interface MvsepSubmitResult {
   keySource: MvsepKeySource;
 }
 
+/**
+ * Типизированная ошибка слоя MVSEP. `message` начинается с `code`, поэтому
+ * старый код, сравнивающий строки, не ломается; новый смотрит на `.code`.
+ *
+ * Коды: AUTH_REQUIRED (сессия beLive), MVSEP_KEY_INVALID (ключ MVSEP отвергнут),
+ * FILE_TOO_LARGE, CONCURRENT_LIMIT, MVSEP_LIMIT_REACHED, MVSEP_SUBMIT_ERROR_<n>,
+ * MVSEP_API_ERROR, MVSEP_NO_HASH, MVSEP_STATUS_HTTP_<n>, MVSEP_STATUS_FETCH_ERROR_<n>,
+ * MVSEP_NOT_READY, MVSEP_NO_FILES, MVSEP_NO_INSTRUMENTAL, DOWNLOAD_ERROR_<n>.
+ */
+export class MvsepError extends Error {
+  readonly code: string;
+  constructor(code: string, detail?: string) {
+    super(detail ? `${code}: ${detail}` : code);
+    this.name = 'MvsepError';
+    this.code = code;
+  }
+}
+
+/** Ошибка «нужно войти / обновить сессию beLive» (не путать с невалидным ключом MVSEP). */
+export function isMvsepAuthError(err: unknown): boolean {
+  return err instanceof MvsepError && err.code === 'AUTH_REQUIRED';
+}
+
 // ─── Key Resolution ──────────────────────────────────────────
 
 export function resolveApiKey(): { key: string; source: MvsepKeySource } {
-  const userKey = useUserProfileStore.getState().currentUser?.mvsepApiKey;
+  const userKey = useMvsepKeyStore.getState().apiKey;
   if (userKey?.trim()) {
     return { key: userKey.trim(), source: 'user' };
   }
@@ -154,210 +179,347 @@ export function getDailyUsageInfo(): { used: number; limit: number; date: string
   };
 }
 
+// ─── Worker transport (JWT + silent refresh) ─────────────────
+
+function getAuthToken(): string {
+  return useUserProfileStore.getState().currentUser?.authToken || '';
+}
+
+let refreshInFlight: Promise<boolean> | null = null;
+
+/**
+ * Обновить JWT через cookie-сессию. Параллельные вызовы делят один запрос
+ * (несколько стемов качаются одновременно и могут словить 401 разом).
+ */
+function refreshAuthToken(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      try {
+        const session = await authService.refreshSession();
+        if (!session) {return false;}
+        await authService.applySession(session);
+        return !!getAuthToken();
+      } catch {
+        return false;
+      } finally {
+        refreshInFlight = null;
+      }
+    })();
+  }
+  return refreshInFlight;
+}
+
+/**
+ * 401 именно от воркера beLive (наш JWT), а не от MVSEP. Воркер пробрасывает
+ * статус MVSEP как есть (belive-mvsep/index.js:157), поэтому по одному коду их
+ * не различить; свои 401 воркер помечает `errors: ['AUTH_REQUIRED'|'INVALID_TOKEN']`
+ * (index.js:249-257). Нечитаемое тело трактуем как «наш» 401 — лишний refresh безвреден.
+ */
+async function isWorkerAuthRejection(resp: Response): Promise<boolean> {
+  try {
+    const body = await resp.clone().json();
+    const errors: unknown = body?.errors;
+    return (
+      Array.isArray(errors) &&
+      errors.some((e) => e === 'AUTH_REQUIRED' || e === 'INVALID_TOKEN')
+    );
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * fetch к воркеру с JWT. Нет токена или воркер ответил «наш» 401 → один refresh
+ * и один повтор; если не помогло — `AUTH_REQUIRED`. 401 от MVSEP (неверный ключ)
+ * возвращается вызывающему как есть.
+ */
+async function workerFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  const send = (): Promise<Response> =>
+    fetch(`${MVSEP_WORKER_URL}${path}`, {
+      ...init,
+      headers: {
+        ...((init.headers as Record<string, string> | undefined) ?? {}),
+        Authorization: `Bearer ${getAuthToken()}`,
+      },
+    });
+
+  if (!getAuthToken() && !(await refreshAuthToken())) {
+    throw new MvsepError('AUTH_REQUIRED');
+  }
+
+  let resp = await send();
+  if (resp.status === 401 && (await isWorkerAuthRejection(resp))) {
+    if (!(await refreshAuthToken())) {throw new MvsepError('AUTH_REQUIRED');}
+    resp = await send();
+    if (resp.status === 401 && (await isWorkerAuthRejection(resp))) {
+      throw new MvsepError('AUTH_REQUIRED');
+    }
+  }
+  return resp;
+}
+
+/**
+ * Живой ответ MVSEP на неверный ключ (зонд 707, 07.11.2026):
+ * HTTP 401 `{"success":false,"errors":["invalid token"],"data":{"message":"invalid token. …"}}`.
+ * Регэксп — запас на другие формулировки (сброс ключа, `api_key`, `unauthorized`).
+ */
+const KEY_INVALID_RE = /token|api.?key|unauthor/i;
+
+/** Текст ошибки из любой известной формы ответа: `errors[]`, `data.message`, `message`, `error`. */
+function extractMvsepMessage(body: any): string {
+  if (!body || typeof body !== 'object') {return '';}
+  const candidates = [
+    Array.isArray(body.errors) ? body.errors.join(', ') : body.errors,
+    body.data?.message,
+    body.message,
+    body.error,
+  ];
+  const hit = candidates.find((c) => typeof c === 'string' && c.trim());
+  return hit ? String(hit) : '';
+}
+
 // ─── API: Submit Track ───────────────────────────────────────
 
 export async function submitTrack(
   fileData: ArrayBuffer,
   fileName: string,
-  apiKey?: string
 ): Promise<MvsepSubmitResult> {
   if (fileData.byteLength > MVSEP_MAX_FILE_SIZE) {
-    throw new Error('FILE_TOO_LARGE');
+    throw new MvsepError('FILE_TOO_LARGE');
   }
-
-  // Path 1: CF Worker proxy (Phase 1.5)
-  if (MVSEP_WORKER_URL) {
-    const authToken = useUserProfileStore.getState().currentUser?.authToken;
-    if (!authToken) throw new Error('AUTH_REQUIRED');
-
-    const formData = new FormData();
-    formData.append('audiofile', new Blob([fileData]), fileName);
-    formData.append('sep_type', String(MVSEP_RENDER_ID));
-    formData.append('output_format', String(MVSEP_OUTPUT_FORMAT));
-
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${authToken}`,
-    };
-    const userKey = useUserProfileStore.getState().currentUser?.mvsepApiKey;
-    if (userKey?.trim()) {
-      headers['X-Mvsep-User-Key'] = userKey.trim();
-    }
-
-    const resp = await fetch(`${MVSEP_WORKER_URL}/submit`, {
-      method: 'POST', headers, body: formData,
-    });
-
-    if (resp.status === 401) throw new Error('AUTH_REQUIRED');
-    if (resp.status === 429) {
-      const json = await resp.json();
-      if (json.code === 'CONCURRENT_LIMIT') throw new Error('CONCURRENT_LIMIT');
-      throw new Error('MVSEP_LIMIT_REACHED');
-    }
-    if (!resp.ok) throw new Error(`MVSEP_SUBMIT_ERROR_${resp.status}`);
-
-    const json = await resp.json();
-    if (json.status === 'error') {
-      throw new Error(`MVSEP_API_ERROR: ${json.errors?.join(', ') || 'Unknown'}`);
-    }
-    if (!json.data?.hash) throw new Error('MVSEP_NO_HASH');
-
-    const keySource: MvsepKeySource = json.quota?.keySource || 'beLive';
-    return { hash: json.data.hash, keySource };
-  }
-
-  // Path 2: Direct MVSEP API (fallback — user key only)
-  const { key, source } = apiKey ? { key: apiKey, source: 'user' as MvsepKeySource } : resolveApiKey();
-  if (!key) throw new Error('NO_API_KEY');
 
   const formData = new FormData();
   formData.append('audiofile', new Blob([fileData]), fileName);
   formData.append('sep_type', String(MVSEP_RENDER_ID));
   formData.append('output_format', String(MVSEP_OUTPUT_FORMAT));
-  formData.append('api_token', key);
 
-  const resp = await fetch('https://mvsep.com/api/separation/create', {
-    method: 'POST', body: formData,
-  });
+  const headers: Record<string, string> = {};
+  const userKey = useMvsepKeyStore.getState().apiKey?.trim();
+  if (userKey) {headers['X-Mvsep-User-Key'] = userKey;}
 
-  if (resp.status === 403) throw new Error('MVSEP_LIMIT_REACHED');
-  if (!resp.ok) throw new Error(`MVSEP_SUBMIT_ERROR_${resp.status}`);
+  const resp = await workerFetch('/submit', { method: 'POST', headers, body: formData });
+
+  // Сюда 401 доходит только если он НЕ от нашего воркера (см. workerFetch) —
+  // т.е. от MVSEP. С пользовательским ключом это «ключ невалиден» (D8).
+  if (resp.status === 401) {
+    throw userKey
+      ? new MvsepError('MVSEP_KEY_INVALID')
+      : new MvsepError('MVSEP_SUBMIT_ERROR_401');
+  }
+  if (resp.status === 429) {
+    const body = await resp.json().catch(() => ({}));
+    if (body?.code === 'CONCURRENT_LIMIT') {throw new MvsepError('CONCURRENT_LIMIT');}
+    throw new MvsepError('MVSEP_LIMIT_REACHED');
+  }
+  if (!resp.ok) {
+    const text = extractMvsepMessage(await resp.json().catch(() => null));
+    if (KEY_INVALID_RE.test(text)) {throw new MvsepError('MVSEP_KEY_INVALID');}
+    throw new MvsepError(`MVSEP_SUBMIT_ERROR_${resp.status}`, text || undefined);
+  }
 
   const json = await resp.json();
-  if (json.status === 'error') {
-    const errors = json.errors?.join(', ') || 'Unknown MVSEP error';
-    if (errors.includes('limit') || errors.includes('Limit')) throw new Error('MVSEP_LIMIT_REACHED');
-    throw new Error(`MVSEP_API_ERROR: ${errors}`);
+  // Живой ответ MVSEP на успех: `{success:true, data:{link, hash}}` — поля `status` НЕТ
+  // (старый код ждал `status==='ok'`). Ошибку признаём по любому из двух признаков.
+  if (json.status === 'error' || json.success === false) {
+    const errors = extractMvsepMessage(json) || 'Unknown';
+    if (KEY_INVALID_RE.test(errors)) {throw new MvsepError('MVSEP_KEY_INVALID');}
+    if (/limit/i.test(errors)) {throw new MvsepError('MVSEP_LIMIT_REACHED');}
+    throw new MvsepError('MVSEP_API_ERROR', errors);
   }
-  if (!json.data?.hash) throw new Error('MVSEP_NO_HASH');
+  if (!json.data?.hash) {throw new MvsepError('MVSEP_NO_HASH');}
 
-  return { hash: json.data.hash, keySource: source };
+  const keySource: MvsepKeySource = json.quota?.keySource || (userKey ? 'user' : 'beLive');
+  return { hash: json.data.hash, keySource };
 }
 
 // ─── API: Poll Status ────────────────────────────────────────
 
 /**
- * Заголовок авторизации для воркера belive-mvsep.
+ * Статус джобы MVSEP.
  *
- * /status и /download теперь требуют тот же JWT HS256, что /submit:
- * раньше они были открыты, /status жёг наш MVSEP_API_KEY на анонимные
- * запросы, а /download работал открытым прокси.
+ * Контракт (R2/R3): функция НЕ возвращает 'error'. Транспорт, 401 после refresh
+ * и не-2xx ответы — это БРОСОК (вызывающий решает: пауза/повтор, а не «failed»).
+ * Неизвестный статус MVSEP = 'processing'.
  */
-function workerAuthHeaders(): Record<string, string> {
-  const token = useUserProfileStore.getState().currentUser?.authToken;
-  if (!token) throw new Error('AUTH_REQUIRED');
-  return { Authorization: `Bearer ${token}` };
-}
-
 export async function pollStatus(hash: string): Promise<MvsepJobStatus> {
-  if (MVSEP_WORKER_URL) {
-    // Поллинг не должен бросать: без токена просто сообщаем 'error',
-    // вызывающий цикл сам решит, что делать.
-    const token = useUserProfileStore.getState().currentUser?.authToken;
-    if (!token) return 'error';
-    const resp = await fetch(`${MVSEP_WORKER_URL}/status?hash=${encodeURIComponent(hash)}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!resp.ok) return 'error';
-    const json = await resp.json();
-    return mapMvsepStatus(json.status);
-  }
-
-  // Direct fallback
-  const { key } = resolveApiKey();
-  const url = `https://mvsep.com/api/separation/get?hash=${hash}${key ? `&api_token=${key}` : ''}`;
-  const resp = await fetch(url);
-  if (!resp.ok) return 'error';
+  const resp = await workerFetch(`/status?hash=${encodeURIComponent(hash)}`);
+  if (!resp.ok) {throw new MvsepError(`MVSEP_STATUS_HTTP_${resp.status}`);}
   const json = await resp.json();
-  return mapMvsepStatus(json.status);
+  return mapMvsepStatus(json?.status);
 }
 
-function mapMvsepStatus(status: string): MvsepJobStatus {
-  if (status === 'done') return 'done';
-  if (status === 'failed') return 'failed';
-  if (status === 'not_found') return 'not_found';
-  if (status === 'processing') return 'processing';
-  if (status === 'waiting') return 'waiting';
-  return 'error';
+const warnedStatuses = new Set<string>();
+
+/**
+ * Док MVSEP 🌐: not_found, waiting, processing, distributing, merging, done, failed.
+ * distributing/merging — штатные промежуточные стадии (D2): раньше они падали в
+ * 'error' и убивали джобу. Всё неизвестное — тоже 'processing' (+ один warn).
+ */
+export function mapMvsepStatus(status: unknown): MvsepJobStatus {
+  switch (status) {
+    case 'done': return 'done';
+    case 'failed': return 'failed';
+    case 'not_found': return 'not_found';
+    case 'waiting': return 'waiting';
+    case 'processing':
+    case 'distributing':
+    case 'merging':
+      return 'processing';
+    default: {
+      const label = String(status);
+      if (!warnedStatuses.has(label)) {
+        warnedStatuses.add(label);
+        console.warn(`[MVSEP] unknown status "${label}" — treating as processing`);
+      }
+      return 'processing';
+    }
+  }
+}
+
+// ─── Stem classification (MVSEP download path) ───────────────
+
+/** Токен имени файла → id слота (те же id, что у `classifyStemFromFilename`: пианино = `keys`). */
+const STEM_TOKEN_TO_SLOT: Readonly<Record<string, string>> = {
+  vocals: 'vocals', vocal: 'vocals', vox: 'vocals',
+  drums: 'drums', drum: 'drums',
+  bass: 'bass',
+  piano: 'keys', keys: 'keys', synth: 'keys',
+  guitar: 'guitar', gtr: 'guitar',
+  other: 'other',
+  instrum: 'instrumental', instrumental: 'instrumental', instrumentals: 'instrumental',
+  karaoke: 'instrumental', accompaniment: 'instrumental',
+};
+
+function tokenizeName(name: string): string[] {
+  return name.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+}
+
+/**
+ * Классификация ВСЕХ файлов одной джобы разом → массив id слотов (по порядку).
+ *
+ * Почему не `classifyStemFromFilename` по одному файлу: он ищет подстроки по
+ * всему имени, а в имени есть НАЗВАНИЕ ТРЕКА («Guitar Hero», «The Other Side»
+ * дадут guitar/other для каждого файла), а неопознанный файл он по ZIP-семантике
+ * считает инструменталом (молчаливая подмена). Здесь название, модель и формат
+ * одинаковы у всех файлов джобы → токены, общие для всех файлов, выбрасываются,
+ * и остаётся только метка стема. Формат имён MVSEP не нужно знать заранее.
+ * Что не опознано — `unknown_<i>` (+ warn), а не инструментал.
+ * Сам `classifyStemFromFilename` не меняем (ZIP-путь).
+ */
+export function classifyMvsepFiles(baseNames: string[]): string[] {
+  const tokenLists = baseNames.map(tokenizeName);
+
+  // Сколько раз токен встречается в КАЖДОМ файле (минимум по файлам) — «общая часть»
+  // (название, модель, формат). Метка стема добавляет токену ещё одно вхождение, поэтому
+  // даже название трека со словом «Vocals» не прячет метку «Vocals».
+  const counts = tokenLists.map((list) => {
+    const m = new Map<string, number>();
+    for (const t of list) {m.set(t, (m.get(t) ?? 0) + 1);}
+    return m;
+  });
+  const commonCount = new Map<string, number>();
+  if (counts.length >= 2) {
+    for (const [tok, n] of counts[0]) {
+      commonCount.set(tok, Math.min(n, ...counts.slice(1).map((c) => c.get(tok) ?? 0)));
+    }
+  }
+  const isCommon = (i: number, tok: string): boolean =>
+    (counts[i].get(tok) ?? 0) <= (commonCount.get(tok) ?? 0);
+
+  return baseNames.map((name, i) => {
+    const all = tokenLists[i];
+    const diff = all.filter((t) => !isCommon(i, t));
+    // Метка стема, общая для всех файлов (бывает у наборов из 2 файлов), не должна
+    // «исчезнуть»: если после выбрасывания общего ничего не осталось — смотрим всё имя.
+    const toks = diff.length > 0 ? diff : all;
+
+    // «No Vocals» / «without vocals» — инструментал, а не вокал. Отрицание берём
+    // только из различающейся части, чтобы «No Vocals Here» в НАЗВАНИИ трека не сработало.
+    for (let k = 0; k < all.length; k++) {
+      const next = all[k + 1] ?? '';
+      const distinct = !isCommon(i, all[k]);
+      if (
+        (distinct && (all[k] === 'novocals' || all[k] === 'novocal')) ||
+        (distinct && (all[k] === 'no' || all[k] === 'without') && /^vocals?$/.test(next))
+      ) {
+        return 'instrumental';
+      }
+    }
+    for (const tok of toks) {
+      const slot = STEM_TOKEN_TO_SLOT[tok];
+      if (slot) {return slot;}
+    }
+    // Метка могла быть склеена с другим словом — старый классификатор, но только по «хвосту»
+    if (toks.length > 0) {
+      const legacy = classifyStemFromFilename(`_${toks.join('_')}_`);
+      if (legacy) {return legacy;}
+    }
+    console.warn(`[MVSEP] unclassified stem file "${name}" → unknown_${i}`);
+    return `unknown_${i}`;
+  });
 }
 
 // ─── API: Download Stems ─────────────────────────────────────
 
 export async function downloadStems(hash: string): Promise<Map<string, Blob>> {
-  // Get files list first (need to know what to download)
-  let files: MvsepFileResult[];
-
-  if (MVSEP_WORKER_URL) {
-    const resp = await fetch(`${MVSEP_WORKER_URL}/status?hash=${encodeURIComponent(hash)}`, {
-      headers: workerAuthHeaders(),
-    });
-    if (!resp.ok) throw new Error(`MVSEP_STATUS_FETCH_ERROR_${resp.status}`);
-    const json = await resp.json();
-    if (json.status !== 'done' || !json.data?.files) {
-      throw new Error(`MVSEP_NOT_READY: status=${json.status}`);
-    }
-    files = json.data.files;
-  } else {
-    const { key } = resolveApiKey();
-    const url = `https://mvsep.com/api/separation/get?hash=${hash}${key ? `&api_token=${key}` : ''}`;
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`MVSEP_STATUS_FETCH_ERROR_${resp.status}`);
-    const json = await resp.json();
-    if (json.status !== 'done' || !json.data?.files) {
-      throw new Error(`MVSEP_NOT_READY: status=${json.status}`);
-    }
-    files = json.data.files;
+  const statusResp = await workerFetch(`/status?hash=${encodeURIComponent(hash)}`);
+  if (!statusResp.ok) {throw new MvsepError(`MVSEP_STATUS_FETCH_ERROR_${statusResp.status}`);}
+  const json = await statusResp.json();
+  if (json.status !== 'done' || !json.data?.files) {
+    throw new MvsepError('MVSEP_NOT_READY', `status=${json.status}`);
   }
+  const files: MvsepFileResult[] = json.data.files;
+  if (files.length === 0) {throw new MvsepError('MVSEP_NO_FILES');}
 
-  if (files.length === 0) throw new Error('MVSEP_NO_FILES');
+  // R6: ВСЕ скачивания идут через /download воркера, независимо от keySource.
+  // Раньше прокси включался только при keySource==='beLive', а keySource жил в
+  // не-персистентном сторе → после перезагрузки BYOK-стемы шли напрямую (D6).
+  const baseNames = files.map((f) => getFileNameWithoutExtension(f.download));
+  const keys = classifyMvsepFiles(baseNames);
+  const results = await Promise.all(
+    files.map(async (file, i) => {
+      const blob = await downloadViaWorker(file.url);
+      return { key: keys[i], blob, baseName: baseNames[i] };
+    }),
+  );
 
   const stemMap = new Map<string, Blob>();
-  const keySource = useMvsepStore.getState().activeJobs.get(hash)?.keySource;
-
-  const downloadTasks = files.map(async (file) => {
-    const baseName = getFileNameWithoutExtension(file.download);
-    const stemId = classifyStemFromFilename(baseName);
-    const key = stemId || 'instrumental';
-    let blob: Blob;
-    if (MVSEP_WORKER_URL && keySource === 'beLive') {
-      const resp = await fetch(
-        `${MVSEP_WORKER_URL}/download?url=${encodeURIComponent(file.url)}`,
-        { headers: workerAuthHeaders() },
-      );
-      if (!resp.ok) throw new Error(`DOWNLOAD_ERROR_${resp.status}: ${key}`);
-      blob = await resp.blob();
-    } else {
-      blob = await downloadWithRetry(file.url);
-    }
-    return { key, blob };
-  });
-
-  const results = await Promise.all(downloadTasks);
   for (const { key, blob } of results) {
-    if (!stemMap.has(key)) stemMap.set(key, blob);
+    if (!stemMap.has(key)) {stemMap.set(key, blob);}
   }
 
   if (!stemMap.has('instrumental')) {
-    throw new Error('MVSEP_NO_INSTRUMENTAL');
+    // Политика «нет инструментала» (D1/Q5) решается после замера H3 — здесь
+    // поведение прежнее, но в ошибке теперь имена файлов для диагностики.
+    throw new MvsepError(
+      'MVSEP_NO_INSTRUMENTAL',
+      results.map((r) => r.baseName).join(' | '),
+    );
   }
 
   return stemMap;
 }
 
-async function downloadWithRetry(url: string): Promise<Blob> {
-  let lastError: Error | null = null;
+/** Ретраи на сетевые сбои и 5xx/429/408; 401 уже обработан в workerFetch, прочие 4xx — сразу. */
+async function downloadViaWorker(url: string): Promise<Blob> {
+  let lastError: unknown = null;
   for (let attempt = 0; attempt < DOWNLOAD_RETRIES; attempt++) {
+    let retryable = true;
     try {
-      const resp = await fetch(url);
-      if (!resp.ok) throw new Error(`HTTP_${resp.status}`);
-      return await resp.blob();
-    } catch (err: any) {
-      lastError = err;
-      if (attempt < DOWNLOAD_RETRIES - 1) {
-        await sleep(DOWNLOAD_RETRY_DELAYS[attempt]);
-      }
+      const resp = await workerFetch(`/download?url=${encodeURIComponent(url)}`);
+      if (resp.ok) {return await resp.blob();}
+      retryable = resp.status >= 500 || resp.status === 429 || resp.status === 408;
+      lastError = new MvsepError(`DOWNLOAD_ERROR_${resp.status}`);
+    } catch (err) {
+      if (isMvsepAuthError(err)) {throw err;}
+      lastError = err; // сеть / обрыв чтения тела — ретраим
+    }
+    if (!retryable) {throw lastError;}
+    if (attempt < DOWNLOAD_RETRIES - 1) {
+      await sleep(DOWNLOAD_RETRY_DELAYS[attempt]);
     }
   }
-  throw lastError || new Error('DOWNLOAD_FAILED');
+  throw lastError || new MvsepError('DOWNLOAD_FAILED');
 }
 
 function sleep(ms: number): Promise<void> {
