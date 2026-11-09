@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>beLive · Единый граф дорожной карты</title>
+<style>
+:root{
+  --bg:#0c1118; --panel:#141c27; --panel2:#182231; --line:#2a394d;
+  --tx:#e6eef9; --tx2:#9fb0c6; --tx3:#6f829b;
+  --done:#39d98a; --active:#ffc44d; --queued:#5b6b82; --risk:#ff6b6b; --gate:#6aa9ff;
+  --doneBg:#123224; --activeBg:#43300f; --queuedBg:#1a2331; --riskBg:#3d1a1a; --gateBg:#172943;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1500px;margin:0 auto;padding:18px 20px 28px}
+header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:12px}
+h1{margin:0;font-size:20px;letter-spacing:.2px}
+.sub{color:var(--tx2);font-size:12px}
+.sha{font-family:ui-monospace,Consolas,monospace;color:var(--gate);background:var(--gateBg);padding:2px 8px;border-radius:5px;font-size:12px}
+.kpis{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:14px 0 6px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+.kpi b{display:block;font-size:17px;color:var(--done);font-family:ui-monospace,Consolas,monospace}
+.kpi span{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.6px}
+.drift{color:var(--tx3);font-size:11px;margin-bottom:16px;font-family:ui-monospace,Consolas,monospace}
+.drift em{color:var(--active);font-style:normal}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--tx2);margin:22px 0 10px;font-weight:600}
+h2 small{font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx3);margin-left:8px}
+.track{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:6px}
+.node{position:relative;min-width:118px;flex:1 1 0;background:var(--queuedBg);border:1px solid var(--queued);border-radius:9px;padding:10px 9px;cursor:pointer;transition:transform .12s,border-color .12s}
+.node:hover{transform:translateY(-3px)}
+.node+.node{margin-left:20px}
+.node+.node:before{content:"→";position:absolute;left:-19px;top:50%;transform:translateY(-50%);color:var(--tx3);font-size:15px}
+.node .id{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--tx3)}
+.node .nm{font-size:12px;font-weight:600;margin:3px 0 6px;line-height:1.3}
+.node .st{font-size:10px;color:var(--tx2);line-height:1.35}
+.node .bar{height:3px;border-radius:2px;background:#26344a;margin-top:8px;overflow:hidden}
+.node .bar i{display:block;height:100%;background:currentColor}
+.node.done{background:var(--doneBg);border-color:var(--done);color:var(--done)}
+.node.active{background:var(--activeBg);border-color:var(--active);color:var(--active)}
+.node.risk{background:var(--riskBg);border-color:var(--risk);color:var(--risk)}
+.node.queued{color:var(--queued)}
+.node.done .nm,.node.active .nm,.node.risk .nm{color:var(--tx)}
+.node.active:after{content:"ГДЕ МЫ";position:absolute;top:-9px;right:6px;background:var(--active);color:#1a1204;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.5px}
+.cols{display:grid;grid-template-columns:1.55fr 1fr;gap:16px}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.card{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--done);border-radius:7px;padding:9px 11px;cursor:pointer}
+.card:hover{background:var(--panel2)}
+.card.wait{border-left-color:var(--active)}
+.card .t{font-size:12px;font-weight:600}
+.card .d{font-size:11px;color:var(--tx2);margin-top:3px}
+.card .p{font-family:ui-monospace,Consolas,monospace;font-size:10px;color:var(--tx3);margin-top:5px}
+.open{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:4px 12px}
+.open div{padding:8px 0;border-bottom:1px solid var(--line);font-size:11.5px;color:var(--tx2);cursor:pointer}
+.open div:last-child{border:0}
+.open div b{color:var(--active);font-weight:600}
+.detail{margin-top:16px;background:var(--panel);border:1px solid var(--gate);border-radius:9px;padding:14px 16px;min-height:88px}
+.detail h3{margin:0 0 6px;font-size:14px;color:var(--gate)}
+.detail p{margin:4px 0;color:var(--tx2);font-size:12px}
+.detail code{background:#101a28;padding:1px 5px;border-radius:4px;color:var(--active);font-size:11px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:18px;color:var(--tx3);font-size:11px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
+footer{margin-top:16px;color:var(--tx3);font-size:10.5px;border-top:1px solid var(--line);padding-top:10px}
+@media(max-width:1000px){.cols{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>beLive · Единый граф</h1>
+  <span class="sha" id="sha"></span>
+  <span class="sub">Где мы · Куда идём · Кто держит · Что ждёт GO</span>
+</header>
+
+<div class="kpis" id="kpis"></div>
+<div class="drift" id="drift"></div>
+
+<h2>Магистраль модернизации <small>канон NODES.md · нумерация NODE-IDS.md · кликни на узел</small></h2>
+<div class="track" id="track"></div>
+
+<div class="cols">
+  <div>
+    <h2>Продуктовые линии <small>уже в main</small></h2>
+    <div class="cards" id="cards"></div>
+  </div>
+  <div>
+    <h2>Ждёт решения Никиты <small>не решаем за него</small></h2>
+    <div class="open" id="open"></div>
+  </div>
+</div>
+
+<div class="detail" id="detail"></div>
+
+<div class="legend">
+  <span><i style="background:var(--done)"></i>в main / закрыто</span>
+  <span><i style="background:var(--active)"></i>в работе</span>
+  <span><i style="background:var(--queued)"></i>очередь</span>
+  <span><i style="background:var(--risk)"></i>высокий риск</span>
+  <span><i style="background:var(--gate)"></i>гейты / фундамент</span>
+</div>
+
+<footer>
+Источник: board/roadmap-data.json · генерируется scripts/generate-roadmap.mjs · Mermaid-канон: board/ROADMAP.md.
+Данные правит только командующий (707 / CEO). <span id="stamp"></span>
+</footer>
+</div>
+
+<script>
+/*DATA:START*/
+const DATA = {
+  "schema": "belive.roadmap.v1",
+  "generated": "2026-11-09T18:30:00+03:00",
+  "main": "ca45f643",
+  "command": "707 · комбинированная работа (WorkBuddy + WSL-harness) · до ~20:12",
+  "drift": "9c7c37b → f0717e1 (#54/#55) → 0464dd5 (#56) → fd9a113 (#57/#58) → ca45f643 (#59)",
+  "kpi": [
+    [
+      "0",
+      "tsc typecheck"
+    ],
+    [
+      "647/651",
+      "as-any ratchet"
+    ],
+    [
+      "695/1190",
+      "lint warn / baseline"
+    ],
+    [
+      "1204",
+      "vitest"
+    ],
+    [
+      "0",
+      "lint errors"
+    ],
+    [
+      "396.4",
+      "build gzip КБ"
+    ],
+    [
+      "1649",
+      "secrets clean"
+    ]
+  ],
+  "nodes": [
+    {
+      "id": "N0",
+      "nm": "Аудит Центр_5",
+      "st": "NODES / ROADMAP / PDF",
+      "cls": "done",
+      "p": 100,
+      "d": "10-страничный аудит, карта N0–N8, реестр P0–P5, база main@9694bbb. Всё дальнейшее опирается на него.",
+      "who": "Центр_5",
+      "next": "—",
+      "block": "нет"
+    },
+    {
+      "id": "N1",
+      "nm": "Гейты",
+      "st": "8 гейтов в CI",
+      "cls": "done",
+      "p": 100,
+      "d": "ESLint TS-парсер, tsc 146→0, lint errors 43→0, ratchet (asany / lint-baseline / typecheck), check-secrets, check-manifest, pregate.sh (12 гейтов), FROZEN-guard. Закрыто PR #48, #49, #53, #57, #59.",
+      "who": "805 → 007_c",
+      "next": "N1c.2",
+      "block": "нет"
+    },
+    {
+      "id": "N1c.2",
+      "nm": "Линт-долг",
+      "st": "1155 → 695 · −460",
+      "cls": "active",
+      "p": 62,
+      "d": "eqeqeq −92/92 конфигом (все == null), curly −368 в 53 файлах (нормализация «только скобки» 53/53). Исключены 15 файлов дельты 708 (93 curly). Пакет HANDOFF-705-N1c2, PREGATE OK 12/12. Осталось: no-empty 207, scripts 11, js 22, src 231.",
+      "who": "705",
+      "next": "scripts/js → no-empty → src → baseline --update",
+      "block": "пакет на fd9a113, main уже ca45f643 → пересбор перед воротами"
+    },
+    {
+      "id": "N2",
+      "nm": "P0-баги рантайма",
+      "st": "2.1–2.5 · очередь",
+      "cls": "queued",
+      "p": 0,
+      "d": "2.1 Blob-URL revoke · 2.2 Mic-off TypeError · 2.3 V-Mix no-op · 2.4 unhandledrejection · 2.5 MicSourceV3 refcount (FROZEN-REQUEST). Канон: N2 — это БАГИ, не линт.",
+      "who": "705 / 702",
+      "next": "после N1c.2",
+      "block": "решение Никиты по 702 (UI на prev-трек vs тишина)"
+    },
+    {
+      "id": "N3",
+      "nm": "Шум консоли",
+      "st": "805/N3 готов к воротам",
+      "cls": "active",
+      "p": 35,
+      "d": "Ф1+Ф2 сданы, ветка 805/N3 @ac76064 (5 файлов, FROZEN 0), в origin нет, маршрутизирована 007_c. Ф3 (типы на границе персиста) на паузе.",
+      "who": "805 → 705 / 007_c",
+      "next": "влить ветку, затем Ф3 по решению",
+      "block": "N3 Ф3 — продолжать или ждать Центр_5"
+    },
+    {
+      "id": "N4",
+      "nm": "Размер бандла",
+      "st": "очередь",
+      "cls": "queued",
+      "p": 0,
+      "d": "main-чанк ~1 228 КБ / gzip 396.4. manualChunks, React.lazy, бюджеты размеров.",
+      "who": "705",
+      "next": "после N3",
+      "block": "нет"
+    },
+    {
+      "id": "N5",
+      "nm": "Мусор репозитория",
+      "st": "очередь",
+      "cls": "queued",
+      "p": 0,
+      "d": "team-m/ из дерева, notify + INBOX, LP-трек, GH Pages. Внимание: aetherBoot.ts правится и в N2.1 — N5 идёт ПОСЛЕ N2, чтобы не пересечься.",
+      "who": "705",
+      "next": "после N4",
+      "block": "GH Pages снос по решению Никиты"
+    },
+    {
+      "id": "N6",
+      "nm": "Похороны V2",
+      "st": "очередь",
+      "cls": "queued",
+      "p": 0,
+      "d": "Остатки легаси-фасада, мёртвые сторы, дубли настроек.",
+      "who": "705",
+      "next": "после N5",
+      "block": "FROZEN-зависимости"
+    },
+    {
+      "id": "N7",
+      "nm": "Шов JS ↔ React",
+      "st": "самый тяжёлый",
+      "cls": "risk",
+      "p": 0,
+      "d": "По объёму сопоставим со всеми остальными узлами вместе: каталог треков, тексты, маркеры, фасад движка с легаси-глобалов на модули. Риск: потеря пользовательских треков при миграции IndexedDB.",
+      "who": "705 + Gate R",
+      "next": "только после GO",
+      "block": "требуется явное «ок» Никиты + бэкап"
+    },
+    {
+      "id": "N8",
+      "nm": "История git",
+      "st": "окно заморозки",
+      "cls": "queued",
+      "p": 0,
+      "d": "filter-repo, утечки в истории, force-push только в окно заморозки с бэкапом. Не сейчас.",
+      "who": "Никита + 007_c",
+      "next": "отдельно",
+      "block": "окно заморозки"
+    }
+  ],
+  "cards": [
+    {
+      "t": "TrackMap + система Лупа",
+      "d": "Скобки петли, edge-toggle, title-glow, drag, sub-block, layout 54px",
+      "p": "PR #50 · 21 файл · tsc 0 · в проде",
+      "cls": "",
+      "who": "808",
+      "next": "706 смотрит постфактум на проде (5 зон)"
+    },
+    {
+      "t": "First Path / MVSEP",
+      "d": "A1 v2.2 BYOK: ключ на устройстве, миграция с обнулением, 63 теста",
+      "p": "PR #55 · Gate R PASS · в проде",
+      "cls": "",
+      "who": "806",
+      "next": "W0 (download, квота 10/день, keySource, W0.5) → AUTH-1 → E2E"
+    },
+    {
+      "t": "User Room",
+      "d": "Вход через User, настройки ИИ/графики в комнате, статистика",
+      "p": "PR #56 · в проде",
+      "cls": "",
+      "who": "709",
+      "next": "D10 (migrateGuest) отдельным H после AUTH-1"
+    },
+    {
+      "t": "Mobile performance",
+      "d": "revokeObjectURL + волна без повторного декода, −140 МиБ PCM",
+      "p": "PR #51 · в проде",
+      "cls": "",
+      "who": "702",
+      "next": "FROZEN A+B + F5 (бюджет стемов) — Crawling всё ещё не играет"
+    },
+    {
+      "t": "SEO-витрина",
+      "d": "Каркас Astro + nauchitsya-pet / raspevka-onlayn, тон «студия»",
+      "p": "PR #52 #58 · в проде",
+      "cls": "wait",
+      "who": "711 / 706",
+      "next": "8 страниц волны 1; не публиковать раньше запуска коуча; CF Pages + DNS — руки Никиты"
+    },
+    {
+      "t": "AI Coach",
+      "d": "В main ревизия 2: нет строки о внешнем ИИ-сервисе, нет тестов stop()/поздний токен",
+      "p": "PR #54 · рев.4 проверена (tsc 0, 23 теста)",
+      "cls": "wait",
+      "who": "700 / 706",
+      "next": "рев.4 fast-follow; блокер — 20 промптов от 706"
+    },
+    {
+      "t": "FROZEN-guard",
+      "d": "pull_request_target, 30/30 сценариев, метка frozen-ok требует reason",
+      "p": "PR #59 · в проде",
+      "cls": "",
+      "who": "805 / 007_c",
+      "next": "добавить в required_status_checks (ок Никиты)"
+    }
+  ],
+  "open": [
+    [
+      "702 · FROZEN A+B / F5",
+      "Crawling не играет: decode до reset, пик 1476 МиБ при потолке ~1024. Нужно: (а) вернуть UI на prev-трек или (б) тишина с сообщением; и режем ли микшер 7→2-3 стема."
+    ],
+    [
+      "20 промптов от 706",
+      "Единственный внешний блокер мержа AI Coach рев.4. 706 из Windows, доски не видит — пнуть может только Никита."
+    ],
+    [
+      "CF Pages belive-seo",
+      "API-токен + 2 секрета в GitHub + Pages-проект + DNS mybelive.com. Сайт собран, но не привязан."
+    ],
+    [
+      "Отзыв старого ключа MVSEP",
+      "Новый ключ работает (проверено curl, HTTP 200). Старый ещё активен и засветился в истории."
+    ],
+    [
+      "strict + frozen-guard в required checks",
+      "Два «ок» на репо-конфиг. Прямой push в main и так закрыт, но строгость не полная."
+    ],
+    [
+      "N3 Ф3 · типы персиста",
+      "Продолжать сейчас или ждать Центр_5."
+    ]
+  ]
+};
+/*DATA:END*/
+
+function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!==undefined)e.innerHTML=html;return e}
+
+document.getElementById('sha').textContent='main '+DATA.main;
+document.getElementById('stamp').textContent='Снимок '+DATA.generated+' · '+DATA.command;
+document.getElementById('kpis').innerHTML=DATA.kpi.map(k=>`<div class="kpi"><b>${k[0]}</b><span>${k[1]}</span></div>`).join('');
+document.getElementById('drift').innerHTML='Дрейф main: '+DATA.drift.replace(DATA.main,'<em>'+DATA.main+'</em>')+'. Правило №6: pregate только на текущем origin/main.';
+
+const track=document.getElementById('track');
+DATA.nodes.forEach(n=>{
+  const d=el('div','node '+n.cls,
+    `<div class="id">${n.id}</div><div class="nm">${n.nm}</div><div class="st">${n.st}</div><div class="bar"><i style="width:${n.p}%"></i></div>`);
+  d.onclick=()=>show(n.id,n.nm,n.d,n.who,n.next,n.block);
+  track.appendChild(d);
+});
+
+const cards=document.getElementById('cards');
+DATA.cards.forEach(c=>{
+  const d=el('div','card '+c.cls,
+    `<div class="t">${c.t}</div><div class="d">${c.d}</div><div class="p">${c.p}</div>`);
+  d.onclick=()=>show('ПРОДУКТ',c.t,c.d,c.who,c.next,'—');
+  cards.appendChild(d);
+});
+
+const open=document.getElementById('open');
+DATA.open.forEach(o=>{
+  const d=el('div','',`<b>${o[0]}</b> — ${o[1]}`);
+  d.onclick=()=>show('РЕШЕНИЕ НИКИТЫ',o[0],o[1],'Никита','после «ок» стартует соответствующий узел','без GO не начинаем');
+  open.appendChild(d);
+});
+
+function show(id,title,desc,who,next,block){
+  document.getElementById('detail').innerHTML=
+   `<h3><code>${id}</code> ${title}</h3>`+
+   `<p>${desc}</p>`+
+   `<p>👤 <b>${who}</b> &nbsp;·&nbsp; ➡️ ${next}</p>`+
+   `<p>🚧 Блокер: ${block}</p>`+
+   `<p style="color:var(--tx3);font-size:10px">${DATA.generated} · main ${DATA.main}</p>`;
+}
+show('КАРТИНА','Единый граф · '+DATA.command,
+ 'Магистраль модернизации N0→N8 и '+DATA.cards.length+' продуктовых линий идут параллельно. Фундамент (гейты) уже стоит. Активный фронт — N1c.2 (линт-долг) у 705; главный пользовательский баг — Crawling на слабом телефоне — ещё не закрыт и ждёт решения Никиты.',
+ '707 / CEO','обновить roadmap-data.json → --write → --check','дрейф main (5 смен за день)');
+</script>
+</body>
+</html>
