@@ -14,7 +14,9 @@ describe('ai-settings.store', () => {
     expect(s.openRouterApiKey).toBe('');
     expect(s.coachName).toBe('Билли');
     expect(s.temperature).toBe(0.7);
-    expect(s.showSettings).toBe(false);
+    // showSettings убран 09.11: модалка AI Configuration удалена,
+    // настройки ИИ живут в комнате (SettingsBlock → AiSection).
+    expect('showSettings' in s).toBe(false);
   });
 
   it('isConfigured — это метод, а не флаг', () => {

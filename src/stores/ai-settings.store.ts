@@ -33,7 +33,6 @@ interface AiSettingsState {
   temperature: number;
   // Status
   lastVerifiedAt: string | null;
-  showSettings: boolean;
   /** Billy mode: 'user' = vocal coach, 'tech' = technical diagnostics */
   billyMode: 'user' | 'tech';
   /** Switch Billy mode */
@@ -46,7 +45,6 @@ interface AiSettingsState {
   setTemperature: (t: number) => void;
   setProvider: (p: AiProviderId) => void;
   markVerified: () => void;
-  setShowSettings: (show: boolean) => void;
   isConfigured: () => boolean;
   reset: () => void;
 }
@@ -58,7 +56,6 @@ const initialState = {
   coachName: 'Билли',
   temperature: 0.7,
   lastVerifiedAt: null as string | null,
-  showSettings: false,
   billyMode: 'user' as const,
 };
 
@@ -77,7 +74,6 @@ export const useAiSettingsStore = create<AiSettingsState>()(
       set(updates);
     },
     markVerified: () => set({ lastVerifiedAt: new Date().toISOString() }),
-    setShowSettings: (show: boolean) => set({ showSettings: show }),
     isConfigured: () => {
       const state = get();
       if (state.provider === 'belive') {

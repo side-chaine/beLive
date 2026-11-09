@@ -57,12 +57,13 @@
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto minmax(150px, 1.2fr) minmax(90px, 0.8fr) minmax(110px, 1.4fr) auto;
+  grid-template-rows: auto minmax(150px, 1.2fr) minmax(90px, 0.8fr) minmax(110px, 1.4fr) auto auto;
   grid-template-areas:
     "topbar topbar"
     "profile week"
     "continue continue"
     "tempo sessions"
+    "settings settings"
     "footer footer";
   gap: 12px;
 }
@@ -508,6 +509,11 @@
   padding: 0 16px;
 }
 
+/* Настройки (ИИ · графика · подсказки) — перенесены из меню аватара */
+.bl-settings {
+  grid-area: settings;
+}
+
 /* ── Скелетон ───────────────────────────── */
 .bl-userroom__skeleton {
   grid-area: week;
@@ -659,6 +665,7 @@
       "continue"
       "tempo"
       "sessions"
+      "settings"
       "footer";
   }
 }

@@ -46,9 +46,7 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { usePerformanceTier } from './hooks/usePerformanceTier';
 // retired: monitor.bridge → monitor-events (main.tsx)
 
-import { AiSettingsModal } from './components/AiSettingsModal';
 import { BlockScenesModal } from './components/BlockScenesModal';
-import { useAiSettingsStore } from './stores/ai-settings.store';
 import { useCoachPanelStore } from './stores/coachPanel.store';
 import { useShowStore } from './stores/show.store';
 import { ShowEditor } from './components/Show/ShowEditor';
@@ -79,7 +77,6 @@ export default function App() {
   const mode = useModeStore((s) => s.mode);
   const syncOpen = useSyncStore((s) => s.open);
   const trackInfoOpen = useTrackInfoStore((s) => s.isOpen);
-  const aiSettingsOpen = useAiSettingsStore(s => s.showSettings);
   const coachPanelOpen = useCoachPanelStore((s) => s.open);
   const showActive = useShowStore(s => s.activeMode !== 'entry' && !s.featureActive && !s.isPresenting);
   const isPresenting = useShowStore(s => s.isPresenting);
@@ -295,7 +292,6 @@ export default function App() {
           {/* C1–C3 (PR-2): немодальный баннер деградации стемов. Не блокирует UI. */}
           <StemDegradedBanner />
           {trackInfoOpen && <TrackInfoBoard />}
-          {aiSettingsOpen && <AiSettingsModal onClose={() => useAiSettingsStore.getState().setShowSettings(false)} />}
           {surface === 'profile' && <UserRoom />}
         </div>
           )}
