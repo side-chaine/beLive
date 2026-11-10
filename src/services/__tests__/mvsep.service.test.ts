@@ -19,6 +19,8 @@ import {
   mapMvsepStatus,
   classifyMvsepFiles,
   pollStatus,
+  pollStatusDetailed,
+  readQueue,
   submitTrack,
   downloadStems,
   MvsepError,
@@ -102,6 +104,63 @@ describe('pollStatus', () => {
   it('сетевой сбой пробрасывается как есть', async () => {
     fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'));
     await expect(pollStatus('h1')).rejects.toThrow('Failed to fetch');
+  });
+});
+
+// ─── Очередь MVSEP: живой ответ 10.11.2026 ───────────────────
+//
+// Реальный ответ /status:
+// {"success":true,"status":"waiting","data":{"queue_count":432,"current_order":26,"eta_seconds":63}}
+// eta_seconds намеренно НЕ читаем: он не убывал (63 → 45 → 11 при позиции 26 → 18 → 3).
+
+describe('readQueue — только честные поля', () => {
+  it('живой ответ: позиция и размер очереди', () => {
+    expect(readQueue({ queue_count: 432, current_order: 26, eta_seconds: 63 }))
+      .toEqual({ pos: 26, total: 432 });
+  });
+
+  it('eta_seconds не попадает в результат', () => {
+    const q = readQueue({ queue_count: 10, current_order: 3, eta_seconds: 5 });
+    expect(q).toEqual({ pos: 3, total: 10 });
+    expect(q).not.toHaveProperty('eta');
+  });
+
+  it.each([
+    ['нет data', undefined],
+    ['не объект', 'waiting'],
+    ['нет полей', { foo: 1 }],
+    ['позиция строкой', { queue_count: 10, current_order: '3' }],
+    ['NaN', { queue_count: NaN, current_order: 3 }],
+    ['Infinity', { queue_count: 10, current_order: Infinity }],
+    ['нулевая позиция', { queue_count: 10, current_order: 0 }],
+    ['нулевая очередь', { queue_count: 0, current_order: 3 }],
+    ['отрицательная позиция', { queue_count: 10, current_order: -2 }],
+  ])('мусор → undefined: %s', (_label, data) => {
+    expect(readQueue(data)).toBeUndefined();
+  });
+});
+
+describe('pollStatusDetailed', () => {
+  it('отдаёт статус и очередь одним ответом', async () => {
+    fetchMock.mockResolvedValueOnce(
+      json({ success: true, status: 'waiting', data: { queue_count: 446, current_order: 18, eta_seconds: 45 } }),
+    );
+    await expect(pollStatusDetailed('h1')).resolves.toEqual({
+      status: 'waiting',
+      queue: { pos: 18, total: 446 },
+    });
+  });
+
+  it('без полей очереди queue отсутствует, а не равно нулям', async () => {
+    fetchMock.mockResolvedValueOnce(json({ status: 'processing' }));
+    const r = await pollStatusDetailed('h1');
+    expect(r.status).toBe('processing');
+    expect(r.queue).toBeUndefined();
+  });
+
+  it('pollStatus остаётся совместимым: только статус', async () => {
+    fetchMock.mockResolvedValueOnce(json({ status: 'done', data: { files: [] } }));
+    await expect(pollStatus('h1')).resolves.toBe('done');
   });
 });
 
