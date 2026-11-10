@@ -90,11 +90,29 @@ afterEach(() => {
 // ─── публичные роуты ───────────────────────────────────────
 
 describe('публичные роуты остаются публичными', () => {
-  it('/health отвечает без токена', async () => {
+  it('/health отвечает без токена и отдаёт keyTag, не сам ключ', async () => {
     const res = await worker.fetch(req('/health'), makeEnv());
     expect(res.status).toBe(200);
     const json = await res.json();
-    expect(json).toEqual({ status: 'ok', service: 'belive-mvsep' });
+    expect(json).toMatchObject({ status: 'ok', service: 'belive-mvsep' });
+    expect(json.keyTag).toMatch(/^[0-9a-f]{8}$/);
+    // Цель keyTag — опознать ключ, не раскрывая его.
+    expect(JSON.stringify(json)).not.toContain('mvsep-test-key');
+  });
+
+  it('/health без секрета отдаёт keyTag: null, а не 500', async () => {
+    const env = makeEnv();
+    delete env.MVSEP_API_KEY;
+    const res = await worker.fetch(req('/health'), env);
+    expect(res.status).toBe(200);
+    expect((await res.json()).keyTag).toBeNull();
+  });
+
+  it('keyTag — первые 8 hex от sha256 ключа', async () => {
+    const { createHash } = await import('node:crypto');
+    const expected = createHash('sha256').update('mvsep-test-key').digest('hex').slice(0, 8);
+    const res = await worker.fetch(req('/health'), makeEnv());
+    expect((await res.json()).keyTag).toBe(expected);
   });
 
   it('OPTIONS (preflight) отвечает 204 без токена', async () => {
@@ -240,6 +258,178 @@ describe('с валидным токеном роуты работают', () =>
     );
     expect(res.status).toBe(400);
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
+// ─── /download: SSRF-гард ──────────────────────────────────
+//
+// /download — прокси наружу по URL из запроса, поэтому пускать любой URL
+// нельзя: получим SSRF (внутренние адреса, localhost, метаданные CF).
+// Проверяем HOSTNAME, а не префикс строки: реальные файлы лежат на
+// de.mvsep.com, и старая проверка `startsWith('https://mvsep.com/')`
+// отбивала их все — то есть ломала продукт и при этом не защищала.
+
+describe('/download: SSRF-гард по hostname', () => {
+  const OK_FILE = 'https://de.mvsep.com/storage/processed/b4/x.mp3';
+
+  async function download(url) {
+    return worker.fetch(
+      req('/download?url=' + encodeURIComponent(url), { token: await makeJwt('google:me') }),
+      makeEnv(),
+    );
+  }
+
+  beforeEach(() => {
+    fetchSpy.mockImplementation(async () =>
+      new Response('ID3', { status: 200, headers: { 'Content-Type': 'audio/mpeg' } }),
+    );
+  });
+
+  it('пропускает реальный адрес de.mvsep.com', async () => {
+    const res = await download(OK_FILE);
+    expect(res.status).toBe(200);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('пропускает корневой mvsep.com', async () => {
+    expect((await download('https://mvsep.com/file/x.mp3')).status).toBe(200);
+  });
+
+  it('пропускает явный порт 443', async () => {
+    expect((await download('https://de.mvsep.com:443/x.mp3')).status).toBe(200);
+  });
+
+  it.each([
+    ['чужой домен', 'https://evil.com/storage/x.mp3'],
+    ['суффикс-обман', 'https://mvsep.com.evil.com/x.mp3'],
+    ['путь-обман', 'https://evil.com/mvsep.com/x.mp3'],
+    ['http вместо https', 'http://de.mvsep.com/x.mp3'],
+    ['userinfo', 'https://user:pass@de.mvsep.com/x.mp3'],
+    ['нестандартный порт', 'https://de.mvsep.com:8443/x.mp3'],
+    ['мусор', 'not a url'],
+  ])('отклоняет: %s', async (_name, url) => {
+    const res = await download(url);
+    expect(res.status).toBe(400);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
+// ─── /download: редиректы ─────────────────────────────────
+//
+// MVSEP реально редиректит (de.mvsep.com/ → de.mvsep.com/en), поэтому
+// blanket-400 на любой 3xx уронил бы все стемы. Location разбираем сами и
+// проверяем тем же allowlist — иначе редирект становится обходом SSRF-гарда.
+
+describe('/download: редиректы только внутри MVSEP', () => {
+  async function download(url) {
+    return worker.fetch(
+      req('/download?url=' + encodeURIComponent(url), { token: await makeJwt('google:me') }),
+      makeEnv(),
+    );
+  }
+
+  it('302 на тот же хост — проходит', async () => {
+    fetchSpy
+      .mockImplementationOnce(async () =>
+        new Response(null, { status: 302, headers: { Location: 'https://de.mvsep.com/en/x.mp3' } }))
+      .mockImplementationOnce(async () =>
+        new Response('ID3', { status: 200, headers: { 'Content-Type': 'audio/mpeg' } }));
+
+    const res = await download('https://de.mvsep.com/x.mp3');
+    expect(res.status).toBe(200);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('302 на чужой хост — 400, второй запрос не уходит', async () => {
+    fetchSpy.mockImplementationOnce(async () =>
+      new Response(null, { status: 302, headers: { Location: 'https://evil.com/x.mp3' } }));
+
+    const res = await download('https://de.mvsep.com/x.mp3');
+    expect(res.status).toBe(400);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('четвёртый хоп — 400', async () => {
+    fetchSpy.mockImplementation(async () =>
+      new Response(null, { status: 302, headers: { Location: 'https://de.mvsep.com/loop' } }));
+
+    const res = await download('https://de.mvsep.com/x.mp3');
+    expect(res.status).toBe(400);
+    // начальный запрос + 3 разрешённых хопа
+    expect(fetchSpy).toHaveBeenCalledTimes(4);
+  });
+});
+
+// ─── /submit: успех MVSEP и квота ──────────────────────────
+//
+// /separation/create отдаёт {success:true, data:{link,hash}} — поля `status`
+// там нет. Старое условие `data.status === 'ok'` было ложно всегда, поэтому
+// счётчик 10/день не рос, а общий лок снимался сразу: оба лимита были мертвы.
+
+describe('/submit: успех MVSEP и квота', () => {
+  function postReq(token, fd, extraHeaders = {}) {
+    const r = new Request('https://mvsep.test/submit', {
+      method: 'POST',
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...extraHeaders },
+    });
+    // jsdom-Request не умеет multipart — подменяем только метод разбора.
+    Object.defineProperty(r, 'formData', { value: async () => fd, configurable: true });
+    return r;
+  }
+
+  function mvsepCreate(body) {
+    fetchSpy.mockImplementationOnce(async () =>
+      new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+  }
+
+  const todayKey = (sub) => `mvsep:${sub}:${new Date().toISOString().slice(0, 10)}`;
+
+  it('живая форма {success:true} засчитывается: счётчик растёт, лок держится', async () => {
+    const kv = makeKv();
+    mvsepCreate({ success: true, data: { link: 'l', hash: 'h1' } });
+
+    const res = await worker.fetch(postReq(await makeJwt('google:me'), new FormData()), makeEnv(kv));
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.quota).toMatchObject({ used: 1, limit: 10, keySource: 'beLive' });
+    expect(kv._store.has(LOCK_KEY)).toBe(true);
+  });
+
+  it('старая форма {status:"ok"} тоже принимается', async () => {
+    const kv = makeKv();
+    mvsepCreate({ status: 'ok', data: { hash: 'h2' } });
+
+    const res = await worker.fetch(postReq(await makeJwt('google:me'), new FormData()), makeEnv(kv));
+
+    expect((await res.json()).quota).toMatchObject({ used: 1, keySource: 'beLive' });
+    expect(kv._store.has(LOCK_KEY)).toBe(true);
+  });
+
+  it('success:false при HTTP 200 — лок снят, счётчик не растёт', async () => {
+    const kv = makeKv();
+    mvsepCreate({ success: false, errors: ['invalid token'] });
+
+    const res = await worker.fetch(postReq(await makeJwt('google:me'), new FormData()), makeEnv(kv));
+
+    expect((await res.json()).quota).toBeUndefined();
+    expect(kv._store.has(LOCK_KEY)).toBe(false);
+    expect(kv._store.has(todayKey('google:me'))).toBe(false);
+  });
+
+  it('свой ключ: quota только keySource, без limit и used', async () => {
+    const kv = makeKv();
+    mvsepCreate({ success: true, data: { hash: 'h3' } });
+
+    const res = await worker.fetch(
+      postReq(await makeJwt('google:me'), new FormData(), { 'X-Mvsep-User-Key': 'user-key' }),
+      makeEnv(kv),
+    );
+
+    // Выдуманного limit:49 больше нет — UI не должен показывать чужую цифру.
+    expect((await res.json()).quota).toEqual({ keySource: 'user' });
+    // BYOK не трогает ни дневной счётчик, ни общий лок.
+    expect(kv._store.size).toBe(0);
   });
 });
 
