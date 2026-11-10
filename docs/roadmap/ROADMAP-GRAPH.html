@@ -3,386 +3,1202 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>beLive · Единый граф дорожной карты</title>
+<title>beLive · Единый граф</title>
+<!--ROADMAP-TEMPLATE:v2 · шаблон понимает схему belive.roadmap.v2 (directions/nodes/edges); v1-шаблон со старой схемой (cards/cls) генератор отклоняет до записи-->
 <style>
 :root{
-  --bg:#0c1118; --panel:#141c27; --panel2:#182231; --line:#2a394d;
+  color-scheme:dark;
+  --bg:#0c1118; --panel:#141c27; --panel2:#182231; --line:#2a394d; --line2:#223046;
   --tx:#e6eef9; --tx2:#9fb0c6; --tx3:#6f829b;
-  --done:#39d98a; --active:#ffc44d; --queued:#5b6b82; --risk:#ff6b6b; --gate:#6aa9ff;
-  --doneBg:#123224; --activeBg:#43300f; --queuedBg:#1a2331; --riskBg:#3d1a1a; --gateBg:#172943;
+  --done:#39d98a; --active:#ffc44d; --blocked:#ff6b6b; --waiting:#a371f7; --queued:#7f93ad; --risk:#ff6b6b;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Consolas,monospace;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-.wrap{max-width:1500px;margin:0 auto;padding:18px 20px 28px}
-header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:12px}
-h1{margin:0;font-size:20px;letter-spacing:.2px}
-.sub{color:var(--tx2);font-size:12px}
-.sha{font-family:ui-monospace,Consolas,monospace;color:var(--gate);background:var(--gateBg);padding:2px 8px;border-radius:5px;font-size:12px}
-.kpis{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin:14px 0 6px}
-.kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 10px}
-.kpi b{display:block;font-size:17px;color:var(--done);font-family:ui-monospace,Consolas,monospace}
-.kpi span{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.6px}
-.drift{color:var(--tx3);font-size:11px;margin-bottom:16px;font-family:ui-monospace,Consolas,monospace}
-.drift em{color:var(--active);font-style:normal}
-h2{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--tx2);margin:22px 0 10px;font-weight:600}
-h2 small{font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx3);margin-left:8px}
-.track{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:6px}
-.node{position:relative;min-width:118px;flex:1 1 0;background:var(--queuedBg);border:1px solid var(--queued);border-radius:9px;padding:10px 9px;cursor:pointer;transition:transform .12s,border-color .12s}
-.node:hover{transform:translateY(-3px)}
-.node+.node{margin-left:20px}
-.node+.node:before{content:"→";position:absolute;left:-19px;top:50%;transform:translateY(-50%);color:var(--tx3);font-size:15px}
-.node .id{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--tx3)}
-.node .nm{font-size:12px;font-weight:600;margin:3px 0 6px;line-height:1.3}
-.node .st{font-size:10px;color:var(--tx2);line-height:1.35}
-.node .bar{height:3px;border-radius:2px;background:#26344a;margin-top:8px;overflow:hidden}
-.node .bar i{display:block;height:100%;background:currentColor}
-.node.done{background:var(--doneBg);border-color:var(--done);color:var(--done)}
-.node.active{background:var(--activeBg);border-color:var(--active);color:var(--active)}
-.node.risk{background:var(--riskBg);border-color:var(--risk);color:var(--risk)}
-.node.queued{color:var(--queued)}
-.node.done .nm,.node.active .nm,.node.risk .nm{color:var(--tx)}
-.node.active:after{content:"ГДЕ МЫ";position:absolute;top:-9px;right:6px;background:var(--active);color:#1a1204;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:.5px}
-.cols{display:grid;grid-template-columns:1.55fr 1fr;gap:16px}
-.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-.card{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--done);border-radius:7px;padding:9px 11px;cursor:pointer}
-.card:hover{background:var(--panel2)}
-.card.wait{border-left-color:var(--active)}
-.card .t{font-size:12px;font-weight:600}
-.card .d{font-size:11px;color:var(--tx2);margin-top:3px}
-.card .p{font-family:ui-monospace,Consolas,monospace;font-size:10px;color:var(--tx3);margin-top:5px}
-.open{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:4px 12px}
-.open div{padding:8px 0;border-bottom:1px solid var(--line);font-size:11.5px;color:var(--tx2);cursor:pointer}
-.open div:last-child{border:0}
-.open div b{color:var(--active);font-weight:600}
-.detail{margin-top:16px;background:var(--panel);border:1px solid var(--gate);border-radius:9px;padding:14px 16px;min-height:88px}
-.detail h3{margin:0 0 6px;font-size:14px;color:var(--gate)}
-.detail p{margin:4px 0;color:var(--tx2);font-size:12px}
-.detail code{background:#101a28;padding:1px 5px;border-radius:4px;color:var(--active);font-size:11px}
-.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:18px;color:var(--tx3);font-size:11px}
-.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
-footer{margin-top:16px;color:var(--tx3);font-size:10.5px;border-top:1px solid var(--line);padding-top:10px}
-@media(max-width:1000px){.cols{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(4,1fr)}}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 var(--sans);display:flex;flex-direction:column;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+svg{display:block}
+
+/* ---------- Верхняя полоса: факты ---------- */
+#top{display:flex;align-items:center;gap:24px;padding:10px 16px 8px;border-bottom:1px solid var(--line);flex:none}
+.brand{display:flex;flex-direction:column;min-width:210px}
+.brand h1{margin:0;font-size:16px;font-weight:650;letter-spacing:.2px;white-space:nowrap}
+.brand .sub{font-size:12px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:44vw}
+#stats{display:flex;gap:26px;margin-left:auto;flex:none}
+.stat{display:flex;flex-direction:column;align-items:flex-end}
+.stat .v{font:600 22px/1.15 var(--mono)}
+.stat .l{font-size:12px;color:var(--tx3)}
+.stat.prod .v{font-size:15px;color:var(--tx2);display:inline-flex;align-items:center;gap:7px}
+.pdot{width:8px;height:8px;border-radius:50%;background:var(--tx3);display:inline-block}
+.c-active{color:var(--active)} .c-waiting{color:var(--waiting)} .c-blocked{color:var(--blocked)}
+#kline{font:12px/1.4 var(--mono);color:var(--tx3);padding:4px 16px;border-bottom:1px solid var(--line2);background:rgba(20,28,39,.35);white-space:nowrap;overflow-x:auto;flex:none;scrollbar-width:thin}
+
+/* ---------- Тулбар ---------- */
+#bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);flex-wrap:nowrap;overflow-x:auto;flex:none;scrollbar-width:none}
+#bar::-webkit-scrollbar{display:none}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-size:13px;white-space:nowrap;flex:none}
+.btn:hover{border-color:#3d5474}
+.btn.primary{background:var(--tx);color:#0c1118;font-weight:650;border-color:var(--tx)}
+.btn.primary:hover{background:#ffffff}
+.btn.primary.on{background:var(--waiting);border-color:var(--waiting);color:#fff}
+.chip{padding:6px 12px;border:1px solid var(--line);border-radius:999px;font-size:13px;white-space:nowrap;flex:none;background:var(--panel)}
+.chip.on{border-color:var(--waiting);color:var(--waiting);background:rgba(163,113,247,.12)}
+.srch{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:0 8px;flex:none}
+.srch svg{flex:none;color:var(--tx3)}
+.srch input{background:none;border:0;color:var(--tx);font:13px var(--sans);padding:7px 2px;width:170px;outline:none}
+.srch input::placeholder{color:var(--tx3)}
+.srch .qn{font:12px var(--mono);color:var(--tx3);white-space:nowrap}
+select{background:var(--panel);border:1px solid var(--line);color:var(--tx);border-radius:8px;padding:6px 8px;font:13px var(--sans);flex:none;max-width:210px}
+.legend{position:absolute;top:10px;left:12px;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--tx2);align-items:center;max-width:calc(100% - 24px);pointer-events:none;z-index:3}
+@media(max-width:1279px){.btn .bl{display:none}}
+.lg{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.lg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.zooms{display:flex;gap:6px;flex:none;margin-left:auto}
+.zb{width:30px;height:30px;border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--tx2)}
+.zb:hover{border-color:#3d5474;color:var(--tx)}
+
+/* ---------- Карта + инспектор ---------- */
+#main{flex:1;display:grid;grid-template-columns:1fr 380px;min-height:0}
+#mapwrap{position:relative;min-width:0;overflow:hidden}
+#map{width:100%;height:100%;touch-action:none;-webkit-user-select:none;user-select:none;cursor:grab}
+#map.dragging{cursor:grabbing}
+.hint{position:absolute;left:12px;bottom:10px;font-size:12px;color:var(--tx3);pointer-events:none}
+.src{position:absolute;right:12px;bottom:10px;font-size:12px;color:var(--tx3);pointer-events:none;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#insp{border-left:1px solid var(--line);background:var(--panel);overflow-y:auto;position:relative;min-height:0;scrollbar-width:thin}
+.grip{display:none}
+
+/* SVG-карта */
+.nd{cursor:pointer;transition:opacity .25s}
+.nd .body{fill:var(--panel2);stroke:var(--line);stroke-width:1}
+.nd:hover .body{stroke:#3d5474}
+.nd .ring{fill:none;stroke:transparent;transition:stroke .15s,opacity .15s}
+.nd.sel .ring{stroke:var(--c);stroke-width:1.5;opacity:.55}
+.nd.target .ring{stroke:var(--c);stroke-width:2;opacity:.95}
+.nd .ttl{fill:var(--tx);font:600 15px var(--sans)}
+.nd .stl{fill:var(--c);font:600 12px var(--sans)}
+.nd .own{fill:var(--tx3);font:12px var(--sans)}
+.nd .ptr{fill:#26344a}
+.nd .pfl{fill:var(--c)}
+.nd .nbadge rect{fill:#0c1118;stroke:var(--line)}
+.nd .nbadge text{fill:var(--tx);font:700 12px var(--mono)}
+.nd.off{display:none}
+.nd.dim{opacity:.16}
+.cluster rect{fill:rgba(20,28,39,.5);stroke:var(--line2)}
+.cluster text{fill:var(--tx3);font:600 13px var(--sans);letter-spacing:1.2px;text-transform:uppercase}
+.cluster.off{display:none}
+.cluster{transition:opacity .25s}
+.edge{fill:none;stroke:#8b9bb4;stroke-width:1.6;transition:opacity .25s}
+.edge.related{stroke:#44546c;stroke-width:1.4;stroke-dasharray:3 6}
+.edge.hl{stroke:#dbe7f5}
+.edge.off{display:none}
+#map.wn .nd:not(.target){opacity:.13}
+#map.wn .edge{opacity:.07}
+#map.wn .cluster{opacity:.3}
+#map.wn .nd.target{opacity:1}
+
+/* ---------- Инспектор ---------- */
+#insp .head{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
+.tag{font-size:12px;padding:2px 8px;border:1px solid var(--line);border-radius:6px;color:var(--tx2);white-space:nowrap}
+.tag.state{border-color:currentColor;font-weight:600}
+.ic{width:30px;height:30px;border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--tx2);flex:none;margin-left:auto}
+.ic:hover{border-color:#3d5474;color:var(--tx)}
+#insp h2{font-size:18px;margin:14px 16px 2px;line-height:1.25}
+#insp .meta{font:12px var(--mono);color:var(--tx3);margin:0 16px 10px}
+#insp section{padding:12px 16px;border-bottom:1px solid var(--line2)}
+#insp section.last{border-bottom:0;display:flex;gap:8px;padding-bottom:20px}
+#insp h3{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--tx2);margin:0 0 8px;font-weight:600}
+.detail{margin:0;font-size:14px}
+.stnote{margin:6px 0 0;font-size:12px;color:var(--tx3)}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0;font-size:14px}
+.row .k{color:var(--tx3);flex:none}
+.row b{font-weight:600;text-align:right}
+.row .bar{flex:1;height:6px;background:#26344a;border-radius:3px;overflow:hidden;align-self:center}
+.row .bar i{display:block;height:100%}
+.pv{font:600 13px var(--mono)}
+.prs{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.pr{font:12px var(--mono);border:1px solid var(--line);padding:1px 7px;border-radius:6px;color:var(--tx2)}
+.blk{color:var(--blocked);max-width:62%}
+.nextb{border-left:3px solid currentColor;padding:6px 0 6px 12px;font-size:14px}
+.nextb span{color:var(--tx)}
+textarea{width:100%;min-height:110px;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--tx);font:14px/1.5 var(--sans);padding:10px;resize:vertical;outline:none}
+textarea:focus{border-color:#3d5474}
+.saved{font-size:12px;color:var(--tx3);margin-top:6px;min-height:16px}
+.notehint{font-size:12px;color:var(--tx3);margin:4px 0 8px}
+.wn{margin:12px 16px 0;border:1px solid var(--waiting);border-radius:10px;padding:10px 12px;color:var(--waiting);font-size:13px;font-weight:700;letter-spacing:.4px}
+.wn small{display:block;color:var(--tx2);font-weight:400;margin-top:3px;letter-spacing:0}
+.empty{padding:48px 20px;text-align:center}
+.empty svg{margin:0 auto 14px;opacity:.5}
+.e1{font-size:15px;font-weight:600;margin:0 0 10px}
+.e2{font-size:12px;color:var(--tx3);line-height:1.8;margin:0}
+
+/* ---------- Тост ---------- */
+#toast{position:fixed;left:50%;bottom:18px;transform:translate(-50%,8px);opacity:0;transition:.2s;background:var(--panel2);border:1px solid var(--line);padding:8px 14px;border-radius:10px;font-size:13px;z-index:50;pointer-events:none;max-width:88vw;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- Мобильная шторка ---------- */
+@media(max-width:760px){
+  #top{flex-wrap:wrap;gap:2px 12px;padding:8px 12px 6px}
+  .brand{flex:none;width:100%;min-width:0;flex-direction:row;align-items:baseline;justify-content:space-between;gap:10px}
+  .brand h1{font-size:15px}
+  .brand .sub{flex:1;min-width:0;text-align:right}
+  #stats{margin-left:0;width:100%;justify-content:space-between;gap:8px}
+  .stat{align-items:flex-start}
+  .stat .v{font-size:17px}
+  .stat.prod .v{font-size:13px}
+  #main{grid-template-columns:1fr}
+  #insp{position:fixed;left:0;right:0;bottom:0;width:auto;height:48%;max-height:48%;border-left:0;border-top:1px solid var(--line);border-radius:14px 14px 0 0;transform:translateY(105%);transition:transform .25s ease;z-index:30}
+  #insp.open{transform:none}
+  /* при открытой шторке легенда не отжимает и не перекрывает карту (ревью CEO, P1-6) */
+  body.insp-open .legend{display:none}
+  .grip{display:block;width:42px;height:4px;border-radius:99px;background:var(--line);margin:8px auto 0;flex:none;cursor:pointer}
+  .hint{display:none}
+  .legend{top:8px;left:10px;gap:4px 12px}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-<header>
-  <h1>beLive · Единый граф</h1>
-  <span class="sha" id="sha"></span>
-  <span class="sub">Где мы · Куда идём · Кто держит · Что ждёт GO</span>
+
+<header id="top">
+  <div class="brand">
+    <h1>beLive · Единый граф</h1>
+    <div class="sub" id="sub"></div>
+  </div>
+  <div id="stats">
+    <div class="stat prod" title="SHA деплоя нигде не отслеживается: до version.json/__BUILD_SHA__ здесь показан снимок main, а не прод"><span class="v"><i class="pdot"></i><span id="prodV"></span></span><span class="l">main (снимок)</span></div>
+    <div class="stat"><span class="v c-active" id="stActive">0</span><span class="l">в работе</span></div>
+    <div class="stat" title="Узлы-решения (dec-*) в состоянии «ждёт решения»; продуктовые линии, стоящие за тем же решением, не считаются — двойного счёта нет"><span class="v c-waiting" id="stWait">0</span><span class="l">ждут решения</span></div>
+    <div class="stat" title="Узлы с непустым полем «блокер» при любом состоянии; сколько ровно в состоянии «заблокировано» — метрикой ниже под шапкой"><span class="v c-blocked" id="stBlocked">0</span><span class="l">с блокером</span></div>
+  </div>
 </header>
+<div id="kline"></div>
 
-<div class="kpis" id="kpis"></div>
-<div class="drift" id="drift"></div>
-
-<h2>Магистраль модернизации <small>канон NODES.md · нумерация NODE-IDS.md · кликни на узел</small></h2>
-<div class="track" id="track"></div>
-
-<div class="cols">
-  <div>
-    <h2>Продуктовые линии <small>уже в main</small></h2>
-    <div class="cards" id="cards"></div>
+<div id="bar">
+  <button class="btn primary" id="btnWn" title="Подсветить следующий шаг — остальное приглушить">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.4"/><circle cx="8" cy="8" r="1.6" fill="currentColor" stroke="none"/><path d="M8 .8v3M8 12.2v3M.8 8h3M12.2 8h3"/></svg>
+    Что делать сейчас
+  </button>
+  <div class="srch">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="7" cy="7" r="4.6"/><path d="M10.5 10.5L14.6 14.6"/></svg>
+    <input id="q" type="search" placeholder="Поиск по названию · /" autocomplete="off">
+    <span class="qn" id="qn"></span>
   </div>
-  <div>
-    <h2>Ждёт решения Никиты <small>не решаем за него</small></h2>
-    <div class="open" id="open"></div>
+  <select id="selDir" title="Фильтр по направлению"></select>
+  <select id="selOwner" title="Фильтр по владельцу"></select>
+  <button class="chip" id="chipWait" title="Только узлы, которые без Никиты не двигаются">Стоит без Никиты</button>
+  <button class="btn" id="btnExp" title="Скачать все заметки одним JSON-файлом">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 2v8M4.6 6.8L8 10.2l3.4-3.4M2.5 13.5h11"/></svg>
+    <span class="bl">Экспорт заметок</span>
+  </button>
+  <button class="btn" id="btnImp" title="Загрузить заметки из JSON — перенос между устройствами">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 10V2M4.6 5.6L8 9l3.4-3.4M2.5 13.5h11"/></svg>
+    <span class="bl">Импорт заметок</span>
+  </button>
+  <input type="file" id="fileImp" accept=".json,application/json" hidden>
+  <div class="zooms">
+    <button class="zb" id="zOut" title="Уменьшить"><svg width="13" height="13" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.8"><path d="M3 8h10"/></svg></button>
+    <button class="zb" id="zIn" title="Увеличить"><svg width="13" height="13" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.8"><path d="M3 8h10M8 3v10"/></svg></button>
+    <button class="zb" id="zFit" title="Вписать всё"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2.5 5.5v-3h3M13.5 5.5v-3h-3M2.5 10.5v3h3M13.5 10.5v3h-3"/></svg></button>
   </div>
 </div>
 
-<div class="detail" id="detail"></div>
+<main id="main">
+  <div id="mapwrap">
+    <div class="legend" id="legend"></div>
+    <svg id="map" aria-label="Карта направлений">
+      <defs>
+        <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
+          <circle cx="1.4" cy="1.4" r="1.2" fill="#161f2e"/>
+        </pattern>
+        <pattern id="rh" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="2.4" height="6" fill="#ff6b6b"/>
+        </pattern>
+        <marker id="arD" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 Z" fill="#8b9bb4"/>
+        </marker>
+        <marker id="arR" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 Z" fill="#44546c"/>
+        </marker>
+      </defs>
+      <g id="vp">
+        <rect x="-4000" y="-4000" width="12000" height="12000" fill="url(#grid)"/>
+        <g id="gClusters"></g>
+        <g id="gEdges"></g>
+        <g id="gNodes"></g>
+      </g>
+    </svg>
+    <div class="hint">Тяните — панорама · колесо / щипок — зум · клик по узлу — детали</div>
+    <div class="src" id="srcNote"></div>
+  </div>
+  <aside id="insp">
+    <div class="grip" id="grip" title="Закрыть"></div>
+    <div id="inspBody"></div>
+  </aside>
+</main>
 
-<div class="legend">
-  <span><i style="background:var(--done)"></i>в main / закрыто</span>
-  <span><i style="background:var(--active)"></i>в работе</span>
-  <span><i style="background:var(--queued)"></i>очередь</span>
-  <span><i style="background:var(--risk)"></i>высокий риск</span>
-  <span><i style="background:var(--gate)"></i>гейты / фундамент</span>
-</div>
-
-<footer>
-Источник: board/roadmap-data.json · генерируется scripts/generate-roadmap.mjs · Mermaid-канон: board/ROADMAP.md.
-Данные правит только командующий (707 / CEO). <span id="stamp"></span>
-</footer>
-</div>
+<div id="toast"></div>
 
 <script>
 /*DATA:START*/
 const DATA = {
-  "schema": "belive.roadmap.v1",
-  "generated": "2026-11-09T18:30:00+03:00",
-  "main": "ca45f643",
-  "command": "707 · комбинированная работа (WorkBuddy + WSL-harness) · до ~20:12",
-  "drift": "9c7c37b → f0717e1 (#54/#55) → 0464dd5 (#56) → fd9a113 (#57/#58) → ca45f643 (#59)",
-  "kpi": [
-    [
-      "0",
-      "tsc typecheck"
-    ],
-    [
-      "647/651",
-      "as-any ratchet"
-    ],
-    [
-      "695/1190",
-      "lint warn / baseline"
-    ],
-    [
-      "1204",
-      "vitest"
-    ],
-    [
-      "0",
-      "lint errors"
-    ],
-    [
-      "396.4",
-      "build gzip КБ"
-    ],
-    [
-      "1649",
-      "secrets clean"
+  "schema": "belive.roadmap.v2",
+  "meta": {
+    "generated": "2026-11-10T13:35:00+03:00",
+    "main": "6cd4f1f",
+    "prod": "6cd4f1f",
+    "command": "707 · комбинированная работа (WorkBuddy + WSL-harness) · до ~20:12",
+    "drift": "9c7c37b → f0717e1 (#54/#55) → 0464dd5 (#56) → fd9a113 (#57/#58) → ca45f643 (#59) → 6cd4f1f (#60–#69: living-graph #60, frozen-ab #61, n1c2 #62, frozen-guard v2/v3/upsert #63–#68, npm ci #69)",
+    "kpi": [
+      [
+        "0",
+        "tsc typecheck"
+      ],
+      [
+        "648/651",
+        "as-any ratchet"
+      ],
+      [
+        "695/1190",
+        "lint warn / baseline"
+      ],
+      [
+        "1208",
+        "vitest"
+      ],
+      [
+        "0",
+        "lint errors"
+      ],
+      [
+        "396.2",
+        "build gzip КБ"
+      ],
+      [
+        "1657",
+        "secrets clean"
+      ]
     ]
+  },
+  "directions": [
+    {
+      "id": "trunk",
+      "title": "Магистраль N0–N8",
+      "order": 1
+    },
+    {
+      "id": "trackmap",
+      "title": "TrackMap + система Лупа",
+      "order": 2
+    },
+    {
+      "id": "firstpath",
+      "title": "First Path / MVSEP",
+      "order": 3
+    },
+    {
+      "id": "userroom",
+      "title": "User Room",
+      "order": 4
+    },
+    {
+      "id": "mobile",
+      "title": "Mobile performance",
+      "order": 5
+    },
+    {
+      "id": "seo",
+      "title": "SEO-витрина",
+      "order": 6
+    },
+    {
+      "id": "aicoach",
+      "title": "AI Coach",
+      "order": 7
+    },
+    {
+      "id": "frozen",
+      "title": "FROZEN-guard",
+      "order": 8
+    }
   ],
   "nodes": [
     {
       "id": "N0",
-      "nm": "Аудит Центр_5",
-      "st": "NODES / ROADMAP / PDF",
-      "cls": "done",
-      "p": 100,
-      "d": "10-страничный аудит, карта N0–N8, реестр P0–P5, база main@9694bbb. Всё дальнейшее опирается на него.",
-      "who": "Центр_5",
+      "title": "Аудит Центр_5",
+      "direction": "trunk",
+      "state": "done",
+      "progress": 100,
+      "owner": "Центр_5",
+      "pr": [],
+      "blocker": null,
       "next": "—",
-      "block": "нет"
+      "st": "NODES / ROADMAP / PDF",
+      "detail": "10-страничный аудит, карта N0–N8, реестр P0–P5, база main@9694bbb. Всё дальнейшее опирается на него.",
+      "updated": "2026-11-09"
     },
     {
       "id": "N1",
-      "nm": "Гейты",
-      "st": "8 гейтов в CI",
-      "cls": "done",
-      "p": 100,
-      "d": "ESLint TS-парсер, tsc 146→0, lint errors 43→0, ratchet (asany / lint-baseline / typecheck), check-secrets, check-manifest, pregate.sh (12 гейтов), FROZEN-guard. Закрыто PR #48, #49, #53, #57, #59.",
-      "who": "805 → 007_c",
-      "next": "N1c.2",
-      "block": "нет"
+      "title": "Гейты",
+      "direction": "trunk",
+      "state": "done",
+      "progress": 100,
+      "owner": "805 → 007_c",
+      "pr": [
+        48,
+        49,
+        53,
+        57,
+        59,
+        62,
+        66,
+        67,
+        68,
+        69
+      ],
+      "blocker": null,
+      "next": "—",
+      "st": "8 гейтов в CI · FROZEN v3 required",
+      "detail": "ESLint TS-парсер, tsc 146→0, lint errors 43→0, ratchet (asany / lint-baseline / typecheck), check-secrets, check-manifest, pregate.sh (12 гейтов), FROZEN-guard v3 (workflow_run + check-runs на голову PR, required), npm ci --ignore-scripts в 4 workflow. Закрыто PR #48, #49, #53, #57, #59, #62, #66, #67, #68, #69.",
+      "updated": "2026-11-10"
     },
     {
       "id": "N1c.2",
-      "nm": "Линт-долг",
-      "st": "1155 → 695 · −460",
-      "cls": "active",
-      "p": 62,
-      "d": "eqeqeq −92/92 конфигом (все == null), curly −368 в 53 файлах (нормализация «только скобки» 53/53). Исключены 15 файлов дельты 708 (93 curly). Пакет HANDOFF-705-N1c2, PREGATE OK 12/12. Осталось: no-empty 207, scripts 11, js 22, src 231.",
-      "who": "705",
-      "next": "scripts/js → no-empty → src → baseline --update",
-      "block": "пакет на fd9a113, main уже ca45f643 → пересбор перед воротами"
+      "title": "Линт-долг",
+      "direction": "trunk",
+      "state": "done",
+      "progress": 100,
+      "owner": "705",
+      "pr": [
+        62
+      ],
+      "blocker": null,
+      "next": "—",
+      "st": "1155 → 695 · пакет смержен #62",
+      "detail": "eqeqeq null:ignore −92/92 конфигом, curly −368 в 53 файлах («только скобки» 53/53), исключены 15 файлов дельты 708. Пакет 705/n1c2 смержен PR #62, PREGATE OK 12/12. Линт 1155 → 695; остаток удерживается ratchet-гейтом lint-baseline из N1.",
+      "updated": "2026-11-10"
     },
     {
       "id": "N2",
-      "nm": "P0-баги рантайма",
-      "st": "2.1–2.5 · очередь",
-      "cls": "queued",
-      "p": 0,
-      "d": "2.1 Blob-URL revoke · 2.2 Mic-off TypeError · 2.3 V-Mix no-op · 2.4 unhandledrejection · 2.5 MicSourceV3 refcount (FROZEN-REQUEST). Канон: N2 — это БАГИ, не линт.",
-      "who": "705 / 702",
+      "title": "P0-баги рантайма",
+      "direction": "trunk",
+      "state": "queued",
+      "progress": 0,
+      "owner": "705 / 702",
+      "pr": [],
+      "blocker": "решение Никиты по 702 (UI на prev-трек vs тишина)",
       "next": "после N1c.2",
-      "block": "решение Никиты по 702 (UI на prev-трек vs тишина)"
+      "st": "2.1–2.5 · очередь",
+      "detail": "2.1 Blob-URL revoke · 2.2 Mic-off TypeError · 2.3 V-Mix no-op · 2.4 unhandledrejection · 2.5 MicSourceV3 refcount (FROZEN-REQUEST). Канон: N2 — это БАГИ, не линт.",
+      "updated": "2026-11-09"
     },
     {
       "id": "N3",
-      "nm": "Шум консоли",
-      "st": "805/N3 готов к воротам",
-      "cls": "active",
-      "p": 35,
-      "d": "Ф1+Ф2 сданы, ветка 805/N3 @ac76064 (5 файлов, FROZEN 0), в origin нет, маршрутизирована 007_c. Ф3 (типы на границе персиста) на паузе.",
-      "who": "805 → 705 / 007_c",
+      "title": "Шум консоли",
+      "direction": "trunk",
+      "state": "active",
+      "progress": 35,
+      "owner": "805 → 705 / 007_c",
+      "pr": [],
+      "blocker": "N3 Ф3 — продолжать или ждать Центр_5",
       "next": "влить ветку, затем Ф3 по решению",
-      "block": "N3 Ф3 — продолжать или ждать Центр_5"
+      "st": "805/N3 готов к воротам",
+      "detail": "Ф1+Ф2 сданы, ветка 805/N3 @ac76064 (5 файлов, FROZEN 0), в origin нет, маршрутизирована 007_c. Ф3 (типы на границе персиста) на паузе.",
+      "updated": "2026-11-09"
     },
     {
       "id": "N4",
-      "nm": "Размер бандла",
-      "st": "очередь",
-      "cls": "queued",
-      "p": 0,
-      "d": "main-чанк ~1 228 КБ / gzip 396.4. manualChunks, React.lazy, бюджеты размеров.",
-      "who": "705",
+      "title": "Размер бандла",
+      "direction": "trunk",
+      "state": "queued",
+      "progress": 0,
+      "owner": "705",
+      "pr": [],
+      "blocker": null,
       "next": "после N3",
-      "block": "нет"
+      "st": "очередь",
+      "detail": "main-чанк ~1 245 КБ / gzip 396.2 (замер на 6cd4f1f). manualChunks, React.lazy, бюджеты размеров.",
+      "updated": "2026-11-10"
     },
     {
       "id": "N5",
-      "nm": "Мусор репозитория",
-      "st": "очередь",
-      "cls": "queued",
-      "p": 0,
-      "d": "team-m/ из дерева, notify + INBOX, LP-трек, GH Pages. Внимание: aetherBoot.ts правится и в N2.1 — N5 идёт ПОСЛЕ N2, чтобы не пересечься.",
-      "who": "705",
+      "title": "Мусор репозитория",
+      "direction": "trunk",
+      "state": "queued",
+      "progress": 0,
+      "owner": "705",
+      "pr": [],
+      "blocker": "GH Pages снос по решению Никиты",
       "next": "после N4",
-      "block": "GH Pages снос по решению Никиты"
+      "st": "очередь",
+      "detail": "team-m/ из дерева, notify + INBOX, LP-трек, GH Pages. Внимание: aetherBoot.ts правится и в N2.1 — N5 идёт ПОСЛЕ N2, чтобы не пересечься.",
+      "updated": "2026-11-09"
     },
     {
       "id": "N6",
-      "nm": "Похороны V2",
-      "st": "очередь",
-      "cls": "queued",
-      "p": 0,
-      "d": "Остатки легаси-фасада, мёртвые сторы, дубли настроек.",
-      "who": "705",
+      "title": "Похороны V2",
+      "direction": "trunk",
+      "state": "queued",
+      "progress": 0,
+      "owner": "705",
+      "pr": [],
+      "blocker": "FROZEN-зависимости",
       "next": "после N5",
-      "block": "FROZEN-зависимости"
+      "st": "очередь",
+      "detail": "Остатки легаси-фасада, мёртвые сторы, дубли настроек.",
+      "updated": "2026-11-09"
     },
     {
       "id": "N7",
-      "nm": "Шов JS ↔ React",
-      "st": "самый тяжёлый",
-      "cls": "risk",
-      "p": 0,
-      "d": "По объёму сопоставим со всеми остальными узлами вместе: каталог треков, тексты, маркеры, фасад движка с легаси-глобалов на модули. Риск: потеря пользовательских треков при миграции IndexedDB.",
-      "who": "705 + Gate R",
+      "title": "Шов JS ↔ React",
+      "direction": "trunk",
+      "state": "risk",
+      "progress": 0,
+      "owner": "705 + Gate R",
+      "pr": [],
+      "blocker": "требуется явное «ок» Никиты + бэкап",
       "next": "только после GO",
-      "block": "требуется явное «ок» Никиты + бэкап"
+      "st": "самый тяжёлый",
+      "detail": "По объёму сопоставим со всеми остальными узлами вместе: каталог треков, тексты, маркеры, фасад движка с легаси-глобалов на модули. Риск: потеря пользовательских треков при миграции IndexedDB.",
+      "updated": "2026-11-09"
     },
     {
       "id": "N8",
-      "nm": "История git",
-      "st": "окно заморозки",
-      "cls": "queued",
-      "p": 0,
-      "d": "filter-repo, утечки в истории, force-push только в окно заморозки с бэкапом. Не сейчас.",
-      "who": "Никита + 007_c",
+      "title": "История git",
+      "direction": "trunk",
+      "state": "queued",
+      "progress": 0,
+      "owner": "Никита + 007_c",
+      "pr": [],
+      "blocker": "окно заморозки",
       "next": "отдельно",
-      "block": "окно заморозки"
+      "st": "окно заморозки",
+      "detail": "filter-repo, утечки в истории, force-push только в окно заморозки с бэкапом. Не сейчас.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "dec-702",
+      "title": "702 · FROZEN A+B / F5",
+      "direction": "mobile",
+      "state": "waiting",
+      "progress": 0,
+      "owner": "Никита",
+      "pr": [],
+      "blocker": null,
+      "priority": 1,
+      "next": "решить: (а) вернуть UI на prev-трек или (б) тишина с сообщением; и решить бюджет стемов 7→2-3",
+      "detail": "Crawling не играет: decode до reset, пик 1476 МиБ при потолке ~1024. Нужно: (а) вернуть UI на prev-трек или (б) тишина с сообщением; и режем ли микшер 7→2-3 стема.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "dec-prompts",
+      "title": "20 промптов от 706",
+      "direction": "aicoach",
+      "state": "waiting",
+      "progress": 0,
+      "owner": "Никита",
+      "pr": [],
+      "blocker": null,
+      "priority": 2,
+      "next": "пнуть 706 исполнить написанные промпты — доски из Windows он не видит",
+      "detail": "Набор из 20 промптов написан, ждёт исполнения 706. Единственный внешний блокер мержа AI Coach рев.4: 706 из Windows доски не видит, пнуть может только Никита.",
+      "updated": "2026-11-10"
+    },
+    {
+      "id": "dec-cfpages",
+      "title": "CF Pages belive-seo",
+      "direction": "seo",
+      "state": "waiting",
+      "progress": 0,
+      "owner": "Никита",
+      "pr": [],
+      "blocker": null,
+      "priority": 3,
+      "next": "API-токен + 2 секрета в GitHub + Pages-проект + DNS mybelive.com",
+      "detail": "API-токен + 2 секрета в GitHub + Pages-проект + DNS mybelive.com. Сайт собран, но не привязан.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "dec-mvsep",
+      "title": "Отзыв старого ключа MVSEP",
+      "direction": "firstpath",
+      "state": "waiting",
+      "progress": 0,
+      "owner": "Никита",
+      "pr": [],
+      "blocker": null,
+      "priority": 4,
+      "next": "отозвать старый ключ MVSEP",
+      "detail": "Новый ключ работает (проверено curl, HTTP 200). Старый ещё активен и засветился в истории.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "dec-n3f3",
+      "title": "N3 Ф3 · типы персиста",
+      "direction": "trunk",
+      "state": "waiting",
+      "progress": 0,
+      "owner": "Никита",
+      "pr": [],
+      "blocker": null,
+      "priority": 5,
+      "next": "решить: продолжать Ф3 сейчас или ждать Центр_5",
+      "detail": "Продолжать сейчас или ждать Центр_5.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "line-trackmap",
+      "title": "TrackMap + система Лупа",
+      "direction": "trackmap",
+      "state": "done",
+      "progress": 100,
+      "owner": "808",
+      "pr": [
+        50
+      ],
+      "blocker": null,
+      "next": "706 смотрит постфактум на проде (5 зон)",
+      "st": "PR #50 · 21 файл · tsc 0 · в проде",
+      "detail": "Скобки петли, edge-toggle, title-glow, drag, sub-block, layout 54px.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "line-firstpath",
+      "title": "First Path / MVSEP",
+      "direction": "firstpath",
+      "state": "done",
+      "progress": 100,
+      "owner": "806",
+      "pr": [
+        55
+      ],
+      "blocker": null,
+      "next": "W0 (download, квота 10/день, keySource, W0.5) → AUTH-1 → E2E",
+      "st": "PR #55 · Gate R PASS · в проде",
+      "detail": "A1 v2.2 BYOK: ключ на устройстве, миграция с обнулением, 63 теста.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "line-userroom",
+      "title": "User Room",
+      "direction": "userroom",
+      "state": "done",
+      "progress": 100,
+      "owner": "709",
+      "pr": [
+        56
+      ],
+      "blocker": null,
+      "next": "D10 (migrateGuest) отдельным H после AUTH-1",
+      "st": "PR #56 · в проде",
+      "detail": "Вход через User, настройки ИИ/графики в комнате, статистика.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "line-mobile",
+      "title": "Mobile performance",
+      "direction": "mobile",
+      "state": "done",
+      "progress": 100,
+      "owner": "702",
+      "pr": [
+        51
+      ],
+      "blocker": null,
+      "next": "FROZEN A+B + F5 (бюджет стемов) — Crawling всё ещё не играет",
+      "st": "PR #51 · в проде",
+      "detail": "revokeObjectURL + волна без повторного декода, −140 МиБ PCM.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "line-seo",
+      "title": "SEO-витрина",
+      "direction": "seo",
+      "state": "waiting",
+      "progress": 90,
+      "owner": "711 / 706",
+      "pr": [
+        52,
+        58
+      ],
+      "blocker": "CF Pages + DNS — руки Никиты",
+      "next": "8 страниц волны 1; не публиковать раньше запуска коуча",
+      "st": "PR #52 #58 · в проде",
+      "detail": "Каркас Astro + nauchitsya-pet / raspevka-onlayn, тон «студия».",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "line-aicoach",
+      "title": "AI Coach",
+      "direction": "aicoach",
+      "state": "waiting",
+      "progress": 90,
+      "owner": "700 / 706",
+      "pr": [
+        54
+      ],
+      "blocker": "20 промптов от 706",
+      "next": "рев.4 fast-follow",
+      "st": "PR #54 · рев.4 проверена (tsc 0, 23 теста)",
+      "detail": "В main ревизия 2: нет строки о внешнем ИИ-сервисе, нет тестов stop()/поздний токен.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "line-frozen",
+      "title": "FROZEN-guard",
+      "direction": "frozen",
+      "state": "done",
+      "progress": 100,
+      "owner": "805 / 007_c",
+      "pr": [
+        59,
+        63,
+        66,
+        68
+      ],
+      "blocker": null,
+      "next": "—",
+      "st": "PR #59 #63 #66 #68 · 60/60 · required",
+      "detail": "Триггер workflow_run (после PR Gate), вердикт — check-run frozen-guard на голову PR: POST, при повторе PATCH по id (upsert, один SHA — один чек); job назван frozen-guard-run, чек ставится на всех путях выхода через trap. 60/60 сценариев, required. Метка frozen-ok требует reason в теле PR.",
+      "updated": "2026-11-10"
     }
   ],
-  "cards": [
+  "edges": [
     {
-      "t": "TrackMap + система Лупа",
-      "d": "Скобки петли, edge-toggle, title-glow, drag, sub-block, layout 54px",
-      "p": "PR #50 · 21 файл · tsc 0 · в проде",
-      "cls": "",
-      "who": "808",
-      "next": "706 смотрит постфактум на проде (5 зон)"
+      "from": "N0",
+      "to": "N1",
+      "kind": "depends"
     },
     {
-      "t": "First Path / MVSEP",
-      "d": "A1 v2.2 BYOK: ключ на устройстве, миграция с обнулением, 63 теста",
-      "p": "PR #55 · Gate R PASS · в проде",
-      "cls": "",
-      "who": "806",
-      "next": "W0 (download, квота 10/день, keySource, W0.5) → AUTH-1 → E2E"
+      "from": "N1",
+      "to": "N1c.2",
+      "kind": "depends"
     },
     {
-      "t": "User Room",
-      "d": "Вход через User, настройки ИИ/графики в комнате, статистика",
-      "p": "PR #56 · в проде",
-      "cls": "",
-      "who": "709",
-      "next": "D10 (migrateGuest) отдельным H после AUTH-1"
+      "from": "N1c.2",
+      "to": "N2",
+      "kind": "depends"
     },
     {
-      "t": "Mobile performance",
-      "d": "revokeObjectURL + волна без повторного декода, −140 МиБ PCM",
-      "p": "PR #51 · в проде",
-      "cls": "",
-      "who": "702",
-      "next": "FROZEN A+B + F5 (бюджет стемов) — Crawling всё ещё не играет"
+      "from": "N3",
+      "to": "N4",
+      "kind": "depends"
     },
     {
-      "t": "SEO-витрина",
-      "d": "Каркас Astro + nauchitsya-pet / raspevka-onlayn, тон «студия»",
-      "p": "PR #52 #58 · в проде",
-      "cls": "wait",
-      "who": "711 / 706",
-      "next": "8 страниц волны 1; не публиковать раньше запуска коуча; CF Pages + DNS — руки Никиты"
+      "from": "N4",
+      "to": "N5",
+      "kind": "depends"
     },
     {
-      "t": "AI Coach",
-      "d": "В main ревизия 2: нет строки о внешнем ИИ-сервисе, нет тестов stop()/поздний токен",
-      "p": "PR #54 · рев.4 проверена (tsc 0, 23 теста)",
-      "cls": "wait",
-      "who": "700 / 706",
-      "next": "рев.4 fast-follow; блокер — 20 промптов от 706"
+      "from": "N2",
+      "to": "N5",
+      "kind": "depends"
     },
     {
-      "t": "FROZEN-guard",
-      "d": "pull_request_target, 30/30 сценариев, метка frozen-ok требует reason",
-      "p": "PR #59 · в проде",
-      "cls": "",
-      "who": "805 / 007_c",
-      "next": "добавить в required_status_checks (ок Никиты)"
+      "from": "N5",
+      "to": "N6",
+      "kind": "depends"
+    },
+    {
+      "from": "dec-702",
+      "to": "N2",
+      "kind": "depends"
+    },
+    {
+      "from": "dec-prompts",
+      "to": "line-aicoach",
+      "kind": "depends"
+    },
+    {
+      "from": "dec-cfpages",
+      "to": "line-seo",
+      "kind": "depends"
+    },
+    {
+      "from": "dec-n3f3",
+      "to": "N3",
+      "kind": "related"
+    },
+    {
+      "from": "dec-mvsep",
+      "to": "line-firstpath",
+      "kind": "related"
+    },
+    {
+      "from": "dec-702",
+      "to": "line-mobile",
+      "kind": "related"
+    },
+    {
+      "from": "line-seo",
+      "to": "line-aicoach",
+      "kind": "related"
+    },
+    {
+      "from": "line-mobile",
+      "to": "N2",
+      "kind": "related"
+    },
+    {
+      "from": "line-frozen",
+      "to": "N1",
+      "kind": "related"
     }
-  ],
-  "open": [
-    [
-      "702 · FROZEN A+B / F5",
-      "Crawling не играет: decode до reset, пик 1476 МиБ при потолке ~1024. Нужно: (а) вернуть UI на prev-трек или (б) тишина с сообщением; и режем ли микшер 7→2-3 стема."
-    ],
-    [
-      "20 промптов от 706",
-      "Единственный внешний блокер мержа AI Coach рев.4. 706 из Windows, доски не видит — пнуть может только Никита."
-    ],
-    [
-      "CF Pages belive-seo",
-      "API-токен + 2 секрета в GitHub + Pages-проект + DNS mybelive.com. Сайт собран, но не привязан."
-    ],
-    [
-      "Отзыв старого ключа MVSEP",
-      "Новый ключ работает (проверено curl, HTTP 200). Старый ещё активен и засветился в истории."
-    ],
-    [
-      "strict + frozen-guard в required checks",
-      "Два «ок» на репо-конфиг. Прямой push в main и так закрыт, но строгость не полная."
-    ],
-    [
-      "N3 Ф3 · типы персиста",
-      "Продолжать сейчас или ждать Центр_5."
-    ]
   ]
 };
 /*DATA:END*/
 
-function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!==undefined)e.innerHTML=html;return e}
+/* ---------- 0. Утилиты ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const norm = (s) => String(s).toLowerCase().replace(/ё/g, 'е');
+const trunc = (s, max) => String(s).length > max ? String(s).slice(0, max - 1) + '…' : String(s);
+const isMobile = () => window.matchMedia('(max-width:760px)').matches;
 
-document.getElementById('sha').textContent='main '+DATA.main;
-document.getElementById('stamp').textContent='Снимок '+DATA.generated+' · '+DATA.command;
-document.getElementById('kpis').innerHTML=DATA.kpi.map(k=>`<div class="kpi"><b>${k[0]}</b><span>${k[1]}</span></div>`).join('');
-document.getElementById('drift').innerHTML='Дрейф main: '+DATA.drift.replace(DATA.main,'<em>'+DATA.main+'</em>')+'. Правило №6: pregate только на текущем origin/main.';
+const svg = $('#map'), vp = $('#vp');
 
-const track=document.getElementById('track');
-DATA.nodes.forEach(n=>{
-  const d=el('div','node '+n.cls,
-    `<div class="id">${n.id}</div><div class="nm">${n.nm}</div><div class="st">${n.st}</div><div class="bar"><i style="width:${n.p}%"></i></div>`);
-  d.onclick=()=>show(n.id,n.nm,n.d,n.who,n.next,n.block);
-  track.appendChild(d);
-});
+/* ---------- 1. Состояния ---------- */
+const ST = {
+  done:    { l: 'сделано',       c: '#39d98a' },
+  active:  { l: 'в работе',      c: '#ffc44d' },
+  blocked: { l: 'заблокировано', c: '#ff6b6b' },
+  waiting: { l: 'ждёт решения',  c: '#a371f7' },
+  queued:  { l: 'в очереди',     c: '#7f93ad' },
+  risk:    { l: 'риск',          c: '#ff6b6b', hatch: true }
+};
 
-const cards=document.getElementById('cards');
-DATA.cards.forEach(c=>{
-  const d=el('div','card '+c.cls,
-    `<div class="t">${c.t}</div><div class="d">${c.d}</div><div class="p">${c.p}</div>`);
-  d.onclick=()=>show('ПРОДУКТ',c.t,c.d,c.who,c.next,'—');
-  cards.appendChild(d);
-});
+const dirs = (DATA.directions || []).slice().sort((a, b) => a.order - b.order);
+const dirById = {}; dirs.forEach(x => dirById[x.id] = x);
+const nodes = DATA.nodes || [];
+const nodeById = {}; nodes.forEach(n => nodeById[n.id] = n);
+const edges = DATA.edges || [];
 
-const open=document.getElementById('open');
-DATA.open.forEach(o=>{
-  const d=el('div','',`<b>${o[0]}</b> — ${o[1]}`);
-  d.onclick=()=>show('РЕШЕНИЕ НИКИТЫ',o[0],o[1],'Никита','после «ок» стартует соответствующий узел','без GO не начинаем');
-  open.appendChild(d);
-});
-
-function show(id,title,desc,who,next,block){
-  document.getElementById('detail').innerHTML=
-   `<h3><code>${id}</code> ${title}</h3>`+
-   `<p>${desc}</p>`+
-   `<p>👤 <b>${who}</b> &nbsp;·&nbsp; ➡️ ${next}</p>`+
-   `<p>🚧 Блокер: ${block}</p>`+
-   `<p style="color:var(--tx3);font-size:10px">${DATA.generated} · main ${DATA.main}</p>`;
+/* ---------- 2. Заметки владельца (localStorage) ---------- */
+/* имя хранилища — не секрет; согласовано с secrets-гейтом R3: имя не должно оканчиваться на KEY */
+const LS_NAME = 'belive.roadmap.notes.v2';
+let notes = {};
+try { notes = JSON.parse(localStorage.getItem(LS_NAME) || '{}') || {}; } catch (e) { notes = {}; }
+function saveNotes() { try { localStorage.setItem(LS_NAME, JSON.stringify(notes)); } catch (e) { /* file:// без хранилища — работаем в памяти */ } }
+function noteCount(id) { const t = (notes[id] || '').trim(); if (!t) return 0; return t.split('\n').filter(l => l.trim()).length; }
+let saveT = null;
+function queueSave(id) {
+  clearTimeout(saveT);
+  saveT = setTimeout(() => {
+    saveNotes(); refreshBadge(id);
+    const st = $('#noteStat'); if (st) st.textContent = 'Сохранено · ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  }, 400);
 }
-show('КАРТИНА','Единый граф · '+DATA.command,
- 'Магистраль модернизации N0→N8 и '+DATA.cards.length+' продуктовых линий идут параллельно. Фундамент (гейты) уже стоит. Активный фронт — N1c.2 (линт-долг) у 705; главный пользовательский баг — Crawling на слабом телефоне — ещё не закрыт и ждёт решения Никиты.',
- '707 / CEO','обновить roadmap-data.json → --write → --check','дрейф main (5 смен за день)');
+
+/* ---------- 3. Раскладка: магистраль сверху, линии ниже ---------- */
+const NW = 232, NH = 66, GX = 14, GY = 14, PX = 16, PH = 34;
+let clusters = [], pos = {};
+
+function layout() {
+  clusters = []; pos = {};
+  let y = 0;
+  dirs.forEach(dir => {
+    const dn = nodes.filter(n => n.direction === dir.id);
+    if (!dn.length) return;
+    const cols = dir.id === dirs[0].id ? 4 : 1;              // магистраль — грид 4 в ряд, линии — колонка
+    const rows = Math.ceil(dn.length / cols);
+    const w = cols * NW + (cols - 1) * GX + 2 * PX;
+    const h = PH + rows * NH + (rows - 1) * GY + PX;
+    clusters.push({ d: dir, x: 0, y: y, w: w, h: h, nodes: dn, cols: cols });
+    dn.forEach((n, i) => {
+      pos[n.id] = {
+        x: 0 + PX + (i % cols) * (NW + GX),
+        y: y + PH + Math.floor(i / cols) * (NH + GY)
+      };
+    });
+    y += h + 90;
+  });
+  /* линейки кластеров раскладываем в ряды по 4 */
+  const rest = clusters.slice(1);
+  const gapX = 56, perRow = 4;
+  let x = 0, rowH = 0, yy = clusters.length ? clusters[0].h + 90 : 0, rowStart = 0;
+  clusters[0] && (clusters[0].x = 0);
+  let idx = 0;
+  rest.forEach((c, i) => {
+    if (i > 0 && i % perRow === 0) { yy += rowH + 90; x = 0; rowH = 0; }
+    c.x = x; c.y = yy;
+    c.nodes.forEach((n, j) => { pos[n.id] = { x: c.x + PX, y: c.y + PH + j * (NH + GY) }; });
+    x += c.w + gapX; rowH = Math.max(rowH, c.h); idx = i;
+  });
+}
+
+function worldBBox() {
+  let x1 = 1e9, y1 = 1e9, x2 = -1e9, y2 = -1e9;
+  clusters.forEach(c => {
+    if (c.nodes.every(n => !nodeVisible(n))) return;
+    x1 = Math.min(x1, c.x); y1 = Math.min(y1, c.y);
+    x2 = Math.max(x2, c.x + c.w); y2 = Math.max(y2, c.y + c.h);
+  });
+  if (x1 > x2) return { x: 0, y: 0, w: 100, h: 100 };
+  return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+}
+
+/* ---------- 4. Рендер SVG ---------- */
+function edgeD(a, b) {
+  const ax = a.x + NW / 2, ay = a.y + NH / 2, bx = b.x + NW / 2, by = b.y + NH / 2;
+  const dx = bx - ax, dy = by - ay;
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    const sx = dx > 0 ? a.x + NW : a.x, sy = a.y + NH / 2, tx = dx > 0 ? b.x : b.x + NW, ty = b.y + NH / 2;
+    const mx = (sx + tx) / 2;
+    return `M ${sx} ${sy} C ${mx} ${sy}, ${mx} ${ty}, ${tx} ${ty}`;
+  }
+  const sx = a.x + NW / 2, sy = dy > 0 ? a.y + NH : a.y, tx = b.x + NW / 2, ty = dy > 0 ? b.y : b.y + NH;
+  const my = (sy + ty) / 2;
+  return `M ${sx} ${sy} C ${sx} ${my}, ${tx} ${my}, ${tx} ${ty}`;
+}
+
+function badgeHtml() {
+  return `<g class="nbadge"><rect x="${NW - 36}" y="8" width="23" height="18" rx="9"/><text x="${NW - 24.5}" y="21.5" text-anchor="middle">1</text></g>`;
+}
+
+function nodeSvg(n) {
+  const s = ST[n.state] || ST.queued, p = pos[n.id], c = s.c;
+  const t = /^N\d/.test(n.id) ? `${n.id} · ${n.title}` : n.title;
+  const acc = s.hatch
+    ? `<rect class="acc" width="4" height="${NH}" rx="2" fill="#3d1a1a"/><rect class="acc" width="4" height="${NH}" rx="2" fill="url(#rh)"/>`
+    : `<rect class="acc" width="4" height="${NH}" rx="2" fill="${c}"/>`;
+  return `<g class="nd st-${n.state}" data-id="${esc(n.id)}" style="--c:${c}" transform="translate(${p.x},${p.y})">
+  <title>${esc(n.id + ' · ' + n.title)}</title>
+  <rect class="ring" x="-6" y="-6" width="${NW + 12}" height="${NH + 12}" rx="16"/>
+  <rect class="body" width="${NW}" height="${NH}" rx="10"/>
+  ${acc}
+  <text class="ttl" x="16" y="26">${esc(trunc(t, 24))}</text>
+  <circle cx="21" cy="45" r="3.5" fill="${c}"/>
+  <text class="stl" x="31" y="49">${s.l}</text>
+  <text class="own" x="${NW - 16}" y="49" text-anchor="end">${esc(trunc(String(n.owner), 16))}</text>
+  <rect class="ptr" x="16" y="55" width="${NW - 32}" height="3" rx="1.5"/>
+  ${n.progress ? `<rect class="pfl" x="16" y="55" width="${(NW - 32) * n.progress / 100}" height="3" rx="1.5"/>` : ''}
+  ${noteCount(n.id) ? badgeHtml().replace('>1<', '>' + noteCount(n.id) + '<') : ''}
+</g>`;
+}
+
+function render() {
+  $('#gClusters').innerHTML = clusters.map(c =>
+    `<g class="cluster" data-dir="${esc(c.d.id)}"><rect x="${c.x}" y="${c.y}" width="${c.w}" height="${c.h}" rx="14"/><text x="${c.x + PX + 2}" y="${c.y + 22}">${esc(trunc(c.d.title, 30))}</text></g>`).join('');
+  $('#gEdges').innerHTML = edges.filter(e => pos[e.from] && pos[e.to]).map(e =>
+    `<path class="edge ${e.kind}" data-f="${esc(e.from)}" data-t="${esc(e.to)}" d="${edgeD(pos[e.from], pos[e.to])}" marker-end="url(#${e.kind === 'depends' ? 'arD' : 'arR'})"/>`).join('');
+  $('#gNodes').innerHTML = nodes.map(nodeSvg).join('');
+}
+
+function refreshBadge(id) {
+  const g = $(`.nd[data-id="${CSS.escape(id)}"]`); if (!g) return;
+  const cnt = noteCount(id); let b = g.querySelector('.nbadge');
+  if (cnt && !b) { g.insertAdjacentHTML('beforeend', badgeHtml().replace('>1<', '>' + cnt + '<')); }
+  else if (!cnt && b) { b.remove(); }
+  else if (cnt && b) { b.querySelector('text').textContent = cnt; }
+}
+
+/* ---------- 5. Панорама и зум ---------- */
+let V = { x: 0, y: 0, k: 1 };
+function applyView() { vp.setAttribute('transform', `translate(${V.x} ${V.y}) scale(${V.k})`); }
+function zoomToK(k, cx, cy) {
+  const r = svg.getBoundingClientRect(); k = clamp(k, .15, 2.5);
+  const wx = (cx - r.left - V.x) / V.k, wy = (cy - r.top - V.y) / V.k;
+  V.k = k; V.x = cx - r.left - wx * k; V.y = cy - r.top - wy * k; applyView();
+}
+function fit() {
+  const b = worldBBox(), r = svg.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  const k = clamp(Math.min(r.width / (b.w + 40), r.height / (b.h + 40)), .15, 1.4);
+  V.k = k; V.x = (r.width - b.w * k) / 2 - b.x * k; V.y = (r.height - b.h * k) / 2 - b.y * k; applyView();
+}
+function centerOn(id) {
+  const p = pos[id]; if (!p) return; const r = svg.getBoundingClientRect();
+  let cy = r.top + r.height / 2;                      /* центр карты в координатах окна */
+  if (isMobile()) {
+    /* шторка 48% экрана — видимая полоса карты ~52% высоты окна; легенда при открытой шторке скрыта */
+    const visBottom = window.innerHeight * 0.52;
+    const legendBottom = document.querySelector('#legend').getBoundingClientRect().bottom;
+    const top = Math.max(r.top, legendBottom + 4);
+    cy = clamp((top + visBottom) / 2, r.top + 36, Math.max(r.top + 36, visBottom - 36));
+  }
+  const k = Math.max(V.k, .9);
+  V.k = k; V.x = r.width / 2 - (p.x + NW / 2) * k; V.y = cy - r.top - (p.y + NH / 2) * k; applyView();
+}
+
+svg.addEventListener('wheel', e => { e.preventDefault(); zoomToK(V.k * Math.exp(-e.deltaY * 0.0013), e.clientX, e.clientY); }, { passive: false });
+$('#zIn').onclick = () => { const r = svg.getBoundingClientRect(); zoomToK(V.k * 1.25, r.left + r.width / 2, r.top + r.height / 2); };
+$('#zOut').onclick = () => { const r = svg.getBoundingClientRect(); zoomToK(V.k / 1.25, r.left + r.width / 2, r.top + r.height / 2); };
+$('#zFit').onclick = () => fit();
+
+let drag = null, pinch = null; const ptrs = new Map();
+function reinitDrag(id) { const p = ptrs.get(id); if (p) drag = { sx: p.x, sy: p.y, vx: V.x, vy: V.y, moved: 99, target: null, mid: false }; }
+svg.addEventListener('pointerdown', e => {
+  try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (ptrs.size === 1) drag = { sx: e.clientX, sy: e.clientY, vx: V.x, vy: V.y, moved: 0, target: e.target };
+  if (ptrs.size === 2) { const a = [...ptrs.values()]; pinch = { d0: Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y), k0: V.k }; drag = null; }
+});
+svg.addEventListener('pointermove', e => {
+  if (!ptrs.has(e.pointerId)) return;
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (ptrs.size === 2 && pinch) {
+    const a = [...ptrs.values()];
+    const d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+    zoomToK(pinch.k0 * d / pinch.d0, (a[0].x + a[1].x) / 2, (a[0].y + a[1].y) / 2);
+  } else if (drag) {
+    drag.moved = Math.max(drag.moved, Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy));
+    if (drag.moved > 4) svg.classList.add('dragging');
+    V.x = drag.vx + (e.clientX - drag.sx); V.y = drag.vy + (e.clientY - drag.sy); applyView();
+  }
+});
+function endPointer(e) {
+  const wasClick = drag && drag.moved < 7;
+  const tgt = drag ? drag.target : null;
+  ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null;
+  if (ptrs.size === 1) { const rid = [...ptrs.keys()][0]; reinitDrag(rid); }
+  else drag = null;
+  svg.classList.remove('dragging');
+  if (wasClick) {
+    const g = tgt && tgt.closest ? tgt.closest('.nd') : null;
+    if (g) select(g.dataset.id);
+    else if (whatnow) { /* в режиме «что сейчас» клики мимо не сбрасывают акцент */ }
+    else if (isMobile()) closeSheet();
+  }
+}
+svg.addEventListener('pointerup', endPointer);
+svg.addEventListener('pointercancel', e => { ptrs.delete(e.pointerId); pinch = null; drag = null; svg.classList.remove('dragging'); });
+
+/* подсветка связей при наведении */
+svg.addEventListener('mouseover', e => {
+  const g = e.target.closest ? e.target.closest('.nd') : null; if (!g) return;
+  $$('.edge').forEach(el => el.classList.toggle('hl', el.dataset.f === g.dataset.id || el.dataset.t === g.dataset.id));
+});
+svg.addEventListener('mouseout', () => $$('.edge').forEach(el => el.classList.remove('hl')));
+
+/* ---------- 6. Фильтры ---------- */
+let filters = { q: '', dir: 'all', owner: 'all', wait: false };
+function nodeVisible(n) {
+  if (filters.dir !== 'all' && n.direction !== filters.dir) return false;
+  if (filters.owner !== 'all' && !String(n.owner).includes(filters.owner)) return false;
+  if (filters.wait && n.state !== 'waiting') return false;
+  return true;
+}
+const matchQ = (n, q) => norm(n.title + ' ' + n.id).includes(q);
+function applyFilters(refit) {
+  const q = norm(filters.q.trim());
+  nodes.forEach(n => {
+    const el = $(`.nd[data-id="${CSS.escape(n.id)}"]`); if (!el) return;
+    const vis = nodeVisible(n);
+    el.classList.toggle('off', !vis);
+    el.classList.toggle('dim', vis && !!q && !matchQ(n, q));
+  });
+  clusters.forEach(c => {
+    const el = $(`.cluster[data-dir="${CSS.escape(c.d.id)}"]`); if (!el) return;
+    el.classList.toggle('off', !c.nodes.some(nodeVisible));
+  });
+  /* рёбра перебираем по DOM-элементам: у узла может быть несколько исходящих,
+     селектор по data-f цеплял только первое — второе висело к скрытому узлу (ревью CEO, P1-5) */
+  $$('.edge').forEach(el => {
+    const a = nodeById[el.dataset.f], b = nodeById[el.dataset.t];
+    el.classList.toggle('off', !(a && b && nodeVisible(a) && nodeVisible(b)));
+  });
+  if (q) { const hits = nodes.filter(n => nodeVisible(n) && matchQ(n, q)).length; $('#qn').textContent = hits + '/' + nodes.filter(nodeVisible).length; }
+  else $('#qn').textContent = '';
+  if (refit) fit();
+}
+
+/* ---------- 7. Инспектор ---------- */
+let sel = null;
+function select(id, opts = {}) {
+  sel = id;
+  $$('.nd').forEach(e2 => e2.classList.toggle('sel', e2.dataset.id === id));
+  renderInspector();
+  if (isMobile()) { $('#insp').classList.add('open'); document.body.classList.add('insp-open'); centerOn(id); }
+  else if (opts.center) centerOn(id);
+}
+function deselect() {
+  sel = null;
+  $$('.nd').forEach(e2 => e2.classList.remove('sel'));
+  renderInspector(); closeSheet();
+  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+}
+function closeSheet() { $('#insp').classList.remove('open'); document.body.classList.remove('insp-open'); }
+$('#grip').onclick = closeSheet;
+
+const ICON_X = '<svg width="12" height="12" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.8"><path d="M3 3l10 10M13 3L3 13"/></svg>';
+const ICON_LINK = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6.5 9.5a3.2 3.2 0 010-4.5l2-2a3.2 3.2 0 014.5 4.5l-1 1M9.5 6.5a3.2 3.2 0 010 4.5l-2 2a3.2 3.2 0 01-4.5-4.5l1-1"/></svg>';
+
+function renderInspector() {
+  const n = sel ? nodeById[sel] : null, body = $('#inspBody');
+  if (!n) {
+    body.innerHTML = `<div class="empty">
+      <svg width="120" height="54" viewBox="0 0 120 54" fill="none" stroke="#6f829b" stroke-width="1.4">
+        <rect x="4" y="8" width="30" height="16" rx="4"/><rect x="46" y="8" width="30" height="16" rx="4"/><rect x="88" y="32" width="28" height="16" rx="4"/>
+        <path d="M34 16h12M76 16h12c4 0 8 4 8 8v8" stroke-dasharray="2 3"/>
+      </svg>
+      <p class="e1">Выберите узел на карте</p>
+      <p class="e2">Панорама — тяните карту, зум — колесо или щипок<br>
+      «Что делать сейчас» подсвечит следующий шаг<br>
+      Заметки живут на узлах и сохраняются сами</p>
+    </div>`;
+    return;
+  }
+  const s = ST[n.state] || ST.queued, dir = dirById[n.direction] || { title: '—' };
+  const wn = whatnow && whatnow.n.id === n.id
+    ? `<div class="wn">СЛЕДУЮЩИЙ ШАГ<small>${esc(whatnow.why)}</small></div>` : '';
+  body.innerHTML = `${wn}
+  <div class="head">
+    <span class="tag">${esc(dir.title)}</span>
+    <span class="tag state" style="color:${s.c}">${s.l}</span>
+    <button class="ic" id="inspClose" title="Закрыть (Esc)">${ICON_X}</button>
+  </div>
+  <h2>${esc(n.title)}</h2>
+  <div class="meta">${esc(n.id)} · обновлено ${esc(n.updated)}</div>
+  <section><h3>Что это</h3><p class="detail">${esc(n.detail)}</p>${n.st ? `<p class="stnote">${esc(n.st)}</p>` : ''}</section>
+  <section><h3>Состояние</h3>
+    <div class="row"><span class="k">Прогресс</span><span class="bar"><i style="width:${n.progress}%;background:${s.c}"></i></span><b class="pv">${n.progress}%</b></div>
+    <div class="row"><span class="k">Владелец</span><b>${esc(n.owner)}</b></div>
+    ${n.pr && n.pr.length ? `<div class="row"><span class="k">PR</span><span class="prs">${n.pr.map(p => `<span class="pr">#${p}</span>`).join('')}</span></div>` : ''}
+    ${n.blocker ? `<div class="row"><span class="k">Блокер</span><b class="blk">${esc(n.blocker)}</b></div>` : ''}
+  </section>
+  <section><h3>Что дальше</h3><div class="nextb" style="color:${s.c}"><span>${esc(n.next)}</span></div></section>
+  <section><h3>Заметки</h3>
+    <div class="notehint">Сохраняются в этом браузере автоматически. Экспортируй — и забирай на другое устройство.</div>
+    <textarea id="noteTa" placeholder="Решения, оговорки, «не забыть»…"></textarea>
+    <div class="saved" id="noteStat"></div>
+  </section>
+  <section class="last"><button class="btn" id="btnLink">${ICON_LINK} Ссылка на узел</button></section>`;
+  const ta = $('#noteTa'); ta.value = notes[n.id] || '';
+  ta.addEventListener('input', () => { notes[n.id] = ta.value; queueSave(n.id); });
+  $('#inspClose').onclick = deselect;
+  $('#btnLink').onclick = () => {
+    location.hash = 'node-' + n.id;
+    try { navigator.clipboard.writeText(location.href).then(() => toast('Ссылка скопирована'), () => toast('Ссылка: ' + location.hash)); }
+    catch (e) { toast('Ссылка: ' + location.hash); }
+  };
+}
+
+/* ---------- 8. Режим «Что делать сейчас» ---------- */
+let whatnow = null;
+function computeWhatNow() {
+  const vis = nodes;
+  const w = vis.filter(n => n.state === 'waiting').sort((a, b) => (a.priority ?? 900) - (b.priority ?? 900));
+  if (w.length) return { n: w[0], why: 'Ждёт вашего решения — без вас не двигается.' };
+  const b = vis.filter(n => n.state === 'blocked' || n.state === 'risk');
+  if (b.length) return { n: b[0], why: 'Заблокировано — держит зависимые узлы.' };
+  const a = vis.filter(n => n.state === 'active').sort((x, y) => y.progress - x.progress);
+  return a[0] ? { n: a[0], why: 'Самая продвинутая задача в работе.' } : null;
+}
+function setWhatNow(on) {
+  if (on) {
+    whatnow = computeWhatNow();
+    if (!whatnow) { toast('Нечего подсвечивать — узлов нет'); return; }
+    svg.classList.add('wn');
+    $$('.nd').forEach(e2 => e2.classList.toggle('target', e2.dataset.id === whatnow.n.id));
+    $('#btnWn').classList.add('on');
+    select(whatnow.n.id, { center: true });
+    toast('Сейчас: ' + whatnow.n.title);
+  } else {
+    whatnow = null;
+    svg.classList.remove('wn');
+    $$('.nd').forEach(e2 => e2.classList.remove('target'));
+    $('#btnWn').classList.remove('on');
+    if (sel) renderInspector();
+  }
+}
+$('#btnWn').onclick = () => setWhatNow(!whatnow);
+
+/* ---------- 9. Экспорт / импорт заметок ---------- */
+$('#btnExp').onclick = () => {
+  const cnt = Object.values(notes).filter(v => String(v).trim()).length;
+  const payload = { app: 'beLive.roadmap.notes', version: 2, exported: new Date().toISOString(), notes: notes };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'belive-roadmap-notes.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 800);
+  toast(cnt ? 'Экспортировано заметок: ' + cnt + ' — belive-roadmap-notes.json' : 'Заметок пока нет — файл-пустышка');
+};
+$('#btnImp').onclick = () => $('#fileImp').click();
+$('#fileImp').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const j = JSON.parse(r.result);
+      const inc = (j && j.notes && typeof j.notes === 'object') ? j.notes : null;
+      if (!inc) throw new Error('нет поля notes');
+      let cnt = 0;
+      for (const k of Object.keys(inc)) {
+        if (typeof inc[k] === 'string' && inc[k].trim()) { notes[k] = inc[k]; cnt++; }
+        else delete notes[k];
+      }
+      saveNotes(); nodes.forEach(n => refreshBadge(n.id));
+      if (sel) renderInspector();
+      toast('Импортировано заметок: ' + cnt);
+    } catch (err) { toast('Импорт не удался: ' + (err.message || 'битый JSON')); }
+  };
+  r.readAsText(f); e.target.value = '';
+});
+
+/* ---------- 10. Тост, клавиатура ---------- */
+let toastT = null;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2800);
+}
+document.addEventListener('keydown', e => {
+  const inField = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  if (e.key === '/' && !inField) { e.preventDefault(); $('#q').focus(); }
+  if (e.key === 'Escape') { if (whatnow) setWhatNow(false); else if (sel) deselect(); }
+});
+
+/* ---------- 11. Верхняя полоса, легенда, тулбар ---------- */
+function renderStats() {
+  const cnt = st => nodes.filter(n => n.state === st).length;
+  /* «prod» не отслеживается: SHA деплоя нигде не выводится, поэтому в шапке
+     честный снимок main, а не непроверяемое «prod» (ревью CEO, P0-3) */
+  $('#prodV').textContent = (DATA.meta && DATA.meta.main) || '—';
+  $('#stActive').textContent = cnt('active');
+  /* решения — узлы с priority (dec-*); линии, стоящие за тем же решением,
+     не считаются: двойного счёта нет (ревью CEO, P1-4) */
+  $('#stWait').textContent = nodes.filter(n => n.state === 'waiting' && n.priority !== undefined).length;
+  /* «с блокером» = непустое поле blocker при любом состоянии; сами состояния
+     «заблокировано» показываются отдельной метрикой ниже (ревью CEO, P0-2) */
+  $('#stBlocked').textContent = nodes.filter(n => n.blocker && String(n.blocker).trim()).length;
+  const g = (DATA.meta && DATA.meta.generated) || '';
+  const dt = g.slice(8, 10) + '.' + g.slice(5, 7) + ' ' + g.slice(11, 16);
+  $('#sub').textContent = 'снимок ' + dt + ' · ' + ((DATA.meta && DATA.meta.command) || '');
+  const small = ['сделано ' + cnt('done'), 'заблокировано ' + cnt('blocked'), 'риск ' + cnt('risk'), 'в очереди ' + cnt('queued')];
+  if (DATA.meta && DATA.meta.kpi) DATA.meta.kpi.forEach(k => small.push(k[0] + ' ' + k[1]));
+  if (DATA.meta && DATA.meta.drift) small.push('дрейф: ' + DATA.meta.drift);
+  $('#kline').textContent = small.join(' · ');
+  $('#srcNote').textContent = 'данные: docs/roadmap/roadmap-data.json · генератор: scripts/generate-roadmap.mjs · блок данных руками не правится';
+}
+function renderLegend() {
+  $('#legend').innerHTML = Object.entries(ST).map(([k, s]) =>
+    `<span class="lg"><i style="background:${s.c};${s.hatch ? 'background-image:repeating-linear-gradient(45deg,#ff6b6b 0 3px,#3d1a1a 3px 6px);' : ''}"></i>${s.l}</span>`).join('');
+}
+function buildToolbar() {
+  $('#selDir').innerHTML = `<option value="all">Все направления</option>` +
+    dirs.map(d => `<option value="${esc(d.id)}">${esc(d.title)}</option>`).join('');
+  const toks = new Set();
+  nodes.forEach(n => String(n.owner).split(/\s*[\/+,→]\s*/).forEach(t => { t = t.trim(); if (t) toks.add(t); }));
+  $('#selOwner').innerHTML = `<option value="all">Все владельцы</option>` +
+    [...toks].sort((a, b) => a.localeCompare(b, 'ru')).map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  $('#selDir').onchange = e => { filters.dir = e.target.value; applyFilters(true); };
+  $('#selOwner').onchange = e => { filters.owner = e.target.value; applyFilters(true); };
+  $('#chipWait').onclick = () => {
+    filters.wait = !filters.wait;
+    $('#chipWait').classList.toggle('on', filters.wait);
+    applyFilters(true);
+  };
+  $('#q').addEventListener('input', e => { filters.q = e.target.value; applyFilters(false); });
+}
+
+/* ---------- 12. Инициализация ---------- */
+let rzT = null;
+window.addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(fit, 150); });
+buildToolbar(); renderLegend(); renderStats(); renderInspector();
+layout(); render(); applyFilters(false); fit();
+const h = location.hash.match(/^#node-(.+)$/);
+if (h && nodeById[h[1]]) select(h[1], { center: true });
 </script>
 </body>
 </html>

@@ -8,7 +8,16 @@
 //   0  in sync            1  STALE (forgot --write)      2  usage
 //   3  INVALID DATA (schema/enum/typo)                   4  markers missing
 //
-// SOURCE OF TRUTH = <ROADMAP_DIR>/roadmap-data.json.
+// SOURCE OF TRUTH = <ROADMAP_DIR>/roadmap-data.json, schema belive.roadmap.v2:
+//   meta       generated, main, prod (+командные снимки: command, drift, kpi)
+//   directions id, title, order
+//   nodes      id, title, direction, state, progress 0..100, owner, pr[],
+//              blocker, next, detail, updated (+опционально st, priority)
+//   edges      from, to, kind=depends|related   (from = предпосылка, to = зависимый)
+//
+// Связи берутся ТОЛЬКО из edges[]. Порядок узлов в массиве ничего не значит:
+// ложной линейной цепочки N0→N8 на карте и в mermaid больше нет.
+//
 // --check compares GENERATED ARTIFACTS with the committed artifacts. It deliberately
 // does NOT compare roadmap-data.json.main with HEAD: main advances on every merge,
 // so such a check would be permanently red. The main field is an informational
@@ -16,7 +25,9 @@
 //
 // MIRROR_DIR (optional): a second location (the Windows bridge) that receives the
 // generated MD/HTML. This removes the manual "copy from repo to bridge" step which
-// would otherwise create a second source of truth.
+// would otherwise create a second source of truth. The target must carry the v2
+// template (ROADMAP-TEMPLATE:v2): a stale v1 template is refused loudly (exit 3)
+// BEFORE any write, because splicing v2 data into it would break the page silently.
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join, isAbsolute } from 'node:path';
@@ -34,6 +45,11 @@ const G_END   = '<!-- GRAPH:END -->';
 const D_START = '/*DATA:START*/';
 const D_END   = '/*DATA:END*/';
 
+// Подпись шаблона v2. v1-шаблон (18 КБ, JS читал DATA.cards/cls) содержит те же
+// маркеры DATA:*, поэтому сплайс «удался бы» и сломал цель молча (ловушка MIRROR_DIR
+// из ревью CEO, P1-7). Любая цель — BOARD или MIRROR — обязана нести подпись v2.
+const TPL_V2 = 'ROADMAP-TEMPLATE:v2';
+
 const args = new Set(process.argv.slice(2));
 const esc = (s) => String(s).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -42,76 +58,111 @@ let d;
 try {
   d = JSON.parse(readFileSync(DATA, 'utf8'));
 } catch (e) {
-  console.error('✗ INVALID DATA · cannot parse roadmap-data.json:', e.message);
+  console.error('✗ INVALID DATA · не читается roadmap-data.json:', e.message);
   process.exit(3);
 }
 
-const CLS = new Set(['done', 'active', 'queued', 'risk']);
+const STATES = new Set(['done', 'active', 'blocked', 'waiting', 'queued', 'risk']);
+const EDGE_KINDS = new Set(['depends', 'related']);
 const errors = [];
 const req = (o, fields, where) => fields.forEach(f => {
-  if (o[f] === undefined || o[f] === null || o[f] === '') {errors.push(`${where}: missing "${f}"`);}
+  if (o[f] === undefined || o[f] === null || o[f] === '') {errors.push(`${where}: нет обязательного поля "${f}"`);}
 });
 
-if (d.schema !== 'belive.roadmap.v1') {errors.push('schema: expected belive.roadmap.v1');}
-req(d, ['generated', 'main', 'command', 'drift'], 'root');
-if (!Array.isArray(d.kpi) || !d.kpi.every(k => Array.isArray(k) && k.length === 2)) {errors.push('kpi: expected array of [value,label]');}
-if (!Array.isArray(d.nodes) || d.nodes.length === 0) {errors.push('nodes: expected non-empty array');}
-if (!Array.isArray(d.cards)) {errors.push('cards: expected array');}
-if (!Array.isArray(d.open)) {errors.push('open: expected array');}
+if (d.schema !== 'belive.roadmap.v2') {errors.push(`schema: ожидался "belive.roadmap.v2", найден ${JSON.stringify(d.schema)} — старую v1 нужно мигрировать`);}
+req(d, ['meta', 'directions', 'nodes', 'edges'], 'root');
 
-const seen = new Set();
+const dirIds = new Set();
+if (!Array.isArray(d.directions) || d.directions.length === 0) {errors.push('directions: ожидается непустой массив направлений');}
+(d.directions || []).forEach((x, i) => {
+  const w = `directions[${i}] (${x?.id ?? '?'})`;
+  if (typeof x !== 'object') { errors.push(`${w}: не объект`); return; }
+  req(x, ['id', 'title', 'order'], w);
+  if (dirIds.has(x.id)) {errors.push(`${w}: дубликат id направления`);}
+  dirIds.add(x.id);
+});
+
+if (d.meta && (typeof d.meta.generated !== 'string' || !d.meta.main)) {
+  req(d.meta, ['generated', 'main', 'prod'], 'meta');
+}
+
+const nodeIds = new Set();
+if (!Array.isArray(d.nodes) || d.nodes.length === 0) {errors.push('nodes: ожидается непустой массив узлов');}
 (d.nodes || []).forEach((n, i) => {
   const w = `nodes[${i}] (${n?.id ?? '?'})`;
-  if (typeof n !== 'object') { errors.push(`${w}: not an object`); return; }
-  req(n, ['id', 'nm', 'st', 'cls', 'd', 'who', 'next', 'block'], w);
-  if (!CLS.has(n.cls)) {errors.push(`${w}: cls "${n.cls}" not in done|active|queued|risk (typo?)`);}
-  if (typeof n.p !== 'number' || n.p < 0 || n.p > 100) {errors.push(`${w}: p must be 0..100`);}
-  if (seen.has(n.id)) {errors.push(`${w}: duplicate id`);}
-  seen.add(n.id);
+  if (typeof n !== 'object') { errors.push(`${w}: не объект`); return; }
+  req(n, ['id', 'title', 'direction', 'state', 'progress', 'owner', 'pr', 'next', 'detail', 'updated'], w);
+  if (!('blocker' in n)) {errors.push(`${w}: нет обязательного поля "blocker"`);}
+  else if (n.blocker !== null && typeof n.blocker !== 'string') {errors.push(`${w}: blocker — ожидается строка или null`);}
+  if (n.state !== undefined && !STATES.has(n.state)) {errors.push(`${w}: state "${n.state}" — нет такого состояния (done|active|blocked|waiting|queued|risk)`);}
+  if (n.progress !== undefined && (typeof n.progress !== 'number' || !Number.isInteger(n.progress) || n.progress < 0 || n.progress > 100)) {errors.push(`${w}: progress ${JSON.stringify(n.progress)} — нужно целое число 0..100`);}
+  if (n.direction !== undefined && !dirIds.has(n.direction)) {errors.push(`${w}: direction "${n.direction}" не объявлен в directions`);}
+  if (n.pr !== undefined && !Array.isArray(n.pr)) {errors.push(`${w}: pr — ожидается массив номеров PR`);}
+  if (n.st !== undefined && typeof n.st !== 'string') {errors.push(`${w}: st — ожидается строка`);}
+  if (n.priority !== undefined && typeof n.priority !== 'number') {errors.push(`${w}: priority — ожидается число`);}
+  if (nodeIds.has(n.id)) {errors.push(`${w}: дубликат id узла`);}
+  nodeIds.add(n.id);
 });
-(d.cards || []).forEach((c, i) => {
-  if (typeof c !== 'object') { errors.push(`cards[${i}]: not an object`); return; }
-  req(c, ['t', 'd', 'p', 'who', 'next'], `cards[${i}]`);
+
+const edgeSeen = new Set();
+(d.edges || []).forEach((e, i) => {
+  const w = `edges[${i}]`;
+  if (typeof e !== 'object') { errors.push(`${w}: не объект`); return; }
+  req(e, ['from', 'to', 'kind'], w);
+  if (e.from !== undefined && !nodeIds.has(e.from)) {errors.push(`${w}: from "${e.from}" — такого узла нет (опечатка в id?)`);}
+  if (e.to !== undefined && !nodeIds.has(e.to)) {errors.push(`${w}: to "${e.to}" — такого узла нет (опечатка в id?)`);}
+  if (e.from && e.from === e.to) {errors.push(`${w}: петля — узел "${e.from}" ссылается сам на себя`);}
+  if (e.kind !== undefined && !EDGE_KINDS.has(e.kind)) {errors.push(`${w}: kind "${e.kind}" — ожидается depends|related`);}
+  if (e.from && e.to && e.kind) {
+    const k = `${e.from}→${e.to} (${e.kind})`;
+    if (edgeSeen.has(k)) {errors.push(`${w}: дубликат ребра ${k}`);}
+    edgeSeen.add(k);
+  }
 });
-(d.open || []).forEach((o, i) => {
-  if (!Array.isArray(o) || o.length !== 2) {errors.push(`open[${i}]: expected [title, description]`);}
+
+// Узел направления без единого узла — не ошибка, но предупредим (мусор в схеме).
+(d.directions || []).forEach(x => {
+  if ((d.nodes || []).some(n => n.direction === x.id)) {return;}
+  console.warn(`⚠ направление "${x.id}" не содержит ни одного узла`);
 });
 
 if (errors.length) {
-  console.error('✗ INVALID DATA · ' + errors.length + ' problem(s):');
+  console.error(`✗ INVALID DATA · ${errors.length} проблем(а):`);
   errors.forEach(e => console.error('   - ' + e));
   process.exit(3);
 }
 
 // --- 1. Mermaid -------------------------------------------------------------
-const key = (n) => n.id.replace(/[^A-Za-z0-9]/g, '');
-const mmd = ['```mermaid', 'flowchart LR',
-  '  subgraph MOD["🔧 МОДЕРНИЗАЦИЯ · канон NODES.md / NODE-IDS.md"]', '    direction LR'];
-d.nodes.forEach(n => mmd.push(`    ${key(n)}["${n.id} ${n.nm}<br/>${esc(n.st)}"]`));
-for (let i = 1; i < d.nodes.length; i++) {mmd.push(`    ${key(d.nodes[i - 1])} --> ${key(d.nodes[i])}`);}
-mmd.push('  end', '', '  subgraph PROD["🚀 ПРОДУКТ · уже в main"]', '    direction TB');
-d.cards.forEach((c, i) => mmd.push(`    P${i + 1}["${esc(c.t)}<br/>${esc(c.p)}"]`));
-mmd.push('  end', '', '  subgraph OPEN["⏳ ЖДЁТ РЕШЕНИЯ НИКИТЫ"]', '    direction TB');
-d.open.forEach((o, i) => mmd.push(`    O${i + 1}["${esc(o[0])}"]`));
-mmd.push('  end', '',
-  `  GATES["🛡️ ГЕЙТЫ<br/>${d.kpi.map(k => esc(k[0]) + ' ' + esc(k[1])).join(' · ')}"]`,
-  `  MAIN["main ${d.main}"]`, '',
-  `  ${key(d.nodes[1])} -.опирается.-> GATES`,
-  `  ${key(d.nodes[2])} -.проверен.-> GATES`,
-  '  PROD -.защищено.-> GATES',
-  '  O1 -.после GO.-> ' + key(d.nodes[3]),
-  '  O5 -.после GO.-> GATES',
-  '  MAIN -.истина.-> GATES', '',
+// Сплошная стрелка — жёсткая зависимость, пунктир — мягкая связь («связано»).
+// Рёбра — из edges[], никаких цепочек «по порядку массива».
+const key = (id) => String(id).replace(/[^A-Za-z0-9_]/g, '_');
+const mmd = ['```mermaid',
+  '%% Единый граф · beLive · сплошная — жёсткая зависимость, пунктир — «связано»',
+  'flowchart LR'];
+const orderedDirs = [...d.directions].sort((a, b) => a.order - b.order);
+orderedDirs.forEach(dir => {
+  const dn = d.nodes.filter(n => n.direction === dir.id);
+  if (!dn.length) {return;}
+  mmd.push(`  subgraph D${key(dir.id)}["${esc(dir.title)}"]`, '    direction TB');
+  dn.forEach(n => {
+    const label = [`${n.id} · ${n.title}`, n.st ? esc(n.st) : null, `${n.progress}%`].filter(Boolean);
+    mmd.push(`    ${key(n.id)}["${label.join('<br/>')}"]:::${n.state}`);
+  });
+  mmd.push('  end', '');
+});
+d.edges.forEach(e => {
+  mmd.push(e.kind === 'depends'
+    ? `  ${key(e.from)} --> ${key(e.to)}`
+    : `  ${key(e.from)} -.- ${key(e.to)}`);
+});
+mmd.push('',
   '  classDef done fill:#123c2a,stroke:#39d98a,color:#eafff3;',
   '  classDef active fill:#4a3410,stroke:#ffc44d,color:#fff6de;',
-  '  classDef queued fill:#1b2430,stroke:#55657a,color:#c9d6e5;',
-  '  classDef risk fill:#4a1c1c,stroke:#ff6b6b,color:#ffe9e9;',
-  '  classDef gate fill:#1c2c46,stroke:#6aa9ff,color:#e8f1ff;', '');
-for (const cls of CLS) {
-  const ids = d.nodes.filter(n => n.cls === cls).map(key);
-  if (ids.length) {mmd.push(`  class ${ids.join(',')} ${cls};`);}
-}
-mmd.push('  class GATES,MAIN gate;', '```');
+  '  classDef blocked fill:#4a1c1c,stroke:#ff6b6b,color:#ffe9e9;',
+  '  classDef waiting fill:#33204d,stroke:#a371f7,color:#f3ecff;',
+  '  classDef queued fill:#1b2430,stroke:#7f93ad,color:#c9d6e5;',
+  '  classDef risk fill:#4a1c1c,stroke:#ff6b6b,color:#ffe9e9,stroke-dasharray:5 4;',
+  '```');
 const graphBlock = mmd.join('\n');
 
 // --- 2. HTML data block -----------------------------------------------------
@@ -141,13 +192,26 @@ function render(dir) {
   };
 }
 
+function assertV2Template(dir) {
+  const htmlPath = join(dir, 'ROADMAP-GRAPH.html');
+  if (!existsSync(htmlPath)) {return;}  // файла нет — его поймает прежняя диагностика ниже
+  const t = readText(htmlPath);
+  if (t.includes(TPL_V2) && !/DATA\.cards|"cards"\s*:|"cls"\s*:/.test(t)) {return;}
+  console.error(`✗ INVALID DATA · ${dir}: ROADMAP-GRAPH.html — шаблон не v2 (нет подписи ${TPL_V2} либо найдены v1-маркеры cards/cls).`);
+  console.error('  Старый шаблон читает DATA.cards/cls и данными belive.roadmap.v2 ломается молча.');
+  console.error('  Скопируйте в эту папку новый ROADMAP-GRAPH.html и повторите --write. Ничего не записано.');
+  process.exit(3);
+}
+
 function targets() {
+  assertV2Template(BOARD);
   const list = [render(BOARD)];
   if (MIRROR) {
     if (!existsSync(join(MIRROR, 'ROADMAP.md')) || !existsSync(join(MIRROR, 'ROADMAP-GRAPH.html'))) {
       console.error(`✗ INVALID DATA · MIRROR_DIR missing generated templates: ${MIRROR}`);
       process.exit(3);
     }
+    assertV2Template(MIRROR);
     list.push(render(MIRROR));
   }
   return list;
@@ -161,26 +225,27 @@ catch (e) { console.error('✗ INVALID DATA · ' + e.message); process.exit(4); 
 // Never a failure: main moves on every merge, so the snapshot is expected to lag.
 if (process.env.EXPECTED_MAIN) {
   const head = process.env.EXPECTED_MAIN;
-  if (!head.startsWith(String(d.main))) {
-    console.warn(`⚠ roadmap snapshot main=${d.main}, current HEAD=${head.slice(0, 12)} — informational, not a gate.`);
+  if (!head.startsWith(String(d.meta.main))) {
+    console.warn(`⚠ roadmap snapshot main=${d.meta.main}, current HEAD=${head.slice(0, 12)} — informational, not a gate.`);
   }
 }
+
+const summary = `main ${d.meta.main} · ${d.nodes.length} nodes · ${d.directions.length} directions · ${d.edges.length} edges`;
 
 if (args.has('--check')) {
   let stale = false;
   items.forEach(t => {
-    const tag = t.mdPath;
-    if (t.mdNext !== t.mdText)   { console.error(`✗ STALE · ${tag} — run: node scripts/generate-roadmap.mjs --write`); stale = true; }
+    if (t.mdNext !== t.mdText)   { console.error(`✗ STALE · ${t.mdPath} — run: node scripts/generate-roadmap.mjs --write`); stale = true; }
     if (t.htmlNext !== t.htmlText) { console.error(`✗ STALE · ${t.htmlPath} — run: node scripts/generate-roadmap.mjs --write`); stale = true; }
   });
   if (stale) {process.exit(1);}
-  console.log(`✓ roadmap graph in sync · main ${d.main} · ${d.nodes.length} nodes · ${d.cards.length} lines · ${items.length} location(s)`);
+  console.log(`✓ roadmap graph in sync · ${summary} · ${items.length} location(s)`);
   process.exit(0);
 }
 
 if (args.has('--write')) {
   items.forEach(t => { writeFileSync(t.mdPath, t.mdNext); writeFileSync(t.htmlPath, t.htmlNext); });
-  console.log(`✓ generated · main ${d.main} · ${d.nodes.length} nodes · ${d.cards.length} product lines · ${d.open.length} open decisions · ${items.length} location(s)`);
+  console.log(`✓ generated · ${summary} · ${items.length} location(s)`);
   process.exit(0);
 }
 

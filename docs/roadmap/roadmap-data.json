@@ -1,45 +1,211 @@
 {
-  "schema": "belive.roadmap.v1",
-  "generated": "2026-11-09T18:30:00+03:00",
-  "main": "ca45f643",
-  "command": "707 · комбинированная работа (WorkBuddy + WSL-harness) · до ~20:12",
-  "drift": "9c7c37b → f0717e1 (#54/#55) → 0464dd5 (#56) → fd9a113 (#57/#58) → ca45f643 (#59)",
-  "kpi": [
-    ["0", "tsc typecheck"],
-    ["647/651", "as-any ratchet"],
-    ["695/1190", "lint warn / baseline"],
-    ["1204", "vitest"],
-    ["0", "lint errors"],
-    ["396.4", "build gzip КБ"],
-    ["1649", "secrets clean"]
+  "schema": "belive.roadmap.v2",
+  "meta": {
+    "generated": "2026-11-10T13:35:00+03:00",
+    "main": "6cd4f1f",
+    "prod": "6cd4f1f",
+    "command": "707 · комбинированная работа (WorkBuddy + WSL-harness) · до ~20:12",
+    "drift": "9c7c37b → f0717e1 (#54/#55) → 0464dd5 (#56) → fd9a113 (#57/#58) → ca45f643 (#59) → 6cd4f1f (#60–#69: living-graph #60, frozen-ab #61, n1c2 #62, frozen-guard v2/v3/upsert #63–#68, npm ci #69)",
+    "kpi": [
+      ["0", "tsc typecheck"],
+      ["648/651", "as-any ratchet"],
+      ["695/1190", "lint warn / baseline"],
+      ["1208", "vitest"],
+      ["0", "lint errors"],
+      ["396.2", "build gzip КБ"],
+      ["1657", "secrets clean"]
+    ]
+  },
+  "directions": [
+    { "id": "trunk", "title": "Магистраль N0–N8", "order": 1 },
+    { "id": "trackmap", "title": "TrackMap + система Лупа", "order": 2 },
+    { "id": "firstpath", "title": "First Path / MVSEP", "order": 3 },
+    { "id": "userroom", "title": "User Room", "order": 4 },
+    { "id": "mobile", "title": "Mobile performance", "order": 5 },
+    { "id": "seo", "title": "SEO-витрина", "order": 6 },
+    { "id": "aicoach", "title": "AI Coach", "order": 7 },
+    { "id": "frozen", "title": "FROZEN-guard", "order": 8 }
   ],
   "nodes": [
-    {"id":"N0","nm":"Аудит Центр_5","st":"NODES / ROADMAP / PDF","cls":"done","p":100,"d":"10-страничный аудит, карта N0–N8, реестр P0–P5, база main@9694bbb. Всё дальнейшее опирается на него.","who":"Центр_5","next":"—","block":"нет"},
-    {"id":"N1","nm":"Гейты","st":"8 гейтов в CI","cls":"done","p":100,"d":"ESLint TS-парсер, tsc 146→0, lint errors 43→0, ratchet (asany / lint-baseline / typecheck), check-secrets, check-manifest, pregate.sh (12 гейтов), FROZEN-guard. Закрыто PR #48, #49, #53, #57, #59.","who":"805 → 007_c","next":"N1c.2","block":"нет"},
-    {"id":"N1c.2","nm":"Линт-долг","st":"1155 → 695 · −460","cls":"active","p":62,"d":"eqeqeq −92/92 конфигом (все == null), curly −368 в 53 файлах (нормализация «только скобки» 53/53). Исключены 15 файлов дельты 708 (93 curly). Пакет HANDOFF-705-N1c2, PREGATE OK 12/12. Осталось: no-empty 207, scripts 11, js 22, src 231.","who":"705","next":"scripts/js → no-empty → src → baseline --update","block":"пакет на fd9a113, main уже ca45f643 → пересбор перед воротами"},
-    {"id":"N2","nm":"P0-баги рантайма","st":"2.1–2.5 · очередь","cls":"queued","p":0,"d":"2.1 Blob-URL revoke · 2.2 Mic-off TypeError · 2.3 V-Mix no-op · 2.4 unhandledrejection · 2.5 MicSourceV3 refcount (FROZEN-REQUEST). Канон: N2 — это БАГИ, не линт.","who":"705 / 702","next":"после N1c.2","block":"решение Никиты по 702 (UI на prev-трек vs тишина)"},
-    {"id":"N3","nm":"Шум консоли","st":"805/N3 готов к воротам","cls":"active","p":35,"d":"Ф1+Ф2 сданы, ветка 805/N3 @ac76064 (5 файлов, FROZEN 0), в origin нет, маршрутизирована 007_c. Ф3 (типы на границе персиста) на паузе.","who":"805 → 705 / 007_c","next":"влить ветку, затем Ф3 по решению","block":"N3 Ф3 — продолжать или ждать Центр_5"},
-    {"id":"N4","nm":"Размер бандла","st":"очередь","cls":"queued","p":0,"d":"main-чанк ~1 228 КБ / gzip 396.4. manualChunks, React.lazy, бюджеты размеров.","who":"705","next":"после N3","block":"нет"},
-    {"id":"N5","nm":"Мусор репозитория","st":"очередь","cls":"queued","p":0,"d":"team-m/ из дерева, notify + INBOX, LP-трек, GH Pages. Внимание: aetherBoot.ts правится и в N2.1 — N5 идёт ПОСЛЕ N2, чтобы не пересечься.","who":"705","next":"после N4","block":"GH Pages снос по решению Никиты"},
-    {"id":"N6","nm":"Похороны V2","st":"очередь","cls":"queued","p":0,"d":"Остатки легаси-фасада, мёртвые сторы, дубли настроек.","who":"705","next":"после N5","block":"FROZEN-зависимости"},
-    {"id":"N7","nm":"Шов JS ↔ React","st":"самый тяжёлый","cls":"risk","p":0,"d":"По объёму сопоставим со всеми остальными узлами вместе: каталог треков, тексты, маркеры, фасад движка с легаси-глобалов на модули. Риск: потеря пользовательских треков при миграции IndexedDB.","who":"705 + Gate R","next":"только после GO","block":"требуется явное «ок» Никиты + бэкап"},
-    {"id":"N8","nm":"История git","st":"окно заморозки","cls":"queued","p":0,"d":"filter-repo, утечки в истории, force-push только в окно заморозки с бэкапом. Не сейчас.","who":"Никита + 007_c","next":"отдельно","block":"окно заморозки"}
+    {
+      "id": "N0", "title": "Аудит Центр_5", "direction": "trunk", "state": "done",
+      "progress": 100, "owner": "Центр_5", "pr": [], "blocker": null,
+      "next": "—", "st": "NODES / ROADMAP / PDF",
+      "detail": "10-страничный аудит, карта N0–N8, реестр P0–P5, база main@9694bbb. Всё дальнейшее опирается на него.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "N1", "title": "Гейты", "direction": "trunk", "state": "done",
+      "progress": 100, "owner": "805 → 007_c", "pr": [48, 49, 53, 57, 59, 62, 66, 67, 68, 69], "blocker": null,
+      "next": "—", "st": "8 гейтов в CI · FROZEN v3 required",
+      "detail": "ESLint TS-парсер, tsc 146→0, lint errors 43→0, ratchet (asany / lint-baseline / typecheck), check-secrets, check-manifest, pregate.sh (12 гейтов), FROZEN-guard v3 (workflow_run + check-runs на голову PR, required), npm ci --ignore-scripts в 4 workflow. Закрыто PR #48, #49, #53, #57, #59, #62, #66, #67, #68, #69.",
+      "updated": "2026-11-10"
+    },
+    {
+      "id": "N1c.2", "title": "Линт-долг", "direction": "trunk", "state": "done",
+      "progress": 100, "owner": "705", "pr": [62], "blocker": null,
+      "next": "—", "st": "1155 → 695 · пакет смержен #62",
+      "detail": "eqeqeq null:ignore −92/92 конфигом, curly −368 в 53 файлах («только скобки» 53/53), исключены 15 файлов дельты 708. Пакет 705/n1c2 смержен PR #62, PREGATE OK 12/12. Линт 1155 → 695; остаток удерживается ratchet-гейтом lint-baseline из N1.",
+      "updated": "2026-11-10"
+    },
+    {
+      "id": "N2", "title": "P0-баги рантайма", "direction": "trunk", "state": "queued",
+      "progress": 0, "owner": "705 / 702", "pr": [],
+      "blocker": "решение Никиты по 702 (UI на prev-трек vs тишина)",
+      "next": "после N1c.2", "st": "2.1–2.5 · очередь",
+      "detail": "2.1 Blob-URL revoke · 2.2 Mic-off TypeError · 2.3 V-Mix no-op · 2.4 unhandledrejection · 2.5 MicSourceV3 refcount (FROZEN-REQUEST). Канон: N2 — это БАГИ, не линт.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "N3", "title": "Шум консоли", "direction": "trunk", "state": "active",
+      "progress": 35, "owner": "805 → 705 / 007_c", "pr": [],
+      "blocker": "N3 Ф3 — продолжать или ждать Центр_5",
+      "next": "влить ветку, затем Ф3 по решению", "st": "805/N3 готов к воротам",
+      "detail": "Ф1+Ф2 сданы, ветка 805/N3 @ac76064 (5 файлов, FROZEN 0), в origin нет, маршрутизирована 007_c. Ф3 (типы на границе персиста) на паузе.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "N4", "title": "Размер бандла", "direction": "trunk", "state": "queued",
+      "progress": 0, "owner": "705", "pr": [], "blocker": null,
+      "next": "после N3", "st": "очередь",
+      "detail": "main-чанк ~1 245 КБ / gzip 396.2 (замер на 6cd4f1f). manualChunks, React.lazy, бюджеты размеров.",
+      "updated": "2026-11-10"
+    },
+    {
+      "id": "N5", "title": "Мусор репозитория", "direction": "trunk", "state": "queued",
+      "progress": 0, "owner": "705", "pr": [],
+      "blocker": "GH Pages снос по решению Никиты",
+      "next": "после N4", "st": "очередь",
+      "detail": "team-m/ из дерева, notify + INBOX, LP-трек, GH Pages. Внимание: aetherBoot.ts правится и в N2.1 — N5 идёт ПОСЛЕ N2, чтобы не пересечься.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "N6", "title": "Похороны V2", "direction": "trunk", "state": "queued",
+      "progress": 0, "owner": "705", "pr": [],
+      "blocker": "FROZEN-зависимости",
+      "next": "после N5", "st": "очередь",
+      "detail": "Остатки легаси-фасада, мёртвые сторы, дубли настроек.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "N7", "title": "Шов JS ↔ React", "direction": "trunk", "state": "risk",
+      "progress": 0, "owner": "705 + Gate R", "pr": [],
+      "blocker": "требуется явное «ок» Никиты + бэкап",
+      "next": "только после GO", "st": "самый тяжёлый",
+      "detail": "По объёму сопоставим со всеми остальными узлами вместе: каталог треков, тексты, маркеры, фасад движка с легаси-глобалов на модули. Риск: потеря пользовательских треков при миграции IndexedDB.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "N8", "title": "История git", "direction": "trunk", "state": "queued",
+      "progress": 0, "owner": "Никита + 007_c", "pr": [],
+      "blocker": "окно заморозки",
+      "next": "отдельно", "st": "окно заморозки",
+      "detail": "filter-repo, утечки в истории, force-push только в окно заморозки с бэкапом. Не сейчас.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "dec-702", "title": "702 · FROZEN A+B / F5", "direction": "mobile", "state": "waiting",
+      "progress": 0, "owner": "Никита", "pr": [], "blocker": null, "priority": 1,
+      "next": "решить: (а) вернуть UI на prev-трек или (б) тишина с сообщением; и решить бюджет стемов 7→2-3",
+      "detail": "Crawling не играет: decode до reset, пик 1476 МиБ при потолке ~1024. Нужно: (а) вернуть UI на prev-трек или (б) тишина с сообщением; и режем ли микшер 7→2-3 стема.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "dec-prompts", "title": "20 промптов от 706", "direction": "aicoach", "state": "waiting",
+      "progress": 0, "owner": "Никита", "pr": [], "blocker": null, "priority": 2,
+      "next": "пнуть 706 исполнить написанные промпты — доски из Windows он не видит",
+      "detail": "Набор из 20 промптов написан, ждёт исполнения 706. Единственный внешний блокер мержа AI Coach рев.4: 706 из Windows доски не видит, пнуть может только Никита.",
+      "updated": "2026-11-10"
+    },
+    {
+      "id": "dec-cfpages", "title": "CF Pages belive-seo", "direction": "seo", "state": "waiting",
+      "progress": 0, "owner": "Никита", "pr": [], "blocker": null, "priority": 3,
+      "next": "API-токен + 2 секрета в GitHub + Pages-проект + DNS mybelive.com",
+      "detail": "API-токен + 2 секрета в GitHub + Pages-проект + DNS mybelive.com. Сайт собран, но не привязан.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "dec-mvsep", "title": "Отзыв старого ключа MVSEP", "direction": "firstpath", "state": "waiting",
+      "progress": 0, "owner": "Никита", "pr": [], "blocker": null, "priority": 4,
+      "next": "отозвать старый ключ MVSEP",
+      "detail": "Новый ключ работает (проверено curl, HTTP 200). Старый ещё активен и засветился в истории.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "dec-n3f3", "title": "N3 Ф3 · типы персиста", "direction": "trunk", "state": "waiting",
+      "progress": 0, "owner": "Никита", "pr": [], "blocker": null, "priority": 5,
+      "next": "решить: продолжать Ф3 сейчас или ждать Центр_5",
+      "detail": "Продолжать сейчас или ждать Центр_5.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "line-trackmap", "title": "TrackMap + система Лупа", "direction": "trackmap", "state": "done",
+      "progress": 100, "owner": "808", "pr": [50], "blocker": null,
+      "next": "706 смотрит постфактум на проде (5 зон)", "st": "PR #50 · 21 файл · tsc 0 · в проде",
+      "detail": "Скобки петли, edge-toggle, title-glow, drag, sub-block, layout 54px.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "line-firstpath", "title": "First Path / MVSEP", "direction": "firstpath", "state": "done",
+      "progress": 100, "owner": "806", "pr": [55], "blocker": null,
+      "next": "W0 (download, квота 10/день, keySource, W0.5) → AUTH-1 → E2E", "st": "PR #55 · Gate R PASS · в проде",
+      "detail": "A1 v2.2 BYOK: ключ на устройстве, миграция с обнулением, 63 теста.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "line-userroom", "title": "User Room", "direction": "userroom", "state": "done",
+      "progress": 100, "owner": "709", "pr": [56], "blocker": null,
+      "next": "D10 (migrateGuest) отдельным H после AUTH-1", "st": "PR #56 · в проде",
+      "detail": "Вход через User, настройки ИИ/графики в комнате, статистика.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "line-mobile", "title": "Mobile performance", "direction": "mobile", "state": "done",
+      "progress": 100, "owner": "702", "pr": [51], "blocker": null,
+      "next": "FROZEN A+B + F5 (бюджет стемов) — Crawling всё ещё не играет", "st": "PR #51 · в проде",
+      "detail": "revokeObjectURL + волна без повторного декода, −140 МиБ PCM.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "line-seo", "title": "SEO-витрина", "direction": "seo", "state": "waiting",
+      "progress": 90, "owner": "711 / 706", "pr": [52, 58],
+      "blocker": "CF Pages + DNS — руки Никиты",
+      "next": "8 страниц волны 1; не публиковать раньше запуска коуча", "st": "PR #52 #58 · в проде",
+      "detail": "Каркас Astro + nauchitsya-pet / raspevka-onlayn, тон «студия».",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "line-aicoach", "title": "AI Coach", "direction": "aicoach", "state": "waiting",
+      "progress": 90, "owner": "700 / 706", "pr": [54],
+      "blocker": "20 промптов от 706",
+      "next": "рев.4 fast-follow", "st": "PR #54 · рев.4 проверена (tsc 0, 23 теста)",
+      "detail": "В main ревизия 2: нет строки о внешнем ИИ-сервисе, нет тестов stop()/поздний токен.",
+      "updated": "2026-11-09"
+    },
+    {
+      "id": "line-frozen", "title": "FROZEN-guard", "direction": "frozen", "state": "done",
+      "progress": 100, "owner": "805 / 007_c", "pr": [59, 63, 66, 68], "blocker": null,
+      "next": "—", "st": "PR #59 #63 #66 #68 · 60/60 · required",
+      "detail": "Триггер workflow_run (после PR Gate), вердикт — check-run frozen-guard на голову PR: POST, при повторе PATCH по id (upsert, один SHA — один чек); job назван frozen-guard-run, чек ставится на всех путях выхода через trap. 60/60 сценариев, required. Метка frozen-ok требует reason в теле PR.",
+      "updated": "2026-11-10"
+    }
   ],
-  "cards": [
-    {"t":"TrackMap + система Лупа","d":"Скобки петли, edge-toggle, title-glow, drag, sub-block, layout 54px","p":"PR #50 · 21 файл · tsc 0 · в проде","cls":"","who":"808","next":"706 смотрит постфактум на проде (5 зон)"},
-    {"t":"First Path / MVSEP","d":"A1 v2.2 BYOK: ключ на устройстве, миграция с обнулением, 63 теста","p":"PR #55 · Gate R PASS · в проде","cls":"","who":"806","next":"W0 (download, квота 10/день, keySource, W0.5) → AUTH-1 → E2E"},
-    {"t":"User Room","d":"Вход через User, настройки ИИ/графики в комнате, статистика","p":"PR #56 · в проде","cls":"","who":"709","next":"D10 (migrateGuest) отдельным H после AUTH-1"},
-    {"t":"Mobile performance","d":"revokeObjectURL + волна без повторного декода, −140 МиБ PCM","p":"PR #51 · в проде","cls":"","who":"702","next":"FROZEN A+B + F5 (бюджет стемов) — Crawling всё ещё не играет"},
-    {"t":"SEO-витрина","d":"Каркас Astro + nauchitsya-pet / raspevka-onlayn, тон «студия»","p":"PR #52 #58 · в проде","cls":"wait","who":"711 / 706","next":"8 страниц волны 1; не публиковать раньше запуска коуча; CF Pages + DNS — руки Никиты"},
-    {"t":"AI Coach","d":"В main ревизия 2: нет строки о внешнем ИИ-сервисе, нет тестов stop()/поздний токен","p":"PR #54 · рев.4 проверена (tsc 0, 23 теста)","cls":"wait","who":"700 / 706","next":"рев.4 fast-follow; блокер — 20 промптов от 706"},
-    {"t":"FROZEN-guard","d":"pull_request_target, 30/30 сценариев, метка frozen-ok требует reason","p":"PR #59 · в проде","cls":"","who":"805 / 007_c","next":"добавить в required_status_checks (ок Никиты)"}
-  ],
-  "open": [
-    ["702 · FROZEN A+B / F5","Crawling не играет: decode до reset, пик 1476 МиБ при потолке ~1024. Нужно: (а) вернуть UI на prev-трек или (б) тишина с сообщением; и режем ли микшер 7→2-3 стема."],
-    ["20 промптов от 706","Единственный внешний блокер мержа AI Coach рев.4. 706 из Windows, доски не видит — пнуть может только Никита."],
-    ["CF Pages belive-seo","API-токен + 2 секрета в GitHub + Pages-проект + DNS mybelive.com. Сайт собран, но не привязан."],
-    ["Отзыв старого ключа MVSEP","Новый ключ работает (проверено curl, HTTP 200). Старый ещё активен и засветился в истории."],
-    ["strict + frozen-guard в required checks","Два «ок» на репо-конфиг. Прямой push в main и так закрыт, но строгость не полная."],
-    ["N3 Ф3 · типы персиста","Продолжать сейчас или ждать Центр_5."]
+  "edges": [
+    { "from": "N0", "to": "N1", "kind": "depends" },
+    { "from": "N1", "to": "N1c.2", "kind": "depends" },
+    { "from": "N1c.2", "to": "N2", "kind": "depends" },
+    { "from": "N3", "to": "N4", "kind": "depends" },
+    { "from": "N4", "to": "N5", "kind": "depends" },
+    { "from": "N2", "to": "N5", "kind": "depends" },
+    { "from": "N5", "to": "N6", "kind": "depends" },
+    { "from": "dec-702", "to": "N2", "kind": "depends" },
+    { "from": "dec-prompts", "to": "line-aicoach", "kind": "depends" },
+    { "from": "dec-cfpages", "to": "line-seo", "kind": "depends" },
+    { "from": "dec-n3f3", "to": "N3", "kind": "related" },
+    { "from": "dec-mvsep", "to": "line-firstpath", "kind": "related" },
+    { "from": "dec-702", "to": "line-mobile", "kind": "related" },
+    { "from": "line-seo", "to": "line-aicoach", "kind": "related" },
+    { "from": "line-mobile", "to": "N2", "kind": "related" },
+    { "from": "line-frozen", "to": "N1", "kind": "related" }
   ]
 }
