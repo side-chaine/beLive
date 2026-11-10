@@ -63,7 +63,7 @@ flowchart LR
 
   subgraph Dfrozen["FROZEN-guard"]
     direction TB
-    line_frozen["line-frozen · FROZEN-guard<br/>PR #59 #63 #66 #68 · 60/60 · required<br/>100%"]:::done
+    line_frozen["line-frozen · FROZEN-guard<br/>PR #59 #63 #66 #68 · 60/60 · required<br/>100%"]:::active
   end
 
   N0 --> N1
