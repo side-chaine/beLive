@@ -26,8 +26,16 @@ jobs:
     name: roadmap in sync
     runs-on: ubuntu-latest
     steps:
+      # fetch-depth: 0 — не для скорости, а для правды. Дрейф-чек в
+      # generate-roadmap.mjs ищет «Merge pull request #N» в истории origin/main.
+      # При глубине 1 история — один коммит, а на pull_request-событии ref
+      # origin/main не создаётся вовсе: проверка молча пропускается и чек
+      # зелёный, ничего не проверив. Замер на main 886dabb: полная история
+      # 1225 коммитов и 60 merge-строк, клон 78 МБ → 113 МБ (+35 МБ, +3.8 с).
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
