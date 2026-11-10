@@ -71,6 +71,26 @@ MOCK_DIR=""
 curl() {
   local url="${*: -1}"
   local f=""
+  # POST /check-runs: тело лежит в файле после --data-binary, его надо
+  # сохранить, чтобы сценарии проверяли поля, а не факт вызова.
+  case "$url" in
+    *"/check-runs"*)
+      local prev="" payload=""
+      for a in "$@"; do
+        case "$prev" in
+          --data-binary|--data|-d) payload="${a#@}" ;;
+        esac
+        prev="$a"
+      done
+      if [ -n "$payload" ] && [ -f "$payload" ]; then
+        cp "$payload" "$MOCK_DIR/check_run.json"
+        printf '{"id":1}'
+        return 0
+      fi
+      printf '{"message":"Bad Request"}'
+      return 22
+      ;;
+  esac
   case "$url" in
     *"/pulls/"*"/files"*)
       local p="${url##*page=}"
@@ -101,6 +121,7 @@ run_case() {
   [ -n "$run_prs" ] || run_prs='[{"number":7}]'
   [ -n "$head_sha" ] || head_sha=HEAD
   [ -n "$event" ] || event=pull_request
+  rm -f "$dir/check_run.json"
   set +e
   local out
   out=$(GH_TOKEN=x API_URL=https://api.github.com REPO=o/r \
@@ -116,6 +137,42 @@ run_case() {
     printf 'FAIL  %-52s exit=%s (ожидали %s)\n' "$name" "$rc" "$expected"
     printf '%s\n' "$out" | sed 's/^/      /'
     FAIL=$((FAIL + 1))
+  fi
+}
+
+# check_case <имя> <success|failure|none> <каталог> [ожидаемый head_sha]
+# Проверяются поля тела POST /check-runs, а не факт вызова: required поймает
+# чек только при точном name и на head_sha головы PR.
+check_case() {
+  local name="$1" expected="$2" dir="$3" head="${4-HEAD}"
+  if [ "$expected" = "none" ]; then
+    if [ -f "$dir/check_run.json" ]; then
+      printf 'FAIL  %-52s чек создан, а не должен\n' "$name"; FAIL=$((FAIL + 1))
+    else
+      printf 'PASS  %-52s чека нет\n' "$name"; PASS=$((PASS + 1))
+    fi
+    return
+  fi
+  if [ ! -f "$dir/check_run.json" ]; then
+    printf 'FAIL  %-52s чек не создан\n' "$name"; FAIL=$((FAIL + 1))
+    return
+  fi
+  if CHECK_EXPECT="$expected" CHECK_HEAD="$head" python3 - "$dir/check_run.json" <<'PY'
+import json, os, sys
+d = json.load(open(sys.argv[1]))
+out = d.get("output") or {}
+ok = (d.get("name") == "frozen-guard"
+      and d.get("head_sha") == os.environ["CHECK_HEAD"]
+      and d.get("status") == "completed"
+      and d.get("conclusion") == os.environ["CHECK_EXPECT"]
+      and bool(out.get("title"))
+      and bool(out.get("summary")))
+sys.exit(0 if ok else 1)
+PY
+  then
+    printf 'PASS  %-52s чек %s\n' "$name" "$expected"; PASS=$((PASS + 1))
+  else
+    printf 'FAIL  %-52s поля чека не те\n' "$name"; FAIL=$((FAIL + 1))
   fi
 }
 
@@ -161,8 +218,8 @@ trigger_check "T2 имя workflow совпадает с PR Gate" \
   "$ON_GET; w=on.get('workflow_run') or {}; pg=yaml.safe_load(open(sys.argv[2])); sys.exit(0 if pg.get('name') in (w.get('workflows') or []) else 1)" "$PR_GATE"
 trigger_check "T3 нет pull_request_target и pull_request" \
   "$ON_GET; sys.exit(0 if 'pull_request_target' not in on and 'pull_request' not in on else 1)"
-trigger_check "T4 права только read (contents/pull-requests/actions)" \
-  "import sys,yaml; d=yaml.safe_load(open(sys.argv[1])); p=d.get('permissions') or {}; sys.exit(0 if p.get('contents')=='read' and p.get('pull-requests')=='read' and p.get('actions')=='read' and not any(str(v)=='write' for v in p.values()) else 1)"
+trigger_check "T4 права: read + checks: write (ничего лишнего)" \
+  "import sys,yaml; d=yaml.safe_load(open(sys.argv[1])); p=d.get('permissions') or {}; ok=p.get('contents')=='read' and p.get('pull-requests')=='read' and p.get('actions')=='read' and p.get('checks')=='write' and set(p)=={'contents','pull-requests','actions','checks'}; sys.exit(0 if ok else 1)"
 trigger_check "T5 concurrency по ветке-источнику" \
   "import sys,yaml; d=yaml.safe_load(open(sys.argv[1])); c=d.get('concurrency') or {}; g=str(c.get('group','')); sys.exit(0 if 'workflow_run.head_branch' in g and c.get('cancel-in-progress') is True else 1)"
 
@@ -282,7 +339,7 @@ run_case "S26 нет ответа GET /pulls -> red" 1 "$T/sf"
 put sf/pr.json '{"head":{"sha":"HEAD"},"labels":[],"body":""}'
 run_case "S27 в PR нет base.sha -> red" 1 "$T/sf"
 mkpr sf BASE HEAD '[]'
-run_case "S28 head из события не равен голове PR -> устарел" 0 "$T/sf" '[{"number":7}]' 'OTHER'
+run_case "S28 head из события не равен голове PR -> red" 1 "$T/sf" '[{"number":7}]' 'OTHER'
 run_case "S29 несколько PR в списке -> берём первый" 1 "$T/sf" '[{"number":7},{"number":9}]'
 mkpr sf BASE HEAD '["frozen-ok"]' "$BODY_OK"
 run_case "S30 несколько PR + метка -> green" 0 "$T/sf" '[{"number":7},{"number":9}]'
@@ -303,6 +360,30 @@ run_case "S33 найденный PR идёт не в main -> red" 1 "$T/sg" '[]'
 
 rm -f "$T/sg/commit_pulls.json"
 run_case "S34 поиск по коммиту упал -> red" 1 "$T/sg" '[]'
+
+# --- t36: доставка вердикта на PR через check-runs ---------------------------
+# Job-check этого workflow живёт на main, PR его не видит. Вердикт доставляется
+# отдельным POST, и проверяются поля тела: name, head_sha, status, conclusion,
+# title и summary.
+mk sh; put sh/files_p1.json '[{"filename":"src/components/Header.tsx"}]'; mkpr sh BASE HEAD '[]'
+run_case "S35 зелёный путь -> exit 0" 0 "$T/sh"
+check_case "S35 чек на голове PR" success "$T/sh"
+
+mk si; put si/files_p1.json '[{"filename":"src/audio/engine-v3/core/Foo.ts"}]'; mkpr si BASE HEAD '[]'
+run_case "S36 красный путь -> exit 1" 1 "$T/si"
+check_case "S36 чек failure" failure "$T/si"
+
+# Скрипт падает до вердикта (API вернул объект вместо массива): чек обязан
+# появиться красным, иначе required висел бы в «Expected» вечно.
+mk sj; put sj/files_p1.json '{"message":"Bad credentials"}'; mkpr sj BASE HEAD '[]'
+run_case "S37 скрипт упал до вердикта -> red" 1 "$T/sj"
+check_case "S37 чек failure при падении" failure "$T/sj"
+
+run_case "S38 push -> exit 0" 0 "$T/sj" '[]' '' push
+check_case "S38 на push чек не создаётся" none "$T/sj"
+
+run_case "S39 устаревший head -> red" 1 "$T/sh" '[{"number":7}]' OTHER
+check_case "S39 чек failure (устарел)" failure "$T/sh" OTHER
 
 echo "---"
 echo "PASS=$PASS FAIL=$FAIL"
