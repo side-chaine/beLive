@@ -13,17 +13,31 @@ name: Frozen Guard
 # принудительно и frozen-guard.yml перестал бы запускаться вообще.
 # workflow_run не исполняет код PR и не требует pull_request_target.
 #
-# Как вердикт попадает на PR (t36).
+# Как вердикт попадает на PR (t36, t38).
 # workflow_run исполняется на дефолтной ветке, поэтому собственный job-check
 # этого workflow привязан к main, а не к голове PR: на PR его не видно вообще.
-# Поэтому вердикт доставляется отдельно — POST /repos/{repo}/check-runs с
-# name=frozen-guard и head_sha=голова PR. Имя обязано совпадать с тем, что
-# прописано в required checks, иначе required его не поймает.
+# Поэтому вердикт доставляется отдельно — check-run с name=frozen-guard и
+# head_sha=голова PR. Имя обязано совпадать с тем, что прописано в required
+# checks, иначе required его не поймает.
+#
+# Почему job называется frozen-guard-run, а не frozen-guard (t38).
+# Job-check привязан к main и на main-коммите висел красный «frozen-guard» —
+# шум и двусмысленность с именем в required. Теперь единственный чек с именем
+# frozen-guard создаёт только этот скрипт, через REST.
+#
+# Почему upsert, а не слепой POST (t38).
+# Повторный прогон («Re-run all jobs» после метки) раньше создавал ВТОРОЙ чек
+# на том же SHA: на 57f9747 лежали failure 19:23Z и success 20:16Z, и какой из
+# них возьмёт branch protection — неизвестно. Теперь сначала GET
+# /commits/{sha}/check-runs?check_name=frozen-guard, и если чек для этого
+# head_sha уже есть — PATCH по его id (red -> green), иначе POST. Один SHA —
+# один чек с нашим именем.
 # Check-run создаётся на ВСЕХ путях выхода через trap на EXIT: если скрипт
 # упадёт до вердикта, чек всё равно появится — красным. Иначе required-check
 # висел бы в «Expected» вечно, и PR нельзя было бы смержить.
 # Вердикт чека и статус job не расходятся: red() всегда exit 1, green() exit 0.
-# Если сам POST не прошёл — это ::error:: и красный прогон, а не тихий пропуск.
+# Если сам GET или POST/PATCH не прошёл — это ::error:: и красный прогон,
+# а не тихий пропуск.
 #
 # Что осталось тем же:
 #   * НЕТ checkout кода PR — ни actions/checkout, ни run: скриптов из PR;
@@ -110,7 +124,9 @@ concurrency:
 
 jobs:
   frozen-guard:
-    name: frozen-guard
+    # Не frozen-guard: иначе job-check на main делит имя с чеком на PR и
+    # путается с required status check. См. шапку (t38).
+    name: frozen-guard-run
     runs-on: ubuntu-latest
     steps:
       - name: Check protected paths
@@ -165,19 +181,53 @@ jobs:
               exit "$rc"
             fi
             payload=$(mktemp)
-            if ! RESULT="$RESULT" TITLE="$TITLE" SUMMARY="$SUMMARY" python3 -c 'import json,os; print(json.dumps({"name":"frozen-guard","head_sha":os.environ["HEAD_SHA"],"status":"completed","conclusion":os.environ["RESULT"],"output":{"title":os.environ["TITLE"],"summary":os.environ["SUMMARY"]}}))' > "$payload"; then
-              echo "::error::Не удалось собрать тело check-run — вердикт не доставлен на PR."
-              exit 1
-            fi
+            list=$(mktemp)
+            # upsert: на одном head_sha должен быть ровно один чек с нашим
+            # именем, иначе branch protection не знает, какой из двух брать.
             if ! curl -sS --fail-with-body --retry 3 --retry-delay 2 \
-                -X POST \
                 -H "Authorization: Bearer ${GH_TOKEN}" \
                 -H "Accept: application/vnd.github+json" \
-                -H "Content-Type: application/json" \
-                --data-binary @"$payload" \
-                "${API_URL}/repos/${REPO}/check-runs" > /dev/null; then
-              echo "::error::POST check-runs упал — вердикт ${RESULT} не доставлен на ${HEAD_SHA}."
+                "${API_URL}/repos/${REPO}/commits/${HEAD_SHA}/check-runs?check_name=frozen-guard&filter=all" > "$list"; then
+              echo "::error::GET check-runs по ${HEAD_SHA} упал — существующий чек не определить, вердикт не доставлен."
               exit 1
+            fi
+            if ! existing_id=$(python3 -c 'import json,sys; d=json.load(sys.stdin); r=[c for c in (d.get("check_runs") or []) if c.get("name")=="frozen-guard" and c.get("head_sha")==sys.argv[1]]; print(max((c.get("id") for c in r), default=""))' "$HEAD_SHA" < "$list" 2>/dev/null); then
+              echo "::error::Ответ check-runs не разобран — вердикт не доставлен."
+              exit 1
+            fi
+
+            if [ -n "$existing_id" ]; then
+              if ! RESULT="$RESULT" TITLE="$TITLE" SUMMARY="$SUMMARY" python3 -c 'import json,os; print(json.dumps({"status":"completed","conclusion":os.environ["RESULT"],"output":{"title":os.environ["TITLE"],"summary":os.environ["SUMMARY"]}}))' > "$payload"; then
+                echo "::error::Не удалось собрать тело PATCH — вердикт не доставлен."
+                exit 1
+              fi
+              if ! curl -sS --fail-with-body --retry 3 --retry-delay 2 \
+                  -X PATCH \
+                  -H "Authorization: Bearer ${GH_TOKEN}" \
+                  -H "Accept: application/vnd.github+json" \
+                  -H "Content-Type: application/json" \
+                  --data-binary @"$payload" \
+                  "${API_URL}/repos/${REPO}/check-runs/${existing_id}" > /dev/null; then
+                echo "::error::PATCH check-runs/${existing_id} упал — вердикт ${RESULT} не доставлен на ${HEAD_SHA}."
+                exit 1
+              fi
+              echo "Чек ${existing_id} обновлён (${RESULT})."
+            else
+              if ! RESULT="$RESULT" TITLE="$TITLE" SUMMARY="$SUMMARY" python3 -c 'import json,os; print(json.dumps({"name":"frozen-guard","head_sha":os.environ["HEAD_SHA"],"status":"completed","conclusion":os.environ["RESULT"],"output":{"title":os.environ["TITLE"],"summary":os.environ["SUMMARY"]}}))' > "$payload"; then
+                echo "::error::Не удалось собрать тело check-run — вердикт не доставлен на PR."
+                exit 1
+              fi
+              if ! curl -sS --fail-with-body --retry 3 --retry-delay 2 \
+                  -X POST \
+                  -H "Authorization: Bearer ${GH_TOKEN}" \
+                  -H "Accept: application/vnd.github+json" \
+                  -H "Content-Type: application/json" \
+                  --data-binary @"$payload" \
+                  "${API_URL}/repos/${REPO}/check-runs" > /dev/null; then
+                echo "::error::POST check-runs упал — вердикт ${RESULT} не доставлен на ${HEAD_SHA}."
+                exit 1
+              fi
+              echo "Чек создан (${RESULT})."
             fi
             exit "$rc"
           }

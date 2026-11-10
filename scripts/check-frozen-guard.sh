@@ -20,6 +20,10 @@
 #   S26-S30 источник данных workflow_run: GET /pulls, устаревший head, битый PR
 #   S31-S34 пустой pull_requests при event=pull_request: поиск PR по коммиту,
 #           пустой поиск -> красный, чужая база -> красный, API упал -> красный
+#   S35-S39 доставка вердикта: чек success/failure, падение до вердикта,
+#           push (чека нет), устаревший head
+#   S40-S43 upsert: существующий чек -> PATCH по последнему id (POST не зовётся),
+#           чека нет -> POST, GET упал -> красный, job не называется frozen-guard
 #
 # Требования: bash, python3 + PyYAML (на ubuntu-latest есть).
 # Запуск:  bash scripts/check-frozen-guard.sh [путь-к-workflow] [путь-к-pr-gate.yml]
@@ -70,18 +74,37 @@ bash -n "$T/step.sh" || { echo "тело шага не проходит bash -n"
 MOCK_DIR=""
 curl() {
   local url="${*: -1}"
-  local f=""
-  # POST /check-runs: тело лежит в файле после --data-binary, его надо
-  # сохранить, чтобы сценарии проверяли поля, а не факт вызова.
+  local f="" prev="" payload=""
+  for a in "$@"; do
+    case "$prev" in
+      --data-binary|--data|-d) payload="${a#@}" ;;
+    esac
+    prev="$a"
+  done
+
   case "$url" in
+    # GET списка чеков по коммиту — его читает upsert
+    *"/commits/"*"/check-runs"*)
+      if [ -f "$MOCK_DIR/list_fail" ]; then
+        printf '{"message":"Server Error"}'
+        return 22
+      fi
+      f="$MOCK_DIR/check_runs_list.json"
+      ;;
+    # PATCH по id: тело и id сохраняем отдельно, чтобы сценарий проверил,
+    # что обновили именно существующий чек, а не создали второй
+    *"/check-runs/"*)
+      if [ -n "$payload" ] && [ -f "$payload" ]; then
+        cp "$payload" "$MOCK_DIR/check_run_patched.json"
+        printf '%s' "${url##*/check-runs/}" > "$MOCK_DIR/patched_id.txt"
+        printf '{"id":1}'
+        return 0
+      fi
+      printf '{"message":"Bad Request"}'
+      return 22
+      ;;
+    # POST нового чека
     *"/check-runs"*)
-      local prev="" payload=""
-      for a in "$@"; do
-        case "$prev" in
-          --data-binary|--data|-d) payload="${a#@}" ;;
-        esac
-        prev="$a"
-      done
       if [ -n "$payload" ] && [ -f "$payload" ]; then
         cp "$payload" "$MOCK_DIR/check_run.json"
         printf '{"id":1}'
@@ -91,6 +114,7 @@ curl() {
       return 22
       ;;
   esac
+
   case "$url" in
     *"/pulls/"*"/files"*)
       local p="${url##*page=}"
@@ -121,7 +145,10 @@ run_case() {
   [ -n "$run_prs" ] || run_prs='[{"number":7}]'
   [ -n "$head_sha" ] || head_sha=HEAD
   [ -n "$event" ] || event=pull_request
-  rm -f "$dir/check_run.json"
+  rm -f "$dir/check_run.json" "$dir/check_run_patched.json" "$dir/patched_id.txt"
+  # По умолчанию «на коммите чеков нет»: сценарий может положить свой список
+  # заранее, а S42 поднимает list_fail — тогда GET отвечает ошибкой.
+  [ -f "$dir/check_runs_list.json" ] || printf '{"check_runs":[]}' > "$dir/check_runs_list.json"
   set +e
   local out
   out=$(GH_TOKEN=x API_URL=https://api.github.com REPO=o/r \
@@ -140,37 +167,47 @@ run_case() {
   fi
 }
 
-# check_case <имя> <success|failure|none> <каталог> [ожидаемый head_sha]
-# Проверяются поля тела POST /check-runs, а не факт вызова: required поймает
-# чек только при точном name и на head_sha головы PR.
+# check_case <имя> <success|failure|none> <каталог> [head_sha] [post|patch]
+# Проверяются поля тела запроса, а не факт вызова: required поймает чек только
+# при точном name и на head_sha головы PR. Для PATCH name/head_sha в теле нет —
+# их проверяем только у POST, зато у PATCH сверяем id и отсутствие второго чека.
 check_case() {
-  local name="$1" expected="$2" dir="$3" head="${4-HEAD}"
+  local name="$1" expected="$2" dir="$3" head="${4-HEAD}" via="${5-post}"
+  local file="$dir/check_run.json" other="$dir/check_run_patched.json"
+  if [ "$via" = "patch" ]; then
+    file="$dir/check_run_patched.json"
+    other="$dir/check_run.json"
+  fi
   if [ "$expected" = "none" ]; then
-    if [ -f "$dir/check_run.json" ]; then
+    if [ -f "$dir/check_run.json" ] || [ -f "$dir/check_run_patched.json" ]; then
       printf 'FAIL  %-52s чек создан, а не должен\n' "$name"; FAIL=$((FAIL + 1))
     else
       printf 'PASS  %-52s чека нет\n' "$name"; PASS=$((PASS + 1))
     fi
     return
   fi
-  if [ ! -f "$dir/check_run.json" ]; then
-    printf 'FAIL  %-52s чек не создан\n' "$name"; FAIL=$((FAIL + 1))
+  if [ ! -f "$file" ]; then
+    printf 'FAIL  %-52s чек не создан (%s)\n' "$name" "$via"; FAIL=$((FAIL + 1))
     return
   fi
-  if CHECK_EXPECT="$expected" CHECK_HEAD="$head" python3 - "$dir/check_run.json" <<'PY'
+  if [ -f "$other" ]; then
+    printf 'FAIL  %-52s лишний вызов: %s\n' "$name" "${other##*/}"; FAIL=$((FAIL + 1))
+    return
+  fi
+  if CHECK_EXPECT="$expected" CHECK_HEAD="$head" CHECK_VIA="$via" python3 - "$file" <<'PY'
 import json, os, sys
 d = json.load(open(sys.argv[1]))
 out = d.get("output") or {}
-ok = (d.get("name") == "frozen-guard"
-      and d.get("head_sha") == os.environ["CHECK_HEAD"]
-      and d.get("status") == "completed"
+ok = (d.get("status") == "completed"
       and d.get("conclusion") == os.environ["CHECK_EXPECT"]
       and bool(out.get("title"))
       and bool(out.get("summary")))
+if os.environ["CHECK_VIA"] == "post":
+    ok = ok and d.get("name") == "frozen-guard" and d.get("head_sha") == os.environ["CHECK_HEAD"]
 sys.exit(0 if ok else 1)
 PY
   then
-    printf 'PASS  %-52s чек %s\n' "$name" "$expected"; PASS=$((PASS + 1))
+    printf 'PASS  %-52s чек %s (%s)\n' "$name" "$expected" "$via"; PASS=$((PASS + 1))
   else
     printf 'FAIL  %-52s поля чека не те\n' "$name"; FAIL=$((FAIL + 1))
   fi
@@ -384,6 +421,38 @@ check_case "S38 на push чек не создаётся" none "$T/sj"
 
 run_case "S39 устаревший head -> red" 1 "$T/sh" '[{"number":7}]' OTHER
 check_case "S39 чек failure (устарел)" failure "$T/sh" OTHER
+
+# --- t38: upsert и уникальность имени ----------------------------------------
+# Повторный прогон не должен плодить второй чек на том же SHA: на 57f9747
+# лежали failure 19:23Z и success 20:16Z, и branch protection не знал,
+# какой брать. Теперь существующий чек обновляется через PATCH.
+mk sk
+put sk/files_p1.json '[{"filename":"src/components/Header.tsx"}]'
+mkpr sk BASE HEAD '[]'
+put sk/check_runs_list.json '{"check_runs":[{"id":100,"name":"frozen-guard","head_sha":"HEAD"},{"id":111,"name":"frozen-guard","head_sha":"HEAD"},{"id":222,"name":"other","head_sha":"HEAD"}]}'
+run_case "S40 чек уже есть -> exit 0" 0 "$T/sk"
+check_case "S40 PATCH существующего чека" success "$T/sk" HEAD patch
+if [ "$(cat "$T/sk/patched_id.txt" 2>/dev/null)" = "111" ]; then
+  printf 'PASS  %-52s id=111\n' "S40 PATCH по последнему id"; PASS=$((PASS + 1))
+else
+  printf 'FAIL  %-52s id=%s\n' "S40 PATCH по последнему id" "$(cat "$T/sk/patched_id.txt" 2>/dev/null)"; FAIL=$((FAIL + 1))
+fi
+
+mk sl
+put sl/files_p1.json '[{"filename":"src/components/Header.tsx"}]'
+mkpr sl BASE HEAD '[]'
+run_case "S41 чека нет -> exit 0" 0 "$T/sl"
+check_case "S41 POST нового чека" success "$T/sl" HEAD post
+
+mk sm
+put sm/files_p1.json '[{"filename":"src/components/Header.tsx"}]'
+mkpr sm BASE HEAD '[]'
+touch "$T/sm/list_fail"
+run_case "S42 GET check-runs упал -> red" 1 "$T/sm"
+check_case "S42 вердикт не доставлен" none "$T/sm"
+
+trigger_check "S43 job не называется frozen-guard" \
+  "import sys,yaml; d=yaml.safe_load(open(sys.argv[1])); n=[j.get('name') for j in d['jobs'].values()]; sys.exit(0 if 'frozen-guard' not in n else 1)"
 
 echo "---"
 echo "PASS=$PASS FAIL=$FAIL"
