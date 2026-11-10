@@ -1,0 +1,389 @@
+/**
+ * Порт + Пульт — правая колонка каталога.
+ *
+ * Один вход: .zip уходит в существующий импорт (onZip), аудио — в First Path.
+ * Под Портом всегда стоит Пульт: в пустом состоянии он показывает финальную
+ * форму (7 серых стемов), в работе — стадию, таймер, очередь и плитки.
+ *
+ * Правило: ни одного выдуманного числа. Процента обработки не существует,
+ * `eta_seconds` от MVSEP врёт (проверено живьём) — показываем только позицию
+ * в очереди и прошедшее время.
+ */
+
+import { useEffect, useRef, useState } from 'react';
+import { T } from '../theme';
+import { useMvsepStore, getElapsedString } from '../../stores/mvsep.store';
+import type { MvsepJobState } from '../../stores/mvsep.store';
+import { isZipFile } from '../../services/mvsep.service';
+import {
+  startFirstPath,
+  checkFirstPathFile,
+  FIRST_PATH_REJECT_TEXT,
+} from '../../services/first-path.service';
+import type { FirstPathReject } from '../../services/first-path.service';
+
+// Порядок и подписи — как в живом ответе MVSEP (sep_type 63): bass, drums, other,
+// vocals, guitar, piano, instrum. Слот пианино в каталоге называется `keys`.
+const STEMS: ReadonlyArray<readonly [string, string, string]> = [
+  ['🎤', 'vocals', 'vocals'],
+  ['🥁', 'drums', 'drums'],
+  ['🎸', 'bass', 'bass'],
+  ['🎸', 'guitar', 'guitar'],
+  ['🎹', 'piano', 'keys'],
+  ['🎛', 'other', 'other'],
+  ['🎼', 'instrum', 'instrumental'],
+];
+
+const RAIL = ['очередь', 'обработка', 'стемы', 'готово'];
+
+/** Ghost-курсор показываем один раз за загрузку страницы, не за сессию. */
+let ghostShown = false;
+
+const stageOf = (job: MvsepJobState): number => {
+  if (job.status === 'uploading' || job.status === 'queued') {return 0;}
+  if (job.status === 'processing') {return 1;}
+  if (job.status === 'downloading' || job.status === 'importing') {return 2;}
+  if (job.status === 'done') {return 3;}
+  return 0;
+};
+
+const litCount = (job: MvsepJobState): number => {
+  if (job.status === 'done') {return STEMS.length;}
+  if (job.status === 'importing') {return STEMS.length;}
+  if (job.status === 'downloading') {
+    const { downloaded, total } = job.downloadProgress;
+    if (total <= 0) {return 0;}
+    return Math.min(STEMS.length, Math.round((downloaded / total) * STEMS.length));
+  }
+  return 0;
+};
+
+interface Props {
+  /** .zip уходит в существующий импорт — Порт его не разбирает. */
+  onZip: (file: File) => void;
+  /** Заблокирован, пока идёт импорт архива. */
+  zipBusy?: boolean;
+  /** Прогресс импорта архива (0–100) — рисуем в Пульте вместо плиток. */
+  zipProgress?: number;
+}
+
+const ZIP_STEPS: ReadonlyArray<readonly [string, number]> = [
+  ['Чтение архива', 10],
+  ['Импорт треков', 90],
+  ['Финализация', 95],
+];
+
+export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
+  const jobs = useMvsepStore((s) => s.activeJobs);
+  const job = [...jobs.values()].find((j) => j.status !== 'failed' && j.status !== 'timeout') ?? null;
+
+  const [over, setOver] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [reject, setReject] = useState<FirstPathReject | null>(null);
+  const [hint, setHint] = useState<string | null>(null);
+  const [ghost, setGhost] = useState(false);
+  const [, forceTick] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Таймер: обновляем раз в секунду, пока джоба жива. Прошедшее время — правда.
+  useEffect(() => {
+    if (!job) {return;}
+    const id = setInterval(() => forceTick((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, [job?.hash, job?.status]);
+
+  // Ghost-курсор: один раз за загрузку страницы, только на пустом Порте.
+  useEffect(() => {
+    if (job || ghostShown) {return;}
+    const id = setTimeout(() => { setGhost(true); ghostShown = true; }, 1200);
+    return () => clearTimeout(id);
+  }, [job]);
+
+  useEffect(() => {
+    if (!reject) {return;}
+    const id = setTimeout(() => setReject(null), 4000);
+    return () => clearTimeout(id);
+  }, [reject]);
+
+  const handleFile = async (file: File) => {
+    setGhost(false);
+    setHint(null);
+
+    if (isZipFile(file.name)) {onZip(file); return;}
+
+    const early = checkFirstPathFile(file);
+    if (early) {setReject(early); return;}
+
+    setBusy(true);
+    try {
+      const res = await startFirstPath(file);
+      if (!res.ok) {setReject(res.reason);}
+    } catch {
+      setReject(null);
+      setHint('не удалось отправить — связь или сессия. Попробуй ещё раз.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setOver(false);
+    const files = e.dataTransfer?.files;
+    if (!files || files.length === 0) {return;}
+    // Пока идёт разделение, второй трек не берём: воркер всё равно держит лок.
+    if (job || busy || zipBusy) {return;}
+    void handleFile(files[0]);
+  };
+
+  const stage = job ? stageOf(job) : -1;
+  const lit = job ? litCount(job) : 0;
+  const timer = job ? getElapsedString(job.submittedAt) : '';
+
+  const statusText = (() => {
+    if (zipBusy) {return `распаковываю архив · ${zipProgress}%`;}
+    if (reject) {return FIRST_PATH_REJECT_TEXT[reject];}
+    if (busy) {return 'отправляю на разделение…';}
+    if (!job) {return 'кинь трек — верну 7 стемов';}
+    if (job.status === 'uploading') {return 'загружаю файл';}
+    if (job.status === 'queued') {
+      return job.queue
+        ? `в очереди · ${job.queue.pos} из ${job.queue.total}`
+        : 'в очереди MVSEP';
+    }
+    if (job.status === 'processing') {return 'разделяю на стемы';}
+    if (job.status === 'downloading') {return `забираю стемы · ${lit} из ${STEMS.length}`;}
+    if (job.status === 'importing') {return 'складываю в каталог';}
+    if (job.status === 'done') {return 'готово';}
+    if (job.status === 'limit_reached') {return FIRST_PATH_REJECT_TEXT.limit_reached;}
+    if (job.status === 'concurrent') {return FIRST_PATH_REJECT_TEXT.concurrent;}
+    if (job.status === 'auth_required') {return FIRST_PATH_REJECT_TEXT.auth_required;}
+    return 'ошибка';
+  })();
+
+  const hintFor = (): string => {
+    if (!job) {return 'Стемы — отдельные дорожки: вокал, барабаны, бас, гитара, пианино, other и инструментал.';}
+    if (job.status === 'queued') {
+      return 'MVSEP отдаёт позицию в очереди, но не ETA: поле eta_seconds не убывает. Показываем место и время ожидания.';
+    }
+    if (job.status === 'processing') {return 'Идёт разделение. Процента нет — движок его не сообщает, а выдумывать нельзя.';}
+    return 'Стемы качаются через наш воркер и сразу попадают в «МОЮ МУЗЫКУ».';
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* ── ПОРТ ─────────────────────────────────────────── */}
+      <div
+        onClick={() => { if (!job && !busy && !zipBusy) {setGhost(false); inputRef.current?.click();} }}
+        onMouseEnter={() => setOver(true)}
+        onMouseLeave={() => setOver(false)}
+        onDragOver={(e) => { e.preventDefault(); if (!job && !busy && !zipBusy) {setOver(true);} }}
+        onDragLeave={() => setOver(false)}
+        onDrop={onDrop}
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          border: over ? `1.5px solid ${T.orange}` : `1.5px dashed ${T.border2}`,
+          borderRadius: T.rL,
+          background: over ? 'rgba(255,140,0,0.07)' : 'transparent',
+          padding: job ? '7px 12px' : '18px 12px',
+          cursor: job ? 'default' : 'pointer',
+          transition: 'all 0.2s',
+          minHeight: job ? 0 : 96,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: job ? 'space-between' : 'center',
+          flexDirection: job ? 'row' : 'column',
+          gap: job ? 0 : 6,
+          textAlign: 'center',
+        }}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".zip,audio/*"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {void handleFile(file);}
+            e.target.value = '';
+          }}
+        />
+
+        {job ? (
+          <>
+            <span style={{ fontSize: 11, color: T.dim }}>▸ ещё</span>
+            <span style={{ fontFamily: 'ui-monospace,monospace', fontSize: 12, fontWeight: 600, color: T.orange }}>
+              {timer}
+            </span>
+          </>
+        ) : (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+              <div style={{ display: 'flex', gap: 1 }}>
+                {['›', '›', '›'].map((c, i) => (
+                  <span
+                    key={i}
+                    style={{
+                      fontSize: 19, fontWeight: 700, lineHeight: 1,
+                      color: over ? 'rgba(255,140,0,0.92)' : 'rgba(255,140,0,0.16)',
+                      animation: over ? `bl-port-chev 1.4s ease-in-out ${0.36 - i * 0.18}s infinite` : undefined,
+                    }}
+                  >{c}</span>
+                ))}
+              </div>
+              <div style={{
+                fontSize: 26, fontWeight: 800, letterSpacing: '0.24em', lineHeight: 1,
+                color: over ? T.orange : 'rgba(255,255,255,0.82)', transition: 'color 0.2s',
+              }}>ПОРТ</div>
+              <div style={{ display: 'flex', gap: 1 }}>
+                {['‹', '‹', '‹'].map((c, i) => (
+                  <span
+                    key={i}
+                    style={{
+                      fontSize: 19, fontWeight: 700, lineHeight: 1,
+                      color: over ? 'rgba(255,140,0,0.92)' : 'rgba(255,140,0,0.16)',
+                      animation: over ? `bl-port-chev-r 1.4s ease-in-out ${i * 0.18}s infinite` : undefined,
+                    }}
+                  >{c}</span>
+                ))}
+              </div>
+            </div>
+            <div style={{ fontSize: 11, color: over ? 'rgba(255,140,0,0.8)' : T.mute }}>
+              {over ? 'отпускай — приму' : 'перетащи .zip или трек'}
+            </div>
+          </>
+        )}
+
+        {ghost && (
+          <div style={{
+            position: 'absolute', left: '16%', top: '46%',
+            display: 'flex', alignItems: 'flex-start', gap: 2,
+            pointerEvents: 'none', animation: 'bl-port-ghost 3.2s cubic-bezier(.5,.05,.5,.95) 1 forwards',
+          }}>
+            <svg width="15" height="19" viewBox="0 0 18 22">
+              <path d="M2 1 L2 17 L6.5 13 L9.5 20 L12 19 L9 12 L14.5 12 Z" fill="#fff" stroke="#000" strokeWidth="1.2" />
+            </svg>
+            <span style={{ fontSize: 15, opacity: 0.5, transform: 'translate(-6px,-4px)' }}>🎵</span>
+          </div>
+        )}
+      </div>
+
+      {/* ── ПУЛЬТ ────────────────────────────────────────── */}
+      <div style={{
+        border: `1px solid ${T.border}`,
+        borderRadius: T.rL,
+        background: 'rgba(255,255,255,0.02)',
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 150,
+      }}>
+        {job && (
+          <div style={{ padding: '9px 12px 4px' }}>
+            <div style={{
+              fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
+              overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>{job.fileName || 'трек'}</div>
+          </div>
+        )}
+
+        {/* рельса стадий */}
+        <div style={{ display: 'flex', alignItems: 'center', padding: job ? '4px 12px 2px' : '12px 12px 2px' }}>
+          {RAIL.map((label, i) => (
+            <div key={label} style={{ display: 'flex', alignItems: 'center', flex: i === RAIL.length - 1 ? '0 0 auto' : 1 }}>
+              <div style={{
+                width: 7, height: 7, borderRadius: '50%', flex: '0 0 auto',
+                background: i < stage ? T.green : i === stage ? T.orange : 'rgba(255,255,255,0.14)',
+                animation: i === stage && job ? 'bl-port-breathe 4s ease-in-out infinite' : undefined,
+              }} />
+              {i !== RAIL.length - 1 && (
+                <div style={{ height: 1, flex: 1, margin: '0 3px', background: i < stage ? 'rgba(76,175,80,0.5)' : 'rgba(255,255,255,0.1)' }} />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* строка статуса */}
+        <div style={{ padding: '6px 12px 8px', fontSize: 11, color: reject ? T.red : T.dim, minHeight: 16 }}>
+          {statusText}
+          {job && job.status === 'queued' && (
+            <span style={{ display: 'inline-block', width: 5, height: 10, marginLeft: 4, verticalAlign: -1, background: T.orange, animation: 'bl-port-caret 1s step-end infinite' }} />
+          )}
+        </div>
+
+        {/* плитки стемов / прогресс архива */}
+        {zipBusy ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '0 12px 8px' }}>
+            {ZIP_STEPS.map(([label, at], i) => {
+              const done = zipProgress > at;
+              const active = (i === 0 && zipProgress <= 10) || (i === 1 && zipProgress > 10) || (i === 2 && zipProgress > 90);
+              const color = done ? T.green : active ? T.orange : T.mute;
+              return (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />
+                  <span style={{ flex: 1, fontSize: 11, color, fontWeight: active ? 600 : 400 }}>{label}</span>
+                  <span style={{ fontSize: 11, color }}>{done ? '✓' : active ? `${zipProgress}%` : '—'}</span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5, padding: '0 12px 8px' }}>
+          {STEMS.map(([icon, label, slot], i) => {
+            const isLit = i < lit;
+            return (
+              <div
+                key={slot}
+                title={slot}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6, minHeight: 28,
+                  padding: '5px 8px', borderRadius: 6,
+                  border: `1px solid ${isLit ? 'rgba(255,140,0,0.3)' : 'rgba(255,255,255,0.06)'}`,
+                  background: isLit ? 'rgba(255,140,0,0.06)' : 'rgba(255,255,255,0.015)',
+                  opacity: job ? 1 : 0.45,
+                  transition: 'all 0.3s',
+                  animation: isLit ? 'bl-port-tile 0.32s ease-out' : undefined,
+                }}
+              >
+                <span style={{ fontSize: 11, opacity: isLit ? 1 : 0.35 }}>{icon}</span>
+                <span style={{ flex: 1, fontSize: 10.5, color: isLit ? '#ddd' : 'rgba(255,255,255,0.32)' }}>{label}</span>
+                <span style={{ fontFamily: 'ui-monospace,monospace', fontSize: 9, color: isLit ? T.green : T.mute }}>
+                  {isLit ? '✓' : '—'}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        )}
+
+        {/* низ: подсказка + кнопка */}
+        <div style={{
+          marginTop: 'auto', borderTop: `1px solid ${T.border}`,
+          padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 8, minHeight: 36,
+        }}>
+          <div style={{ flex: 1, fontSize: 10.5, color: T.dim, lineHeight: 1.35 }}>
+            {hint ?? (job ? (job.queue ? `осталось мест: ${job.queue.pos}` : 'работаю…') : '…или .zip с готовыми треками')}
+          </div>
+          {!job && (
+            <button
+              onClick={() => setHint(hint ? null : hintFor())}
+              style={{
+                background: 'transparent', border: `1px solid ${T.border2}`, color: T.dim,
+                fontSize: 10.5, padding: '4px 9px', borderRadius: 6, cursor: 'pointer',
+              }}
+            >{hint ? '×' : '? что будет'}</button>
+          )}
+          {job && (job.status === 'queued' || job.status === 'processing') && (
+            <button
+              onClick={() => setHint(hint ? null : hintFor())}
+              style={{
+                background: 'transparent', border: `1px solid ${T.border2}`, color: T.dim,
+                fontSize: 10.5, padding: '4px 9px', borderRadius: 6, cursor: 'pointer',
+              }}
+            >{hint ? '×' : '? сколько ещё'}</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

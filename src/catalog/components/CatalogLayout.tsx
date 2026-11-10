@@ -11,6 +11,7 @@ import { useSyncStore } from '../../sync/store/sync.store';
 import { useUIStore } from '../../stores/ui.store';
 import { useSwipe } from '../hooks/useSwipe';
 import { CatalogContent } from './CatalogContent';
+import { PortPanel } from './PortPanel';
 import { T, colBase, IB, NB } from '../theme';
 import { AvatarEngine } from '../../avatar/AvatarEngine';
 
@@ -40,8 +41,6 @@ export function CatalogLayout({ color, onClose }: Props) {
   const [zipBusy, setZipBusy] = useState(false);
   const [zipProgress, setZipProgress] = useState(0);
   const zipBusyRef = useRef(false);
-  const [zipOver, setZipOver] = useState(false);
-  const [zipHover, setZipHover] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const [pendingLyricsTrackId, setPendingLyricsTrackId] = useState<number|null>(null);
   const [pendingLyricsTitle, setPendingLyricsTitle] = useState('');
@@ -246,33 +245,7 @@ export function CatalogLayout({ color, onClose }: Props) {
           </div>
           {/* ── Upload tab: PORT + Manual upload ── */}
           <div style={{ display:catalogTab==='upload'?'flex':'none', flexDirection:'column', flex:1, minHeight:0, overflow:'auto', gap:8 }}>
-            {/* PORT dropzone */}
-            <div onClick={()=>{if(zipBusy){return;}const input=document.getElementById('bl-smart-file-input') as HTMLInputElement;input?.click();}} onMouseEnter={()=>setZipHover(true)} onMouseLeave={()=>setZipHover(false)} onDragOver={e=>{e.preventDefault();e.stopPropagation();setZipOver(true);}} onDragLeave={()=>setZipOver(false)} onDrop={e=>{e.preventDefault();setZipOver(false);const files=e.dataTransfer?.files;if(files&&files.length>0){handleZip(files[0]);}}} style={{ border:zipOver?`2px dashed ${T.orange}`:`1.5px dashed ${zipHover?T.orange:T.border2}`, borderRadius:T.rL, padding:'20px 16px', textAlign:'center', cursor:zipBusy?'default':'pointer', background:zipOver?'rgba(255,140,0,0.07)':zipHover?'rgba(255,140,0,0.03)':'transparent', transition:'all 0.2s', overflow:'hidden', minHeight:88, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:6 }}>
-              <input id="bl-smart-file-input" type="file" accept=".zip" style={{ display:'none' }} onChange={e=>{const file=e.target.files?.[0];if(file){handleZip(file);}e.target.value='';}} />
-              {!zipBusy?(<>
-                {zipOver&&<div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(255,140,0,0.10)', borderRadius:T.rL, fontSize:13, fontWeight:600, color:T.orange, zIndex:2, pointerEvents:'none' }}>📦 Отпустите ZIP</div>}
-                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6 }}>
-                  <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:12 }}>
-                    <div style={{ display:'flex', gap:2 }}>{(zipOver||zipHover)?<><span style={{fontSize:15,fontWeight:700,color:'rgba(255,140,0,0.9)',animation:'bl-chev-pull 1.4s ease-in-out 0.36s infinite'}}>›</span><span style={{fontSize:19,fontWeight:700,color:'rgba(255,140,0,0.9)',animation:'bl-chev-pull 1.4s ease-in-out 0.18s infinite'}}>›</span><span style={{fontSize:24,fontWeight:700,color:'rgba(255,140,0,0.9)',animation:'bl-chev-pull 1.4s ease-in-out 0s infinite'}}>›</span></>:<><span style={{fontSize:18,fontWeight:700,color:'rgba(255,140,0,0.18)'}}>›</span><span style={{fontSize:18,fontWeight:700,color:'rgba(255,140,0,0.18)'}}>›</span></>}</div>
-                    <div style={{fontSize:28,fontWeight:800,letterSpacing:'0.22em',color:zipOver||zipHover?'#FF8C00':'rgba(255,255,255,0.82)',transition:'color 0.2s',lineHeight:1}}>ПОРТ</div>
-                    <div style={{ display:'flex', gap:2 }}>{(zipOver||zipHover)?<><span style={{fontSize:24,fontWeight:700,color:'rgba(255,140,0,0.9)',animation:'bl-chev-pull 1.4s ease-in-out 0s infinite'}}>‹</span><span style={{fontSize:19,fontWeight:700,color:'rgba(255,140,0,0.9)',animation:'bl-chev-pull 1.4s ease-in-out 0.18s infinite'}}>‹</span><span style={{fontSize:15,fontWeight:700,color:'rgba(255,140,0,0.9)',animation:'bl-chev-pull 1.4s ease-in-out 0.36s infinite'}}>‹</span></>:<><span style={{fontSize:18,fontWeight:700,color:'rgba(255,140,0,0.18)'}}>‹</span><span style={{fontSize:18,fontWeight:700,color:'rgba(255,140,0,0.18)'}}>‹</span></>}</div>
-                  </div>
-                  <div style={{fontSize:11,color:zipOver||zipHover?'rgba(255,140,0,0.65)':'rgba(255,255,255,0.22)',letterSpacing:'0.05em',transition:'color 0.2s'}}>{zipOver||zipHover?'закинуть ZIP':'перетащите .zip или нажмите'}</div>
-                </div>
-              </>):(
-                <div style={{ display:'flex', flexDirection:'column', gap:4, width:'100%' }}>
-                  {[{label:'Чтение архива',t:10},{label:'Импорт треков',t:90},{label:'Финализация',t:95}].map((p,i)=>{const d=zipProgress>p.t;const a=(i===0&&zipProgress<=10)||(i===1&&zipProgress>10)||(i===2&&zipProgress>90);return(
-                    <div key={p.label} style={{ display:'flex', alignItems:'center', gap:8 }}>
-                      <div style={{width:6,height:6,borderRadius:'50%',background:d?'#4ade80':a?T.orange:'rgba(255,255,255,0.15)'}} />
-                      <span style={{fontSize:11,flex:1,textAlign:'left',color:d?'#4ade80':a?T.orange:T.mute,fontWeight:a?600:400}}>{p.label}</span>
-                      <span style={{fontSize:11,color:d?'#4ade80':a?T.orange:T.mute}}>{d?'✓':a?`${zipProgress}%`:'—'}</span>
-                    </div>);})}
-                  <div style={{width:'100%',height:3,borderRadius:2,background:'rgba(255,255,255,0.08)',overflow:'hidden'}}>
-                    <div style={{height:'100%',borderRadius:2,width:zipProgress>0?`${zipProgress}%`:'40%',transition:zipProgress>0?'width 0.4s ease':undefined,background:zipProgress>0&&zipProgress<=35?'linear-gradient(90deg,#FF8C00 0%,#ffcc80 50%,#FF8C00 100%)':T.orange,backgroundSize:zipProgress>0&&zipProgress<=35?'300% 100%':undefined,animation:zipProgress===0?'bl-zip-slide 1.4s ease-in-out infinite':zipProgress<=35?'bl-tg-pulse 1.8s linear infinite':undefined}} />
-                  </div>
-                </div>
-              )}
-            </div>
+            <PortPanel onZip={handleZip} zipBusy={zipBusy} zipProgress={zipProgress} />
 
             {/* Manual upload toggle */}
             <div onClick={()=>setShowManual(!showManual)} style={{ padding:'6px 10px', cursor:'pointer', color:T.dim, fontSize:11, borderRadius:T.r, marginTop:8, background:showManual?T.surfaceH:'transparent' }}>

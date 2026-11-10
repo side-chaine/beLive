@@ -110,3 +110,23 @@
 .bl-track-actions { display: flex; gap: 1px; flex-shrink: 0; }
 .bl-track-actions button:hover { opacity: 1 !important; transform: scale(1.12); }
 .bl-track-actions button { transition: opacity .15s ease, transform .12s ease; }
+
+/* ─── Порт + Пульт (A2.2) ───────────────────────────────────
+   Только transform/opacity — колонка узкая, box-shadow и width дают дёрганье. */
+
+@keyframes bl-port-chev   { 0%,100% { transform: translateX(0);   opacity: .55; } 50% { transform: translateX(3px);  opacity: 1; } }
+@keyframes bl-port-chev-r { 0%,100% { transform: translateX(0);   opacity: .55; } 50% { transform: translateX(-3px); opacity: 1; } }
+@keyframes bl-port-breathe{ 0%,100% { opacity: .45; } 50% { opacity: 1; } }
+@keyframes bl-port-caret  { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
+@keyframes bl-port-tile   { 0% { transform: scale(.96); opacity: .4; } 60% { transform: scale(1.015); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes bl-port-ghost  {
+  0%   { opacity: 0; transform: translate(-38px, 24px) scale(.9); }
+  12%  { opacity: 1; transform: translate(0, 0) scale(1); }
+  55%  { opacity: 1; transform: translate(76px, -10px) scale(1); }
+  70%  { opacity: 0; transform: translate(94px, -16px) scale(.94); }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bl-port-anim, .bl-port-anim * { animation: none !important; transition: none !important; }
+}
