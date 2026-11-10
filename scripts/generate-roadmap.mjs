@@ -5,8 +5,9 @@
 //   node scripts/generate-roadmap.mjs --check   # CI: fail if committed graph is stale
 //
 // Exit codes (CI must be able to tell the failures apart):
-//   0  in sync            1  STALE (forgot --write)      2  usage
-//   3  INVALID DATA (schema/enum/typo)                   4  markers missing
+//   0  in sync            1  STALE (forgot --write) or DRIFT (merged PR ≠ state)
+//   2  usage              3  INVALID DATA (schema/enum/typo)
+//   4  markers missing
 //
 // SOURCE OF TRUTH = <ROADMAP_DIR>/roadmap-data.json, schema belive.roadmap.v2:
 //   meta       generated, main, prod (+командные снимки: command, drift, kpi)
@@ -28,8 +29,13 @@
 // would otherwise create a second source of truth. The target must carry the v2
 // template (ROADMAP-TEMPLATE:v2): a stale v1 template is refused loudly (exit 3)
 // BEFORE any write, because splicing v2 data into it would break the page silently.
+//
+// ROADMAP_GIT_DIR (optional): repository the drift check reads `git log` from.
+// Defaults to the repo root. Only exists so a fixture can be tested without
+// touching this repo's history.
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { dirname, join, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -39,6 +45,7 @@ const resolveDir = (v) => (isAbsolute(v) ? v : join(ROOT, v));
 const BOARD  = resolveDir(process.env.ROADMAP_DIR || 'board');   // canonical location
 const MIRROR = process.env.MIRROR_DIR ? resolveDir(process.env.MIRROR_DIR) : null;
 const DATA = join(BOARD, 'roadmap-data.json');
+const GIT_DIR = process.env.ROADMAP_GIT_DIR ? resolveDir(process.env.ROADMAP_GIT_DIR) : ROOT;
 
 const G_START = '<!-- GRAPH:START -->';
 const G_END   = '<!-- GRAPH:END -->';
@@ -130,6 +137,41 @@ if (errors.length) {
   console.error(`✗ INVALID DATA · ${errors.length} проблем(а):`);
   errors.forEach(e => console.error('   - ' + e));
   process.exit(3);
+}
+
+// --- 0b. Drift: влитый PR не может стоять «в работе» ------------------------
+// Карта врала сама: узел оставался в active/queued/waiting, хотя его PR уже влит
+// в main, и это ловилось только глазами. Источник — локальный git, без API и
+// токена (gh в окружении нет, сеть не нужна): строка «Merge pull request #N».
+//
+// Почему условия два, а не одно. «PR влит + state != done» слишком грубо: у
+// линии бывает влитый PR и живой блокер — line-seo ждёт CF Pages, line-aicoach
+// ждёт промпты 706, и оба состояния честные. Дрейф — когда PR влит, состояние
+// не done и объяснения нет (blocker пуст): тогда узел утверждает «работа идёт»,
+// хотя работа кончилась. Если объяснение есть, это не ложь карты, а незакрытая
+// линия, и судить её должен владелец линии, а не генератор.
+const MERGED_PR_RE = /^Merge pull request #(\d+)\b/gm;
+
+function mergedPullRequests(repoDir) {
+  try {
+    const log = execFileSync('git', ['-C', repoDir, 'log', '--pretty=%s', 'origin/main'], {
+      encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    return new Set([...log.matchAll(MERGED_PR_RE)].map(m => Number(m[1])));
+  } catch {
+    return null;   // не репозиторий или нет origin/main — проверку молча пропускаем
+  }
+}
+
+function detectDrift(nodes, merged) {
+  if (!merged) {return [];}
+  const out = [];
+  (nodes || []).forEach(n => {
+    if (n.state === 'done' || !Array.isArray(n.pr) || n.pr.length === 0 || n.blocker) {return;}
+    const hit = n.pr.find(p => merged.has(p));
+    if (hit !== undefined) {out.push(`⚠ DRIFT · ${n.id} · PR #${hit} влит, состояние ${n.state}`);}
+  });
+  return out;
 }
 
 // --- 1. Mermaid -------------------------------------------------------------
@@ -232,22 +274,31 @@ if (process.env.EXPECTED_MAIN) {
 
 const summary = `main ${d.meta.main} · ${d.nodes.length} nodes · ${d.directions.length} directions · ${d.edges.length} edges`;
 
+// Дрейф считается только для --check/--write: в режиме usage незачем читать
+// историю и пугать предупреждениями перед строкой подсказки.
+const drift = (args.has('--check') || args.has('--write'))
+  ? detectDrift(d.nodes, mergedPullRequests(GIT_DIR))
+  : [];
+drift.forEach(line => console.error(line));
+
 if (args.has('--check')) {
   let stale = false;
   items.forEach(t => {
     if (t.mdNext !== t.mdText)   { console.error(`✗ STALE · ${t.mdPath} — run: node scripts/generate-roadmap.mjs --write`); stale = true; }
     if (t.htmlNext !== t.htmlText) { console.error(`✗ STALE · ${t.htmlPath} — run: node scripts/generate-roadmap.mjs --write`); stale = true; }
   });
-  if (stale) {process.exit(1);}
+  if (stale || drift.length) {process.exit(1);}
   console.log(`✓ roadmap graph in sync · ${summary} · ${items.length} location(s)`);
   process.exit(0);
 }
 
 if (args.has('--write')) {
+  // Дрейф не блокирует запись: --write — это «сгенерируй картинку по данным»,
+  // а не приёмка данных. Предупредили выше, записали дальше.
   items.forEach(t => { writeFileSync(t.mdPath, t.mdNext); writeFileSync(t.htmlPath, t.htmlNext); });
   console.log(`✓ generated · ${summary} · ${items.length} location(s)`);
   process.exit(0);
 }
 
-console.error('usage: node scripts/generate-roadmap.mjs --write | --check   [ROADMAP_DIR=... MIRROR_DIR=... EXPECTED_MAIN=...]');
+console.error('usage: node scripts/generate-roadmap.mjs --write | --check   [ROADMAP_DIR=... MIRROR_DIR=... EXPECTED_MAIN=... ROADMAP_GIT_DIR=...]');
 process.exit(2);
