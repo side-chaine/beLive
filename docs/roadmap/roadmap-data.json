@@ -183,7 +183,7 @@
       "updated": "2026-11-09"
     },
     {
-      "id": "line-frozen", "title": "FROZEN-guard", "direction": "frozen", "state": "active",
+      "id": "line-frozen", "title": "FROZEN-guard", "direction": "frozen", "state": "done",
       "progress": 100, "owner": "805 / 007_c", "pr": [59, 63, 66, 68], "blocker": null,
       "next": "—", "st": "PR #59 #63 #66 #68 · 60/60 · required",
       "detail": "Триггер workflow_run (после PR Gate), вердикт — check-run frozen-guard на голову PR: POST, при повторе PATCH по id (upsert, один SHA — один чек); job назван frozen-guard-run, чек ставится на всех путях выхода через trap. 60/60 сценариев, required. Метка frozen-ok требует reason в теле PR.",
