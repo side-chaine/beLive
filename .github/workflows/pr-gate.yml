@@ -34,8 +34,10 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      # --ignore-scripts: postinstall зависимости — исполнение чужого кода.
+      # Проверено: esbuild/vite работают без скриптов установки.
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       # Дешёвое и страшное — раньше медленного (N1b/8a). Секунды против минут.
       - name: Secrets gate

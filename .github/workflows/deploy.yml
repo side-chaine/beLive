@@ -24,7 +24,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       # N1b/8a — временный дубль до N5.4 (снос GH Pages): гейты остаются в pr-gate.
       - name: Secrets gate
