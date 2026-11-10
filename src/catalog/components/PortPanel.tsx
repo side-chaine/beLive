@@ -171,7 +171,7 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div className="bl-port-anim" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {/* ── ПОРТ ─────────────────────────────────────────── */}
       <div
         onClick={() => { if (!job && !busy && !zipBusy) {setGhost(false); inputRef.current?.click();} }}
@@ -362,7 +362,7 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
           padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 8, minHeight: 36,
         }}>
           <div style={{ flex: 1, fontSize: 10.5, color: T.dim, lineHeight: 1.35 }}>
-            {hint ?? (job ? (job.queue ? `осталось мест: ${job.queue.pos}` : 'работаю…') : '…или .zip с готовыми треками')}
+            {hint ?? (job ? (job.queue ? `впереди: ${job.queue.pos}` : 'работаю…') : '…или .zip с готовыми треками')}
           </div>
           {!job && (
             <button
