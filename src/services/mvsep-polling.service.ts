@@ -16,7 +16,7 @@
  */
 
 import {
-  pollStatus,
+  pollStatusDetailed,
   downloadStems,
   getPollMaxTime,
   isMvsepAuthError,
@@ -220,7 +220,7 @@ class MvsepPollingService {
     }
 
     try {
-      const status = await pollStatus(hash);
+      const { status, queue } = await pollStatusDetailed(hash);
       if (!this.active.has(hash)) {return;} // остановили, пока ждали ответ
       job.pollCount++;
       this.markResumed(job);
@@ -244,6 +244,8 @@ class MvsepPollingService {
         useMvsepStore
           .getState()
           .updateJobStatus(hash, status === 'waiting' ? 'queued' : 'processing');
+        // Очередь пишем только когда MVSEP её реально отдал (см. readQueue).
+        if (queue) {useMvsepStore.getState().updateJobQueue(hash, queue);}
         job.timer = setTimeout(() => this.tick(hash), getAdaptiveDelay(job.pollCount));
       }
     } catch (err) {

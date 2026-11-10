@@ -342,10 +342,41 @@ export async function submitTrack(
  * Неизвестный статус MVSEP = 'processing'.
  */
 export async function pollStatus(hash: string): Promise<MvsepJobStatus> {
+  return (await pollStatusDetailed(hash)).status;
+}
+
+/** Позиция в очереди MVSEP. `pos` — сколько джоб впереди нас, `total` — размер очереди. */
+export interface MvsepQueueInfo {
+  pos: number;
+  total: number;
+}
+
+/**
+ * Полный ответ /status: статус + очередь, если MVSEP её отдал.
+ *
+ * `eta_seconds` намеренно не читаем. Живой прогон 10.11.2026: eta_seconds 63 → 45 → 11,
+ * пока current_order шёл 26 → 18 → 3, то есть ETA не убывает и врёт. Позиция же
+ * монотонна и проверяема — её и показываем. Нет полей — нет очереди, никаких нулей.
+ */
+export async function pollStatusDetailed(
+  hash: string,
+): Promise<{ status: MvsepJobStatus; queue?: MvsepQueueInfo }> {
   const resp = await workerFetch(`/status?hash=${encodeURIComponent(hash)}`);
   if (!resp.ok) {throw new MvsepError(`MVSEP_STATUS_HTTP_${resp.status}`);}
   const json = await resp.json();
-  return mapMvsepStatus(json?.status);
+  return { status: mapMvsepStatus(json?.status), queue: readQueue(json?.data) };
+}
+
+/** Достаёт очередь из data MVSEP. Мусор, NaN и нули → undefined (не рисуем строку). */
+export function readQueue(data: unknown): MvsepQueueInfo | undefined {
+  if (!data || typeof data !== 'object') {return undefined;}
+  const d = data as Record<string, unknown>;
+  const pos = d.current_order;
+  const total = d.queue_count;
+  if (typeof pos !== 'number' || typeof total !== 'number') {return undefined;}
+  if (!Number.isFinite(pos) || !Number.isFinite(total)) {return undefined;}
+  if (pos <= 0 || total <= 0) {return undefined;}
+  return { pos, total };
 }
 
 const warnedStatuses = new Set<string>();

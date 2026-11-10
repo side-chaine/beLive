@@ -4,7 +4,7 @@
  */
 
 import { create } from 'zustand';
-import type { MvsepKeySource } from '../services/mvsep.service';
+import type { MvsepKeySource, MvsepQueueInfo } from '../services/mvsep.service';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -33,6 +33,8 @@ export interface MvsepJobState {
     downloaded: number;
     total: number;
   };
+  /** Очередь MVSEP, пока джоба в waiting. undefined = MVSEP не отдал поля. */
+  queue?: MvsepQueueInfo;
   error?: string;
 }
 
@@ -50,6 +52,7 @@ interface MvsepActions {
   addJob: (hash: string, trackId: number, fileName: string, keySource: MvsepKeySource, submittedAt?: number) => void;
   updateJobStatus: (hash: string, status: MvsepInternalStatus, error?: string) => void;
   updateDownloadProgress: (hash: string, downloaded: number, total: number) => void;
+  updateJobQueue: (hash: string, queue: MvsepQueueInfo) => void;
   removeJob: (hash: string) => void;
   setDailyUsage: (usage: MvsepDailyUsage) => void;
   resetDailyUsageIfNewDay: () => void;
@@ -126,6 +129,8 @@ export const useMvsepStore = create<MvsepState & MvsepActions>((set, get) => ({
           ...job,
           status,
           error,
+          // Очередь имеет смысл только в queued: вышли из него — забыли.
+          queue: status === 'queued' ? job.queue : undefined,
           lastPolledAt: Date.now(),
         });
       }
@@ -142,6 +147,17 @@ export const useMvsepStore = create<MvsepState & MvsepActions>((set, get) => ({
           ...job,
           downloadProgress: { downloaded, total },
         });
+      }
+      return { activeJobs: newJobs };
+    });
+  },
+
+  updateJobQueue: (hash, queue) => {
+    set((state) => {
+      const newJobs = new Map(state.activeJobs);
+      const job = newJobs.get(hash);
+      if (job) {
+        newJobs.set(hash, { ...job, queue });
       }
       return { activeJobs: newJobs };
     });
