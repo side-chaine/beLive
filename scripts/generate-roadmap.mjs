@@ -49,6 +49,8 @@ const GIT_DIR = process.env.ROADMAP_GIT_DIR ? resolveDir(process.env.ROADMAP_GIT
 
 const G_START = '<!-- GRAPH:START -->';
 const G_END   = '<!-- GRAPH:END -->';
+const H_START = '<!-- HEAD:START -->';
+const H_END   = '<!-- HEAD:END -->';
 const D_START = '/*DATA:START*/';
 const D_END   = '/*DATA:END*/';
 
@@ -211,6 +213,25 @@ const graphBlock = mmd.join('\n');
 // Body only — splice() owns the markers, otherwise they nest on every run.
 const dataBlock = `const DATA = ${JSON.stringify(d, null, 2)};`;
 
+// --- 2b. Шапка ROADMAP.md ---------------------------------------------------
+// Раньше строка «Снимок» жила статикой вне сплайса: --check её не видел, и
+// устаревший SHA в шапке не краснел никогда — карта могла врать про базу,
+// оставаясь зелёной. Теперь шапка генерируется из meta и проверяется тем же
+// сравнением, что и граф.
+//
+// Дата берётся из строки как есть, без пересчёта в локальную зону: генератор
+// запускают на разных машинах, и «22:29» не должно превращаться в «19:29»
+// только потому, что прогон случился в другом поясе.
+function fmtStamp(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(String(iso));
+  return m ? `${m[3]}.${m[2]}.${m[1]} ${m[4]}:${m[5]}` : String(iso);
+}
+
+const headBlock = [
+  `> **Снимок:** ${fmtStamp(d.meta.generated)} · \`origin/main = ${d.meta.main}\``,
+  d.meta.drift ? `> **Дрейф:** ${d.meta.drift}` : null,
+].filter(Boolean).join('\n');
+
 // --- 3. splice --------------------------------------------------------------
 function splice(text, start, end, body) {
   const a = text.indexOf(start), b = text.indexOf(end);
@@ -229,7 +250,7 @@ function render(dir) {
   const htmlText = readText(htmlPath);
   return {
     mdPath, htmlPath, mdText, htmlText,
-    mdNext: splice(mdText, G_START, G_END, graphBlock),
+    mdNext: splice(splice(mdText, H_START, H_END, headBlock), G_START, G_END, graphBlock),
     htmlNext: splice(htmlText, D_START, D_END, dataBlock),
   };
 }
