@@ -431,6 +431,36 @@ describe('/submit: успех MVSEP и квота', () => {
     // BYOK не трогает ни дневной счётчик, ни общий лок.
     expect(kv._store.size).toBe(0);
   });
+
+  // Отказ сабмита снимал лок БЕЗ проверки владельца. Сценарий: пока наш /create
+  // висит, лок успевает уйти другому (мы отменили, он взял) — и наш отказ
+  // освобождал его обработку, то есть разрешал второй трек параллельно.
+  it('сеть упала — лок, ушедший другому за время запроса, остаётся', async () => {
+    const kv = makeKv();
+    fetchSpy.mockImplementationOnce(async () => {
+      kv._store.set(LOCK_KEY, JSON.stringify({ userId: 'google:other', startedAt: 2 }));
+      throw new Error('network');
+    });
+
+    const res = await worker.fetch(postReq(await makeJwt('google:me'), new FormData()), makeEnv(kv));
+
+    expect(res.status).toBe(502);
+    expect(kv._store.has(LOCK_KEY)).toBe(true);
+  });
+
+  it('MVSEP вернул ошибку — чужой лок тоже не снимается', async () => {
+    const kv = makeKv();
+    fetchSpy.mockImplementationOnce(async () => {
+      kv._store.set(LOCK_KEY, JSON.stringify({ userId: 'google:other', startedAt: 2 }));
+      return new Response(JSON.stringify({ success: false, errors: ['bad'] }), {
+        status: 200, headers: { 'Content-Type': 'application/json' },
+      });
+    });
+
+    await worker.fetch(postReq(await makeJwt('google:me'), new FormData()), makeEnv(kv));
+
+    expect(kv._store.has(LOCK_KEY)).toBe(true);
+  });
 });
 
 // ─── владение локом ────────────────────────────────────────

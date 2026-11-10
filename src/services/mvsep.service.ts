@@ -164,10 +164,19 @@ export function isWithinDailyLimit(): boolean {
   return usage.count < MVSEP_DAILY_LIMIT_LOGGED;
 }
 
-export function incrementDailyUsage(): void {
-  const usage = getDailyUsage();
-  usage.count += 1;
-  saveDailyUsage(usage);
+/**
+ * Записать израсходованную квоту beLive — числом от сервера, а не своим счётом.
+ *
+ * Раньше здесь был `incrementDailyUsage()` с локальным `count += 1`, но его
+ * никто не вызывал: счётчик не рос, `isWithinDailyLimit()` всегда возвращал true,
+ * и предпроверка «лимит исчерпан» была мёртвой. Считать самим тоже нельзя —
+ * локальный счёт разъезжается с реальным (другая вкладка, другое устройство,
+ * сброс квоты на сервере). Воркер отдаёт `quota.used` в ответе на /submit —
+ * берём его.
+ */
+export function syncDailyUsage(used: number): void {
+  if (!Number.isFinite(used) || used < 0) {return;}
+  saveDailyUsage({ count: used, date: getTodayString() });
 }
 
 export function getDailyUsageInfo(): { used: number; limit: number; date: string } {
@@ -329,6 +338,11 @@ export async function submitTrack(
   if (!json.data?.hash) {throw new MvsepError('MVSEP_NO_HASH');}
 
   const keySource: MvsepKeySource = json.quota?.keySource || (userKey ? 'user' : 'beLive');
+  // Квота beLive приходит с сервера в этом же ответе — синхронизируем локальный
+  // счётчик с ней. Без этого предпроверка canAutoSeparate() врала: счётчик не рос.
+  if (keySource === 'beLive' && typeof json.quota?.used === 'number') {
+    syncDailyUsage(json.quota.used);
+  }
   return { hash: json.data.hash, keySource };
 }
 
@@ -376,6 +390,9 @@ export function readQueue(data: unknown): MvsepQueueInfo | undefined {
   if (typeof pos !== 'number' || typeof total !== 'number') {return undefined;}
   if (!Number.isFinite(pos) || !Number.isFinite(total)) {return undefined;}
   if (pos <= 0 || total <= 0) {return undefined;}
+  // Позиция не может быть больше самой очереди: «500 из 10» — это не очередь,
+  // а разъехавшиеся поля. Показывать такое хуже, чем не показывать ничего.
+  if (pos > total) {return undefined;}
   return { pos, total };
 }
 

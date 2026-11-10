@@ -115,10 +115,6 @@ async function acquireConcurrentLock(kv, userId) {
   return true;
 }
 
-async function releaseConcurrentLock(kv) {
-  await kv.delete(CONCURRENT_LOCK_KEY);
-}
-
 /**
  * Снять лок, только если он принадлежит этому пользователю.
  *
@@ -198,7 +194,7 @@ async function handleSubmit(request, env, userId, cors) {
   try {
     mvsepResp = await fetch(`${MVSEP_API_URL}/create`, { method: 'POST', body: formData });
   } catch (err) {
-    if (!userApiKey) {await releaseConcurrentLock(env.MVSEP_RATES);}
+    if (!userApiKey) {await releaseConcurrentLockIfOwner(env.MVSEP_RATES, userId);}
     return new Response(JSON.stringify({ status: 'error', errors: ['MVSEP unreachable'] }), {
       status: 502, headers: { ...cors, 'Content-Type': 'application/json' }
     });
@@ -224,8 +220,9 @@ async function handleSubmit(request, env, userId, cors) {
       data.quota = { keySource: 'user' };
     }
   } else {
-    // MVSEP error — release lock
-    if (!userApiKey) {await releaseConcurrentLock(env.MVSEP_RATES);}
+    // MVSEP error — снимаем лок, только если он наш: иначе отказ сабмита
+    // пользователя A освобождал бы обработку пользователя B на общем ключе.
+    if (!userApiKey) {await releaseConcurrentLockIfOwner(env.MVSEP_RATES, userId);}
   }
 
   return new Response(JSON.stringify(data), {
