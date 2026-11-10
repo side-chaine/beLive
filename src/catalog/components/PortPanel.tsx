@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from 'react';
 import { T } from '../theme';
 import { useMvsepStore, getElapsedString } from '../../stores/mvsep.store';
 import type { MvsepJobState } from '../../stores/mvsep.store';
-import { isZipFile } from '../../services/mvsep.service';
+import { isZipFile, MvsepError } from '../../services/mvsep.service';
 import {
   startFirstPath,
   checkFirstPathFile,
@@ -84,6 +84,12 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
   const [ghost, setGhost] = useState(false);
   const [, forceTick] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Синхронный замок: `busy` — React-состояние и читается до перерисовки,
+  // поэтому двойной клик успевал отправить два submit (две квоты, второй лок).
+  const busyRef = useRef(false);
+  // Итог последней джобы: поллер удаляет её из стора, и без снимка провал
+  // исчезает молча — Пульт просто возвращается в пустое состояние.
+  const [outcome, setOutcome] = useState<{ name: string; ok: boolean; text: string } | null>(null);
 
   // Таймер: обновляем раз в секунду, пока джоба жива. Прошедшее время — правда.
   useEffect(() => {
@@ -91,6 +97,29 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
     const id = setInterval(() => forceTick((n) => n + 1), 1000);
     return () => clearInterval(id);
   }, [job?.hash, job?.status]);
+
+  // Снимок финала: подписка на стор, а не на рендер. stopPolling удаляет джобу
+  // сразу после updateJobStatus('failed'), поэтому в разметке этот статус
+  // не появляется вообще — провал исчезал молча.
+  useEffect(() => {
+    return useMvsepStore.subscribe((state, prev) => {
+      for (const [hash, before] of prev.activeJobs) {
+        if (state.activeJobs.has(hash)) {continue;}
+        if (before.status === 'failed') {
+          setOutcome({ name: before.fileName, ok: false, text: before.error || 'разделение не удалось' });
+        } else if (before.status === 'done') {
+          setOutcome({ name: before.fileName, ok: true, text: 'готово — трек в каталоге' });
+        }
+      }
+    });
+  }, []);
+
+  // «Готово» гаснет само; ошибка висит до следующего действия пользователя.
+  useEffect(() => {
+    if (!outcome?.ok) {return;}
+    const id = setTimeout(() => setOutcome(null), 6000);
+    return () => clearTimeout(id);
+  }, [outcome]);
 
   // Ghost-курсор: один раз за загрузку страницы, только на пустом Порте.
   useEffect(() => {
@@ -106,22 +135,32 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
   }, [reject]);
 
   const handleFile = async (file: File) => {
+    if (busyRef.current) {return;}
     setGhost(false);
     setHint(null);
+    setOutcome(null);
 
     if (isZipFile(file.name)) {onZip(file); return;}
 
     const early = checkFirstPathFile(file);
     if (early) {setReject(early); return;}
 
+    busyRef.current = true;
     setBusy(true);
     try {
       const res = await startFirstPath(file);
       if (!res.ok) {setReject(res.reason);}
-    } catch {
+    } catch (err) {
+      // Серверные отказы приходят исключением — переводим в те же коды, что
+      // и предпроверка, иначе пользователь видит «связь» вместо «лимит».
       setReject(null);
-      setHint('не удалось отправить — связь или сессия. Попробуй ещё раз.');
+      const code = err instanceof MvsepError ? err.code : '';
+      if (code === 'CONCURRENT_LIMIT') {setReject('concurrent');}
+      else if (code === 'MVSEP_LIMIT_REACHED') {setReject('limit_reached');}
+      else if (code === 'MVSEP_KEY_INVALID') {setHint('MVSEP не принял ключ — проверь его в профиле');}
+      else {setHint('не удалось отправить — связь или сессия. Попробуй ещё раз.');}
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   };
@@ -171,7 +210,7 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div className="bl-port-anim" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {/* ── ПОРТ ─────────────────────────────────────────── */}
       <div
         onClick={() => { if (!job && !busy && !zipBusy) {setGhost(false); inputRef.current?.click();} }}
@@ -304,8 +343,11 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
         </div>
 
         {/* строка статуса */}
-        <div style={{ padding: '6px 12px 8px', fontSize: 11, color: reject ? T.red : T.dim, minHeight: 16 }}>
-          {statusText}
+        <div style={{
+          padding: '6px 12px 8px', fontSize: 11, minHeight: 16,
+          color: reject || (outcome && !outcome.ok) ? T.red : outcome?.ok ? T.green : T.dim,
+        }}>
+          {!job && outcome ? outcome.text : statusText}
           {job && job.status === 'queued' && (
             <span style={{ display: 'inline-block', width: 5, height: 10, marginLeft: 4, verticalAlign: -1, background: T.orange, animation: 'bl-port-caret 1s step-end infinite' }} />
           )}
@@ -362,7 +404,7 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
           padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 8, minHeight: 36,
         }}>
           <div style={{ flex: 1, fontSize: 10.5, color: T.dim, lineHeight: 1.35 }}>
-            {hint ?? (job ? (job.queue ? `осталось мест: ${job.queue.pos}` : 'работаю…') : '…или .zip с готовыми треками')}
+            {hint ?? (job ? (job.queue ? `впереди: ${job.queue.pos}` : 'работаю…') : '…или .zip с готовыми треками')}
           </div>
           {!job && (
             <button
