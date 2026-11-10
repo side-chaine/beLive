@@ -1,6 +1,47 @@
 const MVSEP_API_URL = 'https://mvsep.com/api/separation';
 const DAILY_LIMIT = 10;
 
+// ─── SSRF-гард для /download ─────────────────────────────
+//
+// /download — открытый наружу прокси: он ходит по URL, который пришёл от
+// клиента. Пускать любой URL нельзя — получим SSRF (внутренние адреса,
+// localhost, метаданные Cloudflare). Но и проверять префикс строкой нельзя:
+// реальные файлы MVSEP лежат на https://de.mvsep.com/storage/processed/…,
+// и старая проверка `startsWith('https://mvsep.com/')` отбивала их все.
+//
+// Проверяем именно HOSTNAME разобранного URL: mvsep.com и любой его
+// поддомен. `mvsep.com.evil.com` и `evil.com/mvsep.com` так не проходят.
+
+const MVSEP_HOST = 'mvsep.com';
+const MAX_DOWNLOAD_URL_LEN = 2048;
+const MAX_DOWNLOAD_REDIRECTS = 3;
+
+/**
+ * Разбирает URL и возвращает его, только если это https на хост MVSEP.
+ * Возвращает null на мусор — вызывающий отвечает 400.
+ */
+function parseAllowedMvsepUrl(raw, base) {
+  if (typeof raw !== 'string' || raw.length === 0 || raw.length > MAX_DOWNLOAD_URL_LEN) {return null;}
+
+  let u;
+  try {
+    u = base ? new URL(raw, base) : new URL(raw);
+  } catch {
+    return null;
+  }
+
+  if (u.protocol !== 'https:') {return null;}
+  // userinfo в URL — классический обход вида https://mvsep.com@evil.com/
+  if (u.username || u.password) {return null;}
+  // Порт: только дефолтный. Иначе https://mvsep.com:8443/ уйдёт на чужой сервис.
+  if (u.port && u.port !== '443') {return null;}
+
+  const host = u.hostname.toLowerCase();
+  if (host !== MVSEP_HOST && !host.endsWith('.' + MVSEP_HOST)) {return null;}
+
+  return u;
+}
+
 // ─── CORS ────────────────────────────────────────────────
 
 function corsHeaders(origin, env) {
@@ -101,6 +142,29 @@ async function releaseConcurrentLockIfOwner(kv, userId) {
   return true;
 }
 
+// ─── keyTag для /health ──────────────────────────────────
+//
+// Показывает, КАКОЙ ключ лежит в секрете, не раскрывая его: 8 hex от
+// sha256(MVSEP_API_KEY). Значения в Cloudflare encrypted, поэтому после
+// ротации иначе не проверить, что секрет действительно сменился.
+//
+// Считается лениво и кэшируется вместе с сырым ключом: если секрет
+// поменяли, тег пересчитается сам. Нет секрета — null, не 500.
+
+let keyTagCache = { key: null, tag: null };
+
+async function getKeyTag(apiKey) {
+  if (!apiKey) {return null;}
+  if (keyTagCache.key === apiKey) {return keyTagCache.tag;}
+
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(apiKey));
+  const hex = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
+  const tag = hex.slice(0, 8);
+
+  keyTagCache = { key: apiKey, tag };
+  return tag;
+}
+
 // ─── Handlers ────────────────────────────────────────────
 
 async function handleSubmit(request, env, userId, cors) {
@@ -142,12 +206,22 @@ async function handleSubmit(request, env, userId, cors) {
 
   const data = await mvsepResp.json();
 
-  if (data.status === 'ok' && data.data?.hash) {
+  // Успех MVSEP: /separation/create отдаёт {success:true, data:{link, hash}} —
+  // поля `status` там нет вообще. Старое условие `data.status === 'ok'` было
+  // ложно всегда, поэтому счётчик 10/день не рос, а глобальный лок снимался
+  // сразу в else: оба лимита на общем ключе были мертвы. Старую форму
+  // `status:'ok'` принимаем для совместимости.
+  const accepted = (data.success === true || data.status === 'ok') && !!data.data?.hash;
+
+  if (accepted) {
     if (!userApiKey) {
       const newCount = await incrementDailyUsage(env.MVSEP_RATES, userId);
       data.quota = { used: newCount, limit: DAILY_LIMIT, keySource: 'beLive' };
     } else {
-      data.quota = { used: 0, limit: 49, keySource: 'user' };
+      // У BYOK нет лимита beLive: пользователь платит MVSEP сам. Отдаём только
+      // то, что реально знаем — источник ключа. Ни `limit`, ни `used` не шлём:
+      // выдуманное число попадёт в UI и будет врать.
+      data.quota = { keySource: 'user' };
     }
   } else {
     // MVSEP error — release lock
@@ -185,14 +259,45 @@ async function handleStatus(request, env, userId, cors) {
   });
 }
 
+function badDownloadUrl(cors) {
+  return new Response(JSON.stringify({ status: 'error', errors: ['Invalid URL'] }), {
+    status: 400, headers: { ...cors, 'Content-Type': 'application/json' }
+  });
+}
+
 async function handleDownload(request, env, cors) {
-  const fileUrl = new URL(request.url).searchParams.get('url');
-  if (!fileUrl || !fileUrl.startsWith('https://mvsep.com/')) {
-    return new Response(JSON.stringify({ status: 'error', errors: ['Invalid URL'] }), {
-      status: 400, headers: { ...cors, 'Content-Type': 'application/json' }
-    });
+  const raw = new URL(request.url).searchParams.get('url');
+
+  let target = parseAllowedMvsepUrl(raw);
+  if (!target) {return badDownloadUrl(cors);}
+
+  // Редиректы разбираем сами, а не отдаём fetch: MVSEP отдаёт 302 (например,
+  // de.mvsep.com/ → de.mvsep.com/en), и blanket-400 на 3xx уронил бы все
+  // стемы. Каждый Location проверяем тем же allowlist — иначе редирект
+  // становится обходом SSRF-гарда.
+  let resp;
+  let hops = 0;
+  for (;;) {
+    try {
+      resp = await fetch(target.toString(), { redirect: 'manual' });
+    } catch {
+      return new Response(JSON.stringify({ status: 'error', errors: ['MVSEP unreachable'] }), {
+        status: 502, headers: { ...cors, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (resp.status < 300 || resp.status >= 400) {break;}
+
+    const location = resp.headers.get('Location');
+    if (!location) {return badDownloadUrl(cors);}
+
+    if (++hops > MAX_DOWNLOAD_REDIRECTS) {return badDownloadUrl(cors);}
+
+    const next = parseAllowedMvsepUrl(location, target);
+    if (!next) {return badDownloadUrl(cors);}
+    target = next;
   }
-  const resp = await fetch(fileUrl);
+
   return new Response(resp.body, {
     status: resp.status,
     headers: {
@@ -232,7 +337,8 @@ export default {
 
     // Health — no auth
     if (url.pathname === '/health') {
-      return new Response(JSON.stringify({ status: 'ok', service: 'belive-mvsep' }), {
+      const keyTag = await getKeyTag(env.MVSEP_API_KEY);
+      return new Response(JSON.stringify({ status: 'ok', service: 'belive-mvsep', keyTag }), {
         headers: { ...cors, 'Content-Type': 'application/json' }
       });
     }
