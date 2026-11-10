@@ -23,6 +23,9 @@ import {
   readQueue,
   submitTrack,
   downloadStems,
+  isWithinDailyLimit,
+  syncDailyUsage,
+  getDailyUsageInfo,
   MvsepError,
 } from '../mvsep.service';
 import { useUserProfileStore } from '../../stores/user-profile.store';
@@ -135,8 +138,35 @@ describe('readQueue — только честные поля', () => {
     ['нулевая позиция', { queue_count: 10, current_order: 0 }],
     ['нулевая очередь', { queue_count: 0, current_order: 3 }],
     ['отрицательная позиция', { queue_count: 10, current_order: -2 }],
+    ['позиция больше очереди', { queue_count: 10, current_order: 500 }],
   ])('мусор → undefined: %s', (_label, data) => {
     expect(readQueue(data)).toBeUndefined();
+  });
+});
+
+// ─── Квота beLive: счётчик обязан идти от сервера ────────────
+//
+// `incrementDailyUsage()` никто не вызывал, поэтому счётчик не рос и
+// `isWithinDailyLimit()` всегда был true — предпроверка «лимит исчерпан» была мёртвой.
+// Теперь число берётся из `quota.used` ответа воркера на /submit.
+
+describe('syncDailyUsage — квота от сервера, а не свой счёт', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('число от сервера доезжает до предпроверки', () => {
+    expect(isWithinDailyLimit()).toBe(true);
+    syncDailyUsage(10);
+    expect(isWithinDailyLimit()).toBe(false);
+    expect(getDailyUsageInfo()).toMatchObject({ used: 10, limit: 10 });
+  });
+
+  it('мусор от сервера не портит уже записанный счётчик', () => {
+    syncDailyUsage(3);
+    syncDailyUsage(Number.NaN);
+    syncDailyUsage(-1);
+    expect(getDailyUsageInfo().used).toBe(3);
   });
 });
 
@@ -318,6 +348,50 @@ describe('submitTrack — реальные формы ответа MVSEP', () =>
     });
     useMvsepKeyStore.getState().setApiKey('k');
     await expect(submitTrack(new ArrayBuffer(8), 'a.mp3')).resolves.toMatchObject({ keySource: 'user' });
+  });
+
+  it('quota.used от воркера доезжает до локального счётчика', async () => {
+    localStorage.clear();
+    useMvsepKeyStore.getState().clearApiKey();
+    fetchMock.mockImplementation(async () =>
+      json({ success: true, data: { hash: 'h-q' }, quota: { used: 4, limit: 10, keySource: 'beLive' } }),
+    );
+    await submitTrack(new ArrayBuffer(8), 'a.mp3');
+    expect(getDailyUsageInfo()).toMatchObject({ used: 4, limit: 10 });
+  });
+
+  it('BYOK-ответ без used не трогает счётчик beLive', async () => {
+    localStorage.clear();
+    syncDailyUsage(7);
+    useMvsepKeyStore.getState().setApiKey('user-key');
+    fetchMock.mockImplementation(async () =>
+      json({ success: true, data: { hash: 'h-u' }, quota: { keySource: 'user' } }),
+    );
+    await submitTrack(new ArrayBuffer(8), 'a.mp3');
+    expect(getDailyUsageInfo().used).toBe(7);
+    useMvsepKeyStore.getState().clearApiKey();
+  });
+
+  // Ребро от 805: 11-й сабмит. Если воркер когда-нибудь ответит beLive без
+  // `quota.used`, счётчик обязан остаться прежним, а не превратиться в 0/NaN.
+  it('beLive-ответ без quota.used не обнуляет зеркало (11-й сабмит)', async () => {
+    localStorage.clear();
+    useMvsepKeyStore.getState().clearApiKey();
+    syncDailyUsage(10);
+    fetchMock.mockImplementation(async () =>
+      json({ success: true, data: { hash: 'h-11' }, quota: { keySource: 'beLive' } }),
+    );
+    await submitTrack(new ArrayBuffer(8), 'a.mp3');
+    expect(getDailyUsageInfo().used).toBe(10);
+  });
+
+  it('отказ 429 не трогает зеркало: квоту списывает сервер, не клиент', async () => {
+    localStorage.clear();
+    useMvsepKeyStore.getState().clearApiKey();
+    syncDailyUsage(9);
+    fetchMock.mockImplementation(async () => json({ errors: ['daily limit'] }, 429));
+    await expect(submitTrack(new ArrayBuffer(8), 'a.mp3')).rejects.toMatchObject({ code: 'MVSEP_LIMIT_REACHED' });
+    expect(getDailyUsageInfo().used).toBe(9);
   });
 
   it('{success:false, data:{message:"Invalid API token"}} при HTTP 200 → MVSEP_KEY_INVALID', async () => {
