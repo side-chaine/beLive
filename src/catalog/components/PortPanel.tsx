@@ -116,6 +116,7 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
   const [over, setOver] = useState(false);
   const [busy, setBusy] = useState(false);
   const [reject, setReject] = useState<FirstPathReject | null>(null);
+  const [fail, setFail] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
   const [ghost, setGhost] = useState(false);
   const [, forceTick] = useState(0);
@@ -164,17 +165,16 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
     return () => clearTimeout(id);
   }, [job]);
 
-  useEffect(() => {
-    if (!reject) {return;}
-    const id = setTimeout(() => setReject(null), 4000);
-    return () => clearTimeout(id);
-  }, [reject]);
+  // Отказ не гаснет сам: раньше строка жила 4 секунды и человек, отвернувшись,
+  // видел пустой Пульт — «ничего не произошло». Сбрасывается следующей попыткой.
 
   const handleFile = async (file: File) => {
     if (busyRef.current) {return;}
     setGhost(false);
     setHint(null);
     setOutcome(null);
+    setReject(null);
+    setFail(null);
 
     if (isZipFile(file.name)) {onZip(file); return;}
 
@@ -189,12 +189,15 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
     } catch (err) {
       // Серверные отказы приходят исключением — переводим в те же коды, что
       // и предпроверка, иначе пользователь видит «связь» вместо «лимит».
-      setReject(null);
       const code = err instanceof MvsepError ? err.code : '';
+      // В консоль — код как есть: по нему ищут причину, в интерфейсе он лишний.
+      console.warn('[port] отправка не удалась:', code || err);
       if (code === 'CONCURRENT_LIMIT') {setReject('concurrent');}
       else if (code === 'MVSEP_LIMIT_REACHED') {setReject('limit_reached');}
-      else if (code === 'MVSEP_KEY_INVALID') {setHint('MVSEP не принял ключ — проверь его в профиле');}
-      else {setHint('не удалось отправить — связь или сессия. Попробуй ещё раз.');}
+      else if (code === 'MVSEP_KEY_INVALID') {setFail('MVSEP не принял ключ — проверь его в профиле');}
+      else if (code === 'AUTH_REQUIRED') {setFail('сессия истекла — войди заново, без входа разделение недоступно');}
+      else if (code === 'MVSEP_SUBMIT_ERROR_401') {setFail('MVSEP отклонил запрос (401) — это на стороне сервиса, повтори позже');}
+      else {setFail('не удалось отправить — связь или сессия. Попробуй ещё раз.');}
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -218,14 +221,15 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
 
   const statusText = (() => {
     if (zipBusy) {return `распаковываю архив · ${zipProgress}%`;}
+    if (fail) {return fail;}
     if (reject) {return FIRST_PATH_REJECT_TEXT[reject];}
     if (busy) {return 'отправляю на разделение…';}
-    if (!job) {return 'кинь трек — верну 7 стемов';}
+    if (!job) {return 'кинь трек — разделю его на 7 дорожек';}
     if (job.status === 'uploading') {return 'загружаю файл';}
     if (job.status === 'queued' || job.status === 'processing') {
       return 'можно закрыть Каталог — вкладку лучше оставить открытой';
     }
-    if (job.status === 'downloading') {return 'забираю стемы';}
+    if (job.status === 'downloading') {return 'забираю дорожки';}
     if (job.status === 'importing') {return 'складываю в каталог';}
     if (job.status === 'done') {return 'готово';}
     if (job.status === 'limit_reached') {return FIRST_PATH_REJECT_TEXT.limit_reached;}
@@ -235,12 +239,12 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
   })();
 
   const hintFor = (): string => {
-    if (!job) {return 'Стемы — отдельные дорожки: вокал, барабаны, бас, гитара, пианино, other и инструментал.';}
+    if (!job) {return 'Стемы — это дорожки одного трека: вокал, барабаны, бас, гитара, клавиши, прочее и инструментал. Каждую можно включить отдельно.';}
     if (job.status === 'queued') {
       return 'MVSEP отдаёт позицию в очереди, но не ETA: поле eta_seconds не убывает. Показываем место и время ожидания.';
     }
     if (job.status === 'processing') {return 'Идёт разделение. Процента нет — движок его не сообщает, а выдумывать нельзя.';}
-    return 'Стемы качаются через наш воркер и сразу попадают в «МОЮ МУЗЫКУ».';
+    return 'Дорожки качаются через наш воркер и сразу попадают в «МОЮ МУЗЫКУ».';
   };
 
   return (
@@ -285,8 +289,8 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
 
         {job ? (
           <>
-            <span style={{ fontSize: 11, color: T.dim }}>▸ ПОРТ · брось ещё</span>
-            <span style={{ fontFamily: 'ui-monospace,monospace', fontSize: 12, fontWeight: 600, color: T.orange }}>
+            <span style={{ fontSize: 12, color: T.dim }}>▸ ПОРТ · брось ещё</span>
+            <span style={{ fontFamily: 'ui-monospace,monospace', fontSize: 13, fontWeight: 600, color: T.orange }}>
               {timer}
             </span>
           </>
@@ -322,7 +326,7 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
                 ))}
               </div>
             </div>
-            <div style={{ fontSize: 11, color: over ? 'rgba(255,140,0,0.8)' : T.mute }}>
+            <div style={{ fontSize: 12.5, color: over ? 'rgba(255,140,0,0.85)' : '#9a9a9a' }}>
               {over ? 'отпускай — приму' : 'перетащи .zip или трек'}
             </div>
           </>
@@ -354,7 +358,7 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
         {job && (
           <div style={{ padding: '9px 12px 4px' }}>
             <div style={{
-              fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
+              fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
               overflow: 'hidden', textOverflow: 'ellipsis',
             }}>{job.fileName || 'трек'}</div>
           </div>
@@ -381,22 +385,22 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
           {RAIL.map((label, i) => {
             const isDone = job !== null && i < stage;
             const isActive = job !== null && i === stage;
-            const color = isDone ? T.green : isActive ? T.orange : T.mute;
+            const color = isDone ? T.green : isActive ? T.orange : '#767676';
             return (
               <div
                 key={label}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 7, padding: '1.5px 0',
-                  fontSize: 10.5, color: isDone ? T.dim : isActive ? '#e8e8ec' : T.mute,
+                  display: 'flex', alignItems: 'center', gap: 8, padding: '2px 0',
+                  fontSize: 12, color: isDone ? '#9a9a9a' : isActive ? '#f0f0f0' : '#767676',
                 }}
               >
-                <span style={{ width: 12, fontFamily: 'ui-monospace,monospace', fontSize: 9.5, fontWeight: 600, color }}>
+                <span style={{ width: 14, flex: '0 0 auto', fontFamily: 'ui-monospace,monospace', fontSize: 11, fontWeight: 600, color }}>
                   {['①', '②', '③', '④'][i]}
                 </span>
                 <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {label}
                 </span>
-                <span style={{ fontFamily: 'ui-monospace,monospace', fontSize: 9.5, fontWeight: 600, color }}>
+                <span style={{ flex: '0 0 auto', fontFamily: 'ui-monospace,monospace', fontSize: 11, fontWeight: 600, color }}>
                   {steps ? steps[i] : '—'}
                 </span>
               </div>
@@ -406,8 +410,9 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
 
         {/* строка статуса */}
         <div style={{
-          padding: '6px 12px 8px', fontSize: 11, minHeight: 16,
-          color: reject || (outcome && !outcome.ok) ? T.red : outcome?.ok ? T.green : T.dim,
+          padding: '7px 12px 9px', fontSize: 12, minHeight: 18,
+          fontWeight: fail ? 600 : 400,
+          color: fail || reject || (outcome && !outcome.ok) ? T.red : outcome?.ok ? T.green : '#9a9a9a',
         }}>
           {!job && outcome ? outcome.text : statusText}
           {job && job.status === 'queued' && (
@@ -421,12 +426,12 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
             {ZIP_STEPS.map(([label, at], i) => {
               const done = zipProgress > at;
               const active = (i === 0 && zipProgress <= 10) || (i === 1 && zipProgress > 10) || (i === 2 && zipProgress > 90);
-              const color = done ? T.green : active ? T.orange : T.mute;
+              const color = done ? T.green : active ? T.orange : '#767676';
               return (
                 <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />
-                  <span style={{ flex: 1, fontSize: 11, color, fontWeight: active ? 600 : 400 }}>{label}</span>
-                  <span style={{ fontSize: 11, color }}>{done ? '✓' : active ? `${zipProgress}%` : '—'}</span>
+                  <span style={{ flex: 1, fontSize: 12, color, fontWeight: active ? 600 : 400 }}>{label}</span>
+                  <span style={{ fontSize: 12, color }}>{done ? '✓' : active ? `${zipProgress}%` : '—'}</span>
                 </div>
               );
             })}
@@ -441,27 +446,27 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
                 key={slot}
                 title={STEM_NAME[i]}
                 style={{
-                  position: 'relative', display: 'flex', flexDirection: 'column', gap: 2,
+                  position: 'relative', display: 'flex', flexDirection: 'column', gap: 3,
                   gridColumn: slot === 'instrumental' ? 'span 2' : undefined,
-                  minHeight: 40, padding: '6px 7px', borderRadius: 6,
-                  border: `1px ${isLit ? 'solid' : 'dashed'} ${isLit ? color : 'rgba(255,255,255,0.13)'}`,
-                  background: isLit ? `${color}14` : 'rgba(255,255,255,0.015)',
-                  opacity: job ? 1 : 0.45,
+                  minHeight: 46, padding: '7px 8px', borderRadius: 6,
+                  border: `1px ${isLit ? 'solid' : 'dashed'} ${isLit ? color : 'rgba(255,255,255,0.18)'}`,
+                  background: isLit ? `${color}14` : 'rgba(255,255,255,0.025)',
+                  opacity: job ? 1 : 0.72,
                   transition: 'all 0.3s',
                   animation: isLit ? 'bl-port-tile 0.32s ease-out' : undefined,
                 }}
               >
                 <span style={{
-                  fontFamily: 'ui-monospace,monospace', fontSize: 8.5, fontWeight: 700,
-                  letterSpacing: '0.08em', color: isLit ? color : 'rgba(255,255,255,0.35)',
+                  fontFamily: 'ui-monospace,monospace', fontSize: 10, fontWeight: 700,
+                  letterSpacing: '0.06em', color: isLit ? color : 'rgba(255,255,255,0.5)',
                 }}>{STEM_CODE[i]}</span>
                 <span style={{
-                  fontSize: 9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  color: isLit ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.2)',
+                  fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  color: isLit ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.42)',
                 }}>{STEM_NAME[i]}</span>
                 <span style={{
-                  position: 'absolute', right: 6, top: 6,
-                  fontFamily: 'ui-monospace,monospace', fontSize: 9, color: isLit ? T.green : T.mute,
+                  position: 'absolute', right: 7, top: 7,
+                  fontFamily: 'ui-monospace,monospace', fontSize: 10, color: isLit ? T.green : 'rgba(255,255,255,0.3)',
                 }}>{isLit ? '✓' : ''}</span>
               </div>
             );
@@ -472,17 +477,21 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
         {/* низ: подсказка + кнопка */}
         <div style={{
           marginTop: 'auto', borderTop: `1px solid ${T.border}`,
-          padding: '7px 12px', display: 'flex', alignItems: 'center', gap: 8, minHeight: 36,
+          padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8, minHeight: 40,
         }}>
-          <div style={{ flex: 1, fontSize: 10.5, color: T.dim, lineHeight: 1.35 }}>
-            {hint ?? (job ? (job.queue ? `впереди: ${job.queue.pos}` : 'работаю…') : '…или .zip с готовыми треками')}
+          <div style={{ flex: 1, fontSize: 11.5, color: '#9a9a9a', lineHeight: 1.4 }}>
+            {hint ?? (job
+              ? job.status === 'done'
+                ? 'дорожки в «МОЕЙ МУЗЫКЕ»'
+                : job.queue ? `впереди: ${job.queue.pos}` : 'работаю…'
+              : '…или .zip с готовыми треками')}
           </div>
           {!job && (
             <button
               onClick={() => setHint(hint ? null : hintFor())}
               style={{
-                background: 'transparent', border: `1px solid ${T.border2}`, color: T.dim,
-                fontSize: 10.5, padding: '4px 9px', borderRadius: 6, cursor: 'pointer',
+                background: 'transparent', border: `1px solid ${T.border2}`, color: '#9a9a9a',
+                fontSize: 11.5, padding: '5px 10px', borderRadius: 6, cursor: 'pointer', flex: '0 0 auto',
               }}
             >{hint ? '×' : '? что будет'}</button>
           )}
@@ -490,8 +499,8 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
             <button
               onClick={() => setHint(hint ? null : hintFor())}
               style={{
-                background: 'transparent', border: `1px solid ${T.border2}`, color: T.dim,
-                fontSize: 10.5, padding: '4px 9px', borderRadius: 6, cursor: 'pointer',
+                background: 'transparent', border: `1px solid ${T.border2}`, color: '#9a9a9a',
+                fontSize: 11.5, padding: '5px 10px', borderRadius: 6, cursor: 'pointer', flex: '0 0 auto',
               }}
             >{hint ? '×' : '? сколько ещё'}</button>
           )}

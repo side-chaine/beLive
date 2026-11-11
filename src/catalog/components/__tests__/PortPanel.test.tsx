@@ -9,10 +9,18 @@
  * момент УДАЛЕНИЯ джобы, а не при рендере статуса.
  */
 
-import { describe, expect, it, beforeEach } from 'vitest';
-import { act, render, screen } from '@testing-library/react';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { PortPanel } from '../PortPanel';
 import { useMvsepStore } from '../../../stores/mvsep.store';
+import { startFirstPath } from '../../../services/first-path.service';
+import { MvsepError } from '../../../services/mvsep.service';
+
+// Отправку не трогаем по-настоящему: тест про то, что видит человек при отказе.
+vi.mock('../../../services/first-path.service', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../services/first-path.service')>();
+  return { ...actual, startFirstPath: vi.fn(), checkFirstPathFile: vi.fn(() => null) };
+});
 
 const noop = () => {};
 
@@ -63,7 +71,46 @@ describe('PortPanel · снимок финала', () => {
       s.removeJob('h-processing');
     });
     // Пульт вернулся в пустое состояние — и не соврал про ошибку.
-    expect(screen.getByText('кинь трек — верну 7 стемов')).toBeTruthy();
+    expect(screen.getByText('кинь трек — разделю его на 7 дорожек')).toBeTruthy();
     expect(screen.queryByText('разделение не удалось')).toBeNull();
+  });
+});
+
+describe('PortPanel · отказ отправки виден и не гаснет', () => {
+  beforeEach(() => {
+    useMvsepStore.setState({ activeJobs: new Map() });
+    vi.mocked(startFirstPath).mockReset();
+  });
+
+  const dropFile = async (container: HTMLElement) => {
+    const input = container.querySelector('input[type=file]') as HTMLInputElement;
+    const file = new File(['x'], 'track.mp3', { type: 'audio/mpeg' });
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [file] } });
+    });
+  };
+
+  it('истёкшая сессия: пишет, что делать, а не «связь или сессия»', async () => {
+    vi.mocked(startFirstPath).mockRejectedValue(new MvsepError('AUTH_REQUIRED'));
+    const { container } = render(<PortPanel onZip={noop} />);
+    await dropFile(container);
+    expect(screen.getByText(/сессия истекла — войди заново/)).toBeTruthy();
+  });
+
+  it('сообщение не исчезает через 4 секунды — раньше человек видел пустой Пульт', async () => {
+    vi.useFakeTimers();
+    vi.mocked(startFirstPath).mockRejectedValue(new MvsepError('AUTH_REQUIRED'));
+    const { container } = render(<PortPanel onZip={noop} />);
+    await dropFile(container);
+    act(() => { vi.advanceTimersByTime(5000); });
+    expect(screen.getByText(/сессия истекла — войди заново/)).toBeTruthy();
+    vi.useRealTimers();
+  });
+
+  it('401 от MVSEP не выдаёт себя за проблему пользователя', async () => {
+    vi.mocked(startFirstPath).mockRejectedValue(new MvsepError('MVSEP_SUBMIT_ERROR_401'));
+    const { container } = render(<PortPanel onZip={noop} />);
+    await dropFile(container);
+    expect(screen.getByText(/это на стороне сервиса/)).toBeTruthy();
   });
 });
