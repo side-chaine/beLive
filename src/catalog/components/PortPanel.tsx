@@ -34,17 +34,53 @@ const STEMS: ReadonlyArray<readonly [string, string, string]> = [
   ['🎼', 'instrum', 'instrumental'],
 ];
 
-const RAIL = ['очередь', 'обработка', 'стемы', 'готово'];
+// Цвет стема — свой у каждой дорожки. Зелёный занят «готово», оранжевый — «активно»,
+// поэтому в палитру не входят. Вокал и инструментал повторяют фейдеры Voc/Inst.
+const STEM_COLORS: ReadonlyArray<string> = [
+  '#3b9eff', '#f5c542', '#9b59b6', '#ec5f9e', '#26c6da', '#9aa0a6', '#e74c3c',
+];
+const STEM_CODE = ['VOC', 'DRM', 'BAS', 'GTR', 'KEY', 'OTH', 'INSTRUM'];
+const STEM_NAME = ['Вокал', 'Ударные', 'Бас', 'Гитара', 'Клавиши', 'Прочее', 'Инструментал'];
+
+const RAIL = ['Отправлено', 'Очередь MVSEP', 'Разделение на стемы', 'Загрузка и сборка'];
 
 /** Ghost-курсор показываем один раз за загрузку страницы, не за сессию. */
 let ghostShown = false;
 
+/**
+ * Ступень пути: 0 — отправка, 1 — очередь, 2 — разделение, 3 — загрузка и сборка,
+ * 4 — всё пройдено. Ровно те же четыре ступени, что в рейле и в списке под ним:
+ * если разойдутся, человек увидит две разные карты одного пути.
+ */
 const stageOf = (job: MvsepJobState): number => {
-  if (job.status === 'uploading' || job.status === 'queued') {return 0;}
-  if (job.status === 'processing') {return 1;}
-  if (job.status === 'downloading' || job.status === 'importing') {return 2;}
-  if (job.status === 'done') {return 3;}
+  if (job.status === 'uploading') {return 0;}
+  if (job.status === 'queued') {return 1;}
+  if (job.status === 'processing') {return 2;}
+  if (job.status === 'downloading' || job.status === 'importing') {return 3;}
+  if (job.status === 'done') {return 4;}
   return 0;
+};
+
+/** Значения четырёх ступеней — только реальные данные, без выдуманных процентов. */
+const stepValues = (job: MvsepJobState): ReadonlyArray<string> => {
+  const stage = stageOf(job);
+  const val = (i: number, active: string): string => {
+    if (i < stage) {return '✓';}
+    if (i > stage) {return '—';}
+    return active;
+  };
+  return [
+    val(0, '…'),
+    val(1, job.queue ? `${job.queue.pos} из ${job.queue.total}` : ''),
+    val(2, 'идёт'),
+    val(3, job.status === 'importing'
+      ? 'собираю'
+      : `${
+        job.downloadProgress.total > 0
+          ? Math.min(job.downloadProgress.downloaded, job.downloadProgress.total)
+          : 0
+      } из ${STEMS.length}`),
+  ];
 };
 
 const litCount = (job: MvsepJobState): number => {
@@ -177,6 +213,7 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
 
   const stage = job ? stageOf(job) : -1;
   const lit = job ? litCount(job) : 0;
+  const steps = job ? stepValues(job) : null;
   const timer = job ? getElapsedString(job.submittedAt) : '';
 
   const statusText = (() => {
@@ -185,13 +222,10 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
     if (busy) {return 'отправляю на разделение…';}
     if (!job) {return 'кинь трек — верну 7 стемов';}
     if (job.status === 'uploading') {return 'загружаю файл';}
-    if (job.status === 'queued') {
-      return job.queue
-        ? `в очереди · ${job.queue.pos} из ${job.queue.total}`
-        : 'в очереди MVSEP';
+    if (job.status === 'queued' || job.status === 'processing') {
+      return 'можно закрыть Каталог — вкладку лучше оставить открытой';
     }
-    if (job.status === 'processing') {return 'разделяю на стемы';}
-    if (job.status === 'downloading') {return `забираю стемы · ${lit} из ${STEMS.length}`;}
+    if (job.status === 'downloading') {return 'забираю стемы';}
     if (job.status === 'importing') {return 'складываю в каталог';}
     if (job.status === 'done') {return 'готово';}
     if (job.status === 'limit_reached') {return FIRST_PATH_REJECT_TEXT.limit_reached;}
@@ -251,7 +285,7 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
 
         {job ? (
           <>
-            <span style={{ fontSize: 11, color: T.dim }}>▸ ещё</span>
+            <span style={{ fontSize: 11, color: T.dim }}>▸ ПОРТ · брось ещё</span>
             <span style={{ fontFamily: 'ui-monospace,monospace', fontSize: 12, fontWeight: 600, color: T.orange }}>
               {timer}
             </span>
@@ -342,6 +376,34 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
           ))}
         </div>
 
+        {/* список ступеней: рейл отвечает «где мы», список — «что это за ступень» */}
+        <div style={{ padding: '2px 12px 8px' }}>
+          {RAIL.map((label, i) => {
+            const isDone = job !== null && i < stage;
+            const isActive = job !== null && i === stage;
+            const color = isDone ? T.green : isActive ? T.orange : T.mute;
+            return (
+              <div
+                key={label}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 7, padding: '1.5px 0',
+                  fontSize: 10.5, color: isDone ? T.dim : isActive ? '#e8e8ec' : T.mute,
+                }}
+              >
+                <span style={{ width: 12, fontFamily: 'ui-monospace,monospace', fontSize: 9.5, fontWeight: 600, color }}>
+                  {['①', '②', '③', '④'][i]}
+                </span>
+                <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {label}
+                </span>
+                <span style={{ fontFamily: 'ui-monospace,monospace', fontSize: 9.5, fontWeight: 600, color }}>
+                  {steps ? steps[i] : '—'}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
         {/* строка статуса */}
         <div style={{
           padding: '6px 12px 8px', fontSize: 11, minHeight: 16,
@@ -370,28 +432,37 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
             })}
           </div>
         ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5, padding: '0 12px 8px' }}>
-          {STEMS.map(([icon, label, slot], i) => {
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 5, padding: '0 12px 8px' }}>
+          {STEMS.map(([, , slot], i) => {
             const isLit = i < lit;
+            const color = STEM_COLORS[i];
             return (
               <div
                 key={slot}
-                title={slot}
+                title={STEM_NAME[i]}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 6, minHeight: 28,
-                  padding: '5px 8px', borderRadius: 6,
-                  border: `1px solid ${isLit ? 'rgba(255,140,0,0.3)' : 'rgba(255,255,255,0.06)'}`,
-                  background: isLit ? 'rgba(255,140,0,0.06)' : 'rgba(255,255,255,0.015)',
+                  position: 'relative', display: 'flex', flexDirection: 'column', gap: 2,
+                  gridColumn: slot === 'instrumental' ? 'span 2' : undefined,
+                  minHeight: 40, padding: '6px 7px', borderRadius: 6,
+                  border: `1px ${isLit ? 'solid' : 'dashed'} ${isLit ? color : 'rgba(255,255,255,0.13)'}`,
+                  background: isLit ? `${color}14` : 'rgba(255,255,255,0.015)',
                   opacity: job ? 1 : 0.45,
                   transition: 'all 0.3s',
                   animation: isLit ? 'bl-port-tile 0.32s ease-out' : undefined,
                 }}
               >
-                <span style={{ fontSize: 11, opacity: isLit ? 1 : 0.35 }}>{icon}</span>
-                <span style={{ flex: 1, fontSize: 10.5, color: isLit ? '#ddd' : 'rgba(255,255,255,0.32)' }}>{label}</span>
-                <span style={{ fontFamily: 'ui-monospace,monospace', fontSize: 9, color: isLit ? T.green : T.mute }}>
-                  {isLit ? '✓' : '—'}
-                </span>
+                <span style={{
+                  fontFamily: 'ui-monospace,monospace', fontSize: 8.5, fontWeight: 700,
+                  letterSpacing: '0.08em', color: isLit ? color : 'rgba(255,255,255,0.35)',
+                }}>{STEM_CODE[i]}</span>
+                <span style={{
+                  fontSize: 9, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  color: isLit ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.2)',
+                }}>{STEM_NAME[i]}</span>
+                <span style={{
+                  position: 'absolute', right: 6, top: 6,
+                  fontFamily: 'ui-monospace,monospace', fontSize: 9, color: isLit ? T.green : T.mute,
+                }}>{isLit ? '✓' : ''}</span>
               </div>
             );
           })}
