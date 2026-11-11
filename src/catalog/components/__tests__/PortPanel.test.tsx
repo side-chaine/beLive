@@ -114,3 +114,109 @@ describe('PortPanel · отказ отправки виден и не гасне
     expect(screen.getByText(/это на стороне сервиса/)).toBeTruthy();
   });
 });
+
+/**
+ * N4 — «ничего не происходит» на проде.
+ *
+ * Целью клика и drop была только пунктирная рамка 96 px. Подсказка
+ * «кинь трек — разделю его на 7 дорожек» живёт ниже, в Пульте (281 px), и
+ * человек целился именно в неё: панель выглядит одним блоком, а 3/4 её площади
+ * молчали. Тесты держат цель на всей панели, а не на рамке.
+ */
+describe('PortPanel · файл принимает вся панель, а не только рамка', () => {
+  beforeEach(() => {
+    useMvsepStore.setState({ activeJobs: new Map() });
+    vi.mocked(startFirstPath).mockReset();
+    vi.mocked(startFirstPath).mockResolvedValue({ ok: true, hash: 'h-drop', trackId: 1 });
+  });
+
+  const mp3 = () => new File(['x'], 'track.mp3', { type: 'audio/mpeg' });
+
+  it('drop по плиткам стемов принимает файл — раньше эта зона была мёртвой', async () => {
+    render(<PortPanel onZip={noop} />);
+    await act(async () => {
+      fireEvent.drop(screen.getByText('Вокал'), { dataTransfer: { files: [mp3()] } });
+    });
+    expect(startFirstPath).toHaveBeenCalledTimes(1);
+  });
+
+  it('drop по строке статуса принимает файл', async () => {
+    render(<PortPanel onZip={noop} />);
+    await act(async () => {
+      fireEvent.drop(screen.getByText('кинь трек — разделю его на 7 дорожек'), {
+        dataTransfer: { files: [mp3()] },
+      });
+    });
+    expect(startFirstPath).toHaveBeenCalledTimes(1);
+  });
+
+  it('клик по подсказке «кинь трек…» открывает выбор файла', () => {
+    const click = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => {});
+    try {
+      render(<PortPanel onZip={noop} />);
+      fireEvent.click(screen.getByText('кинь трек — разделю его на 7 дорожек'));
+      expect(click).toHaveBeenCalledTimes(1);
+    } finally {
+      click.mockRestore();
+    }
+  });
+
+  it('клик по «? что будет» не открывает выбор файла — кнопка остаётся кнопкой', () => {
+    const click = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => {});
+    try {
+      render(<PortPanel onZip={noop} />);
+      fireEvent.click(screen.getByText('? что будет'));
+      expect(click).not.toHaveBeenCalled();
+      expect(screen.getByText(/Стемы — это дорожки одного трека/)).toBeTruthy();
+    } finally {
+      click.mockRestore();
+    }
+  });
+});
+
+/**
+ * N5 — «есть вывод, но не видно, что трек приняли».
+ *
+ * Джоба появляется только после ответа воркера. Между броском и ответом панель
+ * выглядела ровно как до броска: ни имени файла, ни живой ступени. Теперь файл
+ * показывается сразу и остаётся рядом с причиной отказа.
+ */
+describe('PortPanel · видно, что файл принят', () => {
+  beforeEach(() => {
+    useMvsepStore.setState({ activeJobs: new Map() });
+    vi.mocked(startFirstPath).mockReset();
+  });
+
+  const dropNamed = async (name: string) => {
+    await act(async () => {
+      fireEvent.drop(screen.getByText('Вокал'), {
+        dataTransfer: { files: [new File(['x'], name, { type: 'audio/mpeg' })] },
+      });
+    });
+  };
+
+  it('имя и размер видны сразу — до ответа воркера', async () => {
+    vi.mocked(startFirstPath).mockReturnValue(new Promise(() => {}));
+    render(<PortPanel onZip={noop} />);
+    await dropNamed('my-song.mp3');
+    expect(screen.getByText('my-song.mp3')).toBeTruthy();
+    expect(screen.getByText(/ПОРТ · принял/)).toBeTruthy();
+  });
+
+  it('после отказа имя файла остаётся рядом с причиной', async () => {
+    vi.mocked(startFirstPath).mockRejectedValue(new MvsepError('MVSEP_KEY_INVALID'));
+    render(<PortPanel onZip={noop} />);
+    await dropNamed('lost.mp3');
+    expect(screen.getByText('lost.mp3')).toBeTruthy();
+    expect(screen.getByText(/MVSEP не принял ключ/)).toBeTruthy();
+  });
+
+  it('имя не переживает следующую попытку — показываем текущий файл', async () => {
+    vi.mocked(startFirstPath).mockResolvedValue({ ok: true, hash: 'h-x', trackId: 1 });
+    render(<PortPanel onZip={noop} />);
+    await dropNamed('first.mp3');
+    await dropNamed('second.mp3');
+    expect(screen.queryByText('first.mp3')).toBeNull();
+    expect(screen.getByText('second.mp3')).toBeTruthy();
+  });
+});
