@@ -22,8 +22,9 @@ import {
   isMvsepAuthError,
   MvsepError,
 } from './mvsep.service';
-import { useMvsepStore } from '../stores/mvsep.store';
+import { useMvsepStore, getElapsedString } from '../stores/mvsep.store';
 import { useMvsepKeyStore } from '../stores/mvsep-key.store';
+import { showTrackNotice } from '../utils/notification';
 import { completeMvsepTrack } from './upload.service';
 import {
   getMvsepResumableTracks,
@@ -355,6 +356,7 @@ class MvsepPollingService {
       await completeMvsepTrack(trackId, stemsMap);
 
       useMvsepStore.getState().updateJobStatus(hash, 'done');
+      this.notifyReady(hash);
 
       // Clean up
       this.stopPolling(hash);
@@ -397,6 +399,7 @@ class MvsepPollingService {
     message: string,
   ): Promise<void> {
     useMvsepStore.getState().updateJobStatus(hash, 'failed', message);
+    this.notifyFailed(hash);
 
     try {
       await updateTrackField(trackId, { mvsepStatus: 'failed', mvsepErrorCode: code });
@@ -405,6 +408,31 @@ class MvsepPollingService {
     }
 
     this.stopPolling(hash);
+  }
+
+  /**
+   * Уведомление «готово». Только факт, без промежуточных статусов:
+   * очередь и разделение человек видит в Порте, если ему надо.
+   */
+  private notifyReady(hash: string): void {
+    const job = useMvsepStore.getState().activeJobs.get(hash);
+    if (!job) {return;}
+    const elapsed = job.submittedAt ? ` · заняло ${getElapsedString(job.submittedAt)}` : '';
+    showTrackNotice({
+      kind: 'ready',
+      title: `${job.fileName || 'трек'} — готово`,
+      text: `7 стемов${elapsed}`,
+    });
+  }
+
+  private notifyFailed(hash: string): void {
+    const job = useMvsepStore.getState().activeJobs.get(hash);
+    if (!job) {return;}
+    showTrackNotice({
+      kind: 'failed',
+      title: `${job.fileName || 'трек'} — не получилось`,
+      text: 'MVSEP не смог обработать файл. Повтор — новая отправка.',
+    });
   }
 }
 
