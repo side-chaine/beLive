@@ -44,6 +44,12 @@ const STEM_NAME = ['Вокал', 'Ударные', 'Бас', 'Гитара', 'К
 
 const RAIL = ['Отправлено', 'Очередь MVSEP', 'Разделение на стемы', 'Загрузка и сборка'];
 
+/** Размер файла для строки «принял»: 12,4 МБ / 640 КБ. Без десятых у мелочи. */
+const humanSize = (bytes: number): string => {
+  if (bytes >= 1024 * 1024) {return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} МБ`;}
+  return `${Math.max(1, Math.round(bytes / 1024))} КБ`;
+};
+
 /** Ghost-курсор показываем один раз за загрузку страницы, не за сессию. */
 let ghostShown = false;
 
@@ -127,6 +133,9 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
   // Итог последней джобы: поллер удаляет её из стора, и без снимка провал
   // исчезает молча — Пульт просто возвращается в пустое состояние.
   const [outcome, setOutcome] = useState<{ name: string; ok: boolean; text: string } | null>(null);
+  // Файл, который Порт уже взял. До появления джобы о нём негде было прочитать:
+  // человек бросал трек и не видел, что его приняли, — панель выглядела пустой.
+  const [picked, setPicked] = useState<{ name: string; size: number } | null>(null);
 
   // Таймер: обновляем раз в секунду, пока джоба жива. Прошедшее время — правда.
   useEffect(() => {
@@ -165,6 +174,11 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
     return () => clearTimeout(id);
   }, [job]);
 
+  // Джоба появилась — имя и размер берём из неё, дубль в шапке не нужен.
+  useEffect(() => {
+    if (job) {setPicked(null);}
+  }, [job?.hash]);
+
   // Отказ не гаснет сам: раньше строка жила 4 секунды и человек, отвернувшись,
   // видел пустой Пульт — «ничего не произошло». Сбрасывается следующей попыткой.
 
@@ -177,6 +191,10 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
     setFail(null);
 
     if (isZipFile(file.name)) {onZip(file); return;}
+
+    // Файл взят — показываем его сразу, ещё до ответа воркера: иначе между
+    // броском и джобой панель выглядит ровно как до броска.
+    setPicked({ name: file.name, size: file.size });
 
     const early = checkFirstPathFile(file);
     if (early) {setReject(early); return;}
@@ -204,20 +222,61 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
     }
   };
 
+  /** Пустой Порт готов принять файл. Идёт джоба или распаковка — не готов. */
+  const idle = !job && !busy && !zipBusy;
+
+  const openPicker = () => {
+    if (!idle) {return;}
+    setGhost(false);
+    inputRef.current?.click();
+  };
+
+  /**
+   * Клик и drop ловит ВСЯ панель, а не только пунктирная рамка. Раньше целью был
+   * один блок 96 px, а подсказка «кинь трек — разделю его на 7 дорожек» лежала
+   * ниже, в Пульте: человек целился в неё и получал тишину.
+   */
+  const onPanelClick = (e: React.MouseEvent) => {
+    // Кнопки внутри Пульта («? что будет») нажимаются сами, файл не открывают.
+    if ((e.target as HTMLElement)?.closest?.('button')) {return;}
+    openPicker();
+  };
+
+  const onPanelDragOver = (e: React.DragEvent) => {
+    if (!idle) {return;}
+    // Без preventDefault браузер не разрешит drop.
+    e.preventDefault();
+    setOver(true);
+  };
+
+  const onPanelDragLeave = (e: React.DragEvent) => {
+    // dragleave приходит и при переходе между детьми панели — гасим подсветку,
+    // только когда курсор реально ушёл за её пределы.
+    const to = e.relatedTarget as Node | null;
+    if (to && e.currentTarget.contains(to)) {return;}
+    setOver(false);
+  };
+
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setOver(false);
     const files = e.dataTransfer?.files;
     if (!files || files.length === 0) {return;}
     // Пока идёт разделение, второй трек не берём: воркер всё равно держит лок.
-    if (job || busy || zipBusy) {return;}
+    if (!idle) {return;}
     void handleFile(files[0]);
   };
 
-  const stage = job ? stageOf(job) : -1;
+  // Пока файл летит на воркер, джобы ещё нет — но ступень ① уже идёт, и это
+  // правда: файл действительно отправлен. Без этого панель стояла мёртвой.
+  const stage = job ? stageOf(job) : busy ? 0 : -1;
+  const active = job !== null || busy;
   const lit = job ? litCount(job) : 0;
-  const steps = job ? stepValues(job) : null;
+  const steps = job ? stepValues(job) : busy ? ['…', '—', '—', '—'] : null;
   const timer = job ? getElapsedString(job.submittedAt) : '';
+  // Имя файла в шапке Пульта: у джобы своё, у принятого-но-ещё-не-отправленного — своё.
+  const fileName = job ? (job.fileName || 'трек') : (picked?.name ?? '');
+  const fileSize = !job && picked ? humanSize(picked.size) : '';
 
   const statusText = (() => {
     if (zipBusy) {return `распаковываю архив · ${zipProgress}%`;}
@@ -248,21 +307,27 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
   };
 
   return (
-    <div className="bl-port-anim" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div
+      className="bl-port-anim"
+      onClick={onPanelClick}
+      onDragOver={onPanelDragOver}
+      onDragLeave={onPanelDragLeave}
+      onDrop={onDrop}
+      style={{
+        display: 'flex', flexDirection: 'column', gap: 8,
+        cursor: idle ? 'pointer' : 'default',
+      }}
+    >
       {/* ── ПОРТ ─────────────────────────────────────────── */}
       <div
-        onClick={() => { if (!job && !busy && !zipBusy) {setGhost(false); inputRef.current?.click();} }}
         onMouseEnter={() => setOver(true)}
         onMouseLeave={() => setOver(false)}
-        onDragOver={(e) => { e.preventDefault(); if (!job && !busy && !zipBusy) {setOver(true);} }}
-        onDragLeave={() => setOver(false)}
-        onDrop={onDrop}
         style={{
           position: 'relative',
           overflow: 'hidden',
-          border: over ? `1.5px solid ${T.orange}` : `1.5px dashed ${T.border2}`,
+          border: over || busy ? `1.5px solid ${T.orange}` : `1.5px dashed ${T.border2}`,
           borderRadius: T.rL,
-          background: over ? 'rgba(255,140,0,0.07)' : 'transparent',
+          background: over || busy ? 'rgba(255,140,0,0.07)' : 'transparent',
           padding: job ? '7px 12px' : '18px 12px',
           cursor: job ? 'default' : 'pointer',
           transition: 'all 0.2s',
@@ -293,6 +358,11 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
             <span style={{ fontFamily: 'ui-monospace,monospace', fontSize: 13, fontWeight: 600, color: T.orange }}>
               {timer}
             </span>
+          </>
+        ) : busy ? (
+          <>
+            <span style={{ fontSize: 12, fontWeight: 600, color: T.orange }}>▸ ПОРТ · принял</span>
+            <span style={{ fontSize: 12.5, color: '#9a9a9a' }}>отправляю…</span>
           </>
         ) : (
           <>
@@ -355,23 +425,28 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
         flexDirection: 'column',
         minHeight: 150,
       }}>
-        {job && (
-          <div style={{ padding: '9px 12px 4px' }}>
+        {fileName && (
+          <div style={{ padding: '9px 12px 4px', display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <div style={{
-              fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
+              flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
               overflow: 'hidden', textOverflow: 'ellipsis',
-            }}>{job.fileName || 'трек'}</div>
+            }}>{fileName}</div>
+            {fileSize && (
+              <span style={{ flex: '0 0 auto', fontFamily: 'ui-monospace,monospace', fontSize: 11, color: T.dim }}>
+                {fileSize}
+              </span>
+            )}
           </div>
         )}
 
         {/* рельса стадий */}
-        <div style={{ display: 'flex', alignItems: 'center', padding: job ? '4px 12px 2px' : '12px 12px 2px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', padding: active ? '4px 12px 2px' : '12px 12px 2px' }}>
           {RAIL.map((label, i) => (
             <div key={label} style={{ display: 'flex', alignItems: 'center', flex: i === RAIL.length - 1 ? '0 0 auto' : 1 }}>
               <div style={{
                 width: 7, height: 7, borderRadius: '50%', flex: '0 0 auto',
                 background: i < stage ? T.green : i === stage ? T.orange : 'rgba(255,255,255,0.14)',
-                animation: i === stage && job ? 'bl-port-breathe 4s ease-in-out infinite' : undefined,
+                animation: i === stage && active ? 'bl-port-breathe 4s ease-in-out infinite' : undefined,
               }} />
               {i !== RAIL.length - 1 && (
                 <div style={{ height: 1, flex: 1, margin: '0 3px', background: i < stage ? 'rgba(76,175,80,0.5)' : 'rgba(255,255,255,0.1)' }} />
@@ -383,8 +458,8 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
         {/* список ступеней: рейл отвечает «где мы», список — «что это за ступень» */}
         <div style={{ padding: '2px 12px 8px' }}>
           {RAIL.map((label, i) => {
-            const isDone = job !== null && i < stage;
-            const isActive = job !== null && i === stage;
+            const isDone = active && i < stage;
+            const isActive = active && i === stage;
             const color = isDone ? T.green : isActive ? T.orange : '#767676';
             return (
               <div
