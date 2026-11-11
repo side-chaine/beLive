@@ -15,11 +15,18 @@ import { PortPanel } from '../PortPanel';
 import { useMvsepStore } from '../../../stores/mvsep.store';
 import { startFirstPath } from '../../../services/first-path.service';
 import { MvsepError } from '../../../services/mvsep.service';
+import { loadTrackFacts } from '../../../services/track-facts.service';
 
 // Отправку не трогаем по-настоящему: тест про то, что видит человек при отказе.
 vi.mock('../../../services/first-path.service', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../services/first-path.service')>();
   return { ...actual, startFirstPath: vi.fn(), checkFirstPathFile: vi.fn(() => null) };
+});
+
+// Сеть за фактами не нужна: проверяем, что панель их показывает, когда они пришли.
+vi.mock('../../../services/track-facts.service', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../services/track-facts.service')>();
+  return { ...actual, loadTrackFacts: vi.fn(() => Promise.resolve()) };
 });
 
 const noop = () => {};
@@ -218,5 +225,47 @@ describe('PortPanel · видно, что файл принят', () => {
     await dropNamed('second.mp3');
     expect(screen.queryByText('first.mp3')).toBeNull();
     expect(screen.getByText('second.mp3')).toBeTruthy();
+  });
+});
+
+/**
+ * N6 — ожидание в очереди перестаёт быть пустым.
+ *
+ * Пока MVSEP держит трек в очереди, панель сама показывает обложку, темп,
+ * год и наличие текста. Человек смотрит не на голую цифру, а на свой трек.
+ */
+describe('PortPanel · что уже знаем о треке, пока идёт очередь', () => {
+  beforeEach(() => {
+    useMvsepStore.setState({ activeJobs: new Map() });
+    vi.mocked(loadTrackFacts).mockReset().mockResolvedValue(undefined);
+  });
+
+  it('факты появляются сами, без действий человека', async () => {
+    vi.mocked(loadTrackFacts).mockImplementation(async (_name, _audio, onPatch) => {
+      onPatch({ coverUrl: 'https://example.test/c.jpg', bpm: 120, key: 'A minor', camelot: '8A' });
+      onPatch({ year: '2000', genre: 'rock', lyricsLines: 42 });
+    });
+
+    render(<PortPanel onZip={noop} />);
+    await act(async () => {
+      const s = useMvsepStore.getState();
+      s.addJob('h-facts', 11, 'Linkin Park - Runaway.mp3', 'beLive');
+      s.updateJobStatus('h-facts', 'queued');
+    });
+
+    expect(screen.getByText('≈120 BPM · A minor · 8A')).toBeTruthy();
+    expect(screen.getByText('2000 · rock · текст: 42 строк')).toBeTruthy();
+  });
+
+  it('на одну джобу — одна загрузка фактов, даже когда очередь обновилась', async () => {
+    render(<PortPanel onZip={noop} />);
+    await act(async () => {
+      const s = useMvsepStore.getState();
+      s.addJob('h-once', 12, 'a.mp3', 'beLive');
+      s.updateJobStatus('h-once', 'queued');
+      s.updateJobQueue('h-once', { pos: 200, total: 270 });
+    });
+
+    expect(loadTrackFacts).toHaveBeenCalledTimes(1);
   });
 });
