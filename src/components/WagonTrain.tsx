@@ -480,6 +480,28 @@ export function WagonTrain() {
         );
       })}
       <LoopContour shapes={shapes} grabSide={drag.grab?.side ?? null} magnetX={magnetX} />
+      {shapes.length > 0 && (
+        /* ✕ живёт в координатах СКОБКИ, а не блока: при частичном захвате
+           правая скобка уезжает внутрь вагона — крестик едет вместе с ней.
+           left = правая вертикаль (x+w) минус 16px → «чуть внутрь лупа»,
+           top  = уровень верхней полоски (y) + 1px → не вылезает за клип root. */
+        <button
+          type="button"
+          className={styles.loopClear}
+          style={{
+            left: shapes[0].x + shapes[0].w - 16,
+            top: shapes[0].y + 1,
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            interruptPracticeSession(() => useLoopStore.getState().clearLoop());
+          }}
+          title="Снять петлю целиком"
+          aria-label="Снять петлю целиком"
+        >
+          <span className={styles.loopClearGlyph} aria-hidden="true" />
+        </button>
+      )}
       <LoopHandles
         handles={handles}
         grab={drag.grab}

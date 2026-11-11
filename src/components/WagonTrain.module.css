@@ -380,6 +380,57 @@
   display: none;
 }
 
+/* ✕ «снять петлю целиком» — у ВЕРХНЕЙ ПРАВОЙ скобки, на уровне её верхней
+   полоски, чуть внутри лупа. Позиция задаётся инлайном из геометрии shapes[0]
+   (x+w / y), поэтому при частичном захвате блока крестик едет за скобкой,
+   а не остаётся в конце вагона. Один клик → clearLoop(). */
+.loopClear {
+  position: absolute;
+  z-index: 5;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(20, 10, 0, 0.6);
+  border: 1px solid rgba(255, 190, 120, 0.85);
+  color: #ffd9a0;
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(255, 167, 38, 0.45);
+  transition: background 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+.loopClear:hover {
+  background: rgba(255, 120, 60, 0.4);
+  border-color: #ffe6bf;
+  transform: scale(1.15);
+  box-shadow: 0 0 8px rgba(255, 140, 60, 0.7);
+}
+.loopClearGlyph {
+  position: relative;
+  display: block;
+  width: 7px;
+  height: 7px;
+}
+.loopClearGlyph::before,
+.loopClearGlyph::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  border-radius: 1px;
+  background: currentColor;
+}
+.loopClearGlyph::before {
+  transform: translateY(-50%) rotate(45deg);
+}
+.loopClearGlyph::after {
+  transform: translateY(-50%) rotate(-45deg);
+}
+
 .loopInfinity {
   font-size: 14px;
   line-height: 1;
