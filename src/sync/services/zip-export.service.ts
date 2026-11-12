@@ -26,6 +26,11 @@ function mimeToExt(mimeType?: string | null): string {
 
 export interface ZipExportCallbacks {
   onProgress?: (percent: number) => void;
+  /**
+   * Лимит ZIP в байтах. По умолчанию 50MB — это лимит Telegram Bot API.
+   * Скачивание в браузер лимита TG не имеет, ему передают больший.
+   */
+  sizeLimitBytes?: number;
 }
 
 export interface ZipExportInput {
@@ -44,6 +49,8 @@ export async function generateTrackZip(
 
   const fullTrack = await getTrack(trackId);
   if (!fullTrack) {throw new Error(`Track ${trackId} not found in IDB`);}
+
+  const sizeLimit = callbacks?.sizeLimitBytes ?? STEM_TRANSCODE_CONFIG.zipSizeLimit;
 
   const zip = new JSZip();
   const trackName = meta?.title || 'track';
@@ -77,6 +84,7 @@ export async function generateTrackZip(
         scenesByteLength: scenesBytes || undefined,
       },
       STEM_TRANSCODE_CONFIG.compressibleTypes,
+      sizeLimit,
     );
 
     if (preFlight.needsTranscode) {
@@ -106,7 +114,7 @@ export async function generateTrackZip(
         else if (!result.skipped.includes(stemId)) {finalBytes += entry.data.byteLength;}
       }
 
-      if (!wouldFitZip(finalBytes)) {
+      if (!wouldFitZip(finalBytes, sizeLimit)) {
         let largestStem = '', largestSize = 0;
         for (const [stemId, data] of Object.entries(result.compressed)) {
           if (data.byteLength > largestSize) { largestSize = data.byteLength; largestStem = stemId; }
@@ -119,8 +127,9 @@ export async function generateTrackZip(
           } catch { /* tightening failed */ }
           terminateWorker();
         }
-        if (!wouldFitZip(finalBytes)) {
-          throw new Error('Экспорт невозможен: размер трека превышает 50MB даже после сжатия.');
+        if (!wouldFitZip(finalBytes, sizeLimit)) {
+          const limitMb = Math.round(sizeLimit / (1024 * 1024));
+          throw new Error(`Экспорт невозможен: размер трека превышает ${limitMb}MB даже после сжатия.`);
         }
       }
 
@@ -192,6 +201,6 @@ export async function generateTrackZip(
       .resume();
   });
 
-  assertZipSize(blob);
+  assertZipSize(blob, sizeLimit);
   return blob;
 }

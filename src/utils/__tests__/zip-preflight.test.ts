@@ -100,3 +100,36 @@ describe('assertZipSize', () => {
     expect(() => assertZipSize(blob)).not.toThrow();
   });
 });
+
+/**
+ * A1f — 50MB это лимит Telegram, а не браузера.
+ *
+ * Трек 6:36 с шестью стемами весит больше 50MB, и ZIP падал с «превышает
+ * 50MB» при обычном скачивании. Лимит стал параметром: публикация в TG
+ * остаётся 50MB, скачивание — своим.
+ */
+describe('лимит снаружи', () => {
+  const fakeStem = (bytes: number) => ({ data: { byteLength: bytes } as ArrayBuffer, type: 'audio/mpeg' });
+
+  it('120MB не влезает в 50MB, но влезает в лимит скачивания', () => {
+    const bytes = 120 * 1024 * 1024;
+    expect(wouldFitZip(bytes)).toBe(false);
+    expect(wouldFitZip(bytes, STEM_TRANSCODE_CONFIG.downloadZipLimit)).toBe(true);
+  });
+
+  it('под лимитом скачивания pre-flight не гоняет транскодинг', () => {
+    const pre = calcPreFlight(
+      { stemsData: { drums: fakeStem(120 * 1024 * 1024) } },
+      STEM_TRANSCODE_CONFIG.compressibleTypes,
+      STEM_TRANSCODE_CONFIG.downloadZipLimit,
+    );
+    expect(pre.needsTranscode).toBe(false);
+    expect(pre.stemsToTranscode).toEqual([]);
+  });
+
+  it('assertZipSize уважает переданный лимит', () => {
+    const blob = { size: 120 * 1024 * 1024 } as Blob;
+    expect(() => assertZipSize(blob)).toThrow('ZipSizeHardLimitError');
+    expect(() => assertZipSize(blob, STEM_TRANSCODE_CONFIG.downloadZipLimit)).not.toThrow();
+  });
+});

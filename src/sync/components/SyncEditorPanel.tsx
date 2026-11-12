@@ -15,6 +15,7 @@ import type { LrcVersion } from '../../services/auto-lyrics.service';
 import { openBlockEditor } from '../../blocks/bridge/blockEditor.service';
 import { uploadBlobToTelegram } from '../../services/tg-upload.service';
 import { generateTrackZip } from '../../sync/services/zip-export.service';
+import { STEM_TRANSCODE_CONFIG } from '../../config/stem-transcode.config';
 
 function formatTime(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -196,7 +197,13 @@ export default function SyncEditorPanel() {
       setExportProgress(5);
       const blob = await generateTrackZip(
         { trackId: Number(meta.id), liveMarkers, liveTextBlocks },
-        { onProgress: (pct) => setExportProgress(pct) },
+        {
+          onProgress: (pct) => setExportProgress(pct),
+          // 50MB — лимит Telegram Bot API, а не браузера. Качаем без него.
+          sizeLimitBytes: publishInFlightRef.current
+            ? STEM_TRANSCODE_CONFIG.zipSizeLimit
+            : STEM_TRANSCODE_CONFIG.downloadZipLimit,
+        },
       );
 
       setExportProgress(98);
