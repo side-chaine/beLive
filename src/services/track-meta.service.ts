@@ -16,7 +16,7 @@ export const _inFlight = new Set<number>();
 // ─── MusicBrainz API (CORS-friendly, free, rate-limit: 1 req/sec) ───
 const MB_USER_AGENT = 'beLive/1.0 (https://belive.app)';
 
-async function fetchMusicBrainz(
+export async function fetchMusicBrainz(
   artist: string,
   title: string,
 ): Promise<TrackMetaPartial | null> {

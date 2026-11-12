@@ -21,6 +21,9 @@ import {
   FIRST_PATH_REJECT_TEXT,
 } from '../../services/first-path.service';
 import type { FirstPathReject } from '../../services/first-path.service';
+import { loadTrackFacts } from '../../services/track-facts.service';
+import type { TrackFactsPatch } from '../../services/track-facts.service';
+import { PortFacts } from './PortFacts';
 
 // Порядок и подписи — как в живом ответе MVSEP (sep_type 63): bass, drums, other,
 // vocals, guitar, piano, instrum. Слот пианино в каталоге называется `keys`.
@@ -136,6 +139,13 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
   // Файл, который Порт уже взял. До появления джобы о нём негде было прочитать:
   // человек бросал трек и не видел, что его приняли, — панель выглядела пустой.
   const [picked, setPicked] = useState<{ name: string; size: number } | null>(null);
+  // Что уже знаем о треке, пока идёт очередь: обложка, темп, год, текст.
+  const [facts, setFacts] = useState<TrackFactsPatch | null>(null);
+  const [factsPending, setFactsPending] = useState(false);
+  // Буфер файла читается один раз — для отправки и для локального анализа темпа.
+  const audioRef = useRef<ArrayBuffer | null>(null);
+  // Одна загрузка фактов на джобу: повторный рендер их не перезапускает.
+  const factsHashRef = useRef<string | null>(null);
 
   // Таймер: обновляем раз в секунду, пока джоба жива. Прошедшее время — правда.
   useEffect(() => {
@@ -179,6 +189,21 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
     if (job) {setPicked(null);}
   }, [job?.hash]);
 
+  // Факты стартуют один раз на джобу. Буфер файла, если он ещё в руках, уходит
+  // локальному анализу темпа; после перезагрузки страницы остаются сетевые
+  // источники — имя трека их переживает.
+  useEffect(() => {
+    if (!job || factsHashRef.current === job.hash) {return;}
+    factsHashRef.current = job.hash;
+    const audio = audioRef.current;
+    audioRef.current = null;
+    setFacts(null);
+    setFactsPending(true);
+    void loadTrackFacts(job.fileName, audio, (patch) => {
+      setFacts((prev) => ({ ...(prev ?? {}), ...patch }));
+    }).finally(() => setFactsPending(false));
+  }, [job?.hash]);
+
   // Отказ не гаснет сам: раньше строка жила 4 секунды и человек, отвернувшись,
   // видел пустой Пульт — «ничего не произошло». Сбрасывается следующей попыткой.
 
@@ -201,12 +226,18 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
 
     busyRef.current = true;
     setBusy(true);
+    setFacts(null);
+    setFactsPending(false);
     try {
-      const res = await startFirstPath(file);
-      if (!res.ok) {setReject(res.reason);}
+      // Буфер читаем один раз: он нужен и отправке, и локальному анализу темпа.
+      const buffer = await file.arrayBuffer();
+      audioRef.current = buffer;
+      const res = await startFirstPath(file, buffer);
+      if (!res.ok) {setReject(res.reason); audioRef.current = null;}
     } catch (err) {
       // Серверные отказы приходят исключением — переводим в те же коды, что
       // и предпроверка, иначе пользователь видит «связь» вместо «лимит».
+      audioRef.current = null;
       const code = err instanceof MvsepError ? err.code : '';
       // В консоль — код как есть: по нему ищут причину, в интерфейсе он лишний.
       console.warn('[port] отправка не удалась:', code || err);
@@ -581,6 +612,11 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
           )}
         </div>
       </div>
+
+      {/* Пока идёт разделение — то, что уже можно знать о треке. */}
+      {job && job.status !== 'done' && (
+        <PortFacts fileName={job.fileName} facts={facts} pending={factsPending} />
+      )}
     </div>
   );
 }

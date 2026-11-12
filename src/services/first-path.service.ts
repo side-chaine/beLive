@@ -51,12 +51,16 @@ export function checkFirstPathFile(file: File): FirstPathReject | null {
  * Запустить путь. Возвращает причину отказа вместо исключения: Порт — это
  * элемент интерфейса, ему нужна строка статуса, а не stack trace.
  */
-export async function startFirstPath(file: File): Promise<FirstPathResult> {
+export async function startFirstPath(
+  file: File,
+  /** Уже прочитанный буфер: тот же файл нужен локальному анализу темпа. */
+  preloaded?: ArrayBuffer,
+): Promise<FirstPathResult> {
   const reject = checkFirstPathFile(file);
   if (reject) {return { ok: false, reason: reject };}
 
   // Ошибки транспорта/авторизации летят исключением: это не «нельзя», а «не сейчас».
-  const buffer = await file.arrayBuffer();
+  const buffer = preloaded ?? await file.arrayBuffer();
   const { hash, keySource } = await submitTrack(buffer, file.name);
 
   const trackId = await createMvsepPlaceholder(file.name, hash, keySource);
