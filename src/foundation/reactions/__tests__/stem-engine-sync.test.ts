@@ -22,6 +22,11 @@ vi.mock('../../../audio/engine-v3', () => ({
 const { initStemEngineSync } = await import('../stem-engine-sync')
 import { getTransport } from '../../../audio/engine-v3'
 
+type TestWindow = Window & {
+  __belive?: { pipeline: Record<string, (id: string, value: unknown) => void> }
+  __v3Active?: boolean
+}
+
 describe('Central Bridge (stem-engine-sync)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -99,6 +104,35 @@ describe('№18-BUS: busVolumes wiring (diffAndApply)', () => {
     useStemStore.getState().setStemsEnabled(true)
     expect(setStemMuted).toHaveBeenCalledWith('drums', false)
     expect(setStemMuted).toHaveBeenCalledWith('backing', false)
+    cleanup()
+  })
+
+  it('H3.4: выключение стемов снимает соло-маску, включение возвращает', () => {
+    const setStemMuted = vi.fn()
+    const soloStem = vi.fn()
+    const w = window as unknown as TestWindow
+    w.__belive = { pipeline: { setStemMuted, soloStem, setBusVolume: vi.fn() } }
+    w.__v3Active = true
+    mockV2.getV2Engine.mockReturnValue(null)
+    vi.mocked(getTransport).mockReturnValue(
+      { orchestrator: { all: () => [], get: () => null } } as unknown as ReturnType<typeof getTransport>,
+    )
+
+    useStemStore.getState().initStems(['drums', 'vocals', 'instrumental'], true)
+    const cleanup = initStemEngineSync()
+
+    useStemStore.getState().setStemSolo('vocals', true)
+    expect(soloStem).toHaveBeenCalledWith('vocals', true)
+
+    // Visual → Stems: стемы выключены, соло больше не фильтрует инструментал
+    vi.clearAllMocks()
+    useStemStore.getState().setStemsEnabled(false)
+    expect(soloStem).toHaveBeenCalledWith('vocals', false)
+
+    // Обратно: соло возвращается как было
+    vi.clearAllMocks()
+    useStemStore.getState().setStemsEnabled(true)
+    expect(soloStem).toHaveBeenCalledWith('vocals', true)
     cleanup()
   })
 })

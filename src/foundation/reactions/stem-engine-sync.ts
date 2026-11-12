@@ -194,6 +194,15 @@ function diffAndApply(current: EngineStateSnapshot, prev: EngineStateSnapshot): 
           if (MUSIC_STEMS.has(id)) {pipeline.setStemMuted(id, !current.stemsEnabled)}
         }
       }
+      // Стемы выключены — играет инструментал, и соло-маска стемов при этом не
+      // действует. Без этого засолоенный вокал оставлял слышимым только его,
+      // а засолоенные барабаны/бас глушились вместе со стемами — тишина.
+      // Включение стемов возвращает маску как была.
+      if (pipeline?.soloStem) {
+        for (const id of Object.keys(current.stemSolos)) {
+          if (current.stemSolos[id]) {pipeline.soloStem(id, current.stemsEnabled)}
+        }
+      }
     }
   }
 }
