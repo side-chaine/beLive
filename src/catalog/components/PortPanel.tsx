@@ -15,6 +15,7 @@ import { T } from '../theme';
 import { useMvsepStore, getElapsedString } from '../../stores/mvsep.store';
 import type { MvsepJobState } from '../../stores/mvsep.store';
 import { isZipFile, MvsepError } from '../../services/mvsep.service';
+import { mvsepPollingService } from '../../services/mvsep-polling.service';
 import {
   startFirstPath,
   checkFirstPathFile,
@@ -163,6 +164,14 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
         if (state.activeJobs.has(hash)) {continue;}
         if (before.status === 'failed') {
           setOutcome({ name: before.fileName, ok: false, text: before.error || 'разделение не удалось' });
+        } else if (before.status === 'timeout') {
+          // Предохранитель сработал — это не провал трека: MVSEP его ещё держит.
+          // Текст нейтральный: timeout приходит и от 3 ч тишины, и от потолка 6 ч.
+          setOutcome({
+            name: before.fileName,
+            ok: false,
+            text: 'перестали ждать MVSEP — трек остался на сервере, перезагрузи страницу и он подхватится',
+          });
         } else if (before.status === 'done') {
           setOutcome({ name: before.fileName, ok: true, text: 'готово — трек в каталоге' });
         }
@@ -600,6 +609,16 @@ export function PortPanel({ onZip, zipBusy, zipProgress = 0 }: Props) {
                 fontSize: 11.5, padding: '5px 10px', borderRadius: 6, cursor: 'pointer', flex: '0 0 auto',
               }}
             >{hint ? '×' : '? что будет'}</button>
+          )}
+          {job && (job.status === 'queued' || job.status === 'processing') && (
+            <button
+              onClick={() => mvsepPollingService.pollNow(job.hash)}
+              title="Спросить MVSEP прямо сейчас, не дожидаясь таймера"
+              style={{
+                background: 'transparent', border: `1px solid ${T.border2}`, color: '#9a9a9a',
+                fontSize: 11.5, padding: '5px 10px', borderRadius: 6, cursor: 'pointer', flex: '0 0 auto',
+              }}
+            >↻ проверить</button>
           )}
           {job && (job.status === 'queued' || job.status === 'processing') && (
             <button

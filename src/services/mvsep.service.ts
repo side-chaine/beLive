@@ -23,7 +23,9 @@ const MVSEP_WORKER_URL = import.meta.env.VITE_MVSEP_WORKER_URL || 'https://beliv
 const MVSEP_RENDER_ID = 63;         // BS Roformer SW (6 stems)
 const MVSEP_OUTPUT_FORMAT = 0;      // mp3 320kbps
 const MVSEP_MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
-const MVSEP_MAX_POLL_TIME = 20 * 60 * 1000;   // 20 min
+// Предохранитель от бесконечности, а не «окно ожидания»: поллер живёт, пока
+// MVSEP честно отвечает о прогрессе, и сдаётся только после 3 ч тишины.
+const MVSEP_MAX_POLL_TIME = 3 * 60 * 60 * 1000; // 3 h
 
 const MVSEP_DAILY_LIMIT_LOGGED = 10; // beLive quota for shared key
 
