@@ -39,6 +39,13 @@ export const STEM_TRANSCODE_CONFIG = {
 
   /** Лимит ZIP-файла */
   zipSizeLimit: 50 * 1024 * 1024, // 50MB
+
+  /**
+   * Лимит для скачивания в браузер. 50MB — это лимит Telegram Bot API, а не
+   * браузера: трек 6:36 с шестью стемами весит больше, и ZIP падал с «превышает
+   * 50MB», хотя качать его никто не мешает. Публикация в TG по-прежнему 50MB.
+   */
+  downloadZipLimit: 300 * 1024 * 1024, // 300MB
 } as const;
 
 export type StemTranscodeConfig = typeof STEM_TRANSCODE_CONFIG;

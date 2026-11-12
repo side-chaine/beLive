@@ -37,7 +37,8 @@ export interface PreFlightResult {
  */
 export function calcPreFlight(
   input: PreFlightInput,
-  compressibleTypes: readonly string[]
+  compressibleTypes: readonly string[],
+  sizeLimit: number = STEM_TRANSCODE_CONFIG.zipSizeLimit,
 ): PreFlightResult {
   // Суммируем всё
   const stemsBytes = Object.values(input.stemsData).reduce(
@@ -53,7 +54,7 @@ export function calcPreFlight(
     + coverBytes + bgBytes + scenesBytes;
 
   // Threshold от zipSizeLimit - slack (50MB - 1MB = 49MB)
-  const threshold = STEM_TRANSCODE_CONFIG.zipSizeLimit - STEM_TRANSCODE_CONFIG.zipOverheadSlack;
+  const threshold = sizeLimit - STEM_TRANSCODE_CONFIG.zipOverheadSlack;
   const needsTranscode = predictedTotal >= threshold;
 
   // stemsToTranscode в порядке priorityChain, только существующие стемы,
@@ -67,8 +68,8 @@ export function calcPreFlight(
     : [];
 
   // Дефицит от zipSizeLimit (50MB), не от threshold
-  const deficitMB = predictedTotal > STEM_TRANSCODE_CONFIG.zipSizeLimit
-    ? Math.round((predictedTotal - STEM_TRANSCODE_CONFIG.zipSizeLimit) / (1024 * 1024))
+  const deficitMB = predictedTotal > sizeLimit
+    ? Math.round((predictedTotal - sizeLimit) / (1024 * 1024))
     : 0;
 
   return { predictedTotal, needsTranscode, stemsToTranscode, deficitMB };
@@ -78,8 +79,11 @@ export function calcPreFlight(
  * Budget gate: проверка ДО сборки ZIP.
  * @returns true если finalBytes вписывается в zipSizeLimit
  */
-export function wouldFitZip(finalBytes: number): boolean {
-  return finalBytes < STEM_TRANSCODE_CONFIG.zipSizeLimit;
+export function wouldFitZip(
+  finalBytes: number,
+  sizeLimit: number = STEM_TRANSCODE_CONFIG.zipSizeLimit,
+): boolean {
+  return finalBytes < sizeLimit;
 }
 
 /**
@@ -87,10 +91,11 @@ export function wouldFitZip(finalBytes: number): boolean {
  * @throws Error если >= 50MB
  * Defense-in-depth: последний рубеж после generateInternalStream.
  */
-export function assertZipSize(blob: Blob): void {
-  if (blob.size >= STEM_TRANSCODE_CONFIG.zipSizeLimit) {
-    throw new Error(
-      `ZipSizeHardLimitError: ${blob.size} превышает лимит ${STEM_TRANSCODE_CONFIG.zipSizeLimit}`
-    );
+export function assertZipSize(
+  blob: Blob,
+  sizeLimit: number = STEM_TRANSCODE_CONFIG.zipSizeLimit,
+): void {
+  if (blob.size >= sizeLimit) {
+    throw new Error(`ZipSizeHardLimitError: ${blob.size} превышает лимит ${sizeLimit}`);
   }
 }
