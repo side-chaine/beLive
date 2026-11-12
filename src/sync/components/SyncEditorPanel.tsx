@@ -16,6 +16,7 @@ import { openBlockEditor } from '../../blocks/bridge/blockEditor.service';
 import { uploadBlobToTelegram } from '../../services/tg-upload.service';
 import { generateTrackZip } from '../../sync/services/zip-export.service';
 import { STEM_TRANSCODE_CONFIG } from '../../config/stem-transcode.config';
+import { splitArtistTitle } from '../artist-title';
 
 function formatTime(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -634,12 +635,11 @@ export default function SyncEditorPanel() {
         }
       }
 
-      // Fallback: parse from title if artist is empty
-      // Title often contains "Artist - Title" format
-      if (!artistName && trackName.includes(' - ')) {
-        const parts = trackName.split(' - ');
-        artistName = parts[0].trim();
-        trackName = parts.slice(1).join(' - ').trim();
+      // Fallback: разбираем имя файла — «Metallica - X», «Metallica-X», «Metallica – X».
+      if (!artistName && trackName) {
+        const split = splitArtistTitle(trackName);
+        artistName = split.artist;
+        trackName = split.title;
       }
 
       // Another fallback: from track store
@@ -650,17 +650,18 @@ export default function SyncEditorPanel() {
           if (!artistName) {artistName = current.artist || '';}
           if (!trackName) {
             trackName = current.title || '';
-            // Same "Artist - Title" split
-            if (!artistName && trackName.includes(' - ')) {
-              const parts = trackName.split(' - ');
-              artistName = parts[0].trim();
-              trackName = parts.slice(1).join(' - ').trim();
+            if (!artistName) {
+              const split = splitArtistTitle(trackName);
+              artistName = split.artist;
+              trackName = split.title;
             }
           }
         }
       }
 
-      if (!artistName || !trackName) {
+      // Артист не обязателен: lrclib ищет и по одному названию, а «No track info»
+      // из-за пустого артиста убивал весь выбор версий.
+      if (!trackName) {
         console.warn('[LRC-Picker] No track info available');
         setLrcLoading(false);
         return;
