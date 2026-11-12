@@ -41,6 +41,47 @@ const failAndRemove = (hash: string, error?: string) => {
   });
 };
 
+// «Проверить сейчас» — только факт вызова: сам поллер тестируется отдельно.
+const pollNow = vi.fn((_hash: string) => true);
+vi.mock('../../../services/mvsep-polling.service', () => ({
+  mvsepPollingService: { pollNow: (hash: string) => pollNow(hash) },
+}));
+
+describe('PortPanel · «проверить сейчас» (FP-N7)', () => {
+  beforeEach(() => {
+    useMvsepStore.setState({ activeJobs: new Map() });
+    pollNow.mockClear();
+  });
+
+  it('в очереди есть кнопка, она опрашивает именно эту джобу', () => {
+    act(() => {
+      useMvsepStore.getState().addJob('h-q', 7, 'track.wav', 'beLive');
+      useMvsepStore.getState().updateJobStatus('h-q', 'queued');
+    });
+    render(<PortPanel onZip={noop} />);
+
+    fireEvent.click(screen.getByText('↻ проверить'));
+    expect(pollNow).toHaveBeenCalledWith('h-q');
+  });
+
+  it('в пустом Порте кнопки нет', () => {
+    render(<PortPanel onZip={noop} />);
+    expect(screen.queryByText('↻ проверить')).toBeNull();
+  });
+
+  it('предохранитель сработал (timeout) — панель объясняет, а не пустеет', () => {
+    render(<PortPanel onZip={noop} />);
+    act(() => {
+      const s = useMvsepStore.getState();
+      s.addJob('h-to', 7, 'track.wav', 'beLive');
+      s.updateJobStatus('h-to', 'timeout');
+      s.removeJob('h-to'); // так делает handleTimeout → stopPolling
+    });
+
+    expect(screen.getByText(/перестали ждать MVSEP/)).toBeTruthy();
+  });
+});
+
 describe('PortPanel · снимок финала', () => {
   beforeEach(() => {
     useMvsepStore.setState({ activeJobs: new Map() });

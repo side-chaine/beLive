@@ -10,6 +10,9 @@
  *  - R3: неизвестный статус MVSEP = processing (см. mapMvsepStatus).
  *  - R4: resume на старте берёт processing и timeout (в окне давности).
  *  - R5: keySource/код ошибки/попытки лежат в IDB, а не только в сторе.
+ *  - R6 (FP-N7): окно ожидания считается от последнего ЧЕСТНОГО ответа MVSEP,
+ *    а не от старта сессии. Пока приходит queue/processing — поллер живёт;
+ *    сдаётся только после MAX_POLL_TIME тишины подряд.
  *
  * `paused` — in-memory фаза поллера. В IDB трек остаётся `processing`, поэтому
  * перезагрузка во время паузы подхватывается resume.
@@ -22,6 +25,8 @@ import {
   isMvsepAuthError,
   MvsepError,
 } from './mvsep.service';
+import type { MvsepJobStatus, MvsepQueueInfo } from './mvsep.service';
+import { recordQueueSample } from './mvsep-queue-log';
 import { useMvsepStore, getElapsedString } from '../stores/mvsep.store';
 import { useMvsepKeyStore } from '../stores/mvsep-key.store';
 import { showTrackNotice } from '../utils/notification';
@@ -38,6 +43,8 @@ interface PollingJob {
   trackId: number;
   timer: ReturnType<typeof setTimeout> | null;
   startTime: number;
+  /** Момент последнего честного ответа MVSEP. От него считается окно тишины. */
+  lastProgressAt: number;
   pollCount: number;
   /** Подряд идущие not_found (MVSEP мог ещё не проиндексировать свежий hash). */
   notFoundCount: number;
@@ -57,14 +64,23 @@ export interface StartPollingOptions {
 
 // ─── Constants ───────────────────────────────────────────────
 
-const MAX_POLL_TIME = getPollMaxTime(); // 20 min — окно ожидания за одну сессию поллера
+const MAX_POLL_TIME = getPollMaxTime(); // 3 h тишины подряд — предохранитель, не окно ожидания
+/**
+ * Потолок одной сессии — от старта, ответы его не продлевают.
+ * Без него джоба, которую MVSEP потерял, но продолжает отдавать `waiting`,
+ * опрашивалась бы вечно: тишины нет, значит 3-часовой предохранитель не сработает.
+ * 6 ч — 4× худшего живого замера (87 минут при очереди 374).
+ */
+const ABSOLUTE_MAX_POLL_TIME = 6 * 60 * 60 * 1000;
 const NOT_FOUND_TOLERANCE = 3;
 const MAX_IMPORT_ATTEMPTS = 5;
 
 /**
  * Окно, в котором resume ещё пробует подобрать `processing`/`timeout` трек.
- * ⚠ Предположение: MVSEP хранит результат минимум сутки. Не проверено; если
- * срок меньше, джоба получит `not_found` ×3 → `failed` (дёшево и честно).
+ * ⚠ 87 минут проверены живым прогоном 11.11 (трек подхватился после
+ * перезагрузки). Что MVSEP держит результат сутки — **предположение**: снять
+ * его может только прогон на 24 ч. Если MVSEP удалит результат раньше —
+ * `not_found` ×3 → `failed`, дёшево и честно.
  */
 const RESUME_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -116,11 +132,16 @@ class MvsepPollingService {
   startPolling(hash: string, trackId: number, opts: StartPollingOptions = {}): void {
     if (this.active.has(hash)) {return;} // already polling
 
+    // Окно тишины отсчитывается от старта сессии: resume передаёт startTime
+    // только в тестах, прод — никогда, поэтому после F5 окно начинается заново.
+    const startedAt = opts.startTime ?? Date.now();
+
     const job: PollingJob = {
       hash,
       trackId,
       timer: null,
-      startTime: opts.startTime ?? Date.now(),
+      startTime: startedAt,
+      lastProgressAt: startedAt,
       pollCount: 0,
       notFoundCount: 0,
       pausedCount: 0,
@@ -152,6 +173,43 @@ class MvsepPollingService {
   /** Поллер сейчас в паузе (сеть/сессия)? Для UI в A2. */
   isPaused(hash: string): boolean {
     return this.active.get(hash)?.paused ?? false;
+  }
+
+  /**
+   * «Проверить сейчас» (FP-N7): ручной опрос вне расписания.
+   * Снимает текущий таймер и спрашивает MVSEP сразу. Дальше всё как обычно:
+   * ответ — планируется следующий опрос, ошибка — бэкофф паузы.
+   */
+  pollNow(hash: string): boolean {
+    const job = this.active.get(hash);
+    if (!job) {return false;}
+    if (job.timer) {clearTimeout(job.timer);}
+    job.timer = setTimeout(() => this.tick(hash), 0);
+    return true;
+  }
+
+  /**
+   * FP-N7: сырьё для разбора очереди. Пишем каждый честный ответ — по этим
+   * точкам видно, в какие часы MVSEP разбирает быстрее (журнал в localStorage).
+   */
+  private journal(
+    job: PollingJob,
+    status: MvsepJobStatus,
+    silenceSec: number,
+    queue?: MvsepQueueInfo,
+  ): void {
+    const sample = {
+      at: Date.now(),
+      hash: job.hash,
+      status,
+      pos: queue?.pos,
+      total: queue?.total,
+      poll: job.pollCount,
+      elapsedSec: Math.round((Date.now() - job.startTime) / 1000),
+      silenceSec,
+    };
+    recordQueueSample(sample);
+    console.info('[MvsepPoll]', sample);
   }
 
   /**
@@ -214,8 +272,16 @@ class MvsepPollingService {
     if (!job) {return;}
     job.timer = null;
 
-    // Timeout check
-    if (Date.now() - job.startTime > MAX_POLL_TIME) {
+    // Порядок важен: потолок сессии — ДО обновления lastProgressAt, иначе он
+    // сдвигается на один опрос и тест зеленеет по неверной причине.
+    // 1) потолок: 6 ч от старта, ответы не продлевают;
+    // 2) тишина: 3 ч без единого честного ответа.
+    const now = Date.now();
+    if (now - job.startTime > ABSOLUTE_MAX_POLL_TIME) {
+      await this.handleTimeout(hash, job.trackId);
+      return;
+    }
+    if (now - job.lastProgressAt > MAX_POLL_TIME) {
       await this.handleTimeout(hash, job.trackId);
       return;
     }
@@ -223,6 +289,9 @@ class MvsepPollingService {
     try {
       const { status, queue } = await pollStatusDetailed(hash);
       if (!this.active.has(hash)) {return;} // остановили, пока ждали ответ
+      const answeredAt = Date.now();
+      const silenceSec = Math.round((answeredAt - job.lastProgressAt) / 1000);
+      job.lastProgressAt = answeredAt;
       job.pollCount++;
       this.markResumed(job);
 
@@ -247,6 +316,7 @@ class MvsepPollingService {
           .updateJobStatus(hash, status === 'waiting' ? 'queued' : 'processing');
         // Очередь пишем только когда MVSEP её реально отдал (см. readQueue).
         if (queue) {useMvsepStore.getState().updateJobQueue(hash, queue);}
+        this.journal(job, status, silenceSec, queue);
         job.timer = setTimeout(() => this.tick(hash), getAdaptiveDelay(job.pollCount));
       }
     } catch (err) {

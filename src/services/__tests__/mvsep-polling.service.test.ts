@@ -29,6 +29,7 @@ vi.mock('../upload.service', async (orig) => ({
 }));
 
 import { mvsepPollingService } from '../mvsep-polling.service';
+import { readQueueLog, clearQueueLog } from '../mvsep-queue-log';
 import { useUserProfileStore } from '../../stores/user-profile.store';
 import { useMvsepKeyStore } from '../../stores/mvsep-key.store';
 import { useMvsepStore } from '../../stores/mvsep.store';
@@ -68,6 +69,8 @@ beforeEach(() => {
   vi.setSystemTime(NOW);
   vi.spyOn(console, 'warn').mockImplementation(() => {});
   vi.spyOn(console, 'error').mockImplementation(() => {});
+  vi.spyOn(console, 'info').mockImplementation(() => {});
+  clearQueueLog();
   fetchMock = vi.fn();
   vi.stubGlobal('fetch', fetchMock);
   refreshSession.mockReset();
@@ -257,10 +260,10 @@ describe('R3: промежуточные статусы MVSEP (I6)', () => {
     });
   });
 
-  it('окно ожидания вышло → timeout, а не failed', async () => {
+  it('3 часа тишины → timeout, а не failed', async () => {
     useMvsepStore.getState().addJob(HASH, TRACK, 's.mp3', 'user');
     mvsepPollingService.startPolling(HASH, TRACK, {
-      startTime: NOW - 21 * 60 * 1000,
+      startTime: NOW - 3 * 60 * 60 * 1000 - 1000,
       firstDelayMs: 0,
     });
     await vi.advanceTimersByTimeAsync(1);
@@ -355,5 +358,149 @@ describe('resumeOrphanedJobs (R4, R5)', () => {
     const first = storeJob('h-a');
     await mvsepPollingService.resumeOrphanedJobs();
     expect(storeJob('h-a')).toBe(first);
+  });
+});
+
+// ─── FP-N7: сессия живёт, пока MVSEP отвечает ────────────────
+
+describe('FP-N7: окно считается от последнего честного ответа', () => {
+  const MIN = 60_000;
+  const stems = () =>
+    json({
+      status: 'done',
+      data: { files: [{ download: 'S_instrum_[mvsep.com].mp3', url: 'https://mvsep.com/1' }] },
+    });
+  const queueAt = (pos: number) =>
+    json({ status: 'waiting', data: { current_order: pos, queue_count: 374 } });
+  /** Позиция тает на один трек в минуту — как на живом прогоне 11.11. */
+  const posAfter = (elapsedMs: number) => Math.max(1, 374 - Math.round(elapsedMs / MIN));
+
+  it('очередь 374 и готовность на 87-й минуте — сессия доживает, стемы импортированы', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (!url.includes('/status')) {return new Response('x', { status: 200 });}
+      const elapsed = Date.now() - NOW;
+      return elapsed >= 87 * MIN ? stems() : queueAt(posAfter(elapsed));
+    });
+
+    await startAndTick();
+    await vi.advanceTimersByTimeAsync(88 * MIN);
+
+    expect(completeMvsepTrack).toHaveBeenCalledTimes(1);
+    expect(updateTrackField).not.toHaveBeenCalledWith(TRACK, { mvsepStatus: 'timeout' });
+    expect(storeJob()).toBeUndefined();
+  });
+
+  it('25 минут без сети — джоба жива (старый кап 20 минут её убивал)', async () => {
+    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+    await startAndTick();
+    await vi.advanceTimersByTimeAsync(25 * MIN);
+
+    expect(mvsepPollingService.isPaused(HASH)).toBe(true);
+    expect(updateTrackField).not.toHaveBeenCalledWith(TRACK, { mvsepStatus: 'timeout' });
+    expect(storeJob()).toBeDefined();
+  });
+
+  it('13 часов ответов waiting — потолок 6 часов срабатывает, а не вечный опрос', async () => {
+    // MVSEP потерял джобу, но продолжает отдавать `waiting`: тишины нет,
+    // поэтому 3-часовой предохранитель молчит — ловит только потолок сессии.
+    fetchMock.mockImplementation(async (url: string) => {
+      if (!url.includes('/status')) {return new Response('x', { status: 200 });}
+      return queueAt(374);
+    });
+
+    await startAndTick();
+    await vi.advanceTimersByTimeAsync(13 * 60 * MIN);
+
+    expect(updateTrackField).toHaveBeenCalledWith(TRACK, { mvsepStatus: 'timeout' });
+    expect(storeJob()).toBeUndefined();
+  });
+
+  it('4 часа очереди с прогрессом — джоба жива: окно продлевается ответами', async () => {
+    // Замок на сброс окна: без него предохранитель на 3 часа убил бы джобу.
+    fetchMock.mockImplementation(async (url: string) => {
+      if (!url.includes('/status')) {return new Response('x', { status: 200 });}
+      const elapsed = Date.now() - NOW;
+      return elapsed >= 240 * MIN ? stems() : queueAt(posAfter(elapsed));
+    });
+
+    await startAndTick();
+    await vi.advanceTimersByTimeAsync(241 * MIN);
+
+    expect(updateTrackField).not.toHaveBeenCalledWith(TRACK, { mvsepStatus: 'timeout' });
+    expect(completeMvsepTrack).toHaveBeenCalledTimes(1);
+  });
+
+  it('JWT протухает 5+ раз за 87 минут — джоба жива, не failed', async () => {
+    refreshSession.mockResolvedValue({ jwt: 'fresh' });
+    let calls = 0;
+    fetchMock.mockImplementation(async (url: string) => {
+      if (!url.includes('/status')) {return new Response('x', { status: 200 });}
+      calls++;
+      if (calls % 15 === 0) {return worker401();}
+      const elapsed = Date.now() - NOW;
+      return elapsed >= 87 * MIN ? stems() : queueAt(posAfter(elapsed));
+    });
+
+    await startAndTick();
+    await vi.advanceTimersByTimeAsync(88 * MIN);
+
+    expect(refreshSession.mock.calls.length).toBeGreaterThanOrEqual(5);
+    expect(failedWrites()).toHaveLength(0);
+    expect(completeMvsepTrack).toHaveBeenCalledTimes(1);
+  });
+
+  it('F5 на 30-й минуте: resume не наследует startTime — окно начинается заново', async () => {
+    const iso = (msAgo: number) => new Date(NOW - msAgo).toISOString();
+    getMvsepResumableTracks.mockResolvedValue([
+      { id: 7, title: 'S', mvsepStatus: 'processing', mvsepHash: 'h-a', mvsepSubmittedAt: iso(30 * MIN) },
+    ]);
+    fetchMock.mockImplementation(async () => json({ status: 'processing' }));
+
+    await mvsepPollingService.resumeOrphanedJobs();
+    await vi.advanceTimersByTimeAsync(3_000);
+    expect(fetchMock).toHaveBeenCalled();
+
+    // Два часа после resume: со старым окном 20 минут джоба была бы уже timeout.
+    await vi.advanceTimersByTimeAsync(119 * MIN);
+    expect(updateTrackField).not.toHaveBeenCalledWith(7, { mvsepStatus: 'timeout' });
+    expect(storeJob('h-a')).toBeDefined();
+  });
+
+  it('pollNow опрашивает сразу, не дожидаясь таймера', async () => {
+    fetchMock.mockImplementation(async () => json({ status: 'processing' }));
+    useMvsepStore.getState().addJob(HASH, TRACK, 's.mp3', 'user');
+    mvsepPollingService.startPolling(HASH, TRACK, { firstDelayMs: 15_000 });
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    expect(mvsepPollingService.pollNow(HASH)).toBe(true);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // Прежний таймер на 15-й секунде снят: за это время успевает пройти только
+    // новый опрос (10 с). Если таймер не снять — здесь будет третий запрос.
+    await vi.advanceTimersByTimeAsync(15_000);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('pollNow по неизвестной джобе — false, без падения', () => {
+    expect(mvsepPollingService.pollNow('нет-такой')).toBe(false);
+  });
+
+  it('каждый честный ответ оставляет точку в журнале очереди', async () => {
+    fetchMock.mockImplementation(async () => queueAt(229));
+    await startAndTick();
+
+    const log = readQueueLog();
+    expect(log).toHaveLength(1);
+    expect(log[0]).toMatchObject({ hash: HASH, pos: 229, total: 374, poll: 1, elapsedSec: 0 });
+  });
+
+  it('мусор вместо очереди — поллинг жив, позиции нет', async () => {
+    fetchMock.mockImplementation(async () => json({ status: 'waiting', data: { current_order: 'x' } }));
+    await startAndTick();
+
+    expect(failedWrites()).toHaveLength(0);
+    expect(storeJob()!.queue).toBeUndefined();
+    expect(readQueueLog()[0].pos).toBeUndefined();
   });
 });
