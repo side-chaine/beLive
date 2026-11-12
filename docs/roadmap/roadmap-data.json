@@ -1,19 +1,19 @@
 {
   "schema": "belive.roadmap.v2",
   "meta": {
-    "generated": "2026-11-10T22:29:00+03:00",
-    "main": "c479336",
+    "generated": "2026-11-12T20:14:40+03:00",
+    "main": "ec48ea1",
     "prod": "6cd4f1f",
-    "command": "707 · комбинированная работа (WorkBuddy + WSL-harness) · до ~20:12",
-    "drift": "9c7c37b → f0717e1 (#54/#55) → 0464dd5 (#56) → fd9a113 (#57/#58) → ca45f643 (#59) → 6cd4f1f (#60–#69: living-graph #60, frozen-ab #61, n1c2 #62, frozen-guard v2/v3/upsert #63–#68, npm ci #69) → cfb5383 (#70: roadmap v2.2) → c27dd6e (#71: W0 MVSEP) → 2c89fdc (#72: A2.1) → c479336 (#73: A2.2 Порт + Пульт)",
+    "command": "807 · конвейер WSL",
+    "drift": "9c7c37b → f0717e1 (#54/#55) → 0464dd5 (#56) → fd9a113 (#57/#58) → ca45f643 (#59) → 6cd4f1f (#60–#69: living-graph #60, frozen-ab #61, n1c2 #62, frozen-guard v2/v3/upsert #63–#68, npm ci #69) → cfb5383 (#70: roadmap v2.2) → c27dd6e (#71: W0 MVSEP) → 2c89fdc (#72: A2.1) → c479336 (#73: A2.2 Порт + Пульт) → #74–#76 (roadmap: drift-check, fetch-depth, head) → #78–#83 (Порт: хвост A2.2, hotfix T52, N2, notice-ready, N3, N4) → #84 (loop-clear 808) → ec48ea1 (#85 FP-N6, #86 FP-N7)",
     "kpi": [
       ["0", "tsc typecheck"],
       ["648/651", "as-any ratchet"],
       ["695/1190", "lint warn / baseline"],
-      ["1253", "vitest"],
+      ["1316", "vitest"],
       ["0", "lint errors"],
       ["396.2", "build gzip КБ"],
-      ["1662", "secrets clean"]
+      ["1671", "secrets clean"]
     ]
   },
   "directions": [
@@ -146,11 +146,20 @@
       "updated": "2026-11-09"
     },
     {
-      "id": "line-firstpath", "title": "First Path / MVSEP", "direction": "firstpath", "state": "done",
-      "progress": 100, "owner": "806", "pr": [55], "blocker": null,
-      "next": "W0 (download, квота 10/день, keySource, W0.5) → AUTH-1 → E2E", "st": "PR #55 · Gate R PASS · в проде",
-      "detail": "A1 v2.2 BYOK: ключ на устройстве, миграция с обнулением, 63 теста.",
-      "updated": "2026-11-09"
+      "id": "line-firstpath", "title": "First Path / MVSEP", "direction": "firstpath", "state": "active",
+      "progress": 90, "owner": "806", "pr": [55, 85, 86], "blocker": "живой e2e поллера на очереди 300+ не выполнен после фикса (FP-N7 влит ec48ea1)",
+      "next": "живой e2e поллера на очереди 300+ → webhook_url + проверка подписи",
+      "st": "E2E PASS 11.11 · FP-N7 влит 12.11 (ec48ea1) · живой прогон после фикса не выполнен",
+      "detail": "E2E 11.11: трек → 7 стемов → FULL + обложка, ≈48 мин при очереди 374. FP-N6 (факты о треке) влит f4999d1. FP-N7 (поллер) влит ec48ea1: окно от последнего ответа, потолок 6 ч, «↻ проверить», журнал очереди, исходник при timeout.",
+      "updated": "2026-11-12"
+    },
+    {
+      "id": "fp-n7", "title": "FP-N7 · поллер MVSEP — окно от последнего ответа", "direction": "firstpath", "state": "done",
+      "progress": 100, "owner": "806", "pr": [86], "blocker": null,
+      "next": "живой e2e на очереди 300+; webhook_url + подпись — следующая итерация",
+      "st": "PR #86 · Gate R 807 · дерево 80109372",
+      "detail": "Окно считается от последнего честного ответа (3 ч тишины), абсолютный потолок 6 ч от старта, pollNow + кнопка «↻ проверить», журнал очереди в localStorage, исходник при timeout вместо пустой панели. 1300 тестов, мутации по каждой правке.",
+      "updated": "2026-11-12"
     },
     {
       "id": "line-userroom", "title": "User Room", "direction": "userroom", "state": "done",

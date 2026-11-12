@@ -4,8 +4,8 @@
 > GitHub рендерит Mermaid нативно в Markdown — без сборки и зависимостей.
 > Граф виден владельцу, 707 и CEO в одном месте, рядом с кодом.
 <!-- HEAD:START -->
-> **Снимок:** 10.11.2026 22:29 · `origin/main = c479336`
-> **Дрейф:** 9c7c37b → f0717e1 (#54/#55) → 0464dd5 (#56) → fd9a113 (#57/#58) → ca45f643 (#59) → 6cd4f1f (#60–#69: living-graph #60, frozen-ab #61, n1c2 #62, frozen-guard v2/v3/upsert #63–#68, npm ci #69) → cfb5383 (#70: roadmap v2.2) → c27dd6e (#71: W0 MVSEP) → 2c89fdc (#72: A2.1) → c479336 (#73: A2.2 Порт + Пульт)
+> **Снимок:** 12.11.2026 20:14 · `origin/main = ec48ea1`
+> **Дрейф:** 9c7c37b → f0717e1 (#54/#55) → 0464dd5 (#56) → fd9a113 (#57/#58) → ca45f643 (#59) → 6cd4f1f (#60–#69: living-graph #60, frozen-ab #61, n1c2 #62, frozen-guard v2/v3/upsert #63–#68, npm ci #69) → cfb5383 (#70: roadmap v2.2) → c27dd6e (#71: W0 MVSEP) → 2c89fdc (#72: A2.1) → c479336 (#73: A2.2 Порт + Пульт) → #74–#76 (roadmap: drift-check, fetch-depth, head) → #78–#83 (Порт: хвост A2.2, hotfix T52, N2, notice-ready, N3, N4) → #84 (loop-clear 808) → ec48ea1 (#85 FP-N6, #86 FP-N7)
 <!-- HEAD:END -->
 
 <!-- GRAPH:START -->
@@ -35,7 +35,8 @@ flowchart LR
   subgraph Dfirstpath["First Path / MVSEP"]
     direction TB
     dec_mvsep["dec-mvsep · Отзыв старого ключа MVSEP<br/>0%"]:::waiting
-    line_firstpath["line-firstpath · First Path / MVSEP<br/>PR #55 · Gate R PASS · в проде<br/>100%"]:::done
+    line_firstpath["line-firstpath · First Path / MVSEP<br/>E2E PASS 11.11 · FP-N7 влит 12.11 (ec48ea1) · живой прогон после фикса не выполнен<br/>90%"]:::active
+    fp_n7["fp-n7 · FP-N7 · поллер MVSEP — окно от последнего ответа<br/>PR #86 · Gate R 807 · дерево 80109372<br/>100%"]:::done
   end
 
   subgraph Duserroom["User Room"]
