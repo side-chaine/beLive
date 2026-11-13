@@ -1795,6 +1795,18 @@ async function _fetchLrclib(
 }
 
 /**
+ * TC-LRCPICKER-02: первый таймкод LRC в секундах. 0 — если его нет.
+ * Версии одного мастера начинают текст с одного места; версия с другим интро
+ * (длиннее вступление) даёт сдвинутым весь тайминг, а не одну строку.
+ */
+function firstTimestamp(lrc: string): number {
+  const m = /^\[(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?\]/m.exec(lrc || '');
+  if (!m) {return 0;}
+  const frac = m[3] ? parseInt(m[3], 10) / (m[3].length === 3 ? 1000 : 100) : 0;
+  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10) + frac;
+}
+
+/**
  * TC-LRCPICKER-01: Fetch ALL matching synced LRC versions from lrclib.
  * Returns array sorted by score (best first).
  * Used by LRC Version Picker UI.
@@ -1822,17 +1834,44 @@ export async function fetchLrcVersions(
       Math.abs((r.duration || 0) - trackDurationSec) <= 5
     );
 
+    // TC-LRCPICKER-02: версии одного мастера начинают текст с одного места.
+    // Кластер по первому таймкоду отсекает чужой мастер: у него длиннее
+    // вступление, и уезжает не одна строка, а вся сетка. На «The Unforgiven II»
+    // так выбиралась 552432 (0:42.29) при восемнадцати версиях с 0:37.
+    const firstTimes = synced
+      .map((r: any) => firstTimestamp(r.syncedLyrics))
+      .filter((t: number) => t > 0)
+      .sort((a: number, b: number) => a - b);
+    const consensus = firstTimes.length ? firstTimes[Math.floor(firstTimes.length / 2)] : 0;
+    // Допуск: секунда или 5 % от первого таймкода — что больше. На 0:37 это
+    // 1.85 с, то есть разница в 4.65 с отсекается, а живой разброс внутри
+    // одного мастера (доли секунды) — нет.
+    const tolerance = Math.max(1.0, 0.05 * consensus);
+    // Версия без разборчивого таймкода остаётся: судить о ней нечем.
+    const inCluster = (t: number) => t === 0 || Math.abs(t - consensus) <= tolerance;
+    const clustered = consensus > 0
+      ? synced.filter((r: any) => inCluster(firstTimestamp(r.syncedLyrics)))
+      : synced;
+    // Защита: версий мало или кластер меньше половины — берём все, как раньше.
+    // На двух-трёх результатах «медиана» ещё не признак мастера.
+    const pool = synced.length < 3 || clustered.length * 2 < synced.length ? synced : clustered;
+
     // Score: duration proximity + line count
-    const versions: LrcVersion[] = synced.map((r: any) => {
+    const versions: LrcVersion[] = pool.map((r: any) => {
       const durationDelta = Math.abs((r.duration || 0) - trackDurationSec);
       const lineCount = (r.syncedLyrics || '').split('\n').filter(
         (l: string) => /^\[\d/.test(l)
       ).length;
 
-      // Score: closer duration = better, more lines = slightly better
+      // Score: closer duration = better, more lines = slightly better,
+      // отрыв от общего первого таймкода — штраф. Кластер уже отсекает чужой
+      // мастер, штраф держит порядок внутри кластера.
       const durationScore = Math.max(0, 10 - durationDelta * 2);
       const lineScore = Math.min(5, lineCount / 10);
-      const score = durationScore + lineScore;
+      const first = firstTimestamp(r.syncedLyrics);
+      const driftPenalty =
+        consensus > 0 && first > 0 ? Math.min(4, Math.abs(first - consensus) / 1.5) : 0;
+      const score = durationScore + lineScore - driftPenalty;
 
       return {
         id: r.id || 0,
@@ -1851,7 +1890,10 @@ export async function fetchLrcVersions(
 
     if (import.meta.env.DEV) {console.log(
       `[LRC-Picker] Found ${versions.length} versions ` +
-      `for "${artist} — ${title}" (${trackDurationSec}s)`
+      `for "${artist} — ${title}" (${trackDurationSec}s)` +
+      (versions.length < synced.length
+        ? ` · отсечено ${synced.length - versions.length} чужим интро (${consensus.toFixed(2)}s ±${tolerance.toFixed(2)}s)`
+        : '')
     );}
 
     return versions;
