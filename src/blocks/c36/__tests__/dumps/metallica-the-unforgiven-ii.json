@@ -1,0 +1,1012 @@
+{
+  "schema": "belive.blocks-dump/1",
+  "track": {
+    "artist": "Metallica",
+    "title": "The Unforgiven II",
+    "durationSec": 396
+  },
+  "provenance": {
+    "lrclibId": 552432,
+    "commit": null,
+    "capturedAt": "2026-11-12T21:49:18.059Z",
+    "source": "sandbox blocks-dump.json + lrclib.net/api/get",
+    "note": "LRC построен из markers песочницы; построчное сравнение с lrclib дало mismatches 0",
+    "textSource": "owner-paste",
+    "capturedBy": "stand",
+    "lrcSource": "lrclib-api"
+  },
+  "geniusRaw": "[Instrumental Intro]\n\n[Verse 1]\nLay beside me\nAnd tell me what they've done\nAnd speak the words I wanna hear\nTo make my demons run\nThe door is locked now\nBut it's opened if you're true\nIf you can understand the me\nThen I can understand the you\n\n[Verse 2]\nLay beside me\nUnder wicked sky\nThrough black of day, dark of night\nWe share this paralyze\nThe door cracks open\nBut there's no sun shining through\nBlack heart scarring darker still\nBut there's no sun shining through\n\n[Pre-Chorus]\nNo, there's no sun shining through\nNo, there's no sun shining\n\n[Chorus]\nWhat I've felt, what I've known\nTurn the pages, turn the stone\nBehind the door, should I open it for you?\nYeah, what I've felt, what I've known\nSick and tired, I stand alone\nCould you be there? 'Cause I'm the one who waits for you\nOr are you unforgiven, too?\n\n[Verse 3]\nCome lay beside me\nThis won't hurt, I swear\nShe loves me not, she loves me still\nBut she'll never love again\nShe lay beside me\nBut she'll be there when I'm gone\nBlack heart scarring darker still\nYes, she'll be there when I'm gone\n\n[Pre-Chorus]\nYes, she'll be there when I'm gone\nDead sure, she'll be there\n\n[Chorus]\nWhat I've felt, what I've known\nTurn the pages, turn the stone\nBehind the door, should I open it for you?\nYeah, what I've felt, what I've known\nSick and tired, I stand alone\nCould you be there? 'Cause I'm the one who waits for you\nOr are you unforgiven, too?\n\n[Guitar Solo]\n\n[Bridge]\nLay beside me\nTell me what I've done\nThe door is closed, so are your eyes\nBut now I see the sun\n\n[Pre-Chorus]\nNow I see the sun\nYes, now I see it\n\n[Chorus]\nWhat I've felt, what I've known\nTurn the pages, turn the stone\nBehind the door, should I open it for you?\nYeah, what I've felt, what I've known\nSo sick and tired, I stand alone\nCould you be there? 'Cause I'm the one who waits\nThe one who waits for you, oh\nWhat I've felt, what I've known\nTurn the pages, turn the stone\nBehind the door, should I open it for you?\n(So I dub thee unforgiven)\nOh-oh, what I've felt\nOh, what I've known\nI take this key (Never free) and I bury it (Never me) in you\nBecause you're unforgiven, too\n\n[Outro]\n(Never free, never me)\nBecause you're unforgiven, too\nOh-oh, oh",
+  "lrcRaw": "[00:37.68] Lay beside me\n[00:42.13] Tell me what they've done\n[00:44.82] Speak the words I wanna hear\n[00:49.29] To make my demons run\n[00:52.08] The door is locked now\n[00:56.51] But it's opened if you're true\n[00:59.30] If you can understand the me\n[01:03.66] Then I can understand the you\n[01:21.33] Lay beside me, under wicked sky\n[01:28.46] Through black of day, dark of night\n[01:33.03] We share this, paralysed\n[01:35.85] The door cracks open\n[01:39.95] But there's no sun shining through\n[01:43.19] Black heart scarring darker still\n[01:47.27] But there's no sun shining through\n[01:50.87] No, there's no sun shining through\n[01:54.47] No, there's no sun shining\n[01:58.96] What I've felt, what I've known\n[02:02.22] Turn the pages, turn the stone\n[02:05.52] Behind the door, should I open it for you?\n[02:12.45] Yeah, what I've felt, what I've known\n[02:16.64] Sick and tired, I stand alone\n[02:20.09] Could you be there?\n[02:21.46] 'Cause I'm the one who waits for you\n[02:25.10] Or are you unforgiven too?\n[02:42.73] Come lay beside me\n[02:47.38] This won't hurt, I swear\n[02:49.93] She loves me not, she loves me still\n[02:54.48] But she'll never love again\n[02:57.05] She laid beside me but she'll be there when I'm gone\n[03:05.24] Black heart scarring darker still\n[03:08.88] Yes, she'll be there when I'm gone\n[03:12.47] Yes, she'll be there when I'm gone\n[03:16.15] Dead sure she'll be there\n[03:20.46] What I've felt, what I've known\n[03:23.67] Turn the pages, turn the stone\n[03:27.15] Behind the door, should I open it for you?\n[03:33.87] Yeah, what I've felt, what I've known\n[03:37.92] Sick and tired, I stand alone\n[03:41.59] Could you be there?\n[03:43.03] 'Cause I'm the one who waits for you\n[03:46.46] Or are you unforgiven too?\n[04:40.15] Lay beside me\n[04:44.89] Tell me what I've done\n[04:47.23] The door is closed, so are your eyes\n[04:51.72] But now I see the sun\n[04:55.85] Now I see the sun\n[04:58.81] Yes, now I see it\n[05:06.89] What I've felt, what I've known\n[05:10.27] Turn the pages, turn the stone\n[05:13.72] Behind the door, should I open it for you?\n[05:20.43] Yeah, what I've felt, what I've known\n[05:24.43] So sick and tired of staying alone\n[05:28.12] Could you be there?\n[05:29.40] 'Cause I'm the one who waits\n[05:31.42] The one who waits for you\n[05:35.63] What I've felt, what I've known\n[05:38.87] Turn the pages, turn the stone\n[05:42.35] Behind the door, should I open it for you?\n[05:47.53] (So I dub thee unforgiven)\n[05:49.22] Oh, what I've felt\n[05:52.58] Oh, what I've known\n[05:56.70] I take this key (never free)\n[05:58.51] And I bury it (never me) in you\n[06:01.73] Because you're unforgiven, too\n[06:05.27] (Never free, never me)\n[06:09.57] 'Cause you're unforgiven, too",
+  "geniusBlocks": [
+    {
+      "i": 1,
+      "label": "Verse 1",
+      "kind": "verse",
+      "lines": [
+        "Lay beside me",
+        "And tell me what they've done",
+        "And speak the words I wanna hear",
+        "To make my demons run",
+        "The door is locked now",
+        "But it's opened if you're true",
+        "If you can understand the me",
+        "Then I can understand the you"
+      ]
+    },
+    {
+      "i": 2,
+      "label": "Verse 2",
+      "kind": "verse",
+      "lines": [
+        "Lay beside me",
+        "Under wicked sky",
+        "Through black of day, dark of night",
+        "We share this paralyze",
+        "The door cracks open",
+        "But there's no sun shining through",
+        "Black heart scarring darker still",
+        "But there's no sun shining through"
+      ]
+    },
+    {
+      "i": 3,
+      "label": "Pre-Chorus",
+      "kind": "prechorus",
+      "lines": [
+        "No, there's no sun shining through",
+        "No, there's no sun shining"
+      ]
+    },
+    {
+      "i": 4,
+      "label": "Chorus",
+      "kind": "chorus",
+      "lines": [
+        "What I've felt, what I've known",
+        "Turn the pages, turn the stone",
+        "Behind the door, should I open it for you?",
+        "Yeah, what I've felt, what I've known",
+        "Sick and tired, I stand alone",
+        "Could you be there? 'Cause I'm the one who waits for you",
+        "Or are you unforgiven, too?"
+      ]
+    },
+    {
+      "i": 5,
+      "label": "Verse 3",
+      "kind": "verse",
+      "lines": [
+        "Come lay beside me",
+        "This won't hurt, I swear",
+        "She loves me not, she loves me still",
+        "But she'll never love again",
+        "She lay beside me",
+        "But she'll be there when I'm gone",
+        "Black heart scarring darker still",
+        "Yes, she'll be there when I'm gone"
+      ]
+    },
+    {
+      "i": 6,
+      "label": "Pre-Chorus",
+      "kind": "prechorus",
+      "lines": [
+        "Yes, she'll be there when I'm gone",
+        "Dead sure, she'll be there"
+      ]
+    },
+    {
+      "i": 7,
+      "label": "Chorus",
+      "kind": "chorus",
+      "lines": [
+        "What I've felt, what I've known",
+        "Turn the pages, turn the stone",
+        "Behind the door, should I open it for you?",
+        "Yeah, what I've felt, what I've known",
+        "Sick and tired, I stand alone",
+        "Could you be there? 'Cause I'm the one who waits for you",
+        "Or are you unforgiven, too?"
+      ]
+    },
+    {
+      "i": 8,
+      "label": "Guitar Solo",
+      "kind": "solo",
+      "lines": []
+    },
+    {
+      "i": 9,
+      "label": "Bridge",
+      "kind": "bridge",
+      "lines": [
+        "Lay beside me",
+        "Tell me what I've done",
+        "The door is closed, so are your eyes",
+        "But now I see the sun"
+      ]
+    },
+    {
+      "i": 10,
+      "label": "Pre-Chorus",
+      "kind": "prechorus",
+      "lines": [
+        "Now I see the sun",
+        "Yes, now I see it"
+      ]
+    },
+    {
+      "i": 11,
+      "label": "Chorus",
+      "kind": "chorus",
+      "lines": [
+        "What I've felt, what I've known",
+        "Turn the pages, turn the stone",
+        "Behind the door, should I open it for you?",
+        "Yeah, what I've felt, what I've known",
+        "So sick and tired, I stand alone",
+        "Could you be there? 'Cause I'm the one who waits",
+        "The one who waits for you, oh",
+        "What I've felt, what I've known",
+        "Turn the pages, turn the stone",
+        "Behind the door, should I open it for you?",
+        "(So I dub thee unforgiven)",
+        "Oh-oh, what I've felt",
+        "Oh, what I've known",
+        "I take this key (Never free) and I bury it (Never me) in you",
+        "Because you're unforgiven, too"
+      ]
+    },
+    {
+      "i": 12,
+      "label": "Outro",
+      "kind": "outro",
+      "lines": [
+        "(Never free, never me)",
+        "Because you're unforgiven, too",
+        "Oh-oh, oh"
+      ]
+    }
+  ],
+  "lrcLines": [
+    {
+      "i": 0,
+      "t": 37.68,
+      "text": "Lay beside me"
+    },
+    {
+      "i": 1,
+      "t": 42.13,
+      "text": "Tell me what they've done"
+    },
+    {
+      "i": 2,
+      "t": 44.82,
+      "text": "Speak the words I wanna hear"
+    },
+    {
+      "i": 3,
+      "t": 49.29,
+      "text": "To make my demons run"
+    },
+    {
+      "i": 4,
+      "t": 52.08,
+      "text": "The door is locked now"
+    },
+    {
+      "i": 5,
+      "t": 56.51,
+      "text": "But it's opened if you're true"
+    },
+    {
+      "i": 6,
+      "t": 59.3,
+      "text": "If you can understand the me"
+    },
+    {
+      "i": 7,
+      "t": 63.66,
+      "text": "Then I can understand the you"
+    },
+    {
+      "i": 8,
+      "t": 81.33,
+      "text": "Lay beside me, under wicked sky"
+    },
+    {
+      "i": 9,
+      "t": 88.46,
+      "text": "Through black of day, dark of night"
+    },
+    {
+      "i": 10,
+      "t": 93.03,
+      "text": "We share this, paralysed"
+    },
+    {
+      "i": 11,
+      "t": 95.85,
+      "text": "The door cracks open"
+    },
+    {
+      "i": 12,
+      "t": 99.95,
+      "text": "But there's no sun shining through"
+    },
+    {
+      "i": 13,
+      "t": 103.19,
+      "text": "Black heart scarring darker still"
+    },
+    {
+      "i": 14,
+      "t": 107.27,
+      "text": "But there's no sun shining through"
+    },
+    {
+      "i": 15,
+      "t": 110.87,
+      "text": "No, there's no sun shining through"
+    },
+    {
+      "i": 16,
+      "t": 114.47,
+      "text": "No, there's no sun shining"
+    },
+    {
+      "i": 17,
+      "t": 118.96,
+      "text": "What I've felt, what I've known"
+    },
+    {
+      "i": 18,
+      "t": 122.22,
+      "text": "Turn the pages, turn the stone"
+    },
+    {
+      "i": 19,
+      "t": 125.52,
+      "text": "Behind the door, should I open it for you?"
+    },
+    {
+      "i": 20,
+      "t": 132.45,
+      "text": "Yeah, what I've felt, what I've known"
+    },
+    {
+      "i": 21,
+      "t": 136.64,
+      "text": "Sick and tired, I stand alone"
+    },
+    {
+      "i": 22,
+      "t": 140.09,
+      "text": "Could you be there?"
+    },
+    {
+      "i": 23,
+      "t": 141.46,
+      "text": "'Cause I'm the one who waits for you"
+    },
+    {
+      "i": 24,
+      "t": 145.1,
+      "text": "Or are you unforgiven too?"
+    },
+    {
+      "i": 25,
+      "t": 162.73,
+      "text": "Come lay beside me"
+    },
+    {
+      "i": 26,
+      "t": 167.38,
+      "text": "This won't hurt, I swear"
+    },
+    {
+      "i": 27,
+      "t": 169.93,
+      "text": "She loves me not, she loves me still"
+    },
+    {
+      "i": 28,
+      "t": 174.48,
+      "text": "But she'll never love again"
+    },
+    {
+      "i": 29,
+      "t": 177.05,
+      "text": "She laid beside me but she'll be there when I'm gone"
+    },
+    {
+      "i": 30,
+      "t": 185.24,
+      "text": "Black heart scarring darker still"
+    },
+    {
+      "i": 31,
+      "t": 188.88,
+      "text": "Yes, she'll be there when I'm gone"
+    },
+    {
+      "i": 32,
+      "t": 192.47,
+      "text": "Yes, she'll be there when I'm gone"
+    },
+    {
+      "i": 33,
+      "t": 196.15,
+      "text": "Dead sure she'll be there"
+    },
+    {
+      "i": 34,
+      "t": 200.46,
+      "text": "What I've felt, what I've known"
+    },
+    {
+      "i": 35,
+      "t": 203.67,
+      "text": "Turn the pages, turn the stone"
+    },
+    {
+      "i": 36,
+      "t": 207.15,
+      "text": "Behind the door, should I open it for you?"
+    },
+    {
+      "i": 37,
+      "t": 213.87,
+      "text": "Yeah, what I've felt, what I've known"
+    },
+    {
+      "i": 38,
+      "t": 217.92,
+      "text": "Sick and tired, I stand alone"
+    },
+    {
+      "i": 39,
+      "t": 221.59,
+      "text": "Could you be there?"
+    },
+    {
+      "i": 40,
+      "t": 223.03,
+      "text": "'Cause I'm the one who waits for you"
+    },
+    {
+      "i": 41,
+      "t": 226.46,
+      "text": "Or are you unforgiven too?"
+    },
+    {
+      "i": 42,
+      "t": 280.15,
+      "text": "Lay beside me"
+    },
+    {
+      "i": 43,
+      "t": 284.89,
+      "text": "Tell me what I've done"
+    },
+    {
+      "i": 44,
+      "t": 287.23,
+      "text": "The door is closed, so are your eyes"
+    },
+    {
+      "i": 45,
+      "t": 291.72,
+      "text": "But now I see the sun"
+    },
+    {
+      "i": 46,
+      "t": 295.85,
+      "text": "Now I see the sun"
+    },
+    {
+      "i": 47,
+      "t": 298.81,
+      "text": "Yes, now I see it"
+    },
+    {
+      "i": 48,
+      "t": 306.89,
+      "text": "What I've felt, what I've known"
+    },
+    {
+      "i": 49,
+      "t": 310.27,
+      "text": "Turn the pages, turn the stone"
+    },
+    {
+      "i": 50,
+      "t": 313.72,
+      "text": "Behind the door, should I open it for you?"
+    },
+    {
+      "i": 51,
+      "t": 320.43,
+      "text": "Yeah, what I've felt, what I've known"
+    },
+    {
+      "i": 52,
+      "t": 324.43,
+      "text": "So sick and tired of staying alone"
+    },
+    {
+      "i": 53,
+      "t": 328.12,
+      "text": "Could you be there?"
+    },
+    {
+      "i": 54,
+      "t": 329.4,
+      "text": "'Cause I'm the one who waits"
+    },
+    {
+      "i": 55,
+      "t": 331.42,
+      "text": "The one who waits for you"
+    },
+    {
+      "i": 56,
+      "t": 335.63,
+      "text": "What I've felt, what I've known"
+    },
+    {
+      "i": 57,
+      "t": 338.87,
+      "text": "Turn the pages, turn the stone"
+    },
+    {
+      "i": 58,
+      "t": 342.35,
+      "text": "Behind the door, should I open it for you?"
+    },
+    {
+      "i": 59,
+      "t": 347.53,
+      "text": "(So I dub thee unforgiven)"
+    },
+    {
+      "i": 60,
+      "t": 349.22,
+      "text": "Oh, what I've felt"
+    },
+    {
+      "i": 61,
+      "t": 352.58,
+      "text": "Oh, what I've known"
+    },
+    {
+      "i": 62,
+      "t": 356.7,
+      "text": "I take this key (never free)"
+    },
+    {
+      "i": 63,
+      "t": 358.51,
+      "text": "And I bury it (never me) in you"
+    },
+    {
+      "i": 64,
+      "t": 361.73,
+      "text": "Because you're unforgiven, too"
+    },
+    {
+      "i": 65,
+      "t": 365.27,
+      "text": "(Never free, never me)"
+    },
+    {
+      "i": 66,
+      "t": 369.57,
+      "text": "'Cause you're unforgiven, too"
+    }
+  ],
+  "markers": [
+    {
+      "lineIndex": 0,
+      "t": 37.68,
+      "text": "Lay beside me"
+    },
+    {
+      "lineIndex": 1,
+      "t": 42.13,
+      "text": "Tell me what they've done"
+    },
+    {
+      "lineIndex": 2,
+      "t": 44.82,
+      "text": "Speak the words I wanna hear"
+    },
+    {
+      "lineIndex": 3,
+      "t": 49.29,
+      "text": "To make my demons run"
+    },
+    {
+      "lineIndex": 4,
+      "t": 52.08,
+      "text": "The door is locked now"
+    },
+    {
+      "lineIndex": 5,
+      "t": 56.51,
+      "text": "But it's opened if you're true"
+    },
+    {
+      "lineIndex": 6,
+      "t": 59.3,
+      "text": "If you can understand the me"
+    },
+    {
+      "lineIndex": 7,
+      "t": 63.66,
+      "text": "Then I can understand the you"
+    },
+    {
+      "lineIndex": 8,
+      "t": 81.33,
+      "text": "Lay beside me, under wicked sky"
+    },
+    {
+      "lineIndex": 9,
+      "t": 88.46,
+      "text": "Through black of day, dark of night"
+    },
+    {
+      "lineIndex": 10,
+      "t": 93.03,
+      "text": "We share this, paralysed"
+    },
+    {
+      "lineIndex": 11,
+      "t": 95.85,
+      "text": "The door cracks open"
+    },
+    {
+      "lineIndex": 12,
+      "t": 99.95,
+      "text": "But there's no sun shining through"
+    },
+    {
+      "lineIndex": 13,
+      "t": 103.19,
+      "text": "Black heart scarring darker still"
+    },
+    {
+      "lineIndex": 14,
+      "t": 107.27,
+      "text": "But there's no sun shining through"
+    },
+    {
+      "lineIndex": 15,
+      "t": 110.87,
+      "text": "No, there's no sun shining through"
+    },
+    {
+      "lineIndex": 16,
+      "t": 114.47,
+      "text": "No, there's no sun shining"
+    },
+    {
+      "lineIndex": 17,
+      "t": 118.96,
+      "text": "What I've felt, what I've known"
+    },
+    {
+      "lineIndex": 18,
+      "t": 122.22,
+      "text": "Turn the pages, turn the stone"
+    },
+    {
+      "lineIndex": 19,
+      "t": 125.52,
+      "text": "Behind the door, should I open it for you?"
+    },
+    {
+      "lineIndex": 20,
+      "t": 132.45,
+      "text": "Yeah, what I've felt, what I've known"
+    },
+    {
+      "lineIndex": 21,
+      "t": 136.64,
+      "text": "Sick and tired, I stand alone"
+    },
+    {
+      "lineIndex": 22,
+      "t": 140.09,
+      "text": "Could you be there?"
+    },
+    {
+      "lineIndex": 23,
+      "t": 141.46,
+      "text": "'Cause I'm the one who waits for you"
+    },
+    {
+      "lineIndex": 24,
+      "t": 145.1,
+      "text": "Or are you unforgiven too?"
+    },
+    {
+      "lineIndex": 25,
+      "t": 162.73,
+      "text": "Come lay beside me"
+    },
+    {
+      "lineIndex": 26,
+      "t": 167.38,
+      "text": "This won't hurt, I swear"
+    },
+    {
+      "lineIndex": 27,
+      "t": 169.93,
+      "text": "She loves me not, she loves me still"
+    },
+    {
+      "lineIndex": 28,
+      "t": 174.48,
+      "text": "But she'll never love again"
+    },
+    {
+      "lineIndex": 29,
+      "t": 177.05,
+      "text": "She laid beside me but she'll be there when I'm gone"
+    },
+    {
+      "lineIndex": 30,
+      "t": 185.24,
+      "text": "Black heart scarring darker still"
+    },
+    {
+      "lineIndex": 31,
+      "t": 188.88,
+      "text": "Yes, she'll be there when I'm gone"
+    },
+    {
+      "lineIndex": 32,
+      "t": 192.47,
+      "text": "Yes, she'll be there when I'm gone"
+    },
+    {
+      "lineIndex": 33,
+      "t": 196.15,
+      "text": "Dead sure she'll be there"
+    },
+    {
+      "lineIndex": 34,
+      "t": 200.46,
+      "text": "What I've felt, what I've known"
+    },
+    {
+      "lineIndex": 35,
+      "t": 203.67,
+      "text": "Turn the pages, turn the stone"
+    },
+    {
+      "lineIndex": 36,
+      "t": 207.15,
+      "text": "Behind the door, should I open it for you?"
+    },
+    {
+      "lineIndex": 37,
+      "t": 213.87,
+      "text": "Yeah, what I've felt, what I've known"
+    },
+    {
+      "lineIndex": 38,
+      "t": 217.92,
+      "text": "Sick and tired, I stand alone"
+    },
+    {
+      "lineIndex": 39,
+      "t": 221.59,
+      "text": "Could you be there?"
+    },
+    {
+      "lineIndex": 40,
+      "t": 223.03,
+      "text": "'Cause I'm the one who waits for you"
+    },
+    {
+      "lineIndex": 41,
+      "t": 226.46,
+      "text": "Or are you unforgiven too?"
+    },
+    {
+      "lineIndex": 42,
+      "t": 280.15,
+      "text": "Lay beside me"
+    },
+    {
+      "lineIndex": 43,
+      "t": 284.89,
+      "text": "Tell me what I've done"
+    },
+    {
+      "lineIndex": 44,
+      "t": 287.23,
+      "text": "The door is closed, so are your eyes"
+    },
+    {
+      "lineIndex": 45,
+      "t": 291.72,
+      "text": "But now I see the sun"
+    },
+    {
+      "lineIndex": 46,
+      "t": 295.85,
+      "text": "Now I see the sun"
+    },
+    {
+      "lineIndex": 47,
+      "t": 298.81,
+      "text": "Yes, now I see it"
+    },
+    {
+      "lineIndex": 48,
+      "t": 306.89,
+      "text": "What I've felt, what I've known"
+    },
+    {
+      "lineIndex": 49,
+      "t": 310.27,
+      "text": "Turn the pages, turn the stone"
+    },
+    {
+      "lineIndex": 50,
+      "t": 313.72,
+      "text": "Behind the door, should I open it for you?"
+    },
+    {
+      "lineIndex": 51,
+      "t": 320.43,
+      "text": "Yeah, what I've felt, what I've known"
+    },
+    {
+      "lineIndex": 52,
+      "t": 324.43,
+      "text": "So sick and tired of staying alone"
+    },
+    {
+      "lineIndex": 53,
+      "t": 328.12,
+      "text": "Could you be there?"
+    },
+    {
+      "lineIndex": 54,
+      "t": 329.4,
+      "text": "'Cause I'm the one who waits"
+    },
+    {
+      "lineIndex": 55,
+      "t": 331.42,
+      "text": "The one who waits for you"
+    },
+    {
+      "lineIndex": 56,
+      "t": 335.63,
+      "text": "What I've felt, what I've known"
+    },
+    {
+      "lineIndex": 57,
+      "t": 338.87,
+      "text": "Turn the pages, turn the stone"
+    },
+    {
+      "lineIndex": 58,
+      "t": 342.35,
+      "text": "Behind the door, should I open it for you?"
+    },
+    {
+      "lineIndex": 59,
+      "t": 347.53,
+      "text": "(So I dub thee unforgiven)"
+    },
+    {
+      "lineIndex": 60,
+      "t": 349.22,
+      "text": "Oh, what I've felt"
+    },
+    {
+      "lineIndex": 61,
+      "t": 352.58,
+      "text": "Oh, what I've known"
+    },
+    {
+      "lineIndex": 62,
+      "t": 356.7,
+      "text": "I take this key (never free)"
+    },
+    {
+      "lineIndex": 63,
+      "t": 358.51,
+      "text": "And I bury it (never me) in you"
+    },
+    {
+      "lineIndex": 64,
+      "t": 361.73,
+      "text": "Because you're unforgiven, too"
+    },
+    {
+      "lineIndex": 65,
+      "t": 365.27,
+      "text": "(Never free, never me)"
+    },
+    {
+      "lineIndex": 66,
+      "t": 369.57,
+      "text": "'Cause you're unforgiven, too"
+    }
+  ],
+  "expectedBlocks": [
+    {
+      "i": 0,
+      "label": "Verse 1",
+      "startIdx": 0,
+      "endIdx": 7
+    },
+    {
+      "i": 1,
+      "label": "Verse 2",
+      "startIdx": 8,
+      "endIdx": 14
+    },
+    {
+      "i": 2,
+      "label": "Pre-Chorus",
+      "startIdx": 15,
+      "endIdx": 16
+    },
+    {
+      "i": 3,
+      "label": "Chorus 1",
+      "startIdx": 17,
+      "endIdx": 24
+    },
+    {
+      "i": 4,
+      "label": "Verse 3",
+      "startIdx": 25,
+      "endIdx": 31
+    },
+    {
+      "i": 5,
+      "label": "Pre-Chorus",
+      "startIdx": 32,
+      "endIdx": 33
+    },
+    {
+      "i": 6,
+      "label": "Chorus 2",
+      "startIdx": 34,
+      "endIdx": 41
+    },
+    {
+      "i": 7,
+      "label": "Solo",
+      "startIdx": null,
+      "endIdx": null
+    },
+    {
+      "i": 8,
+      "label": "Bridge",
+      "startIdx": 42,
+      "endIdx": 45
+    },
+    {
+      "i": 9,
+      "label": "Pre-Chorus",
+      "startIdx": 46,
+      "endIdx": 47
+    },
+    {
+      "i": 10,
+      "label": "Chorus 3",
+      "startIdx": 48,
+      "endIdx": 64
+    },
+    {
+      "i": 11,
+      "label": "Outro",
+      "startIdx": 65,
+      "endIdx": 66
+    }
+  ],
+  "currentOutput": [
+    {
+      "i": 0,
+      "label": "Verse 1",
+      "startIdx": 0,
+      "endIdx": 7,
+      "lines": 8
+    },
+    {
+      "i": 1,
+      "label": "Verse 2",
+      "startIdx": 8,
+      "endIdx": 13,
+      "lines": 6
+    },
+    {
+      "i": 2,
+      "label": "Pre-Chorus",
+      "startIdx": 14,
+      "endIdx": 16,
+      "lines": 3
+    },
+    {
+      "i": 3,
+      "label": "Chorus 1",
+      "startIdx": 17,
+      "endIdx": 24,
+      "lines": 8
+    },
+    {
+      "i": 4,
+      "label": "Verse 3",
+      "startIdx": 25,
+      "endIdx": 30,
+      "lines": 6
+    },
+    {
+      "i": 5,
+      "label": "Pre-Chorus",
+      "startIdx": 31,
+      "endIdx": 33,
+      "lines": 3
+    },
+    {
+      "i": 6,
+      "label": "Chorus 2",
+      "startIdx": 34,
+      "endIdx": 40,
+      "lines": 7
+    },
+    {
+      "i": 7,
+      "label": "Solo",
+      "startIdx": 41,
+      "endIdx": 41,
+      "lines": 1
+    },
+    {
+      "i": 8,
+      "label": "Bridge",
+      "startIdx": 42,
+      "endIdx": 44,
+      "lines": 3
+    },
+    {
+      "i": 9,
+      "label": "Pre-Chorus",
+      "startIdx": 45,
+      "endIdx": 46,
+      "lines": 2
+    },
+    {
+      "i": 10,
+      "label": "Chorus 3",
+      "startIdx": 47,
+      "endIdx": 63,
+      "lines": 17
+    },
+    {
+      "i": 11,
+      "label": "Outro",
+      "startIdx": 64,
+      "endIdx": 66,
+      "lines": 3
+    }
+  ],
+  "goldStatus": "derived",
+  "features": [
+    "repeated_chorus_x3",
+    "instrumental_inside",
+    "long_merge",
+    "verbatim_seam_duplicate"
+  ]
+}

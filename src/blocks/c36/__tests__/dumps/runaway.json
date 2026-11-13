@@ -1,0 +1,386 @@
+{
+  "schema": "belive.blocks-dump/1",
+  "track": {
+    "artist": "Kanye West",
+    "title": "Runaway",
+    "durationSec": null
+  },
+  "provenance": {
+    "lrclibId": null,
+    "commit": null,
+    "capturedAt": "2026-11-12T21:47:52.566Z",
+    "note": "fixture from repo tests",
+    "textSource": "repo-fixture",
+    "capturedBy": "stand",
+    "lrcSource": "repo-fixture"
+  },
+  "geniusRaw": "[Verse 1]\nGraffiti decorations, under a sky of dust\nA constant wave of tension, on top of broken trust\nThe lessons that you taught me, I learned were never true\n\n[Pre-Chorus]\nNow I find myself in question\nThey point the finger at me again\nGuilty by association\nYou point the finger at me again\n\n[Chorus]\nI wanna run away, never say goodbye\nI wanna know the truth, instead of wondering why\nI wanna know the answers, no more lies\nI wanna shut the door, and open up my mind\n\n[Verse 2]\nPaper bags and angry voices, under a sky of dust\nAnother wave of tension, has more than filled me up\nAll my talk of taking action, these words were never true\n\n[Pre-Chorus]\nNow I find myself in question\nThey point the finger at me again\nGuilty by association\nYou point the finger at me again\n\n[Chorus]\nI wanna run away, never say goodbye\nI wanna know the truth, instead of wondering why\nI wanna know the answers, no more lies\nI wanna shut the door, and open up my mind\n\n[Bridge]\nI'm gonna run away, and never say goodbye\nGonna run away, gonna run away\nGonna run away, gonna run away\nI'm gonna run away, and never wonder why\nGonna run away, gonna run away\nGonna run away, gonna run away\nI'm gonna run away, and open up my mind\nGonna run away, gonna run away\nMind (Gonna run away, gonna run away)\nMind (Gonna run away, gonna run away)\nMind (Gonna run away, gonna run away)\n\n[Chorus]\nI wanna run away, never say goodbye\nI wanna know the truth, instead of wondering why\nI wanna know the answers, no more lies\nI wanna shut the door, and open up my mind\n\n[Outro]\nI wanna run away and open up my mind\nI wanna run away and open up my mind\nI wanna run away and open up my mind\nI wanna run away and open up my mind",
+  "lrcRaw": "[00:00.00] Graffiti decorations\n[00:02.50] Under the sky of dust\n[00:05.00] A constant wave of tension\n[00:07.50] On top of broken trust\n[00:10.00] The lessons that you taught me\n[00:12.50] I learned were never true\n[00:15.00] Now I find myself in question\n[00:17.50] (They point the finger at me again)\n[00:20.00] Guilty by association\n[00:22.50] (You point the finger at me again)\n[00:25.00] I wanna run away\n[00:27.50] Never say \"goodbye\"\n[00:30.00] I wanna know the truth\n[00:32.50] Instead of wondering why\n[00:35.00] I wanna know the answers\n[00:37.50] No more lies\n[00:40.00] I wanna shut the door\n[00:42.50] And open up my mind\n[00:45.00] Paper bags and angry voices\n[00:47.50] Under a sky of dust\n[00:50.00] Another wave of tension\n[00:52.50] Has more than filled me up\n[00:55.00] All my talk of taking action\n[00:57.50] These words were never true\n[01:00.00] Now I find myself in question\n[01:02.50] (They point the finger at me again)\n[01:05.00] Guilty by association\n[01:07.50] (You point the finger at me again)\n[01:10.00] I wanna run away\n[01:12.50] Never say \"goodbye\"\n[01:15.00] I wanna know the truth\n[01:17.50] Instead of wondering why\n[01:20.00] I wanna know the answers\n[01:22.50] No more lies\n[01:25.00] I wanna shut the door\n[01:27.50] And open up my mind\n[01:30.00] I'm gonna run away and never say \"goodbye\"\n[01:32.50] Gonna run away, gonna run away\n[01:35.00] Gonna run away, gonna run away\n[01:37.50] I'm gonna run away and never wonder why\n[01:40.00] Gonna run away, gonna run away\n[01:42.50] Gonna run away, gonna run away\n[01:45.00] I'm gonna run away and open up my mind\n[01:47.50] Gonna run away, gonna run away (mind)\n[01:50.00] Gonna run away, gonna run away (mind)\n[01:52.50] Gonna run away, gonna run away (mind)\n[01:55.00] Gonna run away, gonna run away (mind)\n[01:57.50] I wanna run away\n[02:00.00] Never say \"goodbye\"\n[02:02.50] I wanna know the truth\n[02:05.00] Instead of wondering why\n[02:07.50] I wanna know the answers\n[02:10.00] No more lies\n[02:12.50] I wanna shut the door\n[02:15.00] And open up my mind\n[02:17.50] I wanna run away and open up my mind\n[02:20.00] I wanna run away and open up my mind\n[02:22.50] I wanna run away and open up my mind\n[02:25.00] I wanna run away and open up my mind",
+  "lrcLines": [
+    {
+      "i": 0,
+      "t": 0,
+      "text": "Graffiti decorations"
+    },
+    {
+      "i": 1,
+      "t": 2.5,
+      "text": "Under the sky of dust"
+    },
+    {
+      "i": 2,
+      "t": 5,
+      "text": "A constant wave of tension"
+    },
+    {
+      "i": 3,
+      "t": 7.5,
+      "text": "On top of broken trust"
+    },
+    {
+      "i": 4,
+      "t": 10,
+      "text": "The lessons that you taught me"
+    },
+    {
+      "i": 5,
+      "t": 12.5,
+      "text": "I learned were never true"
+    },
+    {
+      "i": 6,
+      "t": 15,
+      "text": "Now I find myself in question"
+    },
+    {
+      "i": 7,
+      "t": 17.5,
+      "text": "(They point the finger at me again)"
+    },
+    {
+      "i": 8,
+      "t": 20,
+      "text": "Guilty by association"
+    },
+    {
+      "i": 9,
+      "t": 22.5,
+      "text": "(You point the finger at me again)"
+    },
+    {
+      "i": 10,
+      "t": 25,
+      "text": "I wanna run away"
+    },
+    {
+      "i": 11,
+      "t": 27.5,
+      "text": "Never say \"goodbye\""
+    },
+    {
+      "i": 12,
+      "t": 30,
+      "text": "I wanna know the truth"
+    },
+    {
+      "i": 13,
+      "t": 32.5,
+      "text": "Instead of wondering why"
+    },
+    {
+      "i": 14,
+      "t": 35,
+      "text": "I wanna know the answers"
+    },
+    {
+      "i": 15,
+      "t": 37.5,
+      "text": "No more lies"
+    },
+    {
+      "i": 16,
+      "t": 40,
+      "text": "I wanna shut the door"
+    },
+    {
+      "i": 17,
+      "t": 42.5,
+      "text": "And open up my mind"
+    },
+    {
+      "i": 18,
+      "t": 45,
+      "text": "Paper bags and angry voices"
+    },
+    {
+      "i": 19,
+      "t": 47.5,
+      "text": "Under a sky of dust"
+    },
+    {
+      "i": 20,
+      "t": 50,
+      "text": "Another wave of tension"
+    },
+    {
+      "i": 21,
+      "t": 52.5,
+      "text": "Has more than filled me up"
+    },
+    {
+      "i": 22,
+      "t": 55,
+      "text": "All my talk of taking action"
+    },
+    {
+      "i": 23,
+      "t": 57.5,
+      "text": "These words were never true"
+    },
+    {
+      "i": 24,
+      "t": 60,
+      "text": "Now I find myself in question"
+    },
+    {
+      "i": 25,
+      "t": 62.5,
+      "text": "(They point the finger at me again)"
+    },
+    {
+      "i": 26,
+      "t": 65,
+      "text": "Guilty by association"
+    },
+    {
+      "i": 27,
+      "t": 67.5,
+      "text": "(You point the finger at me again)"
+    },
+    {
+      "i": 28,
+      "t": 70,
+      "text": "I wanna run away"
+    },
+    {
+      "i": 29,
+      "t": 72.5,
+      "text": "Never say \"goodbye\""
+    },
+    {
+      "i": 30,
+      "t": 75,
+      "text": "I wanna know the truth"
+    },
+    {
+      "i": 31,
+      "t": 77.5,
+      "text": "Instead of wondering why"
+    },
+    {
+      "i": 32,
+      "t": 80,
+      "text": "I wanna know the answers"
+    },
+    {
+      "i": 33,
+      "t": 82.5,
+      "text": "No more lies"
+    },
+    {
+      "i": 34,
+      "t": 85,
+      "text": "I wanna shut the door"
+    },
+    {
+      "i": 35,
+      "t": 87.5,
+      "text": "And open up my mind"
+    },
+    {
+      "i": 36,
+      "t": 90,
+      "text": "I'm gonna run away and never say \"goodbye\""
+    },
+    {
+      "i": 37,
+      "t": 92.5,
+      "text": "Gonna run away, gonna run away"
+    },
+    {
+      "i": 38,
+      "t": 95,
+      "text": "Gonna run away, gonna run away"
+    },
+    {
+      "i": 39,
+      "t": 97.5,
+      "text": "I'm gonna run away and never wonder why"
+    },
+    {
+      "i": 40,
+      "t": 100,
+      "text": "Gonna run away, gonna run away"
+    },
+    {
+      "i": 41,
+      "t": 102.5,
+      "text": "Gonna run away, gonna run away"
+    },
+    {
+      "i": 42,
+      "t": 105,
+      "text": "I'm gonna run away and open up my mind"
+    },
+    {
+      "i": 43,
+      "t": 107.5,
+      "text": "Gonna run away, gonna run away (mind)"
+    },
+    {
+      "i": 44,
+      "t": 110,
+      "text": "Gonna run away, gonna run away (mind)"
+    },
+    {
+      "i": 45,
+      "t": 112.5,
+      "text": "Gonna run away, gonna run away (mind)"
+    },
+    {
+      "i": 46,
+      "t": 115,
+      "text": "Gonna run away, gonna run away (mind)"
+    },
+    {
+      "i": 47,
+      "t": 117.5,
+      "text": "I wanna run away"
+    },
+    {
+      "i": 48,
+      "t": 120,
+      "text": "Never say \"goodbye\""
+    },
+    {
+      "i": 49,
+      "t": 122.5,
+      "text": "I wanna know the truth"
+    },
+    {
+      "i": 50,
+      "t": 125,
+      "text": "Instead of wondering why"
+    },
+    {
+      "i": 51,
+      "t": 127.5,
+      "text": "I wanna know the answers"
+    },
+    {
+      "i": 52,
+      "t": 130,
+      "text": "No more lies"
+    },
+    {
+      "i": 53,
+      "t": 132.5,
+      "text": "I wanna shut the door"
+    },
+    {
+      "i": 54,
+      "t": 135,
+      "text": "And open up my mind"
+    },
+    {
+      "i": 55,
+      "t": 137.5,
+      "text": "I wanna run away and open up my mind"
+    },
+    {
+      "i": 56,
+      "t": 140,
+      "text": "I wanna run away and open up my mind"
+    },
+    {
+      "i": 57,
+      "t": 142.5,
+      "text": "I wanna run away and open up my mind"
+    },
+    {
+      "i": 58,
+      "t": 145,
+      "text": "I wanna run away and open up my mind"
+    }
+  ],
+  "geniusBlocks": [],
+  "markers": [],
+  "expectedBlocks": [],
+  "currentOutput": [
+    {
+      "i": 0,
+      "label": "Verse 1",
+      "startIdx": 0,
+      "endIdx": 5,
+      "lines": 6
+    },
+    {
+      "i": 1,
+      "label": "Pre-Chorus",
+      "startIdx": 6,
+      "endIdx": 9,
+      "lines": 4
+    },
+    {
+      "i": 2,
+      "label": "Chorus 1",
+      "startIdx": 10,
+      "endIdx": 17,
+      "lines": 8
+    },
+    {
+      "i": 3,
+      "label": "Verse 2",
+      "startIdx": 18,
+      "endIdx": 23,
+      "lines": 6
+    },
+    {
+      "i": 4,
+      "label": "Pre-Chorus",
+      "startIdx": 24,
+      "endIdx": 27,
+      "lines": 4
+    },
+    {
+      "i": 5,
+      "label": "Chorus 2",
+      "startIdx": 28,
+      "endIdx": 35,
+      "lines": 8
+    },
+    {
+      "i": 6,
+      "label": "Bridge",
+      "startIdx": 36,
+      "endIdx": 46,
+      "lines": 11
+    },
+    {
+      "i": 7,
+      "label": "Chorus 3",
+      "startIdx": 47,
+      "endIdx": 54,
+      "lines": 8
+    },
+    {
+      "i": 8,
+      "label": "Outro",
+      "startIdx": 55,
+      "endIdx": 58,
+      "lines": 4
+    }
+  ],
+  "goldStatus": "unverified",
+  "features": []
+}

@@ -1,0 +1,807 @@
+{
+  "schema": "belive.blocks-dump/1",
+  "track": {
+    "artist": "Metallica",
+    "title": "I Disappear",
+    "durationSec": 266
+  },
+  "provenance": {
+    "lrclibId": 546740,
+    "commit": null,
+    "capturedAt": "2026-11-13T07:59:05.768Z",
+    "source": "owner-paste (inbox/ceo/i-disappear.genius.txt) + lrclib.net/api/search",
+    "note": "Текст владельца, 67 строк / 1423 Б, дословно. Побайтово совпал с копией со страницы Genius — сверено diff, расхождений нет. sha256=2cc9370bc6bc2a70",
+    "textSource": "owner-paste",
+    "capturedBy": "stand",
+    "lrcSource": "lrclib-api",
+    "ownerPasteBytes": 1423
+  },
+  "geniusRaw": "[Instrumental Intro]\n\n[Verse 1]\nHey, hey, hey, here I go now\nHere I go into new days\nHey, hey, hey, here I go now\nHere I go into new days\nI'm pain, I'm hope, I'm suffer\nYeah, hey, hey, hey, yeah\nHere I go into new days\n\n[Verse 2]\nHey, hey, hey, ain't no mercy\nAin't no mercy there for me\nHey, hey, hey, ain't no mercy\nAin't no mercy there for me\nI'm pain, I'm hope, I'm suffer\nYeah, yeah, hey, hey, no mercy\nAin't no mercy there for me\n\n[Chorus]\nDo you bury me when I'm gone?\nDo you teach me while I'm here?\nJust as soon as I belong\nThen it's time I disappear\n\n[Interlude]\nHey, yeah, yeah\n\n[Verse 3]\nHey, hey, hey, and I went\nAnd I went on down that road\nHey, hey, hey, and I went on\nAnd I went on down that road\nI'm pain, I'm hope, I'm suffer\nHey, hey, hey, yeah, and I went on\nAnd I went on down that road\n\n[Chorus]\nDo you bury me when I'm gone?\nDo you teach me while I'm here?\nJust as soon as I belong\nThen it's time I disappear\nDo you bury me when I'm gone?\nDo you teach me while I'm here?\nJust as soon as I belong\nThen it's time I disappear\nDisappear\n\n[Bridge]\nI'm gone, I'm gone\nI'm gone, I'm real gone\nI'm gone, I'm gone, baby\nI'm gone, I'm gone\n\n[Instrumental Break]\n\n[Chorus]\nDo you bury me when I'm gone?\nDo you teach me while I'm here?\nJust as soon as I belong\nThen it's time I disappear\nDo you bury me when I'm gone?\nDo you teach me while I'm here?\nJust as soon as I belong\nThen it's time I disappear\nDisappear",
+  "lrcRaw": "[00:39.89] Hey, hey, hey\n[00:42.55] Here I go now\n[00:44.65] Here I go into new days\n[00:47.72] Hey, hey, hey\n[00:50.23] Here I go now\n[00:52.56] Here I go into new days\n[00:55.45] I'm pain, I'm hope, I'm suffer\n[00:59.55] Yeah, hey, hey, hey, yeah, yeah\n[01:04.31] Here I go into new days\n[01:09.61] \n[01:15.37] Hey, hey, hey\n[01:18.00] Ain't no mercy\n[01:20.09] Ain't no mercy there for me\n[01:23.07] Hey, hey, hey\n[01:25.78] Ain't no mercy\n[01:27.77] Ain't no mercy there for me\n[01:30.82] I'm pain, I'm hope, I'm suffer\n[01:34.92] Yeah, hey, hey, no mercy\n[01:39.67] Ain't no mercy there for me\n[01:45.66] Do you bury me when I'm gone?\n[01:49.54] Do you teach me while I'm here?\n[01:53.46] Just as soon as I belong\n[01:57.31] Then it's time I disappear\n[02:00.66] \n[02:08.36] Hey, hey, hey\n[02:11.08] And I went\n[02:12.76] And I went on down that road\n[02:15.95] Hey, hey, hey\n[02:18.73] And I went down\n[02:20.64] And I went on down that road\n[02:23.50] I'm pain, I'm hope, I'm suffer\n[02:27.78] Hey, hey, hey, yeah\n[02:30.34] And I went down\n[02:32.39] And I went on down that road\n[02:37.93] Do you bury me when I'm gone?\n[02:42.69] Do you teach me while I'm here?\n[02:46.51] Just as soon as I belong\n[02:50.36] Then it's time I disappear\n[02:54.25] Do you bury me when I'm gone?\n[02:58.16] Do you teach me while I'm here?\n[03:01.92] Just as soon as I belong\n[03:05.75] Then it's time I disappear\n[03:09.18] \n[03:13.93] Disappeared\n[03:16.62] I'm gone, I'm gone\n[03:20.45] I'm gone, out of here, I'm gone\n[03:24.21] I'm gone, I'm gone\n[03:28.31] I'm gone, I'm gone\n[03:32.91] \n[03:48.71] Do you bury me when I'm gone?\n[03:52.72] Do you teach me while I'm here?\n[03:56.43] Just as soon as I belong\n[04:00.39] Then it's time I disappear\n[04:04.28] Do you bury me when I'm gone?\n[04:08.17] Do you teach me while I'm here?\n[04:11.95] Just as soon as I belong\n[04:16.00] Then it's time I disappear\n[04:20.01] \n[04:22.23] Go on, yeah\n[04:23.61]",
+  "geniusBlocks": [
+    {
+      "i": 1,
+      "label": "Verse 1",
+      "kind": "verse",
+      "lines": [
+        "Hey, hey, hey, here I go now",
+        "Here I go into new days",
+        "Hey, hey, hey, here I go now",
+        "Here I go into new days",
+        "I'm pain, I'm hope, I'm suffer",
+        "Yeah, hey, hey, hey, yeah",
+        "Here I go into new days"
+      ]
+    },
+    {
+      "i": 2,
+      "label": "Verse 2",
+      "kind": "verse",
+      "lines": [
+        "Hey, hey, hey, ain't no mercy",
+        "Ain't no mercy there for me",
+        "Hey, hey, hey, ain't no mercy",
+        "Ain't no mercy there for me",
+        "I'm pain, I'm hope, I'm suffer",
+        "Yeah, yeah, hey, hey, no mercy",
+        "Ain't no mercy there for me"
+      ]
+    },
+    {
+      "i": 3,
+      "label": "Chorus",
+      "kind": "chorus",
+      "lines": [
+        "Do you bury me when I'm gone?",
+        "Do you teach me while I'm here?",
+        "Just as soon as I belong",
+        "Then it's time I disappear"
+      ]
+    },
+    {
+      "i": 4,
+      "label": "Interlude",
+      "kind": "interlude",
+      "lines": [
+        "Hey, yeah, yeah"
+      ]
+    },
+    {
+      "i": 5,
+      "label": "Verse 3",
+      "kind": "verse",
+      "lines": [
+        "Hey, hey, hey, and I went",
+        "And I went on down that road",
+        "Hey, hey, hey, and I went on",
+        "And I went on down that road",
+        "I'm pain, I'm hope, I'm suffer",
+        "Hey, hey, hey, yeah, and I went on",
+        "And I went on down that road"
+      ]
+    },
+    {
+      "i": 6,
+      "label": "Chorus",
+      "kind": "chorus",
+      "lines": [
+        "Do you bury me when I'm gone?",
+        "Do you teach me while I'm here?",
+        "Just as soon as I belong",
+        "Then it's time I disappear",
+        "Do you bury me when I'm gone?",
+        "Do you teach me while I'm here?",
+        "Just as soon as I belong",
+        "Then it's time I disappear",
+        "Disappear"
+      ]
+    },
+    {
+      "i": 7,
+      "label": "Bridge",
+      "kind": "bridge",
+      "lines": [
+        "I'm gone, I'm gone",
+        "I'm gone, I'm real gone",
+        "I'm gone, I'm gone, baby",
+        "I'm gone, I'm gone"
+      ]
+    },
+    {
+      "i": 8,
+      "label": "Instrumental Break",
+      "kind": "instrumental",
+      "lines": []
+    },
+    {
+      "i": 9,
+      "label": "Chorus",
+      "kind": "chorus",
+      "lines": [
+        "Do you bury me when I'm gone?",
+        "Do you teach me while I'm here?",
+        "Just as soon as I belong",
+        "Then it's time I disappear",
+        "Do you bury me when I'm gone?",
+        "Do you teach me while I'm here?",
+        "Just as soon as I belong",
+        "Then it's time I disappear",
+        "Disappear"
+      ]
+    }
+  ],
+  "lrcLines": [
+    {
+      "i": 0,
+      "t": 39.89,
+      "text": "Hey, hey, hey"
+    },
+    {
+      "i": 1,
+      "t": 42.55,
+      "text": "Here I go now"
+    },
+    {
+      "i": 2,
+      "t": 44.65,
+      "text": "Here I go into new days"
+    },
+    {
+      "i": 3,
+      "t": 47.72,
+      "text": "Hey, hey, hey"
+    },
+    {
+      "i": 4,
+      "t": 50.23,
+      "text": "Here I go now"
+    },
+    {
+      "i": 5,
+      "t": 52.56,
+      "text": "Here I go into new days"
+    },
+    {
+      "i": 6,
+      "t": 55.45,
+      "text": "I'm pain, I'm hope, I'm suffer"
+    },
+    {
+      "i": 7,
+      "t": 59.55,
+      "text": "Yeah, hey, hey, hey, yeah, yeah"
+    },
+    {
+      "i": 8,
+      "t": 64.31,
+      "text": "Here I go into new days"
+    },
+    {
+      "i": 9,
+      "t": 75.37,
+      "text": "Hey, hey, hey"
+    },
+    {
+      "i": 10,
+      "t": 78,
+      "text": "Ain't no mercy"
+    },
+    {
+      "i": 11,
+      "t": 80.09,
+      "text": "Ain't no mercy there for me"
+    },
+    {
+      "i": 12,
+      "t": 83.07,
+      "text": "Hey, hey, hey"
+    },
+    {
+      "i": 13,
+      "t": 85.78,
+      "text": "Ain't no mercy"
+    },
+    {
+      "i": 14,
+      "t": 87.77,
+      "text": "Ain't no mercy there for me"
+    },
+    {
+      "i": 15,
+      "t": 90.82,
+      "text": "I'm pain, I'm hope, I'm suffer"
+    },
+    {
+      "i": 16,
+      "t": 94.92,
+      "text": "Yeah, hey, hey, no mercy"
+    },
+    {
+      "i": 17,
+      "t": 99.67,
+      "text": "Ain't no mercy there for me"
+    },
+    {
+      "i": 18,
+      "t": 105.66,
+      "text": "Do you bury me when I'm gone?"
+    },
+    {
+      "i": 19,
+      "t": 109.54,
+      "text": "Do you teach me while I'm here?"
+    },
+    {
+      "i": 20,
+      "t": 113.46,
+      "text": "Just as soon as I belong"
+    },
+    {
+      "i": 21,
+      "t": 117.31,
+      "text": "Then it's time I disappear"
+    },
+    {
+      "i": 22,
+      "t": 128.36,
+      "text": "Hey, hey, hey"
+    },
+    {
+      "i": 23,
+      "t": 131.08,
+      "text": "And I went"
+    },
+    {
+      "i": 24,
+      "t": 132.76,
+      "text": "And I went on down that road"
+    },
+    {
+      "i": 25,
+      "t": 135.95,
+      "text": "Hey, hey, hey"
+    },
+    {
+      "i": 26,
+      "t": 138.73,
+      "text": "And I went down"
+    },
+    {
+      "i": 27,
+      "t": 140.64,
+      "text": "And I went on down that road"
+    },
+    {
+      "i": 28,
+      "t": 143.5,
+      "text": "I'm pain, I'm hope, I'm suffer"
+    },
+    {
+      "i": 29,
+      "t": 147.78,
+      "text": "Hey, hey, hey, yeah"
+    },
+    {
+      "i": 30,
+      "t": 150.34,
+      "text": "And I went down"
+    },
+    {
+      "i": 31,
+      "t": 152.39,
+      "text": "And I went on down that road"
+    },
+    {
+      "i": 32,
+      "t": 157.93,
+      "text": "Do you bury me when I'm gone?"
+    },
+    {
+      "i": 33,
+      "t": 162.69,
+      "text": "Do you teach me while I'm here?"
+    },
+    {
+      "i": 34,
+      "t": 166.51,
+      "text": "Just as soon as I belong"
+    },
+    {
+      "i": 35,
+      "t": 170.36,
+      "text": "Then it's time I disappear"
+    },
+    {
+      "i": 36,
+      "t": 174.25,
+      "text": "Do you bury me when I'm gone?"
+    },
+    {
+      "i": 37,
+      "t": 178.16,
+      "text": "Do you teach me while I'm here?"
+    },
+    {
+      "i": 38,
+      "t": 181.92,
+      "text": "Just as soon as I belong"
+    },
+    {
+      "i": 39,
+      "t": 185.75,
+      "text": "Then it's time I disappear"
+    },
+    {
+      "i": 40,
+      "t": 193.93,
+      "text": "Disappeared"
+    },
+    {
+      "i": 41,
+      "t": 196.62,
+      "text": "I'm gone, I'm gone"
+    },
+    {
+      "i": 42,
+      "t": 200.45,
+      "text": "I'm gone, out of here, I'm gone"
+    },
+    {
+      "i": 43,
+      "t": 204.21,
+      "text": "I'm gone, I'm gone"
+    },
+    {
+      "i": 44,
+      "t": 208.31,
+      "text": "I'm gone, I'm gone"
+    },
+    {
+      "i": 45,
+      "t": 228.71,
+      "text": "Do you bury me when I'm gone?"
+    },
+    {
+      "i": 46,
+      "t": 232.72,
+      "text": "Do you teach me while I'm here?"
+    },
+    {
+      "i": 47,
+      "t": 236.43,
+      "text": "Just as soon as I belong"
+    },
+    {
+      "i": 48,
+      "t": 240.39,
+      "text": "Then it's time I disappear"
+    },
+    {
+      "i": 49,
+      "t": 244.28,
+      "text": "Do you bury me when I'm gone?"
+    },
+    {
+      "i": 50,
+      "t": 248.17,
+      "text": "Do you teach me while I'm here?"
+    },
+    {
+      "i": 51,
+      "t": 251.95,
+      "text": "Just as soon as I belong"
+    },
+    {
+      "i": 52,
+      "t": 256,
+      "text": "Then it's time I disappear"
+    },
+    {
+      "i": 53,
+      "t": 262.23,
+      "text": "Go on, yeah"
+    }
+  ],
+  "markers": [
+    {
+      "lineIndex": 0,
+      "t": 39.89,
+      "text": "Hey, hey, hey"
+    },
+    {
+      "lineIndex": 1,
+      "t": 42.55,
+      "text": "Here I go now"
+    },
+    {
+      "lineIndex": 2,
+      "t": 44.65,
+      "text": "Here I go into new days"
+    },
+    {
+      "lineIndex": 3,
+      "t": 47.72,
+      "text": "Hey, hey, hey"
+    },
+    {
+      "lineIndex": 4,
+      "t": 50.23,
+      "text": "Here I go now"
+    },
+    {
+      "lineIndex": 5,
+      "t": 52.56,
+      "text": "Here I go into new days"
+    },
+    {
+      "lineIndex": 6,
+      "t": 55.45,
+      "text": "I'm pain, I'm hope, I'm suffer"
+    },
+    {
+      "lineIndex": 7,
+      "t": 59.55,
+      "text": "Yeah, hey, hey, hey, yeah, yeah"
+    },
+    {
+      "lineIndex": 8,
+      "t": 64.31,
+      "text": "Here I go into new days"
+    },
+    {
+      "lineIndex": 9,
+      "t": 75.37,
+      "text": "Hey, hey, hey"
+    },
+    {
+      "lineIndex": 10,
+      "t": 78,
+      "text": "Ain't no mercy"
+    },
+    {
+      "lineIndex": 11,
+      "t": 80.09,
+      "text": "Ain't no mercy there for me"
+    },
+    {
+      "lineIndex": 12,
+      "t": 83.07,
+      "text": "Hey, hey, hey"
+    },
+    {
+      "lineIndex": 13,
+      "t": 85.78,
+      "text": "Ain't no mercy"
+    },
+    {
+      "lineIndex": 14,
+      "t": 87.77,
+      "text": "Ain't no mercy there for me"
+    },
+    {
+      "lineIndex": 15,
+      "t": 90.82,
+      "text": "I'm pain, I'm hope, I'm suffer"
+    },
+    {
+      "lineIndex": 16,
+      "t": 94.92,
+      "text": "Yeah, hey, hey, no mercy"
+    },
+    {
+      "lineIndex": 17,
+      "t": 99.67,
+      "text": "Ain't no mercy there for me"
+    },
+    {
+      "lineIndex": 18,
+      "t": 105.66,
+      "text": "Do you bury me when I'm gone?"
+    },
+    {
+      "lineIndex": 19,
+      "t": 109.54,
+      "text": "Do you teach me while I'm here?"
+    },
+    {
+      "lineIndex": 20,
+      "t": 113.46,
+      "text": "Just as soon as I belong"
+    },
+    {
+      "lineIndex": 21,
+      "t": 117.31,
+      "text": "Then it's time I disappear"
+    },
+    {
+      "lineIndex": 22,
+      "t": 128.36,
+      "text": "Hey, hey, hey"
+    },
+    {
+      "lineIndex": 23,
+      "t": 131.08,
+      "text": "And I went"
+    },
+    {
+      "lineIndex": 24,
+      "t": 132.76,
+      "text": "And I went on down that road"
+    },
+    {
+      "lineIndex": 25,
+      "t": 135.95,
+      "text": "Hey, hey, hey"
+    },
+    {
+      "lineIndex": 26,
+      "t": 138.73,
+      "text": "And I went down"
+    },
+    {
+      "lineIndex": 27,
+      "t": 140.64,
+      "text": "And I went on down that road"
+    },
+    {
+      "lineIndex": 28,
+      "t": 143.5,
+      "text": "I'm pain, I'm hope, I'm suffer"
+    },
+    {
+      "lineIndex": 29,
+      "t": 147.78,
+      "text": "Hey, hey, hey, yeah"
+    },
+    {
+      "lineIndex": 30,
+      "t": 150.34,
+      "text": "And I went down"
+    },
+    {
+      "lineIndex": 31,
+      "t": 152.39,
+      "text": "And I went on down that road"
+    },
+    {
+      "lineIndex": 32,
+      "t": 157.93,
+      "text": "Do you bury me when I'm gone?"
+    },
+    {
+      "lineIndex": 33,
+      "t": 162.69,
+      "text": "Do you teach me while I'm here?"
+    },
+    {
+      "lineIndex": 34,
+      "t": 166.51,
+      "text": "Just as soon as I belong"
+    },
+    {
+      "lineIndex": 35,
+      "t": 170.36,
+      "text": "Then it's time I disappear"
+    },
+    {
+      "lineIndex": 36,
+      "t": 174.25,
+      "text": "Do you bury me when I'm gone?"
+    },
+    {
+      "lineIndex": 37,
+      "t": 178.16,
+      "text": "Do you teach me while I'm here?"
+    },
+    {
+      "lineIndex": 38,
+      "t": 181.92,
+      "text": "Just as soon as I belong"
+    },
+    {
+      "lineIndex": 39,
+      "t": 185.75,
+      "text": "Then it's time I disappear"
+    },
+    {
+      "lineIndex": 40,
+      "t": 193.93,
+      "text": "Disappeared"
+    },
+    {
+      "lineIndex": 41,
+      "t": 196.62,
+      "text": "I'm gone, I'm gone"
+    },
+    {
+      "lineIndex": 42,
+      "t": 200.45,
+      "text": "I'm gone, out of here, I'm gone"
+    },
+    {
+      "lineIndex": 43,
+      "t": 204.21,
+      "text": "I'm gone, I'm gone"
+    },
+    {
+      "lineIndex": 44,
+      "t": 208.31,
+      "text": "I'm gone, I'm gone"
+    },
+    {
+      "lineIndex": 45,
+      "t": 228.71,
+      "text": "Do you bury me when I'm gone?"
+    },
+    {
+      "lineIndex": 46,
+      "t": 232.72,
+      "text": "Do you teach me while I'm here?"
+    },
+    {
+      "lineIndex": 47,
+      "t": 236.43,
+      "text": "Just as soon as I belong"
+    },
+    {
+      "lineIndex": 48,
+      "t": 240.39,
+      "text": "Then it's time I disappear"
+    },
+    {
+      "lineIndex": 49,
+      "t": 244.28,
+      "text": "Do you bury me when I'm gone?"
+    },
+    {
+      "lineIndex": 50,
+      "t": 248.17,
+      "text": "Do you teach me while I'm here?"
+    },
+    {
+      "lineIndex": 51,
+      "t": 251.95,
+      "text": "Just as soon as I belong"
+    },
+    {
+      "lineIndex": 52,
+      "t": 256,
+      "text": "Then it's time I disappear"
+    },
+    {
+      "lineIndex": 53,
+      "t": 262.23,
+      "text": "Go on, yeah"
+    }
+  ],
+  "expectedBlocks": [
+    {
+      "i": 0,
+      "label": "Verse 1",
+      "startIdx": 0,
+      "endIdx": 8
+    },
+    {
+      "i": 1,
+      "label": "Verse 2",
+      "startIdx": 9,
+      "endIdx": 17
+    },
+    {
+      "i": 2,
+      "label": "Chorus",
+      "startIdx": 18,
+      "endIdx": 21
+    },
+    {
+      "i": 3,
+      "label": "Interlude",
+      "startIdx": null,
+      "endIdx": null
+    },
+    {
+      "i": 4,
+      "label": "Verse 3",
+      "startIdx": 22,
+      "endIdx": 31
+    },
+    {
+      "i": 5,
+      "label": "Chorus",
+      "startIdx": 32,
+      "endIdx": 40
+    },
+    {
+      "i": 6,
+      "label": "Bridge",
+      "startIdx": 41,
+      "endIdx": 44
+    },
+    {
+      "i": 7,
+      "label": "Instrumental Break",
+      "startIdx": null,
+      "endIdx": null
+    },
+    {
+      "i": 8,
+      "label": "Chorus",
+      "startIdx": 45,
+      "endIdx": 53
+    }
+  ],
+  "currentOutput": [
+    {
+      "i": 0,
+      "label": "Verse 1",
+      "startIdx": 0,
+      "endIdx": 15,
+      "lines": 12
+    },
+    {
+      "i": 1,
+      "label": "Verse 2",
+      "startIdx": 10,
+      "endIdx": 17,
+      "lines": 6
+    },
+    {
+      "i": 2,
+      "label": "Chorus 1",
+      "startIdx": 18,
+      "endIdx": 21,
+      "lines": 4
+    },
+    {
+      "i": 3,
+      "label": "Interlude",
+      "startIdx": 22,
+      "endIdx": 22,
+      "lines": 1
+    },
+    {
+      "i": 4,
+      "label": "Verse 3",
+      "startIdx": 23,
+      "endIdx": 31,
+      "lines": 9
+    },
+    {
+      "i": 5,
+      "label": "Chorus 2",
+      "startIdx": 32,
+      "endIdx": 40,
+      "lines": 9
+    },
+    {
+      "i": 6,
+      "label": "Bridge",
+      "startIdx": 41,
+      "endIdx": 44,
+      "lines": 4
+    },
+    {
+      "i": 7,
+      "label": "Instrumental",
+      "startIdx": null,
+      "endIdx": null,
+      "lines": 0
+    },
+    {
+      "i": 8,
+      "label": "Chorus 3",
+      "startIdx": 45,
+      "endIdx": 53,
+      "lines": 9
+    }
+  ],
+  "goldStatus": "derived",
+  "features": [
+    "repeated_chorus_x3",
+    "instrumental_inside",
+    "long_merge",
+    "verbatim_seam_duplicate",
+    "one_line_interlude",
+    "empty_lrc_for_interlude"
+  ]
+}
