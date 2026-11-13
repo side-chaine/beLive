@@ -22,6 +22,12 @@
     { "member": "src/components/VolumeControls.tsx", "class": "H-4", "reason": "режим владельца 8bad1711 (TC-DOCK, 19.05)", "owner": "Никита", "until": "обратная подмотка или явное решение" },
     { "member": "src/catalog/feed/EventList.tsx", "class": "H-5", "reason": "живой CF-воркер ↔ мёртвый фронт ленты", "owner": "Никита", "until": "развилка: подключить/снести/держать" },
     { "member": "src/catalog/feed/HeroStack.tsx", "class": "H-5", "reason": "живой CF-воркер ↔ мёртвый фронт ленты", "owner": "Никита", "until": "развилка: подключить/снести/держать" },
-    { "member": "src/catalog/feed/TrackScroll.tsx", "class": "H-5", "reason": "живой CF-воркер ↔ мёртвый фронт ленты", "owner": "Никита", "until": "развилка: подключить/снести/держать" }
+    { "member": "src/catalog/feed/TrackScroll.tsx", "class": "H-5", "reason": "живой CF-воркер ↔ мёртвый фронт ленты", "owner": "Никита", "until": "развилка: подключить/снести/держать" },
+    { "member": "src/blocks/c36/gate.ts", "class": "H-1c", "reason": "достижимы только из тестов (net-new Ц36 M-модель, прод-путь не тронут по спеке rev.3)", "owner": "007", "until": "подключение Ц36 к прод-графу" },
+    { "member": "src/blocks/c36/hungarian.ts", "class": "H-1c", "reason": "достижимы только из тестов (net-new Ц36 M-модель, прод-путь не тронут по спеке rev.3)", "owner": "007", "until": "подключение Ц36 к прод-графу" },
+    { "member": "src/blocks/c36/legacy.ts", "class": "H-1c", "reason": "достижимы только из тестов (net-new Ц36 M-модель, прод-путь не тронут по спеке rev.3)", "owner": "007", "until": "подключение Ц36 к прод-графу" },
+    { "member": "src/blocks/c36/metrics.ts", "class": "H-1c", "reason": "достижимы только из тестов (net-new Ц36 M-модель, прод-путь не тронут по спеке rev.3)", "owner": "007", "until": "подключение Ц36 к прод-графу" },
+    { "member": "src/blocks/c36/model.ts", "class": "H-1c", "reason": "достижимы только из тестов (net-new Ц36 M-модель, прод-путь не тронут по спеке rev.3)", "owner": "007", "until": "подключение Ц36 к прод-графу" },
+    { "member": "src/blocks/c36/parse.ts", "class": "H-1c", "reason": "достижимы только из тестов (net-new Ц36 M-модель, прод-путь не тронут по спеке rev.3)", "owner": "007", "until": "подключение Ц36 к прод-графу" }
   ]
 }

@@ -1,0 +1,545 @@
+{
+  "schema": "belive.blocks-dump/1",
+  "track": {
+    "artist": "Michael Jackson",
+    "title": "They Don't Care About Us",
+    "durationSec": null
+  },
+  "provenance": {
+    "lrclibId": null,
+    "commit": null,
+    "capturedAt": "2026-11-12T21:47:52.563Z",
+    "note": "fixture from repo tests",
+    "textSource": "repo-fixture",
+    "capturedBy": "stand",
+    "lrcSource": "repo-fixture"
+  },
+  "geniusRaw": "[Intro]\nAll I want to say is that they dont care about us\n\n[Verse 1]\nSkinhead, dead head\nEverybody gone bad\n\n[Chorus 1]\nAll I wanna say is that they dont care about us\n\n[Verse 2]\nBeat me, hate me\nYou can never break me\n\n[Chorus 2]\nAll I wanna say is that they dont care about us\n\n[Post-Chorus 1]\nTell me what has become of my life\n\n[Verse 3]\nSkinhead, dead head\nEverybody gone bad\n\n[Chorus 3]\nAll I wanna say is that they dont care about us\n\n[Post-Chorus 2]\nTell me what has become of my rights\n\n[Bridge 1]\nSome things in life they just dont want to see\n\n[Verse 4]\nSkinhead, dead head\nEverybody gone bad\n\n[Chorus 4]\nAll I wanna say is that they dont care about us\n\n[Solo]\n\n[Bridge 2]\nSkinhead dead head everybody gone bad\n\n[Verse 5]\nSkinhead, dead head\nEverybody gone bad\n\n[Chorus 5]\nAll I wanna say is that they dont care about us\n",
+  "lrcRaw": "[00:00.00] All I want to say is that they don't really care about us\n[00:02.50] Don't worry what people say, we know the truth\n[00:05.00] All I want to say is that they don't really care about us\n[00:07.50] Enough is enough of this garbage\n[00:10.00] All I want to say is that they don't really care about us\n[00:12.50] \n[00:15.00] Skinhead, deadhead\n[00:17.50] Everybody gone bad\n[00:20.00] Situation aggravation\n[00:22.50] Everybody, allegation\n[00:25.00] In the suite on the news\n[00:27.50] Everybody, dog food\n[00:30.00] Bang-bang, shock dead\n[00:32.50] Everybody's gone mad\n[00:35.00] All I wanna say is that they don't really care about us\n[00:37.50] All I wanna say is that they don't really care about us\n[00:40.00] Beat me, hate me\n[00:42.50] You can never break me\n[00:45.00] Will me, thrill me\n[00:47.50] You can never kill me\n[00:50.00] Jew me, sue me\n[00:52.50] Everybody, do me\n[00:55.00] Kick me, kike me\n[00:57.50] Don't you black or white me\n[01:00.00] All I wanna say is that they don't really care about us\n[01:02.50] All I wanna say is that they don't really care about us\n[01:05.00] Tell me what has become of my life\n[01:07.50] I have a wife and two children who love me\n[01:10.00] I'm a victim of police brutality, now (Mhhm)\n[01:12.50] I'm tired of bein' the victim of hate\n[01:15.00] Your rapin' me of my pride\n[01:17.50] Oh, for God's sake\n[01:20.00] I look to heaven to fulfill its prophecy\n[01:22.50] Set me free\n[01:25.00] Skinhead, deadhead\n[01:27.50] Everybody, gone bad\n[01:30.00] Trepidation speculation\n[01:32.50] Everybody, allegation\n[01:35.00] In the suite on the news\n[01:37.50] Everybody, dog food\n[01:40.00] Black man, black mail\n[01:42.50] Throw the brother in jail\n[01:45.00] All I wanna say is that they don't really care about us\n[01:47.50] All I wanna say is that they don't really care about us\n[01:50.00] Tell me what has become of my rights\n[01:52.50] Am I invisible 'cause you ignore me?\n[01:55.00] Your proclamation promised me free liberty, now\n[01:57.50] I'm tired of bein' the victim of shame\n[02:00.00] They're throwin' me in a class with a bad name\n[02:02.50] I can't believe this is the land from which I came\n[02:05.00] You know I really do hate to say it\n[02:07.50] The government don't wanna see\n[02:10.00] But if Roosevelt was livin', he wouldn't let this be, no, no\n[02:12.50] Skinhead, deadhead\n[02:15.00] Everybody, gone bad\n[02:17.50] Situation, speculation\n[02:20.00] Everybody, litigation\n[02:22.50] Beat me, bash me\n[02:25.00] You can never trash me\n[02:27.50] Hit me, kick me\n[02:30.00] You can never get me\n[02:32.50] All I wanna say is that they don't really care about us\n[02:35.00] All I wanna say is that they don't really care about us\n[02:37.50] \n[02:40.00] Some things in life they just don't wanna see (Ah)\n[02:42.50] But if Martin Luther was livin'\n[02:45.00] He wouldn't let this be, no, no\n[02:47.50] Skinhead, deadhead (Yeah, yeah)\n[02:50.00] Everybody's gone bad\n[02:52.50] Situation, segregation (Woo-hoo)\n[02:55.00] Everybody, allegation\n[02:57.50] In the suite on the news\n[03:00.00] Everybody dog food (Woo-ho)\n[03:02.50] Kick me, kike me\n[03:05.00] Don't you wrong or right me\n[03:07.50] All I wanna say is that they don't really care about us\n[03:10.00] All I wanna say is that they don't really care about us\n[03:12.50] All I wanna say is that they don't really care about us\n[03:15.00] All I wanna say is that they don't really care about us\n[03:17.50] All I wanna say is that they don't really care about us\n[03:20.00] All I wanna say is that they don't really care about us",
+  "lrcLines": [
+    {
+      "i": 0,
+      "t": 0,
+      "text": "All I want to say is that they don't really care about us"
+    },
+    {
+      "i": 1,
+      "t": 2.5,
+      "text": "Don't worry what people say, we know the truth"
+    },
+    {
+      "i": 2,
+      "t": 5,
+      "text": "All I want to say is that they don't really care about us"
+    },
+    {
+      "i": 3,
+      "t": 7.5,
+      "text": "Enough is enough of this garbage"
+    },
+    {
+      "i": 4,
+      "t": 10,
+      "text": "All I want to say is that they don't really care about us"
+    },
+    {
+      "i": 5,
+      "t": 12.5,
+      "text": ""
+    },
+    {
+      "i": 6,
+      "t": 15,
+      "text": "Skinhead, deadhead"
+    },
+    {
+      "i": 7,
+      "t": 17.5,
+      "text": "Everybody gone bad"
+    },
+    {
+      "i": 8,
+      "t": 20,
+      "text": "Situation aggravation"
+    },
+    {
+      "i": 9,
+      "t": 22.5,
+      "text": "Everybody, allegation"
+    },
+    {
+      "i": 10,
+      "t": 25,
+      "text": "In the suite on the news"
+    },
+    {
+      "i": 11,
+      "t": 27.5,
+      "text": "Everybody, dog food"
+    },
+    {
+      "i": 12,
+      "t": 30,
+      "text": "Bang-bang, shock dead"
+    },
+    {
+      "i": 13,
+      "t": 32.5,
+      "text": "Everybody's gone mad"
+    },
+    {
+      "i": 14,
+      "t": 35,
+      "text": "All I wanna say is that they don't really care about us"
+    },
+    {
+      "i": 15,
+      "t": 37.5,
+      "text": "All I wanna say is that they don't really care about us"
+    },
+    {
+      "i": 16,
+      "t": 40,
+      "text": "Beat me, hate me"
+    },
+    {
+      "i": 17,
+      "t": 42.5,
+      "text": "You can never break me"
+    },
+    {
+      "i": 18,
+      "t": 45,
+      "text": "Will me, thrill me"
+    },
+    {
+      "i": 19,
+      "t": 47.5,
+      "text": "You can never kill me"
+    },
+    {
+      "i": 20,
+      "t": 50,
+      "text": "Jew me, sue me"
+    },
+    {
+      "i": 21,
+      "t": 52.5,
+      "text": "Everybody, do me"
+    },
+    {
+      "i": 22,
+      "t": 55,
+      "text": "Kick me, kike me"
+    },
+    {
+      "i": 23,
+      "t": 57.5,
+      "text": "Don't you black or white me"
+    },
+    {
+      "i": 24,
+      "t": 60,
+      "text": "All I wanna say is that they don't really care about us"
+    },
+    {
+      "i": 25,
+      "t": 62.5,
+      "text": "All I wanna say is that they don't really care about us"
+    },
+    {
+      "i": 26,
+      "t": 65,
+      "text": "Tell me what has become of my life"
+    },
+    {
+      "i": 27,
+      "t": 67.5,
+      "text": "I have a wife and two children who love me"
+    },
+    {
+      "i": 28,
+      "t": 70,
+      "text": "I'm a victim of police brutality, now (Mhhm)"
+    },
+    {
+      "i": 29,
+      "t": 72.5,
+      "text": "I'm tired of bein' the victim of hate"
+    },
+    {
+      "i": 30,
+      "t": 75,
+      "text": "Your rapin' me of my pride"
+    },
+    {
+      "i": 31,
+      "t": 77.5,
+      "text": "Oh, for God's sake"
+    },
+    {
+      "i": 32,
+      "t": 80,
+      "text": "I look to heaven to fulfill its prophecy"
+    },
+    {
+      "i": 33,
+      "t": 82.5,
+      "text": "Set me free"
+    },
+    {
+      "i": 34,
+      "t": 85,
+      "text": "Skinhead, deadhead"
+    },
+    {
+      "i": 35,
+      "t": 87.5,
+      "text": "Everybody, gone bad"
+    },
+    {
+      "i": 36,
+      "t": 90,
+      "text": "Trepidation speculation"
+    },
+    {
+      "i": 37,
+      "t": 92.5,
+      "text": "Everybody, allegation"
+    },
+    {
+      "i": 38,
+      "t": 95,
+      "text": "In the suite on the news"
+    },
+    {
+      "i": 39,
+      "t": 97.5,
+      "text": "Everybody, dog food"
+    },
+    {
+      "i": 40,
+      "t": 100,
+      "text": "Black man, black mail"
+    },
+    {
+      "i": 41,
+      "t": 102.5,
+      "text": "Throw the brother in jail"
+    },
+    {
+      "i": 42,
+      "t": 105,
+      "text": "All I wanna say is that they don't really care about us"
+    },
+    {
+      "i": 43,
+      "t": 107.5,
+      "text": "All I wanna say is that they don't really care about us"
+    },
+    {
+      "i": 44,
+      "t": 110,
+      "text": "Tell me what has become of my rights"
+    },
+    {
+      "i": 45,
+      "t": 112.5,
+      "text": "Am I invisible 'cause you ignore me?"
+    },
+    {
+      "i": 46,
+      "t": 115,
+      "text": "Your proclamation promised me free liberty, now"
+    },
+    {
+      "i": 47,
+      "t": 117.5,
+      "text": "I'm tired of bein' the victim of shame"
+    },
+    {
+      "i": 48,
+      "t": 120,
+      "text": "They're throwin' me in a class with a bad name"
+    },
+    {
+      "i": 49,
+      "t": 122.5,
+      "text": "I can't believe this is the land from which I came"
+    },
+    {
+      "i": 50,
+      "t": 125,
+      "text": "You know I really do hate to say it"
+    },
+    {
+      "i": 51,
+      "t": 127.5,
+      "text": "The government don't wanna see"
+    },
+    {
+      "i": 52,
+      "t": 130,
+      "text": "But if Roosevelt was livin', he wouldn't let this be, no, no"
+    },
+    {
+      "i": 53,
+      "t": 132.5,
+      "text": "Skinhead, deadhead"
+    },
+    {
+      "i": 54,
+      "t": 135,
+      "text": "Everybody, gone bad"
+    },
+    {
+      "i": 55,
+      "t": 137.5,
+      "text": "Situation, speculation"
+    },
+    {
+      "i": 56,
+      "t": 140,
+      "text": "Everybody, litigation"
+    },
+    {
+      "i": 57,
+      "t": 142.5,
+      "text": "Beat me, bash me"
+    },
+    {
+      "i": 58,
+      "t": 145,
+      "text": "You can never trash me"
+    },
+    {
+      "i": 59,
+      "t": 147.5,
+      "text": "Hit me, kick me"
+    },
+    {
+      "i": 60,
+      "t": 150,
+      "text": "You can never get me"
+    },
+    {
+      "i": 61,
+      "t": 152.5,
+      "text": "All I wanna say is that they don't really care about us"
+    },
+    {
+      "i": 62,
+      "t": 155,
+      "text": "All I wanna say is that they don't really care about us"
+    },
+    {
+      "i": 63,
+      "t": 157.5,
+      "text": ""
+    },
+    {
+      "i": 64,
+      "t": 160,
+      "text": "Some things in life they just don't wanna see (Ah)"
+    },
+    {
+      "i": 65,
+      "t": 162.5,
+      "text": "But if Martin Luther was livin'"
+    },
+    {
+      "i": 66,
+      "t": 165,
+      "text": "He wouldn't let this be, no, no"
+    },
+    {
+      "i": 67,
+      "t": 167.5,
+      "text": "Skinhead, deadhead (Yeah, yeah)"
+    },
+    {
+      "i": 68,
+      "t": 170,
+      "text": "Everybody's gone bad"
+    },
+    {
+      "i": 69,
+      "t": 172.5,
+      "text": "Situation, segregation (Woo-hoo)"
+    },
+    {
+      "i": 70,
+      "t": 175,
+      "text": "Everybody, allegation"
+    },
+    {
+      "i": 71,
+      "t": 177.5,
+      "text": "In the suite on the news"
+    },
+    {
+      "i": 72,
+      "t": 180,
+      "text": "Everybody dog food (Woo-ho)"
+    },
+    {
+      "i": 73,
+      "t": 182.5,
+      "text": "Kick me, kike me"
+    },
+    {
+      "i": 74,
+      "t": 185,
+      "text": "Don't you wrong or right me"
+    },
+    {
+      "i": 75,
+      "t": 187.5,
+      "text": "All I wanna say is that they don't really care about us"
+    },
+    {
+      "i": 76,
+      "t": 190,
+      "text": "All I wanna say is that they don't really care about us"
+    },
+    {
+      "i": 77,
+      "t": 192.5,
+      "text": "All I wanna say is that they don't really care about us"
+    },
+    {
+      "i": 78,
+      "t": 195,
+      "text": "All I wanna say is that they don't really care about us"
+    },
+    {
+      "i": 79,
+      "t": 197.5,
+      "text": "All I wanna say is that they don't really care about us"
+    },
+    {
+      "i": 80,
+      "t": 200,
+      "text": "All I wanna say is that they don't really care about us"
+    }
+  ],
+  "geniusBlocks": [],
+  "markers": [],
+  "expectedBlocks": [],
+  "currentOutput": [
+    {
+      "i": 0,
+      "label": "Intro",
+      "startIdx": 0,
+      "endIdx": 4,
+      "lines": 5
+    },
+    {
+      "i": 1,
+      "label": "Verse 1",
+      "startIdx": 5,
+      "endIdx": 11,
+      "lines": 7
+    },
+    {
+      "i": 2,
+      "label": "Chorus 1",
+      "startIdx": 12,
+      "endIdx": 14,
+      "lines": 3
+    },
+    {
+      "i": 3,
+      "label": "Verse 2",
+      "startIdx": 15,
+      "endIdx": 22,
+      "lines": 8
+    },
+    {
+      "i": 4,
+      "label": "Chorus 2",
+      "startIdx": 23,
+      "endIdx": 24,
+      "lines": 2
+    },
+    {
+      "i": 5,
+      "label": "Post-Chorus 1",
+      "startIdx": 25,
+      "endIdx": 31,
+      "lines": 7
+    },
+    {
+      "i": 6,
+      "label": "Verse 3",
+      "startIdx": 32,
+      "endIdx": 39,
+      "lines": 8
+    },
+    {
+      "i": 7,
+      "label": "Chorus 3",
+      "startIdx": 40,
+      "endIdx": 41,
+      "lines": 2
+    },
+    {
+      "i": 8,
+      "label": "Post-Chorus 2",
+      "startIdx": 42,
+      "endIdx": 42,
+      "lines": 1
+    },
+    {
+      "i": 9,
+      "label": "Bridge 1",
+      "startIdx": 43,
+      "endIdx": 51,
+      "lines": 8
+    },
+    {
+      "i": 10,
+      "label": "Verse 4",
+      "startIdx": 47,
+      "endIdx": 59,
+      "lines": 9
+    },
+    {
+      "i": 11,
+      "label": "Chorus 4",
+      "startIdx": 60,
+      "endIdx": 61,
+      "lines": 2
+    },
+    {
+      "i": 12,
+      "label": "Solo",
+      "startIdx": 62,
+      "endIdx": 75,
+      "lines": 14
+    },
+    {
+      "i": 13,
+      "label": "Bridge 2",
+      "startIdx": null,
+      "endIdx": null,
+      "lines": 0
+    },
+    {
+      "i": 14,
+      "label": "Verse 5",
+      "startIdx": null,
+      "endIdx": null,
+      "lines": 0
+    },
+    {
+      "i": 15,
+      "label": "Chorus 5",
+      "startIdx": 76,
+      "endIdx": 78,
+      "lines": 3
+    }
+  ],
+  "goldStatus": "unverified",
+  "features": []
+}
