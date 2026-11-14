@@ -586,6 +586,59 @@ export function blockFirstLineSync(
     _GENIUS_FIRST_LINES.push(gl.length > 0 ? gl[0] : '');
   }
 
+  // ═══ TC-153-rev (t73, path A — EARLY pass, ДО CGP) · opener re-anchor ═══
+  // ГЕНЕРИК (без хардкода I Disappear). Кража строк (string-theft): блок bi
+  // стартует на LRC-строке S, но его ИСТИННЫЙ опенер — это строка S-1, которая
+  // «мягко повторяет» предыдущий блок (bi-1) и потому проглочена диапазоном bi-1.
+  // Пример: I Disappear V2 опенер «Hey, hey, hey» на LRC 9 забрал V1, т.к. matcher
+  // выбрал S=10 («Ain't no mercy»), а CGP потом докорректировал до 16.
+  // Правило (ограничено ТОЛЬКО «opener совпадает с хвостом предыдущего»):
+  //   A) строка S-1 — истинный опенер bi (ведущий префикс первой Genius-строки bi
+  //      ИЛИ containment ≥ 0.6);
+  //   B) строка S-1 мягко повторяет ПРЕДЫДУЩИЙ блок bi-1 (близка к любой его
+  //      Genius-строке).
+  // Запуск ДО CGP: CGP увидит startIdx=S-1 (containment опенера ≥ 0.6, не < 0.6)
+  // и не докорректирует. Не трогает Pass-3 тай-брейк.
+  // Пишем только в _lrcStartIdx (CGP и Section-4 применят к blocks[] далее).
+  for (let bi = 1; bi < N; bi++) {
+    const s = _lrcStartIdx[bi];
+    if (s == null || s <= 0) {continue;}
+    const prevLineIdx = s - 1;
+    const prevLine = displayLines[prevLineIdx];
+    if (!prevLine?.trim()) {continue;}
+    const opener = _GENIUS_FIRST_LINES[bi];
+    if (!opener) {continue;}
+
+    // Condition A: prevLine — истинный опенер bi.
+    const prevNorm = _normalizeText(prevLine);
+    const openNorm = _normalizeText(opener);
+    const isOpeningPrefix = !!prevNorm && !!openNorm &&
+      (openNorm === prevNorm || openNorm.startsWith(prevNorm));
+    const openContain = _containmentScore(opener, prevLine);
+    if (!isOpeningPrefix && openContain < 0.6) {continue;}
+
+    // Condition B (scoped): prevLine мягко повторяет ПРЕДЫДУЩИЙ блок bi-1.
+    const prevBi = bi - 1;
+    const prevGeniusLines = (tagResult.blocks[prevBi]?.contentLines ?? [])
+      .filter((l: string) => l.trim());
+    let softRepeatsPrev = false;
+    if (prevGeniusLines.length > 0) {
+      for (const gl of prevGeniusLines) {
+        if (_containmentScore(gl, prevLine) >= 0.6) { softRepeatsPrev = true; break; }
+      }
+    }
+    if (!softRepeatsPrev) {continue;}
+
+    // Re-anchor bi на S-1.
+    _lrcStartIdx[bi] = prevLineIdx;
+    if (import.meta.env.DEV) {
+      console.log(
+        `  [TC-153-rev] block ${bi} [${tagResult.blocks[bi]?.type ?? '?'}] re-anchored: ` +
+        `startIdx ${s} → ${prevLineIdx} (opener «${opener.substring(0, 30)}» soft-repeats prev block)`
+      );
+    }
+  }
+
   function _containmentScore(geniusLine: string, lrcLine: string): number {
     const gNorm = _normalizeText(geniusLine);
     const lNorm = _normalizeText(lrcLine);
@@ -687,7 +740,7 @@ export function blockFirstLineSync(
       (blocks[bi] as any)._matchScore = _chosenMatchScore[bi];
     }
   }
-  
+
   // 4. Assign LRC line ranges to blocks
   //    Block N owns lines from its startIdx to block N+1's startIdx
   let _prevChronoEnd = -1;  // DIAG-CHRONO tracker
@@ -993,6 +1046,8 @@ export function blockFirstLineSync(
       const { loBi, hiBi } = findStructuralWindow(i);   // ← TC-150: новая строка
       let bestBlock = lastValidBlockIdx;  // fallback: предыдущий
       let bestOverlap = 0;
+      let tiedNextBlock = -1;        // TC-153-rev (BL-042 t73): ближайший СЛЕДУЮЩИЙ блок в тай-зоне overlap
+      let tiedNextOverlap = 0;
       for (const [b, blockWords] of blockWordSets) {
         if (b < loBi || b > hiBi) {continue;}             // ← TC-150: новая строка (guard)
         let overlap = 0;
@@ -1000,10 +1055,31 @@ export function blockFirstLineSync(
         if (overlap > bestOverlap) {
           bestOverlap = overlap;
           bestBlock = b;
+          tiedNextBlock = -1; tiedNextOverlap = 0;
         } else if (overlap === bestOverlap && overlap > 0 && b === lastValidBlockIdx) {
           // TC-153: при равном overlap предпочесть lastValidBlockIdx
           // (принципиально, а не "первый по порядку итерации")
           bestBlock = b;
+        }
+        if (overlap === bestOverlap && overlap > 0 && b > lastValidBlockIdx) {
+          // TC-153-rev: запоминаем ближайший СЛЕДУЮЩИЙ блок, попавший в тай-зону
+          if (tiedNextBlock === -1 || b < tiedNextBlock) {tiedNextBlock = b; tiedNextOverlap = overlap;}
+        }
+      }
+
+      // TC-153-rev (BL-042 t73, ХИРУРГИЧЕСКИ): сирот-повтор дословно ПОВТОРЯЕТ
+      // открывающую строку ПРЕДЫДУЩЕГО блока и стоит на границе со СЛЕДУЮЩИМ —
+      // это открывающий повтор СЛЕДУЮЩЕГО блока (V1/V2 делят одну фразу, напр.
+      // I Disappear «Hey, hey, hey»). Роутим в СЛЕДУЮЩИЙ блок. НЕ глобальный
+      // тай-брейк: не бьёт Runaway (line 35 не повторяет открытие пред. блока) и
+      // не трогает TC-150 window-guard. Срабатывает строго когда orphan УЖЕ ушёл бы
+      // в предыдущий (bestBlock === lastValidBlockIdx) и в тай-зоне есть СЛЕДУЮЩИЙ.
+      if (bestBlock === lastValidBlockIdx && bestOverlap > 0 &&
+          tiedNextBlock !== -1 && tiedNextOverlap === bestOverlap) {
+        const prevFirstIdx = blocks[lastValidBlockIdx].lineIndices[0];
+        const prevFirst = prevFirstIdx !== undefined ? _normalizeText(displayLines[prevFirstIdx]) : '';
+        if (prevFirst && prevFirst === orphanNorm) {
+          bestBlock = tiedNextBlock;
         }
       }
 
