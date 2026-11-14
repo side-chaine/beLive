@@ -68,9 +68,11 @@ export interface WindowStat {
 export interface CorpusStats {
   windows: number;
   byRuleDSplit: Record<string, number>; // "6,3" -> count
-  byRuleDGroupSize: Record<string, number>; // groupSize -> count (matched окна)
+  byRuleDGroupSize: Record<string, number>; // groupSize(g) -> count (matched окна)
+  byRuleDCopies: Record<string, number>; // copies(k, число повторов группы) -> count (GGG)
   rondoGte4: number; // ruleD.matched && groupSize>=4 (rondo gmin=4)
   rondoLt4: number; // ruleD.matched && groupSize<4 (ложные [2,2,2,3]-риски)
+  gggKge3: number; // ruleD.matched && copies>=3 (GGG-collapse кандидат)
   ruleDMatched: number;
   echoHits: number;
   unisonCollapse: number;
@@ -128,8 +130,10 @@ export function summarizeWindows(stats: WindowStat[], trackKey = ''): CorpusStat
     windows: stats.length,
     byRuleDSplit: {},
     byRuleDGroupSize: {},
+    byRuleDCopies: {},
     rondoGte4: 0,
     rondoLt4: 0,
+    gggKge3: 0,
     ruleDMatched: 0,
     echoHits: 0,
     unisonCollapse: 0,
@@ -145,6 +149,9 @@ export function summarizeWindows(stats: WindowStat[], trackKey = ''): CorpusStat
       const gk = String(w.ruleD.groupSize);
       agg.byRuleDGroupSize[gk] = (agg.byRuleDGroupSize[gk] ?? 0) + 1;
       if (w.ruleD.groupSize >= 4) {agg.rondoGte4++;} else {agg.rondoLt4++;}
+      const ck = String(w.ruleD.copies);
+      agg.byRuleDCopies[ck] = (agg.byRuleDCopies[ck] ?? 0) + 1;
+      if (w.ruleD.copies >= 3) {agg.gggKge3++;}
     }
     if (w.echo !== null) {agg.echoHits++;}
     if (w.unisonCollapse) {agg.unisonCollapse++;}
@@ -204,12 +211,16 @@ export async function runCorpus(
       combined.anaphoraAnchor += part.anaphoraAnchor;
       combined.rondoGte4 += part.rondoGte4;
       combined.rondoLt4 += part.rondoLt4;
+      combined.gggKge3 += part.gggKge3;
       combined.perTrack[key] = part.windows;
       for (const [k, v] of Object.entries(part.byRuleDSplit)) {
         combined.byRuleDSplit[k] = (combined.byRuleDSplit[k] ?? 0) + v;
       }
       for (const [k, v] of Object.entries(part.byRuleDGroupSize)) {
         combined.byRuleDGroupSize[k] = (combined.byRuleDGroupSize[k] ?? 0) + v;
+      }
+      for (const [k, v] of Object.entries(part.byRuleDCopies)) {
+        combined.byRuleDCopies[k] = (combined.byRuleDCopies[k] ?? 0) + v;
       }
     } catch (e) {
       // Сетевой сбой/rate-limit — трек пропускаем, не валим весь корпус.
