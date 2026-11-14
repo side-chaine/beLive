@@ -309,7 +309,7 @@ export function detectEchoBreakPoint(
  *   14   → [4,5,5]      15 → [5,5,5]
  *   16+  → равномерно на 3 (макс 6)
  */
-function computeBalancedSplit(totalLines: number): number[] {
+export function computeBalancedSplit(totalLines: number): number[] {
   // 1-5: один подблок, не делим
   if (totalLines <= 5) {return [totalLines];}
 
