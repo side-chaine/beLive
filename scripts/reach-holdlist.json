@@ -28,6 +28,9 @@
     { "member": "src/blocks/c36/legacy.ts", "class": "H-1c", "reason": "достижимы только из тестов (net-new Ц36 M-модель, прод-путь не тронут по спеке rev.3)", "owner": "007", "until": "подключение Ц36 к прод-графу" },
     { "member": "src/blocks/c36/metrics.ts", "class": "H-1c", "reason": "достижимы только из тестов (net-new Ц36 M-модель, прод-путь не тронут по спеке rev.3)", "owner": "007", "until": "подключение Ц36 к прод-графу" },
     { "member": "src/blocks/c36/model.ts", "class": "H-1c", "reason": "достижимы только из тестов (net-new Ц36 M-модель, прод-путь не тронут по спеке rev.3)", "owner": "007", "until": "подключение Ц36 к прод-графу" },
-    { "member": "src/blocks/c36/parse.ts", "class": "H-1c", "reason": "достижимы только из тестов (net-new Ц36 M-модель, прод-путь не тронут по спеке rev.3)", "owner": "007", "until": "подключение Ц36 к прод-графу" }
+    { "member": "src/blocks/c36/parse.ts", "class": "H-1c", "reason": "достижимы только из тестов (net-new Ц36 M-модель, прод-путь не тронут по спеке rev.3)", "owner": "007", "until": "подключение Ц36 к прод-графу" },
+    { "member": "src/blocks/c36/apply.ts", "class": "H-1c", "reason": "Ц36 подключён к прод-графу (t72 wiring), reach-скрипт не резолвит .js→.ts цепочку — hold до фикса резолвера", "owner": "007", "until": "BL-042 remainder: reach resolution / снятие hold" },
+    { "member": "src/blocks/c36/attribution.ts", "class": "H-1c", "reason": "Ц36 подключён к прод-графу (t72 wiring), reach-скрипт не резолвит .js→.ts цепочку — hold до фикса резолвера", "owner": "007", "until": "BL-042 remainder: reach resolution / снятие hold" },
+    { "member": "src/blocks/c36/wiring.ts", "class": "H-1c", "reason": "Ц36 подключён к прод-графу (t72 wiring), reach-скрипт не резолвит .js→.ts цепочку — hold до фикса резолвера", "owner": "007", "until": "BL-042 remainder: reach resolution / снятие hold" }
   ]
 }

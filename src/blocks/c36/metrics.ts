@@ -1,7 +1,7 @@
 // metrics.ts — сравнение разбиений: точное совпадение, покрытие, дыры, дубли.
 // Центр_36, research. Порт /tmp/c36v12/src/metrics.js.
 
-import type { Range } from './parse.js';
+import type { LegacyRange, Range } from './parse.js';
 
 export interface CompareRow {
   i: number;
@@ -19,7 +19,7 @@ export interface CompareResult {
 
 // target/actual: массивы {startIdx, endIdx, lines?} или null, по одному на блок.
 // NOT MAPPED (null) у цели и факта считается совпадением.
-export function compare(target: (Range | null)[] | null | undefined, actual: (Range | null)[] | null | undefined): CompareResult {
+export function compare(target: (LegacyRange | null)[] | null | undefined, actual: (LegacyRange | null)[] | null | undefined): CompareResult {
   const n = Math.max(target?.length ?? 0, actual?.length ?? 0);
   const perBlock: CompareRow[] = [];
   const norm = (r: Range | null | undefined) => {
@@ -47,11 +47,11 @@ export function compare(target: (Range | null)[] | null | undefined, actual: (Ra
 }
 
 // Покрытие/дыры/дубли по фактическому разбиению (ranges only, без модели блоков).
-export function coverageStats(partition: (Range | null)[], m: number): { covered: number; total: number; holes: number[]; dupes: number[]; mappedBlocks: number } {
+export function coverageStats(partition: (LegacyRange | null)[], m: number): { covered: number; total: number; holes: number[]; dupes: number[]; mappedBlocks: number } {
   const cover = new Array(m).fill(0);
   let mappedBlocks = 0;
   for (const p of partition) {
-    if (!p || p.startIdx === null) {continue;}
+    if (!p || p.startIdx === null || p.endIdx === null) {continue;}
     mappedBlocks += 1;
     for (let i = p.startIdx; i <= p.endIdx; i++) {cover[i] += 1;}
   }
