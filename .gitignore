@@ -136,3 +136,6 @@ gateway/dist-*/
 public/team-m/
 src/**/*.tar.gz
 team-m/tmp/
+
+# BL-048 corpus runner cache (live lrclib, regenerated)
+src/blocks/c36/corpus/.cache/

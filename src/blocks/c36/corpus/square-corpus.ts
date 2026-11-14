@@ -68,6 +68,9 @@ export interface WindowStat {
 export interface CorpusStats {
   windows: number;
   byRuleDSplit: Record<string, number>; // "6,3" -> count
+  byRuleDGroupSize: Record<string, number>; // groupSize -> count (matched окна)
+  rondoGte4: number; // ruleD.matched && groupSize>=4 (rondo gmin=4)
+  rondoLt4: number; // ruleD.matched && groupSize<4 (ложные [2,2,2,3]-риски)
   ruleDMatched: number;
   echoHits: number;
   unisonCollapse: number;
@@ -124,6 +127,9 @@ export function summarizeWindows(stats: WindowStat[], trackKey = ''): CorpusStat
   const agg: CorpusStats = {
     windows: stats.length,
     byRuleDSplit: {},
+    byRuleDGroupSize: {},
+    rondoGte4: 0,
+    rondoLt4: 0,
     ruleDMatched: 0,
     echoHits: 0,
     unisonCollapse: 0,
@@ -136,6 +142,9 @@ export function summarizeWindows(stats: WindowStat[], trackKey = ''): CorpusStat
       agg.ruleDMatched++;
       const key = w.ruleD.split.join(',');
       agg.byRuleDSplit[key] = (agg.byRuleDSplit[key] ?? 0) + 1;
+      const gk = String(w.ruleD.groupSize);
+      agg.byRuleDGroupSize[gk] = (agg.byRuleDGroupSize[gk] ?? 0) + 1;
+      if (w.ruleD.groupSize >= 4) {agg.rondoGte4++;} else {agg.rondoLt4++;}
     }
     if (w.echo !== null) {agg.echoHits++;}
     if (w.unisonCollapse) {agg.unisonCollapse++;}
@@ -193,9 +202,14 @@ export async function runCorpus(
       combined.unisonCollapse += part.unisonCollapse;
       combined.tailGiant += part.tailGiant;
       combined.anaphoraAnchor += part.anaphoraAnchor;
+      combined.rondoGte4 += part.rondoGte4;
+      combined.rondoLt4 += part.rondoLt4;
       combined.perTrack[key] = part.windows;
       for (const [k, v] of Object.entries(part.byRuleDSplit)) {
         combined.byRuleDSplit[k] = (combined.byRuleDSplit[k] ?? 0) + v;
+      }
+      for (const [k, v] of Object.entries(part.byRuleDGroupSize)) {
+        combined.byRuleDGroupSize[k] = (combined.byRuleDGroupSize[k] ?? 0) + v;
       }
     } catch (e) {
       // Сетевой сбой/rate-limit — трек пропускаем, не валим весь корпус.
