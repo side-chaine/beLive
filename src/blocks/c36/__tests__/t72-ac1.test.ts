@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest';
 import { blockFirstLineSync, type LrcResult } from '../../../services/auto-lyrics.service';
 import { partitionStats } from '../apply';
-import { rawDump, lrc, LIVE_INDICES, FIXED_INDICES } from './live-fixture';
+import { rawDump, lrc } from './live-fixture';
 
 function run() {
   const d = rawDump();
@@ -31,12 +31,24 @@ describe('BL-042 AC1 · шов I Disappear починен в PROD-пути', () 
     expect(res.blocks[i].lineIndices).toEqual([22, 23, 24, 25, 26, 27, 28, 29, 30, 31]);
   });
 
-  it('AC1c · РОВНО 2 блока изменены, остальные byte-exact к живому legacy', () => {
+  it('AC1c · назначение после t72 (шов) + t73 (кража строк устранена): V1=[0..8], V2=[9..17]', () => {
     const res = run();
     const actual = res.blocks.map((b) => [...b.lineIndices]);
-    expect(actual).toEqual(FIXED_INDICES);
-    const diff = actual.map((a, i) => (a.join(',') === LIVE_INDICES[i].join(',') ? -1 : i)).filter((i) => i >= 0);
-    expect(diff).toEqual([3, 4]);
+    // t72 починил шов (блоки 3=[], 4=[22..31]); t73 вернул орфан-строки
+    // (LRC 9/12/15 «Hey, hey, hey» / «I'm pain…») из V1 в V2 — кража устранена,
+    // V1=[0..8], V2=[9..17] без переплетения.
+    const expected = [
+      [0, 1, 2, 3, 4, 5, 6, 7, 8],
+      [9, 10, 11, 12, 13, 14, 15, 16, 17],
+      [18, 19, 20, 21],
+      [],
+      [22, 23, 24, 25, 26, 27, 28, 29, 30, 31],
+      [32, 33, 34, 35, 36, 37, 38, 39, 40],
+      [41, 42, 43, 44],
+      [],
+      [45, 46, 47, 48, 49, 50, 51, 52, 53],
+    ];
+    expect(actual).toEqual(expected);
   });
 
   it('AC1d · partition: 54/54 покрытия, 0 дыр, 0 дублей', () => {
