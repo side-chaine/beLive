@@ -2,7 +2,8 @@ import { useMemo, useRef, useEffect, useCallback, type CSSProperties } from 'rea
 import { useBlocksStore } from '../stores/blocks.store';
 import { useMarkersStore } from '../stores/markers.store';
 import { useLyricsStore } from '../stores/lyrics.store';
-import { createSubBlocks, getActiveBlock, getActiveSubBlockIndex } from '../utils/block-utils';
+import { getActiveBlock, getActiveSubBlockIndex } from '../utils/block-utils';
+import { subBlocksOf } from '../utils/subblocks';
 import { getTransport } from '../audio/engine-v3';
 import { useLoopStore } from '../stores/loop.store';
 import { useDeckStore } from '../stores/deck.store';
@@ -56,7 +57,7 @@ export function WagonTrain() {
   const subStarts = useMemo(() => {
     const out: number[] = [];
     for (const b of blocks) {
-      const subs = createSubBlocks(b.lineIndices, MAX_SUB_BLOCK_LINES, lines);
+      const subs = subBlocksOf(b, lines, MAX_SUB_BLOCK_LINES);
       for (let i = 1; i < subs.length; i++) {
         const first = subs[i].lineIndices[0];
         if (typeof first === 'number') out.push(first);
@@ -171,12 +172,12 @@ export function WagonTrain() {
     if (fi > 0) set.add(`${fb}:${fi - 1}`);
     else if (fBi > 0) {
       const pb = blocks[fBi - 1];
-      const subs = createSubBlocks(pb.lineIndices, MAX_SUB_BLOCK_LINES, lines);
+      const subs = subBlocksOf(pb, lines, MAX_SUB_BLOCK_LINES);
       set.add(`${pb.id}:${subs.length - 1}`);
     }
     if (lBi >= 0) {
       const lbBlock = blocks[lBi];
-      const subs = createSubBlocks(lbBlock.lineIndices, MAX_SUB_BLOCK_LINES, lines);
+      const subs = subBlocksOf(lbBlock, lines, MAX_SUB_BLOCK_LINES);
       if (li < subs.length - 1) set.add(`${lb}:${li + 1}`);
       else if (lBi < blocks.length - 1) set.add(`${blocks[lBi + 1].id}:0`);
     }
@@ -304,7 +305,7 @@ export function WagonTrain() {
            считал их заново и сам решал, рисоваться или нет; вагон при этом не
            знал, есть ли у него тело. Теперь источник truth здесь: hasSubs
            управляет центрированием имени, subBlocks уходит в ряд готовым. */
-        const subBlocks = createSubBlocks(block.lineIndices, MAX_SUB_BLOCK_LINES, lines);
+        const subBlocks = subBlocksOf(block, lines, MAX_SUB_BLOCK_LINES);
         const hasSubs = subBlocks.length > 1;
         const firstLine = block.lineIndices[0];
         const lastLine = block.lineIndices[block.lineIndices.length - 1];

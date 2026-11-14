@@ -170,7 +170,7 @@ function getBaseBreakIndex(totalLines: number): number {
 /**
  * Числовое значение font size (для сравнения прыжков)
  */
-function getBlockFontSizeNumeric(lineCount: number): number {
+export function getBlockFontSizeNumeric(lineCount: number): number {
   if (lineCount <= 2) {return 3.2;}
   if (lineCount <= 4) {return 2.6;}
   if (lineCount <= 6) {return 2.0;}

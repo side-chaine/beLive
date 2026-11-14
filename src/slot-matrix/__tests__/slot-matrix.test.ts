@@ -19,6 +19,40 @@ import { computeSlotMatrix } from '../compute-slot-matrix';
 // MOCKS
 // ═══════════════════════════════════════════════════
 
+vi.mock('../../utils/subblocks', () => {
+  const chunk = (indices: number[], max: number) => {
+    const clampedMax = Math.max(1, max);
+    const result: Array<{
+      id: string;
+      lineIndices: number[];
+      isFirst: boolean;
+      isLast: boolean;
+    }> = [];
+    for (let i = 0; i < indices.length; i += clampedMax) {
+      const part = indices.slice(i, i + clampedMax);
+      result.push({
+        id: `sub-${result.length}`,
+        lineIndices: part,
+        isFirst: i === 0,
+        isLast: i + clampedMax >= indices.length,
+      });
+    }
+    return result;
+  };
+  const result = {
+    mode: 'fallback', units: [], roman: [], conf: 0, tRatio: null,
+    groupSize: 0, copies: 0, guard: null,
+  };
+  return {
+    subBlocksOf: (source: { lineIndices: number[] }, _lines: string[], max: number) =>
+      chunk(source.lineIndices, max),
+    createSubBlocksSmart: (source: { lineIndices: number[] }, _lines: string[], max: number) => ({
+      blocks: chunk(source.lineIndices, max),
+      result,
+    }),
+  };
+});
+
 vi.mock('../../utils/block-utils', () => ({
   getBlockFontSize: (count: number) => {
     if (count <= 2) {return '3.2rem';}

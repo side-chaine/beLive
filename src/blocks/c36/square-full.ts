@@ -12,6 +12,7 @@ import {
   computeBalancedSplit,
   createSubBlocks,
   detectEchoBreakPoint,
+  getBlockFontSizeNumeric,
   normalizeText,
   type RuleDResult,
   type SubBlock,
@@ -37,6 +38,13 @@ export const T_RATIO_CONF_BUMP = 0.1;
 
 /** Потолок юнитов: Римские не выше IV. */
 export const MAX_UNITS = 4;
+
+/**
+ * Структурный font-jump (У13): [6,2] даёт прыжок 1.2rem (2.0 → 3.2) и раньше
+ * отбивался legacy-порогом 0.65. Для СТРУКТУРНЫХ разрезов структура важнее
+ * косметики шрифта — потолок 1.25: [6,2] проходит (1.2), [2,8] — нет (1.6).
+ */
+export const STRUCTURAL_FONT_JUMP_MAX = 1.25;
 
 /** conf-тиры §12.6. */
 export const CONF = {
@@ -283,7 +291,13 @@ function checkGuards(units: readonly number[], mode: SquareMode): string | null 
   if (units.length > MAX_UNITS) {return 'roman-cap';}
   if (mode === 'exact-train' || mode === 'near-train' || mode === 'pair-exact-square') {
     if (units.length === 2 && units[1] >= TAIL_GIANT_RATIO * units[0]) {return 'tail-giant';}
-    if (units.length === 2 && units[0] === 6 && units[1] === 2) {return 'font-guard';}
+    if (units.length === 2) {
+      const jump = Math.abs(
+        getBlockFontSizeNumeric(units[0]) - getBlockFontSizeNumeric(units[1]),
+      );
+      if (jump > STRUCTURAL_FONT_JUMP_MAX) {return 'font-jump';}
+      if (units[0] === 6 && units[1] === 2) {return 'font-guard';}
+    }
   }
   return null;
 }

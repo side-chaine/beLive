@@ -16,11 +16,11 @@ import {
   getActiveBlock,
   getNextBlock,
   getBlockFontSize,
-  createSubBlocks,
 } from '../utils/block-utils';
 import { useSlotMatrix } from '../slot-matrix/use-slot-matrix';
 import { measureNextBlock, type NextBlockMeasurement } from '../slot-matrix/measure-next-block';
 import { MAX_SUB_BLOCK_LINES } from '../slot-matrix/slot-matrix.utils';
+import { subBlocksOf } from '../utils/subblocks';
 import { getTransport } from '../audio/engine-v3';
 
 import styles from './RehearsalLyrics.module.css';
@@ -392,7 +392,7 @@ export function RehearsalLyrics() {
       psNextBlock = nextBlock;
     } else if (nextBlock) {
       // Block→Block: первый подблок СЛЕДУЮЩЕГО блока
-      const nextBlockSubBlocks = createSubBlocks(nextBlock.lineIndices, 6, lines);
+      const nextBlockSubBlocks = subBlocksOf(nextBlock, lines, 6);
       const firstSubBlock = nextBlockSubBlocks[0];
       if (!firstSubBlock) {
         nextBlockMeasureRef.current = null;
