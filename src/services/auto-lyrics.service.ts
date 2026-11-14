@@ -8,6 +8,7 @@ import type { DetectedBlock } from '../blocks/parser/tagged-lyrics.parser';
 import type { PersistedSyncMarker, PersistedTextBlock } from '../types/persistence.types';
 import { computeLocalStopWords } from '../utils/block-utils';
 import { TAXONOMY_VERSION } from '../blocks/parser/block-taxonomy';
+import { runC36Gate } from '../blocks/c36/wiring.js';
 
 // ── Types ──────────────────────────────────────────────
 
@@ -1080,7 +1081,14 @@ export function blockFirstLineSync(
     delete (blocks[i] as any)._oversized;        // TC-6B
     delete (blocks[i] as any)._instrumentalGap;   // TC-6C
   }
-  
+
+  // ── t72 wiring: c36 как пост-процесс. Адаптер — blocks/c36/wiring.ts,
+  // применение (атомарно + post-validate + rollback) — blocks/c36/apply.ts.
+  // tagResult.blocks — источник ИСХОДНОГО Genius-текста: blocks[].contentLines
+  // к этому моменту уже перезаписан LRC-текстом (Section 4 / Pass 3).
+  const c36 = runC36Gate(blocks, tagResult.blocks, displayLines, markers);
+  if (import.meta.env.DEV && c36.logLine) { console.log(c36.logLine); }
+
   return {
     markers,
     blocks,

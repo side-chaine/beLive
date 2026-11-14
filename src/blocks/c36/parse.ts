@@ -20,6 +20,30 @@ export interface Range {
   endIdx: number;
 }
 
+// AUX_KINDS — SSOT. Aux-блок (добавочный, без собственного текста в LRC) может
+// законно получить 0 строк. Раньше константа дублировалась в model.ts и
+// attribution.ts; расхождение молча ломало доказательство «no-disputes не тронут»
+// (тождество D5 ≡ model.zeroWidth). BL-042 ITER-3.
+// ВНИМАНИЕ: kindOf() мапит 'interlude' → 'instrumental' (research-наследие),
+// прод-тип — 'interlude'. Оба в множестве, поэтому поведение идентично;
+// унификация kindOf — BL-044 (менять сейчас = менять kinds дампов).
+export const AUX_KINDS: ReadonlySet<string> = new Set(['interlude', 'instrumental', 'outro']);
+
+// Legacy/currentOutput блоки могут быть NOT MAPPED → startIdx/endIdx = null.
+// Здесь null — это НЕ «блок отсутствует» (это null-элемент массива), а
+// «блок заявлен, но строк не получил» (пустой/aux-блок в legacy-выводе).
+export interface LegacyRange {
+  startIdx: number | null;
+  endIdx: number | null;
+}
+
+export interface LegacyBlock extends LegacyRange {
+  i: number;
+  label?: string;
+  kind?: string;
+  lines?: number;
+}
+
 export interface Dump {
   id?: string;
   track?: { artist?: string; title?: string; durationSec?: number };
@@ -27,7 +51,7 @@ export interface Dump {
   geniusRaw?: string;
   geniusBlocks?: GeniusBlock[];
   expectedBlocks?: (Range & { i: number; label: string })[] | null;
-  currentOutput?: (Range & { i: number; label?: string; kind?: string; lines?: number })[] | null;
+  currentOutput?: LegacyBlock[] | null;
   goldStatus?: string | null;
   raw?: unknown;
 }

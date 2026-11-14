@@ -5,7 +5,7 @@
 // Быстрый путь: на блок один раз строятся матрицы оценок операций
 // (1:1 / merge / split + хвосты), затем окна считаются чистой арифметикой DP.
 
-import { wcontain, buildIdf, containment, type LrcLine, type GeniusBlock, type Range } from './parse.js';
+import { wcontain, buildIdf, containment, AUX_KINDS, type LrcLine, type GeniusBlock, type Range } from './parse.js';
 
 export interface ModelParams {
   wAnchor: number;
@@ -207,7 +207,7 @@ export function mmodel(blocks: GeniusBlock[], lrc: LrcLine[], opts: { params?: P
   // на общем словаре припевных междометий — три ложных попадания на трек.
   const norm = (s: string | null | undefined) => String(s || '').toLowerCase()
     .replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
-  const AUX_KINDS = new Set(['interlude', 'instrumental', 'outro']);
+  // AUX_KINDS импортирован из parse.ts (SSOT, BL-042 ITER-3). Состав не менялся.
   const lrcNorm = new Set(lrc.map((l) => norm(l.text)));
   const zeroWidth = new Set<number>();
   for (const bi of idxNonEmpty) {

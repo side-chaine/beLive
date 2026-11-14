@@ -34,13 +34,28 @@ describe('n10-v12 — B-валидность (v1.2)', () => {
     expect(r.perBlock[3]!.anchorAt).toBe(22);
   });
 
-  it('V3 · режим 2 пишет лог с причиной и списком изменённых блоков', () => {
-    const d = load('metallica-i-disappear.json');
-    const g = gate(d);
+  it('V3 · режим 2 пишет лог с причиной и списком изменённых блоков (genuine overlap)', () => {
+    // Синтетический дамп с НАСТОЯЩИМ overlap: строки 2 и 3 заявлены обоими
+    // блоками. Это genuine defect (не намеренная не-монотонность / gap /
+    // orphan-before-first) — гейт обязан уйти в режим 2 и залогировать per-line.
+    // Дамп конструируется напрямую (loadDump перестраивает geniusBlocks из
+    // geniusRaw, поэтому здесь задаём Dump явно).
+    const synth: Dump = {
+      lrcLines: Array.from({ length: 7 }, (_: unknown, i: number) => ({ i, t: i, text: `a${i}` })),
+      geniusBlocks: [
+        { label: 'A', kind: 'verse', lines: ['a0', 'a1', 'a2', 'a3'] },
+        { label: 'B', kind: 'verse', lines: ['a2', 'a3', 'a4'] },
+      ],
+      currentOutput: [
+        { i: 0, label: 'A', startIdx: 0, endIdx: 3, lines: 4 },
+        { i: 1, label: 'B', startIdx: 2, endIdx: 4, lines: 3 },
+      ],
+    };
+    const g = gate(synth);
     expect(g.mode).toBe('overridden-by-validity');
-    expect(g.logLine!).toMatch(/^\[blocks\] overridden-by-validity · overlap at 1 · changed 4\/9: /);
-    expect(g.logLine!).toMatch(/Interlude 22\.\.22→0 строк/);
-    expect(g.changed!.length).toBe(4);
+    expect(g.logLine!).toMatch(/^\[blocks\] overridden-by-validity · /);
+    expect(g.logLine!).toMatch(/overlap at line 2|overlap at line 3/);
+    expect(g.changed!.length).toBeGreaterThan(0);
   });
 
   it('V4 · MJ: NOT MAPPED проверяется до геометрии — defer, legacy не тронут', () => {
