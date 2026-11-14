@@ -103,10 +103,10 @@ function analyseLegacySets(sets: (number[] | null)[], blocks: GeniusBlock[], m: 
     }
   });
   for (let k = 0; k < m; k++) {
-    if (claimed[k] > 1) geometry.push(`overlap at line ${k}`);
+    if (claimed[k] > 1) {geometry.push(`overlap at line ${k}`);}
   }
   for (let k = 0; k < m; k++) {
-    if (claimed[k] === 0) geometry.push(`hole at line ${k}`);
+    if (claimed[k] === 0) {geometry.push(`hole at line ${k}`);}
   }
   return { notMapped, geometry };
 }
