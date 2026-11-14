@@ -57,7 +57,7 @@ async function main() {
     minSize: 6,
     maxSize: 20,
     step: 1,
-    maxSamples: 60,
+    maxSamples: 12,
   });
 
   // Контр-гипотеза: строгий majority-якорь (exact > g/2) при θ=0.80.
@@ -67,13 +67,12 @@ async function main() {
     minSize: 6,
     maxSize: 20,
     step: 1,
-    maxSamples: 60,
+    maxSamples: 12,
   });
 
   if (!existsSync(RESULTS_DIR)) { mkdirSync(RESULTS_DIR, { recursive: true }); }
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  // Один артефакт: прогон воспроизводим из кэша, таймстемп-копии не нужны.
   const out = { loose: report, strict };
-  writeFileSync(join(RESULTS_DIR, `near-theta-${stamp}.json`), JSON.stringify(out, null, 2), 'utf8');
   writeFileSync(join(RESULTS_DIR, 'latest-near-theta.json'), JSON.stringify(out, null, 2), 'utf8');
 
   console.log(`\ntracks ok/fail: ${report.meta.tracksOk}/${report.meta.tracksFailed}`);
