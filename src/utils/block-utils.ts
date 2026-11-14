@@ -90,7 +90,7 @@ const PUNCTUATION_RE = /[^\p{L}\p{N}\s]/gu;
  * Очистка текста: нижний регистр + убрать пунктуацию + апострофы
  * "I don't know" → "i dont know"
  */
-function normalizeText(text: string): string {
+export function normalizeText(text: string): string {
   return text.toLowerCase().replace(/'/g, '').replace(PUNCTUATION_RE, '').trim();
 }
 
@@ -370,15 +370,24 @@ export function computeBalancedSplit(totalLines: number): number[] {
 export function createSubBlocks(
   lineIndices: number[],
   _maxLines: number = 6,
-  lines?: string[]
+  lines?: string[],
+  forcedSplit?: readonly number[]
 ): SubBlock[] {
   if (lineIndices.length === 0) {return [];}
 
+  // 0. Внешний сплиттер (BL-050-full): валидный по покрытию split
+  //    отменяет и balanced, и echo — он уже учёл near-θ/гварды.
+  const forced = forcedSplit && forcedSplit.length > 0 &&
+    forcedSplit.every((x) => x > 0) &&
+    forcedSplit.reduce((a, b) => a + b, 0) === lineIndices.length
+    ? [...forcedSplit]
+    : null;
+
   // 1. Базовое деление по принципу дополненного квадрата
-  let split = computeBalancedSplit(lineIndices.length);
+  let split = forced ?? computeBalancedSplit(lineIndices.length);
 
   // 2. Echo-detection: корректировка если есть текст и 2 подблока
-  if (lines && split.length === 2) {
+  if (!forced && lines && split.length === 2) {
     const echoBreak = detectEchoBreakPoint(lineIndices, lines);
     if (echoBreak !== null) {
       const totalLines = lineIndices.length;

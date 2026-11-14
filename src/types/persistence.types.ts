@@ -13,6 +13,11 @@ export interface PersistedTextBlock {
   type?: string;
   originalLineIndices?: number[];
   contentLines?: string[];  // TC-010: Display text for WagonTrain
+  // ── BL-050-full (К1): логический (Genius) слой для сплиттера ──
+  /** Исходные логические строки блока (Genius), до перезаписи LRC-текстом. */
+  logicalLines?: string[];
+  /** logical index → локальный индекс в lineIndices (строго возрастает). */
+  logicalToLrc?: number[];
   // ── Taxonomy Gate B ──
   originalTag?: string;        // оригинальный тег Genius ("Guitar Solo")
   instrument?: string;         // для Solo: 'guitar', 'piano', 'drums'...

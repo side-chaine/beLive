@@ -1144,6 +1144,15 @@ export function blockFirstLineSync(
   for (let b = 0; b < blocks.length; b++) {
     if (blocks[b].lineIndices.length > 0) {
       blocks[b].lineIndices.sort((a, z) => a - z);
+      // BL-050-full (К1): сохранить логический (Genius) слой ДО перезаписи
+      // contentLines LRC-текстом. Сплиттеру нужен logical→LRC align, иначе
+      // rule D на логических строках недоступен (contentLines уже = LRC).
+      const genius = (tagResult.blocks[b]?.contentLines ?? []).filter((l: string) => l.trim());
+      const align = alignLogicalToLrc(genius, blocks[b].lineIndices, displayLines);
+      if (align) {
+        blocks[b].logicalLines = genius;
+        blocks[b].logicalToLrc = align;
+      }
       blocks[b].contentLines = blocks[b].lineIndices.map((idx: number) => displayLines[idx]);
     }
   }
@@ -2191,6 +2200,48 @@ function _parseLrc(syncedLyrics: string): LrcLine[] {
   }
 
   return result.sort((a, b) => a.time - b.time);
+}
+
+/**
+ * BL-050-full (К1, §12.1 В10): логические (Genius) строки блока → локальные
+ * индексы в lineIndices. Строго возрастает; null — блок не выровнен, и
+ * сплиттер идёт по LRC-домену (FALLBACK, нулевая регрессия).
+ *
+ * Genius может быть сокращением LRC (S18: 1 логич. : N>2 LRC), поэтому после
+ * точного равенства пробуем containment.
+ */
+function alignLogicalToLrc(
+  logical: readonly string[],
+  lineIndices: readonly number[],
+  displayLines: readonly string[],
+): number[] | null {
+  if (logical.length === 0 || logical.length > lineIndices.length) {return null;}
+
+  const lrcNorm = lineIndices.map((i) => _normalizeText(displayLines[i] ?? ''));
+  const out: number[] = [];
+  let cursor = 0;
+
+  for (const raw of logical) {
+    const want = _normalizeText(raw);
+    if (!want) {return null;}
+
+    let found = -1;
+    for (let k = cursor; k < lrcNorm.length; k++) {
+      if (lrcNorm[k] === want) {found = k; break;}
+    }
+    if (found === -1) {
+      for (let k = cursor; k < lrcNorm.length; k++) {
+        const have = lrcNorm[k];
+        if (have && (have.includes(want) || want.includes(have))) {found = k; break;}
+      }
+    }
+    if (found === -1) {return null;}
+
+    out.push(found);
+    cursor = found + 1;
+  }
+
+  return out;
 }
 
 export function _normalizeText(s: string): string {
