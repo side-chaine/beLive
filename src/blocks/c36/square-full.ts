@@ -71,7 +71,7 @@ export interface SquareFullOpts {
   times?: readonly (number | null)[];
   /** Переопределение θ (калибровка на корпусе). */
   theta?: number;
-  /** Строгий majority-якорь near-train (exact > g/2). */
+  /** Строгий majority-якорь near-train (exact > g/2). Дефолт — true; false = loose (диагностика). */
   strictAnchor?: boolean;
 }
 
@@ -142,17 +142,20 @@ export function exactTrain(texts: readonly string[]): Train | null {
 
 /**
  * Near-train: как exactTrain, но совпадение строки — min-containment ≥ θ.
- * Требуется majority-якорь (≥ половины строк группы точны), иначе
- * near-матчер ловит случайные повторы.
  *
- * strictAnchor: требовать СТРОГОЕ большинство (> g/2). Для g=2 это значит
- * «обе строки точны» — fuzzy-совпадение допускается только в g≥3, где одна
- * вариация — малая доля группы (Chorus 1: 2/3).
+ * strictAnchor (ДЕФОЛТ, калибровка 646 треков): требовать СТРОГОЕ большинство
+ * (exact > g/2). Для g=2 это значит «обе строки точны» — fuzzy допускается
+ * только в g≥3, где одна вариация — малая доля группы (Chorus 1: 2/3).
+ * Loose (exact ≥ ceil(g/2)) оставлен opt-out для диагностики: он даёт 45%
+ * weak-срабатываний (exact=0.5) — «половина группы fuzzy» не доказательство.
+ *
+ * Принцип: пропущенный сплит безопасно падает в FALLBACK, ложный — портит
+ * разбиение. Conservative выигрывает.
  */
 export function nearTrain(
   texts: readonly string[],
   theta = NEAR_THETA,
-  strictAnchor = false,
+  strictAnchor = true,
 ): Train | null {
   const n = texts.length;
   const minExact = (g: number): number =>
@@ -363,7 +366,7 @@ export function splitSquareFull(
   }
 
   // 3. Near-train (θ): extension для V3/Chorus 1 → [6,4].
-  const near = nearTrain(texts, opts.theta ?? NEAR_THETA, opts.strictAnchor === true);
+  const near = nearTrain(texts, opts.theta ?? NEAR_THETA, opts.strictAnchor !== false);
   if (near) {
     const res = build(near, 'near-train', CONF.nearTrain);
     if (res) {return res;}

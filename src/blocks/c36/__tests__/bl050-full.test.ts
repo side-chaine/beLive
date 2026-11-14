@@ -76,6 +76,20 @@ describe('BL-050-full · near-train θ (V3/Chorus 1 → [6,4])', () => {
       'iota kappa', 'lambda mu', 'nu xi', 'omicron pi'];
     expect(nearTrain(t, NEAR_THETA)).toBeNull();
   });
+
+  it('strict-якорь (дефолт): g=2 с одной fuzzy-строкой → НЕ near (weak не доказательство)', () => {
+    // Sad But True: 2-строчная группа, совпала 1 строка из 2 (exact=0.5).
+    const t = [
+      'hey im your life', 'im the one who takes you there',
+      'hey im your life', 'im the one who cares',
+      'different line here', 'another line here',
+    ];
+    expect(nearTrain(t, NEAR_THETA)).toBeNull();          // strict по умолчанию
+    expect(nearTrain(t, NEAR_THETA, false)).not.toBeNull(); // loose — opt-out для диагностики
+    const r = splitSquareFull(idx(0, 5), t);
+    expect(r.mode).not.toBe('near-train');
+    assertInvariant(r.units, r.roman, 6);
+  });
 });
 
 describe('BL-050-full · вторичные предикаты §12.4', () => {
