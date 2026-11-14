@@ -70,3 +70,26 @@ export function subBlocksOf(
 ): SubBlock[] {
   return createSubBlocksSmart(source, lines, maxLines).blocks;
 }
+
+/**
+ * BL-050-ui (У13): веса ширины ∝ ВРЕМЕНИ, не строкам.
+ *
+ * Вес i = время от первой строки подблока i до первой строки подблока i+1;
+ * у последнего — до `blockEndLine` (первая строка ЗА блоком). Если хотя бы
+ * одно значение неизвестно — весь массив null-ов, и UI падает на число строк
+ * (смешивать единицы нельзя).
+ */
+export function subBlockWeights(
+  subBlocks: readonly SubBlock[],
+  markerTime: (lineIndex: number) => number | undefined,
+  blockEndLine?: number,
+): (number | null)[] {
+  const out: (number | null)[] = subBlocks.map((sb, i) => {
+    const nextStart = subBlocks[i + 1]?.lineIndices[0];
+    const from = markerTime(sb.lineIndices[0]);
+    const to = nextStart != null ? markerTime(nextStart)
+      : blockEndLine != null ? markerTime(blockEndLine) : undefined;
+    return from != null && to != null && to > from ? to - from : null;
+  });
+  return out.every((w) => w != null && w > 0) ? out : out.map(() => null);
+}

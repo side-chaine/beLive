@@ -3,7 +3,7 @@ import { useBlocksStore } from '../stores/blocks.store';
 import { useMarkersStore } from '../stores/markers.store';
 import { useLyricsStore } from '../stores/lyrics.store';
 import { getActiveBlock, getActiveSubBlockIndex } from '../utils/block-utils';
-import { subBlocksOf } from '../utils/subblocks';
+import { subBlocksOf, createSubBlocksSmart, subBlockWeights } from '../utils/subblocks';
 import { getTransport } from '../audio/engine-v3';
 import { useLoopStore } from '../stores/loop.store';
 import { useDeckStore } from '../stores/deck.store';
@@ -305,10 +305,20 @@ export function WagonTrain() {
            считал их заново и сам решал, рисоваться или нет; вагон при этом не
            знал, есть ли у него тело. Теперь источник truth здесь: hasSubs
            управляет центрированием имени, subBlocks уходит в ряд готовым. */
-        const subBlocks = subBlocksOf(block, lines, MAX_SUB_BLOCK_LINES);
+        const { blocks: subBlocks, result: square } =
+          createSubBlocksSmart(block, lines, MAX_SUB_BLOCK_LINES);
         const hasSubs = subBlocks.length > 1;
         const firstLine = block.lineIndices[0];
         const lastLine = block.lineIndices[block.lineIndices.length - 1];
+
+        /* BL-050-ui (У13): ширина пилюли ∝ ВРЕМЕНИ, не строкам. Время подблока =
+           от его первой строки до первой строки следующего (у последнего — до
+           строки после блока). Нет маркеров → null → fallback на число строк. */
+        const subWeights = subBlockWeights(
+          subBlocks,
+          (li) => markers.find(m => m.lineIndex === li)?.time,
+          lastLine + 1,
+        );
 
         /* 23:3x · «цвет блока = регион»: внутри петли цвет живой, снаружи
            выключен. Новых цветов не вводим (канон Никиты). */
@@ -430,6 +440,8 @@ export function WagonTrain() {
             <SubSegmentRow
               block={block}
               subBlocks={subBlocks}
+              roman={square.roman}
+              weights={subWeights}
               isActive={isActive}
               activeSubIdx={activeSubIdx}
               inLoopBlock={loopBlockIds.includes(block.id)}
