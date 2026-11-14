@@ -67,23 +67,28 @@ export function KaraokeLyricsBoard() {
     )
   }
 
-  // Build visible lines array based on linesCount setting
-  // BL-050-ui (§12.8): караоке-окно НЕ пересекает границу подблока — последняя
-  // видимая строка обрезается концом активного подблока. На границе окно
-  // короче, зато строка из следующего юнита не «подмешивается» в текущий.
+  // BL-050-ui (§12.8): караоке-окно НЕ пересекает границу подблока.
+  // Два поведения для сравнения вживую (?kw=shift):
+  //   clamp (дефолт) — старт с активной строки, конец обрезается границей;
+  //   shift          — окно с начала активного подблока (юнит целиком).
+  const windowMode = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('kw') === 'shift'
+    ? 'shift' : 'clamp'
   const visibleLines: string[] = []
   if (activeLineIndex >= 0) {
     let limit = lines.length - 1
+    let start = activeLineIndex
     const block = blocks.find((b) => b.lineIndices.includes(activeLineIndex))
     if (block) {
       const subs = subBlocksOf(block, lines, MAX_SUB_BLOCK_LINES)
       const sub = subs.find((s) => s.lineIndices.includes(activeLineIndex))
       if (sub && sub.lineIndices.length > 0) {
         limit = Math.min(limit, sub.lineIndices[sub.lineIndices.length - 1])
+        if (windowMode === 'shift') {start = sub.lineIndices[0]}
       }
     }
     for (let i = 0; i < linesCount; i++) {
-      const idx = activeLineIndex + i
+      const idx = start + i
       if (idx <= limit && idx < lines.length) {
         visibleLines.push(lines[idx])
       }

@@ -33,6 +33,11 @@ export function WagonTrain() {
   const markers = useMarkersStore(s => s.markers);
   const activeLineIndex = useLyricsStore(s => s.activeLineIndex);
   const lines = useLyricsStore(s => s.lines);
+  /* BL-050-ui: сравнение вживую — ширина ∝ времени для ВСЕХ блоков с маркерами
+     (дефолт) или только для структурных квадратов (?wmode=square). */
+  const widthMode = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('wmode') === 'square'
+    ? 'square' : 'all';
   const rootRef = useRef<HTMLDivElement>(null);
   const loopBlockIds = useLoopStore(s => s.loopBlockIds);
   const loopSubBlockKeys = useLoopStore(s => s.loopSubBlockKeys);
@@ -314,11 +319,13 @@ export function WagonTrain() {
         /* BL-050-ui (У13): ширина пилюли ∝ ВРЕМЕНИ, не строкам. Время подблока =
            от его первой строки до первой строки следующего (у последнего — до
            строки после блока). Нет маркеров → null → fallback на число строк. */
-        const subWeights = subBlockWeights(
-          subBlocks,
-          (li) => markers.find(m => m.lineIndex === li)?.time,
-          lastLine + 1,
-        );
+        const subWeights = widthMode === 'square' && square.mode === 'fallback'
+          ? null
+          : subBlockWeights(
+            subBlocks,
+            (li) => markers.find(m => m.lineIndex === li)?.time,
+            lastLine + 1,
+          );
 
         /* 23:3x · «цвет блока = регион»: внутри петли цвет живой, снаружи
            выключен. Новых цветов не вводим (канон Никиты). */

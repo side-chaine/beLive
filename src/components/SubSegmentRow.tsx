@@ -9,7 +9,7 @@ interface SubSegmentRowProps {
   /** BL-050-ui: римские метки I–IV (без глифов/цветов — решение владельца). */
   roman?: string[];
   /** BL-050-ui (У13): вес ширины ∝ времени; null → fallback на число строк. */
-  weights?: (number | null)[];
+  weights?: (number | null)[] | null;
   isActive: boolean;
   activeSubIdx: number;
   /** Блок целиком в петле — тогда у суб-блоков доступны кнопки +/−. */
