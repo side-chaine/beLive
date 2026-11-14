@@ -429,3 +429,81 @@ export function getActiveSubBlockIndex(
   }
   return 0;
 }
+
+// ═══════════════════════════════════════════════════
+// RULE D: КВАДРАТ = ПЕРИОДИЧЕСКИЙ ПОЕЗД ФРАЗОВЫХ ГРУПП
+// (Центр_43.1 В1; BL-050-lite: точный поезд БЕЗ wiring)
+// Квадрат = 2+ полных копии группы строк (g≥2); groupMatch требует
+// ПОЛНОГО совпадения ВСЕХ строк группы (PRIMARY = точное равенство).
+// Разрыв — ПОСЛЕ последней полной копии, хвост — отдельный подблок
+// (min-containment: квадрат не заглатывает хвост).
+// FALLBACK = computeBalancedSplit (нулевая регрессия по построению).
+// ═══════════════════════════════════════════════════
+
+export interface RuleDResult {
+  /** Разбиение на подблоки (как computeBalancedSplit), напр. [6,3]. */
+  split: number[];
+  /** Сработал ли точный поезд (иначе — FALLBACK). */
+  matched: boolean;
+  /** Размер группы g (0 если не matched). */
+  groupSize: number;
+  /** Число полных копий группы в квадрате. */
+  copies: number;
+}
+
+/**
+ * Точный поезд фразовых групп (rule D). Возвращает разбиение подблоков.
+ * Если точный поезд не найден — FALLBACK на computeBalancedSplit.
+ *
+ * Принцип: ищем наибольший g (≥2) такой, что первая группа строк
+ * [0..g-1] точно повторяется во 2-й копии [g..2g-1]; продолжаем поезд,
+ * пока копии подряд равны; хвост (после последней полной копии) —
+ * отдельный подблок.
+ *
+ * Примеры:
+ *   9 строк, 2 копии группы 3 + 3-строчный хвост → [6,3]  (I Disappear V1/V2)
+ *   без повтора g≥2 → FALLBACK computeBalancedSplit
+ */
+export function splitSquareRuleD(
+  lineIndices: number[],
+  lines: string[]
+): RuleDResult {
+  const n = lineIndices.length;
+  if (n < 6) {return { split: computeBalancedSplit(n), matched: false, groupSize: 0, copies: 0 };}
+
+  const texts = lineIndices.map((i) => normalizeText(lines[i] ?? ''));
+
+  // Наибольший g (≥2) с 2+ полными копиями и непустым хвостом-не-копией.
+  for (let g = Math.floor(n / 2); g >= 2; g--) {
+    if (2 * g > n) {continue;}
+
+    // 2 копии: [0..g-1] == [g..2g-1] (все строки группы равны).
+    let twoCopies = true;
+    for (let k = 0; k < g; k++) {
+      if (texts[k] !== texts[g + k]) {twoCopies = false; break;}
+    }
+    if (!twoCopies) {continue;}
+
+    // Продолжаем поезд: считаем полные копии подряд с тем же g.
+    let copies = 2;
+    while ((copies + 1) * g <= n) {
+      const base = copies * g;
+      let ok = true;
+      for (let k = 0; k < g; k++) {
+        if (texts[k] !== texts[base + k]) {ok = false; break;}
+      }
+      if (!ok) {break;}
+      copies++;
+    }
+
+    const square = copies * g;
+    const tail = n - square;
+    if (tail < 0) {continue;}
+
+    // min-containment: хвост — отдельный подблок (не заглатывается квадратом).
+    const split = tail === 0 ? Array(copies).fill(g) : [square, tail];
+    return { split, matched: true, groupSize: g, copies };
+  }
+
+  return { split: computeBalancedSplit(n), matched: false, groupSize: 0, copies: 0 };
+}
