@@ -240,6 +240,22 @@ function toRoman(units: number[]): string[] {
   return units.map((_, i) => ROMAN[i] ?? String(i + 1));
 }
 
+/**
+ * Валидность проекции logical→LRC.
+ *
+ * Единый предикат для движка (`mapUnitsToLrc`) И `LineLink` (§6 BL-049):
+ * границы начинаются с 0, строго возрастают, последняя граница = n.
+ * bounds — это массив границ (граничные LRC-индексы), длина = units+1.
+ */
+export function isValidLrcProjection(bounds: readonly number[], n: number): boolean {
+  if (bounds.length === 0) {return false;}
+  if (bounds[0] !== 0) {return false;}
+  for (let i = 1; i < bounds.length; i++) {
+    if (bounds[i] <= bounds[i - 1]) {return false;}
+  }
+  return bounds[bounds.length - 1] === n;
+}
+
 /** Логические юниты → LRC-юниты. null — маппинг невалиден (немонотонен/не покрывает). */
 function mapUnitsToLrc(
   units: readonly number[],
@@ -251,11 +267,7 @@ function mapUnitsToLrc(
   for (const u of units) {acc += u; bounds.push(acc);}
 
   const lrcBounds: number[] = bounds.map((x) => (x >= toLrc.length ? n : toLrc[x]));
-  if (lrcBounds[0] !== 0) {return null;}
-  for (let i = 1; i < lrcBounds.length; i++) {
-    if (lrcBounds[i] <= lrcBounds[i - 1]) {return null;}
-  }
-  if (lrcBounds[lrcBounds.length - 1] !== n) {return null;}
+  if (!isValidLrcProjection(lrcBounds, n)) {return null;}
 
   const out: number[] = [];
   for (let i = 1; i < lrcBounds.length; i++) {out.push(lrcBounds[i] - lrcBounds[i - 1]);}
@@ -287,7 +299,7 @@ function copyTimeRatio(
 }
 
 /** GIGO-гварды над финальными юнитами. Возвращает имя гварда или null. */
-function checkGuards(units: readonly number[], mode: SquareMode): string | null {
+export function checkGuards(units: readonly number[], mode: SquareMode): string | null {
   if (units.length > MAX_UNITS) {return 'roman-cap';}
   if (mode === 'exact-train' || mode === 'near-train' || mode === 'pair-exact-square') {
     if (units.length === 2 && units[1] >= TAIL_GIANT_RATIO * units[0]) {return 'tail-giant';}
