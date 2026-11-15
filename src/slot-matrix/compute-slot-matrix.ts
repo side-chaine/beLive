@@ -12,10 +12,10 @@ import {
 } from './slot-matrix.utils';
 import {
   getBlockFontSize,
-  createSubBlocks,
   getActiveSubBlockIndex,
 } from '../utils/block-utils';
 import { getCanonicalBlockColor } from '../structure/block-colors';
+import { subBlocksOf } from '../utils/subblocks';
 import { TextBlock } from '../stores/blocks.store';
 
 // ═══════════════════════════════════════════════════
@@ -56,7 +56,7 @@ export function computeSlotMatrix(params: ComputeSlotMatrixParams): SlotMatrix {
   } = params;
 
   // 1. Подблоки
-  const subBlocks = createSubBlocks(displayBlock.lineIndices, maxSubBlockLines, lines);
+  const subBlocks = subBlocksOf(displayBlock, lines, maxSubBlockLines);
 
   // 2. Активный подблок
   const activeSubBlockIndex = getActiveSubBlockIndex(

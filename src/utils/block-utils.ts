@@ -90,7 +90,7 @@ const PUNCTUATION_RE = /[^\p{L}\p{N}\s]/gu;
  * Очистка текста: нижний регистр + убрать пунктуацию + апострофы
  * "I don't know" → "i dont know"
  */
-function normalizeText(text: string): string {
+export function normalizeText(text: string): string {
   return text.toLowerCase().replace(/'/g, '').replace(PUNCTUATION_RE, '').trim();
 }
 
@@ -170,7 +170,7 @@ function getBaseBreakIndex(totalLines: number): number {
 /**
  * Числовое значение font size (для сравнения прыжков)
  */
-function getBlockFontSizeNumeric(lineCount: number): number {
+export function getBlockFontSizeNumeric(lineCount: number): number {
   if (lineCount <= 2) {return 3.2;}
   if (lineCount <= 4) {return 2.6;}
   if (lineCount <= 6) {return 2.0;}
@@ -309,7 +309,7 @@ export function detectEchoBreakPoint(
  *   14   → [4,5,5]      15 → [5,5,5]
  *   16+  → равномерно на 3 (макс 6)
  */
-function computeBalancedSplit(totalLines: number): number[] {
+export function computeBalancedSplit(totalLines: number): number[] {
   // 1-5: один подблок, не делим
   if (totalLines <= 5) {return [totalLines];}
 
@@ -370,15 +370,24 @@ function computeBalancedSplit(totalLines: number): number[] {
 export function createSubBlocks(
   lineIndices: number[],
   _maxLines: number = 6,
-  lines?: string[]
+  lines?: string[],
+  forcedSplit?: readonly number[]
 ): SubBlock[] {
   if (lineIndices.length === 0) {return [];}
 
+  // 0. Внешний сплиттер (BL-050-full): валидный по покрытию split
+  //    отменяет и balanced, и echo — он уже учёл near-θ/гварды.
+  const forced = forcedSplit && forcedSplit.length > 0 &&
+    forcedSplit.every((x) => x > 0) &&
+    forcedSplit.reduce((a, b) => a + b, 0) === lineIndices.length
+    ? [...forcedSplit]
+    : null;
+
   // 1. Базовое деление по принципу дополненного квадрата
-  let split = computeBalancedSplit(lineIndices.length);
+  let split = forced ?? computeBalancedSplit(lineIndices.length);
 
   // 2. Echo-detection: корректировка если есть текст и 2 подблока
-  if (lines && split.length === 2) {
+  if (!forced && lines && split.length === 2) {
     const echoBreak = detectEchoBreakPoint(lineIndices, lines);
     if (echoBreak !== null) {
       const totalLines = lineIndices.length;
@@ -428,4 +437,82 @@ export function getActiveSubBlockIndex(
     return subBlocks.length - 1;
   }
   return 0;
+}
+
+// ═══════════════════════════════════════════════════
+// RULE D: КВАДРАТ = ПЕРИОДИЧЕСКИЙ ПОЕЗД ФРАЗОВЫХ ГРУПП
+// (Центр_43.1 В1; BL-050-lite: точный поезд БЕЗ wiring)
+// Квадрат = 2+ полных копии группы строк (g≥2); groupMatch требует
+// ПОЛНОГО совпадения ВСЕХ строк группы (PRIMARY = точное равенство).
+// Разрыв — ПОСЛЕ последней полной копии, хвост — отдельный подблок
+// (min-containment: квадрат не заглатывает хвост).
+// FALLBACK = computeBalancedSplit (нулевая регрессия по построению).
+// ═══════════════════════════════════════════════════
+
+export interface RuleDResult {
+  /** Разбиение на подблоки (как computeBalancedSplit), напр. [6,3]. */
+  split: number[];
+  /** Сработал ли точный поезд (иначе — FALLBACK). */
+  matched: boolean;
+  /** Размер группы g (0 если не matched). */
+  groupSize: number;
+  /** Число полных копий группы в квадрате. */
+  copies: number;
+}
+
+/**
+ * Точный поезд фразовых групп (rule D). Возвращает разбиение подблоков.
+ * Если точный поезд не найден — FALLBACK на computeBalancedSplit.
+ *
+ * Принцип: ищем наибольший g (≥2) такой, что первая группа строк
+ * [0..g-1] точно повторяется во 2-й копии [g..2g-1]; продолжаем поезд,
+ * пока копии подряд равны; хвост (после последней полной копии) —
+ * отдельный подблок.
+ *
+ * Примеры:
+ *   9 строк, 2 копии группы 3 + 3-строчный хвост → [6,3]  (I Disappear V1/V2)
+ *   без повтора g≥2 → FALLBACK computeBalancedSplit
+ */
+export function splitSquareRuleD(
+  lineIndices: number[],
+  lines: string[]
+): RuleDResult {
+  const n = lineIndices.length;
+  if (n < 6) {return { split: computeBalancedSplit(n), matched: false, groupSize: 0, copies: 0 };}
+
+  const texts = lineIndices.map((i) => normalizeText(lines[i] ?? ''));
+
+  // Наибольший g (≥2) с 2+ полными копиями и непустым хвостом-не-копией.
+  for (let g = Math.floor(n / 2); g >= 2; g--) {
+    if (2 * g > n) {continue;}
+
+    // 2 копии: [0..g-1] == [g..2g-1] (все строки группы равны).
+    let twoCopies = true;
+    for (let k = 0; k < g; k++) {
+      if (texts[k] !== texts[g + k]) {twoCopies = false; break;}
+    }
+    if (!twoCopies) {continue;}
+
+    // Продолжаем поезд: считаем полные копии подряд с тем же g.
+    let copies = 2;
+    while ((copies + 1) * g <= n) {
+      const base = copies * g;
+      let ok = true;
+      for (let k = 0; k < g; k++) {
+        if (texts[k] !== texts[base + k]) {ok = false; break;}
+      }
+      if (!ok) {break;}
+      copies++;
+    }
+
+    const square = copies * g;
+    const tail = n - square;
+    if (tail < 0) {continue;}
+
+    // min-containment: хвост — отдельный подблок (не заглатывается квадратом).
+    const split = tail === 0 ? Array(copies).fill(g) : [square, tail];
+    return { split, matched: true, groupSize: g, copies };
+  }
+
+  return { split: computeBalancedSplit(n), matched: false, groupSize: 0, copies: 0 };
 }

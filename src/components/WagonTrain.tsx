@@ -2,7 +2,8 @@ import { useMemo, useRef, useEffect, useCallback, type CSSProperties } from 'rea
 import { useBlocksStore } from '../stores/blocks.store';
 import { useMarkersStore } from '../stores/markers.store';
 import { useLyricsStore } from '../stores/lyrics.store';
-import { createSubBlocks, getActiveBlock, getActiveSubBlockIndex } from '../utils/block-utils';
+import { getActiveBlock, getActiveSubBlockIndex } from '../utils/block-utils';
+import { subBlocksOf, createSubBlocksSmart, subBlockWeights } from '../utils/subblocks';
 import { getTransport } from '../audio/engine-v3';
 import { useLoopStore } from '../stores/loop.store';
 import { useDeckStore } from '../stores/deck.store';
@@ -32,6 +33,11 @@ export function WagonTrain() {
   const markers = useMarkersStore(s => s.markers);
   const activeLineIndex = useLyricsStore(s => s.activeLineIndex);
   const lines = useLyricsStore(s => s.lines);
+  /* BL-050-ui: сравнение вживую — ширина ∝ времени для ВСЕХ блоков с маркерами
+     (дефолт) или только для структурных квадратов (?wmode=square). */
+  const widthMode = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('wmode') === 'square'
+    ? 'square' : 'all';
   const rootRef = useRef<HTMLDivElement>(null);
   const loopBlockIds = useLoopStore(s => s.loopBlockIds);
   const loopSubBlockKeys = useLoopStore(s => s.loopSubBlockKeys);
@@ -56,7 +62,7 @@ export function WagonTrain() {
   const subStarts = useMemo(() => {
     const out: number[] = [];
     for (const b of blocks) {
-      const subs = createSubBlocks(b.lineIndices, MAX_SUB_BLOCK_LINES, lines);
+      const subs = subBlocksOf(b, lines, MAX_SUB_BLOCK_LINES);
       for (let i = 1; i < subs.length; i++) {
         const first = subs[i].lineIndices[0];
         if (typeof first === 'number') out.push(first);
@@ -171,12 +177,12 @@ export function WagonTrain() {
     if (fi > 0) set.add(`${fb}:${fi - 1}`);
     else if (fBi > 0) {
       const pb = blocks[fBi - 1];
-      const subs = createSubBlocks(pb.lineIndices, MAX_SUB_BLOCK_LINES, lines);
+      const subs = subBlocksOf(pb, lines, MAX_SUB_BLOCK_LINES);
       set.add(`${pb.id}:${subs.length - 1}`);
     }
     if (lBi >= 0) {
       const lbBlock = blocks[lBi];
-      const subs = createSubBlocks(lbBlock.lineIndices, MAX_SUB_BLOCK_LINES, lines);
+      const subs = subBlocksOf(lbBlock, lines, MAX_SUB_BLOCK_LINES);
       if (li < subs.length - 1) set.add(`${lb}:${li + 1}`);
       else if (lBi < blocks.length - 1) set.add(`${blocks[lBi + 1].id}:0`);
     }
@@ -304,10 +310,22 @@ export function WagonTrain() {
            считал их заново и сам решал, рисоваться или нет; вагон при этом не
            знал, есть ли у него тело. Теперь источник truth здесь: hasSubs
            управляет центрированием имени, subBlocks уходит в ряд готовым. */
-        const subBlocks = createSubBlocks(block.lineIndices, MAX_SUB_BLOCK_LINES, lines);
+        const { blocks: subBlocks, result: square } =
+          createSubBlocksSmart(block, lines, MAX_SUB_BLOCK_LINES);
         const hasSubs = subBlocks.length > 1;
         const firstLine = block.lineIndices[0];
         const lastLine = block.lineIndices[block.lineIndices.length - 1];
+
+        /* BL-050-ui (У13): ширина пилюли ∝ ВРЕМЕНИ, не строкам. Время подблока =
+           от его первой строки до первой строки следующего (у последнего — до
+           строки после блока). Нет маркеров → null → fallback на число строк. */
+        const subWeights = widthMode === 'square' && square.mode === 'fallback'
+          ? null
+          : subBlockWeights(
+            subBlocks,
+            (li) => markers.find(m => m.lineIndex === li)?.time,
+            lastLine + 1,
+          );
 
         /* 23:3x · «цвет блока = регион»: внутри петли цвет живой, снаружи
            выключен. Новых цветов не вводим (канон Никиты). */
@@ -429,6 +447,8 @@ export function WagonTrain() {
             <SubSegmentRow
               block={block}
               subBlocks={subBlocks}
+              roman={square.roman}
+              weights={subWeights}
               isActive={isActive}
               activeSubIdx={activeSubIdx}
               inLoopBlock={loopBlockIds.includes(block.id)}

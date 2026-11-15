@@ -17,7 +17,7 @@ import { updateTrackField } from '../services/idb.service';
 import type { CoverArtTheme } from '../types/cover-theme.types';
 import { getScenesCountForTrack } from '../services/idb.service';
 import { MAX_BG_PER_TRACK } from '../utils/storage-quota';
-import { createSubBlocks } from '../utils/block-utils';
+import { subBlocksOf } from '../utils/subblocks';
 import { MAX_SUB_BLOCK_LINES } from '../slot-matrix/slot-matrix.utils';
 import styles from './BlockScenesModal.module.css';
 
@@ -261,7 +261,7 @@ const [packProgress, setPackProgress] = useState<{ current: number; total: numbe
     // Собрать все пустые ячейки в порядке чтения (блоки по порядку, строки внутри)
     const emptyCells: { blockIndex: number; lineIndex: number }[] = [];
     for (const block of blocks) {
-      const subBlocks = createSubBlocks(block.lineIndices, MAX_SUB_BLOCK_LINES, lyricsLines);
+      const subBlocks = subBlocksOf(block, lyricsLines, MAX_SUB_BLOCK_LINES);
       let subOffset = 0;
       for (const sub of subBlocks) {
         for (let i = 0; i < sub.lineIndices.length; i++) {
@@ -346,7 +346,7 @@ const [packProgress, setPackProgress] = useState<{ current: number; total: numbe
                   const blockColor = getBlockColor(block.type);
 
                   // Sub-blocks like TrackMap
-                  const subBlocks = createSubBlocks(block.lineIndices, MAX_SUB_BLOCK_LINES, lyricsLines);
+                  const subBlocks = subBlocksOf(block, lyricsLines, MAX_SUB_BLOCK_LINES);
 
                   return (
                     <div

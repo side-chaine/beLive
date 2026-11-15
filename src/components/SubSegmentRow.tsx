@@ -6,6 +6,10 @@ interface SubSegmentRowProps {
   block: TextBlock;
   /** 708 / 22.1x: готовый массив из WagonTrain — один расчёт на вагон. */
   subBlocks: SubBlock[];
+  /** BL-050-ui: римские метки I–IV (без глифов/цветов — решение владельца). */
+  roman?: string[];
+  /** BL-050-ui (У13): вес ширины ∝ времени; null → fallback на число строк. */
+  weights?: (number | null)[] | null;
   isActive: boolean;
   activeSubIdx: number;
   /** Блок целиком в петле — тогда у суб-блоков доступны кнопки +/−. */
@@ -33,6 +37,8 @@ interface SubSegmentRowProps {
 export function SubSegmentRow({
   block,
   subBlocks,
+  roman,
+  weights,
   isActive,
   activeSubIdx,
   inLoopBlock,
@@ -45,6 +51,10 @@ export function SubSegmentRow({
 }: SubSegmentRowProps) {
   if (subBlocks.length <= 1) return null;
 
+  // Ширина ∝ времени — только если ВСЕ веса известны (иначе смешаем единицы).
+  const byTime = !!weights && weights.length === subBlocks.length &&
+    weights.every((w) => w != null && w > 0);
+
   return (
     <div className={styles.subSegments}>
       {subBlocks.map((sub, si) => {
@@ -55,11 +65,12 @@ export function SubSegmentRow({
         // середина не удаляется — стор сам откажет. «+» — только на соседях.
         const showMinus = inSubLoop && (key === firstSubKey || key === lastSubKey);
         const showPlus = !inSubLoop && adjacentSubKeys.has(key);
+        const flex = byTime ? weights![si]! : sub.lineIndices.length;
         return (
           <div
             key={sub.id}
             className={styles.subSegmentWrapper}
-            style={{ flex: sub.lineIndices.length }}
+            style={{ flex }}
           >
             <div
               className={styles.subSegment}
@@ -72,7 +83,13 @@ export function SubSegmentRow({
                 e.stopPropagation();
                 onSubClick(block, sub.lineIndices[0]);
               }}
-            />
+            >
+              {roman?.[si] && (
+                <span className={styles.subSegmentRoman} aria-hidden="true">
+                  {roman[si]}
+                </span>
+              )}
+            </div>
             {inLoopBlock && (showMinus || showPlus) && (
               <span
                 role="button"

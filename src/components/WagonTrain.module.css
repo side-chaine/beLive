@@ -907,6 +907,27 @@
   border-color: rgba(255, 255, 255, 0.34);
 }
 
+/* BL-050-ui: римские I–IV. ТОЛЬКО текст — без глифов и цветовой символики
+   ролей (решение владельца 2026-11-14). Римские не смешиваются с арабскими
+   индексами блоков: Verse 2 ≠ подблок II. */
+.subSegmentRoman {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+  user-select: none;
+}
+
+.subSegment[data-sub-active="true"] .subSegmentRoman {
+  color: rgba(255, 255, 255, 0.85);
+}
+
 /* 708: карточка теперь на всю высоту — клик-зона = сама карточка. */
 .subSegment::before {
   content: '';

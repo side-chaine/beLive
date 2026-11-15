@@ -1,6 +1,8 @@
 {
-  "version": 8,
-  "updated": "2026-09-18",
+  "version": 9,
+  "updated": "2026-11-14",
+  "branch": "806/bl-048-050",
+  "head": "4579868",
   "bricks": [
     {
       "id": "R-1",
@@ -280,6 +282,78 @@
       "status": "dropped",
       "due": "T3",
       "trigger": "do.ts:33 429"
+    },
+    {
+      "id": "B49-1",
+      "title": "isValidLrcProjection — общий предикат (F)",
+      "desc": "NEW exported predicate (bounds[0]===0 && строго возрастает && last===n). Используется mapUnitsToLrc И LineLink. CONF/frozen не трогаем.",
+      "owner": "c36-impl",
+      "status": "planned",
+      "due": "T0",
+      "trigger": "BL-049 v2"
+    },
+    {
+      "id": "B49-2",
+      "title": "bl049-router: роутинг + effConf (B)",
+      "desc": "NEW bl049-router.ts. Таблица §2. effConf=result.conf КАК ЕСТЬ (бамп внутри square-full.ts:359); anaphora форсирует 0.55 без бампа. Пороги CONF.anaphora(0.55)/CONF.rondo(0.65).",
+      "owner": "c36-impl",
+      "status": "planned",
+      "due": "T0",
+      "trigger": "BL-049 v2"
+    },
+    {
+      "id": "B49-AD",
+      "title": "Патч A — S19 REJECT (мёртвый код)",
+      "desc": "Удалить концепт 'S19' (не square-mode; только frozen-guard label scripts/check-frozen-guard.sh:354). fallback||effConf<0.55⇒human уже покрывает. NO-OP в коде.",
+      "owner": "001",
+      "status": "done",
+      "due": "2026-11-14",
+      "trigger": "002-A"
+    },
+    {
+      "id": "B49-3",
+      "title": "dual-oracle через sendWithProvider (C)",
+      "desc": "НЕ 3-й ИИ. Согласие=точн. units ИЛИ одна семья архетипов; явный предикат валидности (без 0.6). Арбитр=checkGuards+isValidLrcProjection. sendWithProvider: НЕстриминг structured, обходит single-flight (generation++), парсуемые units. send() нетронут.",
+      "owner": "ai-coach-impl",
+      "status": "planned",
+      "due": "T1",
+      "trigger": "BL-049 v2"
+    },
+    {
+      "id": "B49-4",
+      "title": "learned-splits runtime-артефакт (E)",
+      "desc": "NEW learned-splits.ts. .gitignore, НЕ коммит. shape: patternKey,units,mode,conf,tRatio,guard,sourceHash (БЕЗ raw text). keep-last-N+ротация; dedup по patternKey+counter++. learningDisabled (forced off в тестах). TTL/version+kill-switch. После подстановки ОБЯЗАТЕЛЬНО checkGuards+isValidLrcProjection→нарушение⇒обычный train. Первое=human, повтор=auto (min-obs), не выше AI на первом learn.",
+      "owner": "operator",
+      "status": "planned",
+      "due": "T1",
+      "trigger": "BL-049 v2"
+    },
+    {
+      "id": "B49-5",
+      "title": "LineLink consumes isValidLrcProjection (F)",
+      "desc": "NEW src/sync/word-sync/line-link.ts. При невалидности помечает линк INVALID, НЕ эмитит bounds. Делит предикат с движком.",
+      "owner": "sync-impl",
+      "status": "planned",
+      "due": "T0",
+      "trigger": "BL-049 v2"
+    },
+    {
+      "id": "B49-6",
+      "title": "research-backlog как runtime-артефакт (D)",
+      "desc": "REJECT 'JSONL в репо с сырым текстом'. ACCEPT runtime: .gitignore, структура только (patternKey,units,mode,conf,tRatio,guard,source-hash — БЕЗ raw text), keep-last-N/ротация, dedup по patternKey+counter++.",
+      "owner": "operator",
+      "status": "planned",
+      "due": "T1",
+      "trigger": "BL-049 v2"
+    },
+    {
+      "id": "B49-7",
+      "title": "Тестовые ячейки 002",
+      "desc": "NEW bl049.test.ts: (1) dual-oracle оба ошиблись⇒HUMAN; (2) learned lock-in⇒human-override; + S19 removed (no-op); + тир-роутинг; + isValidLrcProjection shared. learningDisabled=true в тестах.",
+      "owner": "c36-impl",
+      "status": "planned",
+      "due": "T1",
+      "trigger": "BL-049 v2"
     }
   ]
 }

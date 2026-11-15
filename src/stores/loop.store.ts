@@ -4,7 +4,7 @@ import { useBlocksStore } from './blocks.store';
 import { useLyricsStore } from './lyrics.store';
 import type { TextBlock } from './blocks.store';
 import { getBlockTimeRange } from '../utils/block-time-range';
-import { createSubBlocks } from '../utils/block-utils';
+import { subBlocksOf } from '../utils/subblocks';
 import { MAX_SUB_BLOCK_LINES } from '../slot-matrix/slot-matrix.utils';
 
 // v2 (рефактор, 07.11): канонический набор sub-ключей — единственная правда
@@ -68,7 +68,7 @@ function recalculateFromSubBlockKeys(keys: string[]) {
   const loopBlocks = allBlocks.filter(b => blockIds.includes(b.id));
   const allLineIndices: number[] = [];
   for (const b of loopBlocks) {
-    const subBlocks = createSubBlocks(b.lineIndices, MAX_SUB, lines);
+    const subBlocks = subBlocksOf(b, lines, MAX_SUB);
     for (const key of keys) {
       const [bId, sIdx] = [key.split(':')[0], parseInt(key.split(':')[1])];
       if (bId === b.id && subBlocks[sIdx]) {
@@ -111,7 +111,7 @@ function isSubBlockAdjacent(key: string, existingKeys: string[]): boolean {
         const prevBlock = allBlocks.find(b => b.id === prevBlockId);
         const nextBlock = allBlocks.find(b => b.id === nextBlockId);
         if (!prevBlock || !nextBlock) continue;
-        const prevSubs = createSubBlocks(prevBlock.lineIndices, MAX_SUB, lines);
+        const prevSubs = subBlocksOf(prevBlock, lines, MAX_SUB);
         if (prevSubIdx === prevSubs.length - 1 && nextSubIdx === 0) return true;
       }
     }
@@ -157,7 +157,7 @@ export const useLoopStore = create<LoopState>((set, get) => ({
     const allBlocks = useBlocksStore.getState().blocks;
     const lines = useLyricsStore.getState().lines;
     const isSelected = loopBlockIds.includes(block.id);
-    const subBlocks = createSubBlocks(block.lineIndices, MAX_SUB, lines);
+    const subBlocks = subBlocksOf(block, lines, MAX_SUB);
     const blockSubKeys = subBlocks.map((_, si) => `${block.id}:${si}`);
     if (isSelected) {
       const sortedBlockIds = [...new Set(loopSubBlockKeys.map(k => k.split(':')[0]))];
@@ -190,7 +190,7 @@ export const useLoopStore = create<LoopState>((set, get) => ({
     const lines = useLyricsStore.getState().lines;
     const range = getBlockTimeRange(block, markers);
     if (!range) return;
-    const subBlocks = createSubBlocks(block.lineIndices, MAX_SUB, lines);
+    const subBlocks = subBlocksOf(block, lines, MAX_SUB);
     const newKeys = subBlocks.map((_, si) => `${block.id}:${si}`);
     set({
       isLooping: true,
@@ -208,7 +208,7 @@ export const useLoopStore = create<LoopState>((set, get) => ({
     const lines = useLyricsStore.getState().lines;
     const range = getBlockTimeRange(block, markers);
     if (!range) return;
-    const subBlocks = createSubBlocks(block.lineIndices, MAX_SUB, lines);
+    const subBlocks = subBlocksOf(block, lines, MAX_SUB);
     const newKeys = subBlocks.map((_, si) => `${block.id}:${si}`);
     set({
       isLooping: true,
@@ -228,7 +228,7 @@ export const useLoopStore = create<LoopState>((set, get) => ({
     const lines = useLyricsStore.getState().lines;
     const newSubBlockKeys: string[] = [];
     for (const b of allBlocks) {
-      const subBlocks = createSubBlocks(b.lineIndices, MAX_SUB, lines);
+      const subBlocks = subBlocksOf(b, lines, MAX_SUB);
       for (let si = 0; si < subBlocks.length; si++) {
         const sub = subBlocks[si];
         const hasOverlap = sub.lineIndices.some(li => li >= startLine && li <= endLine);

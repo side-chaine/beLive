@@ -12,10 +12,10 @@ import {
 } from './slot-matrix.utils';
 import {
   getBlockFontSize,
-  createSubBlocks,
   getActiveSubBlockIndex,
 } from '../utils/block-utils';
 import { getCanonicalBlockColor } from '../structure/block-colors';
+import { subBlocksOf } from '../utils/subblocks';
 
 // ═══════════════════════════════════════
 // PARAMS
@@ -60,7 +60,7 @@ export function computeSlotGroups(params: ComputeSlotGroupsParams): SlotGroup[] 
   } = params;
 
   // 1. Подблоки (логическое разбиение)
-  const subBlocks = createSubBlocks(displayBlock.lineIndices, maxSubBlockLines, lines);
+  const subBlocks = subBlocksOf(displayBlock, lines, maxSubBlockLines);
   
   // 2. Активный подблок
   const activeSubBlockIndex = getActiveSubBlockIndex(

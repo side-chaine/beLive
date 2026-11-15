@@ -10,7 +10,7 @@
  * блокировкой композера, но сервис обязан быть безопасным сам по себе.
  */
 
-import { AIError, type AIProvider, type ChatRequest } from '../../js/ai/types';
+import { AIError, type AIProvider, type ChatRequest, type Message } from '../../js/ai/types';
 import { GatewayProvider } from '../../js/ai/providers/gateway-provider';
 import { BeliveProvider } from '../../js/ai/providers/belive.provider';
 import { OpenRouterDirectProvider } from '../../js/ai/providers/openrouter-direct.provider';
@@ -30,6 +30,25 @@ interface Candidate {
 }
 
 type AttemptResult = 'ok' | 'aborted' | AIError;
+
+/** Результат structured-вызова dual-oracle: распарсенные юниты + сырой текст. */
+export interface StructuredUnits {
+  units: number[];
+  raw: string;
+}
+
+/**
+ * Извлечь первый массив положительных целых из текста провайдера.
+ * Допускает обёртки (JSON/пояснения) вокруг `[6,3]`. Пусто → [].
+ */
+export function parseUnits(text: string): number[] {
+  const match = text.match(/\[([^\]]*)\]/);
+  if (!match) {return [];}
+  return match[1]
+    .split(/[,\s]+/)
+    .map((s) => Number.parseInt(s, 10))
+    .filter((x) => Number.isInteger(x) && x > 0);
+}
 
 const AI_SETTINGS_KEY = 'belive:ai-settings';
 
@@ -109,6 +128,39 @@ export class AiCoachService {
     this.active?.stop?.();
     this.active = null;
     this.running = false;
+  }
+
+  /**
+   * НЕстриминговый structured-вызов к КОНКРЕТНОМУ провайдеру (dual-oracle BL-049).
+   *
+   * ОБХОДИТ single-flight (`this.generation++`): не трогает `running`/`active`/
+   * `pendingAbort`, поэтому параллельный стрим `send()` не отменяет его и не
+   * гасит по finally. `send()` остаётся нетронутым.
+   *
+   * Возвращает парсуемые `units` из ответа провайдера.
+   */
+  async sendWithProvider(
+    provider: AIProvider,
+    messages: Message[],
+    model?: string,
+  ): Promise<StructuredUnits> {
+    // Обход single-flight: отцепляемся от любого стрим-поколения.
+    this.generation++;
+
+    const request: ChatRequest = {
+      model: model ?? provider.models[0]?.id ?? '',
+      messages,
+      stream: false,
+      temperature: 0,
+      maxTokens: 200,
+      injectOperator: false,
+    };
+
+    const fullText = await provider.sendChat(request);
+    if (typeof fullText !== 'string') {
+      throw new AIError('AI_COACH_STRUCTURED_EMPTY', 'Провайдер не вернул текст (structured).');
+    }
+    return { units: parseUnits(fullText), raw: fullText };
   }
 
   private candidates(): Candidate[] {

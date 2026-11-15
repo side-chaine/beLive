@@ -3,7 +3,8 @@ import type { SlotMatrix, SubBlockRange, SlotGroup } from './slot-matrix.types';
 import { computeSlotMatrix } from './compute-slot-matrix';
 import './slot-matrix.utils';
 import { MAX_SUB_BLOCK_LINES } from './slot-matrix.utils';
-import { getActiveBlock, createSubBlocks, getBlockFontSize } from '../utils/block-utils';
+import { getActiveBlock, getBlockFontSize } from '../utils/block-utils';
+import { subBlocksOf } from '../utils/subblocks';
 import { getCanonicalBlockColor } from '../structure/block-colors';
 import { useLyricsStore } from '../stores/lyrics.store';
 import { useBlocksStore } from '../stores/blocks.store';
@@ -59,7 +60,7 @@ export function useSlotMatrix(): {
   // Активный подблок — зависит от activeLineIndex
   const activeSubBlockIndex = useMemo(() => {
     if (!displayBlock) {return 0;}
-    const subs = createSubBlocks(displayBlock.lineIndices, MAX_SUB_BLOCK_LINES, lines);
+    const subs = subBlocksOf(displayBlock, lines, MAX_SUB_BLOCK_LINES);
     for (let i = 0; i < subs.length; i++) {
       if (subs[i].lineIndices.includes(activeLineIndex)) {return i;}
     }

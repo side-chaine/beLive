@@ -11,6 +11,10 @@ export interface TextBlock {
   name: string
   type: string          // verse|chorus|bridge|prechorus|intro|outro|unknown
   lineIndices: number[] // indices into lyrics[] array (fragile! future: lineId)
+  /** BL-050-full (К1): логический (Genius) слой — если сервис его пробросил. */
+  logicalLines?: string[]
+  /** logical index → локальный индекс в lineIndices (строго возрастает). */
+  logicalToLrc?: number[]
 }
 
 interface BlocksState {
