@@ -31,6 +31,13 @@
     { "member": "src/blocks/c36/parse.ts", "class": "H-1c", "reason": "достижимы только из тестов (net-new Ц36 M-модель, прод-путь не тронут по спеке rev.3)", "owner": "007", "until": "подключение Ц36 к прод-графу" },
     { "member": "src/blocks/c36/apply.ts", "class": "H-1c", "reason": "Ц36 подключён к прод-графу (t72 wiring), reach-скрипт не резолвит .js→.ts цепочку — hold до фикса резолвера", "owner": "007", "until": "BL-042 remainder: reach resolution / снятие hold" },
     { "member": "src/blocks/c36/attribution.ts", "class": "H-1c", "reason": "Ц36 подключён к прод-графу (t72 wiring), reach-скрипт не резолвит .js→.ts цепочку — hold до фикса резолвера", "owner": "007", "until": "BL-042 remainder: reach resolution / снятие hold" },
-    { "member": "src/blocks/c36/wiring.ts", "class": "H-1c", "reason": "Ц36 подключён к прод-графу (t72 wiring), reach-скрипт не резолвит .js→.ts цепочку — hold до фикса резолвера", "owner": "007", "until": "BL-042 remainder: reach resolution / снятие hold" }
+    { "member": "src/blocks/c36/wiring.ts", "class": "H-1c", "reason": "Ц36 подключён к прод-графу (t72 wiring), reach-скрипт не резолвит .js→.ts цепочку — hold до фикса резолвера", "owner": "007", "until": "BL-042 remainder: reach resolution / снятие hold" },
+    { "member": "src/blocks/c36/bl049-router.ts", "class": "H-1c", "reason": "net-new BL-049, достижим только из тестов / не подключён к прод-графу", "owner": "007", "until": "подключение BL-049 к прод-графу" },
+    { "member": "src/blocks/c36/learned-splits.ts", "class": "H-1c", "reason": "net-new BL-049, достижим только из тестов / не подключён к прод-графу", "owner": "007", "until": "подключение BL-049 к прод-графу" },
+    { "member": "src/sync/word-sync/line-link.ts", "class": "H-1c", "reason": "net-new BL-049 (word-sync layer), достижим только из тестов", "owner": "007", "until": "подключение BL-049 к прод-графу" },
+    { "member": "src/blocks/c36/corpus/square-corpus.ts", "class": "H-1c", "reason": "standalone corpus lib (tsx CLI), не в app-графе", "owner": "007", "until": "BL-048/050 corpus tooling" },
+    { "member": "src/blocks/c36/corpus/near-calibration.ts", "class": "H-1c", "reason": "standalone corpus CLI (tsx), не в app-графе", "owner": "007", "until": "BL-048/050 corpus tooling" },
+    { "member": "src/blocks/c36/corpus/run-corpus.ts", "class": "H-1c", "reason": "standalone corpus CLI (tsx), не в app-графе", "owner": "007", "until": "BL-048/050 corpus tooling" },
+    { "member": "src/blocks/c36/corpus/run-near-theta.ts", "class": "H-1c", "reason": "standalone corpus CLI (tsx), не в app-графе", "owner": "007", "until": "BL-048/050 corpus tooling" }
   ]
 }

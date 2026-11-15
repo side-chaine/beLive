@@ -17,7 +17,6 @@ import {
   fetchTrackLrc,
   collectSquareStats,
   summarizeWindows,
-  memoryCache,
   type CacheStore,
   type CorpusStats,
   type TrackSpec,
