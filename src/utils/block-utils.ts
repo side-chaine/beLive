@@ -1,4 +1,5 @@
 import type { TextBlock } from '../stores/blocks.store';
+import { subBlocksOf } from './subblocks';
 
 /** Find block containing given line index */
 export function getActiveBlock(
@@ -424,7 +425,7 @@ export function getActiveSubBlockIndex(
   lines?: string[]
 ): number {
   if (activeLineIndex < 0 || !block.lineIndices.length) {return 0;}
-  const subBlocks = createSubBlocks(block.lineIndices, maxLines, lines);
+  const subBlocks = subBlocksOf(block, lines ?? [], maxLines);
 
   for (let i = 0; i < subBlocks.length; i++) {
     if (subBlocks[i].lineIndices.includes(activeLineIndex)) {
