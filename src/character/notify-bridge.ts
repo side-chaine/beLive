@@ -1,7 +1,6 @@
 import { registerInit } from '../foundation/registry/initRegistry';
 import { useNotifyStore } from '../stores/notify.store';
 import { emitReportArrived } from './notify-emit';
-import inboxVirtual from '../../team-m/INBOX.md?raw';
 
 const POLL_MS = 1500;
 const inboxUrl = `${import.meta.env.BASE_URL}team-m/INBOX.md`;
@@ -27,7 +26,8 @@ async function pollInbox(): Promise<void> {
     if (!res.ok) {throw new Error(`inbox ${res.status}`);}
     apply(await res.text());
   } catch {
-    apply(inboxVirtual);
+    // INBOX — внутренний документ, не попадает в публичный бандл.
+    // Fallback-контент удалён (A6): при недоступности просто ждём следующего poll.
   }
 }
 
