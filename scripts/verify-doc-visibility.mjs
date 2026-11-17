@@ -12,7 +12,10 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const censusPath = join(root, 'team-m', 'DOC-CENSUS.yaml');
-if (!existsSync(censusPath)) { console.error('G-3b: DOC-CENSUS.yaml отсутствует (R-1.0)'); process.exit(1); }
+// A6: team-m/ untracked из публичного репо. DOC-CENSUS.yaml — приватный артефакт
+// переписи (живёт в архиве), в чистом клоне его нет по дизайну. Граница
+// публичности проверяется ниже по PRIVATE_ZONES/gitignore, а не наличием census.
+if (!existsSync(censusPath)) { console.log('G-3b: DOC-CENSUS.yaml не в репо (A6 untrack) — проверка по PRIVATE_ZONES'); }
 
 // Private zones per .gitignore (Д-15, verified line-by-line by CEO_1 15:36)
 const PRIVATE_ZONES = ['docs/archive/', 'docs/sync/', 'docs/agents/', 'docs/agents-hub/', 'vault/'];
