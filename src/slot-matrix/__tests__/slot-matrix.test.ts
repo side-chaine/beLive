@@ -358,7 +358,7 @@ describe('computeSlotMatrix', () => {
     expect(matrix.activeSlotIndex).toBe(2);
   });
 
-  test('activeSlotIndex defaults to 0 for invalid line', () => {
+  test('activeSlotIndex defaults to -1 for invalid line', () => {
     const matrix = computeSlotMatrix({
       displayBlock: mockBlock,
       activeLineIndex: -1,
@@ -366,7 +366,29 @@ describe('computeSlotMatrix', () => {
       fontScale: 1.0,
     });
 
-    expect(matrix.activeSlotIndex).toBe(0);
+    expect(matrix.activeSlotIndex).toBe(-1);
+  });
+
+  // REGRESSION: активная строка лежит В ДРУГОМ подблоке, но мок
+  // getActiveSubBlockIndex держит видимым подблок [0]. Раньше
+  // Math.max(0, indexOf) подсвечивал строку [0] (ложная подсветка).
+  test('active line outside visible sub-block → activeSlotIndex is -1 (no fallback to slot 0)', () => {
+    const block = {
+      id: 'block-x',
+      name: 'Block X',
+      type: 'verse',
+      lineIndices: [0, 1, 2, 3, 4, 5, 6, 7],
+    };
+    const lines = Array.from({ length: 8 }, (_, i) => `line ${i}`);
+    const matrix = computeSlotMatrix({
+      displayBlock: block,
+      activeLineIndex: 7, // не входит в видимый подблок [0..5]
+      lines,
+      fontScale: 1.0,
+      maxSubBlockLines: 6,
+    });
+
+    expect(matrix.activeSlotIndex).toBe(-1);
   });
 
   test('creates preview slot with next block data', () => {

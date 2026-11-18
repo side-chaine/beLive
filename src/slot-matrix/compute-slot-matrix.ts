@@ -107,7 +107,7 @@ export function computeSlotMatrix(params: ComputeSlotMatrixParams): SlotMatrix {
   });
 
   // 6. Активный слот
-  const activeSlotIndex = Math.max(0, visibleLineIndices.indexOf(activeLineIndex));
+  const activeSlotIndex = Math.max(-1, visibleLineIndices.indexOf(activeLineIndex));
 
   // 7. ПС слот — два уровня:
   //    Уровень 1: подблок → подблок (тот же блок, цвет блока)
