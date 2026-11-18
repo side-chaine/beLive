@@ -1,12 +1,19 @@
 #!/usr/bin/env node
 // scripts/gen-doc-index.mjs — R-3: индекс доков генерится из DOC-CENSUS.yaml (не руками).
 // Спека: DOCS-EXECUTION Опуса → маршрут CEO_1 шаг-5. Приёмка: grep 'docs/sync' docs/INDEX.md = 0.
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
-const census = readFileSync(join(root, 'team-m', 'DOC-CENSUS.yaml'), 'utf8');
+const censusPath = join(root, 'team-m', 'DOC-CENSUS.yaml');
+// A6: team-m/ untracked. Приватный census лежит в архиве (beLive-bridge/private-archive),
+// в чистом клоне его нет — не перезаписываем INDEX.md пустым, выходим с понятным сообщением.
+if (!existsSync(censusPath)) {
+  console.log('gen:docindex: DOC-CENSUS.yaml отсутствует (A6 untrack) — индекс не перегенерирован, сохранён существующий');
+  process.exit(0);
+}
+const census = readFileSync(censusPath, 'utf8');
 
 // Парс records (path/state/visibility) — лёгкий строковый парс (yaml-блок простой)
 const records = [];
