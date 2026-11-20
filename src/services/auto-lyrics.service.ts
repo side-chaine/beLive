@@ -1785,6 +1785,39 @@ export function markAutoSyncApplied(trackId: number): void {
   _autoSyncedTrackId = trackId;
 }
 
+/**
+ * HOTFIX (2026-11-20, auto-apply-at-load): подтянуть lrclib для трека,
+ * у которого нет своего текста/блоков, чтобы не было «играет, но пусто».
+ *
+ * Чистая обёртка над waitForCache с guard'ами — вынесена сюда из loadTrack,
+ * чтобы тестировать моком без тяжёлого IDB/window-окружения загрузчика.
+ *
+ * Guard'ы (НЕ перезаписывать то, что пришло из IDB):
+ *  - hasOwnBlocks: при track.blocksData > 0 путь loadImportedBlocks не меняется;
+ *    это также предохраняет от маскировки под-гипотезы 3b (лирика в IDB есть,
+ *    но blocks-events не подтянул) — туда мы не лезем.
+ *  - hasOwnLyrics: если свой текст уже есть, lrclib не навязывается.
+ */
+export interface AutoApplyLrcTarget {
+  reloadLyrics: (text: string, duration: number, shouldRender?: boolean) => void | Promise<void>;
+}
+
+export async function autoApplyLrcAtLoad(
+  ld: AutoApplyLrcTarget | null | undefined,
+  title: string,
+  duration: number,
+  hasOwnLyrics: boolean,
+  hasOwnBlocks: boolean,
+  timeoutMs: number = 3000,
+  cacheLookup: (t: string, ms: number) => Promise<LrcResult | null> = waitForCache,
+): Promise<boolean> {
+  if (!ld || !title || hasOwnLyrics || hasOwnBlocks) {return false;}
+  const lrc = await cacheLookup(title, timeoutMs);
+  if (!lrc?.rawSynced) {return false;}
+  await ld.reloadLyrics(lrc.rawSynced, duration, false);
+  return true;
+}
+
 export function shouldSkipEditorsForTrack(trackId: number): boolean {
   if (_autoSyncedTrackId === trackId) {
     _autoSyncedTrackId = null; // сбрасываем после первого использования
