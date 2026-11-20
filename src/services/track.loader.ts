@@ -11,6 +11,7 @@ import type { StemDataEntry } from './idb.service';
 import { getTrack as getTrackFromIDB } from './idb.service';
 import { useStemStore } from '../stem/stem.store';
 import { ENGINE_MODE } from '../engine-mode';
+import { autoApplyLrcAtLoad } from './auto-lyrics.service';
 
 export interface LoadTrackOptions {
   autoplay?: boolean;
@@ -114,6 +115,21 @@ export async function loadTrack(index: number, opts: LoadTrackOptions = {}): Pro
       await ld.loadImportedBlocks(track.blocksData, lyrics, false);
     } else if (ld) {
       await ld.reloadLyrics(lyrics, track.duration, false);
+    }
+
+    // HOTFIX (2026-11-20, auto-apply-at-load): трек без своего текста/блоков
+    // («играет, но пусто») подтягивает уже подогретый prefetch'ом lrclib.
+    // Guard-ы внутри autoApplyLrcAtLoad: при track.blocksData > 0 или своем
+    // тексте путь НЕ меняется — 3b (IDB-лирика есть, blocks-events не подтянул)
+    // этим фиксом не маскируется.
+    const hasOwnText = typeof lyrics === 'string' && lyrics.trim().length > 3;
+    const hasOwnBlocks = (track.blocksData?.length ?? 0) > 0;
+    const applied = await autoApplyLrcAtLoad(
+      ld, track.title || '', track.duration,
+      hasOwnText, hasOwnBlocks, 3000,
+    );
+    if (applied && import.meta.env.DEV) {
+      console.log('[AutoLyrics] auto-applied lrclib at load for', track.title);
     }
     _mark('Step 8: Load lyrics');
 
