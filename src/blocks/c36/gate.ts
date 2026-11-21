@@ -12,7 +12,7 @@
 
 import { makeBlockCost, mmodel, validatePartition, type Scorer } from './model.js';
 import type { GeniusBlock, Range, Dump, LegacyBlock } from './parse.js';
-import { detectAttribution, ATTRIBUTION_DEFAULTS, type AttributionParams, type AttributionEvidence } from './attribution.js';
+import { detectAttribution, detectSeam, ATTRIBUTION_DEFAULTS, SEAM_DEFAULTS, type AttributionParams, type AttributionEvidence, type SeamParams, type SeamEvidence } from './attribution.js';
 
 export interface GateDefaults {
   margin: number;
@@ -34,6 +34,7 @@ export interface GateResult {
   changedIdx?: number[];
   zeroWidth?: number[];
   attribution?: AttributionEvidence;
+  seam?: SeamEvidence;
 }
 
 // Локальная стоимость сегмента блоков [a..b] на общем окне (индексы блоков).
@@ -117,6 +118,7 @@ export function gate(dump: Dump, opts: {
   params?: Record<string, number>;
   legacyLineSets?: (number[] | null)[];
   attribution?: Partial<AttributionParams>;
+  seam?: Partial<SeamParams>;
   // mode3=false → НЕ запускать mmodel ради стоимостного сравнения (прод: mode 3
   // всё равно не применяется). Убирает O(k·m²·nG·nL) из нормального пути (F10).
   mode3?: boolean;
@@ -141,6 +143,17 @@ export function gate(dump: Dump, opts: {
         mode: 'repaired-attribution', blocks: attr.partition, rule: 'attribution',
         reason: attr.reason, changed: attr.changed, changedIdx: attr.changedIdx,
         zeroWidth: attr.zeroWidth, logLine: attr.logLine, attribution: attr.evidence,
+      };
+    }
+    // (2c) CLASS 2c ШОВ: только при отказе 2b (гарант AC1c на I Disappear —
+    // там 2b fires первым). argument-order: aux→next (2b), next→prev (2c).
+    // Один ремонт за вызов, граница по argmax LRC-зазора, не по тексту.
+    const seam = detectSeam(blocks, dump.lrcLines, sets, opts.seam ?? SEAM_DEFAULTS);
+    if (seam) {
+      return {
+        mode: 'repaired-seam', blocks: seam.partition, rule: 'seam',
+        reason: seam.reason, changed: seam.changed, changedIdx: seam.changedIdx,
+        logLine: seam.logLine, seam: seam.evidence,
       };
     }
     if (opts.mode3 === false) {

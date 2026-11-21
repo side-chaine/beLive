@@ -37,7 +37,9 @@ export function partitionStats(partition: readonly (readonly number[])[], m: num
 }
 
 // mode 3 ('overridden') НЕ включён: mmodel — другой алгоритм, чем prod-пайплайн.
-export const APPLY_MODES_DEFAULT: readonly string[] = ['overridden-by-validity', 'repaired-attribution'];
+// 'repaired-seam' (2c) — локальный ремонт перекрёстного шва по argmax LRC-зазору;
+// применяется через тот же путь changedIdx, что и 2b (attribution).
+export const APPLY_MODES_DEFAULT: readonly string[] = ['overridden-by-validity', 'repaired-attribution', 'repaired-seam'];
 
 export type ApplyVerdict = 'noop-mode' | 'noop-identical' | 'applied' | 'rolled-back';
 
