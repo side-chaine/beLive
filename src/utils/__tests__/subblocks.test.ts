@@ -69,3 +69,34 @@ describe('subBlockWeights · ширина ∝ времени (У13)', () => {
     expect((w as number[]).reduce((a, b) => a + b, 0)).toBe(39);
   });
 });
+
+describe('GWEN43 · wave0 вес-кап по инструментальному зазору', () => {
+  // Гвен file 08 D6: волна 0 не зависит от шва/Period/gate. Хвостовой зазор
+  // 75.26s (гитарное соло) и отсутствующий маркер last+1 не должны раздувать
+  // последнюю пилюлю / давать все-null.
+  const duo = [sub('s0', [0, 1]), sub('s1', [2, 3])];
+  const D_MED = 3.675;
+
+  it('RED: хвостовой зазор 75.26s капится до d_med, а не 85s', () => {
+    // s1: первая строка 14.09, последняя 27.805, блок заканчивается на 103.35
+    const t = new Map([[0, 0], [2, 14.09], [3, 27.805], [4, 103.35]]);
+    const w = subBlockWeights(duo, (li) => t.get(li), 4, D_MED);
+    expect(w?.[0]).toBeCloseTo(14.09, 2);
+    expect(w?.[1]).toBeCloseTo(27.805 + D_MED - 14.09, 2); // 17.39, не 89.26
+  });
+
+  it('RED: отсутствующий маркер blockEndLine не даёт все-null', () => {
+    const t = new Map([[0, 0], [2, 14.09], [3, 27.805]]);
+    const w = subBlockWeights(duo, (li) => t.get(li), 4, D_MED);
+    expect(w?.[0]).toBeCloseTo(14.09, 2);
+    expect(w?.[1]).toBeCloseTo(27.805 + D_MED - 14.09, 2);
+    expect(w?.some((v) => v == null)).toBe(false);
+  });
+
+  it('НЕГАТИВ: обычный зазор (< 4·d_med) не меняется', () => {
+    const t = new Map([[0, 0], [2, 14.09], [3, 27.805], [4, 33]]);
+    const w = subBlockWeights(duo, (li) => t.get(li), 4, D_MED);
+    expect(w?.[0]).toBeCloseTo(14.09, 2);
+    expect(w?.[1]).toBeCloseTo(33 - 14.09, 2); // 18.91 — кап НЕ применён
+  });
+});

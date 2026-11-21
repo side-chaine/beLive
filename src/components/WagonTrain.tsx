@@ -33,6 +33,20 @@ export function WagonTrain() {
   const markers = useMarkersStore(s => s.markers);
   const activeLineIndex = useLyricsStore(s => s.activeLineIndex);
   const lines = useLyricsStore(s => s.lines);
+  /* GWEN43 wave0: медиана зазоров ЭТОГО трека для вес-капа. Считаем один раз
+     на всех маркерах — в код не хардкодим число 3.6750 (Гвен H3). */
+  const medianGap = useMemo(() => {
+    const times = markers
+      .map((m) => m.time)
+      .filter((t): t is number => typeof t === 'number' && Number.isFinite(t))
+      .sort((a, b) => a - b);
+    if (times.length < 2) {return undefined;}
+    const gaps: number[] = [];
+    for (let i = 1; i < times.length; i++) {gaps.push(times[i] - times[i - 1]);}
+    gaps.sort((a, b) => a - b);
+    const mid = gaps.length >> 1;
+    return gaps.length % 2 ? gaps[mid] : (gaps[mid - 1] + gaps[mid]) / 2;
+  }, [markers]);
   /* BL-050-ui: сравнение вживую — ширина ∝ времени для ВСЕХ блоков с маркерами
      (дефолт) или только для структурных квадратов (?wmode=square). */
   const widthMode = typeof window !== 'undefined' &&
@@ -325,6 +339,7 @@ export function WagonTrain() {
             subBlocks,
             (li) => markers.find(m => m.lineIndex === li)?.time,
             lastLine + 1,
+            medianGap,
           );
 
         /* 23:3x · «цвет блока = регион»: внутри петли цвет живой, снаружи

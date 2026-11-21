@@ -222,6 +222,18 @@ export function rondoTrain(texts: readonly string[]): Train | null {
 
 // ─── Основная функция ───────────────────────────────────────────────────────
 
+/**
+ * GWEN43 §6 / N7 — блок с дырой/интерливингом lineIndices структурно недостоверен.
+ * Атом (Period/train) может отработать, но его результат НЕ публикуется как уверенный.
+ * lineIndices здесь — ГЛОБАЛЬные индексы LRC-строк; прод-баг давал 38..48,50 / 49,51..56.
+ */
+function isContiguousLineIndices(lineIndices: readonly number[]): boolean {
+  for (let i = 1; i < lineIndices.length; i++) {
+    if (lineIndices[i] !== lineIndices[i - 1] + 1) {return false;}
+  }
+  return true;
+}
+
 function fallbackResult(n: number, guard: string | null): SquareFullResult {
   const units = computeBalancedSplit(n);
   return {
@@ -328,6 +340,12 @@ export function splitSquareFull(
 ): SquareFullResult {
   const n = lineIndices.length;
   if (n < 6) {return fallbackResult(n, 'n<6');}
+
+  // 🔴 GWEN43 §6 / N7 — блокирующий гейт: несплошной блок НЕ публикует уверенный квадрат.
+  // Покрытие сохраняется через fallbackResult (computeBalancedSplit(n) → sum == n).
+  if (!isContiguousLineIndices(lineIndices)) {
+    return fallbackResult(n, 'non-contiguous');
+  }
 
   const lrcTexts = lineIndices.map((i) => normalizeText(lines[i] ?? ''));
 

@@ -83,12 +83,25 @@ export function subBlockWeights(
   subBlocks: readonly SubBlock[],
   markerTime: (lineIndex: number) => number | undefined,
   blockEndLine?: number,
+  medianGap?: number,
 ): (number | null)[] {
   const out: (number | null)[] = subBlocks.map((sb, i) => {
     const nextStart = subBlocks[i + 1]?.lineIndices[0];
     const from = markerTime(sb.lineIndices[0]);
-    const to = nextStart != null ? markerTime(nextStart)
+    let to = nextStart != null ? markerTime(nextStart)
       : blockEndLine != null ? markerTime(blockEndLine) : undefined;
+    /* GWEN43 wave0: у последнего подблока `blockEndLine = lastLine + 1`
+       может попасть в инструментальный зазор (Chorus 2 — 75.26s соло) или
+       вообще не иметь маркера (Outro). В обоих случаях берём оценку
+       `последняя строка + медиана зазоров этого трека`, а не всегда last+1.
+       Порог 4·medianGap — alt_threshold Гвен (file 06 §1): на обычных зазорах
+       путь побайтово прежний, кап срабатывает только на выбросе. */
+    if (nextStart == null && from != null && medianGap != null && medianGap > 0) {
+      const tLast = markerTime(sb.lineIndices[sb.lineIndices.length - 1]);
+      if (tLast != null && (to == null || to - tLast > 4 * medianGap)) {
+        to = tLast + medianGap;
+      }
+    }
     return from != null && to != null && to > from ? to - from : null;
   });
   return out.every((w) => w != null && w > 0) ? out : out.map(() => null);
